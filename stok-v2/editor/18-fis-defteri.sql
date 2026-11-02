@@ -81,9 +81,16 @@ declare
   duzen text := coalesce(current_setting('fis.duzen', true), '');
   yeni_j jsonb;
   eski_j jsonb;
+  korunan boolean := false;
 begin
   if not public.fis_kural_aktif() then
-    return case when tg_op = 'DELETE' then old else new end;
+    if tg_op <> 'INSERT' then
+      select exists(select 1 from public.stk_fis where id=old.fis_id and istek is not null) into korunan;
+    end if;
+    if tg_op <> 'DELETE' and not korunan then
+      select exists(select 1 from public.stk_fis where id=new.fis_id and istek is not null) into korunan;
+    end if;
+    if not korunan then return case when tg_op = 'DELETE' then old else new end; end if;
   end if;
   if tg_op = 'DELETE' then
     raise exception 'Hareket silinmez — fişi iptal edin (% %)', tg_table_name, old.id using errcode = '42501';
@@ -206,6 +213,8 @@ end $$;
 
 create or replace function public.fis_baslik_koru() returns trigger
 language plpgsql as $$
+declare
+  korunan boolean := false;
 begin
   if tg_op='DELETE' then
     if old.ek ? 'fazlaTeslimOnayi' then
@@ -218,7 +227,9 @@ begin
     end if;
   end if;
   if not public.fis_kural_aktif() then
-    return case when tg_op = 'DELETE' then old else new end;
+    if tg_op <> 'INSERT' then korunan := old.istek is not null; end if;
+    if tg_op <> 'DELETE' then korunan := korunan or new.istek is not null; end if;
+    if not korunan then return case when tg_op = 'DELETE' then old else new end; end if;
   end if;
   if tg_op = 'DELETE' then
     raise exception 'Fiş silinmez — iptal edin (%)', old.id using errcode = '42501';

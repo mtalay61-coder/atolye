@@ -1,0 +1,1645 @@
+PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit|UTC
+── stok-v2/test/supabase-taklit.sql
+── stok-v2/test/eski-tablolar.sql
+── rls-yazma.sql (yetki_var_mi)
+── degisiklik-sayaci.sql
+psql:degisiklik-sayaci.sql:54: NOTICE:  trigger "degisiklik_izle" for relation "public.tanimlar" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ tanimlar: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:55: NOTICE:  trigger "degisiklik_izle" for relation "public.cariler" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ cariler: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:56: NOTICE:  trigger "degisiklik_izle" for relation "public.cari_hareketleri" does not exist, skipping
+    degisiklik_izle_kur
+---------------------------
+ cari_hareketleri: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:57: NOTICE:  trigger "degisiklik_izle" for relation "public.urunler" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ urunler: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:58: NOTICE:  trigger "degisiklik_izle" for relation "public.varyantlar" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ varyantlar: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:59: NOTICE:  trigger "degisiklik_izle" for relation "public.stok_hareketleri" does not exist, skipping
+    degisiklik_izle_kur
+---------------------------
+ stok_hareketleri: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:60: NOTICE:  trigger "degisiklik_izle" for relation "public.siparisler" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ siparisler: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:61: NOTICE:  trigger "degisiklik_izle" for relation "public.siparis_kalemleri" does not exist, skipping
+    degisiklik_izle_kur
+----------------------------
+ siparis_kalemleri: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:62: NOTICE:  trigger "degisiklik_izle" for relation "public.uretim" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ uretim: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:63: NOTICE:  trigger "degisiklik_izle" for relation "public.uretim_atamalari" does not exist, skipping
+    degisiklik_izle_kur
+---------------------------
+ uretim_atamalari: kuruldu
+(1 row)
+
+           degisiklik_izle_kur
+------------------------------------------
+ stok_rezervasyonlari: tablo yok, atlandi
+(1 row)
+
+     degisiklik_izle_kur
+-----------------------------
+ onaylar: tablo yok, atlandi
+(1 row)
+
+   degisiklik_izle_kur
+-------------------------
+ cop: tablo yok, atlandi
+(1 row)
+
+psql:degisiklik-sayaci.sql:67: NOTICE:  trigger "degisiklik_izle" for relation "public.muhasebe" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ muhasebe: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:68: NOTICE:  trigger "degisiklik_izle" for relation "public.koliler" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ koliler: kuruldu
+(1 row)
+
+     degisiklik_izle_kur
+------------------------------
+ gorevler: tablo yok, atlandi
+(1 row)
+
+psql:degisiklik-sayaci.sql:70: NOTICE:  trigger "degisiklik_izle" for relation "public.mesajlar" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ mesajlar: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:71: NOTICE:  trigger "degisiklik_izle" for relation "public.faturalar" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ faturalar: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:72: NOTICE:  trigger "degisiklik_izle" for relation "public.fis_defteri" does not exist, skipping
+ degisiklik_izle_kur
+----------------------
+ fis_defteri: kuruldu
+(1 row)
+
+        degisiklik_izle_kur
+------------------------------------
+ cek_gorselleri: tablo yok, atlandi
+(1 row)
+
+     degisiklik_izle_kur
+------------------------------
+ modeller: tablo yok, atlandi
+(1 row)
+
+psql:degisiklik-sayaci.sql:82: NOTICE:  policy "giris_yapmis_hersey" for relation "public.degisiklik" does not exist, skipping
+── silinen-arsiv.sql
+psql:silinen-arsiv.sql:45: NOTICE:  column "silen_eposta" of relation "silinen_arsiv" already exists, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.urunler" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.varyantlar" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.stok_hareketleri" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.cariler" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.cari_hareketleri" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.siparisler" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.siparis_kalemleri" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.uretim" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.uretim_atamalari" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_goruntu" for relation "public.tanimlar" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.tanimlar" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_goruntu" for relation "public.koliler" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.koliler" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_goruntu" for relation "public.faturalar" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.faturalar" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_goruntu" for relation "public.muhasebe" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.muhasebe" does not exist, skipping
+── stok-v2/stok-v2.sql
+psql:stok-v2/stok-v2.sql:175: NOTICE:  column "iptal" of relation "stk_hareket" already exists, skipping
+psql:stok-v2/stok-v2.sql:176: NOTICE:  column "iptal_zamani" of relation "stk_hareket" already exists, skipping
+psql:stok-v2/stok-v2.sql:177: NOTICE:  column "iptal_eden" of relation "stk_hareket" already exists, skipping
+psql:stok-v2/stok-v2.sql:300: NOTICE:  trigger "stk_tanim_aynasi" for relation "public.tanimlar" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  policy "stk_okuma" for relation "public.stk_renk" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  policy "stk_okuma" for relation "public.stk_olcu" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  policy "stk_okuma" for relation "public.stk_varyant" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  policy "stk_okuma" for relation "public.stk_fis" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  policy "stk_okuma" for relation "public.stk_hareket" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  policy "stk_okuma" for relation "public.stk_ayar" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  trigger "degisiklik_izle" for relation "public.stk_renk" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  trigger "degisiklik_izle" for relation "public.stk_olcu" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  trigger "degisiklik_izle" for relation "public.stk_varyant" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  trigger "degisiklik_izle" for relation "public.stk_fis" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  trigger "degisiklik_izle" for relation "public.stk_hareket" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  trigger "arsiv_silinen" for relation "public.stk_varyant" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  trigger "arsiv_silinen" for relation "public.stk_fis" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  trigger "arsiv_silinen" for relation "public.stk_hareket" does not exist, skipping
+                       stk_kurulum_tamamla
+------------------------------------------------------------------
+ değişiklik sayacı kuruldu; silme arşivi kuruldu; stok v2 kuruldu
+(1 row)
+
+ stk_tanim_esitle
+------------------
+
+(1 row)
+
+── stok-v2/stok-v2.sql
+psql:stok-v2/stok-v2.sql:98: NOTICE:  relation "stk_renk" already exists, skipping
+psql:stok-v2/stok-v2.sql:107: NOTICE:  relation "stk_olcu" already exists, skipping
+psql:stok-v2/stok-v2.sql:121: NOTICE:  relation "stk_varyant" already exists, skipping
+psql:stok-v2/stok-v2.sql:122: NOTICE:  relation "stk_varyant_tekil" already exists, skipping
+psql:stok-v2/stok-v2.sql:123: NOTICE:  relation "stk_varyant_urun" already exists, skipping
+psql:stok-v2/stok-v2.sql:146: NOTICE:  relation "stk_fis" already exists, skipping
+psql:stok-v2/stok-v2.sql:147: NOTICE:  relation "stk_fis_tarih" already exists, skipping
+psql:stok-v2/stok-v2.sql:148: NOTICE:  relation "stk_fis_siparis" already exists, skipping
+psql:stok-v2/stok-v2.sql:149: NOTICE:  relation "stk_fis_uretim" already exists, skipping
+psql:stok-v2/stok-v2.sql:174: NOTICE:  relation "stk_hareket" already exists, skipping
+psql:stok-v2/stok-v2.sql:175: NOTICE:  column "iptal" of relation "stk_hareket" already exists, skipping
+psql:stok-v2/stok-v2.sql:176: NOTICE:  column "iptal_zamani" of relation "stk_hareket" already exists, skipping
+psql:stok-v2/stok-v2.sql:177: NOTICE:  column "iptal_eden" of relation "stk_hareket" already exists, skipping
+psql:stok-v2/stok-v2.sql:178: NOTICE:  relation "stk_hareket_fis" already exists, skipping
+psql:stok-v2/stok-v2.sql:179: NOTICE:  relation "stk_hareket_varyant" already exists, skipping
+psql:stok-v2/stok-v2.sql:180: NOTICE:  relation "stk_hareket_urun" already exists, skipping
+psql:stok-v2/stok-v2.sql:181: NOTICE:  relation "stk_hareket_siparis" already exists, skipping
+psql:stok-v2/stok-v2.sql:200: NOTICE:  relation "stk_ayar" already exists, skipping
+                       stk_kurulum_tamamla
+------------------------------------------------------------------
+ değişiklik sayacı kuruldu; silme arşivi kuruldu; stok v2 kuruldu
+(1 row)
+
+ stk_tanim_esitle
+------------------
+
+(1 row)
+
+── stok-v2/stok-v2-goc.sql
+── stok-v2/cari-v2.sql
+psql:stok-v2/cari-v2.sql:163: NOTICE:  policy "car_okuma" for relation "public.car_hareket" does not exist, skipping
+psql:stok-v2/cari-v2.sql:163: NOTICE:  trigger "degisiklik_izle" for relation "public.car_hareket" does not exist, skipping
+psql:stok-v2/cari-v2.sql:163: NOTICE:  trigger "arsiv_silinen" for relation "public.car_hareket" does not exist, skipping
+                       car_kurulum_tamamla
+------------------------------------------------------------------
+ değişiklik sayacı kuruldu; silme arşivi kuruldu; cari v2 kuruldu
+(1 row)
+
+── stok-v2/cari-v2.sql
+psql:stok-v2/cari-v2.sql:47: NOTICE:  relation "car_hareket" already exists, skipping
+psql:stok-v2/cari-v2.sql:48: NOTICE:  relation "car_hareket_cari" already exists, skipping
+psql:stok-v2/cari-v2.sql:49: NOTICE:  relation "car_hareket_fis" already exists, skipping
+psql:stok-v2/cari-v2.sql:50: NOTICE:  relation "car_hareket_tarih" already exists, skipping
+psql:stok-v2/cari-v2.sql:52: NOTICE:  column "cari_aktif" of relation "stk_ayar" already exists, skipping
+psql:stok-v2/cari-v2.sql:53: NOTICE:  column "cari_gecis" of relation "stk_ayar" already exists, skipping
+psql:stok-v2/cari-v2.sql:54: NOTICE:  column "cari_geri_donus" of relation "stk_ayar" already exists, skipping
+                       car_kurulum_tamamla
+------------------------------------------------------------------
+ değişiklik sayacı kuruldu; silme arşivi kuruldu; cari v2 kuruldu
+(1 row)
+
+── stok-v2/cari-v2-goc.sql
+── stok-v2/alt-v2.sql
+── stok-v2/alt-v2.sql
+psql:stok-v2/alt-v2.sql:23: NOTICE:  column "alt_aktif" of relation "stk_ayar" already exists, skipping
+psql:stok-v2/alt-v2.sql:24: NOTICE:  column "alt_gecis" of relation "stk_ayar" already exists, skipping
+psql:stok-v2/alt-v2.sql:25: NOTICE:  column "alt_geri_donus" of relation "stk_ayar" already exists, skipping
+── stok-v2/kasa-v2.sql
+psql:stok-v2/kasa-v2.sql:243: NOTICE:  policy "kas_okuma" for relation "public.kas_hesap" does not exist, skipping
+psql:stok-v2/kasa-v2.sql:243: NOTICE:  policy "kas_okuma" for relation "public.kas_hareket" does not exist, skipping
+psql:stok-v2/kasa-v2.sql:243: NOTICE:  policy "kas_okuma" for relation "public.kas_cek" does not exist, skipping
+psql:stok-v2/kasa-v2.sql:243: NOTICE:  policy "kas_okuma" for relation "public.kas_ayar" does not exist, skipping
+psql:stok-v2/kasa-v2.sql:243: NOTICE:  trigger "degisiklik_izle" for relation "public.kas_hesap" does not exist, skipping
+psql:stok-v2/kasa-v2.sql:243: NOTICE:  trigger "degisiklik_izle" for relation "public.kas_hareket" does not exist, skipping
+psql:stok-v2/kasa-v2.sql:243: NOTICE:  trigger "degisiklik_izle" for relation "public.kas_cek" does not exist, skipping
+psql:stok-v2/kasa-v2.sql:243: NOTICE:  trigger "degisiklik_izle" for relation "public.kas_ayar" does not exist, skipping
+psql:stok-v2/kasa-v2.sql:243: NOTICE:  trigger "arsiv_silinen" for relation "public.kas_hesap" does not exist, skipping
+psql:stok-v2/kasa-v2.sql:243: NOTICE:  trigger "arsiv_silinen" for relation "public.kas_hareket" does not exist, skipping
+psql:stok-v2/kasa-v2.sql:243: NOTICE:  trigger "arsiv_silinen" for relation "public.kas_cek" does not exist, skipping
+                       kas_kurulum_tamamla
+------------------------------------------------------------------
+ değişiklik sayacı kuruldu; silme arşivi kuruldu; kasa v2 kuruldu
+(1 row)
+
+── stok-v2/kasa-v2.sql
+psql:stok-v2/kasa-v2.sql:31: NOTICE:  relation "kas_hesap" already exists, skipping
+psql:stok-v2/kasa-v2.sql:45: NOTICE:  relation "kas_hareket" already exists, skipping
+psql:stok-v2/kasa-v2.sql:46: NOTICE:  relation "kas_hareket_hesap" already exists, skipping
+psql:stok-v2/kasa-v2.sql:58: NOTICE:  relation "kas_cek" already exists, skipping
+psql:stok-v2/kasa-v2.sql:65: NOTICE:  relation "kas_ayar" already exists, skipping
+psql:stok-v2/kasa-v2.sql:68: NOTICE:  column "kasa_aktif" of relation "stk_ayar" already exists, skipping
+psql:stok-v2/kasa-v2.sql:69: NOTICE:  column "kasa_gecis" of relation "stk_ayar" already exists, skipping
+psql:stok-v2/kasa-v2.sql:70: NOTICE:  column "kasa_geri_donus" of relation "stk_ayar" already exists, skipping
+                       kas_kurulum_tamamla
+------------------------------------------------------------------
+ değişiklik sayacı kuruldu; silme arşivi kuruldu; kasa v2 kuruldu
+(1 row)
+
+── stok-v2/kasa-v2-goc.sql
+── stok-v2/liste-v2.sql
+psql:stok-v2/liste-v2.sql:66: NOTICE:  trigger "lst_sayac" for relation "public.lst_kayit" does not exist, skipping
+psql:stok-v2/liste-v2.sql:144: NOTICE:  policy "lst_okuma" for relation "public.lst_kayit" does not exist, skipping
+psql:stok-v2/liste-v2.sql:144: NOTICE:  trigger "arsiv_silinen" for relation "public.lst_kayit" does not exist, skipping
+                        lst_kurulum_tamamla
+--------------------------------------------------------------------
+ değişiklik sayacı bağlandı; silme arşivi kuruldu; liste v2 kuruldu
+(1 row)
+
+── stok-v2/liste-v2.sql
+psql:stok-v2/liste-v2.sql:38: NOTICE:  relation "lst_kayit" already exists, skipping
+psql:stok-v2/liste-v2.sql:39: NOTICE:  relation "lst_kayit_sira" already exists, skipping
+psql:stok-v2/liste-v2.sql:41: NOTICE:  column "liste_aktif" of relation "stk_ayar" already exists, skipping
+psql:stok-v2/liste-v2.sql:42: NOTICE:  column "liste_gecis" of relation "stk_ayar" already exists, skipping
+psql:stok-v2/liste-v2.sql:43: NOTICE:  column "liste_geri_donus" of relation "stk_ayar" already exists, skipping
+                        lst_kurulum_tamamla
+--------------------------------------------------------------------
+ değişiklik sayacı bağlandı; silme arşivi kuruldu; liste v2 kuruldu
+(1 row)
+
+── stok-v2/liste-v2-goc.sql
+── rls-kimlik.sql
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.varyantlar" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.stok_hareketleri" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.uretim" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.koliler" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.teklifler" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.muhasebe" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.gunluk" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.mesajlar" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.fis_defteri" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.urunler" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.cariler" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.cari_hareketleri" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.siparisler" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.siparis_kalemleri" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.tanimlar" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.uretim_atamalari" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.faturalar" does not exist, skipping
+── stok-v2/test/sinama.sql
+psql:stok-v2/test/sinama.sql:27: NOTICE:  TAMAM: tanımlar aynası
+psql:stok-v2/test/sinama.sql:31: NOTICE:  table "_ev" does not exist, skipping
+psql:stok-v2/test/sinama.sql:31: NOTICE:  table "_eh" does not exist, skipping
+psql:stok-v2/test/sinama.sql:31: NOTICE:  table "_vm" does not exist, skipping
+psql:stok-v2/test/sinama.sql:31: NOTICE:  table "_fark" does not exist, skipping
+{
+    "fis": 7,
+    "urun": 4,
+    "atlanan": [
+        {
+            "renk": "Siyah",
+            "beden": "Standart",
+            "neden": "ürün yok",
+            "urunId": "u-silinmis"
+        },
+        {
+            "fisNo": "F-6",
+            "neden": "ürün yok",
+            "hareketId": "h7"
+        },
+        {
+            "fisNo": "F-7",
+            "neden": "miktar sıfır",
+            "hareketId": "h8"
+        }
+    ],
+    "farklar": [
+        {
+            "fark": 2.0,
+            "olcu": "37",
+            "renk": "Kahve",
+            "urun": "Deri Çanta",
+            "kayitli": 5,
+            "hareketToplami": 3.0
+        }
+    ],
+    "hareket": 11,
+    "varyant": 6,
+    "iptalFis": 1,
+    "farkSatiri": 1,
+    "eskiHareket": 10,
+    "eskiVaryant": 7,
+    "serbestOlcu": [
+        "XL"
+    ],
+    "serbestRenk": [
+        "Eski Bordo"
+    ],
+    "defterdeIptalAmaHareketiVar": [
+        "F-3"
+    ]
+}
+psql:stok-v2/test/sinama.sql:45: NOTICE:  table "_ev" does not exist, skipping
+psql:stok-v2/test/sinama.sql:45: NOTICE:  table "_eh" does not exist, skipping
+psql:stok-v2/test/sinama.sql:45: NOTICE:  table "_vm" does not exist, skipping
+psql:stok-v2/test/sinama.sql:45: NOTICE:  table "_fark" does not exist, skipping
+psql:stok-v2/test/sinama.sql:45: NOTICE:  TAMAM: göç raporu (ikinci çalıştırma)
+ urun_id  |       renk        | beden | eski | yeni | fark
+----------+-------------------+-------+------+------+------
+ u-canta  | 1058 - taba/siyah | 36    |   10 |   10 |    0
+ u-canta  | kahve             | 37    |    5 |  5.0 |  0.0
+ u-eski   | eski bordo        | xl    |    2 |    2 |    0
+ u-iplik  |                   |       |    0 |    0 |    0
+ u-kosele | siyah             |       |   -4 |   -4 |    0
+ u-kosele | taba              |       |    7 |    7 |    0
+(6 rows)
+
+psql:stok-v2/test/sinama.sql:55: NOTICE:  TAMAM: göç sonrası stok = bugünkü stok
+psql:stok-v2/test/sinama.sql:77: NOTICE:  TAMAM: kimlikler ve fiş başlıkları
+psql:stok-v2/test/sinama.sql:91: NOTICE:  TAMAM: fişsiz / sıfır hareket reddedildi
+psql:stok-v2/test/sinama.sql:108: NOTICE:  TAMAM: doğrudan yazma ve göç uygulamaya kapalı
+psql:stok-v2/test/sinama.sql:136: NOTICE:  TAMAM: fiş kaydet (tek işlem, eksi stok, yeniden gönderim)
+psql:stok-v2/test/sinama.sql:154: NOTICE:  TAMAM: hatalı fiş hiç yazılmadı
+psql:stok-v2/test/sinama.sql:164: NOTICE:  TAMAM: yeni varyant fişle açıldı
+psql:stok-v2/test/sinama.sql:180: NOTICE:  TAMAM: fiş iptal
+psql:stok-v2/test/sinama.sql:205: NOTICE:  TAMAM: varyant aç / kaldır / min stok
+psql:stok-v2/test/sinama.sql:208: warning: \gset: extra argument "stok:" ignored
+psql:stok-v2/test/sinama.sql:208: warning: \gset: extra argument "kaydetme" ignored
+psql:stok-v2/test/sinama.sql:208: warning: \gset: extra argument "yok" ignored
+psql:stok-v2/test/sinama.sql:215: NOTICE:  TAMAM: yetkisiz kullanıcı reddedildi
+psql:stok-v2/test/sinama.sql:216: warning: \gset: extra argument "stok:" ignored
+psql:stok-v2/test/sinama.sql:216: warning: \gset: extra argument "kaydetme" ignored
+psql:stok-v2/test/sinama.sql:216: warning: \gset: extra argument "var," ignored
+psql:stok-v2/test/sinama.sql:216: warning: \gset: extra argument "silme" ignored
+psql:stok-v2/test/sinama.sql:216: warning: \gset: extra argument "yok" ignored
+psql:stok-v2/test/sinama.sql:224: NOTICE:  TAMAM: kaydetme var / silme yok
+psql:stok-v2/test/sinama.sql:225: warning: \gset: extra argument "listede" ignored
+psql:stok-v2/test/sinama.sql:225: warning: \gset: extra argument "yok" ignored
+psql:stok-v2/test/sinama.sql:232: NOTICE:  TAMAM: listede olmayan kullanıcı reddedildi
+psql:stok-v2/test/sinama.sql:252: NOTICE:  TAMAM: renk adı değişimi / silinen renk
+psql:stok-v2/test/sinama.sql:261: NOTICE:  TAMAM: göç kilidi
+psql:stok-v2/test/sinama.sql:269: NOTICE:  TAMAM: değişiklik sayacı ve arşiv
+psql:stok-v2/test/sinama.sql:285: NOTICE:  TAMAM: geçiş döneminde bugünkü uygulama bozulmaz
+SINAMA BITTI
+── stok-v2/test/supabase-taklit.sql
+── stok-v2/test/eski-tablolar.sql
+── degisiklik-sayaci.sql
+psql:degisiklik-sayaci.sql:54: NOTICE:  trigger "degisiklik_izle" for relation "public.tanimlar" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ tanimlar: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:55: NOTICE:  trigger "degisiklik_izle" for relation "public.cariler" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ cariler: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:56: NOTICE:  trigger "degisiklik_izle" for relation "public.cari_hareketleri" does not exist, skipping
+    degisiklik_izle_kur
+---------------------------
+ cari_hareketleri: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:57: NOTICE:  trigger "degisiklik_izle" for relation "public.urunler" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ urunler: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:58: NOTICE:  trigger "degisiklik_izle" for relation "public.varyantlar" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ varyantlar: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:59: NOTICE:  trigger "degisiklik_izle" for relation "public.stok_hareketleri" does not exist, skipping
+    degisiklik_izle_kur
+---------------------------
+ stok_hareketleri: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:60: NOTICE:  trigger "degisiklik_izle" for relation "public.siparisler" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ siparisler: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:61: NOTICE:  trigger "degisiklik_izle" for relation "public.siparis_kalemleri" does not exist, skipping
+    degisiklik_izle_kur
+----------------------------
+ siparis_kalemleri: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:62: NOTICE:  trigger "degisiklik_izle" for relation "public.uretim" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ uretim: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:63: NOTICE:  trigger "degisiklik_izle" for relation "public.uretim_atamalari" does not exist, skipping
+    degisiklik_izle_kur
+---------------------------
+ uretim_atamalari: kuruldu
+(1 row)
+
+           degisiklik_izle_kur
+------------------------------------------
+ stok_rezervasyonlari: tablo yok, atlandi
+(1 row)
+
+     degisiklik_izle_kur
+-----------------------------
+ onaylar: tablo yok, atlandi
+(1 row)
+
+   degisiklik_izle_kur
+-------------------------
+ cop: tablo yok, atlandi
+(1 row)
+
+psql:degisiklik-sayaci.sql:67: NOTICE:  trigger "degisiklik_izle" for relation "public.muhasebe" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ muhasebe: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:68: NOTICE:  trigger "degisiklik_izle" for relation "public.koliler" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ koliler: kuruldu
+(1 row)
+
+     degisiklik_izle_kur
+------------------------------
+ gorevler: tablo yok, atlandi
+(1 row)
+
+psql:degisiklik-sayaci.sql:70: NOTICE:  trigger "degisiklik_izle" for relation "public.mesajlar" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ mesajlar: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:71: NOTICE:  trigger "degisiklik_izle" for relation "public.faturalar" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ faturalar: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:72: NOTICE:  trigger "degisiklik_izle" for relation "public.fis_defteri" does not exist, skipping
+ degisiklik_izle_kur
+----------------------
+ fis_defteri: kuruldu
+(1 row)
+
+        degisiklik_izle_kur
+------------------------------------
+ cek_gorselleri: tablo yok, atlandi
+(1 row)
+
+     degisiklik_izle_kur
+------------------------------
+ modeller: tablo yok, atlandi
+(1 row)
+
+psql:degisiklik-sayaci.sql:82: NOTICE:  policy "giris_yapmis_hersey" for relation "public.degisiklik" does not exist, skipping
+── silinen-arsiv.sql
+psql:silinen-arsiv.sql:45: NOTICE:  column "silen_eposta" of relation "silinen_arsiv" already exists, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.urunler" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.varyantlar" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.stok_hareketleri" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.cariler" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.cari_hareketleri" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.siparisler" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.siparis_kalemleri" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.uretim" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.uretim_atamalari" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_goruntu" for relation "public.tanimlar" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.tanimlar" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_goruntu" for relation "public.koliler" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.koliler" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_goruntu" for relation "public.faturalar" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.faturalar" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_goruntu" for relation "public.muhasebe" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.muhasebe" does not exist, skipping
+── stok-v2/stok-v2.sql (Editor kopyası, parça parça)
+   52 parça, hepsi ayrı oturumda çalıştı
+── stok-v2/stok-v2-goc.sql (Editor kopyası, parça parça)
+   10 parça, hepsi ayrı oturumda çalıştı
+── stok-v2/cari-v2.sql (Editor kopyası, parça parça)
+   13 parça, hepsi ayrı oturumda çalıştı
+── stok-v2/cari-v2-goc.sql (Editor kopyası, parça parça)
+   6 parça, hepsi ayrı oturumda çalıştı
+── stok-v2/alt-v2.sql (Editor kopyası, parça parça)
+   13 parça, hepsi ayrı oturumda çalıştı
+── stok-v2/kasa-v2.sql (Editor kopyası, parça parça)
+   15 parça, hepsi ayrı oturumda çalıştı
+── stok-v2/kasa-v2-goc.sql (Editor kopyası, parça parça)
+   6 parça, hepsi ayrı oturumda çalıştı
+── stok-v2/liste-v2.sql (Editor kopyası, parça parça)
+   13 parça, hepsi ayrı oturumda çalıştı
+── stok-v2/liste-v2-goc.sql (Editor kopyası, parça parça)
+   7 parça, hepsi ayrı oturumda çalıştı
+── rls-kimlik.sql
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.varyantlar" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.stok_hareketleri" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.uretim" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.koliler" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.teklifler" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.muhasebe" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.gunluk" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.mesajlar" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.fis_defteri" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.urunler" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.cariler" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.cari_hareketleri" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.siparisler" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.siparis_kalemleri" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.tanimlar" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.uretim_atamalari" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.faturalar" does not exist, skipping
+── stok-v2/test/sinama-gecis.sql
+psql:stok-v2/test/sinama-gecis.sql:19: NOTICE:  table "_ev" does not exist, skipping
+psql:stok-v2/test/sinama-gecis.sql:19: NOTICE:  table "_eh" does not exist, skipping
+psql:stok-v2/test/sinama-gecis.sql:19: NOTICE:  table "_vm" does not exist, skipping
+psql:stok-v2/test/sinama-gecis.sql:19: NOTICE:  table "_fark" does not exist, skipping
+psql:stok-v2/test/sinama-gecis.sql:59: NOTICE:  TAMAM: stk_yaz satır yaz / tekrar / iptal / geri yükle / taşı
+psql:stok-v2/test/sinama-gecis.sql:72: NOTICE:  TAMAM: stk_yaz tek işlem
+psql:stok-v2/test/sinama-gecis.sql:81: NOTICE:  TAMAM: iptal fişe yeni satır
+psql:stok-v2/test/sinama-gecis.sql:98: NOTICE:  TAMAM: varyant aç / kaldır
+psql:stok-v2/test/sinama-gecis.sql:111: NOTICE:  TAMAM: serbest renk tanıma bağlandı
+psql:stok-v2/test/sinama-gecis.sql:115: NOTICE:  table "_ev" does not exist, skipping
+psql:stok-v2/test/sinama-gecis.sql:115: NOTICE:  table "_eh" does not exist, skipping
+psql:stok-v2/test/sinama-gecis.sql:115: NOTICE:  table "_vm" does not exist, skipping
+psql:stok-v2/test/sinama-gecis.sql:115: NOTICE:  table "_fark" does not exist, skipping
+psql:stok-v2/test/sinama-gecis.sql:135: NOTICE:  TAMAM: geçiş (görünümler, ayar, kilitler)
+psql:stok-v2/test/sinama-gecis.sql:153: NOTICE:  TAMAM: geçişten sonra okuma / yazma
+psql:stok-v2/test/sinama-gecis.sql:164: NOTICE:  TAMAM: görünüm yazılamaz
+psql:stok-v2/test/sinama-gecis.sql:167: NOTICE:  table "_gd_v" does not exist, skipping
+psql:stok-v2/test/sinama-gecis.sql:167: NOTICE:  table "_gd_h" does not exist, skipping
+psql:stok-v2/test/sinama-gecis.sql:177: NOTICE:  TAMAM: geri dönüş
+psql:stok-v2/test/sinama-gecis.sql:187: NOTICE:  table "_ev" does not exist, skipping
+psql:stok-v2/test/sinama-gecis.sql:187: NOTICE:  table "_eh" does not exist, skipping
+psql:stok-v2/test/sinama-gecis.sql:187: NOTICE:  table "_vm" does not exist, skipping
+psql:stok-v2/test/sinama-gecis.sql:187: NOTICE:  table "_fark" does not exist, skipping
+psql:stok-v2/test/sinama-gecis.sql:187: NOTICE:  TAMAM: yeniden geçiş
+SINAMA (GECIS) BITTI
+── stok-v2/test/sinama-cari.sql
+psql:stok-v2/test/sinama-cari.sql:25: NOTICE:  table "_ec" does not exist, skipping
+psql:stok-v2/test/sinama-cari.sql:25: NOTICE:  TAMAM: cari göç
+psql:stok-v2/test/sinama-cari.sql:51: NOTICE:  TAMAM: car_yaz
+psql:stok-v2/test/sinama-cari.sql:68: NOTICE:  TAMAM: fis_yaz tek işlem
+psql:stok-v2/test/sinama-cari.sql:82: NOTICE:  TAMAM: cari yetki
+psql:stok-v2/test/sinama-cari.sql:87: NOTICE:  table "_ec" does not exist, skipping
+psql:stok-v2/test/sinama-cari.sql:98: NOTICE:  TAMAM: cari geçiş
+psql:stok-v2/test/sinama-cari.sql:111: NOTICE:  TAMAM: cari geçişten sonra okuma / yazma
+psql:stok-v2/test/sinama-cari.sql:116: NOTICE:  table "_gd_c" does not exist, skipping
+psql:stok-v2/test/sinama-cari.sql:124: NOTICE:  TAMAM: cari geri dönüş
+psql:stok-v2/test/sinama-cari.sql:130: NOTICE:  table "_ec" does not exist, skipping
+psql:stok-v2/test/sinama-cari.sql:130: NOTICE:  TAMAM: cari yeniden geçiş
+SINAMA (CARI) BITTI
+── stok-v2/test/sinama-alt.sql
+psql:stok-v2/test/sinama-alt.sql:24: NOTICE:  TAMAM: alt tablolar yalnız okunur
+psql:stok-v2/test/sinama-alt.sql:56: NOTICE:  TAMAM: alt_yaz
+psql:stok-v2/test/sinama-alt.sql:76: NOTICE:  TAMAM: fis_yaz stok + cari + kalem tek işlem
+psql:stok-v2/test/sinama-alt.sql:86: NOTICE:  TAMAM: alt yetki
+psql:stok-v2/test/sinama-alt.sql:98: NOTICE:  TAMAM: alt geri dönüş
+SINAMA (ALT) BITTI
+── stok-v2/test/sinama-kasa.sql
+psql:stok-v2/test/sinama-kasa.sql:32: NOTICE:  TAMAM: kasa göç
+psql:stok-v2/test/sinama-kasa.sql:71: NOTICE:  TAMAM: kas_yaz
+psql:stok-v2/test/sinama-kasa.sql:91: NOTICE:  TAMAM: kasa yetki
+psql:stok-v2/test/sinama-kasa.sql:106: NOTICE:  TAMAM: fis_yaz cari + kasa tek işlem
+psql:stok-v2/test/sinama-kasa.sql:121: NOTICE:  TAMAM: kasa geçiş
+psql:stok-v2/test/sinama-kasa.sql:139: NOTICE:  TAMAM: kasa geçişten sonra okuma / yazma, eski yol kapalı
+psql:stok-v2/test/sinama-kasa.sql:150: NOTICE:  TAMAM: kasa geri dönüş
+psql:stok-v2/test/sinama-kasa.sql:156: NOTICE:  TAMAM: kasa yeniden geçiş
+SINAMA (KASA) BITTI
+── stok-v2/test/sinama-liste.sql
+psql:stok-v2/test/sinama-liste.sql:30: NOTICE:  TAMAM: liste göç
+psql:stok-v2/test/sinama-liste.sql:65: NOTICE:  TAMAM: lst_yaz
+psql:stok-v2/test/sinama-liste.sql:80: NOTICE:  TAMAM: liste yetki
+psql:stok-v2/test/sinama-liste.sql:96: NOTICE:  TAMAM: liste geçiş
+psql:stok-v2/test/sinama-liste.sql:112: NOTICE:  TAMAM: liste geçişten sonra okuma / yazma, eski yol kapalı
+psql:stok-v2/test/sinama-liste.sql:128: NOTICE:  TAMAM: liste geri dönüş ve yeniden geçiş
+SINAMA (LISTE) BITTI
+── stok-v2/test/supabase-taklit.sql
+── stok-v2/test/eski-tablolar.sql
+── rls-yazma.sql (yetki_var_mi)
+── degisiklik-sayaci.sql
+psql:degisiklik-sayaci.sql:54: NOTICE:  trigger "degisiklik_izle" for relation "public.tanimlar" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ tanimlar: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:55: NOTICE:  trigger "degisiklik_izle" for relation "public.cariler" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ cariler: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:56: NOTICE:  trigger "degisiklik_izle" for relation "public.cari_hareketleri" does not exist, skipping
+    degisiklik_izle_kur
+---------------------------
+ cari_hareketleri: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:57: NOTICE:  trigger "degisiklik_izle" for relation "public.urunler" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ urunler: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:58: NOTICE:  trigger "degisiklik_izle" for relation "public.varyantlar" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ varyantlar: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:59: NOTICE:  trigger "degisiklik_izle" for relation "public.stok_hareketleri" does not exist, skipping
+    degisiklik_izle_kur
+---------------------------
+ stok_hareketleri: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:60: NOTICE:  trigger "degisiklik_izle" for relation "public.siparisler" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ siparisler: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:61: NOTICE:  trigger "degisiklik_izle" for relation "public.siparis_kalemleri" does not exist, skipping
+    degisiklik_izle_kur
+----------------------------
+ siparis_kalemleri: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:62: NOTICE:  trigger "degisiklik_izle" for relation "public.uretim" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ uretim: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:63: NOTICE:  trigger "degisiklik_izle" for relation "public.uretim_atamalari" does not exist, skipping
+    degisiklik_izle_kur
+---------------------------
+ uretim_atamalari: kuruldu
+(1 row)
+
+           degisiklik_izle_kur
+------------------------------------------
+ stok_rezervasyonlari: tablo yok, atlandi
+(1 row)
+
+     degisiklik_izle_kur
+-----------------------------
+ onaylar: tablo yok, atlandi
+(1 row)
+
+   degisiklik_izle_kur
+-------------------------
+ cop: tablo yok, atlandi
+(1 row)
+
+psql:degisiklik-sayaci.sql:67: NOTICE:  trigger "degisiklik_izle" for relation "public.muhasebe" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ muhasebe: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:68: NOTICE:  trigger "degisiklik_izle" for relation "public.koliler" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ koliler: kuruldu
+(1 row)
+
+     degisiklik_izle_kur
+------------------------------
+ gorevler: tablo yok, atlandi
+(1 row)
+
+psql:degisiklik-sayaci.sql:70: NOTICE:  trigger "degisiklik_izle" for relation "public.mesajlar" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ mesajlar: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:71: NOTICE:  trigger "degisiklik_izle" for relation "public.faturalar" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ faturalar: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:72: NOTICE:  trigger "degisiklik_izle" for relation "public.fis_defteri" does not exist, skipping
+ degisiklik_izle_kur
+----------------------
+ fis_defteri: kuruldu
+(1 row)
+
+        degisiklik_izle_kur
+------------------------------------
+ cek_gorselleri: tablo yok, atlandi
+(1 row)
+
+     degisiklik_izle_kur
+------------------------------
+ modeller: tablo yok, atlandi
+(1 row)
+
+psql:degisiklik-sayaci.sql:82: NOTICE:  policy "giris_yapmis_hersey" for relation "public.degisiklik" does not exist, skipping
+── silinen-arsiv.sql
+psql:silinen-arsiv.sql:45: NOTICE:  column "silen_eposta" of relation "silinen_arsiv" already exists, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.urunler" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.varyantlar" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.stok_hareketleri" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.cariler" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.cari_hareketleri" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.siparisler" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.siparis_kalemleri" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.uretim" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.uretim_atamalari" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_goruntu" for relation "public.tanimlar" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.tanimlar" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_goruntu" for relation "public.koliler" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.koliler" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_goruntu" for relation "public.faturalar" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.faturalar" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_goruntu" for relation "public.muhasebe" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.muhasebe" does not exist, skipping
+── stok-v2/stok-v2.sql
+psql:stok-v2/stok-v2.sql:175: NOTICE:  column "iptal" of relation "stk_hareket" already exists, skipping
+psql:stok-v2/stok-v2.sql:176: NOTICE:  column "iptal_zamani" of relation "stk_hareket" already exists, skipping
+psql:stok-v2/stok-v2.sql:177: NOTICE:  column "iptal_eden" of relation "stk_hareket" already exists, skipping
+psql:stok-v2/stok-v2.sql:300: NOTICE:  trigger "stk_tanim_aynasi" for relation "public.tanimlar" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  policy "stk_okuma" for relation "public.stk_renk" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  policy "stk_okuma" for relation "public.stk_olcu" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  policy "stk_okuma" for relation "public.stk_varyant" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  policy "stk_okuma" for relation "public.stk_fis" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  policy "stk_okuma" for relation "public.stk_hareket" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  policy "stk_okuma" for relation "public.stk_ayar" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  trigger "degisiklik_izle" for relation "public.stk_renk" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  trigger "degisiklik_izle" for relation "public.stk_olcu" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  trigger "degisiklik_izle" for relation "public.stk_varyant" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  trigger "degisiklik_izle" for relation "public.stk_fis" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  trigger "degisiklik_izle" for relation "public.stk_hareket" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  trigger "arsiv_silinen" for relation "public.stk_varyant" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  trigger "arsiv_silinen" for relation "public.stk_fis" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  trigger "arsiv_silinen" for relation "public.stk_hareket" does not exist, skipping
+                       stk_kurulum_tamamla
+------------------------------------------------------------------
+ değişiklik sayacı kuruldu; silme arşivi kuruldu; stok v2 kuruldu
+(1 row)
+
+ stk_tanim_esitle
+------------------
+
+(1 row)
+
+── stok-v2/stok-v2.sql
+psql:stok-v2/stok-v2.sql:98: NOTICE:  relation "stk_renk" already exists, skipping
+psql:stok-v2/stok-v2.sql:107: NOTICE:  relation "stk_olcu" already exists, skipping
+psql:stok-v2/stok-v2.sql:121: NOTICE:  relation "stk_varyant" already exists, skipping
+psql:stok-v2/stok-v2.sql:122: NOTICE:  relation "stk_varyant_tekil" already exists, skipping
+psql:stok-v2/stok-v2.sql:123: NOTICE:  relation "stk_varyant_urun" already exists, skipping
+psql:stok-v2/stok-v2.sql:146: NOTICE:  relation "stk_fis" already exists, skipping
+psql:stok-v2/stok-v2.sql:147: NOTICE:  relation "stk_fis_tarih" already exists, skipping
+psql:stok-v2/stok-v2.sql:148: NOTICE:  relation "stk_fis_siparis" already exists, skipping
+psql:stok-v2/stok-v2.sql:149: NOTICE:  relation "stk_fis_uretim" already exists, skipping
+psql:stok-v2/stok-v2.sql:174: NOTICE:  relation "stk_hareket" already exists, skipping
+psql:stok-v2/stok-v2.sql:175: NOTICE:  column "iptal" of relation "stk_hareket" already exists, skipping
+psql:stok-v2/stok-v2.sql:176: NOTICE:  column "iptal_zamani" of relation "stk_hareket" already exists, skipping
+psql:stok-v2/stok-v2.sql:177: NOTICE:  column "iptal_eden" of relation "stk_hareket" already exists, skipping
+psql:stok-v2/stok-v2.sql:178: NOTICE:  relation "stk_hareket_fis" already exists, skipping
+psql:stok-v2/stok-v2.sql:179: NOTICE:  relation "stk_hareket_varyant" already exists, skipping
+psql:stok-v2/stok-v2.sql:180: NOTICE:  relation "stk_hareket_urun" already exists, skipping
+psql:stok-v2/stok-v2.sql:181: NOTICE:  relation "stk_hareket_siparis" already exists, skipping
+psql:stok-v2/stok-v2.sql:200: NOTICE:  relation "stk_ayar" already exists, skipping
+                       stk_kurulum_tamamla
+------------------------------------------------------------------
+ değişiklik sayacı kuruldu; silme arşivi kuruldu; stok v2 kuruldu
+(1 row)
+
+ stk_tanim_esitle
+------------------
+
+(1 row)
+
+── stok-v2/stok-v2-goc.sql
+── stok-v2/cari-v2.sql
+psql:stok-v2/cari-v2.sql:163: NOTICE:  policy "car_okuma" for relation "public.car_hareket" does not exist, skipping
+psql:stok-v2/cari-v2.sql:163: NOTICE:  trigger "degisiklik_izle" for relation "public.car_hareket" does not exist, skipping
+psql:stok-v2/cari-v2.sql:163: NOTICE:  trigger "arsiv_silinen" for relation "public.car_hareket" does not exist, skipping
+                       car_kurulum_tamamla
+------------------------------------------------------------------
+ değişiklik sayacı kuruldu; silme arşivi kuruldu; cari v2 kuruldu
+(1 row)
+
+── stok-v2/cari-v2.sql
+psql:stok-v2/cari-v2.sql:47: NOTICE:  relation "car_hareket" already exists, skipping
+psql:stok-v2/cari-v2.sql:48: NOTICE:  relation "car_hareket_cari" already exists, skipping
+psql:stok-v2/cari-v2.sql:49: NOTICE:  relation "car_hareket_fis" already exists, skipping
+psql:stok-v2/cari-v2.sql:50: NOTICE:  relation "car_hareket_tarih" already exists, skipping
+psql:stok-v2/cari-v2.sql:52: NOTICE:  column "cari_aktif" of relation "stk_ayar" already exists, skipping
+psql:stok-v2/cari-v2.sql:53: NOTICE:  column "cari_gecis" of relation "stk_ayar" already exists, skipping
+psql:stok-v2/cari-v2.sql:54: NOTICE:  column "cari_geri_donus" of relation "stk_ayar" already exists, skipping
+                       car_kurulum_tamamla
+------------------------------------------------------------------
+ değişiklik sayacı kuruldu; silme arşivi kuruldu; cari v2 kuruldu
+(1 row)
+
+── stok-v2/cari-v2-goc.sql
+── stok-v2/alt-v2.sql
+── stok-v2/alt-v2.sql
+psql:stok-v2/alt-v2.sql:23: NOTICE:  column "alt_aktif" of relation "stk_ayar" already exists, skipping
+psql:stok-v2/alt-v2.sql:24: NOTICE:  column "alt_gecis" of relation "stk_ayar" already exists, skipping
+psql:stok-v2/alt-v2.sql:25: NOTICE:  column "alt_geri_donus" of relation "stk_ayar" already exists, skipping
+── stok-v2/kasa-v2.sql
+psql:stok-v2/kasa-v2.sql:243: NOTICE:  policy "kas_okuma" for relation "public.kas_hesap" does not exist, skipping
+psql:stok-v2/kasa-v2.sql:243: NOTICE:  policy "kas_okuma" for relation "public.kas_hareket" does not exist, skipping
+psql:stok-v2/kasa-v2.sql:243: NOTICE:  policy "kas_okuma" for relation "public.kas_cek" does not exist, skipping
+psql:stok-v2/kasa-v2.sql:243: NOTICE:  policy "kas_okuma" for relation "public.kas_ayar" does not exist, skipping
+psql:stok-v2/kasa-v2.sql:243: NOTICE:  trigger "degisiklik_izle" for relation "public.kas_hesap" does not exist, skipping
+psql:stok-v2/kasa-v2.sql:243: NOTICE:  trigger "degisiklik_izle" for relation "public.kas_hareket" does not exist, skipping
+psql:stok-v2/kasa-v2.sql:243: NOTICE:  trigger "degisiklik_izle" for relation "public.kas_cek" does not exist, skipping
+psql:stok-v2/kasa-v2.sql:243: NOTICE:  trigger "degisiklik_izle" for relation "public.kas_ayar" does not exist, skipping
+psql:stok-v2/kasa-v2.sql:243: NOTICE:  trigger "arsiv_silinen" for relation "public.kas_hesap" does not exist, skipping
+psql:stok-v2/kasa-v2.sql:243: NOTICE:  trigger "arsiv_silinen" for relation "public.kas_hareket" does not exist, skipping
+psql:stok-v2/kasa-v2.sql:243: NOTICE:  trigger "arsiv_silinen" for relation "public.kas_cek" does not exist, skipping
+                       kas_kurulum_tamamla
+------------------------------------------------------------------
+ değişiklik sayacı kuruldu; silme arşivi kuruldu; kasa v2 kuruldu
+(1 row)
+
+── stok-v2/kasa-v2.sql
+psql:stok-v2/kasa-v2.sql:31: NOTICE:  relation "kas_hesap" already exists, skipping
+psql:stok-v2/kasa-v2.sql:45: NOTICE:  relation "kas_hareket" already exists, skipping
+psql:stok-v2/kasa-v2.sql:46: NOTICE:  relation "kas_hareket_hesap" already exists, skipping
+psql:stok-v2/kasa-v2.sql:58: NOTICE:  relation "kas_cek" already exists, skipping
+psql:stok-v2/kasa-v2.sql:65: NOTICE:  relation "kas_ayar" already exists, skipping
+psql:stok-v2/kasa-v2.sql:68: NOTICE:  column "kasa_aktif" of relation "stk_ayar" already exists, skipping
+psql:stok-v2/kasa-v2.sql:69: NOTICE:  column "kasa_gecis" of relation "stk_ayar" already exists, skipping
+psql:stok-v2/kasa-v2.sql:70: NOTICE:  column "kasa_geri_donus" of relation "stk_ayar" already exists, skipping
+                       kas_kurulum_tamamla
+------------------------------------------------------------------
+ değişiklik sayacı kuruldu; silme arşivi kuruldu; kasa v2 kuruldu
+(1 row)
+
+── stok-v2/kasa-v2-goc.sql
+── stok-v2/liste-v2.sql
+psql:stok-v2/liste-v2.sql:66: NOTICE:  trigger "lst_sayac" for relation "public.lst_kayit" does not exist, skipping
+psql:stok-v2/liste-v2.sql:144: NOTICE:  policy "lst_okuma" for relation "public.lst_kayit" does not exist, skipping
+psql:stok-v2/liste-v2.sql:144: NOTICE:  trigger "arsiv_silinen" for relation "public.lst_kayit" does not exist, skipping
+                        lst_kurulum_tamamla
+--------------------------------------------------------------------
+ değişiklik sayacı bağlandı; silme arşivi kuruldu; liste v2 kuruldu
+(1 row)
+
+── stok-v2/liste-v2.sql
+psql:stok-v2/liste-v2.sql:38: NOTICE:  relation "lst_kayit" already exists, skipping
+psql:stok-v2/liste-v2.sql:39: NOTICE:  relation "lst_kayit_sira" already exists, skipping
+psql:stok-v2/liste-v2.sql:41: NOTICE:  column "liste_aktif" of relation "stk_ayar" already exists, skipping
+psql:stok-v2/liste-v2.sql:42: NOTICE:  column "liste_gecis" of relation "stk_ayar" already exists, skipping
+psql:stok-v2/liste-v2.sql:43: NOTICE:  column "liste_geri_donus" of relation "stk_ayar" already exists, skipping
+                        lst_kurulum_tamamla
+--------------------------------------------------------------------
+ değişiklik sayacı bağlandı; silme arşivi kuruldu; liste v2 kuruldu
+(1 row)
+
+── stok-v2/liste-v2-goc.sql
+── rls-kimlik.sql
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.varyantlar" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.stok_hareketleri" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.uretim" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.koliler" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.teklifler" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.muhasebe" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.gunluk" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.mesajlar" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.fis_defteri" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.urunler" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.cariler" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.cari_hareketleri" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.siparisler" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.siparis_kalemleri" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.tanimlar" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.uretim_atamalari" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.faturalar" does not exist, skipping
+── stok-v2/test/sinama-gecis.sql
+psql:stok-v2/test/sinama-gecis.sql:19: NOTICE:  table "_ev" does not exist, skipping
+psql:stok-v2/test/sinama-gecis.sql:19: NOTICE:  table "_eh" does not exist, skipping
+psql:stok-v2/test/sinama-gecis.sql:19: NOTICE:  table "_vm" does not exist, skipping
+psql:stok-v2/test/sinama-gecis.sql:19: NOTICE:  table "_fark" does not exist, skipping
+psql:stok-v2/test/sinama-gecis.sql:59: NOTICE:  TAMAM: stk_yaz satır yaz / tekrar / iptal / geri yükle / taşı
+psql:stok-v2/test/sinama-gecis.sql:72: NOTICE:  TAMAM: stk_yaz tek işlem
+psql:stok-v2/test/sinama-gecis.sql:81: NOTICE:  TAMAM: iptal fişe yeni satır
+psql:stok-v2/test/sinama-gecis.sql:98: NOTICE:  TAMAM: varyant aç / kaldır
+psql:stok-v2/test/sinama-gecis.sql:111: NOTICE:  TAMAM: serbest renk tanıma bağlandı
+psql:stok-v2/test/sinama-gecis.sql:115: NOTICE:  table "_ev" does not exist, skipping
+psql:stok-v2/test/sinama-gecis.sql:115: NOTICE:  table "_eh" does not exist, skipping
+psql:stok-v2/test/sinama-gecis.sql:115: NOTICE:  table "_vm" does not exist, skipping
+psql:stok-v2/test/sinama-gecis.sql:115: NOTICE:  table "_fark" does not exist, skipping
+psql:stok-v2/test/sinama-gecis.sql:135: NOTICE:  TAMAM: geçiş (görünümler, ayar, kilitler)
+psql:stok-v2/test/sinama-gecis.sql:153: NOTICE:  TAMAM: geçişten sonra okuma / yazma
+psql:stok-v2/test/sinama-gecis.sql:164: NOTICE:  TAMAM: görünüm yazılamaz
+psql:stok-v2/test/sinama-gecis.sql:167: NOTICE:  table "_gd_v" does not exist, skipping
+psql:stok-v2/test/sinama-gecis.sql:167: NOTICE:  table "_gd_h" does not exist, skipping
+psql:stok-v2/test/sinama-gecis.sql:177: NOTICE:  TAMAM: geri dönüş
+psql:stok-v2/test/sinama-gecis.sql:187: NOTICE:  table "_ev" does not exist, skipping
+psql:stok-v2/test/sinama-gecis.sql:187: NOTICE:  table "_eh" does not exist, skipping
+psql:stok-v2/test/sinama-gecis.sql:187: NOTICE:  table "_vm" does not exist, skipping
+psql:stok-v2/test/sinama-gecis.sql:187: NOTICE:  table "_fark" does not exist, skipping
+psql:stok-v2/test/sinama-gecis.sql:187: NOTICE:  TAMAM: yeniden geçiş
+SINAMA (GECIS) BITTI
+── stok-v2/test/supabase-taklit.sql
+── stok-v2/test/eski-tablolar.sql
+── rls-yazma.sql (yetki_var_mi)
+── degisiklik-sayaci.sql
+psql:degisiklik-sayaci.sql:54: NOTICE:  trigger "degisiklik_izle" for relation "public.tanimlar" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ tanimlar: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:55: NOTICE:  trigger "degisiklik_izle" for relation "public.cariler" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ cariler: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:56: NOTICE:  trigger "degisiklik_izle" for relation "public.cari_hareketleri" does not exist, skipping
+    degisiklik_izle_kur
+---------------------------
+ cari_hareketleri: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:57: NOTICE:  trigger "degisiklik_izle" for relation "public.urunler" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ urunler: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:58: NOTICE:  trigger "degisiklik_izle" for relation "public.varyantlar" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ varyantlar: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:59: NOTICE:  trigger "degisiklik_izle" for relation "public.stok_hareketleri" does not exist, skipping
+    degisiklik_izle_kur
+---------------------------
+ stok_hareketleri: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:60: NOTICE:  trigger "degisiklik_izle" for relation "public.siparisler" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ siparisler: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:61: NOTICE:  trigger "degisiklik_izle" for relation "public.siparis_kalemleri" does not exist, skipping
+    degisiklik_izle_kur
+----------------------------
+ siparis_kalemleri: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:62: NOTICE:  trigger "degisiklik_izle" for relation "public.uretim" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ uretim: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:63: NOTICE:  trigger "degisiklik_izle" for relation "public.uretim_atamalari" does not exist, skipping
+    degisiklik_izle_kur
+---------------------------
+ uretim_atamalari: kuruldu
+(1 row)
+
+           degisiklik_izle_kur
+------------------------------------------
+ stok_rezervasyonlari: tablo yok, atlandi
+(1 row)
+
+     degisiklik_izle_kur
+-----------------------------
+ onaylar: tablo yok, atlandi
+(1 row)
+
+   degisiklik_izle_kur
+-------------------------
+ cop: tablo yok, atlandi
+(1 row)
+
+psql:degisiklik-sayaci.sql:67: NOTICE:  trigger "degisiklik_izle" for relation "public.muhasebe" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ muhasebe: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:68: NOTICE:  trigger "degisiklik_izle" for relation "public.koliler" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ koliler: kuruldu
+(1 row)
+
+     degisiklik_izle_kur
+------------------------------
+ gorevler: tablo yok, atlandi
+(1 row)
+
+psql:degisiklik-sayaci.sql:70: NOTICE:  trigger "degisiklik_izle" for relation "public.mesajlar" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ mesajlar: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:71: NOTICE:  trigger "degisiklik_izle" for relation "public.faturalar" does not exist, skipping
+ degisiklik_izle_kur
+---------------------
+ faturalar: kuruldu
+(1 row)
+
+psql:degisiklik-sayaci.sql:72: NOTICE:  trigger "degisiklik_izle" for relation "public.fis_defteri" does not exist, skipping
+ degisiklik_izle_kur
+----------------------
+ fis_defteri: kuruldu
+(1 row)
+
+        degisiklik_izle_kur
+------------------------------------
+ cek_gorselleri: tablo yok, atlandi
+(1 row)
+
+     degisiklik_izle_kur
+------------------------------
+ modeller: tablo yok, atlandi
+(1 row)
+
+psql:degisiklik-sayaci.sql:82: NOTICE:  policy "giris_yapmis_hersey" for relation "public.degisiklik" does not exist, skipping
+── silinen-arsiv.sql
+psql:silinen-arsiv.sql:45: NOTICE:  column "silen_eposta" of relation "silinen_arsiv" already exists, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.urunler" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.varyantlar" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.stok_hareketleri" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.cariler" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.cari_hareketleri" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.siparisler" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.siparis_kalemleri" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.uretim" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.uretim_atamalari" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_goruntu" for relation "public.tanimlar" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.tanimlar" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_goruntu" for relation "public.koliler" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.koliler" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_goruntu" for relation "public.faturalar" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.faturalar" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_goruntu" for relation "public.muhasebe" does not exist, skipping
+psql:silinen-arsiv.sql:126: NOTICE:  trigger "arsiv_silinen" for relation "public.muhasebe" does not exist, skipping
+── stok-v2/stok-v2.sql
+psql:stok-v2/stok-v2.sql:175: NOTICE:  column "iptal" of relation "stk_hareket" already exists, skipping
+psql:stok-v2/stok-v2.sql:176: NOTICE:  column "iptal_zamani" of relation "stk_hareket" already exists, skipping
+psql:stok-v2/stok-v2.sql:177: NOTICE:  column "iptal_eden" of relation "stk_hareket" already exists, skipping
+psql:stok-v2/stok-v2.sql:300: NOTICE:  trigger "stk_tanim_aynasi" for relation "public.tanimlar" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  policy "stk_okuma" for relation "public.stk_renk" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  policy "stk_okuma" for relation "public.stk_olcu" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  policy "stk_okuma" for relation "public.stk_varyant" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  policy "stk_okuma" for relation "public.stk_fis" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  policy "stk_okuma" for relation "public.stk_hareket" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  policy "stk_okuma" for relation "public.stk_ayar" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  trigger "degisiklik_izle" for relation "public.stk_renk" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  trigger "degisiklik_izle" for relation "public.stk_olcu" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  trigger "degisiklik_izle" for relation "public.stk_varyant" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  trigger "degisiklik_izle" for relation "public.stk_fis" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  trigger "degisiklik_izle" for relation "public.stk_hareket" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  trigger "arsiv_silinen" for relation "public.stk_varyant" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  trigger "arsiv_silinen" for relation "public.stk_fis" does not exist, skipping
+psql:stok-v2/stok-v2.sql:816: NOTICE:  trigger "arsiv_silinen" for relation "public.stk_hareket" does not exist, skipping
+                       stk_kurulum_tamamla
+------------------------------------------------------------------
+ değişiklik sayacı kuruldu; silme arşivi kuruldu; stok v2 kuruldu
+(1 row)
+
+ stk_tanim_esitle
+------------------
+
+(1 row)
+
+── stok-v2/stok-v2.sql
+psql:stok-v2/stok-v2.sql:98: NOTICE:  relation "stk_renk" already exists, skipping
+psql:stok-v2/stok-v2.sql:107: NOTICE:  relation "stk_olcu" already exists, skipping
+psql:stok-v2/stok-v2.sql:121: NOTICE:  relation "stk_varyant" already exists, skipping
+psql:stok-v2/stok-v2.sql:122: NOTICE:  relation "stk_varyant_tekil" already exists, skipping
+psql:stok-v2/stok-v2.sql:123: NOTICE:  relation "stk_varyant_urun" already exists, skipping
+psql:stok-v2/stok-v2.sql:146: NOTICE:  relation "stk_fis" already exists, skipping
+psql:stok-v2/stok-v2.sql:147: NOTICE:  relation "stk_fis_tarih" already exists, skipping
+psql:stok-v2/stok-v2.sql:148: NOTICE:  relation "stk_fis_siparis" already exists, skipping
+psql:stok-v2/stok-v2.sql:149: NOTICE:  relation "stk_fis_uretim" already exists, skipping
+psql:stok-v2/stok-v2.sql:174: NOTICE:  relation "stk_hareket" already exists, skipping
+psql:stok-v2/stok-v2.sql:175: NOTICE:  column "iptal" of relation "stk_hareket" already exists, skipping
+psql:stok-v2/stok-v2.sql:176: NOTICE:  column "iptal_zamani" of relation "stk_hareket" already exists, skipping
+psql:stok-v2/stok-v2.sql:177: NOTICE:  column "iptal_eden" of relation "stk_hareket" already exists, skipping
+psql:stok-v2/stok-v2.sql:178: NOTICE:  relation "stk_hareket_fis" already exists, skipping
+psql:stok-v2/stok-v2.sql:179: NOTICE:  relation "stk_hareket_varyant" already exists, skipping
+psql:stok-v2/stok-v2.sql:180: NOTICE:  relation "stk_hareket_urun" already exists, skipping
+psql:stok-v2/stok-v2.sql:181: NOTICE:  relation "stk_hareket_siparis" already exists, skipping
+psql:stok-v2/stok-v2.sql:200: NOTICE:  relation "stk_ayar" already exists, skipping
+                       stk_kurulum_tamamla
+------------------------------------------------------------------
+ değişiklik sayacı kuruldu; silme arşivi kuruldu; stok v2 kuruldu
+(1 row)
+
+ stk_tanim_esitle
+------------------
+
+(1 row)
+
+── stok-v2/stok-v2-goc.sql
+── stok-v2/cari-v2.sql
+psql:stok-v2/cari-v2.sql:163: NOTICE:  policy "car_okuma" for relation "public.car_hareket" does not exist, skipping
+psql:stok-v2/cari-v2.sql:163: NOTICE:  trigger "degisiklik_izle" for relation "public.car_hareket" does not exist, skipping
+psql:stok-v2/cari-v2.sql:163: NOTICE:  trigger "arsiv_silinen" for relation "public.car_hareket" does not exist, skipping
+                       car_kurulum_tamamla
+------------------------------------------------------------------
+ değişiklik sayacı kuruldu; silme arşivi kuruldu; cari v2 kuruldu
+(1 row)
+
+── stok-v2/cari-v2.sql
+psql:stok-v2/cari-v2.sql:47: NOTICE:  relation "car_hareket" already exists, skipping
+psql:stok-v2/cari-v2.sql:48: NOTICE:  relation "car_hareket_cari" already exists, skipping
+psql:stok-v2/cari-v2.sql:49: NOTICE:  relation "car_hareket_fis" already exists, skipping
+psql:stok-v2/cari-v2.sql:50: NOTICE:  relation "car_hareket_tarih" already exists, skipping
+psql:stok-v2/cari-v2.sql:52: NOTICE:  column "cari_aktif" of relation "stk_ayar" already exists, skipping
+psql:stok-v2/cari-v2.sql:53: NOTICE:  column "cari_gecis" of relation "stk_ayar" already exists, skipping
+psql:stok-v2/cari-v2.sql:54: NOTICE:  column "cari_geri_donus" of relation "stk_ayar" already exists, skipping
+                       car_kurulum_tamamla
+------------------------------------------------------------------
+ değişiklik sayacı kuruldu; silme arşivi kuruldu; cari v2 kuruldu
+(1 row)
+
+── stok-v2/cari-v2-goc.sql
+── stok-v2/alt-v2.sql
+── stok-v2/alt-v2.sql
+psql:stok-v2/alt-v2.sql:23: NOTICE:  column "alt_aktif" of relation "stk_ayar" already exists, skipping
+psql:stok-v2/alt-v2.sql:24: NOTICE:  column "alt_gecis" of relation "stk_ayar" already exists, skipping
+psql:stok-v2/alt-v2.sql:25: NOTICE:  column "alt_geri_donus" of relation "stk_ayar" already exists, skipping
+── stok-v2/kasa-v2.sql
+psql:stok-v2/kasa-v2.sql:243: NOTICE:  policy "kas_okuma" for relation "public.kas_hesap" does not exist, skipping
+psql:stok-v2/kasa-v2.sql:243: NOTICE:  policy "kas_okuma" for relation "public.kas_hareket" does not exist, skipping
+psql:stok-v2/kasa-v2.sql:243: NOTICE:  policy "kas_okuma" for relation "public.kas_cek" does not exist, skipping
+psql:stok-v2/kasa-v2.sql:243: NOTICE:  policy "kas_okuma" for relation "public.kas_ayar" does not exist, skipping
+psql:stok-v2/kasa-v2.sql:243: NOTICE:  trigger "degisiklik_izle" for relation "public.kas_hesap" does not exist, skipping
+psql:stok-v2/kasa-v2.sql:243: NOTICE:  trigger "degisiklik_izle" for relation "public.kas_hareket" does not exist, skipping
+psql:stok-v2/kasa-v2.sql:243: NOTICE:  trigger "degisiklik_izle" for relation "public.kas_cek" does not exist, skipping
+psql:stok-v2/kasa-v2.sql:243: NOTICE:  trigger "degisiklik_izle" for relation "public.kas_ayar" does not exist, skipping
+psql:stok-v2/kasa-v2.sql:243: NOTICE:  trigger "arsiv_silinen" for relation "public.kas_hesap" does not exist, skipping
+psql:stok-v2/kasa-v2.sql:243: NOTICE:  trigger "arsiv_silinen" for relation "public.kas_hareket" does not exist, skipping
+psql:stok-v2/kasa-v2.sql:243: NOTICE:  trigger "arsiv_silinen" for relation "public.kas_cek" does not exist, skipping
+                       kas_kurulum_tamamla
+------------------------------------------------------------------
+ değişiklik sayacı kuruldu; silme arşivi kuruldu; kasa v2 kuruldu
+(1 row)
+
+── stok-v2/kasa-v2.sql
+psql:stok-v2/kasa-v2.sql:31: NOTICE:  relation "kas_hesap" already exists, skipping
+psql:stok-v2/kasa-v2.sql:45: NOTICE:  relation "kas_hareket" already exists, skipping
+psql:stok-v2/kasa-v2.sql:46: NOTICE:  relation "kas_hareket_hesap" already exists, skipping
+psql:stok-v2/kasa-v2.sql:58: NOTICE:  relation "kas_cek" already exists, skipping
+psql:stok-v2/kasa-v2.sql:65: NOTICE:  relation "kas_ayar" already exists, skipping
+psql:stok-v2/kasa-v2.sql:68: NOTICE:  column "kasa_aktif" of relation "stk_ayar" already exists, skipping
+psql:stok-v2/kasa-v2.sql:69: NOTICE:  column "kasa_gecis" of relation "stk_ayar" already exists, skipping
+psql:stok-v2/kasa-v2.sql:70: NOTICE:  column "kasa_geri_donus" of relation "stk_ayar" already exists, skipping
+                       kas_kurulum_tamamla
+------------------------------------------------------------------
+ değişiklik sayacı kuruldu; silme arşivi kuruldu; kasa v2 kuruldu
+(1 row)
+
+── stok-v2/kasa-v2-goc.sql
+── stok-v2/liste-v2.sql
+psql:stok-v2/liste-v2.sql:66: NOTICE:  trigger "lst_sayac" for relation "public.lst_kayit" does not exist, skipping
+psql:stok-v2/liste-v2.sql:144: NOTICE:  policy "lst_okuma" for relation "public.lst_kayit" does not exist, skipping
+psql:stok-v2/liste-v2.sql:144: NOTICE:  trigger "arsiv_silinen" for relation "public.lst_kayit" does not exist, skipping
+                        lst_kurulum_tamamla
+--------------------------------------------------------------------
+ değişiklik sayacı bağlandı; silme arşivi kuruldu; liste v2 kuruldu
+(1 row)
+
+── stok-v2/liste-v2.sql
+psql:stok-v2/liste-v2.sql:38: NOTICE:  relation "lst_kayit" already exists, skipping
+psql:stok-v2/liste-v2.sql:39: NOTICE:  relation "lst_kayit_sira" already exists, skipping
+psql:stok-v2/liste-v2.sql:41: NOTICE:  column "liste_aktif" of relation "stk_ayar" already exists, skipping
+psql:stok-v2/liste-v2.sql:42: NOTICE:  column "liste_gecis" of relation "stk_ayar" already exists, skipping
+psql:stok-v2/liste-v2.sql:43: NOTICE:  column "liste_geri_donus" of relation "stk_ayar" already exists, skipping
+                        lst_kurulum_tamamla
+--------------------------------------------------------------------
+ değişiklik sayacı bağlandı; silme arşivi kuruldu; liste v2 kuruldu
+(1 row)
+
+── stok-v2/liste-v2-goc.sql
+── rls-kimlik.sql
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.varyantlar" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.stok_hareketleri" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.uretim" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.koliler" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.teklifler" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.muhasebe" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.gunluk" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.mesajlar" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.fis_defteri" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.urunler" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.cariler" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.cari_hareketleri" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.siparisler" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.siparis_kalemleri" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.tanimlar" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.uretim_atamalari" does not exist, skipping
+psql:rls-kimlik.sql:69: NOTICE:  policy "giris_yapmis_hersey" for relation "public.faturalar" does not exist, skipping
+── stk_gecis()
+NOTICE:  table "_ev" does not exist, skipping
+NOTICE:  table "_eh" does not exist, skipping
+NOTICE:  table "_vm" does not exist, skipping
+NOTICE:  table "_fark" does not exist, skipping
+NOTICE:  table "_ec" does not exist, skipping
+── stok-v2/test/uctan-uca.js
+  ✓ 0) açılış: stok (ürün × renk × beden) bulutta aynı
+  ✓ 0) açılış: hareketler bulutta aynı
+1) Fiş: üç ürüne giriş/çıkış (biri eksiye düşer)
+  ✓ 1: stok (ürün × renk × beden) bulutta aynı
+  ✓ 1: hareketler bulutta aynı
+  ✓ 1: satış fişi tek fiş, iki satır
+2) Yeniden adlandırma — önce stok yazması, Tanımlar buluta SONRA varıyor (en kötü sıra)
+  ✓ 2: ad değişikliği stok isteği üretmedi
+  ✓ 2: stok (ürün × renk × beden) bulutta aynı
+  ✓ 2: hareketler bulutta aynı
+3) Hareket silme (fiş geri al) ve geri yükleme
+  ✓ 3 silme: stok (ürün × renk × beden) bulutta aynı
+  ✓ 3 silme: hareketler bulutta aynı
+  ✓ 3: satır silinmedi, iptal edildi
+  ✓ 3 geri yükleme: stok (ürün × renk × beden) bulutta aynı
+  ✓ 3 geri yükleme: hareketler bulutta aynı
+4) Kodsuz renk model rengine çevrildi (Kahve → 1058)
+  ✓ 4: stok (ürün × renk × beden) bulutta aynı
+  ✓ 4: hareketler bulutta aynı
+  ✓ 4: Kahve varyantı bulutta yok
+5) Yeni renk Tanımlar'a eklenip AYNI ANDA fişe girdi (Tanımlar buluta sonra varır)
+  ✓ 5: Tanımlar varmadan: serbest renkle yazıldı
+  ✓ 5: Tanımlar varınca tanımlı renge bağlandı
+  ✓ 5: stok (ürün × renk × beden) bulutta aynı
+  ✓ 5: hareketler bulutta aynı
+6) Ürün silindi (hareketleriyle)
+  ✓ 6: silinen ürünün hareketi iptal (iz kalır)
+  ✓ 6: görünümde silinen ürün yok
+7) Açılıştan yeniden okuma: ekran = bulut
+  ✓ 7: yeniden okunan stok aynı
+  ✓ 7: yeniden okunan hareketler aynı
+8) Cari v2 + yazma zarfı: satış fişinin stok ve cari satırı TEK fis_yaz
+  ✓ 8: tek istek, fis_yaz
+  ✓ 8: cari bakiye arttı
+  ✓ 8: cari görünümü uygulamanın yazdığı biçimde
+  ✓ 8: stok (ürün × renk × beden) bulutta aynı
+  ✓ 8: hareketler bulutta aynı
+9) Tek işlem: stok tarafı sunucuda düşerse cari de YAZILMAZ, iki söz de reddedilir
+ERROR:  Ürün bulunamadı: u-yok
+CONTEXT:  PL/pgSQL function stk_varyant_coz(text,text,text,text,text) line 8 at RAISE
+PL/pgSQL function stk_yaz(jsonb) line 55 at assignment
+PL/pgSQL function fis_yaz(jsonb) line 13 at assignment
+  ✓ 9: iki söz de reddedildi
+  ✓ 9: cari satırı yazılmadı
+  ✓ 9: stok satırı yazılmadı
+10) Cari hareket silme → iptal (iz kalır), görünümden düşer
+  ✓ 10: iptal
+  ✓ 10: bakiye geri
+11) Sipariş sevki: kalem karşılanan + stok çıkışı + cari borç TEK fis_yaz (v1.728.0)
+  ✓ 11: tek istek, fis_yaz
+  ✓ 11: kalem karşılanan bulutta
+  ✓ 11: cari bakiye
+  ✓ 11: stok (ürün × renk × beden) bulutta aynı
+  ✓ 11: hareketler bulutta aynı
+12) Sevk tek işlem: stok tarafı düşerse kalem ve cari de yazılmaz
+ERROR:  Ürün bulunamadı: u-yok2
+CONTEXT:  PL/pgSQL function stk_varyant_coz(text,text,text,text,text) line 8 at RAISE
+PL/pgSQL function stk_yaz(jsonb) line 55 at assignment
+PL/pgSQL function fis_yaz(jsonb) line 13 at assignment
+  ✓ 12: üç söz de reddedildi
+  ✓ 12: kalem değişmedi
+  ✓ 12: cari yazılmadı
+13) Kasa & Banka v2: tahsilat — kasa satırı + cari satırı TEK fis_yaz, belge yazılmaz (v1.729.0)
+  ✓ 13: tek istek, fis_yaz
+  ✓ 13: kasa bakiyesi
+  ✓ 13: cari bakiye
+  ✓ 13: buluttaki belge = ekrandaki belge
+  ✓ 13: taban ilerledi
+14) Bayat cihaz: eski listeyle yazan cihaz başka cihazın hareketini SİLEMEZ
+  ✓ 14: tek kas_yaz
+  ✓ 14: iki cihazın hareketi de bulutta
+Supabase yazma hatası: muhasebe Error: Kasa & Banka: buluttaki hâl bu açılışta okunamadı — yazma bekletildi (sayfayı yenileyin; kayıt kaybolmaz)
+    at v2TabanYokHatasi (/workspace/scratch/09b612fecffd/atolye/test/erp.cjs:7080:12)
+    at kasaV2YukHazirla (/workspace/scratch/09b612fecffd/atolye/test/erp.cjs:7085:15)
+    at kasaIsi (/workspace/scratch/09b612fecffd/atolye/test/erp.cjs:5536:21)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+  ✓ 14: boş cihaz hesap silmedi
+  ✓ 14: taban yokken yazılmadı, bekleyende
+15) Hareket silme → iptal; tek işlem: stok tarafı düşerse kasa da yazılmaz
+  ✓ 15: iptal (iz kalır)
+  ✓ 15: belgeden düştü
+ERROR:  Ürün bulunamadı: u-yok3
+CONTEXT:  PL/pgSQL function stk_varyant_coz(text,text,text,text,text) line 8 at RAISE
+PL/pgSQL function stk_yaz(jsonb) line 55 at assignment
+PL/pgSQL function fis_yaz(jsonb) line 13 at assignment
+Supabase yazma hatası: muhasebe Error: Supabase 400: ERROR:  Ürün bulunamadı: u-yok3
+CONTEXT:  PL/pgSQL function stk_varyant_coz(text,text,text,text,text) line 8 at RAISE
+PL/pgSQL function stk_yaz(jsonb) line 55 at assignment
+PL/pgSQL function fis_yaz(j
+    at supabaseIstek (/workspace/scratch/09b612fecffd/atolye/test/erp.cjs:5312:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async v2KopruGonder (/workspace/scratch/09b612fecffd/atolye/test/erp.cjs:7297:19)
+    at async _zarfUygula (/workspace/scratch/09b612fecffd/atolye/test/erp.cjs:7893:13)
+  ✓ 15: stok reddedildi
+  ✓ 15: kasa satırı yazılmadı, bekleyen defterde, taban yerinde
+16) Liste v2: teklif — yalnız fark lst_yaz, bulut belgesi = ekran belgesi (v1.730.0)
+  ✓ 16: tek istek, lst_yaz
+  ✓ 16: buluttaki belge = ekrandaki belge (sıra dahil)
+17) Mesaj: iki cihaz aynı anda yazar — ikisi de kalır, eski listeli cihaz silemez
+  ✓ 17: iki mesaj da bulutta, sırayla
+18) Silme iptaldir; boş listeli cihaz silemez
+  ✓ 18: iptal (iz kalır)
+Supabase yazma hatası: koliler Error: koliler: buluttaki hâl bu açılışta okunamadı — yazma bekletildi (sayfayı yenileyin; kayıt kaybolmaz)
+    at v2TabanYokHatasi (/workspace/scratch/09b612fecffd/atolye/test/erp.cjs:7080:12)
+    at listeV2YukHazirla (/workspace/scratch/09b612fecffd/atolye/test/erp.cjs:7196:15)
+    at listeIsi (/workspace/scratch/09b612fecffd/atolye/test/erp.cjs:5543:21)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+  ✓ 18: taban yokken boş liste hiçbir şey silmedi
+
+UÇTAN UCA TAMAM
+── stok-v2/editor/15-duzeltme.sql (Editor kopyası, parça parça)
+   22 parça, hepsi ayrı oturumda çalıştı
+── stok-v2/cari-v2.sql
+psql:stok-v2/cari-v2.sql:47: NOTICE:  relation "car_hareket" already exists, skipping
+psql:stok-v2/cari-v2.sql:48: NOTICE:  relation "car_hareket_cari" already exists, skipping
+psql:stok-v2/cari-v2.sql:49: NOTICE:  relation "car_hareket_fis" already exists, skipping
+psql:stok-v2/cari-v2.sql:50: NOTICE:  relation "car_hareket_tarih" already exists, skipping
+psql:stok-v2/cari-v2.sql:52: NOTICE:  column "cari_aktif" of relation "stk_ayar" already exists, skipping
+psql:stok-v2/cari-v2.sql:53: NOTICE:  column "cari_gecis" of relation "stk_ayar" already exists, skipping
+psql:stok-v2/cari-v2.sql:54: NOTICE:  column "cari_geri_donus" of relation "stk_ayar" already exists, skipping
+                       car_kurulum_tamamla
+------------------------------------------------------------------
+ değişiklik sayacı kuruldu; silme arşivi kuruldu; cari v2 kuruldu
+(1 row)
+
+── stok-v2/alt-v2.sql
+psql:stok-v2/alt-v2.sql:23: NOTICE:  column "alt_aktif" of relation "stk_ayar" already exists, skipping
+psql:stok-v2/alt-v2.sql:24: NOTICE:  column "alt_gecis" of relation "stk_ayar" already exists, skipping
+psql:stok-v2/alt-v2.sql:25: NOTICE:  column "alt_geri_donus" of relation "stk_ayar" already exists, skipping
+── stok-v2/test/sinama-duzeltme.sql
+psql:stok-v2/test/sinama-duzeltme.sql:29: NOTICE:  TAMAM: fis_yaz tam tanım (cari-v2 / alt-v2 yeniden çalıştırıldıktan sonra)
+psql:stok-v2/test/sinama-duzeltme.sql:38: NOTICE:  TAMAM: aynı kimlikte son gelen
+psql:stok-v2/test/sinama-duzeltme.sql:50: NOTICE:  TAMAM: liste sıra ölçeği
+psql:stok-v2/test/sinama-duzeltme.sql:76: NOTICE:  TAMAM: tanımlar koruması, yetki atlatılamaz
+psql:stok-v2/test/sinama-duzeltme.sql:81: NOTICE:  TAMAM: yönetici giriş ayarını değiştirebilir
+psql:stok-v2/test/sinama-duzeltme.sql:95: NOTICE:  TAMAM: geri dönüşten sonra v2 yazması reddedildi
+psql:stok-v2/test/sinama-duzeltme.sql:104: NOTICE:  TAMAM: yeniden geçişte v2 yazması açık
+psql:stok-v2/test/sinama-duzeltme.sql:112: NOTICE:  TAMAM: göç karşılaştırması eski tabloyla
+psql:stok-v2/test/sinama-duzeltme.sql:125: NOTICE:  table "_gd_c" does not exist, skipping
+psql:stok-v2/test/sinama-duzeltme.sql:125: NOTICE:  table "_ec" does not exist, skipping
+psql:stok-v2/test/sinama-duzeltme.sql:125: NOTICE:  TAMAM: carisi silinmiş hareket geri dönüşü düşürmedi
+SINAMA (DUZELTME) BITTI
+── stok-v2/veri-sifirla.sql (Editor kopyası, parça parça)
+   3 parça, hepsi ayrı oturumda çalıştı
+── stok-v2/test/sinama-sifirla.sql
+psql:stok-v2/test/sinama-sifirla.sql:20: NOTICE:  TAMAM: onay sözcüğü olmadan çalışmaz
+psql:stok-v2/test/sinama-sifirla.sql:29: NOTICE:  TAMAM: uygulamadan çağrılamaz
+psql:stok-v2/test/sinama-sifirla.sql:45: NOTICE:  TAMAM: bilinmeyen bağımlı varken hiçbir şey silinmedi
+psql:stok-v2/test/sinama-sifirla.sql:65: NOTICE:  TAMAM: dış bağlı tablo tek hatada listelendi, korunan tablo verilemez, hiçbir şey silinmedi
+psql:stok-v2/test/sinama-sifirla.sql:78: NOTICE:  TAMAM: sıfırlandı {"bosaltilan": {"gunluk": 0, "uretim": 1, "cariler": 2, "kas_cek": 2, "stk_fis": 12, "urunler": 4, "stk_olcu": 3, "stk_renk": 6, "kas_hesap": 2, "lst_kayit": 18, "siparisler": 1, "car_hareket": 5, "kas_hareket": 8, "stk_hareket": 17, "stk_varyant": 7, "silinen_arsiv": 4, "uretim_atamalari": 1, "hesap_hareketleri": 1, "siparis_kalemleri": 1}, "kalanKullanici": 3, "silinenIslevler": 16, "silinenTablolar": ["eski_cari_hareketleri", "eski_faturalar", "eski_fis_defteri", "eski_koliler", "eski_mesajlar", "eski_muhasebe", "eski_stok_hareketleri", "eski_teklifler", "eski_varyantlar"], "veriKalanTablolar": {"kas_ayar": 1, "stk_ayar": 1, "tanimlar": 1, "degisiklik": 1, "silinen_arsiv": 1}, "kaldirilanGorunumler": ["vitrin_urunler"]}
+psql:stok-v2/test/sinama-sifirla.sql:96: NOTICE:  TAMAM: tanımlarda yalnız kullanıcılar, görünümler boş, bayraklar açık, sayaç arttı
+psql:stok-v2/test/sinama-sifirla.sql:115: NOTICE:  TAMAM: sıfırdan yazma (fiş + cari + kasa tek işlem, mesaj)
+SINAMA (SIFIRLA) BITTI
+── stok-v2/fis-defteri.sql (Editor kopyası, parça parça)
+   68 parça, hepsi ayrı oturumda çalıştı
+── stok-v2/fis-defteri.sql (Editor kopyası, parça parça)
+   68 parça, hepsi ayrı oturumda çalıştı
+── stok-v2/test/sinama-fis.sql
+psql:stok-v2/test/sinama-fis.sql:21: NOTICE:  TAMAM: kurallar kapalıyken eski yol çalışıyor
+psql:stok-v2/test/sinama-fis.sql:67: NOTICE:  TAMAM: alış faturası + bağlı ödeme makbuzu tek işlemde, numaralar sunucudan (AF-261102001, ÖD-261102001)
+psql:stok-v2/test/sinama-fis.sql:67: NOTICE:  TAMAM: yeniden gönderim çift fiş yazmıyor, sıra ilerliyor
+psql:stok-v2/test/sinama-fis.sql:112: NOTICE:  TAMAM: yarım fiş yok, satırsız fiş yok, düşen fiş numara yakmıyor
+psql:stok-v2/test/sinama-fis.sql:151: NOTICE:  TAMAM: kurallar açık — eski yoldan hareket ve tek satır iptali reddedildi; hesap / varyant açık; fis_kes çalışıyor
+psql:stok-v2/test/sinama-fis.sql:176: NOTICE:  TAMAM: silme, değiştirme ve fişsiz satır veritabanında reddediliyor
+psql:stok-v2/test/sinama-fis.sql:182: ERROR:  Stok fişi BOS-1 satırsız kalamaz — en az bir stok hareketi gerekli
+CONTEXT:  PL/pgSQL function fis_satirsiz_denetle() line 9 at RAISE
+psql:stok-v2/test/sinama-fis.sql:187: NOTICE:  TAMAM: satırsız fiş işlem sonunda reddedildi
+psql:stok-v2/test/sinama-fis.sql:211: NOTICE:  TAMAM: iptal fiş + makbuz + satırlar birlikte, stok geri döndü, tekrar zararsız, fiş bilgisi yazılıyor
+psql:stok-v2/test/sinama-fis.sql:224: NOTICE:  TAMAM: iptal geri açılmıyor
+psql:stok-v2/test/sinama-fis.sql:235: NOTICE:  TAMAM: yetkisiz fiş kesemez
+SINAMA (FIS DEFTERI) BITTI
+── stok-v2/test/sinama-fis-ek.sql
+ kullanici
+-----------
+
+(1 row)
+
+psql:stok-v2/test/sinama-fis-ek.sql:58: NOTICE:  TAMAM: sipariş bağı yalnız bağ alanlarında çözülüyor; miktar / tutar / fiyat aynı; doğrudan değişiklik reddediliyor
+psql:stok-v2/test/sinama-fis-ek.sql:79: NOTICE:  TAMAM: renk varyant düzeyinde taşınıyor; stok ve hareketler aynı
+ hedef_acildi
+--------------
+ t
+(1 row)
+
+ kullanici
+-----------
+
+(1 row)
+
+psql:stok-v2/test/sinama-fis-ek.sql:97: NOTICE:  TAMAM: hedef varyant varken hareketler ona taşınıyor (renk kipi), stok aynı
+psql:stok-v2/test/sinama-fis-ek.sql:107: NOTICE:  TAMAM: anonim ek işlemleri çağıramıyor
+── stok-v2/test/uctan-uca-fis.js
+  ✓ 0: kurallar açık
+1) Satış fişi + peşin tahsilat (bağlı makbuz)
+  ✓ 1: numaralar sunucudan
+  ✓ 1: sunucuda satırlar
+  ✓ 1: belge no ek bilgide, açıklamada numara
+  ✓ 1: yerel numaralar
+2) Olağan eşitleme hiçbir satırı yeniden göndermez (kurallar açık)
+  ✓ 2: satır gönderen istek yok
+  ✓ 2: bekleyen yazma yok
+  ✓ 2: bulut stok = ekran
+  ✓ 2: bulut cari = ekran
+  ✓ 2: bulut kasa = ekran
+  ✓ 2: fiş listesi (makbuz + fiş, bağlı)
+3) Geri al: fiş + makbuz iptal
+  ✓ 3: sunucuda iptal (fiş, makbuz, satırlar)
+  ✓ 3: iptalden sonra satır gönderen istek yok
+  ✓ 3: bekleyen yazma yok
+  ✓ 3: bulut stok = ekran
+  ✓ 3: bulut cari = ekran
+  ✓ 3: bulut kasa = ekran
+4) Sipariş teslimi (satış siparişinin 2 / 3'ü sevk) — fiş + stok + cari + kalemin karşılananı tek işlemde
+  ✓ 4: sunucuda fiş + satırlar + karşılanan
+  ✓ 4: eşitleme hiçbir satırı yeniden göndermedi
+  ✓ 4: bekleyen yazma yok
+  ✓ 4: bulut stok = ekran
+  ✓ 4: bulut cari = ekran
+5) Siparişten satış fişi (fiş formu, kalem siparişe bağlı): kalan 1 çift — sipariş kalemi tamamlanır
+  ✓ 5: yükte sipariş kalemi (karşılanan 3)
+  ✓ 5: sunucuda karşılanan 3, fişte sipariş bağı
+  ✓ 5: sipariş tamamlandı (ekranda)
+  ✓ 5: eşitleme hiçbir satırı yeniden göndermedi
+  ✓ 5: bulut stok = ekran
+  ✓ 5: bulut cari = ekran
+6) Üretim teslimi TEK fiş (ÜRT): hammadde çıkışı + mamul girişi + işçilik + atamanın teslimi tek işlemde; geri al = iptal
+  ✓ 6: yük (aile, satır, atama)
+  ✓ 6: sunucuda ÜRT fişi + 2 stok + 1 cari satırı + atama teslim alındı
+  ✓ 6: satır türü sunucuda (ek)
+  ✓ 6: eşitleme hiçbir satırı yeniden göndermedi (atama dahil)
+  ✓ 6: bekleyen yazma yok
+  ✓ 6: bulut stok = ekran
+  ✓ 6: bulut cari = ekran
+  ✓ 6: buluttan okunan satır türünü taşıyor
+7) Üretim teslimini geri al: fiş ailesi satır türünden bulunur, fiş iptal, atama geri döner (tek işlem)
+  ✓ 7: geri alınan satırlar (3)
+  ✓ 7: iptal edilecek fiş
+  ✓ 7: sunucuda fiş + satırlar iptal, atama teslim alınmadı
+  ✓ 7: eşitleme hiçbir satırı göndermedi (silme yok)
+  ✓ 7: bekleyen yazma yok
+  ✓ 7: bulut stok = ekran
+  ✓ 7: bulut cari = ekran
+8) Ardışık iki ara proses iş verirken tamamlanır: her biri kendi ÜRT fişi, yeni atama SON fişle; biri geri alınır
+  ✓ 8: yükler (satır sayısı, alt yalnız sonda)
+  ✓ 8: iki ayrı fiş, satırlar doğru fişte, atama yazıldı
+  ✓ 8: ekranda her satır kendi fişinin numarası
+  ✓ 8: eşitleme hiçbir satırı yeniden göndermedi
+  ✓ 8: bulut stok = ekran
+  ✓ 8: bulut cari = ekran
+  ✓ 8: Cila geri alınınca yalnız Cila fişi
+  ✓ 8: geri almada satır gönderilmedi
+  ✓ 8: Boya fişi yerinde, Cila iptal
+  ✓ 8: bulut stok = ekran
+9) Numune: NUM fişi sunucudan, hammadde çıkışıyla tek işlemde
+  ✓ 9: NUM fişi + 1 satır
+  ✓ 9: defter kaydı
+  ✓ 9: eşitleme satır göndermedi
+  ✓ 9: bekleyen yazma yok
+  ✓ 9: bulut stok = ekran
+10) Açılış fişi: hareket karşılığı olmayan miktarlar (iki üründe) TEK ACL fişinde
+  ✓ 10: yük iki ürünün satırı
+  ✓ 10: tek ACL fişi, iki satır
+  ✓ 10: eşitleme satır göndermedi
+  ✓ 10: bulut stok = ekran
+11) Tahsilat makbuzu (cari kartı / Ödeme & Tahsilat / sipariş ödemesi): cari + kasa satırı TEK TH fişi; geri al = iptal
+  ✓ 11: TH fişi, 1 cari + 1 kasa satırı, belge no
+  ✓ 11: eşitleme satır göndermedi
+  ✓ 11: bekleyen yazma yok
+  ✓ 11: bulut cari = ekran
+  ✓ 11: bulut kasa = ekran
+  ✓ 11: geri al kasa bağını buldu
+  ✓ 11: iptalden sonra satır gönderilmedi
+  ✓ 11: sunucuda fiş + iki satır iptal
+  ✓ 11: bulut cari = ekran
+  ✓ 11: bulut kasa = ekran
+12) Virman: iki kasa / banka ayağı TEK VRM fişi; gider kartı ödemesi: yalnız kasa satırlı GD fişi
+  ✓ 12: VRM fişi, iki kasa satırı, cari yok
+  ✓ 12: GD fişi, tek kasa satırı
+  ✓ 12: eşitleme satır göndermedi
+  ✓ 12: bekleyen yazma yok
+  ✓ 12: bulut kasa = ekran
+13) Çek: müşteri çeki alınır (cari satırı + çek kaydı TEK fiş), sonra tahsil (kasa satırı + çekin yeni hâli TEK fiş)
+  ✓ 13: TH fişi, cari satırı, çek bulutta (fiş numarasıyla)
+  ✓ 13: eşitleme satır / çek göndermedi
+  ✓ 13: tahsil geçişi uygulanabilir
+  ✓ 13: ÇT fişi, kasa satırı, çek tahsil edildi
+  ✓ 13: tahsilden sonra eşitleme satır / çek göndermedi
+  ✓ 13: bekleyen yazma yok
+  ✓ 13: bulut kasa = ekran
+  ✓ 13: bulut cari = ekran
+── uçtan uca (fiş defteri) temiz ──
+── stok-v2/fis-gece-denetimi.sql (Editor kopyası, parça parça)
+   4 parça, hepsi ayrı oturumda çalıştı
+── stok-v2/fis-gece-denetimi.sql (Editor kopyası, parça parça)
+   4 parça, hepsi ayrı oturumda çalıştı
+── stok-v2/test/sinama-gece.sql
+psql:stok-v2/test/sinama-gece.sql:18: NOTICE:  TABAN: {"gun": {"iptal": [{"tur": "Alış", "eden": "ali@atolye.local", "fisNo": "AF-261102001", "sebep": "yanlış fiyat"}, {"tur": "Ödeme", "eden": "ali@atolye.local", "fisNo": "ÖD-261102001", "sebep": "yanlış fiyat"}, {"tur": "Tahsilat", "eden": "ali@atolye.local", "fisNo": "TH-261102003", "sebep": "Geri alındı"}, {"tur": "Satış", "eden": "ali@atolye.local", "fisNo": "SF-261102003", "sebep": "Geri alındı"}, {"tur": "Üretim", "eden": "ali@atolye.local", "fisNo": "ÜRT-261102001", "sebep": "Üretim teslimi geri alındı"}, {"tur": "Üretim", "eden": "ali@atolye.local", "fisNo": "ÜRT-261102003", "sebep": "Ara proses geri alındı"}, {"tur": "Tahsilat", "eden": "ali@atolye.local", "fisNo": "TH-261102004", "sebep": "Geri alındı"}], "tarih": "2026-11-02", "kesilen": {"para": 9, "stok": 14}}, "temiz": true, "kuralAcik": true, "fissizCari": {"sayi": 1, "ornek": [{"id": "yc1", "fisNo": "ALS-1", "tarih": "2026-10-30", "tutar": 100, "cariId": "c-yeni"}], "kuraldanSonra": 0}, "fissizKasa": {"sayi": 0, "ornek": [], "kuraldanSonra": 0}, "karsilanan": {"fark": {"sayi": 0, "ornek": []}, "hayalet": {"sayi": 0, "ornek": []}, "duzeltme": {"sayi": 0, "ornek": []}}, "tutarFarki": [], "satirsizFis": [], "iptalTutarsiz": []}
+psql:stok-v2/test/sinama-gece.sql:18: NOTICE:  TAMAM: taban temiz (gerçek yazma yollarının fişlerinde yanlış alarm yok)
+psql:stok-v2/test/sinama-gece.sql:59: NOTICE:  TAMAM: fişsiz cari / kasa, tutar farkı, satırsız fiş, iptal tutarsızlığı ve kural sonrası delik görülüyor
+psql:stok-v2/test/sinama-gece.sql:64: NOTICE:  TAMAM: giriş yapmış kullanıcı çağırabiliyor
+psql:stok-v2/test/sinama-gece.sql:70: NOTICE:  TAMAM: anonim çağıramıyor
+── stok-v2/test/r1-yaris.js
+  ✓ 0: kurallar açık (canlının 19. adımdan sonraki hâli)
+1) İki kullanıcı aynı kaleme aynı anda 5'er adet (ikisinin ekranında karşılanan 0)
+    istemcinin gönderdiği kalem bilgisi (A): {"satirlar":[{"id":"k-r1-mvz0q4pi","karsilanan":5}],"artis":[{"id":"k-r1-mvz0q4pi","miktar":5}]}
+    A: SF-261102006   B: SF-261102007
+    SONUÇ → stok hareketleri toplamı: 10 adet çıkış · kalemin karşılananı: 10 · geçerli fiş: 2
+  ✓ 1: iki fiş de kesildi
+  ✓ 1: stoktan 10 adet çıktı
+  ✓ 1: kalemin karşılananı 10 (DEĞİŞMEZ: karşılanan = teslim edilen)
+2) Aynı istek SIRALI tekrar (yanıt kayboldu, istemci yeniden gönderdi)
+  ✓ 2: ilk numara döndü (zatenVar), ikinci fiş yok, karşılanan artmadı
+3) Aynı istek EŞZAMANLI iki kez (çift tıklama iki sekmede)
+    1. çağrı: {"fisNo":"SF-261102008","kalemler":[{"id":"k-r1-mvz0q4pi","karsilanan":12}],"zatenVar":false,"bagliFisNo":null,"karsilananDuzeltme":[]}
+    2. çağrı: {"fisNo":"SF-261102008","kalemler":[{"id":"k-r1-mvz0q4pi","karsilanan":12}],"zatenVar":true,"bagliFisNo":null,"karsilananDuzeltme":[]}
+  ✓ 3: tek fiş, karşılanan +2 (12), stok çıkışı 12, değişmez tutuyor
+  ✓ 3: ikinci kopya hata değil, ilk numarayı aldı (zatenVar)
+4) Ağ kesintisi: sunucu bağlantısı işlem ortasında düşer → hiçbir şey yazılmaz; yeniden gönderim bir kez işlenir
+  ✓ 4: kesilen işlem geri alındı (fiş yok, karşılanan 12, sayaç değişmedi)
+  ✓ 4: yeniden gönderim bir kez işlendi (15), üçüncü gönderim zatenVar
+5) İşlem geri alma: satırlardan biri hatalı (olmayan ürün) → fiş, satırlar, karşılanan, sayaç — hiçbiri yazılmaz
+  ✓ 5: reddedildi, hiçbir şey değişmedi
+6) Teslim İPTALİ (A'nın fişi geri alınır) ile yeni teslim (F, 4 adet) aynı anda — ikisinin ekranında karşılanan 15
+    iptal: tamam   F: SF-261102010
+    SONUÇ → teslim edilen (geçerli): 14 · karşılanan: 14
+  ✓ 6: geçerli teslim 14 (15 − 5 + 4), karşılanan 14
+6b) Aynı iptal TEKRAR gelir (yanıtı kaybolmuştu) — karşılanan ikinci kez düşmemeli
+  ✓ 6b: zatenIptal, karşılanan 14 kaldı
+7) Yönetici onaylı fazla eşzamanlı teslim — fazla adet kırpılmadan kayıtta görünür
+    SONUÇ → teslim edilen: 24 · karşılanan: 24 (miktar 20)
+  ✓ 7: iki fiş, teslim 24, karşılanan 24 (fazla 4 kayıtta)
+8) Eski istemcinin onaysız fazla yükü reddedilir; izinli geçmiş karşılanan korunur
+  ✓ 8: eski onaysız fazla yük reddedildi, karşılanan = teslim edilen (24)
+── R1 temiz ──
+── stok-v2/test/r1b-turetme.js
+  kurallar açık: t · v2 modülleri: t
+1) Eski veriyle iki cihaz karşılananı mutlak yazarken (5) başka kullanıcı 5 teslim eder
+    SONUÇ → stok hareketleri: 10 · karşılanan: 10
+  ✓ 1: üç istek de kabul edildi
+  ✓ 1: karşılanan = stok hareketleri = 10
+2) Sipariş düzenleme: fiyat 120 yapılır, satırda ekrandaki eski karşılanan (0) var
+    SONUÇ → fiyat: 120 · karşılanan: 10
+  ✓ 2: fiyat yazıldı, karşılanan ezilmedi (10)
+3) 20'lik kaleme eşzamanlı 24 teslim (önce 14, sonra iki kullanıcı 5'er; ikisinin ekranında 14)
+    SONUÇ → stok hareketleri: 24 · karşılanan: 24 (miktar 20)
+  ✓ 3: iki fiş, stok 24, karşılanan 24 — fazla 4 sipariş kaydında görünüyor
+4) Yeni kalem eklenir (karşılanan 0)
+  ✓ 4: kalem eklendi, karşılanan 0
+5) Eski uygulama (artis yok) fis_kes içinden mutlak karşılanan gönderir — fiş işlemi içinde serbest
+  ✓ 5: kabul edildi, karşılanan 3
+6) Fiş sistemi KAPALI (v2 modülleri etkin değil): mutlak yazma bugünkü gibi
+  ✓ 6: karşılanan 7 yazıldı (koruma devrede değil)
+── R1b temiz ──
+✓ Fiş başlığının sunucu işareti silinemez
+✓ Fiş başlığı silinemez
+✓ Hareket doğrudan silinemez
+✓ stk_yaz miktarı değiştiremez
+✓ fis_yaz içinden değişiklik de reddedilir
+✓ Cari tutarı eski yoldan değiştirilemez
+✓ Cari hareketi tek başına iptal edilemez
+✓ Eski yol hareketi iptal edemez
+✓ Yeni hareketi mevcut fişe ekleyemez
+✓ Mevcut hareketi başka fişe taşıyamaz
+✓ İptal edilmiş fiş yeniden açılamaz
+✓ Meşru not, idempotent tekrar ve fiş iptali çalışır
+✓ Kurallar kapalı eski bağımsız kayıt akışı korunur
