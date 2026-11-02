@@ -21,4 +21,7 @@ AUDIT_SONRA=$(psql -X -At -d "$COPY_DB" -c 'select count(*) from public.fis_cek_
 STOK_V2_DB="$COPY_DB" FINANS_N=1 node stok-v2/test/finans/t-cek-yaris.js
 STOK_V2_DB="$COPY_DB" node stok-v2/test/finans/t-seyrek-alt.js
 STOK_V2_DB="$COPY_DB" node stok-v2/test/finans/t-cek-iptal.js
+# 1.744.3 incelemesi düzeltmeleri yeniden kurulumda da geri gelmeli
+STOK_V2_DB="$COPY_DB" node stok-v2/test/duzeltme/t-servis-kapi.js
+STOK_V2_DB="$COPY_DB" node stok-v2/test/duzeltme/t-eski-bag.js
 echo "✓ Geri dönüş eski iki açığı üretti; yeniden kurulum korumaları geri getirdi; $AUDIT_ONCE audit satırı korundu; durum görünümü etkin"
