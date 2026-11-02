@@ -30,7 +30,7 @@ D4.satis-tam-sinir YESIL
 D4.denetim-yakalar YESIL
 # D5 — sipariş iptali ve durum (t-iptal.js)
 D5.iptal-bag-korunur KIRMIZI
-D5.iptal-siparise-teslim KIRMIZI
+D5.iptal-siparise-teslim YESIL
 D5.durum-eszamanli KIRMIZI
 D5.denetim-yakalar YESIL
 # Yedekten geri yükleme (t-yedek.js)

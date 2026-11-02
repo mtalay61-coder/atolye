@@ -1,0 +1,6 @@
+F4 e54a2d6 SHARE kilidi, F0 gerçek PostgreSQL koşusu
+  ✗ [F1.G1-yeni-kodla] ön kilitli işlem + fis_kes: kilitlenme yok, ikisi de tamam
+      sonra:    {"onKilit":true,"fisKes":"ERROR:  deadlock detected"}
+      beklenen: [0,true,true]
+      çıkan:    [1,true,false]
+  ✓ [F1.tekil-tutucu] 'tekil' tutulurken fis_kes bekler ve tamamlanır (kilitlenme yok)

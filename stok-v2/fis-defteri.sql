@@ -603,6 +603,7 @@ declare
   v_kalem jsonb;
   v_eksik text;
   v_siparisler text[];
+  v_sid text;
 begin
   if v_istek is null then
     raise exception 'İstek kimliği yok (yeniden gönderimde çift fiş olmasın diye zorunlu)' using errcode = '22023';
@@ -619,8 +620,9 @@ begin
       'kalemler', public.fis_kalem_durumlari(v_idler), 'karsilananDuzeltme', '[]'::jsonb);
   end if;
   -- KİLİT SIRASI 3 — kalemler kimlik sırasıyla, İLK YAZMADAN ÖNCE (v1.743.0, F1)
-  -- F4: teslimin bütün siparişleri önce SHARE ile kilitlenir. KEY SHARE durum UPDATE'ini engellemez.
-  -- İptal FOR UPDATE alır: teslim önceyse iptal onu da kapsar; iptal önceyse aşağıdaki durum kontrolü teslimi reddeder.
+  -- F4: iptal ve teslim, sipariş işlem kilidinde sıraya girer. SHARE kullanmak, kalemi önceden kilitleyip
+  -- başlığı sonra yazan eski işlemle ters sıraya düşüyordu (F1.G1-yeni-kodla gerçek PG'de kırmızı).
+  -- Satırda KEY SHARE silmeye karşı korumayı sürdürür; sıradan başlık UPDATE'iyle çakışmaz.
   select coalesce(array_agg(distinct sid order by sid), '{}'::text[]) into v_siparisler from (
     select p -> 'fis' ->> 'siparisId' as sid
     union all select p -> 'bagli' -> 'fis' ->> 'siparisId'
@@ -629,7 +631,10 @@ begin
     union all select x ->> 'siparis_id' from jsonb_array_elements(public.stk_dizi(p -> 'alt' -> 'siparis_kalemleri' -> 'satirlar')) x
     union all select k.siparis_id::text from public.siparis_kalemleri k where k.id::text = any(v_idler)
   ) q where coalesce(sid, '') <> '';
-  perform 1 from public.siparisler s where s.id::text = any(v_siparisler) order by s.id for share;
+  foreach v_sid in array v_siparisler loop
+    perform pg_advisory_xact_lock(hashtextextended('fis_siparis_iptal:' || v_sid, 0));
+  end loop;
+  perform 1 from public.siparisler s where s.id::text = any(v_siparisler) order by s.id for key share;
   select string_agg(s.id::text, ', ' order by s.id) into v_eksik
     from public.siparisler s where s.id::text = any(v_siparisler) and s.durum = 'İptal';
   if v_eksik is not null then
@@ -780,6 +785,8 @@ declare
 begin
   perform public.stk_yetki(array['siparis', 'stok', 'cari'], 'kaydetme');
   if sid is null then raise exception 'Sipariş kimliği yok' using errcode = '22023'; end if;
+  -- fis_kes ile aynı işlem kilidi, satır kilitlerinden önce. Durum ve bağ çözme tek işlemde kalır.
+  perform pg_advisory_xact_lock(hashtextextended('fis_siparis_iptal:' || sid, 0));
   -- F4: iptal durumu ve bağ çözme tek işlemde. Kilit kalemlerden ve ilk yazmadan önce alınır.
   -- Numarayı istemciden alma: bayat/yanlış numara başka siparişin numarayla eşleşen bağlarını çözmemeli.
   select s.siparis_no into sno from public.siparisler s where s.id::text = sid for update;

@@ -465,6 +465,7 @@ declare
   v_kalem jsonb;
   v_eksik text;
   v_siparisler text[];
+  v_sid text;
 begin
   if v_istek is null then
     raise exception 'İstek kimliği yok (yeniden gönderimde çift fiş olmasın diye zorunlu)' using errcode = '22023';
@@ -487,7 +488,10 @@ begin
     union all select x ->> 'siparis_id' from jsonb_array_elements(public.stk_dizi(p -> 'alt' -> 'siparis_kalemleri' -> 'satirlar')) x
     union all select k.siparis_id::text from public.siparis_kalemleri k where k.id::text = any(v_idler)
   ) q where coalesce(sid, '') <> '';
-  perform 1 from public.siparisler s where s.id::text = any(v_siparisler) order by s.id for share;
+  foreach v_sid in array v_siparisler loop
+    perform pg_advisory_xact_lock(hashtextextended('fis_siparis_iptal:' || v_sid, 0));
+  end loop;
+  perform 1 from public.siparisler s where s.id::text = any(v_siparisler) order by s.id for key share;
   select string_agg(s.id::text, ', ' order by s.id) into v_eksik
     from public.siparisler s where s.id::text = any(v_siparisler) and s.durum = 'İptal';
   if v_eksik is not null then
@@ -613,6 +617,7 @@ declare
 begin
   perform public.stk_yetki(array['siparis', 'stok', 'cari'], 'kaydetme');
   if sid is null then raise exception 'Sipariş kimliği yok' using errcode = '22023'; end if;
+  perform pg_advisory_xact_lock(hashtextextended('fis_siparis_iptal:' || sid, 0));
   select s.siparis_no into sno from public.siparisler s where s.id::text = sid for update;
   if not found then raise exception 'Sipariş bulunamadı (sipariş %)', sid using errcode = 'KR005'; end if;
   ino := case when sno is null then null else sno || ' (iptal)' end;

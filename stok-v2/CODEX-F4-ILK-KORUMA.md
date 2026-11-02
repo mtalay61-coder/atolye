@@ -7,7 +7,7 @@ Canlı Supabase'e erişilmedi; main, deploy ve surum.json değişmedi. Yayın HT
 
 Önceden fis_bag_coz bağları çözüyor, İptal durumu daha sonra istemciden ayrı yazılıyordu. Şimdi aynı RPC siparişi ilk yazmadan önce FOR UPDATE kilitler, numarasını veritabanından okur ve bağ çözme ile İptal durumunu tek işlemde yazar. İstemcinin bayat/yanlış numarası kullanılmaz. Teslim önce bitmişse hareket geçmiş bağa taşınır; stok ve karşılanan kaybolmaz.
 
-fis_kes, yükteki başlık/satır/alt kalem ve mevcut kalemlerden bütün ilgili sipariş kimliklerini çıkarır, kimlik sırasıyla FOR SHARE kilitler. İptal durumunu kilitten sonra denetler; KR006 ile yeni fişi reddeder. KEY SHARE durum güncellemesini engellemediğinden bu kapıda SHARE gereklidir. Aynı istek kimliğinin güvenli tekrarı, yeni teslim sayılmadan ilk fişi döndürmeye devam eder.
+fis_kes, yükteki başlık/satır/alt kalem ve mevcut kalemlerden bütün ilgili sipariş kimliklerini çıkarır. İptal ve teslim, kimlik sırasıyla alınan aynı sipariş advisory işlem kilitlerini kullanır; satırdaki KEY SHARE silmeye karşı korumayı sürdürür. İlk sürümde kullanılan SHARE, F1.G1-yeni-kodla testinde eski kalem→başlık yazma sırasıyla kilitlenme oluşturdu ve kaldırıldı. İptal durumu işlem kilidinden sonra denetlenir; KR006 ile yeni fiş reddedilir. Aynı istek kimliğinin güvenli tekrarı ilk fişi döndürür. Gerçek PostgreSQL sonuçları için CODEX-F4-GERCEK-PG-SONUCLARI.md dosyasına bakın.
 
 fis_siparis_iptal_koru, eski ekranın başlık POST'u ile İptal durumunu geri açmasını engeller. Koruma fiş kuralları açık/kapalı olmasına bağlı değildir. Yeniden açma gerekiyorsa yeni sipariş kullanılmalı; özel bir yeniden açma akışı bu değişikliğe dahil değildir.
 
@@ -29,11 +29,11 @@ fis_siparis_iptal_koru, eski ekranın başlık POST'u ile İptal durumunu geri a
 
 `npm ci` sonrasında `npm run test:f4` ağ kullanmadan geçici gömülü veritabanında çalışır. Test bağımlılığı tam sürüme sabitlendi. Önceki hatayı göstermek: `F4_SQL_REF=1a42e48 node stok-v2/test/f4/kos-gomulu.js` (başarısız olması beklenir).
 
-Gerçek PostgreSQL yarış testi hazır: `stok-v2/test/f4/t-yaris.js`. Önce mevcut stok-v2/test/kos.sh ile izole veritabanı kurulmalı; PGHOST/PGPORT/PGUSER yerel ortama ayarlanmalı. Varsayılan 100 eşzamanlı iptal/teslim çifti için `node stok-v2/test/f4/t-yaris.js`. **Bu test bu ortamda henüz çalıştırılmadı.**
+Gerçek PostgreSQL yarış testi hazır: `stok-v2/test/f4/t-yaris.js`. Önce mevcut stok-v2/test/kos.sh ile izole veritabanı kurulmalı; PGHOST/PGPORT/PGUSER yerel ortama ayarlanmalı. Varsayılan 100 eşzamanlı iptal/teslim çifti için `node stok-v2/test/f4/t-yaris.js`. **Gerçek PostgreSQL üzerinde çalıştırıldı; güncel sonuçlar CODEX-F4-GERCEK-PG-SONUCLARI.md içinde.**
 
 ## Açık kalan işler — F4 tamamlanmadı
 
-1. Gerçek PostgreSQL ile doğal ve zorlanmış araya girme testleri; F0/F1.1/F2/R1/R1b SQL regresyonlarının tamamı. Yeni paylaşım kilidinin bütün eski yollarla etkileşimi kanıtlanmalı.
+1. Bu rapordan sonra gerçek PostgreSQL testleri çalıştırıldı ve SHARE kaynaklı G1 kilitlenmesi advisory işlem kilidiyle düzeltildi. Güncel kapsam ve sonuçlar CODEX-F4-GERCEK-PG-SONUCLARI.md içindedir; bütün eski yazma yollarının güvenliği hâlâ kanıtlanmış değildir.
 2. Üretim/koli/rezervasyon ve diğer sipariş bağlarının temizliği halen istemcide ayrı yazmalardır. Bu değişiklik iptalin bütün modüllerde atomik olduğunu iddia etmez.
 3. Teslim sonrası Tamamlandı/Kısmi Teslim durumunun tek yazarı ve eski yazma yolları ayrıca çözülmeli. İptal olmayan siparişlerdeki durum yarışı bu değişiklikte kapanmadı.
 4. Eski istemcilerin sunucu retlerinden sonraki davranışı, geçiş uyumluluğu ve F5/F8 sunucu kapıları açık.

@@ -1,0 +1,4 @@
+F4 gerçek PostgreSQL · kurallar kapalı · doğal N=100
+✓ F4 zorlanmış sıra iptal → teslim: 3/3; ikinci bağlantının kilit beklediği gözlendi
+✓ F4 zorlanmış sıra teslim → iptal: 3/3; ikinci bağlantının kilit beklediği gözlendi
+✓ F4 doğal yarış 100: iptal başarılı, geçerli bağ yok, karşılanan tutarlı; teslimin önce tamamlandığı çift 31

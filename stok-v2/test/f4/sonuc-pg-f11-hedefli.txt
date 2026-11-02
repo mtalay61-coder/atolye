@@ -1,0 +1,20 @@
+F1.1 kilit sırası · önek f0-t-f11-kilit-mvyubnlm · N=100 · zorlanmış tekrar 3 · kurallar açık · iz sütunları 3/3
+C) doğal zorlama — her çift × 100, 0–40 ms rastgele aralık, rastgele başlangıç sırası
+  ✓ [F11.C-P1-kilit] P1 fis_iptal ∥ fis_bag_coz (aynı sipariş) × 100: kilitlenme 0
+      sonra:    {"kilitlenme":0,"oran":"0%","ikisiTamam":"100/100","bozuk":0,"digerHata":{},"ornek":[],"sure_sn":16}
+  ✓ [F11.C-P1-veri] P1 × 100: her denemede karşılanan = beklenen, D1b / D2 / D6 = 0
+      sonra:    {"bozuk":0}
+  ✓ [F11.C-P2-kilit] P2 fis_bag_coz ∥ fis_bag_coz (iki cihaz aynı siparişi iptal eder) × 100: kilitlenme 0
+      sonra:    {"kilitlenme":0,"oran":"0%","ikisiTamam":"100/100","bozuk":0,"digerHata":{},"ornek":[],"sure_sn":15}
+  ✓ [F11.C-P2-veri] P2 × 100: her denemede karşılanan = beklenen, D1b / D2 / D6 = 0
+      sonra:    {"bozuk":0}
+  ✓ [F11.C-P3-kilit] P3 fis_bag_coz ∥ fis_kes (aynı kaleme yeni teslim) × 100: kilitlenme 0
+      sonra:    {"kilitlenme":0,"oran":"0%","ikisiTamam":"51/100","bozuk":0,"digerHata":{"ERROR:  İptal edilmiş siparişe yeni fiş yazılamaz (sipariş f0-t-f11-ki":49},"ornek":[],"sure_sn":16}
+  ✓ [F11.C-P3-veri] P3 × 100: her denemede karşılanan = beklenen, D1b / D2 / D6 = 0
+      sonra:    {"bozuk":0}
+  ✓ [F11.C-P4-kilit] P4 fis_bag_coz ∥ alt_yaz (aynı siparişin düzenlemesi) × 100: kilitlenme 0
+      sonra:    {"kilitlenme":0,"oran":"0%","ikisiTamam":"100/100","bozuk":0,"digerHata":{},"ornek":[],"sure_sn":17}
+  ✓ [F11.C-P4-veri] P4 × 100: her denemede karşılanan = beklenen, D1b / D2 / D6 = 0
+      sonra:    {"bozuk":0}
+  • [F11.C-P8] (gözlem) P8 fis_iptal ∥ stk_renk_tasi (aynı varyantın hareketleri) × 100: {"kilitlenme":1,"oran":"1%","ikisiTamam":"99/100","bozuk":0,"digerHata":{},"ornek":[],"sure_sn":18}
+── t-f11-kilit.js: 8 yeşil, 0 kırmızı ──

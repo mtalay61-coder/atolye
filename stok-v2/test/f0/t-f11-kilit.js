@@ -84,9 +84,14 @@ const CIFT = {
   P8: { ad: "fis_iptal ∥ stk_renk_tasi (aynı varyantın hareketleri)", acikRisk: true,
     hazirla: () => { const x = kur({ urun: U8, renk: u8Renk[0] }); x.renk = u8Renk; u8Renk = [u8Renk[1], u8Renk[0]];
       // hedef varyant var olsun (birleştirme yolu: hareketler taşınır → fis_iptal'in güncellediği satırlarla çakışır)
-      F.rpc("fis_kes", kesYuku(x.s, x.k, 1, `${x.on}-p8h`, { urun: U8, renk: x.renk[1], karsilanan: 4 })); return x; },
+      // F2 aynı kaleme başka renkte teslimi reddeder; eski kurulum bu reddi yok sayıp
+      // olmayan ikinci teslimi bekliyordu (100/100 sahte bozuk). Birleştirme yolu için
+      // yalnız boş hedef varyant yeterlidir; kalemin üçlük teslimi tek gerçek harekettir.
+      const r = F.rpc("stk_yaz", { varyantAc: [{ urunId: U8, renk: x.renk[1] }] });
+      if (!r.ok) throw new Error(`P8 hedef varyant kurulamadı: ${r.hata}`);
+      return x; },
     a: (x) => uygula(["fis_iptal", iptalYuku(x)]), b: (x) => uygula(["stk_renk_tasi", { eslesmeler: [{ urunId: U8, eski: x.renk[0], yeni: x.renk[1] }] }]),
-    kahin: (x, ra) => (ra.ok ? 1 : 4) },
+    kahin: (x, ra) => (ra.ok ? 0 : 3) },
   P9: { ad: "fis_iptal ∥ eski yol stk_yaz satır iptali (kurallar KAPALI)", acikRisk: true, kurallarKapali: true, hazirla: () => kur(),
     a: (x) => uygula(["fis_iptal", iptalYuku(x)]), b: (x) => uygula(["stk_yaz", { iptal: [x.hid] }]), kahin: (x, ra) => (ra.ok ? 0 : null) },
 };
