@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // F0 / D4 — MİKTARI AŞAN TESLİM. Kullanıcı kararı (1 Kasım): SATIŞTA varsayılan YASAK; istisna yalnız yetkili yönetici onayı +
 // gerekçeyle. ALIŞ için kural henüz verilmedi (bugünkü iş kuralları raporda incelendi) — alış satırları GÖZLEM, kırmızı/yeşil yok.
-// Bugün: kontrol yalnız istemcide, yerel kalana göre (081:213 reddeder, 255 işaretleyip kabul eder); sunucu hiç bakmaz.
+// F3: alış dışındaki çıkışlarda sunucu güncel kalanla denetler. Alış bu kümede hâlâ gözlemdir.
 const T = require("./ortak.js");
 const { ON } = T;
 

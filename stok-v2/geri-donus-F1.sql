@@ -364,4 +364,5 @@ revoke all on function public.fis_gece_denetimi(text) from public, anon;
 grant execute on function public.fis_gece_denetimi(text) to authenticated;
 grant execute on function public.fis_gece_denetimi(text) to service_role;
 
+drop function if exists public.fis_satis_teslim_koru(jsonb);
 commit;

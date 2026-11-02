@@ -13,7 +13,7 @@
 const { execFileSync, spawn } = require("child_process");
 const path = require("path");
 const DB = process.env.STOK_V2_DB || "atolye_stok_v2_sinama";
-const psql = (sql) => execFileSync("psql", ["-X", "-q", "-At", "-v", "ON_ERROR_STOP=1", "-d", DB], { input: sql, encoding: "utf8" }).trim();
+const psql = (sql) => execFileSync("psql", ["-X", "-q", "-At", "-v", "ON_ERROR_STOP=1", "-d", DB], { input: sql, encoding: "utf8", maxBuffer: 16 * 1024 * 1024 }).trim();
 const jsonSorgu = (sql) => JSON.parse(psql(`select coalesce(json_agg(x), '[]'::json) from (${sql}) x;`) || "[]");
 global.window = { localStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} }, __supabaseYenidenDenemeMs: [] };
 const E = require(path.join(__dirname, "../../test/erp.cjs"));
@@ -192,24 +192,24 @@ function teslimYuku({ adet, ekrandaKarsilanan, istek, stok, cariler }) {
   const d6b = durum();
   bekle("6b: zatenIptal, karşılanan 14 kaldı", [rIptal2.ok && rIptal2.sonuc.zatenIptal, d6b.karsilanan, d6b.teslimEdilen], [true, 14, 14]);
 
-  console.log("7) Miktarı aşan eşzamanlı teslim (kalan 6; iki kullanıcı 5'er) — fazla adet sipariş kaydında görünür (v1.742.3: kırpılmaz)");
+  console.log("7) Yönetici onaylı fazla eşzamanlı teslim — fazla adet kırpılmadan kayıtta görünür");
   const yG = teslimYuku({ adet: 5, ekrandaKarsilanan: 14, istek: IST("G"), stok, cariler });
   const yH = teslimYuku({ adet: 5, ekrandaKarsilanan: 14, istek: IST("H"), stok, cariler });
+  // F3: karşılanan hesabının fazlayı kırpmaması, izinli istisna ile sınanır.
+  yG.fazlaTeslimOnayi = yH.fazlaTeslimOnayi = { onay: true, gerekce: "R1: onaylı fazla miktar kırpılmamalı" };
   const [rG, rH] = await Promise.all([rpcAyri("fis_kes", yG, { bekleSn: 0.5 }), (async () => { await uyu(150); return rpcAyri("fis_kes", yH); })()]);
   const d7 = durum();
   console.log(`    SONUÇ → teslim edilen: ${d7.teslimEdilen} · karşılanan: ${d7.karsilanan} (miktar ${d7.miktar})`);
   bekle("7: iki fiş, teslim 24, karşılanan 24 (fazla 4 kayıtta)", [rG.ok, rH.ok, d7.teslimEdilen, d7.karsilanan, d7.tutarli], [true, true, 24, 24, true]);
 
-  // BİLİNÇLİ DAVRANIŞ DEĞİŞİKLİĞİ (v1.743.0, F1 — kullanıcı onayı 1 Kasım, VERI-TUTARLILIGI-F0.md § 8): 1.742.2 / 1.742.3'te
-  // bu senaryo "eski yükün mutlak değeri yazılır (1)" bekliyordu — kalemde 24 teslim varken karşılananın 1 olması R1 hatasının
-  // KENDİSİ (stok 25 / karşılanan 1). F1'de karşılananın tek yazarı sunucu: eski yük yine KABUL edilir, karşılanan hareketlerden
-  // hesaplanır (24 + 1 = 25) ve değişmez tutar.
-  console.log("8) GERİYE UYUM: eski uygulama (yalnız mutlak karşılanan, `artis` yok) kabul edilir; karşılanan hareketlerden (v1.743.0)");
+  // F3: eski istemci mutlak karşılananı ya da onaysız fazlayı yazamaz; izinli 24 teslim korunur.
+  console.log("8) Eski istemcinin onaysız fazla yükü reddedilir; izinli geçmiş karşılanan korunur");
   const yEski = teslimYuku({ adet: 1, ekrandaKarsilanan: 0, istek: IST("ESKI"), stok, cariler });
   delete yEski.alt.siparis_kalemleri.artis;
   const rEski = await rpcAyri("fis_kes", yEski);
   const d8 = durum();
-  bekle("8: eski yük kabul edildi, karşılanan = teslim edilen (25) — eski ekranın mutlak 1'i yazılmadı", [rEski.ok, d8.karsilanan, d8.teslimEdilen, d8.tutarli], [true, 25, 25, true]);
+  // F3: eski istemci onaysız fazlayı gönderse de veri değişmez; 24'lük izinli geçmiş korunur.
+  bekle("8: eski onaysız fazla yük reddedildi, karşılanan = teslim edilen (24)", [rEski.ok, d8.karsilanan, d8.teslimEdilen, d8.tutarli], [false, 24, 24, true]);
 
   // Temizlik YOK (F2, 2 Kasım): teslim geçmişi olan kalem / sipariş silinemez (KR002) — eskiden burada siliniyordu ve fişlerin
   // hareketleri sahipsiz kalıyordu. Her koşu kendi kimlikleriyle çalışır (yukarıda), artakalan kayıt sonraki koşuyu etkilemez.

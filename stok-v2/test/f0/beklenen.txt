@@ -24,8 +24,8 @@ D3.miktar-teslim-alti YESIL
 D3.miktar-teslim-ustu YESIL
 D2.denetim-yakalar YESIL
 # D4 — miktarı aşan teslim (t-fazla.js; alış satırları gözlem)
-D4.satis-eszamanli KIRMIZI
-D4.satis-onaysiz-fazla KIRMIZI
+D4.satis-eszamanli YESIL
+D4.satis-onaysiz-fazla YESIL
 D4.satis-tam-sinir YESIL
 D4.denetim-yakalar YESIL
 # D5 — sipariş iptali ve durum (t-iptal.js)

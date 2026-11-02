@@ -1,0 +1,32 @@
+  ✓ 0: kurallar açık (canlının 19. adımdan sonraki hâli)
+1) İki kullanıcı aynı kaleme aynı anda 5'er adet (ikisinin ekranında karşılanan 0)
+    istemcinin gönderdiği kalem bilgisi (A): {"satirlar":[{"id":"k-r1-mvyz4ib2","karsilanan":5}],"artis":[{"id":"k-r1-mvyz4ib2","miktar":5}]}
+    A: SF-2611026455   B: SF-2611026456
+    SONUÇ → stok hareketleri toplamı: 10 adet çıkış · kalemin karşılananı: 10 · geçerli fiş: 2
+  ✓ 1: iki fiş de kesildi
+  ✓ 1: stoktan 10 adet çıktı
+  ✓ 1: kalemin karşılananı 10 (DEĞİŞMEZ: karşılanan = teslim edilen)
+2) Aynı istek SIRALI tekrar (yanıt kayboldu, istemci yeniden gönderdi)
+  ✓ 2: ilk numara döndü (zatenVar), ikinci fiş yok, karşılanan artmadı
+3) Aynı istek EŞZAMANLI iki kez (çift tıklama iki sekmede)
+    1. çağrı: {"fisNo":"SF-2611026457","kalemler":[{"id":"k-r1-mvyz4ib2","karsilanan":12}],"zatenVar":false,"bagliFisNo":null,"karsilananDuzeltme":[]}
+    2. çağrı: {"fisNo":"SF-2611026457","kalemler":[{"id":"k-r1-mvyz4ib2","karsilanan":12}],"zatenVar":true,"bagliFisNo":null,"karsilananDuzeltme":[]}
+  ✓ 3: tek fiş, karşılanan +2 (12), stok çıkışı 12, değişmez tutuyor
+  ✓ 3: ikinci kopya hata değil, ilk numarayı aldı (zatenVar)
+4) Ağ kesintisi: sunucu bağlantısı işlem ortasında düşer → hiçbir şey yazılmaz; yeniden gönderim bir kez işlenir
+  ✓ 4: kesilen işlem geri alındı (fiş yok, karşılanan 12, sayaç değişmedi)
+  ✓ 4: yeniden gönderim bir kez işlendi (15), üçüncü gönderim zatenVar
+5) İşlem geri alma: satırlardan biri hatalı (olmayan ürün) → fiş, satırlar, karşılanan, sayaç — hiçbiri yazılmaz
+  ✓ 5: reddedildi, hiçbir şey değişmedi
+6) Teslim İPTALİ (A'nın fişi geri alınır) ile yeni teslim (F, 4 adet) aynı anda — ikisinin ekranında karşılanan 15
+    iptal: tamam   F: SF-2611026459
+    SONUÇ → teslim edilen (geçerli): 14 · karşılanan: 14
+  ✓ 6: geçerli teslim 14 (15 − 5 + 4), karşılanan 14
+6b) Aynı iptal TEKRAR gelir (yanıtı kaybolmuştu) — karşılanan ikinci kez düşmemeli
+  ✓ 6b: zatenIptal, karşılanan 14 kaldı
+7) Yönetici onaylı fazla eşzamanlı teslim — fazla adet kırpılmadan kayıtta görünür
+    SONUÇ → teslim edilen: 24 · karşılanan: 24 (miktar 20)
+  ✓ 7: iki fiş, teslim 24, karşılanan 24 (fazla 4 kayıtta)
+8) Eski istemcinin onaysız fazla yükü reddedilir; izinli geçmiş karşılanan korunur
+  ✓ 8: eski onaysız fazla yük reddedildi, karşılanan = teslim edilen (24)
+── R1 temiz ──

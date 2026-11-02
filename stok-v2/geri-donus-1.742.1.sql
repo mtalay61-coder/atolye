@@ -624,3 +624,5 @@ drop function if exists public.fis_kalem_idleri(jsonb);
 drop function if exists public.fis_alt_karsilanansiz(jsonb);
 drop function if exists public.fis_kalem_artis(jsonb);
 drop function if exists public.fis_alt_artissiz(jsonb);
+
+drop function if exists public.fis_satis_teslim_koru(jsonb);

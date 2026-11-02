@@ -14,7 +14,7 @@
 //   6) Fiş sistemi KAPALIYKEN (v2 modülleri etkin değil) mutlak yazma bugünkü gibi çalışır
 const { execFileSync, spawn } = require("child_process");
 const DB = process.env.STOK_V2_DB || "atolye_stok_v2_sinama";
-const psql = (sql) => execFileSync("psql", ["-X", "-q", "-At", "-v", "ON_ERROR_STOP=1", "-d", DB], { input: sql, encoding: "utf8" }).trim();
+const psql = (sql) => execFileSync("psql", ["-X", "-q", "-At", "-v", "ON_ERROR_STOP=1", "-d", DB], { input: sql, encoding: "utf8", maxBuffer: 16 * 1024 * 1024 }).trim();
 function rpcAyri(ad, p, { bekleSn = 0 } = {}) {
   const sql = `begin;
     select set_config('request.jwt.claims', '{"email":"ali@atolye.local","role":"authenticated"}', true);
@@ -81,8 +81,10 @@ const kalemSatiri = ({ sip, kal }, alanlar) => ({ siparis_kalemleri: { satirlar:
   console.log("3) 20'lik kaleme eşzamanlı 24 teslim (önce 14, sonra iki kullanıcı 5'er; ikisinin ekranında 14)");
   const s3 = siparisAc(3, 20);
   await rpcAyri("fis_kes", teslimYuku(s3, `b-${K}-3a`, 14, 0));
-  const [g, h] = await Promise.all([rpcAyri("fis_kes", teslimYuku(s3, `b-${K}-3g`, 5, 14), { bekleSn: 0.5 }),
-    (async () => { await uyu(150); return rpcAyri("fis_kes", teslimYuku(s3, `b-${K}-3h`, 5, 14)); })()]);
+  // F3: bu hesap testi bilerek fazla teslim kurar; artık açık yönetici onayı/gerekçe zorunlu.
+  const onay = (p) => ({ ...p, fazlaTeslimOnayi: { onay: true, gerekce: "R1b: onaylı fazla miktar kırpılmamalı" } });
+  const [g, h] = await Promise.all([rpcAyri("fis_kes", onay(teslimYuku(s3, `b-${K}-3g`, 5, 14)), { bekleSn: 0.5 }),
+    (async () => { await uyu(150); return rpcAyri("fis_kes", onay(teslimYuku(s3, `b-${K}-3h`, 5, 14))); })()]);
   const d3 = kalem(s3.kal);
   console.log(`    SONUÇ → stok hareketleri: ${stokToplam(s3.kal)} · karşılanan: ${d3.karsilanan} (miktar 20)`);
   bekle("3: iki fiş, stok 24, karşılanan 24 — fazla 4 sipariş kaydında görünüyor", [g.ok, h.ok, stokToplam(s3.kal), d3.karsilanan], [true, true, 24, 24]);

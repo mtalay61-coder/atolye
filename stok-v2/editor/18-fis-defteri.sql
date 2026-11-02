@@ -207,6 +207,16 @@ end $$;
 create or replace function public.fis_baslik_koru() returns trigger
 language plpgsql as $$
 begin
+  if tg_op='DELETE' then
+    if old.ek ? 'fazlaTeslimOnayi' then
+      raise exception 'Fazla teslim onay kaydı silinemez (%)',old.id using errcode='KR007';
+    end if;
+  end if;
+  if tg_op='UPDATE' then
+    if (new.ek -> 'fazlaTeslimOnayi') is distinct from (old.ek -> 'fazlaTeslimOnayi') then
+      raise exception 'Fazla teslim onay kaydı değiştirilemez (%)',old.id using errcode='KR007';
+    end if;
+  end if;
   if not public.fis_kural_aktif() then
     return case when tg_op = 'DELETE' then old else new end;
   end if;
@@ -453,6 +463,68 @@ language sql stable security definer set search_path = public as $$
     from public.siparis_kalemleri k where k.id::text = any(coalesce(p_idler, '{}'::text[]))
 $$;
 
+create or replace function public.fis_satis_teslim_koru(p jsonb) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare
+  fazla jsonb;
+  eposta text := lower(coalesce(auth.jwt() ->> 'email', ''));
+  yonetici boolean;
+  gerekce text := btrim(coalesce(p -> 'fazlaTeslimOnayi' ->> 'gerekce', ''));
+begin
+  if exists(select 1 from (
+    select x from jsonb_array_elements(public.stk_dizi(p -> 'stok' -> 'satirlar')) x
+    union all select x from jsonb_array_elements(public.stk_dizi(p -> 'bagli' -> 'stok' -> 'satirlar')) x) q
+    where (x ->> 'miktar')::numeric::text in ('NaN','Infinity','-Infinity')) then
+    raise exception 'Sonlu olmayan teslim miktarı kullanılamaz' using errcode='KR007';
+  end if;
+  p := jsonb_set(p, '{fis,ek}', (case when jsonb_typeof(p -> 'fis' -> 'ek')='object' then p -> 'fis' -> 'ek' else '{}'::jsonb end) - 'fazlaTeslimOnayi');
+  if jsonb_typeof(p -> 'bagli' -> 'fis')='object' then
+    p := jsonb_set(p, '{bagli,fis,ek}', (case when jsonb_typeof(p -> 'bagli' -> 'fis' -> 'ek')='object' then p -> 'bagli' -> 'fis' -> 'ek' else '{}'::jsonb end) - 'fazlaTeslimOnayi');
+  end if;
+  with gelen as (
+    select x ->> 'kalemId' as id, sum(greatest(-coalesce((x ->> 'miktar')::numeric,0),0)) as adet
+      from (select x from jsonb_array_elements(public.stk_dizi(p -> 'stok' -> 'satirlar')) x
+        union all select x from jsonb_array_elements(public.stk_dizi(p -> 'bagli' -> 'stok' -> 'satirlar')) x) q
+     where coalesce(x ->> 'kalemId','')<>'' group by x ->> 'kalemId'
+  ), yeni as (
+    select distinct on (x ->> 'id') x from jsonb_array_elements(public.stk_dizi(p -> 'alt' -> 'siparis_kalemleri' -> 'satirlar')) with ordinality a(x,n)
+     order by x ->> 'id',n desc
+  ), kalem as (
+    select k.id::text as id,k.siparis_id::text as siparis,k.miktar,coalesce(k.karsilanan,0) as karsilanan from public.siparis_kalemleri k join gelen g on g.id=k.id::text
+    union all
+    select x ->> 'id',x ->> 'siparis_id',coalesce((x ->> 'miktar')::numeric,0),0 from yeni
+     where not exists(select 1 from public.siparis_kalemleri k where k.id::text=x ->> 'id')
+  ), hesap as (
+    select g.id,g.adet,k.miktar,greatest(k.karsilanan,coalesce((select sum(-h.miktar) from public.stk_hareket h
+      join public.stk_fis f on f.id=h.fis_id where not h.iptal and not f.iptal
+        and (h.kalem_id=g.id or (h.kalem_id is null and h.gecmis_kalem_id=g.id))),0),0) as onceki
+      from gelen g join kalem k on k.id=g.id join public.siparisler s on s.id::text=k.siparis
+     where s.tip is distinct from 'Alış' and g.adet>0
+  ) select jsonb_agg(jsonb_build_object('kalem',id,'istenen',adet,'onceki',onceki,'miktar',miktar) order by id)
+      into fazla from hesap where onceki+adet>coalesce(miktar,0) or miktar::text in ('NaN','Infinity','-Infinity');
+  if fazla is null then return p; end if;
+  select exists(select 1 from public.tanimlar t cross join lateral jsonb_array_elements(coalesce(t.veri -> 'kullanicilar','[]'::jsonb)) k
+    where t.id='tekil' and k ->> 'rol'='Yönetici' and eposta<>'' and eposta=case when coalesce(k ->> 'eposta','')<>'' then lower(k ->> 'eposta')
+      else regexp_replace(lower(translate(coalesce(k ->> 'kullaniciAdi',''),'ÇĞIİÖŞÜçğıöşü','CGIIOSUcgiosu')),'[^a-z0-9._-]','','g')||'@atolye.local' end) into yonetici;
+  if not yonetici or p -> 'fazlaTeslimOnayi' -> 'onay' is distinct from 'true'::jsonb
+     or jsonb_typeof(p -> 'fazlaTeslimOnayi' -> 'gerekce') is distinct from 'string' or gerekce='' then
+    raise exception 'Satış siparişi miktarı aşılıyor — yönetici onayı ve gerekçe gerekir: %',fazla using errcode='KR007';
+  end if;
+  if exists(select 1 from jsonb_array_elements(fazla) a where a ->> 'istenen' in ('NaN','Infinity','-Infinity')
+    or a ->> 'onceki' in ('NaN','Infinity','-Infinity') or a ->> 'miktar' in ('NaN','Infinity','-Infinity')) then
+    raise exception 'Sonlu olmayan teslim miktarı kullanılamaz' using errcode='KR007';
+  end if;
+  p := jsonb_set(p,'{stok,satirlar}',coalesce((select jsonb_agg(case when exists(select 1 from jsonb_array_elements(fazla) a where a ->> 'kalem'=x ->> 'kalemId')
+    and (x ->> 'miktar')::numeric<0 then x||'{"fazlaGonderim":true}'::jsonb else x end order by n)
+    from jsonb_array_elements(public.stk_dizi(p -> 'stok' -> 'satirlar')) with ordinality q(x,n)),'[]'::jsonb));
+  if jsonb_typeof(p -> 'bagli' -> 'stok')='object' then
+    p := jsonb_set(p,'{bagli,stok,satirlar}',coalesce((select jsonb_agg(case when exists(select 1 from jsonb_array_elements(fazla) a where a ->> 'kalem'=x ->> 'kalemId')
+      and (x ->> 'miktar')::numeric<0 then x||'{"fazlaGonderim":true}'::jsonb else x end order by n)
+      from jsonb_array_elements(public.stk_dizi(p -> 'bagli' -> 'stok' -> 'satirlar')) with ordinality q(x,n)),'[]'::jsonb));
+  end if;
+  return jsonb_set(p,'{fis,ek,fazlaTeslimOnayi}',jsonb_build_object('onaylayan',eposta,'gerekce',gerekce,'zaman',now(),'kalemler',fazla));
+end $$;
+
 create or replace function public.fis_kes(p jsonb) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare
@@ -519,6 +591,7 @@ begin
       using errcode = 'KR003';
   end if;
 
+  p := public.fis_satis_teslim_koru(p);
   fid := public.fis_tek_kes(p -> 'fis', p -> 'stok', p -> 'cari', p -> 'kasa', v_istek);
   if jsonb_typeof(p -> 'bagli') = 'object' then
     bid := public.fis_tek_kes(p -> 'bagli' -> 'fis', p -> 'bagli' -> 'stok', p -> 'bagli' -> 'cari', p -> 'bagli' -> 'kasa', v_istek || ':bagli', fid);
@@ -861,6 +934,7 @@ begin
   revoke all on function public.fis_kalem_hesap(text) from public, anon, authenticated;
   revoke all on function public.fis_kalem_hareket_var(text) from public, anon, authenticated;
   revoke all on function public.fis_kalem_durumlari(text[]) from public, anon, authenticated;
+  revoke all on function public.fis_satis_teslim_koru(jsonb) from public, anon, authenticated;
   foreach t in array array['fis_kes(jsonb)', 'fis_iptal(jsonb)', 'fis_bilgi(jsonb)', 'fis_bag_coz(jsonb)', 'stk_renk_tasi(jsonb)'] loop
     execute 'revoke all on function public.' || t || ' from public, anon';
     execute 'grant execute on function public.' || t || ' to authenticated';

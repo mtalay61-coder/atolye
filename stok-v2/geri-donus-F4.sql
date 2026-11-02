@@ -134,4 +134,28 @@ begin
   perform set_config('fis.kapi', '', true);
   return jsonb_build_object('stok', n_stok, 'cari', n_cari, 'zincir', n_zincir, 'kalemler', public.fis_kalem_durumlari(v_idler));
 end $$;
+create or replace function public.fis_baslik_koru() returns trigger
+language plpgsql as $$
+begin
+  if not public.fis_kural_aktif() then
+    return case when tg_op = 'DELETE' then old else new end;
+  end if;
+  if tg_op = 'DELETE' then
+    raise exception 'Fiş silinmez — iptal edin (%)', old.id using errcode = '42501';
+  end if;
+  if not public.fis_kapi_acik() then
+    raise exception 'Fiş yalnız fis_kes ile kesilir (%) — eski yazma yolu kapalı', new.id using errcode = '42501';
+  end if;
+  if tg_op = 'UPDATE' then
+    if (to_jsonb(new) - 'iptal' - 'iptal_zamani' - 'iptal_eden' - 'iptal_sebebi' - 'aciklama' - 'ek' - 'bagli_fis')
+       is distinct from (to_jsonb(old) - 'iptal' - 'iptal_zamani' - 'iptal_eden' - 'iptal_sebebi' - 'aciklama' - 'ek' - 'bagli_fis') then
+      raise exception 'Kesilmiş fiş değiştirilemez — iptal edip yeniden kesin (%)', new.id using errcode = '42501';
+    end if;
+    if old.iptal and not new.iptal then
+      raise exception 'İptal edilmiş fiş geri açılamaz — yeni fiş kesin (%)', new.id using errcode = '42501';
+    end if;
+  end if;
+  return new;
+end $$;
+drop function if exists public.fis_satis_teslim_koru(jsonb);
 commit;

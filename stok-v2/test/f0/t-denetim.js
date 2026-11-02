@@ -82,7 +82,10 @@ const serbestFis = (istek, miktar, ek = {}) => T.rpc("fis_kes", { istek, fis: { 
     }],
     ["DN.isaretli-fazla", "20'lik kaleme işaretli 25", { D4b_isaretli_fazla_teslim: 1 }, () => {
       const s = sip("h10", [T.kalemObj(`${ON}-h10k`, 20, 0)]);
-      T.rpc("fis_kes", T.teslimYuku({ s, kalemId: `${ON}-h10k`, adet: 25, ekran: 0, istek: `${ON}-h10a` })); durumYaz(s, "Tamamlandı");
+      const r=T.rpc("fis_kes",{...T.teslimYuku({ s, kalemId: `${ON}-h10k`, adet: 25, ekran: 0, istek: `${ON}-h10a` }),
+        fazlaTeslimOnayi:{onay:true,gerekce:"F3 denetim: izinli fazla fixture"}});
+      if(!r.ok)throw new Error(`Fazla teslim denetim fixture reddedildi: ${r.hata}`);
+      durumYaz(s, "Tamamlandı");
     }],
     // F1.1 (2 Kasım, bilerek değişti): bağ geçmiş sütunlara taşınır → teslim geçmişi kalemde kalır; artık hayalet DEĞİL, D5a bilgi.
     // 1.743.0'da beklenen { D5a: 1, D1b: 1 } idi (bağ kopuyor, karşılanan hayalet kalıyordu).

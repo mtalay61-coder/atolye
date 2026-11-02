@@ -186,7 +186,10 @@ const ekranS = (s, kalemler, durum = "Kısmi Teslim") => ({ ...s, durum, kalemle
   {   // fazla teslimli kalem (20 sipariş, 25 teslim — fazla işaretli): miktar DEĞİŞMEDEN başka alan düzenlenebilmeli
     const on = `${ON}-qf`, A = `${on}A`;
     const s = F.siparisKur(F.sipObj(on, [F.kalemObj(A, 20, 0)]));
-    teslim(s, A, 25, 0, `${on}i1`);
+    // F3: geçmişte fazla teslimi olan kalemin fiyatını sınamak için izinli fixture kurulur.
+    const fazla = F.rpc("fis_kes", { ...F.teslimYuku({ s, kalemId: A, adet: 25, ekran: 0, istek: `${on}i1` }),
+      fazlaTeslimOnayi: { onay: true, gerekce: "F2 mevcut fazla teslimli kalem düzenleme fixture" } });
+    if (!fazla.ok) throw new Error(`F2 fazla fixture kurulamadı: ${fazla.hata}`);
     const ekran = ekranS(s, [F.kalemObj(A, 20, kd(A).karsilanan)], "Tamamlandı");
     const y = await yaz([ekran], [{ ...ekran, kalemler: [F.kalemObj(A, 20, kd(A).karsilanan, { birimFiyat: 130 })] }]);
     const fiyat = Number(psql(`select fiyat from public.siparis_kalemleri where id = '${A}';`));
