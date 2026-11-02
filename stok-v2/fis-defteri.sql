@@ -342,25 +342,40 @@ begin
 end $$;
 
 -- İptal edilen siparişe yeni operasyon bağı kurulamaz. SHARE, iptal durum yazmasıyla sıralar.
+-- Bir satırın işaret ettiği siparişler (bağ hedefleri). Tetikleyici ve alt_yaz ön kilidi AYNI tanımı kullanır: ön kilit tam
+-- olarak tetikleyicinin sonra isteyeceği satırları alır (eksik kalırsa kilit tekil'den sonraya düşer).
+create or replace function public.siparis_bag_hedefleri(p_tablo text, j jsonb) returns text[]
+language sql stable security definer set search_path=public as $$
+ select coalesce(array_agg(distinct r order by r) filter (where coalesce(r,'')<>''), '{}'::text[]) from unnest(case
+  when p_tablo='stok_rezervasyonlari' then array[j->>'siparis_id']
+  when p_tablo='uretim' then array[j->>'rezervasyon_siparis_id',j->'ek'->>'rezervasyonSiparisId']
+  when p_tablo='lst_kayit' and j->>'tablo'='koliler' then array[j->'veri'->>'siparisId']
+  when p_tablo='siparisler' then
+   array[j->'ek'->>'rezervasyonSiparisId']||array(select jsonb_array_elements_text(public.stk_dizi(j->'ek'->'rezervasyonSiparisIdleri')))
+  when p_tablo='siparis_kalemleri' then
+   array(select r->>'siparisId' from jsonb_array_elements(public.stk_dizi(j->'rezervasyonlar')) r)
+    ||array(select id::text from public.siparisler where siparis_no=j->'planlama'->>'referansNo' and tip='Alış')
+  else '{}'::text[] end) r
+$$;
+revoke all on function public.siparis_bag_hedefleri(text,jsonb) from public,anon,authenticated;
+
+-- YALNIZ YENİ BAĞ denetlenir (1.744.3 incelemesi, 2 Kasım): UPDATE'te eski satırda zaten olan hedef yeniden denetlenmez.
+-- Önce her UPDATE bütün bağları denetliyordu: koruma kurulmadan önce iptal edilmiş siparişe bağlı eski kaydın aşaması / fiyatı
+-- bile değiştirilemiyordu (KR006); her kaydetmede bağlı siparişlere FOR SHARE alınıyordu — alt_yaz satır satır yazdığından
+-- bu kilit tekil'den SONRA düşüp başlık düzenlemesiyle kilitleniyordu (doğal 100'de 31). Var olan eski bağ denetimde görünür.
 create or replace function public.siparis_canli_bag_koru() returns trigger
 language plpgsql security definer set search_path=public as $$
 declare
- j jsonb:=to_jsonb(new);
- refs text[]:='{}';
+ refs text[];
  sid text;
  durum text;
 begin
  if auth.jwt() is null then return new; end if;
- if tg_table_name='stok_rezervasyonlari' then refs:=array[j->>'siparis_id'];
- elsif tg_table_name='uretim' then refs:=array[j->>'rezervasyon_siparis_id',j->'ek'->>'rezervasyonSiparisId'];
- elsif tg_table_name='lst_kayit' and j->>'tablo'='koliler' then refs:=array[j->'veri'->>'siparisId'];
- elsif tg_table_name='siparisler' then
-  refs:=array[j->'ek'->>'rezervasyonSiparisId']||array(select jsonb_array_elements_text(public.stk_dizi(j->'ek'->'rezervasyonSiparisIdleri')));
- elsif tg_table_name='siparis_kalemleri' then
-  refs:=array(select r->>'siparisId' from jsonb_array_elements(public.stk_dizi(j->'rezervasyonlar')) r)
-    ||array(select id::text from public.siparisler where siparis_no=j->'planlama'->>'referansNo' and tip='Alış');
+ refs:=public.siparis_bag_hedefleri(tg_table_name,to_jsonb(new));
+ if tg_op='UPDATE' then
+  refs:=array(select unnest(refs) except select unnest(public.siparis_bag_hedefleri(tg_table_name,to_jsonb(old))));
  end if;
- for sid in select distinct r from unnest(refs) r where coalesce(r,'')<>'' order by r loop
+ for sid in select r from unnest(refs) r order by r loop
   select s.durum into durum from public.siparisler s where s.id::text=sid for share;
   if not found or durum='İptal' then
    raise exception 'İptal edilmiş veya silinmiş siparişe operasyon bağı kurulamaz (sipariş %)',sid using errcode='KR006';
@@ -1237,6 +1252,16 @@ begin
           union select k.siparis_id::text from public.siparis_kalemleri k
            where k.id::text in (select x ->> 'id' from jsonb_array_elements(satirlar) x union select jsonb_array_elements_text(public.stk_dizi(d -> 'sil'))))
         order by s.id for key share;
+      -- YENİ BAĞ HEDEFLERİ (1.744.3 düzeltmesi): siparis_canli_bag_koru yeni planlama / rezervasyon hedefine FOR SHARE ister.
+      -- Satırlar tek tek yazıldığı için bu kilit ilk satırdan (tekil'den) SONRA düşüyor, hedef siparişin başlık düzenlemesiyle
+      -- (başlık satırı → tekil) ters sıraya giriyordu. Aynı satırlar burada, ilk yazmadan önce, kimlik sırasıyla alınır.
+      -- Kalem satırlarından ÖNCE: fis_bag_coz da önce siparişi, sonra kalemleri kilitler.
+      perform 1 from public.siparisler s where s.id::text in (
+          select r from jsonb_array_elements(satirlar) x
+            left join public.siparis_kalemleri k on k.id::text = x ->> 'id',
+            lateral unnest(public.siparis_bag_hedefleri('siparis_kalemleri', coalesce(to_jsonb(k), '{}'::jsonb) || x)) r
+           where r <> all(public.siparis_bag_hedefleri('siparis_kalemleri', coalesce(to_jsonb(k), '{}'::jsonb))))
+        order by s.id for share;
       perform 1 from public.siparis_kalemleri k
        where k.id::text in (select x ->> 'id' from jsonb_array_elements(satirlar) x union select jsonb_array_elements_text(public.stk_dizi(d -> 'sil')))
        order by k.id for update;

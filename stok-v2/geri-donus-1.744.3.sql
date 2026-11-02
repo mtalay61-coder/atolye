@@ -16,6 +16,7 @@ drop view if exists public.siparisler_okuma;
 drop function if exists public.siparis_durum_hesap(text,text);
 drop function if exists public.stk_istemci_koru();
 drop function if exists public.siparis_canli_bag_koru();
+drop function if exists public.siparis_bag_hedefleri(text,jsonb);
 drop function if exists public.fis_iptal_toplu(jsonb);
 create or replace function public.fis_kural_aktif() returns boolean
 language sql stable security definer set search_path = public as $$
