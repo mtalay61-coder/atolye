@@ -16,5 +16,9 @@ node stok-v2/test/f3/t-satis-sinir.js
 node stok-v2/test/f3/t-satis-yaris.js
 node stok-v2/test/f8/t-renk-kilit.js
 node stok-v2/test/f8/t-renk-dogal.js
+# 1.744.3 incelemesi düzeltmeleri: bağ koruması ∥ başlık kilit sırası, sürüm kapısı / sunucu fonksiyonu, eski bağ
+node stok-v2/test/duzeltme/t-bag-kilit.js
+node stok-v2/test/duzeltme/t-servis-kapi.js
+node stok-v2/test/duzeltme/t-eski-bag.js
 F2_N=100 F2_ZORLA=3 bash stok-v2/test/f2/kos-f2.sh
 echo 'BÜTÜNLÜK ADAYI: bütün süreçler 0'
