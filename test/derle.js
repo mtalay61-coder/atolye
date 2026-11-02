@@ -43,7 +43,7 @@ const DISA_AKTAR = [
   "fiyatBul",   // fiyat çözümleme: cari/renk/beden kırılımı (18 Eylül)
   "useFisDefteriYazma",   // fiş defteri yazma kancası — bayat okuma senaryosu (22 Eylül)
   "karZararHesapla", "iscilikDefteri", "fisinDefteri", "hammaddeBirimFiyati", "mamulDeposuDurumu", "faturaKur", "faturaDogrula", "faturaEngelVarMi", "ublTrXml", "efaturaBirimKodu", "faturaNoBicimi", "sonrakiFaturaSirasi", "faturaSeriGecerliMi", "ettnUret", "efaturaVarsayilanSenaryo", "faturaTutarYaziyla", "faturaSatirlari", "tumFisleriTopla", "sonAlisMaliyeti", "aylarOnce", "gunKuru",      // işçilik yönü senaryosu: rapor işçiliği saymaya devam ediyor mu (22 Eylül)
-  "useCopKutusu", "yazimiIzle", "tabloYaz", "kuralReddiOku", "incelemeOku", "incelemeEkle", "incelemeSil", "incelemedekiSatirlar", "bekleyenKalemleriBirlestir", "bulutHatasiAciklamasi",   // F2 kalıcı ret (v1.744.0)   // yazma hatası senaryosu (22 Eylül, v1.410.0)
+  "useCopKutusu", "yazimiIzle", "tabloYaz", "kuralReddiOku", "incelemeOku", "incelemeEkle", "incelemeSil", "incelemedekiSatirlar", "bekleyenKalemleriBirlestir", "bulutHatasiAciklamasi", "fazlaTeslimKalemleri", "fazlaTeslimOnayiAl", "fisKalemlerininKalani",   // F2 kalıcı ret (v1.744.0)   // yazma hatası senaryosu (22 Eylül, v1.410.0)
   "code128Cubuklar", "code128SatirdanCoz", "kameraKaresiCoz",   // kamera çözücüsü (22 Eylül)
   "fisYaz", "fisGeriAl",
   "stokYuvarla", "paraCevirGenel", "fisNoUret", "fiseAitCariHareketiMi",

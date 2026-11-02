@@ -84,6 +84,55 @@ function fisKesAltFarki(tablo, cocukTablo, eski, yeni) {
   return { satirlar, sil };
 }
 
+// SATIŞ SİPARİŞİ FAZLASI — YÖNETİCİ ONAYI (v1.744.4, F3; kullanıcı kararı 2 Kasım: "önce onay düğmesi"). 1.744.3 sunucusu
+// (fis_satis_teslim_koru) satış siparişinin miktarını aşan teslimi yalnız `fazlaTeslimOnayi: { onay: true, gerekce }` ile ve
+// çağıran tanımlardaki Yönetici kullanıcıysa kabul eder; onay kaydını (gerçek e-posta, gerekçe, zaman, kalemler) fişe kendisi
+// yazar. Arayüzde onay yolu yoktu: fazla teslim pratikte HİÇ yapılamıyordu. Burası yalnız istemci tarafı: kim onaylayabilir,
+// gerekçe sorulur; yetkinin son sözü sunucuda (istemcideki rol beyanına güvenmez). Alış siparişi bu kurala girmez (sunucu da
+// sınamaz). 19 Eylül kuralı ("sevkiyat fazla yapılamasın") YÖNETİCİ DIŞINDA aynen geçerli.
+// Saf: satış siparişini aşan satırlar → [{ ad, renk, beden, fazla }]. `kalemler`: fiş kalemleri (`kalemId`, `miktar`, `kalan`
+// ya da `fazlaGonderim`); `siparisBul(kalem)` kalemin siparişini döner (tipi için).
+function fazlaTeslimKalemleri(kalemler, siparisBul) {
+  return (kalemler || []).filter((k) => {
+    if (!k || !k.kalemId || !(k.miktar > 0)) return false;
+    const fazla = k.kalan != null ? k.miktar > k.kalan : !!k.fazlaGonderim;
+    if (!fazla) return false;
+    const s = siparisBul(k);
+    return !!s && s.tip !== "Alış";
+  }).map((k) => ({ ad: k.urunAd, renk: k.renk, beden: k.beden, fazla: k.kalan != null ? stokYuvarla(k.miktar - k.kalan) : null }));
+}
+// Saf: fiş kalemlerini sipariş kalemine göre toplar ve KAYIT ANINDAKİ kalanla eşler (tek ekran fişi — 255 / 089). Satırın
+// "sipariş fazlası" işareti yalnız siparişten yüklerken kurulur; miktar kutusu sonra elle büyütülünce işaret güncellenmiyordu
+// (senaryo-fazla-onay: 2 çiftlik kaleme 3 yazıldı, işaretsiz gitti). Sunucu kuralı gibi kalemin toplamına bakılır.
+function fisKalemlerininKalani(kalemler, siparisler) {
+  const m = new Map();
+  (kalemler || []).forEach((k) => {
+    if (!k || !k.kalemId) return;
+    const s = (siparisler || []).find((x) => (k.siparis && k.siparis.id === x.id) || (x.kalemler || []).some((y) => y.id === k.kalemId));
+    const sk = s && (s.kalemler || []).find((y) => y.id === k.kalemId);
+    if (!sk) return;
+    const o = m.get(k.kalemId) || { kalemId: k.kalemId, _siparisId: s.id, urunAd: sk.urunAd || k.urunAd, renk: sk.renk, beden: sk.beden, miktar: 0,
+      kalan: stokYuvarla((Number(sk.miktar) || 0) - (Number(sk.karsilanan) || 0)) };
+    o.miktar = stokYuvarla(o.miktar + Math.abs(Number(k.miktar) || 0));
+    m.set(k.kalemId, o);
+  });
+  return [...m.values()];
+}
+// Onay adımı. Döner: `undefined` fazla yok (devam), `null` durdu (kullanıcı uyarıldı / vazgeçti), `{ onay, gerekce }` onaylandı.
+// `sor`: gerekçe penceresi (varsayılan window.prompt — uygulamanın öteki gerekçe soruları gibi; testte değiştirilir).
+function fazlaTeslimOnayiAl(fazlalar, aktifKullanici, showToast, sor = (m) => window.prompt(m, "")) {
+  if (!fazlalar || fazlalar.length === 0) return undefined;
+  const ozet = fazlalar.map((f) => `${olcuMetni([f.ad, f.renk, f.beden], " ")}${f.fazla != null ? `: ${f.fazla} fazla` : ""}`).join(" · ");
+  if (!(aktifKullanici && aktifKullanici.rol === "Yönetici")) {
+    showToast(`Satış siparişi aşılıyor — ${ozet}. Sipariş fazlası yalnız yönetici onayıyla teslim edilir.`);
+    return null;
+  }
+  const g = sor(`Satış siparişi aşılıyor:\n${ozet}\n\nYönetici onayıyla fazla teslim edilecek. Gerekçeyi yazın (fişe kaydedilir; boş bırakırsanız işlem yapılmaz):`);
+  const gerekce = String(g == null ? "" : g).trim();
+  if (!gerekce) { showToast("Fazla teslim yapılmadı — gerekçe girilmedi"); return null; }
+  return { onay: true, gerekce: gerekce.slice(0, 500) };
+}
+
 // Gönderici. Aynı `istek` ile tekrar çağrılabilir (ağ yeniden denemesi): sunucu ikinci kez yazmaz, ilk numarayı döner.
 // İSTEMCİ KİMLİĞİ (v1.743.0, F1 — VERI-TUTARLILIGI-F0.md § 1 / F7): her fiş isteği sürümünü taşır. Sunucu bugün yalnız kabul
 // eder (zorlama F7'de, `stk_ayar.min_istemci_surum`); eski sunucu bilinmeyen alanı yok sayar — iki yönde de geriye uyumlu.

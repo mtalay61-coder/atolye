@@ -108,7 +108,14 @@ const stokFisiSunucuyaKes = useCallback(async ({ cariId, tip, fis, fisGovdesi, s
   const alisMi = tip === "Alış";
   const kullaniciAd = (aktifKullanici && aktifKullanici.ad) || null;
   const zaman = new Date().toISOString();
-  const { yuk, p } = stokFisiSunucuYuku({ cariId, tip, fis, fisGovdesi, sonuc, kalemler, kayitPB, fisAciklamasi, siparisler, kullaniciAd, zaman, istek: uid("fis") });
+  // F3 YÖNETİCİ ONAYI (v1.744.4, 078 `fazlaTeslimOnayiAl`): siparişe bağlı satırların toplamı satış siparişinin kalanını
+  // aşıyorsa (kayıt anındaki miktarla — 078 `fisKalemlerininKalani`) Yönetici gerekçe yazar; değilse fiş kesilmez (sunucu da
+  // onaysız reddeder — KR007).
+  const fazlaOnayi = fazlaTeslimOnayiAl(fazlaTeslimKalemleri(fisKalemlerininKalani(kalemler, siparisler),
+    (k) => (siparisler || []).find((s) => s.id === k._siparisId)), aktifKullanici, showToast);
+  if (fazlaOnayi === null) return null;
+  const { yuk: yuk0, p } = stokFisiSunucuYuku({ cariId, tip, fis, fisGovdesi, sonuc, kalemler, kayitPB, fisAciklamasi, siparisler, kullaniciAd, zaman, istek: uid("fis") });
+  const yuk = fazlaOnayi ? { ...yuk0, fazlaTeslimOnayi: fazlaOnayi } : yuk0;
   const { kimlikler, pesin, toplamTutar, yeniSiparisler, etkSiparis } = p;
   // Taban için ESKİ hâller bekleme ÖNCESİ alınır (fişi hesaplayan fotoğraf — farkın tabanı o).
   const stokEskiler = (stok || []).filter((u) => kalemler.some((k) => k.urunId === u.id));

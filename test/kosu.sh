@@ -15,6 +15,7 @@ node birim-stok-v2-kopru.js || HATA=1
 node birim-yazma-zarfi.js || HATA=1
 node birim-karsilanan-sunucu.js || HATA=1
 node birim-kalici-ret.js || HATA=1
+node birim-fazla-onay.js || HATA=1
 node birim-yedek-fis-kilidi.js || HATA=1
 node birim-siparis-iptal-sunucu.js || HATA=1
 node senaryo-yedek-fis-kilidi.js || HATA=1

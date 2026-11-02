@@ -492,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.744.3";
+const SURUM = "1.744.4";
 const SURUM_TARIHI = "2026-11-02";
-const SURUM_NOTU = "Çek ve fiş işlemlerinde eşzamanlı kayıt koruması; sipariş durumu sunucudan hesaplanır";
+const SURUM_NOTU = "Satış siparişi fazlası yönetici onayı ve gerekçeyle teslim edilebilir; veri bütünlüğü korumaları";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -525,6 +525,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" };   // teklif: v1.723.0, Sipariş'in alt sekmesi
 
 const SURUM_GECMISI = [
+  { surum: "1.744.4", tarih: "02.11.2026", eklenen: ["Satış siparişini aşan teslimde Yönetici gerekçe yazarak onay verebilir; onay fişe kaydedilir. Yönetici dışında sipariş fazlası yine teslim edilmez."], degisen: [], duzeltilen: ["Sipariş kalemleri kaydedilirken bağlı siparişin başlığı aynı anda düzenlenince oluşan sunucu kilitlenmesi giderildi.", "Sürüm kapısı açıkken otomatik gün sonu raporu durmaz.", "Önceden iptal edilmiş siparişe bağlı eski kayıtlar yeniden düzenlenebilir."] },
   { surum: "1.744.3", tarih: "02.11.2026", eklenen: ["Eski istemcilerin yazmasını durduran sunucu sürüm kapısı (geçişte ayrıca etkinleştirilir)."], degisen: ["Sipariş teslim durumu güncel kalemlerden sunucuda hesaplanır.", "Sipariş iptalinde üretim, koli ve rezervasyon bağları birlikte çözülür."], duzeltilen: ["Aynı çekin iki cihazdan eşzamanlı tahsili engellenir; fiş iptali çek ve kasa kaydını birlikte geri alır.", "Farklı alanları değiştirilen sipariş kalemlerinin gönderilmeyen alanları artık silinmez.", "Bakiyeli kasa/banka hesabı kapatılamaz; geçmişin para birimi değiştirilemez."] },
   { surum: "1.744.2", tarih: "02.11.2026", eklenen: [], degisen: ["Sipariş iptal durumu ve fiş bağlarının çözülmesi sunucuda aynı işlemde kaydedilir."], duzeltilen: ["İptal edilmiş siparişe yeni fiş yazılması ve bayat ekranın iptal durumunu geri açması engellenir."] },
   { surum: "1.744.1", tarih: "01.11.2026", eklenen: [], degisen: ["Fiş defteri kullanılan sistemde tam yedek geri yükleme kapalıdır; mevcut kayıtlar değiştirilmeden uyarı gösterilir."], duzeltilen: ["Sunucu ayarı doğrulanamadığında geri yükleme eski sisteme aitmiş gibi başlayabiliyordu; artık veri değiştirilmeden durur."] },

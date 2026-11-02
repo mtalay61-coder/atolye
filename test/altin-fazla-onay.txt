@@ -1,0 +1,33 @@
+{
+ "a_yonetici": {
+  "fisKesIstegi": 1,
+  "hatalar": [],
+  "karsilanan": 3,
+  "onay": {
+   "gerekce": "Müşteri telefonla 1 çift ek istedi",
+   "onay": true
+  },
+  "sorular": [
+   {
+    "fazlaYaziyor": true,
+    "tur": "prompt"
+   }
+  ],
+  "stokSatiri": [
+   {
+    "kalemId": "kf1",
+    "miktar": -3
+   }
+  ],
+  "yoneticiUyarisi": false
+ },
+ "b_yonetici_degil": {
+  "fisKesIstegi": 0,
+  "hatalar": [],
+  "karsilanan": 0,
+  "onay": null,
+  "sorular": [],
+  "stokSatiri": null,
+  "yoneticiUyarisi": true
+ }
+}
