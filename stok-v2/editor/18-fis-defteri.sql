@@ -41,6 +41,7 @@ declare
   baslik jsonb;
 begin
   if auth.jwt() is null then return case when tg_op='DELETE' then old else new end; end if;
+  if auth.jwt() ->> 'role' = 'service_role' then return case when tg_op='DELETE' then old else new end; end if;
   select min_istemci_surum into alt_surum from public.stk_ayar where id='tekil';
   begin baslik := coalesce(nullif(current_setting('request.headers',true),''),'{}')::jsonb;
   exception when others then baslik := '{}'::jsonb; end;
@@ -53,7 +54,7 @@ begin
     if string_to_array(surum,'.')::int[] < string_to_array(alt_surum,'.')::int[] then
       raise exception 'AT001: Uygulama eski (%) — en az % gerekiyor; uygulamayı yenileyin',surum,alt_surum using errcode='AT001';
     end if;
-  elsif tg_table_name <> 'stk_istemci_iz' and coalesce(current_setting('stk.istemci_iz',true),'') <> 'yazildi' then
+  elsif nullif(surum,'') is null and tg_table_name <> 'stk_istemci_iz' and coalesce(current_setting('stk.istemci_iz',true),'') <> 'yazildi' then
     perform set_config('stk.istemci_iz','yazildi',true);
     insert into public.stk_istemci_iz(tablo,islem,surum) values(tg_table_name,tg_op,surum);
   end if;
