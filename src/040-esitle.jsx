@@ -428,7 +428,7 @@ async function _silinenAnaKayitlariYaz(y) {
 function _yazmaDustu(y) {
   // Kural provası (v1.742.0, 038 eskiYolKaydinaYaz): düşen yazmanın farkı da kaydedilir — test ortamında bulut okunmadığı için
   // eski yol yazmaları köprüye varmadan buraya düşüyor. Yalnız test açar; hesap saf (v2KopruYuku).
-  if (typeof window !== "undefined" && Array.isArray(window.__eskiYolKaydi)) { try { eskiYolKaydinaYaz([v2KopruYuku(y)].filter(Boolean)); } catch (e) { /* */ } }
+  if (typeof window !== "undefined" && Array.isArray(window.__eskiYolKaydi)) { try { eskiYolKaydinaYaz([v2KopruYuku(y)].filter(Boolean), true); } catch (e) { /* */ } }
   y.bellegiGeriAl();
   bekleyenKayitEkle(y.tablo, y.fark, y.cocukFarklari);
 }

@@ -55,6 +55,55 @@ create index if not exists stk_fis_cari on public.stk_fis (cari_id);
 alter table public.stk_ayar add column if not exists fis_aktif boolean not null default false;
 alter table public.stk_ayar add column if not exists fis_aktif_zamani timestamptz;
 
+-- Çek ile fişin önceki/sonraki hali aynı transaction'da tutulur; iptal tersini atomik uygular.
+create table if not exists public.fis_cek_iz (
+  fis_id text not null references public.stk_fis(id),
+  cek_id text not null references public.kas_cek(id),
+  onceki jsonb,
+  sonraki jsonb not null,
+  primary key(fis_id,cek_id)
+);
+alter table public.fis_cek_iz enable row level security;
+revoke all on public.fis_cek_iz from public,anon,authenticated;
+
+-- Eski istemci engeli: SQL önce kurulur, minimum sürüm ancak geçişte açık onayla etkinleştirilir.
+alter table public.stk_ayar add column if not exists min_istemci_surum text;
+create table if not exists public.stk_istemci_iz (
+  id bigserial primary key, zaman timestamptz not null default now(),
+  tablo text, islem text, surum text
+);
+alter table public.stk_istemci_iz enable row level security;
+revoke all on public.stk_istemci_iz from public,anon,authenticated;
+revoke all on sequence public.stk_istemci_iz_id_seq from public,anon,authenticated;
+create or replace function public.stk_istemci_koru() returns trigger
+language plpgsql security definer set search_path=public as $$
+declare
+  alt_surum text;
+  surum text;
+  baslik jsonb;
+begin
+  -- SQL Editor / yerel bakım oturumu. HTTP kullanıcısı bu GUC'ları kendi başına ayarlayamaz.
+  if auth.jwt() is null then return case when tg_op='DELETE' then old else new end; end if;
+  select min_istemci_surum into alt_surum from public.stk_ayar where id='tekil';
+  begin baslik := coalesce(nullif(current_setting('request.headers',true),''),'{}')::jsonb;
+  exception when others then baslik := '{}'::jsonb; end;
+  surum := baslik->>'x-atolye-surum';
+  if nullif(alt_surum,'') is not null then
+    if coalesce(surum,'') !~ '\A[0-9]{1,5}\.[0-9]{1,5}\.[0-9]{1,5}\Z'
+      or alt_surum !~ '\A[0-9]{1,5}\.[0-9]{1,5}\.[0-9]{1,5}\Z' then
+      raise exception 'AT001: Uygulama sürümü doğrulanamadı — uygulamayı yenileyin; kayıt değiştirilmedi' using errcode='AT001';
+    end if;
+    if string_to_array(surum,'.')::int[] < string_to_array(alt_surum,'.')::int[] then
+      raise exception 'AT001: Uygulama eski (%) — en az % gerekiyor; uygulamayı yenileyin',surum,alt_surum using errcode='AT001';
+    end if;
+  elsif tg_table_name <> 'stk_istemci_iz' and coalesce(current_setting('stk.istemci_iz',true),'') <> 'yazildi' then
+    perform set_config('stk.istemci_iz','yazildi',true);
+    insert into public.stk_istemci_iz(tablo,islem,surum) values(tg_table_name,tg_op,surum);
+  end if;
+  return case when tg_op='DELETE' then old else new end;
+end $$;
+revoke all on function public.stk_istemci_koru() from public,anon,authenticated;
+
 -- 2) SATIR BAĞLARI — varsayılan değer fis_kes'in o an kestiği fiş: car_yaz / kas_yaz değişmeden fişe bağlı satır yazar.
 alter table public.car_hareket add column if not exists fis_id text references public.stk_fis(id);
 alter table public.car_hareket alter column fis_id set default nullif(current_setting('fis.aktif', true), '');
@@ -121,7 +170,7 @@ end $$;
 -- 4) KURALLAR
 create or replace function public.fis_kural_aktif() returns boolean
 language sql stable security definer set search_path = public as $$
-  select coalesce((select fis_aktif from public.stk_ayar where id = 'tekil'), false)
+  select coalesce((select fis_aktif or nullif(min_istemci_surum,'') is not null from public.stk_ayar where id = 'tekil'), false)
 $$;
 
 create or replace function public.fis_kapi_acik() returns boolean
@@ -150,10 +199,10 @@ begin
     if not korunan then return case when tg_op = 'DELETE' then old else new end; end if;
   end if;
   if tg_op = 'DELETE' then
-    raise exception 'Hareket silinmez — fişi iptal edin (% %)', tg_table_name, old.id using errcode = '42501';
+    raise exception 'Hareket silinmez — fişi iptal edin (% %)', tg_table_name, old.id using errcode = case when exists(select 1 from public.stk_ayar where nullif(min_istemci_surum,'') is not null) then 'KR009' else '42501' end;
   end if;
   if not public.fis_kapi_acik() then
-    raise exception 'Hareket yalnız fiş kesilerek yazılır (% %) — eski yazma yolu kapalı', tg_table_name, new.id using errcode = '42501';
+    raise exception 'Hareket yalnız fiş kesilerek yazılır (% %) — eski yazma yolu kapalı', tg_table_name, new.id using errcode = case when exists(select 1 from public.stk_ayar where nullif(min_istemci_surum,'') is not null) then 'KR009' else '42501' end;
   end if;
   if tg_op = 'INSERT' then
     if new.fis_id is null then
@@ -184,10 +233,10 @@ begin
     if duzen = 'varyant' and tg_table_name = 'stk_hareket' and (yeni_j - 'varyant_id') = (eski_j - 'varyant_id') then
       return new;
     end if;
-    raise exception 'Hareket değiştirilemez — fişi iptal edip yeniden kesin (% %)', tg_table_name, new.id using errcode = '42501';
+    raise exception 'Hareket değiştirilemez — fişi iptal edip yeniden kesin (% %)', tg_table_name, new.id using errcode = case when exists(select 1 from public.stk_ayar where nullif(min_istemci_surum,'') is not null) then 'KR009' else '42501' end;
   end if;
   if old.iptal and not new.iptal then
-    raise exception 'İptal edilmiş hareket geri açılamaz — yeni fiş kesin (% %)', tg_table_name, new.id using errcode = '42501';
+    raise exception 'İptal edilmiş hareket geri açılamaz — yeni fiş kesin (% %)', tg_table_name, new.id using errcode = case when exists(select 1 from public.stk_ayar where nullif(min_istemci_surum,'') is not null) then 'KR009' else '42501' end;
   end if;
   return new;
 end $$;
@@ -286,14 +335,69 @@ begin
   return old;
 end $$;
 
+-- İptal edilen siparişe yeni operasyon bağı kurulamaz. SHARE, iptal durum yazmasıyla sıralar.
+create or replace function public.siparis_canli_bag_koru() returns trigger
+language plpgsql security definer set search_path=public as $$
+declare
+ j jsonb:=to_jsonb(new);
+ refs text[]:='{}';
+ sid text;
+ durum text;
+begin
+ if auth.jwt() is null then return new; end if;
+ if tg_table_name='stok_rezervasyonlari' then refs:=array[j->>'siparis_id'];
+ elsif tg_table_name='uretim' then refs:=array[j->>'rezervasyon_siparis_id',j->'ek'->>'rezervasyonSiparisId'];
+ elsif tg_table_name='lst_kayit' and j->>'tablo'='koliler' then refs:=array[j->'veri'->>'siparisId'];
+ elsif tg_table_name='siparisler' then
+  refs:=array[j->'ek'->>'rezervasyonSiparisId']||array(select jsonb_array_elements_text(public.stk_dizi(j->'ek'->'rezervasyonSiparisIdleri')));
+ elsif tg_table_name='siparis_kalemleri' then
+  refs:=array(select r->>'siparisId' from jsonb_array_elements(public.stk_dizi(j->'rezervasyonlar')) r)
+    ||array(select id::text from public.siparisler where siparis_no=j->'planlama'->>'referansNo' and tip='Alış');
+ end if;
+ for sid in select distinct r from unnest(refs) r where coalesce(r,'')<>'' order by r loop
+  select s.durum into durum from public.siparisler s where s.id::text=sid for share;
+  if not found or durum='İptal' then
+   raise exception 'İptal edilmiş veya silinmiş siparişe operasyon bağı kurulamaz (sipariş %)',sid using errcode='KR006';
+  end if;
+ end loop;
+ return new;
+end $$;
+revoke all on function public.siparis_canli_bag_koru() from public,anon,authenticated;
+
 -- Fiş başlığı: silinmez; yalnız fis_kes / fis_iptal / fis_bilgi yazar; tutar ve satır bilgisi kesildikten sonra değişmez.
+-- Teslim durumu kilit alan bir yan tetikleyiciyle başlığa yazılmaz: G1/G2 ters kilit sırası oluşmaz.
+-- Okuma görünümü her zaman kalemlerden hesaplar; başlık güncellemesi de bayat teslim durumunu normalize eder.
+alter table public.stk_ayar add column if not exists siparis_durum_sunucu boolean not null default true;
+update public.stk_ayar set siparis_durum_sunucu=true where id='tekil' and not siparis_durum_sunucu;
+create or replace function public.siparis_durum_hesap(p_id text,p_durum text) returns text
+language sql stable as $$
+  select case when p_durum='İptal' then 'İptal'
+    when count(*)>0 and bool_and(coalesce(k.karsilanan,0)>=coalesce(k.miktar,0)) and bool_or(coalesce(k.miktar,0)>0) then 'Tamamlandı'
+    when coalesce(sum(greatest(coalesce(k.karsilanan,0),0)),0)>0 then 'Kısmi Teslim'
+    when p_durum in ('Tamamlandı','Kısmi Teslim') then 'Bekliyor'
+    else p_durum end
+  from public.siparis_kalemleri k where k.siparis_id::text=p_id
+$$;
+revoke all on function public.siparis_durum_hesap(text,text) from public,anon;
+grant execute on function public.siparis_durum_hesap(text,text) to authenticated;
+create or replace view public.siparisler_okuma with(security_invoker=true) as
+  select r.* from public.siparisler s cross join lateral jsonb_populate_record(null::public.siparisler,
+    to_jsonb(s)||jsonb_build_object('durum',public.siparis_durum_hesap(s.id::text,s.durum))) r;
+revoke all on public.siparisler_okuma from public,anon;
+grant select on public.siparisler_okuma to authenticated;
+
 -- F4: iptal edilmiş siparişi bayat bir başlık POST'u yeniden açamaz. Kurallar kapalıyken de geçerli.
 create or replace function public.fis_siparis_iptal_koru() returns trigger
 language plpgsql as $$
 begin
+  if new.durum='İptal' and old.durum is distinct from 'İptal' and auth.jwt() is not null
+    and coalesce(current_setting('fis.siparis_iptal',true),'')<>'acik' then
+    raise exception 'Sipariş iptali yalnız bağları birlikte çözen işlemden yapılır (sipariş %)',new.id using errcode='KR006';
+  end if;
   if old.durum = 'İptal' and new.durum is distinct from old.durum then
     raise exception 'İptal edilmiş sipariş yeniden açılamaz (sipariş %) — yeni sipariş oluşturun', old.id using errcode = 'KR006';
   end if;
+  if new.durum is distinct from 'İptal' then new.durum := public.siparis_durum_hesap(new.id::text,new.durum); end if;
   return new;
 end $$;
 
@@ -319,18 +423,18 @@ begin
     if not korunan then return case when tg_op = 'DELETE' then old else new end; end if;
   end if;
   if tg_op = 'DELETE' then
-    raise exception 'Fiş silinmez — iptal edin (%)', old.id using errcode = '42501';
+    raise exception 'Fiş silinmez — iptal edin (%)', old.id using errcode = case when exists(select 1 from public.stk_ayar where nullif(min_istemci_surum,'') is not null) then 'KR009' else '42501' end;
   end if;
   if not public.fis_kapi_acik() then
-    raise exception 'Fiş yalnız fis_kes ile kesilir (%) — eski yazma yolu kapalı', new.id using errcode = '42501';
+    raise exception 'Fiş yalnız fis_kes ile kesilir (%) — eski yazma yolu kapalı', new.id using errcode = case when exists(select 1 from public.stk_ayar where nullif(min_istemci_surum,'') is not null) then 'KR009' else '42501' end;
   end if;
   if tg_op = 'UPDATE' then
     if (to_jsonb(new) - 'iptal' - 'iptal_zamani' - 'iptal_eden' - 'iptal_sebebi' - 'aciklama' - 'ek' - 'bagli_fis')
        is distinct from (to_jsonb(old) - 'iptal' - 'iptal_zamani' - 'iptal_eden' - 'iptal_sebebi' - 'aciklama' - 'ek' - 'bagli_fis') then
-      raise exception 'Kesilmiş fiş değiştirilemez — iptal edip yeniden kesin (%)', new.id using errcode = '42501';
+      raise exception 'Kesilmiş fiş değiştirilemez — iptal edip yeniden kesin (%)', new.id using errcode = case when exists(select 1 from public.stk_ayar where nullif(min_istemci_surum,'') is not null) then 'KR009' else '42501' end;
     end if;
     if old.iptal and not new.iptal then
-      raise exception 'İptal edilmiş fiş geri açılamaz — yeni fiş kesin (%)', new.id using errcode = '42501';
+      raise exception 'İptal edilmiş fiş geri açılamaz — yeni fiş kesin (%)', new.id using errcode = case when exists(select 1 from public.stk_ayar where nullif(min_istemci_surum,'') is not null) then 'KR009' else '42501' end;
     end if;
   end if;
   return new;
@@ -416,6 +520,10 @@ begin
       'hareketler', (select coalesce(jsonb_agg(x || jsonb_build_object('veri', coalesce(x -> 'veri', '{}'::jsonb) || jsonb_build_object('fisNo', fid))), '[]'::jsonb)
                      from jsonb_array_elements(public.stk_dizi(p_kasa -> 'hareketler')) x),
       'cekler', public.stk_dizi(p_kasa -> 'cekler')));
+    insert into public.fis_cek_iz(fis_id,cek_id,onceki,sonraki)
+    select fid,x->>'id',nullif(x->'onceki','null'::jsonb),c.veri
+      from jsonb_array_elements(public.stk_dizi(p_kasa->'cekler')) x
+      join public.kas_cek c on c.id=x->>'id';
   end if;
 
   -- Ailenin satırı hemen denetlenir (işlem sonundaki ertelenmiş denetim de var): hata fişin numarasıyla döner.
@@ -758,6 +866,13 @@ begin
       using errcode = 'KR003';
   end if;
 
+  -- Finans: çek kilidi ilk sayaç/fiş yazmasından önce alınır.
+  perform public.kas_cek_kilitle(jsonb_build_object(
+    'cekler',public.stk_dizi(p->'kasa'->'cekler')||public.stk_dizi(p->'bagli'->'kasa'->'cekler'),
+    'cekIptal',public.stk_dizi(p->'kasa'->'cekIptal')||public.stk_dizi(p->'bagli'->'kasa'->'cekIptal'),
+    'cekOnceki',coalesce(p->'kasa'->'cekOnceki','{}'::jsonb)||coalesce(p->'bagli'->'kasa'->'cekOnceki','{}'::jsonb)),true);
+  perform public.kas_hesap_kilitle(jsonb_build_object('hareketler',
+    public.stk_dizi(p->'kasa'->'hareketler')||public.stk_dizi(p->'bagli'->'kasa'->'hareketler')));
   p := public.fis_satis_teslim_koru(p);
   fid := public.fis_tek_kes(p -> 'fis', p -> 'stok', p -> 'cari', p -> 'kasa', v_istek);
   if jsonb_typeof(p -> 'bagli') = 'object' then
@@ -792,6 +907,8 @@ declare
   v_once jsonb;
   v_kalem jsonb;
   v_bagli text;
+  v_cek_iz record;
+  v_cekler jsonb := '[]'::jsonb;
 begin
   perform public.stk_yetki(array['stok', 'fisler', 'siparis', 'uretim', 'cari', 'muhasebe'], 'silme');
   -- KİLİT SIRASI 2 — fişin (ve bağlı fişin) hareketlerindeki + alt satırlarındaki kalemler, kimlik sırasıyla, FİŞ SATIRINDAN ve
@@ -808,6 +925,12 @@ begin
   -- fiş yazma sırasında kilitleniyordu: aynı anda ana fişi ve makbuzu iptal eden iki cihaz ters sırayla kilitleniyordu
   -- (t-f11-kilit P6b: siparişsiz peşin satışta kalem kilidi ikisini sıralamıyor). Bağlı fiş kimliği kesilirken yazılır, değişmez.
   select ff.bagli_fis into v_bagli from public.stk_fis ff where ff.id = no;
+  for h in select distinct z.cek_id from public.fis_cek_iz z
+      where z.fis_id in (no,v_bagli) order by z.cek_id loop
+    perform pg_advisory_xact_lock(hashtextextended('kas_cek:'||h,0));
+  end loop;
+  perform public.kas_hesap_kilitle(jsonb_build_object('hesaplar',(select coalesce(jsonb_agg(jsonb_build_object('id',a.id,'tur',a.tur,'veri',a.veri)),'[]'::jsonb)
+    from public.kas_hesap a where a.id in(select hesap_id from public.kas_hareket where fis_id in(no,v_bagli)))));
   perform 1 from public.stk_fis ff where ff.id = no or ff.id = v_bagli order by ff.id for update;
   select * into f from public.stk_fis where id = no;
   if not found then
@@ -815,6 +938,18 @@ begin
   end if;
   hedefler := array[f.id] || case when f.bagli_fis is not null then array[f.bagli_fis] else '{}'::text[] end;
 
+  -- Sonraki çek işlemi varsa eski fiş iptal edilemez; önce son işlem geri alınır.
+  for v_cek_iz in select i.*,c.veri,c.iptal as cek_iptal from public.fis_cek_iz i
+      join public.stk_fis ff on ff.id=i.fis_id join public.kas_cek c on c.id=i.cek_id
+      where i.fis_id=any(hedefler) and not ff.iptal order by i.cek_id loop
+    if v_cek_iz.cek_iptal or v_cek_iz.veri is distinct from v_cek_iz.sonraki then
+      raise exception 'Çekin daha yeni işlemi var (%) — önce son işlemi geri alın',v_cek_iz.cek_id using errcode='KR008';
+    end if;
+    update public.kas_cek set veri=coalesce(v_cek_iz.onceki,veri),iptal=(v_cek_iz.onceki is null),
+      iptal_zamani=case when v_cek_iz.onceki is null then now() else null end,
+      iptal_eden=case when v_cek_iz.onceki is null then eposta else null end,guncelleme=now() where id=v_cek_iz.cek_id;
+    v_cekler := v_cekler || jsonb_build_array(jsonb_build_object('id',v_cek_iz.cek_id,'veri',v_cek_iz.onceki));
+  end loop;
   perform set_config('fis.kapi', 'acik', true);
   foreach h in array hedefler loop
     update public.stk_fis set iptal = true, iptal_zamani = now(), iptal_eden = eposta, iptal_sebebi = p ->> 'sebep'
@@ -834,8 +969,45 @@ begin
   v_kalem := public.fis_kalem_karsilanan_yenile(v_idler, v_once, 'fis_iptal', f.id);
   perform set_config('fis.kapi', '', true);
   return jsonb_build_object('fisNo', f.id, 'bagliFisNo', f.bagli_fis, 'zatenIptal', f.iptal,
-    'kalemler', v_kalem -> 'kalemler', 'karsilananDuzeltme', v_kalem -> 'duzeltme');
+    'cekler',v_cekler,'kalemler', v_kalem -> 'kalemler', 'karsilananDuzeltme', v_kalem -> 'duzeltme');
 end $$;
+
+-- Bir üretim tesliminin bütün fişleri tek transaction'da iptal edilir.
+create or replace function public.fis_iptal_toplu(p jsonb) returns jsonb
+language plpgsql security definer set search_path=public as $$
+declare
+  hedefler text[];
+  kalemler text[];
+  kid text;
+  no text;
+  sonuc jsonb := '[]'::jsonb;
+  ilk boolean := true;
+begin
+  perform public.stk_yetki(array['stok','fisler','siparis','uretim','cari','muhasebe'],'silme');
+  if jsonb_array_length(public.stk_dizi(p->'fisler')) not between 1 and 100 then
+    raise exception 'Toplu iptalde 1–100 fiş gerekli' using errcode='KR009';
+  end if;
+  select array_agg(distinct id order by id) into hedefler from (
+    select jsonb_array_elements_text(p->'fisler') as id
+    union select bagli_fis from public.stk_fis where id in (select jsonb_array_elements_text(p->'fisler')) and bagli_fis is not null) a;
+  select array_agg(distinct id order by id) into kalemler from (
+    select coalesce(kalem_id,gecmis_kalem_id) as id from public.stk_hareket where fis_id=any(hedefler)
+    union select unnest(public.fis_kalem_idleri(jsonb_build_object('alt',p->'alt')))) a where id is not null;
+  perform public.fis_kalem_kilitle(kalemler);
+  for kid in select distinct cek_id from public.fis_cek_iz where fis_id=any(hedefler) order by cek_id loop
+    perform pg_advisory_xact_lock(hashtextextended('kas_cek:'||kid,0));
+  end loop;
+  perform public.kas_hesap_kilitle(jsonb_build_object('hesaplar',(select coalesce(jsonb_agg(jsonb_build_object('id',a.id,'tur',a.tur,'veri',a.veri)),'[]'::jsonb)
+    from public.kas_hesap a where a.id in(select hesap_id from public.kas_hareket where fis_id=any(hedefler)))));
+  perform 1 from public.stk_fis where id=any(hedefler) order by id for update;
+  for no in select distinct jsonb_array_elements_text(p->'fisler') order by 1 loop
+    sonuc:=sonuc||jsonb_build_array(public.fis_iptal(jsonb_build_object('no',no,'sebep',p->>'sebep','alt',case when ilk then p->'alt' else null end)));
+    ilk:=false;
+  end loop;
+  return jsonb_build_object('fisler',sonuc);
+end $$;
+revoke all on function public.fis_iptal_toplu(jsonb) from public,anon;
+grant execute on function public.fis_iptal_toplu(jsonb) to authenticated;
 
 -- FİŞ BİLGİSİ — kesilmiş fişe yalnız açıklama ve ek bilgi (irsaliye no gibi); tutar ve satırlar değişmez.
 create or replace function public.fis_bilgi(p jsonb) returns jsonb
@@ -876,19 +1048,26 @@ declare
   v_idler text[];
 begin
   perform public.stk_yetki(array['siparis', 'stok', 'cari'], 'kaydetme');
+  if coalesce((p->>'sil')::boolean,false) then perform public.stk_yetki(array['siparis'],'silme'); end if;
   if sid is null then raise exception 'Sipariş kimliği yok' using errcode = '22023'; end if;
   -- fis_kes ile aynı işlem kilidi, satır kilitlerinden önce. Durum ve bağ çözme tek işlemde kalır.
   perform pg_advisory_xact_lock(hashtextextended('fis_siparis_iptal:' || sid, 0));
   -- F4: iptal durumu ve bağ çözme tek işlemde. Kilit kalemlerden ve ilk yazmadan önce alınır.
   -- Numarayı istemciden alma: bayat/yanlış numara başka siparişin numarayla eşleşen bağlarını çözmemeli.
   select s.siparis_no into sno from public.siparisler s where s.id::text = sid for update;
-  if not found then raise exception 'Sipariş bulunamadı (sipariş %)', sid using errcode = 'KR005'; end if;
+  if not found then
+    if coalesce((p->>'sil')::boolean,false) then return jsonb_build_object('baglarAtomik',true,'zatenSilinmis',true); end if;
+    raise exception 'Sipariş bulunamadı (sipariş %)', sid using errcode = 'KR005';
+  end if;
   ino := case when sno is null then null else sno || ' (iptal)' end;
   -- KİLİT SIRASI 2 (F1.1) — siparişin kalemleri ve bağlı hareketlerin kalemleri, kimlik sırasıyla, İLK YAZMADAN ÖNCE. Önceden hiç
   -- kalem kilidi yoktu ve hareketler yazıldıktan ('tekil' alındıktan) SONRA fiş başlığı güncelleniyordu: aynı siparişin fiş
   -- iptaliyle (kalem → fiş → hareket) ters sıra — %30–70 kilitlenme (1 Kasım matrisi, t-f11-kilit P1). Yazma yapmaz.
   select coalesce(array_agg(distinct x order by x), '{}'::text[]) into v_idler from (
     select k.id::text as x from public.siparis_kalemleri k where k.siparis_id::text = sid
+    union all select k.id::text from public.siparis_kalemleri k
+      where exists(select 1 from jsonb_array_elements(public.stk_dizi(k.rezervasyonlar)) r where r->>'siparisId'=sid)
+         or (sno is not null and k.planlama->>'referansNo'=sno)
     union all select h.kalem_id from public.stk_hareket h
      where h.kalem_id is not null and (h.siparis_id = sid or (h.siparis_id is null and sno is not null and h.siparis_no = sno))) y;
   perform public.fis_kalem_kilitle(v_idler);
@@ -904,6 +1083,12 @@ begin
               or (c.ek ->> 'rezervasyonSiparisId') = sid))
     order by ff.id for update;
 
+  -- Bağlı operasyon satırları ilk yazmadan önce kilitlenir. Fiş ve bu bağlar aynı transaction'dadır.
+  perform 1 from public.uretim u where to_jsonb(u)->>'rezervasyon_siparis_id'=sid or u.ek->>'rezervasyonSiparisId'=sid order by u.id for update;
+  perform 1 from public.lst_kayit l where l.tablo='koliler' and l.veri->>'siparisId'=sid order by l.id for update;
+  if to_regclass('public.stok_rezervasyonlari') is not null then
+    execute format('select 1 from public.stok_rezervasyonlari where siparis_id::text=%L order by id for update',sid);
+  end if;
   perform set_config('fis.kapi', 'acik', true);
   perform set_config('fis.duzen', 'bag', true);
   -- GEÇERLİ bağ → GEÇMİŞ bağ (F1.1, kural 1): eski sipariş / kalem kimliği AYRI sütunlara, BİR KEZ (çözülmüş satır eşleşmez:
@@ -927,8 +1112,30 @@ begin
    where (siparis_id = sid or (siparis_id is null and sno is not null and siparis_no = sno)) and not (coalesce(ek, '{}'::jsonb) ? 'siparisIptal');
   perform set_config('fis.duzen', '', true);
   perform set_config('fis.kapi', '', true);
+  update public.siparis_kalemleri k set
+    rezervasyonlar=(select coalesce(jsonb_agg(r),'[]'::jsonb) from jsonb_array_elements(public.stk_dizi(k.rezervasyonlar)) r where r->>'siparisId' is distinct from sid),
+    planlama=case when k.planlama->>'referansNo'=sno and (select tip from public.siparisler where id::text=sid)='Alış' then null else k.planlama end
+    where k.id::text=any(v_idler) and (exists(select 1 from jsonb_array_elements(public.stk_dizi(k.rezervasyonlar)) r where r->>'siparisId'=sid)
+      or (k.planlama->>'referansNo'=sno and (select tip from public.siparisler where id::text=sid)='Alış'));
+  -- Gerçek üretim şemasında rezervasyon ayrı sütundur; eski/minimal şemada ek JSON içindedir.
+  if exists(select 1 from information_schema.columns where table_schema='public' and table_name='uretim' and column_name='rezervasyon_siparis_id') then
+    execute format('update public.uretim set rezervasyon_siparis_id=null where rezervasyon_siparis_id::text=%L',sid);
+  end if;
+  update public.siparisler s set ek=(coalesce(s.ek,'{}'::jsonb)-'rezervasyonSiparisId') ||
+    case when jsonb_typeof(s.ek->'rezervasyonSiparisIdleri')='array' then jsonb_build_object('rezervasyonSiparisIdleri',
+      (select coalesce(jsonb_agg(r),'[]'::jsonb) from jsonb_array_elements(s.ek->'rezervasyonSiparisIdleri') r where r<>to_jsonb(sid))) else '{}'::jsonb end
+    where s.ek->>'rezervasyonSiparisId'=sid or coalesce(s.ek->'rezervasyonSiparisIdleri','[]'::jsonb) ? sid;
+  update public.uretim set ek=ek-'rezervasyonSiparisId' where ek->>'rezervasyonSiparisId'=sid;
+  update public.lst_kayit set veri=veri||jsonb_build_object('siparisId',null,'iptalSiparisNo',sno),guncelleme=now()
+    where tablo='koliler' and veri->>'siparisId'=sid;
+  if to_regclass('public.stok_rezervasyonlari') is not null then
+    execute format('delete from public.stok_rezervasyonlari where siparis_id::text=%L',sid);
+  end if;
+  perform set_config('fis.siparis_iptal','acik',true);
   update public.siparisler set durum = 'İptal' where id::text = sid and durum is distinct from 'İptal';
-  return jsonb_build_object('stok', n_stok, 'cari', n_cari, 'zincir', n_zincir, 'durum', 'İptal', 'kalemler', public.fis_kalem_durumlari(v_idler));
+  perform set_config('fis.siparis_iptal','',true);
+  if coalesce((p->>'sil')::boolean,false) then delete from public.siparisler where id::text=sid; end if;
+  return jsonb_build_object('stok', n_stok, 'cari', n_cari, 'zincir', n_zincir, 'durum', 'İptal', 'baglarAtomik',true,'kalemler', public.fis_kalem_durumlari(v_idler));
 end $$;
 
 -- RENK TAŞI (v1.742.0, kullanıcı kararı 31 Ekim: "Varyant düzeyinde"). Tanımlar › Bakım › Kodsuz Mamul Renkleri ("Siyah" →
@@ -1008,6 +1215,8 @@ declare
   n_yaz int;
   n_sil int;
   sonuc jsonb := '{}'::jsonb;
+  v_satir jsonb;
+  n_parca int;
 begin
   -- ÖN KİLİT (F2, KİLİT SIRASI 2–3): bütün tablolar için, İLK YAZMADAN ÖNCE — üst satırlar (sipariş / üretim) KEY SHARE, sonra
   -- yazılacak ve silinecek alt satırlar FOR UPDATE, kimlik sırasıyla. Önceden upsert deyimi 'tekil'i aldıktan SONRA silme deyimi
@@ -1048,18 +1257,27 @@ begin
       if exists (select 1 from jsonb_array_elements(satirlar) x where coalesce(x ->> 'id', '') = '') then
         raise exception '% satırında kimlik yok', t using errcode = '22023';
       end if;
-      select string_agg(quote_ident(c.column_name), ', ' order by c.ordinal_position),
-             string_agg(case when c.column_name <> 'id' then quote_ident(c.column_name) || ' = excluded.' || quote_ident(c.column_name) end, ', ')
-        into sutunlar, atamalar
-      from information_schema.columns c
-      where c.table_schema = 'public' and c.table_name = t
-        and c.column_name in (select distinct jsonb_object_keys(x) from jsonb_array_elements(satirlar) x where jsonb_typeof(x) = 'object');
-      execute format(
-        'insert into public.%I as h (%s) select %s from (select distinct on (r.id) r.* from jsonb_array_elements(%L::jsonb) with ordinality as e(x, n), '
-        || 'jsonb_populate_record(null::public.%I, e.x) r order by r.id, e.n desc) s '
-        || 'on conflict (id) do ' || case when atamalar is null then 'nothing' else 'update set ' || atamalar end,
-        t, sutunlar, sutunlar, satirlar::text, t);
-      get diagnostics n_yaz = row_count;
+      if exists(select 1 from jsonb_array_elements(satirlar) r, jsonb_object_keys(r) anahtar
+        where not exists(select 1 from information_schema.columns c where c.table_schema='public' and c.table_name=t and c.column_name=anahtar)) then
+        raise exception 'Alt kayıtta tanınmayan alan var (%) — kayıt değiştirilmedi',t using errcode='KR010';
+      end if;
+      -- Bütün mevcut satırlar ilk yazmadan önce kimlik sırasıyla kilitlenir.
+      execute format('select 1 from public.%I where id::text in (select x->>''id'' from jsonb_array_elements(%L::jsonb) x) order by id for update',t,satirlar::text);
+      -- Satırların anahtar kümeleri farklı olabilir: birleşik sütun listesi eksik alanı NULL yapıp veri siliyordu.
+      for v_satir in select y from (select distinct on (y->>'id') y,n from jsonb_array_elements(satirlar) with ordinality as e(y,n) order by y->>'id',n desc) a order by y->>'id' loop
+        select string_agg(quote_ident(c.column_name), ', ' order by c.ordinal_position),
+               string_agg(case when c.column_name <> 'id' then quote_ident(c.column_name) || ' = excluded.' || quote_ident(c.column_name) end, ', ')
+          into sutunlar, atamalar
+        from information_schema.columns c
+        where c.table_schema = 'public' and c.table_name = t
+          and c.column_name in (select jsonb_object_keys(v_satir));
+        execute format(
+          'insert into public.%I as h (%s) select %s from jsonb_populate_record(null::public.%I,%L::jsonb) r '
+          || 'on conflict (id) do ' || case when atamalar is null then 'nothing' else 'update set ' || atamalar end,
+          t,sutunlar,sutunlar,t,v_satir::text);
+        get diagnostics n_parca = row_count;
+        n_yaz:=n_yaz+n_parca;
+      end loop;
     end if;
     silinecek := array(select jsonb_array_elements_text(public.stk_dizi(d -> 'sil')));
     if array_length(silinecek, 1) > 0 then
@@ -1197,5 +1415,30 @@ begin
 end $$;
 revoke all on function public.fis_kural_ac() from public, anon, authenticated;
 revoke all on function public.fis_kural_kapat() from public, anon, authenticated;
+
+create or replace function public.stk_istemci_kapi_kur() returns void
+language plpgsql as $$
+declare t text;
+begin
+  for t in select tablename from pg_tables where schemaname='public' and tablename <> 'stk_istemci_iz' order by tablename loop
+    execute format('drop trigger if exists stk_istemci_koru on public.%I',t);
+    execute format('create trigger stk_istemci_koru before insert or update or delete on public.%I for each row execute function public.stk_istemci_koru()',t);
+  end loop;
+end $$;
+select public.stk_istemci_kapi_kur();
+drop function public.stk_istemci_kapi_kur();
+
+create or replace function public.siparis_bag_kapi_kur() returns void language plpgsql as $$
+declare t text;
+begin
+ foreach t in array array['siparisler','siparis_kalemleri','uretim','lst_kayit','stok_rezervasyonlari'] loop
+  if to_regclass('public.'||t) is not null then
+   execute format('drop trigger if exists siparis_canli_bag_koru on public.%I',t);
+   execute format('create trigger siparis_canli_bag_koru before insert or update on public.%I for each row execute function public.siparis_canli_bag_koru()',t);
+  end if;
+ end loop;
+end $$;
+select public.siparis_bag_kapi_kur();
+drop function public.siparis_bag_kapi_kur();
 
 commit;

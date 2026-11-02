@@ -1,0 +1,9 @@
+✓ stok-fis-kes AYNI
+✓ fis-kes AYNI
+✓ para-fis-kes AYNI
+✓ banka-fis-kes AYNI
+✓ fis-iptal AYNI
+✓ cek-fis-kes AYNI
+✓ karsilanan-fis-yolu AYNI
+✓ siparis-iptal AYNI
+FINANS_UI_HATA 0

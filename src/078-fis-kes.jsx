@@ -15,7 +15,7 @@
 let _fisDefteriKurulu = false;
 function fisDefteriKuruluAyarla(v) { _fisDefteriKurulu = !!v; }
 function fisKesYolu() {
-  return _fisDefteriKurulu && supabaseAcikMi() && stokV2Aktif() && cariV2Aktif() && kasaV2Aktif() && altV2Aktif();
+  return _fisDefteriKurulu && supabaseAcikMi();
 }
 
 // NUMARA YER TUTUCUSU — numara sunucudan gelmeden açıklamalar yazılır; sunucu ve uygulama aynı değişikliği yapar.
@@ -228,7 +228,7 @@ function paraFisOneki(tip) { return PARA_FIS_ONEKLERI[tip] || "CH"; }
 // satırları (gider / gelir kartı, virman). Döner: `kasaHareketleri` (dizi) ve geriye uyum için `kasaHareketi` (ilki).
 // `cekler` (v1.738.0): fişin doğurduğu / değiştirdiği çek kayıtları (çek alma / verme, ciro, iade, tahsil) — kas_yaz'ın çek satırı,
 // fişle AYNI işlemde.
-function paraFisiYuku({ fis, cariId, hareketler, kasa, cekler, istek, zaman, kullaniciAd }) {
+function paraFisiYuku({ fis, cariId, hareketler, kasa, cekler, cekOnceki, istek, zaman, kullaniciAd }) {
   const cariHareketleri = (hareketler || []).map((h) => ({
     ...h, id: h.id || uid("hrk"), fisNo: FIS_YER, zaman: h.zaman || zaman, kullanici: h.kullanici || kullaniciAd || null,
   }));
@@ -248,7 +248,7 @@ function paraFisiYuku({ fis, cariId, hareketler, kasa, cekler, istek, zaman, kul
     cari: { satirlar: cariId ? cariHareketleri.map((h) => fisKesCariSatiri(cariId, h)) : [] },
     ...(ayaklar.length || (cekler || []).length ? { kasa: {
       hareketler: ayaklar.map((k) => fisKesKasaHareketi(k.hesapId, k.hareket)),
-      ...((cekler || []).length ? { cekler: cekler.map((c) => ({ id: String(c.id), veri: c })) } : {}),
+      ...((cekler || []).length ? { cekler: cekler.map((c) => ({ id: String(c.id), veri: c, onceki: (cekOnceki || []).find((x) => String(x.id) === String(c.id)) || null })) } : {}),
     } } : {}),
   };
   return { yuk, cariHareketleri, kasaHareketi, kasaHareketleri, ayaklar };

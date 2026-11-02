@@ -10,7 +10,16 @@ async function calistir() {
   t["bekleyen:yazma"] = JSON.stringify({ "stok:items": { tablo: "urunler", zaman: "2026-10-28T10:29:00.000Z", deneme: 5, hata: "Failed to fetch — POST varyantlar · gövde 512 KB · adres 52 karakter" } });
   t["bekleyen:kayitlar"] = JSON.stringify({ urunler: { ana: { u2: "yaz" }, cocuk: { varyantlar: { "u2|Siyah|40": { t: "sil", p: "u2" }, "u2|1001 - Siyah|40": { t: "yaz", p: "u2" } } } } });
   const hatalar = [];
-  const { tarayici, sayfa } = await uygulamaAc(t, { hataYaz: false });
+  const { tarayici, sayfa } = await uygulamaAc(t, { hataYaz: false, onceRota: async (s) => {
+    await s.addInitScript((p)=>{
+      if(!localStorage.getItem("test:bekleyen-tohum")) {
+        localStorage.setItem("bekleyen:yazma",p.yazma);localStorage.setItem("bekleyen:kayitlar",p.kayitlar);
+        localStorage.setItem("test:bekleyen-tohum","1");
+      }
+    },{yazma:t["bekleyen:yazma"],kayitlar:t["bekleyen:kayitlar"]});
+    // Takılı yazma senaryosu: kural provasının başarılı RPC taklidi bekleyeni kendiliğinden temizlememeli.
+    await s.route("**/rest/v1/**",(r)=>r.request().method()==="GET"?r.fallback():r.abort("failed"));
+  } });
   sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2200);
   const seritOnce = await sayfa.locator("[data-bekleyen-yazma]").count();

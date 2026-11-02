@@ -7,6 +7,7 @@ bak("KR kodu + stk_hareket satırı", E.kuralReddiOku(JSON.stringify({ code: "KR
   { kod: "KR001", mesaj: "Bağı çözülmüş … (stk_hareket hrk-1)", satirId: "hrk-1" });
 bak("KR kodu + kalem satırı (iki nokta öncesi)", E.kuralReddiOku(JSON.stringify({ code: "KR002", message: "… silinemez (kalem k-9: Bot Siyah, teslim edilen 3)" })).satirId, "k-9");
 bak("KR kodu + sipariş", E.kuralReddiOku(JSON.stringify({ code: "KR002", message: "Teslim geçmişi olan sipariş silinemez (sipariş s-4 SAT-4)" })).satirId, "s-4");
+bak("AT001 eski sürüm kalıcı ret", E.kuralReddiOku(JSON.stringify({code:"AT001",message:"Uygulamayı yenileyin"})), {kod:"AT001",mesaj:"Uygulamayı yenileyin",satirId:null});
 bak("42501 kural reddi sayılmaz", E.kuralReddiOku(JSON.stringify({ code: "42501", message: "permission denied" })), null);
 bak("JSON olmayan gövde", E.kuralReddiOku("Bad gateway"), null);
 bak("açıklama: kural reddi yetki / bağlantı değil", /veri kuralı/.test(E.bulutHatasiAciklamasi("Teslim … [KR002]") || ""), true);

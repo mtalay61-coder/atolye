@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// TEST DERLEYİCİSİ — atolye-erp.jsx -> test/erp.cjs
+// TEST DERLEYİCİSİ — güncel src/ (veya açıkça verilen eski kaynak) -> test/erp.cjs
 //
 // Neden var: değişikliği göndermeden önce mantığı İZOLE ÇALIŞTIRIP test etmek gerekiyor.
 // Denetleyiciler + derleme kontrolü bu oturumlarda bulunan gizli hataların hiçbirini yakalayamazdı.
@@ -53,7 +53,9 @@ const DISA_AKTAR = [
   "KOD_HANE", "BARKOD_UZUNLUK", "kodMetni", "kodlariAta", "stokNoCakismalariniOnar", "cariKodlariAta", "cariKodMetni", "urunBarkoduKur", "hariciBarkodCoz", "hariciBarkodCakismasi", "hariciBarkodAyarla", "barkodTaninmamaSebebi", "urunBarkoduCoz", "varyantinBarkodu", "renkKoduBul", "bedenKoduBul", "barkodEksikleri", "imzaHesapla", "imzaBenzerligi", "gorselEslestir", "ozelKodGoc", "urunOzelKodAlanlari", "ozelKodCiftleri", "ozelKodMetni", "eslesenOzelKodlar", "ozelKodAlaniUyar", "ozelKodAlaniAdla", "ozelKodAlanlariniBirlestir", "ozelKodKapsamlari", "ozelKodKapsamYaz", "siradakiAdim", "dagitilmamis", "enBuyukUretimNo", "uretimAtamaEki", "uretimBolunmusMu", "uretimParcaKodlari", "stokDurumu", "rezervasyonKarsilama", "hammaddeRezervasyonDagit", "uretimKaynakEtiketi", "kaynakEtiketi",
 ];
 
-let kaynak = fs.readFileSync(girdi, "utf8");
+// Varsayılan test her zaman güncel kaynak parçalarını alır; unutulmuş birleşik dosya sessiz eski-kod testi üretemez.
+let kaynak = process.argv[2] ? fs.readFileSync(girdi, "utf8") : fs.readdirSync(path.join(KOK,"src"))
+  .filter((f) => f.endsWith(".jsx")).sort().map((f) => fs.readFileSync(path.join(KOK,"src",f),"utf8")).join("");
 
 // ---- import satırlarını sahtele ---------------------------------------------------------------
 // lucide-react ve xlsx testte hiç çizilmiyor; her ikon adı için boş bir bileşen yeterli.

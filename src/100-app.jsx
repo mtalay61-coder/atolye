@@ -762,7 +762,7 @@ function AtolyeUygulamasi() {
     if (tanimlarSimdi && tanimlarSimdi.acilisGocuYapildi) return urunler;
     // Sunucu defterinde (v1.740.0) açılış göçü yok: hareketsiz başlangıç miktarı kendiliğinden fişe dökülmez (veri sıfırdan;
     // gerekirse Veri Denetimi › Açılış fişi kes — o da ACL fişi).
-    if (fisKesYolu()) return urunler;
+    if (_fisDefteriKurulu || (supabaseAcikMi() && v2AyarBilinmiyorMu())) return urunler;
     const { urunler: yeni, yazilan, satirlar } = acilisFarklariniHareketeCevir(urunler, {
       tarih: bugunYerel(),
       fisNoUret: () => fisNoUret("ACL"),
@@ -1732,14 +1732,18 @@ function AtolyeUygulamasi() {
     // değişmez. İptal edilen satırlar fark tabanından çıkar (eski yoldan bir daha "silinmesin"); kalan iş (üretimin ana satırı,
     // sipariş rezervasyonu, eski usul satırlar) bugünkü yoldan.
     const sunucuSatirlari = fisKesYolu() ? uretimSunucuFisSatirlari(sonuc.silinenStokKayitlari, sonuc.silinenCariKayitlari) : null;
+    if (fisKesYolu() && (!sunucuSatirlari || !sunucuSatirlari.fisler.length) && (sonuc.silinenStokKayitlari.length || sonuc.silinenCariKayitlari.length)) {
+      showToast("Üretim tesliminin fişleri doğrulanamadı — kayıtlar korunuyor. Listeyi yenileyip tekrar deneyin.");
+      return;
+    }
     if (sunucuSatirlari && sunucuSatirlari.fisler.length) {
       const etkU = fisKesEtkilenen(uretim, sonuc.uretim, [uretimId]);
       const atamaFarki = fisKesAltFarki("uretim", "uretim_atamalari", etkU.eskiler[0], etkU.yeniler[0]);
       const alt = atamaFarki.satirlar.length || atamaFarki.sil.length ? { uretim_atamalari: atamaFarki } : null;
       try {
-        for (let i = 0; i < sunucuSatirlari.fisler.length; i++) {
-          await fisIptalGonder(sunucuSatirlari.fisler[i], `Üretim teslimi geri alındı (${siparis.siparisNo} · ${prosesAdi})`, i === 0 ? alt : null);
-        }
+        await supabaseIstek("rpc/fis_iptal_toplu", { method: "POST", body: JSON.stringify({p:{
+          fisler:sunucuSatirlari.fisler,sebep:`Üretim teslimi geri alındı (${siparis.siparisNo} · ${prosesAdi})`,alt
+        }}) });
       } catch (e) {
         showToast(`Geri alınamadı — hiçbir değişiklik yapılmadı (${String((e && e.message) || e).slice(0, 160)})`);
         gunlukYaz(`Üretim teslimi geri alınamadı (${siparis.siparisNo} · ${prosesAdi}): ${String((e && e.message) || e).slice(0, 200)}`, "uretim", { uretimId, atamaId });
@@ -3500,7 +3504,7 @@ function AtolyeUygulamasi() {
     if (donemKilidiEngel(tarihler.filter(Boolean), showToast, hataEtiketi || "Kayıt")) return null;
     if (anahtar && paraFisiSuruyorRef.current.has(anahtar)) return null;
     const kullaniciAd = (aktifKullanici && aktifKullanici.ad) || damgaKullaniciAdi() || null;
-    const h = paraFisiYuku({ fis, cariId, hareketler, kasa, cekler, istek: uid("fis"), zaman: new Date().toISOString(), kullaniciAd });
+    const h = paraFisiYuku({ fis, cariId, hareketler, kasa, cekler, cekOnceki: (muhasebe && muhasebe.cekler) || [], istek: uid("fis"), zaman: new Date().toISOString(), kullaniciAd });
     const cariEski = cariId ? (cariler || []).find((c) => c.id === cariId) : null;   // taban: bekleme ÖNCESİ fotoğraf
     if (anahtar) paraFisiSuruyorRef.current.add(anahtar);
     let r;
@@ -3544,7 +3548,7 @@ function AtolyeUygulamasi() {
     setFisDefteri((onceki) => [sunucuFisKaydi(h.yuk, no, [], yeniHareketler, ayaklar.map((k) => k.hareket)), ...(onceki || [])]);
     gunlukYaz(`Para fişi kesildi: ${(fis && fis.tur) || ""} → ${no}`, "cari", { fisNo: no, cariId, tutar: h.yuk.fis.tutar });
     return { no, hareketIdler: yeniHareketler.map((x) => x.id), kasaHareketIdler: ayaklar.map((k) => k.hareket.id) };
-  }, [cariler, aktifKullanici, showToast]);
+  }, [cariler, muhasebe, aktifKullanici, showToast]);
   paraFisiKesRef.current = paraFisiKes;
   // Geri al (bildirimden): sunucu fişi → fis_iptal (100 yetimFisTemizle, sunucu dalı).
   const paraFisiGeriAl = useCallback((sonuc) => () => fisGeriAlRef.current && fisGeriAlRef.current(sonuc.no, sonuc.hareketIdler), []);
@@ -3589,6 +3593,8 @@ function AtolyeUygulamasi() {
       const h = [...(stok || []).flatMap((u) => u.hareketler || []), ...(cariler || []).flatMap((c) => c.hareketler || [])].find((x) => x && x.id === hareketId);
       const iptal = h && h.fisNo ? sunucuFisiIptalRef.current(h.fisNo, "Hareket silindi") : null;
       if (iptal) return iptal;
+      showToast("Hareketin fiş kaydı doğrulanamadı — hiçbir kayıt silinmedi.");
+      return false;
     }
     // TEK KAPI: geri almanın kendisi `fisGeriAl`da. Burada kalan iş çöp kaydı, yazma ve bildirim.
     // `cariHareketindenSiparisDus`: bu yol tek bir hareketi siler ve o hareket yalnızca cari
@@ -3829,12 +3835,24 @@ function AtolyeUygulamasi() {
       fisKesYerelYaz("cari:data", sonuc.cariler);
       fisKesTabaniKur("cariler", etkCari.eskiler, etkCari.yeniler);
     }
-    if (kasaSilinen.length || cekDegisti) {
+    const sunucuCekleri = iptalYaniti && iptalYaniti.cekler;
+    if (Array.isArray(sunucuCekleri) && sunucuCekleri.length) {
+      const degisen = new Map(sunucuCekleri.map((c) => [String(c.id), c.veri]));
+      yeniMuhasebe = { ...yeniMuhasebe, cekler: (yeniMuhasebe.cekler || [])
+        .filter((c) => !degisen.has(String(c.id)) || degisen.get(String(c.id)))
+        .map((c) => degisen.has(String(c.id)) ? degisen.get(String(c.id)) : c) };
+      // Önceki durum yerel geri alma hesabında silinmişse sunucu kaydını geri ekle.
+      for (const c of sunucuCekleri) if (c.veri && !yeniMuhasebe.cekler.some((x) => String(x.id) === String(c.id))) yeniMuhasebe.cekler.push(c.veri);
+      const taban = tekilTabanOku("muhasebe");
+      if (taban) tekilTabanAyarla("muhasebe", { ...taban, cekler: [
+        ...(taban.cekler || []).filter((c) => !degisen.has(String(c.id))), ...sunucuCekleri.filter((c) => c.veri).map((c) => c.veri) ] });
+    }
+    if (kasaSilinen.length || cekDegisti || (sunucuCekleri && sunucuCekleri.length)) {
       setMuhasebe(yeniMuhasebe);
       fisKesYerelYaz("muhasebe:data", yeniMuhasebe);
       fisKesKasaTabaniKur([], kasaSilinen);
       // Çek değişikliği (iade / ciro / tahsil geri) fiş satırı değil — bugünkü yoldan.
-      if (cekDegisti) yazimiIzle(tekilYaz("muhasebe:data", "muhasebe", yeniMuhasebe), "Muhasebe", yeniMuhasebe);
+      if (cekDegisti && !Array.isArray(sunucuCekleri)) yazimiIzle(tekilYaz("muhasebe:data", "muhasebe", yeniMuhasebe), "Muhasebe", yeniMuhasebe);
     }
     if (etkSip.yeniler.length > 0) {
       // Karşılanan SUNUCUNUN değeri (v1.743.0, F1): fis_iptal yanıtındaki `kalemler` (eski sunucuda yok → fisGeriAl hesabı aynen).
@@ -3858,9 +3876,20 @@ function AtolyeUygulamasi() {
   // Ekranlar için (kasa hareketi silme, gelir/gider silme): numara bir sunucu fişininse onu iptal eder (Promise<bool>), değilse null
   // döner — çağıran bugünkü yoldan devam eder (eski usul kayıt).
   const sunucuFisiIptal = useCallback((fisNo, sebep) => {
-    const f = fisNo && fisKesYolu() && (fisDefteri || []).find((x) => x && x.sunucu && x.fisNo === fisNo);
-    return f ? sunucuFisiniIptalEt(f, { sebep }) : null;
-  }, [fisDefteri, sunucuFisiniIptalEt]);
+    if (!fisKesYolu()) return null;
+    const f = fisNo && (fisDefteri || []).find((x) => x && x.sunucu && x.fisNo === fisNo);
+    if (f) return sunucuFisiniIptalEt(f, { sebep });
+    // Bayat/eksik yerel defter eski satır silme yolunu açamaz. Önce sunucudaki fiş doğrulanır.
+    return (async () => {
+      try {
+        const fisler = await sunucuFisleriniOku();
+        const bulunan = (fisler || []).find((x) => x.fisNo === fisNo);
+        if (bulunan) return sunucuFisiniIptalEt(bulunan, { sebep });
+      } catch (e) { /* kayıtlar korunur; kullanıcı yenileyebilir */ }
+      showToast("Fiş kaydı doğrulanamadı — hiçbir kayıt silinmedi. Listeyi yenileyip tekrar deneyin.");
+      return false;
+    })();
+  }, [fisDefteri, sunucuFisiniIptalEt, showToast]);
   sunucuFisiIptalRef.current = sunucuFisiIptal;   // removeHareketEverywhere bu kancadan ÖNCE tanımlı
   const sunucuFisiMi = useCallback((fisNo) => !!(fisNo && fisKesYolu() && (fisDefteri || []).some((x) => x && x.sunucu && x.fisNo === fisNo)), [fisDefteri]);
   // İRSALİYE BİLGİSİ (v1.739.0, 239 Sevkiyat Merkezi): sunucu fişinde satır yerinde değiştirilmez (kurallar açılınca reddedilir) —
@@ -3900,6 +3929,7 @@ function AtolyeUygulamasi() {
     {
       const sunucuFisi = fisKesYolu() && fis && fis.fisNo && (fisDefteri || []).find((f) => f && f.sunucu && f.fisNo === fis.fisNo);
       if (sunucuFisi) return sunucuFisiniIptalEt(sunucuFisi, fis);
+      if (fisKesYolu()) return sunucuFisiIptal(fis && fis.fisNo, (fis && fis.sebep) || "Geri alındı");
     }
     // Bu fonksiyon eskiden mesajı KOŞULSUZ basıyordu: hiçbir hareket eşleşmese bile "temizlendi"
     // diyordu. Kullanıcı temizlendiğini sanıp fişin listede durmasına anlam veremiyordu.
@@ -4028,7 +4058,7 @@ function AtolyeUygulamasi() {
       (sonuc.etkilenenUretimler.size > 0 ? ", üretim ilerlemesi geri alındı" : "") +
       (sonuc.geriAlinanCekler.length > 0 ? `, ${sonuc.geriAlinanCekler.length} çekin işlemi geri alındı (önceki durumuna döndü)` : "")
     );
-  }, [faturalar, stok, cariler, siparisler, uretim, muhasebe, koliler, showToast, copaAt, muhasebeBaglariniTemizle, aktifKullanici, fisDefterindeIptal, fisDefteri, sunucuFisiniIptalEt]);
+  }, [faturalar, stok, cariler, siparisler, uretim, muhasebe, koliler, showToast, copaAt, muhasebeBaglariniTemizle, aktifKullanici, fisDefterindeIptal, fisDefteri, sunucuFisiniIptalEt, sunucuFisiIptal]);
   // Toast'taki "Geri al" düğmesi fiş numarasıyla buraya gelir.
   useEffect(() => {
     fisGeriAlRef.current = (fisNo, hareketIdler) => {

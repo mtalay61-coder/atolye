@@ -122,40 +122,51 @@ async function calistir() {
   });
   await sayfa.waitForTimeout(700);
   // Kart daha önce açılmıştı; ikinci tıklama KAPATIR (aç/kapa) — kapandıysa yeniden aç.
-  if (!(await sayfa.evaluate(() => !!document.querySelector("[data-paylas-seridi] [data-paylas-pdf]")))) {
+  if (!(await sayfa.evaluate(() => !!document.querySelector("[data-siparis-islem-menusu] [data-paylas-pdf]")))) {
     await sayfa.evaluate(() => {
       const el = [...document.querySelectorAll("*")].find((e) => e.getBoundingClientRect().width > 0 && (e.textContent || "").trim() === "SAT-1" && e.children.length === 0);
       let p = el; for (let i = 0; i < 8 && p; i++, p = p.parentElement) { if (p.onclick || p.tagName === "BUTTON") { p.click(); return; } }
     });
     await sayfa.waitForTimeout(700);
   }
-  // PAYLAŞ ŞERİDİ (13 Eylül): sipariş kartında tek bileşen — PDF · WhatsApp · E-posta.
-  const paylasim = await sayfa.evaluate(() => {
-    const s = document.querySelector("[data-paylas-seridi]");
-    const a = s && s.querySelector("[data-paylas-whatsapp]");
-    return { yazdirVar: !!(s && s.querySelector("[data-paylas-pdf]")), numara: a && a.getAttribute("data-paylas-whatsapp"), eposta: s && (s.querySelector("[data-paylas-eposta]") || {}).getAttribute("data-paylas-eposta"), dosya: s && s.getAttribute("data-paylas-seridi") };
+  // Güncel arayüzde paylaşma sağ tık menüsünde; kaldırılmış eski şerit tıklanmaz.
+  const acPaylasMenu=async()=>{
+    await sayfa.evaluate(()=>{
+      const el=[...document.querySelectorAll("*")].find(e=>e.getBoundingClientRect().width>0&&e.children.length===0&&e.textContent.trim()==="SAT-1");
+      if(!el)throw new Error("SAT-1 kartı bulunamadı");
+      const r=el.getBoundingClientRect();el.dispatchEvent(new MouseEvent("contextmenu",{bubbles:true,cancelable:true,clientX:r.left+5,clientY:r.top+5}));
+    });
+    await sayfa.locator("[data-siparis-islem-menusu]").waitFor({state:"visible"});
+  };
+  await acPaylasMenu();
+  const paylasim=await sayfa.evaluate(()=>{
+    const s=document.querySelector("[data-siparis-islem-menusu]");
+    return {yazdirVar:!!s.querySelector("[data-paylas-pdf]"),numara:s.querySelector("[data-paylas-whatsapp]").getAttribute("data-paylas-whatsapp"),eposta:s.querySelector("[data-paylas-eposta]").getAttribute("data-paylas-eposta")};
   });
   // WHATSAPP (PDF): test ortamında esm.sh yok → PDF üretilemez, yedek yol: numaraya sohbet açılır
   // (yeni pencere). Gerçek cihazda paylaş menüsü PDF ekli açılır — bu ortamda ölçülemiyor.
   const [popup] = await Promise.all([
     sayfa.waitForEvent("popup", { timeout: 15000 }).catch(() => null),
-    sayfa.evaluate(() => document.querySelector("[data-paylas-seridi] [data-paylas-whatsapp]").click()),
+    sayfa.evaluate(() => document.querySelector("[data-siparis-islem-menusu] [data-paylas-whatsapp]").click()),
   ]);
   const whatsappAcildi = popup ? decodeURIComponent(popup.url()).split("?")[0] : null;
   if (popup) await popup.close();
   // PDF düğmesi: kütüphane yüklenemeyince yazdırılabilir HTML indiriyor (yedek yol).
+  await acPaylasMenu();
   const [indirme] = await Promise.all([
     sayfa.waitForEvent("download", { timeout: 15000 }).catch(() => null),
-    sayfa.evaluate(() => document.querySelector("[data-paylas-seridi] [data-paylas-pdf]").click()),
+    sayfa.evaluate(() => document.querySelector("[data-siparis-islem-menusu] [data-paylas-pdf]").click()),
   ]);
   const dosyaIndi = !!indirme;
+  if(indirme)paylasim.dosya=indirme.suggestedFilename().replace(/\.(html|pdf)$/i,"");
   // E-POSTA (13 Eylül): Müşteri B'de e-posta var → düğme adresli. Test ortamında PDF üretilemez ve
   // `mailto:` başsız tarayıcıda gidilemez; ölçülen: düğmenin adresi taşıması ve yedek yolun (dosya
   // indirme + uyarı) çalışması. Gerçek gönderim `eposta` fonksiyonuna bağlı (cihazda denenecek).
-  const epostaDugmesi = await sayfa.evaluate(() => (document.querySelector("[data-paylas-seridi] [data-paylas-eposta]") || {}).getAttribute("data-paylas-eposta"));
+  await acPaylasMenu();
+  const epostaDugmesi = await sayfa.evaluate(() => (document.querySelector("[data-siparis-islem-menusu] [data-paylas-eposta]") || {}).getAttribute("data-paylas-eposta"));
   const [epostaIndirme] = await Promise.all([
     sayfa.waitForEvent("download", { timeout: 15000 }).catch(() => null),
-    sayfa.evaluate(() => document.querySelector("[data-paylas-seridi] [data-paylas-eposta]").click()),
+    sayfa.evaluate(() => document.querySelector("[data-siparis-islem-menusu] [data-paylas-eposta]").click()),
   ]);
   await sayfa.waitForTimeout(500);
   const epostaUyari = await sayfa.evaluate(() => (document.body.innerText.match(/posta programı açılıyor|E-posta gönderildi|e-posta yok/) || [])[0] || null).catch(() => "sayfa-gitti");

@@ -419,7 +419,7 @@ async function baglantiSina() {
 // denenmez. Yazmalar bu yinelemeye dayanıklı: POST merge-duplicates ve DELETE aynı sonucu verir; sürüm koşullu PATCH ilk
 // seferde yere inmişse ikinci deneme 0 satır döner, bunu 040'taki teşhis "sunucu bir fazla → sahte çakışma" olarak çözer.
 const SUPABASE_YENIDEN_DENEME_MS = [700, 1500, 3000];
-async function supabaseIstek(yol, secenekler = {}, tekrarMi = false) {
+async function supabaseIstek(yol, secenekler = {}, tekrarMi = false, islemDenemesi = 0) {
   let yanit;
   for (let deneme = 0; ; deneme++) {
     try {
@@ -428,6 +428,7 @@ async function supabaseIstek(yol, secenekler = {}, tekrarMi = false) {
         headers: {
           ...(await yetkiBasliklari()),
           "Content-Type": "application/json",
+          "x-atolye-surum": SURUM,
           ...(secenekler.headers || {}),
         },
       });
@@ -465,6 +466,15 @@ async function supabaseIstek(yol, secenekler = {}, tekrarMi = false) {
   }
   if (!yanit.ok) {
     const metin = await yanit.text().catch(() => "");
+    let islemKodu = null;
+    try { islemKodu = JSON.parse(metin).code; } catch (e) { /* geçersiz yanıt: normal hata */ }
+    // Bu SQLSTATE'lerde transaction tamamen geri alınmıştır. Aynı istek kimliğiyle sınırlı tekrar güvenlidir.
+    const atomikRpc = /^rpc\/(?:fis_(?:kes|iptal|iptal_toplu|bag_coz)|kas_yaz|alt_yaz|stk_yaz)(?:\?|$)/.test(yol);
+    if (atomikRpc && (islemKodu === "40P01" || islemKodu === "40001") && islemDenemesi < 2) {
+      await new Promise((r) => setTimeout(r, 40 * (islemDenemesi + 1)));
+      return supabaseIstek(yol, secenekler, tekrarMi, islemDenemesi + 1);
+    }
+
     // YETKİ HATASI İNSAN DİLİNDE (kullanıcı, 21 Eylül: "hiç işlem yapılmadı kasada" — ekranda
     // `{"code":"42501"..."permission denied for table muhasebe"}` görüp anlam verememişti).
     // 42501 = Postgres "yetersiz yetki". Bizde tek sebebi var: rls-kimlik.sql ile anonim rolün
@@ -545,7 +555,7 @@ function bekleyenYazmaSil(anahtar) {
 function kuralReddiOku(metin) {
   let j = null;
   try { j = JSON.parse(metin); } catch (e) { j = null; }
-  const kod = j && typeof j.code === "string" && /^KR\d{3}$/.test(j.code) ? j.code : null;
+  const kod = j && typeof j.code === "string" && /^(?:KR\d{3}|AT001)$/.test(j.code) ? j.code : null;
   if (!kod) return null;
   const mesaj = String(j.message || `Sunucu kuralı reddetti (${kod})`);
   const m = mesaj.match(/\((?:stk_hareket|kalem|sipariş)\s+([^\s:),]+)/);

@@ -29,18 +29,18 @@ D4.satis-onaysiz-fazla YESIL
 D4.satis-tam-sinir YESIL
 D4.denetim-yakalar YESIL
 # D5 — sipariş iptali ve durum (t-iptal.js)
-D5.iptal-bag-korunur KIRMIZI
+D5.iptal-bag-korunur YESIL
 D5.iptal-siparise-teslim YESIL
-D5.durum-eszamanli KIRMIZI
+D5.durum-eszamanli YESIL
 D5.denetim-yakalar YESIL
 # Yedekten geri yükleme (t-yedek.js)
-Y.tam-kurallar-kapali KIRMIZI
-Y.tam-kurallar-acik KIRMIZI
+Y.tam-kurallar-kapali YESIL
+Y.tam-kurallar-acik YESIL
 Y.kart-referans YESIL
 Y.denetim-yakalar YESIL
 # Sürüm kontrolü (t-surum.js)
-S.mekanizma-var KIRMIZI
-S.eski-yuk-red KIRMIZI
+S.mekanizma-var YESIL
+S.eski-yuk-red YESIL
 # Kilitlenme (t-kilit.js) — bugün kalem kilitleri kimlik sırasıyla alınıyor (alt_yaz `distinct on … order by id`; aynı önekli
 # fişler fis_sayac satırında sıraya giriyor). K.G1–G3 gözlemleri (tasarım riski) puanlanmaz, raporda.
 K.ters-sira-kilitlenmez YESIL

@@ -77,8 +77,9 @@ const serbestFis = (istek, miktar, ek = {}) => T.rpc("fis_kes", { istek, fis: { 
     }],
     ["DN.onaysiz-fazla", "4 teslimli kalemin miktarı 2'ye indirilir", { D4a_onaysiz_fazla_teslim: 1 }, () => {
       const s = sip("h9", [T.kalemObj(`${ON}-h9k`, 20, 0)]);
-      T.rpc("fis_kes", T.teslimYuku({ s, kalemId: `${ON}-h9k`, adet: 4, ekran: 0, istek: `${ON}-h9a` })); durumYaz(s, "Tamamlandı");
+      T.rpc("fis_kes", T.teslimYuku({ s, kalemId: `${ON}-h9k`, adet: 4, ekran: 0, istek: `${ON}-h9a` }));
       korumasiz(`update public.siparis_kalemleri set miktar = 2 where id = '${ON}-h9k';`);
+      durumYaz(s, "Tamamlandı"); // Normalize edilen başlık, bozuk miktarın tamamlandığı durumu yansıtır.
     }],
     ["DN.isaretli-fazla", "20'lik kaleme işaretli 25", { D4b_isaretli_fazla_teslim: 1 }, () => {
       const s = sip("h10", [T.kalemObj(`${ON}-h10k`, 20, 0)]);

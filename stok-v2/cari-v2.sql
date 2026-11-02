@@ -78,6 +78,11 @@ begin
              where coalesce(x ->> 'id', '') = '' or coalesce(x ->> 'cari_id', '') = '') then
     raise exception 'Cari hareketinde kimlik ya da cari yok' using errcode = '22023';
   end if;
+  if exists(select 1 from jsonb_array_elements(public.stk_dizi(p->'satirlar')) x
+    where (public.stk_sayi(x->>'tutar') is null and to_regprocedure('public.fis_kapi_acik()') is not null)
+      or coalesce(public.stk_sayi(x->>'tutar'),0)::text in ('NaN','Infinity','-Infinity')) then
+    raise exception 'Cari hareket tutarı sonlu bir sayı olmalı' using errcode='KR010';
+  end if;
   insert into public.car_hareket as h (id, cari_id, tarih, zaman, yon, tutar, para_birimi, odeme_sekli, vade, defter, fis_no,
                                        siparis_no, uretim_id, urun_ad, renk, aciklama, ek, olusturan)
   select x ->> 'id', x ->> 'cari_id', x ->> 'tarih', x ->> 'zaman', x ->> 'yon', coalesce(public.stk_sayi(x ->> 'tutar'), 0),

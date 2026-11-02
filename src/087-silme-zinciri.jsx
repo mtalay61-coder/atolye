@@ -159,10 +159,12 @@ const siparisKapat = useCallback(async (siparisId) => {
   // numara "(iptal)" eki alır — 088 siparisBaglariniCoz ile aynı kural, değerleri sunucu hesaplar); yerel kopya aynı değişikliği
   // alır ve fark tabanı ilerler (aynı satır eski yoldan bir daha gönderilmez). Sunucu çözemezse iptal durur, hiçbir şey değişmez.
   // F4: yerel görüntüde bağ görünmese de iptal sunucuda yapılır; başka cihaz teslim etmiş olabilir.
-  const fisYolu = fisKesYolu() && !sil;
+  const fisYolu = fisKesYolu();
+  let sunucuBaglarAtomik = false;
   if (fisYolu) {
     try {
-      await supabaseIstek("rpc/fis_bag_coz", { method: "POST", body: JSON.stringify({ p: { siparisId, siparisNo: no || null } }) });
+      const yanit = await supabaseIstek("rpc/fis_bag_coz", { method: "POST", body: JSON.stringify({ p: { siparisId, siparisNo: no || null, sil } }) });
+      sunucuBaglarAtomik = !!(yanit && yanit.baglarAtomik);
     } catch (e) {
       showToast(`Sipariş iptal edilemedi — fişlerin bağı çözülemedi, hiçbir değişiklik yapılmadı (${String((e && e.message) || e).slice(0, 160)})`);
       gunlukYaz(`Sipariş iptali durdu (fis_bag_coz): ${no}`, "siparis", { siparisId, hata: String((e && e.message) || e).slice(0, 200) });
@@ -184,17 +186,18 @@ const siparisKapat = useCallback(async (siparisId) => {
     const d = siparisBaglariniCoz({ siparisler: [siparis], fisDefteri: defter }, siparisId);
     return d ? d.fisDefteri : defter;
   }));
-  await yaz("uretim", setUretim, (x) => yazimiIzle(tabloYaz("uretim:siparisler", "uretim", x), "Üretim", x));
-  await yaz("koliler", setKoliler, (x) => yazimiIzle(tekilYaz("koli:data", "koliler", x), "Koliler", x));
+  await yaz("uretim", setUretim, sunucuBaglarAtomik ? (x) => { fisKesYerelYaz("uretim:siparisler",x); return {ok:true}; } : (x) => yazimiIzle(tabloYaz("uretim:siparisler", "uretim", x), "Üretim", x));
+  await yaz("koliler", setKoliler, sunucuBaglarAtomik ? (x) => { fisKesYerelYaz("koli:data",x); return {ok:true}; } : (x) => yazimiIzle(tekilYaz("koli:data", "koliler", x), "Koliler", x));
   await yaz("stokRezervasyonlari", setStokRezervasyonlari,
-    (x) => yazimiIzle(tabloYaz("stokrez:data", "stok_rezervasyonlari", x), "Stok rezervasyonları", x));
+    sunucuBaglarAtomik ? (x) => { fisKesYerelYaz("stokrez:data",x); return {ok:true}; } : (x) => yazimiIzle(tabloYaz("stokrez:data", "stok_rezervasyonlari", x), "Stok rezervasyonları", x));
   // Sipariş EN SONA: bağlar çözülmeden sipariş "İptal"/silinmiş görünmesin. Bu da güncel listeden.
   {
     const guncel = sonVeriRef.current || veri;
     const d = siparisBaglariniCoz({ ...guncel }, siparisId, secenek);
     const sonrasi = d ? (sil ? d.siparisler.filter((x) => x.id !== siparisId) : d.siparisler) : nextSiparisler;
     setSiparisler(sonrasi);
-    sonuclar.push(await yazimiIzle(tabloYaz("siparis:data", "siparisler", sonrasi), "Siparişler", sonrasi));
+    if (sunucuBaglarAtomik) fisKesYerelYaz("siparis:data",sonrasi);
+    else sonuclar.push(await yazimiIzle(tabloYaz("siparis:data", "siparisler", sonrasi), "Siparişler", sonrasi));
   }
 
   const basarisiz = sonuclar.filter((x) => x && x.ok === false);

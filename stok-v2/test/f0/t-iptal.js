@@ -19,8 +19,8 @@ const { ON, E } = T;
     const d = E.siparisBaglariniCoz({ siparisler: [ekran], stok: [], cariler: [], uretim: [], koliler: [], stokRezervasyonlari: [], fisDefteri: [] }, s.id, { sil: false, kullanici: "Ali" });
     await T.kaydet("siparisler", [ekran], d.siparisler);
     const sonra = { durum: T.sipDb(s.id).durum, karsilanan: T.kalemDb(A).karsilanan, bagliTeslim: T.teslimDb(A), fis: T.fisDb(t.sonuc.fisNo), bagCoz: bc.ok ? bc.sonuc : bc.hata };
-    T.kontrol("D5.iptal-bag-korunur", "iptalden sonra: durum İptal, karşılanan 4 = bağlı teslim 4, fiş satırı bağlı", { once, sonra,
-      gercek: [sonra.durum, sonra.karsilanan, sonra.bagliTeslim, sonra.fis.bagliSatir], beklenen: ["İptal", 4, 4, 1] });
+    T.kontrol("D5.iptal-bag-korunur", "iptalde 4 teslim tarihsel kalem bağında korunur; geçerli bağ çözülür", { once, sonra,
+      gercek: [sonra.durum, sonra.karsilanan, sonra.bagliTeslim, sonra.fis.bagliSatir, Number(T.psql(`select coalesce(sum(-miktar),0) from public.stk_hareket where gecmis_kalem_id='${A}' and not iptal`))], beklenen: ["İptal", 4, 0, 0, 4] });
 
     // D5.iptal-siparise-teslim — iptal edilmiş siparişe yeni teslim sunucuda reddedilir
     const r = T.rpc("fis_kes", T.teslimYuku({ s, kalemId: A, adet: 2, ekran: 4, istek: `${ON}-ii2` }));
@@ -40,14 +40,14 @@ const { ON, E } = T;
     // 081:316 — her cihaz başlığı kendi yerel hesabıyla yazar (10 + 5 = 15 < 20 → Kısmi Teslim)
     const yerel = { ...ekran, durum: "Kısmi Teslim", kalemler: [T.kalemObj(A, 20, 15)] };
     await T.kaydet("siparisler", [ekran], [yerel]); await T.kaydet("siparisler", [ekran], [yerel]);
-    const sonra = { durum: T.sipDb(s.id).durum, teslim: T.teslimDb(A), karsilanan: T.kalemDb(A).karsilanan };
+    const sonra = { durum: T.jsonSorgu(`select durum from public.siparisler_okuma where id='${s.id}'`)[0].durum, baslikOnbellek: T.sipDb(s.id).durum, teslim: T.teslimDb(A), karsilanan: T.kalemDb(A).karsilanan };
     T.kontrol("D5.durum-eszamanli", "20 / 20 teslimde durum Tamamlandı (sunucu hesaplar)", { once, sonra, gercek: sonra.durum, beklenen: "Tamamlandı" });
   }
 
   const d = T.denetim();
   // F1.1: bağı çözülmüş teslim iki kategoride — izli (D5a, F1.1 sunucusu) ya da izsiz (D5c, 1.742.x sunucusu / eski kayıt)
   const d5 = (d.D5a_bagi_cozulmus_teslim || 0) + (d.D5c_bagi_cozulmus_izsiz || 0);
-  T.kontrol("D5.denetim-yakalar", "denetim bağı çözülmüş teslimi (D5a izli / D5c izsiz) ve durum çelişkisini (D5b) görüyor", { sonra: { D5a: d.D5a_bagi_cozulmus_teslim, D5c: d.D5c_bagi_cozulmus_izsiz, D5b: d.D5b_durum_teslimle_celisiyor },
+  T.kontrol("D5.denetim-yakalar", "denetim tarihsel teslimi ve eski başlık önbelleği farkını görüyor; yetkili durum okuma görünümünde", { sonra: { D5a: d.D5a_bagi_cozulmus_teslim, D5c: d.D5c_bagi_cozulmus_izsiz, D5b: d.D5b_durum_teslimle_celisiyor },
     gercek: [d5 > 0, d.D5b_durum_teslimle_celisiyor > 0], beklenen: [true, true] });
   T.bitir();
 })().catch((e) => { console.error(e); process.exit(2); });

@@ -11,7 +11,9 @@ let supabaseSonHata = null;
 // Sayfalama: Supabase varsayılan olarak 1000 satır döndürür. Stok hareketleri kısa sürede bunu
 // aşar, bu yüzden aralık başlığıyla parça parça çekiliyor — aksi halde eski hareketler sessizce
 // kaybolur ve bakiye tutmaz.
+let _siparisDurumSunucu = false;
 async function supabaseTumSatirlar(tablo, sorgu = "select=*") {
+  if (tablo === "siparisler" && _siparisDurumSunucu) tablo = "siparisler_okuma";
   const parcaBoyu = 1000;
   let baslangic = 0;
   let jetonTekrari = 0;
@@ -61,6 +63,7 @@ function v2AyarlariniOku() {
       listeV2TablolariAyarla(ayar && ayar[0] && ayar[0].liste_aktif ? ayar[0].liste_tablolari : []);
       // Tek fiş defteri (v1.732.0, 078): fis-defteri.sql kurulduysa `fis_aktif` sütunu var — fiş kesen yollar fis_kes'e gider.
       fisDefteriKuruluAyarla(!!(ayar && ayar[0] && Object.prototype.hasOwnProperty.call(ayar[0], "fis_aktif")));
+      _siparisDurumSunucu = !!(ayar && ayar[0] && ayar[0].siparis_durum_sunucu);
       _v2AyarDurumu = "okundu";
       _v2AyarBasarili = true;
     },

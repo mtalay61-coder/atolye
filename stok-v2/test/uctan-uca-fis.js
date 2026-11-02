@@ -522,7 +522,7 @@ const kasaOzet = (m) => (m.kasalar || []).map((k) => `${k.id}:${(k.hareketler ||
   const cekTahsil = E.cekIslemUygula(cekYerel, "tahsil", { tarih: "2026-12-01", kullanici: "Ali", hesapHareketId: tahsilH.id, hesapTur: "kasa", hesapId: kasaId13, hesapAd: "Kasa", tutar: 900, paraBirimi: "TRY" });
   bekle("13: tahsil geçişi uygulanabilir", !!cekTahsil && cekTahsil.durum, "Tahsil Edildi");
   const ht = E.paraFisiYuku({ fis: { tur: "Çek tahsili", onek: E.paraFisOneki("Çek tahsili"), kaynak: "Çek", ek: { cekId: "cek-13", islem: "tahsil" } }, cariId: null, hareketler: [],
-    kasa: { hesapTur: "kasa", hesapId: kasaId13, hareket: tahsilH }, cekler: [cekTahsil], istek: "uu-cek-tahsil", zaman: zamanU, kullaniciAd: "Ali" });
+    kasa: { hesapTur: "kasa", hesapId: kasaId13, hareket: tahsilH }, cekler: [cekTahsil], cekOnceki: [cekYerel], istek: "uu-cek-tahsil", zaman: zamanU, kullaniciAd: "Ali" });
   const not = (await E.fisKesGonder(ht.yuk)).fisNo;
   bekle("13: ÇT fişi, kasa satırı, çek tahsil edildi", [/^ÇT-\d{9}$/.test(not),
     psql(`select (select count(*) from public.kas_hareket where fis_id = '${not}') || '/' || (select veri ->> 'durum' from public.kas_cek where id = 'cek-13');`)], [true, "1/Tahsil Edildi"]);

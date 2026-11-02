@@ -48,6 +48,7 @@ begin
     if coalesce(s ->> 'id', '') = '' then raise exception 'Stok satırında hareket kimliği yok' using errcode = '22023'; end if;
     if fid is null then raise exception 'Hareket % fişsiz — fişsiz hareket yazılamaz', s ->> 'id' using errcode = '22023'; end if;
     m := coalesce((s ->> 'miktar')::numeric, 0);
+    if m::text in ('NaN','Infinity','-Infinity') then raise exception 'Stok miktarı sonlu bir sayı olmalı' using errcode='KR010'; end if;
     if m = 0 then
       update public.stk_hareket set iptal = true, iptal_zamani = now(), iptal_eden = eposta where id = s ->> 'id' and not iptal;
       continue;
@@ -161,6 +162,11 @@ begin
              where coalesce(x ->> 'id', '') = '' or coalesce(x ->> 'cari_id', '') = '') then
     raise exception 'Cari hareketinde kimlik ya da cari yok' using errcode = '22023';
   end if;
+  if exists(select 1 from jsonb_array_elements(public.stk_dizi(p->'satirlar')) x
+    where (public.stk_sayi(x->>'tutar') is null and to_regprocedure('public.fis_kapi_acik()') is not null)
+      or coalesce(public.stk_sayi(x->>'tutar'),0)::text in ('NaN','Infinity','-Infinity')) then
+    raise exception 'Cari hareket tutarı sonlu bir sayı olmalı' using errcode='KR010';
+  end if;
   insert into public.car_hareket as h (id, cari_id, tarih, zaman, yon, tutar, para_birimi, odeme_sekli, vade, defter, fis_no,
                                        siparis_no, uretim_id, urun_ad, renk, aciklama, ek, olusturan)
   select x ->> 'id', x ->> 'cari_id', x ->> 'tarih', x ->> 'zaman', x ->> 'yon', coalesce(public.stk_sayi(x ->> 'tutar'), 0),
@@ -227,7 +233,33 @@ declare
   n_yaz int;
   n_sil int;
   sonuc jsonb := '{}'::jsonb;
+  v_satir jsonb;
+  n_parca int;
 begin
+  foreach t in array array['siparis_kalemleri', 'uretim_atamalari'] loop
+    d := case when jsonb_typeof(p) = 'object' then p -> t end;
+    continue when jsonb_typeof(d) <> 'object';
+    satirlar := public.stk_dizi(d -> 'satirlar');
+    if t = 'siparis_kalemleri' then
+      perform 1 from public.siparisler s where s.id::text in (
+          select x ->> 'siparis_id' from jsonb_array_elements(satirlar) x
+          union select k.siparis_id::text from public.siparis_kalemleri k
+           where k.id::text in (select x ->> 'id' from jsonb_array_elements(satirlar) x union select jsonb_array_elements_text(public.stk_dizi(d -> 'sil'))))
+        order by s.id for key share;
+      perform 1 from public.siparis_kalemleri k
+       where k.id::text in (select x ->> 'id' from jsonb_array_elements(satirlar) x union select jsonb_array_elements_text(public.stk_dizi(d -> 'sil')))
+       order by k.id for update;
+    else
+      perform 1 from public.uretim u where u.id::text in (
+          select x ->> 'uretim_id' from jsonb_array_elements(satirlar) x
+          union select a.uretim_id::text from public.uretim_atamalari a
+           where a.id::text in (select x ->> 'id' from jsonb_array_elements(satirlar) x union select jsonb_array_elements_text(public.stk_dizi(d -> 'sil'))))
+        order by u.id for key share;
+      perform 1 from public.uretim_atamalari a
+       where a.id::text in (select x ->> 'id' from jsonb_array_elements(satirlar) x union select jsonb_array_elements_text(public.stk_dizi(d -> 'sil')))
+       order by a.id for update;
+    end if;
+  end loop;
   for t, d in select key, value from jsonb_each(case when jsonb_typeof(p) = 'object' then p else '{}'::jsonb end) loop
     if t not in ('siparis_kalemleri', 'uretim_atamalari') then
       raise exception 'Bu tablo alt_yaz ile yazılamaz: %', t using errcode = '42501';
@@ -240,18 +272,25 @@ begin
       if exists (select 1 from jsonb_array_elements(satirlar) x where coalesce(x ->> 'id', '') = '') then
         raise exception '% satırında kimlik yok', t using errcode = '22023';
       end if;
-      select string_agg(quote_ident(c.column_name), ', ' order by c.ordinal_position),
-             string_agg(case when c.column_name <> 'id' then quote_ident(c.column_name) || ' = excluded.' || quote_ident(c.column_name) end, ', ')
-        into sutunlar, atamalar
-      from information_schema.columns c
-      where c.table_schema = 'public' and c.table_name = t
-        and c.column_name in (select distinct jsonb_object_keys(x) from jsonb_array_elements(satirlar) x where jsonb_typeof(x) = 'object');
-      execute format(
-        'insert into public.%I as h (%s) select %s from (select distinct on (r.id) r.* from jsonb_array_elements(%L::jsonb) with ordinality as e(x, n), '
-        || 'jsonb_populate_record(null::public.%I, e.x) r order by r.id, e.n desc) s '
-        || 'on conflict (id) do ' || case when atamalar is null then 'nothing' else 'update set ' || atamalar end,
-        t, sutunlar, sutunlar, satirlar::text, t);
-      get diagnostics n_yaz = row_count;
+      if exists(select 1 from jsonb_array_elements(satirlar) r, jsonb_object_keys(r) anahtar
+        where not exists(select 1 from information_schema.columns c where c.table_schema='public' and c.table_name=t and c.column_name=anahtar)) then
+        raise exception 'Alt kayıtta tanınmayan alan var (%) — kayıt değiştirilmedi',t using errcode='KR010';
+      end if;
+      execute format('select 1 from public.%I where id::text in (select x->>''id'' from jsonb_array_elements(%L::jsonb) x) order by id for update',t,satirlar::text);
+      for v_satir in select y from (select distinct on (y->>'id') y,n from jsonb_array_elements(satirlar) with ordinality as e(y,n) order by y->>'id',n desc) a order by y->>'id' loop
+        select string_agg(quote_ident(c.column_name), ', ' order by c.ordinal_position),
+               string_agg(case when c.column_name <> 'id' then quote_ident(c.column_name) || ' = excluded.' || quote_ident(c.column_name) end, ', ')
+          into sutunlar, atamalar
+        from information_schema.columns c
+        where c.table_schema = 'public' and c.table_name = t
+          and c.column_name in (select jsonb_object_keys(v_satir));
+        execute format(
+          'insert into public.%I as h (%s) select %s from jsonb_populate_record(null::public.%I,%L::jsonb) r '
+          || 'on conflict (id) do ' || case when atamalar is null then 'nothing' else 'update set ' || atamalar end,
+          t,sutunlar,sutunlar,t,v_satir::text);
+        get diagnostics n_parca = row_count;
+        n_yaz:=n_yaz+n_parca;
+      end loop;
     end if;
     silinecek := array(select jsonb_array_elements_text(public.stk_dizi(d -> 'sil')));
     if array_length(silinecek, 1) > 0 then
@@ -262,6 +301,96 @@ begin
   end loop;
   return sonuc;
 end $$;
+
+create or replace function public.kas_cek_kilitle(p jsonb, p_fis boolean default false) returns void
+language plpgsql security definer set search_path=public as $$
+declare
+  kid text;
+  c public.kas_cek;
+  v_satir jsonb;
+  beklenen jsonb;
+  sil boolean;
+begin
+  if to_regprocedure('public.fis_kapi_acik()') is null then return; end if;
+  if exists(select 1 from jsonb_array_elements(public.stk_dizi(p->'cekler')) x
+            group by x->>'id' having count(*)>1) then
+    raise exception 'Aynı çek bir işlemde birden çok kez değiştirilemez' using errcode='KR008';
+  end if;
+  for kid in select distinct id from (
+    select x->>'id' as id from jsonb_array_elements(public.stk_dizi(p->'cekler')) x
+    union all select jsonb_array_elements_text(public.stk_dizi(p->'cekIptal'))) a order by id loop
+    if coalesce(kid,'')='' then raise exception 'Çek kimliği eksik' using errcode='KR008'; end if;
+    perform pg_advisory_xact_lock(hashtextextended('kas_cek:'||kid,0));
+    select * into c from public.kas_cek where id=kid;
+    select y into v_satir from jsonb_array_elements(public.stk_dizi(p->'cekler')) with ordinality as e(y,n)
+      where y->>'id'=kid order by n desc limit 1;
+    sil := exists(select 1 from jsonb_array_elements_text(public.stk_dizi(p->'cekIptal')) i where i=kid);
+    if sil and v_satir is not null then raise exception 'Çek aynı işlemde yazılıp silinemez (%)',kid using errcode='KR008'; end if;
+    beklenen := case when sil then p->'cekOnceki'->kid else v_satir->'onceki' end;
+    if c.id is null then
+      if beklenen is not null and beklenen <> 'null'::jsonb then
+        raise exception 'Çek başka cihazda değişmiş veya silinmiş (%) — yenileyin',kid using errcode='KR008';
+      end if;
+    else
+      if not p_fis and not sil and not c.iptal and c.veri=v_satir->'veri' then continue; end if;
+      if c.iptal or beklenen is distinct from c.veri then
+        raise exception 'Çek başka cihazda değişmiş veya iptal edilmiş (%) — yenileyip işlemi tekrar seçin',kid using errcode='KR008';
+      end if;
+      if coalesce(c.veri->>'durum','Portföyde') is distinct from coalesce(v_satir->'veri'->>'durum','Portföyde') and not sil then
+        if coalesce(c.veri->>'durum','Portföyde') not in ('Portföyde','Tahsilde')
+           or coalesce(v_satir->'veri'->>'durum','Portföyde') not in ('Tahsilde','Ciro Edildi','İade Edildi','Tahsil Edildi','Karşılıksız')
+           or (c.veri->>'durum'='Tahsilde' and v_satir->'veri'->>'durum' in ('Tahsilde','Ciro Edildi'))
+           or (coalesce(c.veri->>'tip','Alınan')='Verilen' and v_satir->'veri'->>'durum' in ('Tahsilde','Ciro Edildi'))
+           or (not p_fis and v_satir->'veri'->>'durum' in ('Ciro Edildi','İade Edildi','Tahsil Edildi')) then
+          raise exception 'Çek durum geçişi geçersiz veya fiş gerektiriyor (%)',kid using errcode='KR008';
+        end if;
+      end if;
+    end if;
+  end loop;
+end $$;
+
+revoke all on function public.kas_cek_kilitle(jsonb,boolean) from public,anon,authenticated;
+
+create or replace function public.kas_hesap_kilitle(p jsonb) returns void
+language plpgsql security definer set search_path=public as $$
+declare
+  kid text;
+  c public.kas_hesap;
+  v_satir jsonb;
+  sil boolean;
+begin
+  if to_regprocedure('public.fis_kapi_acik()') is null then return; end if;
+  for kid in select distinct id from (
+    select x->>'id' as id from jsonb_array_elements(public.stk_dizi(p->'hesaplar')) x
+    union all select x->>'hesap_id' from jsonb_array_elements(public.stk_dizi(p->'hareketler')) x
+    union all select jsonb_array_elements_text(public.stk_dizi(p->'hesapSil'))) a order by id loop
+    if coalesce(kid,'')='' then raise exception 'Kasa/banka hesap kimliği yok' using errcode='KR010'; end if;
+    perform pg_advisory_xact_lock(hashtextextended('kas_hesap:'||kid,0));
+    select * into c from public.kas_hesap where id=kid;
+    select y into v_satir from jsonb_array_elements(public.stk_dizi(p->'hesaplar')) with ordinality as e(y,n)
+      where y->>'id'=kid order by n desc limit 1;
+    sil:=exists(select 1 from jsonb_array_elements_text(public.stk_dizi(p->'hesapSil')) i where i=kid);
+    if exists(select 1 from jsonb_array_elements(public.stk_dizi(p->'hareketler')) x where x->>'hesap_id'=kid) then
+      if sil or ((c.id is null or not c.aktif) and v_satir is null) then
+        raise exception 'Hareketin kasa/banka hesabı yok veya kapalı (%)',kid using errcode='KR010';
+      end if;
+    end if;
+    if c.id is null then continue; end if;
+    if v_satir is not null and exists(select 1 from public.kas_hareket where hesap_id=kid) then
+      if c.tur is distinct from v_satir->>'tur'
+        or coalesce(c.veri->>'paraBirimi','TRY') is distinct from coalesce(v_satir->'veri'->>'paraBirimi','TRY') then
+        raise exception 'Hareket geçmişi olan hesabın türü/para birimi değişmez (%)',kid using errcode='KR010';
+      end if;
+    end if;
+    if sil and exists(select 1 from public.kas_hareket h where h.hesap_id=kid and not h.iptal
+      group by coalesce(h.veri->>'paraBirimi',c.veri->>'paraBirimi','TRY')
+      having sum(case when h.veri->>'yon'='Çıkış' then -1 else 1 end * coalesce(public.stk_sayi(h.veri->>'tutar'),0))<>0) then
+      raise exception 'Bakiyesi olan kasa/banka hesabı kapatılamaz (%) — önce bakiyeyi aktarın',kid using errcode='KR010';
+    end if;
+  end loop;
+end $$;
+
+revoke all on function public.kas_hesap_kilitle(jsonb) from public,anon,authenticated;
 
 create or replace function public.kas_yaz(p jsonb) returns jsonb
 language plpgsql security definer set search_path = public as $$
@@ -292,6 +421,15 @@ begin
      or exists (select 1 from jsonb_array_elements(public.stk_dizi(p -> 'cekler')) x
                 where coalesce(x ->> 'id', '') = '' or jsonb_typeof(x -> 'veri') <> 'object') then
     raise exception 'Kasa kaydında kimlik, hesap ya da tür eksik' using errcode = '22023';
+  end if;
+
+  perform public.kas_cek_kilitle(p, coalesce(current_setting('fis.kapi',true),'')='acik');
+  perform public.kas_hesap_kilitle(p);
+
+  if exists(select 1 from jsonb_array_elements(public.stk_dizi(p->'hareketler')) x
+    where (public.stk_sayi(x->'veri'->>'tutar') is null and to_regprocedure('public.fis_kapi_acik()') is not null)
+      or coalesce(public.stk_sayi(x->'veri'->>'tutar'),0)::text in ('NaN','Infinity','-Infinity')) then
+    raise exception 'Kasa/banka hareket tutarı sonlu bir sayı olmalı' using errcode='KR010';
   end if;
 
   insert into public.kas_hesap as h (id, tur, sira, veri, aktif, olusturan)

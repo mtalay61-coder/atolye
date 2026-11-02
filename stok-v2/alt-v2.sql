@@ -41,6 +41,8 @@ declare
   n_yaz int;
   n_sil int;
   sonuc jsonb := '{}'::jsonb;
+  v_satir jsonb;
+  n_parca int;
 begin
   for t, d in select key, value from jsonb_each(case when jsonb_typeof(p) = 'object' then p else '{}'::jsonb end) loop
     if t not in ('siparis_kalemleri', 'uretim_atamalari') then
@@ -54,18 +56,27 @@ begin
       if exists (select 1 from jsonb_array_elements(satirlar) x where coalesce(x ->> 'id', '') = '') then
         raise exception '% satırında kimlik yok', t using errcode = '22023';
       end if;
-      select string_agg(quote_ident(c.column_name), ', ' order by c.ordinal_position),
-             string_agg(case when c.column_name <> 'id' then quote_ident(c.column_name) || ' = excluded.' || quote_ident(c.column_name) end, ', ')
-        into sutunlar, atamalar
-      from information_schema.columns c
-      where c.table_schema = 'public' and c.table_name = t
-        and c.column_name in (select distinct jsonb_object_keys(x) from jsonb_array_elements(satirlar) x where jsonb_typeof(x) = 'object');
-      execute format(
-        'insert into public.%I as h (%s) select %s from (select distinct on (r.id) r.* from jsonb_array_elements(%L::jsonb) with ordinality as e(x, n), '
-        || 'jsonb_populate_record(null::public.%I, e.x) r order by r.id, e.n desc) s '
-        || 'on conflict (id) do ' || case when atamalar is null then 'nothing' else 'update set ' || atamalar end,
-        t, sutunlar, sutunlar, satirlar::text, t);
-      get diagnostics n_yaz = row_count;
+      if exists(select 1 from jsonb_array_elements(satirlar) r, jsonb_object_keys(r) anahtar
+        where not exists(select 1 from information_schema.columns c where c.table_schema='public' and c.table_name=t and c.column_name=anahtar)) then
+        raise exception 'Alt kayıtta tanınmayan alan var (%) — kayıt değiştirilmedi',t using errcode='KR010';
+      end if;
+      -- Bütün mevcut satırlar ilk yazmadan önce kimlik sırasıyla kilitlenir.
+      execute format('select 1 from public.%I where id::text in (select x->>''id'' from jsonb_array_elements(%L::jsonb) x) order by id for update',t,satirlar::text);
+      -- Satırların anahtar kümeleri farklı olabilir: birleşik sütun listesi eksik alanı NULL yapıp veri siliyordu.
+      for v_satir in select y from (select distinct on (y->>'id') y,n from jsonb_array_elements(satirlar) with ordinality as e(y,n) order by y->>'id',n desc) a order by y->>'id' loop
+        select string_agg(quote_ident(c.column_name), ', ' order by c.ordinal_position),
+               string_agg(case when c.column_name <> 'id' then quote_ident(c.column_name) || ' = excluded.' || quote_ident(c.column_name) end, ', ')
+          into sutunlar, atamalar
+        from information_schema.columns c
+        where c.table_schema = 'public' and c.table_name = t
+          and c.column_name in (select jsonb_object_keys(v_satir));
+        execute format(
+          'insert into public.%I as h (%s) select %s from jsonb_populate_record(null::public.%I,%L::jsonb) r '
+          || 'on conflict (id) do ' || case when atamalar is null then 'nothing' else 'update set ' || atamalar end,
+          t,sutunlar,sutunlar,t,v_satir::text);
+        get diagnostics n_parca = row_count;
+        n_yaz:=n_yaz+n_parca;
+      end loop;
     end if;
     silinecek := array(select jsonb_array_elements_text(public.stk_dizi(d -> 'sil')));
     if array_length(silinecek, 1) > 0 then

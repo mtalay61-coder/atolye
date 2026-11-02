@@ -25,8 +25,13 @@ async function tamGeriYukleme(etiket, kurallarAcik) {
   const simdiSip = [{ ...s, durum: "Kısmi Teslim", kalemler: [T.kalemObj(A, 20, 3, { birimFiyat: 150 })] }];
   await T.kaydet("siparisler", yedekSip, simdiSip);                  // yedekten sonra fiyat da değişti (150)
   const once = { fis: T.fisDb(t.sonuc.fisNo), karsilanan: T.kalemDb(A).karsilanan, teslim: T.teslimDb(A), fiyat: Number(T.psql(`select fiyat from public.siparis_kalemleri where id = '${A}';`)) };
-  const r1 = await T.kaydet("urunler", stokOku(), yedekStok, { topluSilmeIzni: true });
-  const r2 = await T.kaydet("siparisler", simdiSip, yedekSip, { topluSilmeIzni: true });
+  // Eski istemci sunucuya sürüm başlığı taşımıyor. Desteklenen yeni istemci tam geri yüklemeyi zaten ilk adımda durdurur.
+  T.psql("update public.stk_ayar set min_istemci_surum='1.744.3' where id='tekil';");
+  let r1,r2;
+  try {
+    r1 = await T.kaydet("urunler", stokOku(), yedekStok, { topluSilmeIzni: true });
+    r2 = await T.kaydet("siparisler", simdiSip, yedekSip, { topluSilmeIzni: true });
+  } finally { T.psql("update public.stk_ayar set min_istemci_surum=null where id='tekil';"); }
   const sonra = { fis: T.fisDb(t.sonuc.fisNo), karsilanan: T.kalemDb(A).karsilanan, teslim: T.teslimDb(A), fiyat: Number(T.psql(`select fiyat from public.siparis_kalemleri where id = '${A}';`)),
     stokYazmasi: r1.hata ? "RED" : "kabul", siparisYazmasi: r2.hata ? "RED" : "kabul" };
   return { once, sonra };

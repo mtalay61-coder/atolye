@@ -408,6 +408,10 @@ function MuhasebeModule({ onParaFisiKes, onFisIptal, sunucuFisiMi, kapsam = "gen
         if (!onCekCariHareketSil || !onCekCariHareketSil(bul.hareketId)) showToast("Cari hareketi silinemedi — geri alınamadı");
         return;
       }
+      if (fisKesYolu()) {
+        showToast("Çekin bağlı fişi doğrulanamadı — kayıtlar korunuyor. Listeyi yenileyip doğru fişten geri alın.");
+        return;
+      }
       // "benzer": kimliği farklı kalmış kopya fiş silinir; çek o kimliği tanımadığı için durumu
       // AYRICA geri alınıyor. "yok": cari tarafında silinecek bir şey yok, yalnız çek geri döner.
       // İkisinde de geri alma `cekIslemGeriAl` ile — çekin kendi kaydındaki bağ kimliği veriliyor.

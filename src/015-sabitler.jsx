@@ -492,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.744.2";
+const SURUM = "1.744.3";
 const SURUM_TARIHI = "2026-11-02";
-const SURUM_NOTU = "Sipariş iptali ve fiş bağları sunucuda birlikte kaydedilir; iptal edilmiş siparişe yeni fiş yazılamaz";
+const SURUM_NOTU = "Çek ve fiş işlemlerinde eşzamanlı kayıt koruması; sipariş durumu sunucudan hesaplanır";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -525,6 +525,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" };   // teklif: v1.723.0, Sipariş'in alt sekmesi
 
 const SURUM_GECMISI = [
+  { surum: "1.744.3", tarih: "02.11.2026", eklenen: ["Eski istemcilerin yazmasını durduran sunucu sürüm kapısı (geçişte ayrıca etkinleştirilir)."], degisen: ["Sipariş teslim durumu güncel kalemlerden sunucuda hesaplanır.", "Sipariş iptalinde üretim, koli ve rezervasyon bağları birlikte çözülür."], duzeltilen: ["Aynı çekin iki cihazdan eşzamanlı tahsili engellenir; fiş iptali çek ve kasa kaydını birlikte geri alır.", "Farklı alanları değiştirilen sipariş kalemlerinin gönderilmeyen alanları artık silinmez.", "Bakiyeli kasa/banka hesabı kapatılamaz; geçmişin para birimi değiştirilemez."] },
   { surum: "1.744.2", tarih: "02.11.2026", eklenen: [], degisen: ["Sipariş iptal durumu ve fiş bağlarının çözülmesi sunucuda aynı işlemde kaydedilir."], duzeltilen: ["İptal edilmiş siparişe yeni fiş yazılması ve bayat ekranın iptal durumunu geri açması engellenir."] },
   { surum: "1.744.1", tarih: "01.11.2026", eklenen: [], degisen: ["Fiş defteri kullanılan sistemde tam yedek geri yükleme kapalıdır; mevcut kayıtlar değiştirilmeden uyarı gösterilir."], duzeltilen: ["Sunucu ayarı doğrulanamadığında geri yükleme eski sisteme aitmiş gibi başlayabiliyordu; artık veri değiştirilmeden durur."] },
   { surum: "1.744.0", tarih: "02.11.2026", eklenen: ["\"İnceleme gerekiyor\" şeridi: sunucunun veri kuralı gereği reddettiği değişiklik (ör. teslimi olan kalemi silmek, iptal edilmiş siparişin hareketini yeniden bağlamak) burada sebebiyle görünür; kendiliğinden yeniden gönderilmez, \"Yeniden dene\" ya da (Yönetici) \"Yerel hâli bırak, sunucudakini al\" ile kapanır. Reddedilen hâlin kopyası günlüğe yazılır."], degisen: ["Teslim geçmişi olan sipariş kalemi silinemez, başka kalemle birleştirilemez; ürünü, rengi ve bedeni değişmez; miktarı teslim edilenin altına inemez — sunucu da reddeder.", "Teslimi olan, zaten iptal edilmiş sipariş silinmez; iptal edilmiş olarak kalır.", "Sunucu bir satırı reddettiğinde aynı tablonun öteki değişiklikleri gönderilir (eskiden hepsi beklemede kalıyordu)."], duzeltilen: ["Sunucunun kural reddi \"Buluta yazma yetkisi yok — giriş yapılmamış\" diye görünüyor ve dakikada bir yeniden gönderiliyordu.", "Bekleyen kalemler birleştirilince teslimli kalemin teslimi sahipsiz kalıyordu.", "İptal edilmiş sipariş silinince teslim geçmişi sahipsiz kalıyordu."] },
