@@ -1,0 +1,306 @@
+── sunucu karşılananı testi temiz ──
+── kalıcı ret birim testi temiz ──
+── birim testi temiz ──
+── ambalaj birim testi temiz ──
+── fiyat kuralı testi temiz ──
+── satır eşitleme testi temiz ──
+── stok no onarımı testi temiz ──
+── değişiklik sayacı testi temiz ──
+── kullanıcı damgası testi temiz ──
+── reçete onay testi temiz ──
+── depo sahiplik testi temiz ──
+── özel kod çoklu tip testi temiz ──
+── cari yön testi temiz ──
+── fiş no testi temiz ──
+── banka testi temiz ──
+── barkod testi temiz ──
+── atölye barkod testi temiz ──
+── stok durumu testi temiz ──
+── hareket etiketi testi temiz ──
+── görsel eşleştirme testi temiz ──
+── özel kod testi temiz ──
+── defter testi temiz ──
+── çek testi temiz ──
+── reçete gerçekleşme testi temiz ──
+── harici barkod testi temiz ──
+── sipariş ek testi temiz ──
+── finans ek testi temiz ──
+── ara proses testi temiz ──
+── geçmiş renk testi temiz ──
+── görsel deposu testi temiz ──
+── açılış fişi testi temiz ──
+── çek bağı testi temiz ──
+── rapor testi temiz ──
+── code128 çözücü testi temiz ──
+── son alış testi temiz ──
+── sipariş çıktısı testi temiz ──
+── sipariş iptal testi temiz ──
+── ekran düzeni testi temiz ──
+── kasa açıklama testi temiz ──
+── kapasite testi temiz ──
+── proses planlama testi temiz ──
+── demirbaş testi temiz ──
+── üretim raporu testi temiz ──
+── adım kuralı testi temiz ──
+── sürüm testi temiz ──
+  senaryo bekleyen-birak ................. FARKLI  (diff altin-bekleyen-birak.txt /tmp/yeni-bekleyen-birak.txt)
+  senaryo arsiv-goruntu ................. AYNI
+  senaryo mamul-renk-kodlu ................. AYNI
+  senaryo teklif ................. AYNI
+  senaryo uctan-uca ................. AYNI
+  senaryo siparis-planlama-toplu ................. AYNI
+  senaryo uretim-raporu ................. AYNI
+  senaryo demirbas-alim ................. AYNI
+  senaryo proses-planlama ................. AYNI
+  senaryo kapasite-tanim ................. AYNI
+  senaryo cari-tipleri-tanim ................. AYNI
+  senaryo kilavuz ................. AYNI
+  senaryo recete-renk-eklendi ................. AYNI
+  senaryo cari-ozel-tip ................. AYNI
+  senaryo kullanici-kisit ................. AYNI
+  senaryo fis ................. AYNI
+  senaryo siparis ................. AYNI
+  senaryo silme ................. AYNI
+  senaryo uretim ................. AYNI
+  senaryo cari-kart ................. AYNI
+  senaryo recete-oneri ................. AYNI
+  senaryo cikis-fisi ................. AYNI
+  senaryo cok-modelli-fis ................. AYNI
+  senaryo onay-duzenleme ................. AYNI
+  senaryo fis-ozet ................. AYNI
+  senaryo cari-bakiye ................. AYNI
+  senaryo gorsel-secici ................. AYNI
+  senaryo hata-paneli ................. AYNI
+  senaryo depo-koprusu ................. AYNI
+  senaryo geri-donus ................. AYNI
+  senaryo son-islemler ................. AYNI
+  senaryo bakiye-renk ................. AYNI
+  senaryo cek-girisi ................. AYNI
+  senaryo paketleme ................. AYNI
+  senaryo sevkiyat ................. AYNI
+  senaryo barkod-atolye ................. AYNI
+  senaryo mamul-depo ................. AYNI
+  senaryo satin-alma-sutunu ................. AYNI
+  senaryo satin-al-dugmesi ................. AYNI
+  senaryo barkod-siparis ................. AYNI
+  senaryo katalog ................. AYNI
+  senaryo sekmeler ................. FARKLI  (diff altin-sekmeler.txt /tmp/yeni-sekmeler.txt)
+  senaryo ozel-kod-ekle ................. AYNI
+  senaryo siparis-duzenle ................. AYNI
+  senaryo gorsel-depo ................. AYNI
+  senaryo acilis-fisi ................. AYNI
+  senaryo pesin-tahsilat ................. AYNI
+  senaryo kur-cevirici ................. AYNI
+  senaryo cek-ciro ................. AYNI
+  senaryo cek-gorsel ................. AYNI
+  senaryo eksi-stok-ihtiyac ................. AYNI
+  senaryo verilen-hammadde ................. AYNI
+  senaryo recete-gerceklesme ................. AYNI
+  senaryo fis-ihtiyactan ................. AYNI
+  senaryo cek-bag ................. AYNI
+  senaryo cek-iade-tahsil ................. AYNI
+  senaryo bulut-giris ................. AYNI
+  senaryo bulut-on-giris ................. AYNI
+  senaryo bulut-kullanici ................. AYNI
+  senaryo recete-sil-onay ................. AYNI
+  senaryo pencere-sekmeleri ................. AYNI
+  senaryo rapor-siparis ................. AYNI
+  senaryo hazir-urunler ................. AYNI
+  senaryo tedarik-girisleri ................. FARKLI  (diff altin-tedarik-girisleri.txt /tmp/yeni-tedarik-girisleri.txt)
+  senaryo koli-uretim-siniri ................. AYNI
+  senaryo json-yedek ................. AYNI
+  senaryo renk-kodu ................. AYNI
+  senaryo renk-gocu ................. AYNI
+  senaryo yoneticisiz ................. AYNI
+  senaryo siparisten-sec ................. AYNI
+  senaryo gorevler ................. AYNI
+  senaryo sohbet ................. AYNI
+  senaryo surum-duyuru ................. AYNI
+  senaryo beden-adi ................. AYNI
+  senaryo beden-grubu ................. AYNI
+  senaryo mobil-gorunum ................. AYNI
+  senaryo stok-matris ................. AYNI
+  senaryo bekleyen-yazma ................. AYNI
+  senaryo fis-defteri ................. AYNI
+  senaryo oturum ................. AYNI
+  senaryo stok-turetme ................. AYNI
+  senaryo kasa-cari-yon ................. AYNI
+  senaryo kasa-islemler ................. AYNI
+  senaryo teknik-cizim ................. AYNI
+  senaryo modelhane ................. AYNI
+  senaryo gider-kartlari ................. AYNI
+  senaryo menu-gruplari ................. AYNI
+  senaryo kullanici-rolleri ................. AYNI
+  senaryo olcu-secimi ................. AYNI
+  senaryo kar-zarar ................. AYNI
+  senaryo anasayfa-alacak ................. AYNI
+  senaryo siparis-matris-sabit ................. AYNI
+  senaryo asorti-koli ................. AYNI
+  senaryo karsilanan-turetme ................. AYNI
+  senaryo karsiliksiz-para ................. AYNI
+  senaryo genel-gider ................. AYNI
+  senaryo kaynaksiz-hareket ................. AYNI
+  senaryo gider-gruplari ................. AYNI
+  senaryo urun-maliyeti ................. AYNI
+  senaryo kart-eylemleri ................. AYNI
+  senaryo sil-onayi ................. AYNI
+  senaryo maliyet-dokumu ................. AYNI
+  senaryo fiyat-grubu ................. AYNI
+  senaryo fiyat-grubu-duzenle ................. AYNI
+  senaryo oturum-dustu ................. AYNI
+  senaryo maliyet-duzenle ................. AYNI
+  senaryo maliyet-renk-fiyati ................. AYNI
+  senaryo maliyet-satis-uyari ................. AYNI
+  senaryo maliyet-renk-beden ................. AYNI
+  senaryo stok-arama-ayri ................. AYNI
+  senaryo ozel-kod-mevcut ................. AYNI
+  senaryo fiyat-grubu-marj ................. AYNI
+  senaryo recete-standart-kart ................. AYNI
+  senaryo sapma-silinen-uretim ................. AYNI
+  senaryo recete-duzen ................. AYNI
+  senaryo renksiz-otomatik ................. AYNI
+  senaryo recete-sablon ................. AYNI
+  senaryo gelir-gider ................. AYNI
+  senaryo fis-defteri-bayat ................. AYNI
+  senaryo bayat-efekt ................. AYNI
+  senaryo iscilik-yonu ................. AYNI
+  senaryo uretim-iade ................. AYNI
+  senaryo yazma-hatasi ................. AYNI
+  senaryo surum-otomatik ................. AYNI
+  senaryo yenileme-ekran ................. AYNI
+  senaryo renk-arama ................. AYNI
+  senaryo depo-okut ................. AYNI
+  senaryo beden-etiketi ................. AYNI
+  senaryo github-yayin ................. AYNI
+  senaryo depo-sevkiyat ................. AYNI
+  senaryo siparis-koli-sevk ................. AYNI
+  senaryo koli-satir-gruplama ................. AYNI
+  senaryo siparisten-koli-sec ................. AYNI
+  senaryo alis-tek-ekran ................. AYNI
+  senaryo renksiz-malzeme ................. AYNI
+  senaryo iscilik-gorunum ................. AYNI
+  senaryo ekstre-sade ................. AYNI
+  senaryo standart-gizli ................. AYNI
+  senaryo siparis-kamera ................. AYNI
+  senaryo foto-ile-urun ................. AYNI
+  senaryo siparis-yazdir ................. AYNI
+  senaryo siparise-urun-ekle ................. AYNI
+  senaryo mamul-stok ................. AYNI
+  senaryo finans-menu ................. AYNI
+  senaryo cek-kur-geri-al ................. AYNI
+  senaryo cek-yazdir ................. AYNI
+  senaryo cek-ozet ................. AYNI
+  senaryo cek-kayip-fis ................. AYNI
+  senaryo finans-rapor ................. AYNI
+  senaryo finans-yaslandirma ................. AYNI
+  senaryo finans-uretim ................. AYNI
+  senaryo model-rengi-arama ................. AYNI
+  senaryo renk-kodu-standart ................. AYNI
+  senaryo siparis-renk-resim ................. AYNI
+  senaryo siparis-form-duzen ................. AYNI
+  senaryo malzeme-tipi-renk ................. AYNI
+  senaryo standart-form ................. AYNI
+  senaryo finans-ek ................. AYNI
+  senaryo proses-notu ................. AYNI
+  senaryo ara-proses ................. AYNI
+  senaryo renksiz-alis ................. AYNI
+  senaryo gecmis-renk ................. AYNI
+  senaryo fiyat-pb ................. AYNI
+  senaryo olcu-fiyat ................. AYNI
+  senaryo fiyat-grup ................. AYNI
+  senaryo fiyat-grup-secici ................. AYNI
+  senaryo barkod-otomatik ................. AYNI
+  senaryo model-rengi-barkod ................. AYNI
+  senaryo barkod-acilista ................. AYNI
+  senaryo stok-no-onar ................. AYNI
+  senaryo resim-damga ................. FARKLI  (diff altin-resim-damga.txt /tmp/yeni-resim-damga.txt)
+  senaryo katalog-fiyatlar ................. AYNI
+  senaryo kesimhane ................. AYNI
+  senaryo tanim-basliklari ................. AYNI
+  senaryo renksiz-recete ................. AYNI
+  senaryo renk-basligi ................. AYNI
+  senaryo renk-basligi-uretim ................. AYNI
+  senaryo kdv-fis ................. AYNI
+  senaryo vergi-no ................. AYNI
+  senaryo maliyet-son-alis ................. AYNI
+  senaryo efatura ................. AYNI
+  senaryo siparis-kdv ................. AYNI
+  senaryo sevkiyat-kdv ................. AYNI
+  senaryo standart-kart ................. AYNI
+  senaryo siparis-iptal ................. AYNI
+  senaryo siparis-satir-fiyat ................. AYNI
+  senaryo siparis-satir-ekle ................. AYNI
+  senaryo cari-liste-toplam ................. AYNI
+  senaryo boyut-ayari ................. AYNI
+  senaryo ekran-duzeni ................. AYNI
+  senaryo urun-karti-duzeni ................. AYNI
+  senaryo cari-karti-duzeni ................. AYNI
+  senaryo siparis-karti-duzeni ................. AYNI
+  senaryo toplu-planlama ................. AYNI
+  senaryo kasa-duzeni ................. AYNI
+  senaryo kismi-teslim ................. AYNI
+  senaryo cek-defter ................. AYNI
+  senaryo harici-barkod ................. AYNI
+  senaryo defter-secimi ................. AYNI
+  senaryo cop-guvenlik ................. AYNI
+  senaryo fiyat-listesi ................. AYNI
+  senaryo fiyat-birim ................. AYNI
+  senaryo maliyet-onay ................. AYNI
+  senaryo tanim-birlestir ................. AYNI
+  senaryo fiyat-listesi-suzgec ................. AYNI
+  senaryo renk-ac-sorusu ................. AYNI
+  senaryo kayip-hammadde ................. AYNI
+  senaryo cevrimdisi-kilit ................. AYNI
+  senaryo siparis-odeme ................. AYNI
+  senaryo siparis-beden-geri ................. AYNI
+  senaryo siparis-islemler ................. AYNI
+  senaryo cari-rapor ................. AYNI
+  senaryo cari-secici ................. AYNI
+  senaryo siparis-notlar ................. AYNI
+  senaryo siparis-telefon-baslik ................. AYNI
+  senaryo siparis-satir-notu ................. AYNI
+  senaryo siparis-belge-sezon ................. AYNI
+  senaryo kayit-seridi ................. AYNI
+  senaryo siparis-kart-hizasi ................. AYNI
+  senaryo rapor-sabit-baslik ................. AYNI
+  senaryo siparis-satir-aramali ................. AYNI
+  senaryo hammadde-durum-renk ................. AYNI
+  senaryo hiz-buyuk-liste ................. AYNI
+  senaryo recete-onay ................. AYNI
+  senaryo logo-kucult ................. AYNI
+  senaryo ozel-kod-coklu ................. AYNI
+  senaryo recete-genis ................. AYNI
+  senaryo sag-tik-her-yer ................. AYNI
+  senaryo cari-renk ................. AYNI
+  senaryo sag-tik-kart ................. AYNI
+  senaryo siparis-git ................. AYNI
+  senaryo denetim-1640 ................. AYNI
+  senaryo otomatik-cikis ................. AYNI
+  senaryo firma-secimi ................. AYNI
+  senaryo kurulum-sihirbazi ................. AYNI
+  senaryo demo-firma ................. AYNI
+  senaryo odeme-tahsilat ................. AYNI
+  senaryo anasayfa-gosterge ................. AYNI
+  senaryo site-portal ................. AYNI
+  senaryo site-ayarlari ................. AYNI
+  senaryo kayit-ceviri ................. AYNI
+  senaryo banka-excel ................. AYNI
+  senaryo mutabakat-donem ................. AYNI
+  senaryo cari-mutabakat ................. AYNI
+  senaryo gunluk-matris ................. AYNI
+  senaryo gun-sonu ................. AYNI
+  senaryo sevk-paneli ................. AYNI
+  senaryo alis-satis ................. AYNI
+  senaryo yeni-cari-tum ................. AYNI
+  senaryo acilis-defter ................. AYNI
+  senaryo fis-kes ................. AYNI
+  senaryo stok-fis-kes ................. AYNI
+  senaryo para-fis-kes ................. AYNI
+  senaryo banka-fis-kes ................. AYNI
+  senaryo fis-iptal ................. AYNI
+  senaryo cek-fis-kes ................. AYNI
+  senaryo irsaliye-fis ................. AYNI
+  senaryo kendiliginden-yok ................. AYNI
+  senaryo kasa-fisleri ................. AYNI
+  senaryo karsilanan-fis-yolu ................. AYNI
+── DAVRANIŞ DEĞİŞTİ ──
