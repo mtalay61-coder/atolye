@@ -1,0 +1,15 @@
+── kontrol: atolye-erp.jsx ──
+  1-6  yapısal denetim ....... TEMİZ
+  7    gidiş-dönüş ............. TEMİZ
+  8    hareketsiz stok ......... TEMİZ
+  9    katman atlama ........... TEMİZ
+  10   sürüm koşulu ............ TEMİZ
+  11   matris kuralı ........... TEMİZ
+  12   fişsiz hareket .......... TEMİZ
+  13   silme sonucu ............ TEMİZ
+  14   alt tablo belleği ....... TEMİZ
+  15   asorti ölçü tipi ........ TEMİZ
+  17   beden sırası ........... TEMİZ
+  16   hareket kapıları ........ TEMİZ · 28 yazıcı, 1 silici
+  18   bayat okuma ............ TEMİZ · 9 borç, 0 gerçek (BORC=1 ile listele)
+── tüm denetimler temiz ──

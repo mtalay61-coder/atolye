@@ -1,0 +1,14 @@
+{
+  "stok-v2/test/pg17/cikis-butunluk.txt": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+  "stok-v2/test/pg17/cikis-geri-donus.txt": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+  "stok-v2/test/pg17/geri-alt-red.txt": "11e1a4bfbca1589fcdfdffc55f349d24a4e06314bd68c1f7b4c1fe32be9fd3f9",
+  "stok-v2/test/pg17/geri-cek-red.txt": "06e63c15c54c6cee03f5a2b68bfc115a0aab27851d4a46beaf1624412d2b7486",
+  "stok-v2/test/pg17/ozet-birim.json": "ff46a025de5d084cdb8ceeb5bec5f74b3c40a3cfbb005b540eb42b42d17cf2ca",
+  "stok-v2/test/pg17/runtime.json": "4da078f6f51d870ddbf401c19dd64ebe222f35f6b90addf4b040b16d13b529ec",
+  "stok-v2/test/pg17/sonuc-birim.txt": "66920be6672092b57a00f6d34608cc1c21ffc292df4eadd5c1a39c8d1fc25b7d",
+  "stok-v2/test/pg17/sonuc-birlestir.txt": "fc371775a6cda3679bbebbb0e8b8c47c60a07d7ab7ce39e018749f3fbdd07f47",
+  "stok-v2/test/pg17/sonuc-butunluk.txt": "12287c2a0fa30c1c2124f729f55b373c1694c53c3c90e67a49e620ff9a24b59f",
+  "stok-v2/test/pg17/sonuc-geri-donus.txt": "cee69104873d244b5165905bd026445907e2f471eee6a1b33a999d0921d5ecda",
+  "stok-v2/test/pg17/sonuc-kontrol.txt": "2a2674c186094b355d1c9adcc194e7ac713a29cc1156fd478a550696961839f0",
+  "stok-v2/test/pg17/version.txt": "e9399f9110b1182bd3e835d623d0e96779de21a5f8865146bfedd656ead89860"
+}

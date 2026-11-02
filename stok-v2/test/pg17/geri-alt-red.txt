@@ -1,0 +1,66 @@
+node:assert:152
+  throw new AssertionError(obj);
+  ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
++ actual - expected
+... Skipped lines
+
+  [
+    {
+      fiyat: 123,
+      id: 'f0-t-seyrek-alt-mvzipgifa',
+      miktar: 20,
+...
+    {
++     fiyat: null,
+-     fiyat: 100,
+      id: 'f0-t-seyrek-alt-mvzipgifb',
+      miktar: 30,
+      planlama: {
+        referansNo: 'uret-1',
+        tip: 'Üretim'
+
+    at Object.<anonymous> (/workspace/scratch/8db966c7705d/atolye/stok-v2/test/finans/t-seyrek-alt.js:4:8)
+    at Module._compile (node:internal/modules/cjs/loader:1929:14)
+    at Object..js (node:internal/modules/cjs/loader:2060:10)
+    at Module.load (node:internal/modules/cjs/loader:1651:32)
+    at Module._load (node:internal/modules/cjs/loader:1443:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: [
+    {
+      id: 'f0-t-seyrek-alt-mvzipgifa',
+      fiyat: 123,
+      planlama: null,
+      miktar: 20
+    },
+    {
+      id: 'f0-t-seyrek-alt-mvzipgifb',
+      fiyat: null,
+      planlama: { tip: 'Üretim', referansNo: 'uret-1' },
+      miktar: 30
+    }
+  ],
+  expected: [
+    {
+      id: 'f0-t-seyrek-alt-mvzipgifa',
+      fiyat: 123,
+      planlama: null,
+      miktar: 20
+    },
+    {
+      id: 'f0-t-seyrek-alt-mvzipgifb',
+      fiyat: 100,
+      planlama: { tip: 'Üretim', referansNo: 'uret-1' },
+      miktar: 30
+    }
+  ],
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.22.1
