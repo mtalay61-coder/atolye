@@ -669,8 +669,22 @@ declare
   n_varyant int := 0;
   n_tasinan int := 0;
   n int;
+  v_kaynaklar text[];
+  v_kalemler text[];
 begin
   perform public.stk_yetki(array['stok', 'tanimlar'], 'kaydetme');
+  select coalesce(array_agg(distinct sv.id order by sv.id), '{}'::text[]) into v_kaynaklar
+    from public.stk_varyant sv join public.stk_renk r on r.id=sv.renk_id
+    join jsonb_array_elements(public.stk_dizi(p -> 'eslesmeler')) as j(eslesme)
+      on sv.urun_id=j.eslesme ->> 'urunId' and public.stk_nrm(r.ad)=public.stk_nrm(j.eslesme ->> 'eski')
+   where coalesce(j.eslesme ->> 'yeni','')<>'' and public.stk_nrm(j.eslesme ->> 'eski')<>public.stk_nrm(j.eslesme ->> 'yeni');
+  select coalesce(array_agg(distinct k order by k), '{}'::text[]) into v_kalemler
+    from (select coalesce(h.kalem_id,h.gecmis_kalem_id) as k from public.stk_hareket h
+           where h.varyant_id=any(v_kaynaklar)) q where k is not null;
+  perform public.fis_kalem_kilitle(v_kalemler);
+  perform 1 from public.stk_fis f where f.id in
+    (select h.fis_id from public.stk_hareket h where h.varyant_id=any(v_kaynaklar))
+    order by f.id for update;
   perform set_config('fis.kapi', 'acik', true);
   perform set_config('fis.duzen', 'varyant', true);
   for e in select * from jsonb_array_elements(public.stk_dizi(p -> 'eslesmeler')) loop
@@ -678,7 +692,8 @@ begin
                   or public.stk_nrm(e ->> 'eski') = public.stk_nrm(e ->> 'yeni');
     hedef_renk := public.stk_renk_coz(null, e ->> 'yeni');
     for v in select sv.* from public.stk_varyant sv join public.stk_renk r on r.id = sv.renk_id
-              where sv.urun_id = e ->> 'urunId' and public.stk_nrm(r.ad) = public.stk_nrm(e ->> 'eski') and sv.renk_id <> hedef_renk loop
+              where sv.id=any(v_kaynaklar) and sv.urun_id = e ->> 'urunId' and public.stk_nrm(r.ad) = public.stk_nrm(e ->> 'eski') and sv.renk_id <> hedef_renk
+              order by sv.id loop
       select id into hedef_v from public.stk_varyant
        where urun_id = v.urun_id and renk_id = hedef_renk and coalesce(olcu_id, '') = coalesce(v.olcu_id, '');
       if hedef_v is null then

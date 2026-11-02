@@ -1,0 +1,6 @@
+                     set_config
+-----------------------------------------------------
+ {"email":"ali@atolye.local","role":"authenticated"}
+(1 row)
+
+psql:stok-v2/test/f8/sinama-renk.sql:24: NOTICE:  F8 SQL temiz: birleştirme, tekrar, hedef yokken adlandırma; miktar 8, iki hareket ve iki fiş korunuyor

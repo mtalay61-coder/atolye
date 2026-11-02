@@ -1,0 +1,12 @@
+{"renk":{"ok":true,"sonuc":{"varyant":1,"tasinanHareket":1},"hata":""},"iptal":{"ok":true,"sonuc":{"fisNo":"SF-2611025062","kalemler":[{"id":"f0-t-renk-kilit-mvywzqe5-k","karsilanan":0}],"bagliFisNo":null,"zatenIptal":false,"karsilananDuzeltme":[]},"hata":""}}
+✓ F8 zorlanmış renk taşıma ∥ fiş iptali (kalemli): iki işlem tamam, hareket ve miktar korunuyor
+{"renk":{"ok":true,"sonuc":{"varyant":1,"tasinanHareket":1},"hata":""},"iptal":{"ok":true,"sonuc":{"fisNo":"SF-2611025063","kalemler":[],"bagliFisNo":null,"zatenIptal":false,"karsilananDuzeltme":[]},"hata":""}}
+✓ F8 zorlanmış renk taşıma ∥ fiş iptali (kalemsiz): iki işlem tamam, hareket ve miktar korunuyor
+{"renk":{"ok":true,"sonuc":{"varyant":1,"tasinanHareket":1},"hata":""},"iptal":{"ok":true,"sonuc":{"fisNo":"SF-2611025064","kalemler":[{"id":"f0-t-renk-kilit-mvywzqyq-k","karsilanan":0}],"bagliFisNo":null,"zatenIptal":false,"karsilananDuzeltme":[]},"hata":""}}
+✓ F8 zorlanmış renk taşıma ∥ fiş iptali (kalemli): iki işlem tamam, hareket ve miktar korunuyor
+{"renk":{"ok":true,"sonuc":{"varyant":1,"tasinanHareket":1},"hata":""},"iptal":{"ok":true,"sonuc":{"fisNo":"SF-2611025065","kalemler":[],"bagliFisNo":null,"zatenIptal":false,"karsilananDuzeltme":[]},"hata":""}}
+✓ F8 zorlanmış renk taşıma ∥ fiş iptali (kalemsiz): iki işlem tamam, hareket ve miktar korunuyor
+{"renk":{"ok":true,"sonuc":{"varyant":1,"tasinanHareket":1},"hata":""},"iptal":{"ok":true,"sonuc":{"fisNo":"SF-2611025066","kalemler":[{"id":"f0-t-renk-kilit-mvywzrjd-k","karsilanan":0}],"bagliFisNo":null,"zatenIptal":false,"karsilananDuzeltme":[]},"hata":""}}
+✓ F8 zorlanmış renk taşıma ∥ fiş iptali (kalemli): iki işlem tamam, hareket ve miktar korunuyor
+{"renk":{"ok":true,"sonuc":{"varyant":1,"tasinanHareket":1},"hata":""},"iptal":{"ok":true,"sonuc":{"fisNo":"SF-2611025067","kalemler":[],"bagliFisNo":null,"zatenIptal":false,"karsilananDuzeltme":[]},"hata":""}}
+✓ F8 zorlanmış renk taşıma ∥ fiş iptali (kalemsiz): iki işlem tamam, hareket ve miktar korunuyor
