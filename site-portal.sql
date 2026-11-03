@@ -86,8 +86,11 @@ revoke all on function public.site_kod_cari(text) from public, anon, authenticat
 -- ayarı tanımdakiyle değiştirir, yalnız ALTER FUNCTION ile verilen yol dosya yeniden çalışınca kaybolurdu.
 create or replace function public.site_pb(p text)
 returns text language sql immutable set search_path = public, extensions, pg_temp as $$
+  -- BOŞ PARA BİRİMİ (3 Kasım düzeltmesi): `else` önce ham girdiyi (p) kullanıyordu → NULL / boş girdide 'TRY' yerine NULL döndü;
+  -- portal_hesap'teki jsonb_object_agg NULL anahtarla düştü (22023 "field name must not be null") — para birimi yazılmamış kalemi
+  -- olan müşterinin hesap sayfası açılmıyordu. Artık her dal varsayılanlı değer üzerinden.
   select case coalesce(nullif(trim(p), ''), 'TRY')
-    when '₺' then 'TRY' when 'TL' then 'TRY' when '$' then 'USD' when '€' then 'EUR' else upper(trim(p)) end;
+    when '₺' then 'TRY' when 'TL' then 'TRY' when '$' then 'USD' when '€' then 'EUR' else upper(coalesce(nullif(trim(p), ''), 'TRY')) end;
 $$;
 
 -- ---------- 3) Müşterinin modelleri ve fiyatları ----------

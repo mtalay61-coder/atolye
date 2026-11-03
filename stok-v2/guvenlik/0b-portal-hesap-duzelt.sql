@@ -1,8 +1,17 @@
--- MÜŞTERİ PORTALI HESAP EKSTRESİ DÜZELTMESİ (3 Kasım). site-portal.sql'deki portal_hesap tanımının aynısı (kos-guvenlik.sh birebir
--- aynı olduğunu denetler). Cari v2'den (1.727) beri cari_hareketleri.tarih METİN; eski tanım `h.tarih < bas` (date) → 42883, müşterinin
--- hesap sayfası açılmıyordu. Karşılaştırma ilk 10 karakter (ISO gün) üzerinden metin olarak. Yetkiler aynı kalır (create or replace
--- yetkiyi korur; sondaki revoke / grant site-portal.sql'deki gibi). Tekrar çalıştırmak zararsız. Geri alma: git'teki önceki
--- site-portal.sql'in portal_hesap tanımı (stok-v2/guvenlik/0b-portal-hesap-geri.sql).
+-- MÜŞTERİ PORTALI HESAP EKSTRESİ DÜZELTMESİ (3 Kasım). site-portal.sql'deki site_pb ve portal_hesap tanımlarının aynısı (kos-guvenlik.sh
+-- birebir aynı olduğunu denetler). İki hata: (1) cari v2'den (1.727) beri cari_hareketleri.tarih METİN; portal_hesap `h.tarih < bas`
+-- (date) → 42883. Karşılaştırma artık ilk 10 karakter (ISO gün) üzerinden metin. (2) site_pb boş para biriminde NULL döndürüyordu →
+-- portal_hesap jsonb_object_agg NULL anahtarla düşüyordu (22023). Yetkiler aynı kalır (create or replace yetkiyi korur). site_pb'nin
+-- yolu tanımla birlikte sabitlenir (2-sikilastir.sql bunu kabul eder). Tekrar çalıştırmak zararsız. Geri alma: 0b-portal-hesap-geri.sql.
+create or replace function public.site_pb(p text)
+returns text language sql immutable set search_path = public, extensions, pg_temp as $$
+  -- BOŞ PARA BİRİMİ (3 Kasım düzeltmesi): `else` önce ham girdiyi (p) kullanıyordu → NULL / boş girdide 'TRY' yerine NULL döndü;
+  -- portal_hesap'teki jsonb_object_agg NULL anahtarla düştü (22023 "field name must not be null") — para birimi yazılmamış kalemi
+  -- olan müşterinin hesap sayfası açılmıyordu. Artık her dal varsayılanlı değer üzerinden.
+  select case coalesce(nullif(trim(p), ''), 'TRY')
+    when '₺' then 'TRY' when 'TL' then 'TRY' when '$' then 'USD' when '€' then 'EUR' else upper(coalesce(nullif(trim(p), ''), 'TRY')) end;
+$$;
+
 create or replace function public.portal_hesap(p_kod text, p_baslangic date default null, p_bitis date default null)
 returns jsonb
 language plpgsql stable security definer set search_path = public

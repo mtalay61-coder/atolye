@@ -134,7 +134,17 @@ begin
       coalesce(eksik, '—'), coalesce(fazla, '—');
   end if;
 
-  -- KİLİT 2: search_path'i sabit olmayan fonksiyonlar listeyle BİREBİR aynı olmalı
+  -- KİLİT 2: search_path'i sabit olmayan fonksiyonlar listeyle BİREBİR aynı olmalı. İSTİSNA: listedeki bir fonksiyonun yolu bu
+  -- dosyanın yazacağı değere ZATEN eşitse (0b-portal-hesap-duzelt.sql site_pb'yi, kaynak dosyalar yeniden çalışınca 19 fonksiyonu
+  -- tanımla birlikte sabitler) o fonksiyon listeden düşer — sıra bağımlılığı olmasın. Başka bir değer taşıyorsa yine DUR.
+  select coalesce(array_agg(x), '{}') into liste from unnest(yol) x
+   where not exists (select 1 from pg_proc p, unnest(coalesce(p.proconfig, '{}')) cc
+                      where p.oid = to_regprocedure(x) and cc = 'search_path=' || yol_degeri);
+  if cardinality(liste) < cardinality(yol) then
+    raise notice 'Bilgi: yolu zaten "%" olan % fonksiyon atlandı: %', yol_degeri, cardinality(yol) - cardinality(liste),
+      (select string_agg(x, ', ') from unnest(yol) x where x <> all (liste));
+    yol := liste;
+  end if;
   select coalesce(array_agg(p.oid::regprocedure::text order by 1), '{}') into hesap
     from pg_proc p join pg_namespace n on n.oid = p.pronamespace join pg_language l on l.oid = p.prolang
    where n.nspname = 'public' and l.lanname not in ('c', 'internal')

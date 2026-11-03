@@ -3,7 +3,7 @@
 // Cari v2'den (1.727) beri cari_hareketleri.tarih METİN; eski tanım `h.tarih < bas` (date) → 42883, hesap sayfası açılmıyordu.
 // Kurulum: test carisi + site hesabı (yönetici site_hesap_kaydet) + üç cari hareketi (tetikleyicisiz, doğrudan):
 //   E: 120 gün önce Borç 100 (dönem öncesi → devir), I: 10 gün önce Borç 40 (dönemde), A: 5 gün önce Alacak 15, saatli ISO metin
-//   (dönemde; "2026-…T10:00:00Z" biçimi de gün olarak doğru okunmalı).
+//   (dönemde; "2026-…T10:00:00Z" biçimi de gün olarak doğru okunmalı) + para birimi BOŞ bir sipariş kalemi (site_pb düzeltmesi).
 // Kahin (girişsiz, portal_giris kodu ile): varsayılan dönem (son 3 ay) → devir 100, hareketler [I, A] gün sırasıyla, bakiye 125;
 // açık dönem (bugün−130 … bugün−100) → yalnız E, devir 0. Eski tanım (git HEAD~ yerine depodaki ESKI_SITE dosyası verilirse) 42883.
 // Kullanım: node t-portal-hesap.js <veritabanı> [eski-site-portal.sql]
@@ -29,7 +29,10 @@ const hazir = sql(`insert into public.cariler (id, unvan, tip, ek) values ('${ca
   insert into public.car_hareket (id, cari_id, tarih, yon, tutar, para_birimi, defter) values
     ('${on}-E', '${cari}', '${gun(120)}', 'Borç', 100, 'TRY', 'Genel'),
     ('${on}-I', '${cari}', '${gun(10)}', 'Borç', 40, 'TRY', 'Genel'),
-    ('${on}-A', '${cari}', '${gun(5)}T10:00:00.000Z', 'Alacak', 15, 'TRY', 'Genel')`);
+    ('${on}-A', '${cari}', '${gun(5)}T10:00:00.000Z', 'Alacak', 15, 'TRY', 'Genel');
+  insert into public.siparisler (id, siparis_no, tip, cari_id, durum, tarih) values ('${on}-s', 'PH-${on}', 'Satış', '${cari}', 'Bekliyor', '${gun(3)}');
+  insert into public.siparis_kalemleri (id, siparis_id, urun_id, urun_ad, renk, miktar, karsilanan, fiyat, para_birimi, birim, sira)
+    values ('${on}-k', '${on}-s', 'u-yeni', 'Yeni Ürün', 'Siyah', 2, 0, 10, null, 'çift', 0)`);
 if (!hazir.ok) { console.error("kurulum düştü:", hazir.hata); process.exit(2); }
 const hesap = sql(`select public.site_hesap_kaydet('${cari}', '${kul}', '${sifre}')`, "authenticated", ALI);
 if (!hesap.ok) { console.error("site hesabı kurulamadı:", hesap.hata); process.exit(2); }
@@ -38,10 +41,13 @@ const oku = (bas, bit) => {
   const r = sql(`select public.portal_hesap('${kod}', ${bas ? `'${bas}'` : "null"}, ${bit ? `'${bit}'` : "null"})::text`, "anon");
   if (!r.ok) return { kod: r.kod };
   const h = JSON.parse(r.cikti).hesap[0];
-  return { devir: h.devir, bakiye: h.bakiye, hareketler: h.hareketler.map((x) => `${x.aciklama || ""}${x.tutar}:${String(x.tarih).slice(0, 10)}`) };
+  const sp = (JSON.parse(r.cikti).siparisler || []).find((x) => x.siparisNo === `PH-${on}`);
+  return { devir: h.devir, bakiye: h.bakiye, hareketler: h.hareketler.map((x) => `${x.aciklama || ""}${x.tutar}:${String(x.tarih).slice(0, 10)}`),
+    ...(bas ? {} : { siparisKdvDahil: sp ? sp.kdvDahil : null }) };
 };
 console.log(`t-portal-hesap · ${DB}`);
-kontrol("PH.varsayilan-donem", oku(), { devir: { TRY: 100 }, bakiye: { TRY: 125 }, hareketler: [`40:${gun(10)}`, `15:${gun(5)}`] });
+// Para birimi BOŞ sipariş kalemi (2 × 10): site_pb düzeltmesinden önce NULL anahtar → 22023; artık TRY.
+kontrol("PH.varsayilan-donem", oku(), { devir: { TRY: 100 }, bakiye: { TRY: 125 }, hareketler: [`40:${gun(10)}`, `15:${gun(5)}`], siparisKdvDahil: { TRY: 20 } });
 kontrol("PH.acik-donem", oku(gun(130), gun(100)), { devir: {}, bakiye: { TRY: 125 }, hareketler: [`100:${gun(120)}`] });
 kontrol("PH.ters-donem-red", oku(gun(1), gun(10)), { kod: "P0001" });
 if (ESKI) {   // düzeltmeden ÖNCEKİ tanım: aynı veriyle 42883 vermeli (hatanın kendisi)
@@ -51,6 +57,12 @@ if (ESKI) {   // düzeltmeden ÖNCEKİ tanım: aynı veriyle 42883 vermeli (hata
   const ii = fs.readFileSync(require("path").join(__dirname, "../../../site-portal.sql"), "utf8");
   sql(ii.slice(ii.indexOf("create or replace function public.portal_hesap("), ii.indexOf("$$;", ii.indexOf("create or replace function public.portal_hesap(")) + 3));
   kontrol("PH.yeni-tanim-geri", oku().devir, { TRY: 100 });
+  // Eski site_pb (boş para biriminde NULL) + yeni portal_hesap: para birimi boş kalem → 22023 (ikinci hata); yeni site_pb geri.
+  const dil = (m, ad) => { const a = m.indexOf(`create or replace function public.${ad}(`); return m.slice(a, m.indexOf("$$;", a) + 3); };
+  sql(dil(s, "site_pb"));
+  kontrol("PH.eski-site-pb-22023", oku(), { kod: "22023" });
+  sql(dil(ii, "site_pb"));
+  kontrol("PH.yeni-site-pb-geri", oku().siparisKdvDahil, { TRY: 20 });
 }
 console.log(`── t-portal-hesap.js: ${hata ? hata + " kırmızı" : "temiz"} ──`);
 process.exit(hata ? 1 : 0);

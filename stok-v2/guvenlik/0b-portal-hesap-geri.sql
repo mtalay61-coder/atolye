@@ -1,5 +1,11 @@
--- GERİ ALMA: portal_hesap'in 3 Kasım düzeltmesinden ÖNCEKİ tanımı (site-portal.sql, git). Hatalı (42883) hâle döndürür; yalnız
--- düzeltme beklenmedik bir soruna yol açarsa.
+-- GERİ ALMA: site_pb ve portal_hesap'in 3 Kasım düzeltmesinden ÖNCEKİ tanımları (main dalındaki site-portal.sql = canlıdaki). Hatalı
+-- (42883 / 22023) hâle döndürür; yalnız düzeltme beklenmedik bir soruna yol açarsa. site_pb'nin yolu da eski hâline (boş) döner.
+create or replace function public.site_pb(p text)
+returns text language sql immutable as $$
+  select case coalesce(nullif(trim(p), ''), 'TRY')
+    when '₺' then 'TRY' when 'TL' then 'TRY' when '$' then 'USD' when '€' then 'EUR' else upper(trim(p)) end;
+$$;
+
 create or replace function public.portal_hesap(p_kod text, p_baslangic date default null, p_bitis date default null)
 returns jsonb
 language plpgsql stable security definer set search_path = public

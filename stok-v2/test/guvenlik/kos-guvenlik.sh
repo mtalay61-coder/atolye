@@ -62,6 +62,10 @@ diff <(sed -n '/LİSTE:KAPANACAK BAŞ/,/LİSTE:YOL SON/p' $G/2-sikilastir.sql | 
      <(sed -n '/LİSTE:KAPANACAK BAŞ/,/LİSTE:YOL SON/p' "$CIK/2-sikilastir-yerel.sql" | grep -o "'public[^']*'") > /dev/null \
   && echo "   ✓ depodaki TASLAK listeler bu veritabanının listeleriyle aynı" || echo "   • depodaki TASLAK listeler bu veritabanından farklı (yerel kopya kullanılıyor)"
 SIK="$CIK/2-sikilastir-yerel.sql"
+# Canlıda planlanan sıra: 0 (site yetkisi) → 0b (portal_hesap + site_pb) → 2 (sıkılaştırma). 0b site_pb'nin yolunu tanımla sabitler;
+# sıkılaştırma bunu "zaten sabit" diye atlamalı (KİLİT 2 istisnası) — bu yüzden 0b önce uygulanır, "önce" özeti ondan sonra alınır.
+editor_ver stok-v2/guvenlik/0-site-yetki-onar.sql "$CIK/0-cikti.txt" && echo "   ✓ 0-site-yetki-onar.sql (Editor gibi)" || kirmizi "0 düştü: $(tail -2 "$CIK/0-cikti.txt")"
+editor_ver stok-v2/guvenlik/0b-portal-hesap-duzelt.sql "$CIK/0b-cikti.txt" && echo "   ✓ 0b-portal-hesap-duzelt.sql (Editor gibi)" || kirmizi "0b düştü: $(tail -2 "$CIK/0b-cikti.txt")"
 ozet > "$CIK/ozet-0-once.txt"
 
 echo "══ 2) önce: batarya + vitrin"
@@ -77,6 +81,7 @@ cmp -s "$CIK/ozet-0-once.txt" "$CIK/ozet-0-kilit.txt" && echo "   ✓ kilitten s
 
 echo "══ 4) sıkılaştırma (Editor gibi) → sonra"
 editor_ver "$SIK" "$CIK/sikilastir-cikti.txt" && echo "   ✓ $(grep -o 'Güvenlik sıkılaştırması.*uygulandı[^.]*' "$CIK/sikilastir-cikti.txt")" || { kirmizi "sıkılaştırma düştü"; tail -5 "$CIK/sikilastir-cikti.txt"; }
+grep -q "yolu zaten.*1 fonksiyon atlandı: public.site_pb" "$CIK/sikilastir-cikti.txt" && echo "   ✓ 0b'nin sabitlediği site_pb KİLİT 2'de atlandı (sıra bağımsız)" || kirmizi "site_pb atlama bildirimi yok: $(grep -o 'Bilgi: yolu[^\n]*' "$CIK/sikilastir-cikti.txt")"
 ozet > "$CIK/ozet-1-sikilastir.txt"
 node $T/davranis.js "$DB" > "$CIK/davranis-sonra.json" || kirmizi "batarya (sonra) çalışmadı"
 node $T/karsilastir.js "$CIK/davranis-once.json" "$CIK/davranis-sonra.json" "$SIK" sikilastir | sed 's/^/   /'; [ "${PIPESTATUS[0]}" -eq 0 ] || HATA=1
@@ -99,12 +104,12 @@ for t in stok-v2/test/f4/t-atomik-bag.js stok-v2/test/f4/t-canli-bag.js stok-v2/
          stok-v2/test/duzeltme/t-bag-kilit.js stok-v2/test/duzeltme/t-servis-kapi.js stok-v2/test/duzeltme/t-eski-bag.js stok-v2/test/duzeltme/t-siparis-sil.js; do
   reg "$(basename "$(dirname "$t")")-$(basename "$t" .js)" node "$t"; done
 reg f2 env F2_N=100 F2_ZORLA=3 bash stok-v2/test/f2/kos-f2.sh
-# finans/t-yetki-tekrar.js rls-kimlik.sql'i YENİDEN çalıştırır: o dosya anon'un BÜTÜN fonksiyon yetkilerini alıyor, sitenin 8
-# fonksiyonu dahil (mevcut davranış — kullanıcıya bildirildi). Canlıdaki işlem sırası: rls-kimlik'ten sonra site-portal.sql.
+# finans/t-yetki-tekrar.js rls-kimlik.sql'i YENİDEN çalıştırır. 3 Kasım öncesi o dosya sitenin 8 fonksiyonunu da anon'a kapatıyordu;
+# artık geri açıyor — site fonksiyonlarında fark OLMAMALI.
 ozet > "$CIK/ozet-1b-regresyon.txt"
 site_fark=$(diff "$CIK/ozet-1-sikilastir.txt" "$CIK/ozet-1b-regresyon.txt" | grep '^>' | grep -cE '^> (herkese_acik_vitrin|site_ayarlari|site_kayit_ol|portal)')
 diger_fark=$(diff "$CIK/ozet-1-sikilastir.txt" "$CIK/ozet-1b-regresyon.txt" | grep '^>' | grep -vcE '^> (herkese_acik_vitrin|site_ayarlari|site_kayit_ol|portal)')
-echo "   • rls-kimlik.sql yeniden çalışınca anon'a kapanan site fonksiyonu: $site_fark (mevcut davranış, sıkılaştırmadan bağımsız)"
+[ "$site_fark" = 0 ] && echo "   ✓ rls-kimlik.sql yeniden çalıştı (finans/t-yetki-tekrar), site fonksiyonları açık kaldı" || kirmizi "rls-kimlik.sql yeniden çalışınca $site_fark site fonksiyonu anon'a kapandı"
 [ "$diger_fark" = 0 ] && echo "   ✓ site fonksiyonları dışında testler yetki değiştirmedi" || { kirmizi "regresyon sırasında başka yetkiler de değişti"; diff "$CIK/ozet-1-sikilastir.txt" "$CIK/ozet-1b-regresyon.txt" | head; }
 # Kaynak dosyalar yeniden çalışır (canlıda ileride olacağı gibi): site-portal.sql + Editor 1 (stok) + 18 (fiş defteri). create or
 # replace yetkiyi korur, ayarı TANIMDAKİYLE değiştirir — search_path artık kaynak tanımlarda olduğu için yol da korunmalı.
@@ -115,10 +120,11 @@ ozet > "$CIK/ozet-1c-site.txt"
 cmp -s "$CIK/ozet-1-sikilastir.txt" "$CIK/ozet-1c-site.txt" && echo "   ✓ kaynak dosyalar (site-portal, Editor 1, 18) yeniden çalışınca YETKİ ve search_path sıkılaştırma sonrasıyla aynı" \
   || { kirmizi "kaynak yeniden çalışınca fark"; diff "$CIK/ozet-1-sikilastir.txt" "$CIK/ozet-1c-site.txt" | head; }
 echo "══ 5b) portal_hesap tarih düzeltmesi"
-python3 - <<'PY' && echo "   ✓ 0b-portal-hesap-duzelt.sql site-portal.sql'deki tanımla birebir" || kirmizi "0b-portal-hesap-duzelt.sql site-portal.sql'den farklı"
-s=open("site-portal.sql").read(); i=s.index("create or replace function public.portal_hesap("); j=s.index("$$;",i)+3
-k=s.index("grant execute on function public.portal_hesap(",j); k=s.index("\n",k)+1
-d=open("stok-v2/guvenlik/0b-portal-hesap-duzelt.sql").read(); raise SystemExit(0 if d.endswith(s[i:k]) else 1)
+python3 - <<'PY' && echo "   ✓ 0b-portal-hesap-duzelt.sql site-portal.sql'deki site_pb ve portal_hesap tanımlarıyla birebir" || kirmizi "0b site-portal.sql'den farklı"
+s=open("site-portal.sql").read(); d=open("stok-v2/guvenlik/0b-portal-hesap-duzelt.sql").read()
+for ad in ("site_pb", "portal_hesap"):
+    i=s.index(f"create or replace function public.{ad}("); j=s.index("$$;",i)+3
+    if s[i:j] not in d: raise SystemExit(1)
 PY
 reg portal-hesap node $T/t-portal-hesap.js "$DB" stok-v2/guvenlik/0b-portal-hesap-geri.sql
 ozet > "$CIK/ozet-1d-portal.txt"; cmp -s "$CIK/ozet-1-sikilastir.txt" "$CIK/ozet-1d-portal.txt" && echo "   ✓ düzeltme ve geri alma denemesi yetki / ayar değiştirmedi" || { kirmizi "portal_hesap sınaması yetki değiştirdi"; diff "$CIK/ozet-1-sikilastir.txt" "$CIK/ozet-1d-portal.txt" | head; }
