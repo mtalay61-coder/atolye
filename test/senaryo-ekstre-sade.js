@@ -19,6 +19,9 @@
 //   4. Tercih localStorage'ta "1"; başka modüle gidip dönünce sade kip korunuyor.
 //   5. "Detaylı görünüm" → özet 0, tablolar geri, localStorage "0".
 // (27 Eylül, yeniden yazıldı — dosya taşımada kaybolmuştu)
+// v1.744.6 (kullanıcı: "listeler matris olsun"): bedenli fiş (B) sade kipte de küçük beden matrisiyle görünür
+// (`SadeBedenMatrisi`, satır = ürün · renk, sütun = beden). Bu yüzden B'nin özeti null / tablolu true, özet sayısı 4 → 3 ve
+// ürünlü satırlar artık aynı boyda / tek satır DEĞİL (B matris yüksekliğinde). Bedensiz A, C ve D tek satır özetini korur.
 const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");

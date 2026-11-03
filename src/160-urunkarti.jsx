@@ -6322,6 +6322,9 @@ function ProductMatrixCard({
                   // ayrıca tıklamak zorunda kalıyor ve başlıkta yalnızca fiş no ile tarih görüyor.
                   // Tıklama artık KAPATMAK için: uzun listede istenmeyen fişler daraltılabilir.
                   const acik = !kapaliFisler.has(g.key);
+                  // TEK HÜCRELİ FİŞ (tek renk, tek beden — metre/desi/"Standart" malzeme): matris tek hücreli bir tabloya döner,
+                  // bilgi eklemeden satırı uzatır (matris kuralı: değişen boyut beden ise). Eskisi gibi başlık satırında kalır.
+                  const tekHucre = gRenkler.length === 1 && gBedenler.length === 1;
                   return (
                     <div
                       key={g.key}
@@ -6333,11 +6336,11 @@ function ProductMatrixCard({
                     >
                       <div
                         // Her fiş açılır / kapanır (v1.744.6: tek renkli fiş de matrisle açılıyor).
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => fisKapatToggle(g.key)}
-                        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") fisKapatToggle(g.key); }}
-                        style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", padding: "8px 10px", cursor: "pointer" }}
+                        role={tekHucre ? undefined : "button"}
+                        tabIndex={tekHucre ? undefined : 0}
+                        onClick={tekHucre ? undefined : () => fisKapatToggle(g.key)}
+                        onKeyDown={(e) => { if (!tekHucre && (e.key === "Enter" || e.key === " ")) fisKapatToggle(g.key); }}
+                        style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", padding: "8px 10px", cursor: tekHucre ? "default" : "pointer" }}
                       >
                         {uretimKaynakli && <Hammer size={13} color="var(--erp-primary)" />}
                         {/* FİŞ NUMARASI TIKLANABİLİR (kullanıcı, 10 Eylül) — sipariş kartındaki
@@ -6382,7 +6385,7 @@ function ProductMatrixCard({
                             çiziliyordu, tablo yalnız çok renkli fişte açılıyordu. v1.744.6 (kullanıcı, 3 Kasım: "listeler
                             matris olsun"; matris kuralı): açık fiş — tek renkli de — aşağıdaki matrisle çizilir; rozetler
                             yalnız fiş KAPATILINCA tek satırlık özet olarak kalır. */}
-                        {gRenkler.length === 1 && !acik && (
+                        {gRenkler.length === 1 && (!acik || tekHucre) && (
                           <span style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
                             <span className="mono" style={{ fontSize: 13, color: "var(--erp-text-2)" }}>{olcuGoster(gRenkler[0])}</span>
                             {gBedenler.map((b) => {
@@ -6429,12 +6432,12 @@ function ProductMatrixCard({
                             boyut={12}
                           />
                         </span>
-                        {/* Ok her fişte (v1.744.6): tek renkli fiş de matrisle açılıp kapanıyor. */}
-                        {acik
+                        {/* Ok her açılabilen fişte (v1.744.6): tek renkli çok bedenli fiş de matrisle açılıp kapanıyor. */}
+                        {tekHucre ? null : acik
                           ? <ChevronDown size={15} color="var(--erp-text-3)" />
                           : <ChevronRight size={15} color="var(--erp-text-3)" />}
                       </div>
-                      {acik && (
+                      {acik && !tekHucre && (
                       <div style={{ padding: "0 10px 10px", overflowX: "auto" }}>
                         <table className="matris-tablo" data-stok-fis-matris={g.key} style={{ width: "auto", minWidth: "100%" }}>
                           <thead>
