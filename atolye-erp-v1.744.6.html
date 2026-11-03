@@ -2351,7 +2351,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 }
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" }; // teklif: v1.723.0, Sipariş'in alt sekmesi
 const SURUM_GECMISI = [
-    { surum: "1.744.6", tarih: "03.11.2026", eklenen: [], degisen: ["Cari ekstrenin sade görünümünde bedenli fişler beden matrisiyle gösterilir (fiyat ayrıntısı Detaylı görünümde).", "Stok kartı hareketlerinde tek renkli fiş de matrisle açılır; fiş kapatılınca tek satırlık özet kalır.", "Gün sonu Excel'inde fiş, stok ve üretim hareketleri beden matrisi."], duzeltilen: ["Stok kartı hareket matrisinde bedenler küçükten büyüğe sıralanır."] },
+    { surum: "1.744.6", tarih: "03.11.2026", eklenen: [], degisen: ["Cari ekstrenin sade görünümünde bedenli fişler beden matrisiyle gösterilir (fiyat ayrıntısı Detaylı görünümde).", "Stok kartı hareketlerinde çok bedenli fiş tek renkli olsa da matrisle açılır; tek renk ve tek bedenli (bedensiz) fiş tek satır kalır.", "Gün sonu Excel'inde fiş, stok ve üretim hareketleri beden matrisi."], duzeltilen: ["Stok kartı hareket matrisinde bedenler küçükten büyüğe sıralanır."] },
     { surum: "1.744.5", tarih: "03.11.2026", eklenen: [], degisen: ["Gün sonu raporunda (ekran, PDF, e-posta) alış/satış fiş kalemleri, stok hareketleri ve üretim hareketleri beden matrisiyle gösterilir: satırda ürün ve renk, sütunlarda bedenler, sonda toplam."], duzeltilen: [] },
     { surum: "1.744.4", tarih: "02.11.2026", eklenen: ["Satış siparişini aşan teslimde Yönetici gerekçe yazarak onay verebilir; onay fişe kaydedilir. Yönetici dışında sipariş fazlası yine teslim edilmez."], degisen: [], duzeltilen: ["Sipariş kalemleri kaydedilirken bağlı siparişin başlığı aynı anda düzenlenince oluşan sunucu kilitlenmesi giderildi.", "Sürüm kapısı açıkken otomatik gün sonu raporu durmaz.", "Önceden iptal edilmiş siparişe bağlı eski kayıtlar yeniden düzenlenebilir."] },
     { surum: "1.744.3", tarih: "02.11.2026", eklenen: ["Eski istemcilerin yazmasını durduran sunucu sürüm kapısı (geçişte ayrıca etkinleştirilir)."], degisen: ["Sipariş teslim durumu güncel kalemlerden sunucuda hesaplanır.", "Sipariş iptalinde üretim, koli ve rezervasyon bağları birlikte çözülür."], duzeltilen: ["Aynı çekin iki cihazdan eşzamanlı tahsili engellenir; fiş iptali çek ve kasa kaydını birlikte geri alır.", "Farklı alanları değiştirilen sipariş kalemlerinin gönderilmeyen alanları artık silinmez.", "Bakiyeli kasa/banka hesabı kapatılamaz; geçmişin para birimi değiştirilemez."] },
@@ -40642,6 +40642,9 @@ function ProductMatrixCard({ tanimlarTum, onKapasiteKaydet, kurlar, kurGecmisi, 
                         // ayrıca tıklamak zorunda kalıyor ve başlıkta yalnızca fiş no ile tarih görüyor.
                         // Tıklama artık KAPATMAK için: uzun listede istenmeyen fişler daraltılabilir.
                         const acik = !kapaliFisler.has(g.key);
+                        // TEK HÜCRELİ FİŞ (tek renk, tek beden — metre/desi/"Standart" malzeme): matris tek hücreli bir tabloya döner,
+                        // bilgi eklemeden satırı uzatır (matris kuralı: değişen boyut beden ise). Eskisi gibi başlık satırında kalır.
+                        const tekHucre = gRenkler.length === 1 && gBedenler.length === 1;
                         return (React.createElement("div", { key: g.key, style: {
                                 background: uretimKaynakli ? "#F0F5EE" : "#fff",
                                 border: `1px solid ${uretimKaynakli ? "#8FA888" : "var(--erp-border-2)"}`,
@@ -40649,8 +40652,8 @@ function ProductMatrixCard({ tanimlarTum, onKapasiteKaydet, kurlar, kurGecmisi, 
                             } },
                             React.createElement("div", { 
                                 // Her fiş açılır / kapanır (v1.744.6: tek renkli fiş de matrisle açılıyor).
-                                role: "button", tabIndex: 0, onClick: () => fisKapatToggle(g.key), onKeyDown: (e) => { if (e.key === "Enter" || e.key === " ")
-                                    fisKapatToggle(g.key); }, style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", padding: "8px 10px", cursor: "pointer" } },
+                                role: tekHucre ? undefined : "button", tabIndex: tekHucre ? undefined : 0, onClick: tekHucre ? undefined : () => fisKapatToggle(g.key), onKeyDown: (e) => { if (!tekHucre && (e.key === "Enter" || e.key === " "))
+                                    fisKapatToggle(g.key); }, style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", padding: "8px 10px", cursor: tekHucre ? "default" : "pointer" } },
                                 uretimKaynakli && React.createElement(Hammer, { size: 13, color: "var(--erp-primary)" }),
                                 g.fisNo && (onFiseGitNo ? (React.createElement("button", { type: "button", className: "mono", onClick: (e) => { e.stopPropagation(); onFiseGitNo(g.fisNo); }, title: `${g.fisNo} fişini Fişler ekranında aç`, style: {
                                         fontSize: 12, fontWeight: 700, background: "none", border: "none",
@@ -40667,7 +40670,7 @@ function ProductMatrixCard({ tanimlarTum, onKapasiteKaydet, kurlar, kurGecmisi, 
                                 cariAdi && React.createElement("span", { style: { fontSize: 12, color: "var(--erp-text-2)" } },
                                     "\u00B7 ",
                                     cariAdi),
-                                gRenkler.length === 1 && !acik && (React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" } },
+                                gRenkler.length === 1 && (!acik || tekHucre) && (React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" } },
                                     React.createElement("span", { className: "mono", style: { fontSize: 13, color: "var(--erp-text-2)" } }, olcuGoster(gRenkler[0])),
                                     gBedenler.map((b) => {
                                         const eslesenler = g.hareketler.filter((x) => x.renk === gRenkler[0] && x.beden === b);
@@ -40697,10 +40700,10 @@ function ProductMatrixCard({ tanimlarTum, onKapasiteKaydet, kurlar, kurGecmisi, 
                                         fisFiyatlari.sembol))),
                                 React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 8 }, onClick: (e) => e.stopPropagation() },
                                     React.createElement(SilOnayButonu, { onConfirm: () => g.hareketler.forEach((h) => onRemoveHareketGlobal(h.id)), baslikNormal: "Bu fi\u015Fin t\u00FCm hareketlerini sil", boyut: 12 })),
-                                acik
+                                tekHucre ? null : acik
                                     ? React.createElement(ChevronDown, { size: 15, color: "var(--erp-text-3)" })
                                     : React.createElement(ChevronRight, { size: 15, color: "var(--erp-text-3)" })),
-                            acik && (React.createElement("div", { style: { padding: "0 10px 10px", overflowX: "auto" } },
+                            acik && !tekHucre && (React.createElement("div", { style: { padding: "0 10px 10px", overflowX: "auto" } },
                                 React.createElement("table", { className: "matris-tablo", "data-stok-fis-matris": g.key, style: { width: "auto", minWidth: "100%" } },
                                     React.createElement("thead", null,
                                         React.createElement("tr", null,
