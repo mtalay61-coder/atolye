@@ -44,7 +44,10 @@ Kullanıcı onayı (3 Kasım): yalnız hazırlık ve yerel test. Canlı veritaba
 `portal_hesap` (müşteri portalı hesap ekstresi) `cari_hareketleri.tarih`'i gün türüyle karşılaştırıyor (`h.tarih < bas`); cari v2'den
 (1.727) beri bu alan METİN → yerelde `42883 operator does not exist: text < date`. Canlıda müşteri hesap sayfası çalışmıyor olabilir.
 
-## Yan bulgu 2 — rls-kimlik.sql site fonksiyonlarını girişsiz kullanıcıya kapatıyor (canlıda kontrol edilmeli)
+## Yan bulgu 2 — rls-kimlik.sql site fonksiyonlarını girişsiz kullanıcıya kapatıyor (DOĞRULANDI, canlıda onarıldı 3 Kasım)
+
+Kullanıcı sitede "Bağlantı kurulamadı" gördü; `0-site-yetki-onar.sql` canlıda çalıştırıldı → 8 fonksiyon `girissiz_calistirir = true`,
+müşteri girişi çalıştı. Kalıcı çözüm (rls-kimlik.sql'in bu 8 yetkiyi kendisinin geri vermesi) hâlâ ayrı karar.
 
 `rls-kimlik.sql` § 2 `revoke all on all functions in schema public from anon` sitenin 8 fonksiyonunu da kapatıyor; yeniden açan yalnız
 `site-portal.sql`. 1.744.4 geçişinde son adım `rls-kimlik.sql` idi → canlıda vitrin, müşteri girişi ve kayıt şu an kapalı olabilir
