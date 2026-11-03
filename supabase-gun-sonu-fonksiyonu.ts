@@ -37,7 +37,7 @@ const yanit = (durum: number, govde: unknown) =>
   new Response(JSON.stringify(govde), { status: durum, headers: { ...CORS, "Content-Type": "application/json" } });
 
 // ---- ÇEKİRDEK: atolye-erp.jsx'ten OTOMATİK çıkarıldı (gun-sonu-sunucu.js) — ELLE DÜZENLEMEYİN ----
-// Tanımlar: alisPbKodu, OKUMA_ISTISNA, alanAdi, ekiKokeAc, kayitaCevir, TARIH_BICIM, SAAT_BICIM, tarihYaz, stokYuvarla, FIS_ON_EKI, fisOnEki, PDF_CIKTI_STILI, pdfCiktiBelgesi, bakiyeMetni, hareketDefterde, cariDefterHareketleri, defterKapsar, PARA_SEMBOLU, cariMutabakatBakiyesi, gunSonuGun, gunSonuPara, gunSonuPBToplam, gunSonuSonAlislar, gunSonuAlisFiyati, gunSonuVerisi, gunSonuPBMetni, gunSonuBolumleri, fisDenetimiSorunSayisi, karsilananHTML, fisDenetimiHTML, gunSonuHTML, gunSonuAlicilari, htmlKacis
+// Tanımlar: alisPbKodu, OKUMA_ISTISNA, alanAdi, ekiKokeAc, kayitaCevir, TARIH_BICIM, SAAT_BICIM, tarihYaz, stokYuvarla, FIS_ON_EKI, fisOnEki, PDF_CIKTI_STILI, pdfCiktiBelgesi, bakiyeMetni, hareketDefterde, cariDefterHareketleri, defterKapsar, PARA_SEMBOLU, cariMutabakatBakiyesi, gunSonuGun, gunSonuPara, gunSonuPBToplam, gunSonuSonAlislar, gunSonuAlisFiyati, gunSonuVerisi, gunSonuPBMetni, GUN_SONU_HARF_BEDEN, gunSonuBedenSirala, gunSonuMatris, gunSonuMatrisBolumu, gunSonuBolumleri, fisDenetimiSorunSayisi, karsilananHTML, fisDenetimiHTML, gunSonuHTML, gunSonuAlicilari, htmlKacis
 
 function alisPbKodu(urun) {
   const ham = String((urun && urun.alisParaBirimi) || "").trim();
@@ -309,21 +309,62 @@ function gunSonuVerisi({ gun, defter = "Tümü", cariler, muhasebe, stok, uretim
 
 const gunSonuPBMetni = (m) => (Object.keys(m || {}).length ? Object.entries(m).map(([pb, t]) => gunSonuPara(t, pb)).join(" · ") : "—");
 
+const GUN_SONU_HARF_BEDEN = ["XXS", "XS", "S", "M", "L", "XL", "XXL", "XXXL", "3XL", "4XL", "5XL"];
+
+function gunSonuBedenSirala(liste) {
+  // Sıra: sayısal bedenler (sayı sırası) → harfli bedenler (XS…XL) → ötekiler (alfabetik) → bedensiz "—" en sonda.
+  const sinif = (x) => (x === "—" ? 3 : !isNaN(parseFloat(x)) ? 0 : GUN_SONU_HARF_BEDEN.includes(String(x).toUpperCase()) ? 1 : 2);
+  return [...liste].sort((a, b) => {
+    const sa = sinif(a), sb = sinif(b);
+    if (sa !== sb) return sa - sb;
+    if (sa === 0) return parseFloat(a) - parseFloat(b) || String(a).localeCompare(String(b), "tr");
+    if (sa === 1) return GUN_SONU_HARF_BEDEN.indexOf(String(a).toUpperCase()) - GUN_SONU_HARF_BEDEN.indexOf(String(b).toUpperCase());
+    return String(a).localeCompare(String(b), "tr");
+  });
+}
+
+function gunSonuMatris(liste, anahtar) {
+  const m = new Map();
+  const bedenler = new Set();
+  (liste || []).forEach((x) => {
+    const alanlar = anahtar(x);
+    const k = JSON.stringify(alanlar);
+    if (!m.has(k)) m.set(k, { alanlar, hucre: {}, toplam: 0, birim: x.birim || "", tutar: {} });
+    const g = m.get(k);
+    const beden = String(x.beden || "") || "—";
+    bedenler.add(beden);
+    g.hucre[beden] = stokYuvarla((g.hucre[beden] || 0) + (Number(x.miktar) || 0));
+    g.toplam = stokYuvarla(g.toplam + (Number(x.miktar) || 0));
+    if (x.tutar != null) { const pb = x.pb || "TRY"; g.tutar[pb] = stokYuvarla((g.tutar[pb] || 0) + (Number(x.tutar) || 0)); }
+  });
+  return { bedenler: gunSonuBedenSirala([...bedenler]), gruplar: [...m.values()] };
+}
+
+function gunSonuMatrisBolumu(mx, basKolonlar, sonKolonlar = [], sonHucreler = () => []) {
+  const say = (n) => (n ? Number(n).toLocaleString("tr-TR") : "");
+  const kolonlar = [...basKolonlar, ...mx.bedenler.map((bd) => [bd, 1]), ["Toplam", 1], ...sonKolonlar];
+  const satirlar = mx.gruplar.map((g) => [...g.alanlar, ...mx.bedenler.map((bd) => say(g.hucre[bd])),
+    `${Number(g.toplam).toLocaleString("tr-TR")} ${g.birim}`.trim(), ...sonHucreler(g)]);
+  return { kolonlar, satirlar };
+}
+
 function gunSonuBolumleri(v) {
   const sonuc = [];
   const b = (baslik, kolonlar, satirlar) => sonuc.push({ baslik, kolonlar, satirlar });
-  b("Alış / Satış fişleri", [["Tür"], ["Fiş No"], ["Cari"], ["Kalemler"], ["Tutar", 1]],
-    v.fisler.map((x) => [x.tur, x.fisNo, x.cari, x.kalemler.map((k) => `${k.urun} ${[k.renk, k.beden].filter(Boolean).join("/")} × ${k.miktar.toLocaleString("tr-TR")} ${k.birim}`).join("; "), gunSonuPBMetni(x.toplam)]));
+  const bm = (baslik, x) => b(baslik, x.kolonlar, x.satirlar);
+  bm("Alış / Satış fişleri", gunSonuMatrisBolumu(
+    gunSonuMatris(v.fisler.flatMap((f) => f.kalemler.map((k) => ({ ...k, f }))), (k) => [k.f.tur, k.f.fisNo, k.f.cari, k.urun, k.renk]),
+    [["Tür"], ["Fiş No"], ["Cari"], ["Ürün"], ["Renk"]], [["Tutar", 1]], (g) => [gunSonuPBMetni(g.tutar)]));
   b("Tahsilat / ödeme ve diğer cari hareketleri", [["Cari"], ["İşlem"], ["Açıklama"], ["Borç", 1], ["Alacak", 1]],
     v.cariHareketleri.map((x) => [x.cari, x.tip, x.aciklama, x.yon === "Borç" ? gunSonuPara(x.tutar, x.pb) : "", x.yon !== "Borç" ? gunSonuPara(x.tutar, x.pb) : ""]));
   b("Kasa / banka hareketleri", [["Hesap"], ["Karşı taraf"], ["Açıklama"], ["Giriş", 1], ["Çıkış", 1]],
     v.kasaHareketleri.map((x) => [x.hesap, x.karsi, x.aciklama, x.yon === "Giriş" ? gunSonuPara(x.tutar, x.pb) : "", x.yon !== "Giriş" ? gunSonuPara(x.tutar, x.pb) : ""]));
-  b("Üretim — stok hareketleri", [["Ürün"], ["Renk/Beden"], ["Sipariş"], ["Fiş"], ["Miktar", 1]],
-    v.uretimHareketleri.map((x) => [x.urun, [x.renk, x.beden].filter(Boolean).join(" / "), x.siparisNo, x.fisNo, `${x.miktar.toLocaleString("tr-TR")} ${x.birim}`]));
+  bm("Üretim — stok hareketleri", gunSonuMatrisBolumu(gunSonuMatris(v.uretimHareketleri, (x) => [x.urun, x.renk, x.siparisNo, x.fisNo]),
+    [["Ürün"], ["Renk"], ["Sipariş"], ["Fiş"]]));
   b("Üretim — proses atamaları", [["Sipariş"], ["Model"], ["Proses"], ["Olay"], ["Personel"], ["Miktar", 1]],
     v.uretimAsamalari.map((x) => [x.siparisNo, `${x.model} ${x.renk}`.trim(), x.proses, x.olay, x.personel, x.miktar.toLocaleString("tr-TR")]));
-  b("Diğer stok hareketleri", [["Ürün"], ["Renk/Beden"], ["Kaynak"], ["Cari"], ["Fiş"], ["Miktar", 1]],
-    v.stokHareketleri.map((x) => [x.urun, [x.renk, x.beden].filter(Boolean).join(" / "), x.kaynak, x.cari, x.fisNo, `${x.miktar.toLocaleString("tr-TR")} ${x.birim}`]));
+  bm("Diğer stok hareketleri", gunSonuMatrisBolumu(gunSonuMatris(v.stokHareketleri, (x) => [x.urun, x.renk, x.kaynak, x.cari, x.fisNo]),
+    [["Ürün"], ["Renk"], ["Kaynak"], ["Cari"], ["Fiş"]]));
   b("Kasa ve banka bakiyeleri (gün sonu)", [["Hesap"], ["Giriş", 1], ["Çıkış", 1], ["Bakiye", 1]],
     v.hesapBakiyeleri.map((x) => [x.hesap, gunSonuPara(x.giris, x.pb), gunSonuPara(x.cikis, x.pb), gunSonuPara(x.bakiye, x.pb)]));
   b("Portföydeki çekler (bugünkü durum)", [["Vade"], ["Çek No"], ["Banka"], ["Cari"], ["Tutar", 1]],
