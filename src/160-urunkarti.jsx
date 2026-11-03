@@ -6277,7 +6277,9 @@ function ProductMatrixCard({
                   const cariAdi = g.cariId ? ((cariler || []).find((c) => c.id === g.cariId) || {}).unvan : null;
                   const uretimKaynakli = g.kaynak === "Üretim";
                   const gRenkler = Array.from(new Set(g.hareketler.map((h) => h.renk)));
-                  const gBedenler = Array.from(new Set(g.hareketler.map((h) => h.beden)));
+                  // Bedenler küçükten büyüğe (v1.744.6 — sıralanmıyordu: fişte ilk yazılan beden önde çıkıyordu; denetim 17'nin
+                  // `v => v.beden` kalıbı bu satırı yakalamıyordu).
+                  const gBedenler = bedenSirala(Array.from(new Set(g.hareketler.map((h) => h.beden))));
 
                   // BİRİM FİYAT VE TUTAR CARİ TARAFINDAN OKUNUR.
                   // Stok hareketi fiyat taşımaz (miktar, renk, beden, kaynak). Aynı fiş numarasına
@@ -6330,12 +6332,12 @@ function ProductMatrixCard({
                       }}
                     >
                       <div
-                        // Tıklama yalnızca çok renkli fişte anlamlı; tek renklide açılacak içerik yok.
-                        role={gRenkler.length > 1 ? "button" : undefined}
-                        tabIndex={gRenkler.length > 1 ? 0 : undefined}
-                        onClick={gRenkler.length > 1 ? () => fisKapatToggle(g.key) : undefined}
-                        onKeyDown={(e) => { if (gRenkler.length > 1 && (e.key === "Enter" || e.key === " ")) fisKapatToggle(g.key); }}
-                        style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", padding: "8px 10px", cursor: gRenkler.length > 1 ? "pointer" : "default" }}
+                        // Her fiş açılır / kapanır (v1.744.6: tek renkli fiş de matrisle açılıyor).
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => fisKapatToggle(g.key)}
+                        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") fisKapatToggle(g.key); }}
+                        style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", padding: "8px 10px", cursor: "pointer" }}
                       >
                         {uretimKaynakli && <Hammer size={13} color="var(--erp-primary)" />}
                         {/* FİŞ NUMARASI TIKLANABİLİR (kullanıcı, 10 Eylül) — sipariş kartındaki
@@ -6376,12 +6378,11 @@ function ProductMatrixCard({
                         {g.siparisNo && <span className="mono" style={{ fontSize: 13, color: "var(--erp-text-3)" }}>{g.siparisNo}</span>}
                         {cariAdi && <span style={{ fontSize: 12, color: "var(--erp-text-2)" }}>· {cariAdi}</span>}
 
-                        {/* TEK RENKLİ FİŞ — miktarlar başlık satırında.
-                            Çoğu fiş tek renkten oluşur; onun için ayrı bir tablo açmak (başlık satırı
-                            + renk satırı) üç satır yer kaplıyor ve hareket listesini gereksiz uzatıyordu.
-                            Beden:miktar çiftleri satır içinde gösterilince fiş tek satıra sığıyor;
-                            tablo yalnızca ÇOK renkli fişlerde açılıyor. */}
-                        {gRenkler.length === 1 && (
+                        {/* TEK RENKLİ FİŞİN KAPALI ÖZETİ. Önce tek renkli fiş hep bu satır içi beden:miktar rozetleriyle
+                            çiziliyordu, tablo yalnız çok renkli fişte açılıyordu. v1.744.6 (kullanıcı, 3 Kasım: "listeler
+                            matris olsun"; matris kuralı): açık fiş — tek renkli de — aşağıdaki matrisle çizilir; rozetler
+                            yalnız fiş KAPATILINCA tek satırlık özet olarak kalır. */}
+                        {gRenkler.length === 1 && !acik && (
                           <span style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
                             <span className="mono" style={{ fontSize: 13, color: "var(--erp-text-2)" }}>{olcuGoster(gRenkler[0])}</span>
                             {gBedenler.map((b) => {
@@ -6428,16 +6429,14 @@ function ProductMatrixCard({
                             boyut={12}
                           />
                         </span>
-                        {/* Ok yalnızca ÇOK renkli fişlerde: tek renklide açılacak bir şey yok,
-                            miktarlar zaten başlık satırında. İşlevsiz bir ok tıklanıp
-                            "bozuk mu?" dedirtirdi. */}
-                        {gRenkler.length > 1 && (acik
+                        {/* Ok her fişte (v1.744.6): tek renkli fiş de matrisle açılıp kapanıyor. */}
+                        {acik
                           ? <ChevronDown size={15} color="var(--erp-text-3)" />
-                          : <ChevronRight size={15} color="var(--erp-text-3)" />)}
+                          : <ChevronRight size={15} color="var(--erp-text-3)" />}
                       </div>
-                      {acik && gRenkler.length > 1 && (
+                      {acik && (
                       <div style={{ padding: "0 10px 10px", overflowX: "auto" }}>
-                        <table style={{ width: "auto", minWidth: "100%" }}>
+                        <table className="matris-tablo" data-stok-fis-matris={g.key} style={{ width: "auto", minWidth: "100%" }}>
                           <thead>
                             <tr>
                               <th style={{ fontSize: 13 }}>{matrisKoseBasligi(gRenkler, gBedenler, renkBasligi(product), product.olcuTipi || "Beden")}</th>

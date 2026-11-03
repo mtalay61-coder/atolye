@@ -1988,11 +1988,15 @@ function CariCard({ onParaFisi, tanimlar, onTanimlarKaydet, onFiseGitNo, muhaseb
                             {/* SADE KİPTE TEK SATIR (23 Eylül, v1.435.0): ürün tablosu ve ürünsüz
                                 hareketlerin tek tek dökümü yerine bir özet satırı. Bilgi atılmıyor,
                                 sıkıştırılıyor (bkz. `hareketSadeOzet`); ayrıntı için Detaylı görünüm. */}
-                            {sadeGorunum ? (
+                            {/* SADE KİPTE BEDENLİ FİŞ MATRİSLE (v1.744.6 — kullanıcı, 3 Kasım: "listeler matris olsun"): bedenler sütun,
+                                fiyat/kur/KDV Detaylı görünümde. Bedensiz ürün ve para hareketi tek satırlık özet olarak kalır. */}
+                            {sadeGorunum ? (urunGruplari.some((ug) => (ug.items || []).some((h) => h.beden != null && h.beden !== "")) ? (
+                              <SadeBedenMatrisi urunGruplari={urunGruplari} />
+                            ) : (
                               <div data-ekstre-sade-ozet="1" style={{ display: "inline-block", verticalAlign: "middle", maxWidth: "100%", fontSize: 11, color: "var(--erp-text-2)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                                 {hareketSadeOzet(urunGruplari, yapisizHareketler, ilk, g)}
                               </div>
-                            ) : (
+                            )) : (
                             <>
                             {urunGruplari.length > 0 && (
                               <FisKalemMatrisi urunGruplari={urunGruplari} stok={stok} kompakt />

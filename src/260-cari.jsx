@@ -1020,6 +1020,48 @@ function cariHareketleriGrupla(hareketler) {
 // BR. FİYAT sütunu kayıt para biriminde; kalem başka parada girildiyse KUR sütunu ham fiyatı ve
 // kullanılan kuru gösterir. Yalnızca çevrilmiş fiyatı yazmak "bu 2.000 ₺ nereden çıktı"
 // sorusunu cevapsız bırakıyordu.
+// SADE GÖRÜNÜMÜN MATRİSİ (v1.744.6 — kullanıcı, 3 Kasım: "listeler matris olsun"). Cari ekstrenin sade kipi ürünlü fişi tek
+// satırlık metne sıkıştırıyordu ("102 Bayan Bot · 2 renk · 152 çift"); bedenler görünmüyordu. Burada yalnız MİKTAR matrisi: satır
+// ürün + renk, sütun beden (FisKalemMatrisi ile aynı sıra), sonda toplam ve tek fiyatlı satırda birim fiyat. Fiyat / kur / KDV
+// sütunları Detaylı görünümde. Bedensiz fişte çağrılmaz (özet metni kalır — tek sütunlu matris bilgi eklemez).
+function SadeBedenMatrisi({ urunGruplari }) {
+  if (!urunGruplari || urunGruplari.length === 0) return null;
+  const bedenler = bedenSirala(Array.from(new Set(urunGruplari.flatMap((ug) => (ug.items || []).map((h) => h.beden)).filter((b) => b != null && b !== ""))));
+  const say = (n) => Number(n || 0).toLocaleString("tr-TR", { maximumFractionDigits: 2 });
+  const hucre = { fontSize: 10, padding: "1px 6px", whiteSpace: "nowrap" };
+  return (
+    <div data-ekstre-sade-matris="1" style={{ overflowX: "auto", maxWidth: "100%" }}>
+      <table className="matris-tablo" style={{ width: "auto", borderCollapse: "collapse" }}>
+        <thead>
+          <tr>
+            <th style={{ ...hucre, textAlign: "left", color: "var(--erp-text-3)", fontWeight: 600 }}></th>
+            {bedenler.map((b) => <th key={b} className="mono" style={{ ...hucre, textAlign: "center", color: "var(--erp-text-3)", fontWeight: 600 }}>{olcuGoster(b, "Miktar")}</th>)}
+            <th className="mono" style={{ ...hucre, textAlign: "right", color: "var(--erp-text-3)", fontWeight: 600, borderLeft: "1px dashed var(--erp-line)" }}>Toplam</th>
+          </tr>
+        </thead>
+        <tbody>
+          {urunGruplari.map((ug) => {
+            const items = ug.items || [];
+            const toplam = items.reduce((t, h) => t + (Number(h.miktar) || 0), 0);
+            const fiyatlar = [...new Set(items.map((h) => h.birimFiyat).filter((x) => x != null))];
+            return (
+              <tr key={ug.key}>
+                <td style={{ ...hucre, fontWeight: 600, color: "var(--erp-text-2)" }}>{[ug.urunAd, olcuGoster(ug.renk)].filter(Boolean).join(" · ")}</td>
+                {bedenler.map((b) => {
+                  const m = items.filter((h) => h.beden === b).reduce((t, h) => t + (Number(h.miktar) || 0), 0);
+                  return <td key={b} className="mono" style={{ ...hucre, textAlign: "center", color: m ? "var(--erp-text)" : "var(--erp-border)" }}>{m ? say(m) : "—"}</td>;
+                })}
+                <td className="mono" style={{ ...hucre, textAlign: "right", fontWeight: 700, borderLeft: "1px dashed var(--erp-line)" }}>
+                  {say(toplam)} {ug.birim || (items[0] || {}).birim || ""}{fiyatlar.length === 1 && fiyatlar[0] ? ` × ${say(fiyatlar[0])}` : ""}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 function FisKalemMatrisi({ urunGruplari, stok, kompakt }) {
   if (!urunGruplari || urunGruplari.length === 0) return null;
 
@@ -1048,7 +1090,7 @@ function FisKalemMatrisi({ urunGruplari, stok, kompakt }) {
 
   return (
     <div style={{ overflowX: "auto" }}>
-      <table style={{ width: "auto", minWidth: "100%", borderCollapse: "collapse" }}>
+      <table className="matris-tablo" style={{ width: "auto", minWidth: "100%", borderCollapse: "collapse" }}>
         <thead>
           <tr>
             <th style={{ ...bh, textAlign: "left" }}>ÜRÜN</th>
