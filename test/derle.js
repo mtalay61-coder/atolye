@@ -43,7 +43,7 @@ const DISA_AKTAR = [
   "fiyatBul",   // fiyat çözümleme: cari/renk/beden kırılımı (18 Eylül)
   "useFisDefteriYazma",   // fiş defteri yazma kancası — bayat okuma senaryosu (22 Eylül)
   "karZararHesapla", "iscilikDefteri", "fisinDefteri", "hammaddeBirimFiyati", "mamulDeposuDurumu", "faturaKur", "faturaDogrula", "faturaEngelVarMi", "ublTrXml", "efaturaBirimKodu", "faturaNoBicimi", "sonrakiFaturaSirasi", "faturaSeriGecerliMi", "ettnUret", "efaturaVarsayilanSenaryo", "faturaTutarYaziyla", "faturaSatirlari", "tumFisleriTopla", "sonAlisMaliyeti", "aylarOnce", "gunKuru",      // işçilik yönü senaryosu: rapor işçiliği saymaya devam ediyor mu (22 Eylül)
-  "useCopKutusu", "yazimiIzle", "tabloYaz", "kuralReddiOku", "incelemeOku", "incelemeEkle", "incelemeSil", "incelemedekiSatirlar", "bekleyenKalemleriBirlestir", "bulutHatasiAciklamasi", "fazlaTeslimKalemleri", "fazlaTeslimOnayiAl", "gunSonuBolumleri", "gunSonuMatris", "gunSonuHTML", "fisKalemlerininKalani",   // F2 kalıcı ret (v1.744.0)   // yazma hatası senaryosu (22 Eylül, v1.410.0)
+  "useCopKutusu", "yazimiIzle", "tabloYaz", "kuralReddiOku", "incelemeOku", "incelemeEkle", "incelemeSil", "incelemedekiSatirlar", "bekleyenKalemleriBirlestir", "bulutHatasiAciklamasi", "fazlaTeslimKalemleri", "fazlaTeslimOnayiAl", "gunSonuBolumleri", "gunSonuMatris", "gunSonuHTML", "gunSonuExcel", "fisKalemlerininKalani",   // F2 kalıcı ret (v1.744.0)   // yazma hatası senaryosu (22 Eylül, v1.410.0)
   "code128Cubuklar", "code128SatirdanCoz", "kameraKaresiCoz",   // kamera çözücüsü (22 Eylül)
   "fisYaz", "fisGeriAl",
   "stokYuvarla", "paraCevirGenel", "fisNoUret", "fiseAitCariHareketiMi",
@@ -64,7 +64,7 @@ kaynak = kaynak.replace(/^import React[\s\S]*?from "react";/m,
   'const { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo } = React;');
 kaynak = kaynak.replace(/^import \{ createPortal \} from "react-dom";/m, 'const { createPortal } = require("react-dom");');
 // XLSX sahte: dosya yazmıyor, ama `raporExcelAktar` çağrılabilsin (çıktı `window.__sonRaporExcel`e düşüyor).
-kaynak = kaynak.replace(/^import \* as XLSX from "xlsx";/m, "const XLSX = { utils: { book_new: () => ({}), aoa_to_sheet: (a) => a, json_to_sheet: (a) => a, book_append_sheet: () => {} }, writeFile: () => {} };");
+kaynak = kaynak.replace(/^import \* as XLSX from "xlsx";/m, "const XLSX = { utils: { book_new: () => ({}), aoa_to_sheet: (a) => a, json_to_sheet: (a) => a, book_append_sheet: (wb, sh, ad) => { (wb.__sayfalar = wb.__sayfalar || {})[ad] = sh; } }, writeFile: (wb, ad) => { globalThis.__sonExcel = { ad, sayfalar: wb.__sayfalar || {} }; } };");
 kaynak = kaynak.replace(/^import \{[\s\S]*?\} from "lucide-react";/m, (blok) => {
   // İçeride yorum satırları var; ayıklanmazsa yorum metni "ikon adı" sanılıp bozuk kod üretiliyor.
   const adlar = blok.match(/\{([\s\S]*?)\}/)[1]
