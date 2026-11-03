@@ -84,7 +84,7 @@ GUVENLIK_SONRA=1 node $T/vitrin.js "$DB" sonra > "$CIK/vitrin-sonra.txt" 2>&1 &&
 bolumler sonra
 anon_sayi=$(psql -X -At -d "$DB" -c "select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and has_function_privilege('anon', p.oid, 'execute')
   and not exists (select 1 from pg_depend d where d.classid = 'pg_proc'::regclass and d.objid = p.oid and d.deptype = 'e')")
-[ "$anon_sayi" = 8 ] && echo "   ✓ anon'un çalıştırabildiği: yalnız 8 site fonksiyonu" || kirmizi "anon'un çalıştırabildiği $anon_sayi (8 olmalı)"
+[ "$anon_sayi" = 9 ] && echo "   ✓ anon'un çalıştırabildiği: yalnız 8 site fonksiyonu + yonetici_mi" || kirmizi "anon'un çalıştırabildiği $anon_sayi (9 olmalı)"
 yolsuz=$(psql -X -At -d "$DB" -c "select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace join pg_language l on l.oid = p.prolang
   where n.nspname = 'public' and l.lanname not in ('c','internal') and not exists (select 1 from unnest(coalesce(p.proconfig,'{}')) c where c like 'search_path=%')
     and not exists (select 1 from pg_depend d where d.classid = 'pg_proc'::regclass and d.objid = p.oid and d.deptype = 'e')")

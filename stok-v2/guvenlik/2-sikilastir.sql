@@ -5,7 +5,7 @@
 --  durur ve farkı yazar (aşağıda "KİLİT"). Yani yanlış listeyle çalıştırılsa bile yetki kaldırmaz.
 --
 --  NE YAPAR (tek işlem; bir adım düşerse hepsi geri alınır):
---   1) Girişsiz kullanıcının (anon) çalıştırabildiği fonksiyonlardan, sitenin kullandığı 8 fonksiyon (ACIK_BIRAK) DIŞINDAKİLERİN
+--   1) Girişsiz kullanıcının (anon) çalıştırabildiği fonksiyonlardan, sitenin kullandığı 8 fonksiyon ve storage politikasının çağırdığı yonetici_mi (ACIK_BIRAK) DIŞINDAKİLERİN
 --      çalıştırma yetkisi anon'dan ve PUBLIC'ten (herkes) alınır. Önce giriş yapmış kullanıcının (authenticated) ve sunucu
 --      fonksiyonlarının (service_role) o fonksiyonu bugün çalıştırıp çalıştıramadığı yazılır; çalıştırabiliyorsa yetki ona AÇIKÇA
 --      verilir — PUBLIC'in alınması onları etkilemez. Tetikleyici fonksiyonları tablo yazımında yetki denetlemeden çalışır (yerelde
@@ -49,7 +49,11 @@ declare
   acik_birak text[] := array[
     'public.herkese_acik_vitrin()', 'public.site_ayarlari()', 'public.site_kayit_ol(jsonb, text, text)',
     'public.portal_giris(text, text)', 'public.portal(text)', 'public.portal_hesap(text, date, date)',
-    'public.portal_siparis(text, jsonb, text, jsonb)', 'public.portal_cikis(text)'];
+    'public.portal_siparis(text, jsonb, text, jsonb)', 'public.portal_cikis(text)',
+    -- yonetici_mi: canlıda storage.objects "gorsel_yonetici_yazar" politikası (rol: public) bunu çağırıyor; politika SORGUYU YAPAN
+    -- rolle değerlendirilir — anon'a kapatılırsa girişsiz görsel isteği "yetki yok" HATASIYLA düşebilir. Girişsiz çağrıda false
+    -- döner (e-posta yok), bilgi sızdırmaz. Canlı Bölüm 3 (3 Kasım) üzerine açık bırakıldı.
+    'public.yonetici_mi()'];
   -- LİSTE:KAPANACAK BAŞ (TASLAK — canlı Bölüm 1'de anon_calistirir = true olup ACIK_BIRAK'ta olmayanlar)
   kapanacak text[] := array[
     'public.degisiklik_bump()',

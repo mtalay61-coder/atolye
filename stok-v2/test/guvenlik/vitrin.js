@@ -43,7 +43,7 @@ adim("portal (çıkıştan sonra → geçersiz kod)", "anon", `public.portal('${
 adim("ERP fis_kes (girişsiz → kapalı)", "anon", "public.fis_kes('{}'::jsonb)", "42501");
 adim("ERP cariler okuma (girişsiz → kapalı)", "anon", "(select count(*) from public.cariler)", "42501");
 adim("ERP surum okuma (girişsiz, giriş öncesi sürüm)", "anon", "(select count(*) from public.surum)", "ok");
-adim("ERP yonetici_mi (girişsiz)", "anon", "public.yonetici_mi()", process.env.GUVENLIK_SONRA ? "42501" : "ok");
+adim("yonetici_mi (girişsiz — storage politikası için açık, false döner)", "anon", "public.yonetici_mi()", "ok", (d) => d === "false");
 adim("ERP site_hesap_listesi (kullanıcı)", "veli", "(select count(*) from public.site_hesap_listesi())", "ok");
 adim("ERP yonetici_mi (yönetici)", "ali", "public.yonetici_mi()", "ok", (d) => d === "true");
 adim("ERP yonetici_mi (kullanıcı)", "veli", "public.yonetici_mi()", "ok", (d) => d === "false");

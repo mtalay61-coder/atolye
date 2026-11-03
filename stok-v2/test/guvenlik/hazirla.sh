@@ -15,6 +15,12 @@ psql -X -q -d template1 -c "$(printf "$VARS" grant to)"
 trap 'psql -X -q -d template1 -c "$(printf "$VARS" revoke from)"' EXIT
 STOK_V2_DB="$DB" bash stok-v2/test/kos.sh > /tmp/guvenlik-kos.txt 2>&1 || { echo "kos.sh düştü — /tmp/guvenlik-kos.txt"; exit 2; }
 q() { psql -X -q -v ON_ERROR_STOP=1 -d "$DB" "$@"; }
+# CANLIDA OLUP DEPODA (kos.sh kurulumunda) OLMAYAN fonksiyonlar (canlı Bölüm 1, 3 Kasım): yazma_yetkisi_koruma (rls-yazma.sql),
+# guncelleme_yaz ve surum_arttir (depoda yok; eski elle kurulum). Yerel liste canlıyla birebir olsun diye kurulur (aynı ad,
+# aynı tür, aynı search_path / definer durumu; gövdeler zararsız taklit). Kurulumdan sonra Supabase varsayılanıyla açılırlar.
+awk '/^create or replace function public.yazma_yetkisi_koruma/,/^end \$\$;/' rls-yazma.sql | q > /dev/null
+q -c "create or replace function public.guncelleme_yaz() returns trigger language plpgsql as \$f\$ begin return new; end \$f\$;
+      create or replace function public.surum_arttir() returns trigger language plpgsql as \$f\$ begin return new; end \$f\$;"
 q -c "create schema if not exists extensions; create extension if not exists pgcrypto schema extensions;"
 q -c "alter table cariler add column if not exists pasif boolean;
       alter table urunler add column if not exists ek jsonb default '{}', add column if not exists fiyat_kurallari jsonb,

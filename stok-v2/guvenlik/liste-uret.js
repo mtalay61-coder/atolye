@@ -10,7 +10,8 @@
 const fs = require("fs");
 
 const ACIK_BIRAK = ["herkese_acik_vitrin()", "site_ayarlari()", "site_kayit_ol(jsonb,text,text)", "portal_giris(text,text)", "portal(text)",
-  "portal_hesap(text,date,date)", "portal_siparis(text,jsonb,text,jsonb)", "portal_cikis(text)"];
+  "portal_hesap(text,date,date)", "portal_siparis(text,jsonb,text,jsonb)", "portal_cikis(text)",
+  "yonetici_mi()"];   // storage.objects politikası (rol public) çağırıyor — 2-sikilastir.sql ACIK_BIRAK açıklaması
 
 function csvOku(yol) {   // tırnaklı alan, alan içinde virgül / çift tırnak / satır sonu destekli
   const m = fs.readFileSync(yol, "utf8").replace(/^﻿/, "");
@@ -43,7 +44,8 @@ if (sema.length) {
 }
 const acik = new Set(ACIK_BIRAK.map(nrm));
 const kapanacak = f.filter((x) => dogru(x.anon_calistirir) && !acik.has(nrm(x.imza))).map((x) => ad(x.imza)).sort();
-const yol = f.filter((x) => !x.search_path && !["c", "internal"].includes(x.dil)).map((x) => ad(x.imza)).sort();
+const bos = (v) => !v || /^null$/i.test(v);   // Supabase Editor CSV'si boş değeri "null" yazar
+const yol = f.filter((x) => bos(x.search_path) && !["c", "internal"].includes(x.dil)).map((x) => ad(x.imza)).sort();
 const siteEksik = ACIK_BIRAK.filter((s) => !f.some((x) => nrm(x.imza) === nrm(s)));
 const dizi = (degisken, l) => `  ${degisken} text[] := array[\n${l.length ? l.map((x) => `    '${x}'`).join(",\n") : ""}]${l.length ? "" : "::text[]"};`;
 

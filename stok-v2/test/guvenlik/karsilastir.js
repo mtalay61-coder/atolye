@@ -11,7 +11,7 @@ const sql = fs.readFileSync(dosya, "utf8");
 const liste = (et) => [...(sql.match(new RegExp(`-- LİSTE:${et} BAŞ[\\s\\S]*?-- LİSTE:${et} SON`)) || [""])[0].matchAll(/'public\.([^']+)'/g)].map((m) => m[1].replace(/\s+/g, ""));
 const kapanacak = new Set(liste("KAPANACAK"));
 const site = new Set(["herkese_acik_vitrin()", "site_ayarlari()", "site_kayit_ol(jsonb,text,text)", "portal_giris(text,text)", "portal(text)",
-  "portal_hesap(text,date,date)", "portal_siparis(text,jsonb,text,jsonb)", "portal_cikis(text)"]);
+  "portal_hesap(text,date,date)", "portal_siparis(text,jsonb,text,jsonb)", "portal_cikis(text)", "yonetici_mi()"]);
 const k = (x) => x.replace(/\s+/g, "");
 let hata = 0; const satir = (s) => { hata += 1; console.log(`  ✗ ${s}`); };
 for (const rol of ["anon", "veli", "ali"]) {
