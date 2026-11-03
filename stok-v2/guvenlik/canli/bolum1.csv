@@ -99,3 +99,7 @@ lst_belge(text),fonksiyon,sql,false,search_path=public,postgres,false,false,fals
 stk_dizi(jsonb),fonksiyon,sql,false,null,postgres,false,false,false,false,true,"{postgres=X/postgres,service_role=X/postgres}"
 stk_kaynak_tur(text),fonksiyon,sql,false,null,postgres,false,false,false,false,true,"{postgres=X/postgres,service_role=X/postgres}"
 stk_mantik(text),fonksiyon,sql,false,null,postgres,false,false,false,false,true,"{postgres=X/postgres,service_role=X/postgres}"
+stk_nrm(text),fonksiyon,sql,false,null,postgres,false,false,false,false,true,"{postgres=X/postgres,service_role=X/postgres}"
+stk_sayi(text),fonksiyon,plpgsql,false,null,postgres,false,false,false,false,true,"{postgres=X/postgres,service_role=X/postgres}"
+stk_yer_tutucu_mu(text),fonksiyon,sql,false,null,postgres,false,false,false,false,true,"{postgres=X/postgres,service_role=X/postgres}"
+stk_zaman(text),fonksiyon,plpgsql,false,null,postgres,false,false,false,false,true,"{postgres=X/postgres,service_role=X/postgres}"

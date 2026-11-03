@@ -1,7 +1,7 @@
 -- =====================================================================================================================
 --  GÜVENLİK SIKILAŞTIRMA (madde 4 + 5) — 2-sikilastir.sql
---  DURUM: TASLAK. Aşağıdaki iki liste (KAPANACAK, YOL) yerel test veritabanından alındı; CANLI çıktı (1-liste-salt-okur.sql)
---  görülünce o çıktıya göre yeniden yazılır. Canlı veritabanı listelerle birebir uyuşmazsa bu dosya HİÇBİR ŞEY DEĞİŞTİRMEDEN
+--  DURUM: LİSTELER CANLIDAN (3 Kasım, 1-liste-salt-okur.sql çıktısı, stok-v2/guvenlik/canli/). Önceki taslak yereldi; canlı çıktı
+--  ile değiştirildi (liste-uret.js). Çalıştırma anında canlı veritabanı listelerle birebir uyuşmazsa bu dosya HİÇBİR ŞEY DEĞİŞTİRMEDEN
 --  durur ve farkı yazar (aşağıda "KİLİT"). Yani yanlış listeyle çalıştırılsa bile yetki kaldırmaz.
 --
 --  NE YAPAR (tek işlem; bir adım düşerse hepsi geri alınır):
@@ -54,7 +54,7 @@ declare
     -- rolle değerlendirilir — anon'a kapatılırsa girişsiz görsel isteği "yetki yok" HATASIYLA düşebilir. Girişsiz çağrıda false
     -- döner (e-posta yok), bilgi sızdırmaz. Canlı Bölüm 3 (3 Kasım) üzerine açık bırakıldı.
     'public.yonetici_mi()'];
-  -- LİSTE:KAPANACAK BAŞ (TASLAK — canlı Bölüm 1'de anon_calistirir = true olup ACIK_BIRAK'ta olmayanlar)
+  -- LİSTE:KAPANACAK BAŞ (CANLI 3 Kasım: Bölüm 1, 104 fonksiyon — anon_calistirir = true olup ACIK_BIRAK'ta olmayanlar)
   kapanacak text[] := array[
     'public.degisiklik_bump()',
     'public.fis_alt_karsilanansiz(jsonb)',
@@ -70,14 +70,16 @@ declare
     'public.fis_siparis_iptal_koru()',
     'public.fis_siparis_teslim_koru()',
     'public.fis_yer_tutucu(jsonb,text,text)',
+    'public.guncelleme_yaz()',
     'public.gunluk_silme_koruma()',
     'public.lst_sayac()',
     'public.site_pb(text)',
+    'public.surum_arttir()',
     'public.tanimlar_kullanici_koruma()',
-    'public.yetki_var_mi(text[],text)',
-    'public.yonetici_mi()'];
+    'public.yazma_yetkisi_koruma()',
+    'public.yetki_var_mi(text[],text)'];
   -- LİSTE:KAPANACAK SON
-  -- LİSTE:YOL BAŞ (TASLAK — canlı Bölüm 1'de search_path boş olanlar; Bölüm 2'de şemasız ad çıkmadıysa)
+  -- LİSTE:YOL BAŞ (CANLI 3 Kasım: Bölüm 1 search_path boş olanlar; Bölüm 2 satırsız)
   yol text[] := array[
     'public.fis_alt_artissiz(jsonb)',
     'public.fis_alt_karsilanansiz(jsonb)',
@@ -89,6 +91,7 @@ declare
     'public.fis_satir_koru()',
     'public.fis_siparis_iptal_koru()',
     'public.fis_yer_tutucu(jsonb,text,text)',
+    'public.guncelleme_yaz()',
     'public.siparis_durum_hesap(text,text)',
     'public.site_pb(text)',
     'public.stk_dizi(jsonb)',
@@ -97,7 +100,8 @@ declare
     'public.stk_nrm(text)',
     'public.stk_sayi(text)',
     'public.stk_yer_tutucu_mu(text)',
-    'public.stk_zaman(text)'];
+    'public.stk_zaman(text)',
+    'public.surum_arttir()'];
   -- LİSTE:YOL SON
   anon_oid oid := (select oid from pg_roles where rolname = 'anon');
   hesap text[]; liste text[]; eksik text; fazla text; f text; r record; c text;
