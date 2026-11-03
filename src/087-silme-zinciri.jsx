@@ -166,7 +166,8 @@ const siparisKapat = useCallback(async (siparisId) => {
       const yanit = await supabaseIstek("rpc/fis_bag_coz", { method: "POST", body: JSON.stringify({ p: { siparisId, siparisNo: no || null, sil } }) });
       sunucuBaglarAtomik = !!(yanit && yanit.baglarAtomik);
     } catch (e) {
-      showToast(`Sipariş iptal edilemedi — fişlerin bağı çözülemedi, hiçbir değişiklik yapılmadı (${String((e && e.message) || e).slice(0, 160)})`);
+      // Silmede "iptal edilemedi" yanıltıyordu (3 Kasım, ALS-1001): kullanıcı silmeye bastı, ileti iptalden söz etti.
+      showToast(`Sipariş ${sil ? "silinemedi" : "iptal edilemedi"} — hiçbir değişiklik yapılmadı (${String((e && e.message) || e).slice(0, 200)})`);
       gunlukYaz(`Sipariş iptali durdu (fis_bag_coz): ${no}`, "siparis", { siparisId, hata: String((e && e.message) || e).slice(0, 200) });
       return;
     }

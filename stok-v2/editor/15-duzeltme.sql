@@ -246,6 +246,12 @@ begin
           union select k.siparis_id::text from public.siparis_kalemleri k
            where k.id::text in (select x ->> 'id' from jsonb_array_elements(satirlar) x union select jsonb_array_elements_text(public.stk_dizi(d -> 'sil'))))
         order by s.id for key share;
+      perform 1 from public.siparisler s where s.id::text in (
+          select r from jsonb_array_elements(satirlar) x
+            left join public.siparis_kalemleri k on k.id::text = x ->> 'id',
+            lateral unnest(public.siparis_bag_hedefleri('siparis_kalemleri', coalesce(to_jsonb(k), '{}'::jsonb) || x)) r
+           where r <> all(public.siparis_bag_hedefleri('siparis_kalemleri', coalesce(to_jsonb(k), '{}'::jsonb))))
+        order by s.id for share;
       perform 1 from public.siparis_kalemleri k
        where k.id::text in (select x ->> 'id' from jsonb_array_elements(satirlar) x union select jsonb_array_elements_text(public.stk_dizi(d -> 'sil')))
        order by k.id for update;

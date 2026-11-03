@@ -166,6 +166,12 @@ begin
     if duzen = 'varyant' and tg_table_name = 'stk_hareket' and (yeni_j - 'varyant_id') = (eski_j - 'varyant_id') then
       return new;
     end if;
+    if duzen = 'bag_sil' and tg_table_name = 'stk_hareket' and old.iptal and new.iptal
+       and new.gecmis_siparis_id is null and new.gecmis_kalem_id is null
+       and (yeni_j - 'gecmis_siparis_id' - 'gecmis_kalem_id' - 'ek') = (eski_j - 'gecmis_siparis_id' - 'gecmis_kalem_id' - 'ek')
+       and ((yeni_j -> 'ek') - 'silinenSiparis') is not distinct from coalesce(eski_j -> 'ek', '{}'::jsonb) then
+      return new;
+    end if;
     raise exception 'Hareket değiştirilemez — fişi iptal edip yeniden kesin (% %)', tg_table_name, new.id using errcode = case when exists(select 1 from public.stk_ayar where nullif(min_istemci_surum,'') is not null) then 'KR009' else '42501' end;
   end if;
   if old.iptal and not new.iptal then
@@ -190,6 +196,11 @@ begin
        or new.siparis_id is not null or new.kalem_id is not null then
       raise exception 'Geçmiş sipariş bağı yalnız sipariş iptalinde, eski geçerli bağdan yazılır (stk_hareket %)', new.id using errcode = 'KR001';
     end if;
+    return new;
+  end if;
+  if coalesce(current_setting('fis.duzen', true), '') = 'bag_sil' and old.iptal and new.iptal
+     and new.gecmis_siparis_id is null and new.gecmis_kalem_id is null and new.siparis_id is null and new.kalem_id is null
+     and new.bag_cozum_zamani is not distinct from old.bag_cozum_zamani then
     return new;
   end if;
   if new.gecmis_siparis_id is distinct from old.gecmis_siparis_id or new.gecmis_kalem_id is distinct from old.gecmis_kalem_id
@@ -945,7 +956,26 @@ begin
   perform set_config('fis.siparis_iptal','acik',true);
   update public.siparisler set durum = 'İptal' where id::text = sid and durum is distinct from 'İptal';
   perform set_config('fis.siparis_iptal','',true);
-  if coalesce((p->>'sil')::boolean,false) then delete from public.siparisler where id::text=sid; end if;
+  if coalesce((p->>'sil')::boolean,false) then
+    if exists (select 1 from public.stk_hareket h where not h.iptal
+                 and (h.gecmis_siparis_id = sid or h.siparis_id = sid
+                      or h.gecmis_kalem_id in (select k.id::text from public.siparis_kalemleri k where k.siparis_id::text = sid)
+                      or h.kalem_id in (select k.id::text from public.siparis_kalemleri k where k.siparis_id::text = sid))) then
+      raise exception 'Bu siparişin iptal edilmemiş fişi var (sipariş %) — önce fişini silin (iptal edin), sonra siparişi silin; sipariş şimdilik iptal edilmiş olarak kalır', coalesce(sno, sid)
+        using errcode = 'KR002';
+    end if;
+    perform set_config('fis.kapi', 'acik', true);
+    perform set_config('fis.duzen', 'bag_sil', true);
+    update public.stk_hareket h
+       set ek = coalesce(h.ek, '{}'::jsonb) || jsonb_build_object('silinenSiparis', jsonb_build_object(
+             'id', h.gecmis_siparis_id, 'kalemId', h.gecmis_kalem_id, 'no', sno, 'zaman', now())),
+           gecmis_siparis_id = null, gecmis_kalem_id = null
+     where h.iptal and (h.gecmis_siparis_id = sid
+       or h.gecmis_kalem_id in (select k.id::text from public.siparis_kalemleri k where k.siparis_id::text = sid));
+    perform set_config('fis.duzen', '', true);
+    perform set_config('fis.kapi', '', true);
+    delete from public.siparisler where id::text=sid;
+  end if;
   return jsonb_build_object('stok', n_stok, 'cari', n_cari, 'zincir', n_zincir, 'durum', 'İptal', 'baglarAtomik',true,'kalemler', public.fis_kalem_durumlari(v_idler));
 end $$;
 

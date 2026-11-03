@@ -20,5 +20,6 @@ node stok-v2/test/f8/t-renk-dogal.js
 node stok-v2/test/duzeltme/t-bag-kilit.js
 node stok-v2/test/duzeltme/t-servis-kapi.js
 node stok-v2/test/duzeltme/t-eski-bag.js
+node stok-v2/test/duzeltme/t-siparis-sil.js
 F2_N=100 F2_ZORLA=3 bash stok-v2/test/f2/kos-f2.sh
 echo 'BÜTÜNLÜK ADAYI: bütün süreçler 0'
