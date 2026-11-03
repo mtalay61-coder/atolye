@@ -25,7 +25,7 @@
   ],
   "bolumler": {
    "Alış / Satış fişleri": [
-    "Satış | SF-1 | Müşteri B | Bot Siyah/41 × 2 çift | 500,00 ₺"
+    "Satış | SF-1 | Müşteri B | Bot | Siyah | 2 | 2 çift | 500,00 ₺"
    ],
    "Tahsilat / ödeme ve diğer cari hareketleri": [
     "Müşteri B | Tahsilat | Tahsilat (TL Kasa) |  | 300,00 ₺",
@@ -35,8 +35,8 @@
     "Kasa: TL Kasa | Müşteri B | Tahsilat | 300,00 ₺ | "
    ],
    "Üretim — stok hareketleri": [
-    "Deri | Siyah | 1001 | 1001-Kesim | -3 metre",
-    "Bot | Siyah / 41 | 1001 | 1001-Kesim-Giriş | 3 çift"
+    "Deri | Siyah | 1001 | 1001-Kesim |  | -3 | -3 metre",
+    "Bot | Siyah | 1001 | 1001-Kesim-Giriş | 3 |  | 3 çift"
    ],
    "Üretim — proses atamaları": [
     "1001 | Bot Siyah | Kesim | Tamamlandı | Personel C | 3"
