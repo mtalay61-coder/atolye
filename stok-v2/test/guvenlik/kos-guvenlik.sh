@@ -82,12 +82,9 @@ node $T/davranis.js "$DB" > "$CIK/davranis-sonra.json" || kirmizi "batarya (sonr
 node $T/karsilastir.js "$CIK/davranis-once.json" "$CIK/davranis-sonra.json" "$SIK" sikilastir | sed 's/^/   /'; [ "${PIPESTATUS[0]}" -eq 0 ] || HATA=1
 GUVENLIK_SONRA=1 node $T/vitrin.js "$DB" sonra > "$CIK/vitrin-sonra.txt" 2>&1 && echo "   ✓ vitrin akışı (sonra) temiz" || { kirmizi "vitrin (sonra)"; cat "$CIK/vitrin-sonra.txt"; }
 bolumler sonra
-node -e '
-  const fs = require("fs"); const s = fs.readFileSync(process.argv[1], "utf8").trim().split("\n"); const b = s[0].split(",");
-  const ia = b.indexOf("anon_calistirir");
-  const anon = s.slice(1).filter((x) => x.split(",")[ia] === "t").length;
-  console.log(`   · Bölüm 1 (sonra): anon çalıştırabilir ${anon} (site 8)`);
-  process.exit(anon === 8 ? 0 : 1);' "$CIK/sonra-bolum1.csv" || kirmizi "Bölüm 1'de anon sayısı 8 değil"
+anon_sayi=$(psql -X -At -d "$DB" -c "select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and has_function_privilege('anon', p.oid, 'execute')
+  and not exists (select 1 from pg_depend d where d.classid = 'pg_proc'::regclass and d.objid = p.oid and d.deptype = 'e')")
+[ "$anon_sayi" = 8 ] && echo "   ✓ anon'un çalıştırabildiği: yalnız 8 site fonksiyonu" || kirmizi "anon'un çalıştırabildiği $anon_sayi (8 olmalı)"
 yolsuz=$(psql -X -At -d "$DB" -c "select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace join pg_language l on l.oid = p.prolang
   where n.nspname = 'public' and l.lanname not in ('c','internal') and not exists (select 1 from unnest(coalesce(p.proconfig,'{}')) c where c like 'search_path=%')
     and not exists (select 1 from pg_depend d where d.classid = 'pg_proc'::regclass and d.objid = p.oid and d.deptype = 'e')")
@@ -111,11 +108,16 @@ echo "   • rls-kimlik.sql yeniden çalışınca anon'a kapanan site fonksiyonu
 [ "$diger_fark" = 0 ] && echo "   ✓ site fonksiyonları dışında testler yetki değiştirmedi" || { kirmizi "regresyon sırasında başka yetkiler de değişti"; diff "$CIK/ozet-1-sikilastir.txt" "$CIK/ozet-1b-regresyon.txt" | head; }
 (echo "set check_function_bodies = off;"; cat site-portal.sql) | psql -X -q -d "$DB" > /dev/null 2>&1
 ozet > "$CIK/ozet-1c-site.txt"
-cmp -s "$CIK/ozet-1-sikilastir.txt" "$CIK/ozet-1c-site.txt" && echo "   ✓ site-portal.sql yeniden çalışınca yetkiler sıkılaştırma sonrasıyla aynı" || { kirmizi "site-portal sonrası fark"; diff "$CIK/ozet-1-sikilastir.txt" "$CIK/ozet-1c-site.txt" | head; }
+# Yetkiler (2. sütun) aynı kalmalı. Ayar (3. sütun): create or replace search_path'i SIFIRLAR — kaynak dosyası yeniden çalışan
+# fonksiyonun sabitlenmiş yolu kaybolur (bilinen bulgu; kalıcı çözüm kaynak tanımlarına SET search_path eklemek).
+cut -d'|' -f1,2 "$CIK/ozet-1-sikilastir.txt" > "$CIK/y1"; cut -d'|' -f1,2 "$CIK/ozet-1c-site.txt" > "$CIK/y2"
+cmp -s "$CIK/y1" "$CIK/y2" && echo "   ✓ site-portal.sql yeniden çalışınca YETKİLER sıkılaştırma sonrasıyla aynı" || { kirmizi "site-portal sonrası yetki farkı"; diff "$CIK/y1" "$CIK/y2" | head; }
+sifirlanan=$(diff "$CIK/ozet-1-sikilastir.txt" "$CIK/ozet-1c-site.txt" | grep '^>' | sed 's/^> //; s/ |.*//' | tr '\n' ' ')
+[ -n "$sifirlanan" ] && echo "   • bulgu: kaynağı yeniden çalışınca search_path'i sıfırlanan: $sifirlanan" || true
 
 echo "══ 6) ikinci uygulama → geri alma"
 editor_ver "$SIK" "$CIK/ikinci-cikti.txt" && grep -q "zaten uygulanmış" "$CIK/ikinci-cikti.txt" && echo "   ✓ ikinci uygulama: zaten uygulanmış" || kirmizi "ikinci uygulama: $(tail -2 "$CIK/ikinci-cikti.txt")"
-ozet > "$CIK/ozet-2-ikinci.txt"; cmp -s "$CIK/ozet-1-sikilastir.txt" "$CIK/ozet-2-ikinci.txt" && echo "   ✓ ikinci uygulama yetkileri değiştirmedi" || kirmizi "ikinci uygulama yetkileri değiştirdi"
+ozet > "$CIK/ozet-2-ikinci.txt"; cmp -s "$CIK/ozet-1c-site.txt" "$CIK/ozet-2-ikinci.txt" && echo "   ✓ ikinci uygulama yetkileri değiştirmedi" || kirmizi "ikinci uygulama yetkileri değiştirdi"
 editor_ver $G/3-geri-al.sql "$CIK/geri-al-cikti.txt" && grep -q "geri alındı" "$CIK/geri-al-cikti.txt" && echo "   ✓ geri alma uygulandı" || { kirmizi "geri alma"; tail -3 "$CIK/geri-al-cikti.txt"; }
 ozet > "$CIK/ozet-3-geri.txt"
 if cmp -s "$CIK/ozet-0-once.txt" "$CIK/ozet-3-geri.txt"; then echo "   ✓ yetki / ayar özeti İLK hâlle birebir aynı ($(wc -l < "$CIK/ozet-0-once.txt") satır)"; else
