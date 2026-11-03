@@ -24,4 +24,11 @@ const mx = E.gunSonuMatris([{ beden: "M", miktar: 2, birim: "adet" }, { beden: "
 bak("sayısal bedenler önce, harfliler beden sırasıyla (S, M, XL), bedensiz '—' en sonda", mx.bedenler, ["40", "S", "M", "XL", "—"]);
 bak("aynı beden toplanır; toplam bütün bedenler", [mx.gruplar[0].hucre.M, mx.gruplar[0].toplam], [3, 13]);
 bak("boş gün: bölüm satırsız", E.gunSonuBolumleri({ ...bos, fisler: [], stokHareketleri: [] }).find((b) => b.baslik === "Alış / Satış fişleri").satirlar, []);
+// Excel (v1.744.6): fiş / stok / üretim sayfaları matris; sütun sırası korunur ("36" başa kaçmaz); hücreler sayı
+bak("Excel yazıldı", E.gunSonuExcel({ ...v, gun: "2026-11-03", hesapBakiyeleri: [], cariBakiyeListesi: [], stokMiktarlari: [] }), true);
+const x = globalThis.__sonExcel;
+bak("Excel dosya adı", x.ad, "gun-sonu-2026-11-03.xlsx");
+bak("Excel Fişler başlığı", x.sayfalar["Fişler"][0], ["Tür", "Fiş No", "Cari", "Ürün", "Renk", "36", "37", "38", "39", "40", "Toplam", "Birim", "Tutar TRY"]);
+bak("Excel Fişler satırı sayı", x.sayfalar["Fişler"][1], ["Alış", "AF-261103001", "Tedarik", "Deneme Stok", "1001 - Siyah", 1, 1, 2, 2, 1, 7, "Çift", 154]);
+bak("Excel stok hareketi: çıkış eksi", x.sayfalar["Stok hareketleri"][1].slice(-7), [-1, -1, -2, -2, -1, -7, "Çift"]);
 process.exit(hata);

@@ -1,10 +1,10 @@
 {
  "boyKarsilastirma": {
-  "sadeOdemeDahilAyniBoy": true,
-  "sadeOdemeDahilTekSatir": true,
+  "sadeOdemeDahilAyniBoy": false,
+  "sadeOdemeDahilTekSatir": false,
   "sadeTablolulardanKisa": true,
-  "sadeUrunluAyniBoy": true,
-  "sadeUrunluTekSatir": true
+  "sadeUrunluAyniBoy": false,
+  "sadeUrunluTekSatir": false
  },
  "detayli": {
   "dugme": "detayli · \"Sade görünüm\"",
@@ -35,7 +35,7 @@
  },
  "donunce": {
   "dugme": "sade · \"Detaylı görünüm\"",
-  "ozetSayisi": 4,
+  "ozetSayisi": 3,
   "tercih": "1"
  },
  "geriDetayli": {
@@ -47,7 +47,7 @@
  "hatalar": [],
  "sade": {
   "dugme": "sade · \"Detaylı görünüm\"",
-  "ozetSayisi": 4,
+  "ozetSayisi": 3,
   "satirlar": [
    {
     "kimlik": "ODM-TEST",
@@ -61,8 +61,8 @@
    },
    {
     "kimlik": "<fisno-001> ‖ Cariye Satış fişi",
-    "ozet": "Bot · 2 renk · 9 çift",
-    "tablolu": false
+    "ozet": null,
+    "tablolu": true
    },
    {
     "kimlik": "<fisno-001> ‖ Cariden Alış fişi",

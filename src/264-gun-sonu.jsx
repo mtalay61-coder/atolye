@@ -315,14 +315,24 @@ function gunSonuExcel(v) {
   if (typeof XLSX === "undefined" || !XLSX.utils || !XLSX.utils.book_new) return false;
   const wb = XLSX.utils.book_new();
   const sayfa = (ad, satirlar) => XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(satirlar.length ? satirlar : [{ Bilgi: "Kayıt yok" }]), ad);
-  sayfa("Fişler", v.fisler.flatMap((f) => f.kalemler.map((k) => ({ Tür: f.tur, "Fiş No": f.fisNo, Cari: f.cari, Ürün: k.urun, Renk: k.renk, Beden: k.beden, Miktar: k.miktar, Birim: k.birim, "Birim Fiyat": k.birimFiyat, Tutar: k.tutar, "P.B.": k.pb }))));
+  // BEDEN MATRİSİ (v1.744.6 — kullanıcı 3 Kasım: listeler matris olsun; rapordaki gunSonuMatris ile aynı gruplama). Sütun sırası
+  // dizi ile verilir: "36" gibi beden adları nesne anahtarı olunca JavaScript onları öne alıyordu. Hücreler SAYI (Excel'de toplanabilsin).
+  const matrisSayfasi = (ad, liste, anahtar, basliklar, tutarli) => {
+    const mx = gunSonuMatris(liste, anahtar);
+    if (!mx.gruplar.length) { sayfa(ad, []); return; }
+    const pbler = [...new Set(mx.gruplar.flatMap((g) => Object.keys(g.tutar)))];
+    const bas = [...basliklar, ...mx.bedenler, "Toplam", "Birim", ...(tutarli ? pbler.map((pb) => `Tutar ${pb}`) : [])];
+    const satirlar = mx.gruplar.map((g) => [...g.alanlar, ...mx.bedenler.map((bd) => (g.hucre[bd] != null ? g.hucre[bd] : null)), g.toplam, g.birim,
+      ...(tutarli ? pbler.map((pb) => (g.tutar[pb] != null ? g.tutar[pb] : null)) : [])]);
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([bas, ...satirlar]), ad);
+  };
+  matrisSayfasi("Fişler", v.fisler.flatMap((f) => f.kalemler.map((k) => ({ ...k, f }))), (k) => [k.f.tur, k.f.fisNo, k.f.cari, k.urun, k.renk],
+    ["Tür", "Fiş No", "Cari", "Ürün", "Renk"], true);
   sayfa("Cari hareketleri", v.cariHareketleri.map((x) => ({ Cari: x.cari, İşlem: x.tip, Yön: x.yon, Açıklama: x.aciklama, "Fiş No": x.fisNo, Tutar: x.tutar, "P.B.": x.pb, Defter: x.defter })));
   sayfa("Kasa-Banka hareketleri", v.kasaHareketleri.map((x) => ({ Hesap: x.hesap, Yön: x.yon, "Karşı taraf": x.karsi, Açıklama: x.aciklama, "Fiş No": x.fisNo, Tutar: x.tutar, "P.B.": x.pb })));
-  sayfa("Üretim", [
-    ...v.uretimHareketleri.map((x) => ({ Tür: "Stok hareketi", Ürün: x.urun, Renk: x.renk, Beden: x.beden, Sipariş: x.siparisNo, Fiş: x.fisNo, Miktar: x.miktar, Birim: x.birim })),
-    ...v.uretimAsamalari.map((x) => ({ Tür: `Proses ${x.olay}`, Ürün: x.model, Renk: x.renk, Sipariş: x.siparisNo, Fiş: x.proses, Personel: x.personel, Miktar: x.miktar })),
-  ]);
-  sayfa("Stok hareketleri", v.stokHareketleri.map((x) => ({ Ürün: x.urun, Kategori: x.kategori, Renk: x.renk, Beden: x.beden, Kaynak: x.kaynak, Cari: x.cari, "Fiş No": x.fisNo, Miktar: x.miktar, Birim: x.birim })));
+  matrisSayfasi("Üretim stok hareketleri", v.uretimHareketleri, (x) => [x.urun, x.renk, x.siparisNo, x.fisNo], ["Ürün", "Renk", "Sipariş", "Fiş"]);
+  sayfa("Proses atamaları", v.uretimAsamalari.map((x) => ({ Olay: x.olay, Ürün: x.model, Renk: x.renk, Sipariş: x.siparisNo, Proses: x.proses, Personel: x.personel, Miktar: x.miktar })));
+  matrisSayfasi("Stok hareketleri", v.stokHareketleri, (x) => [x.urun, x.kategori, x.renk, x.kaynak, x.cari, x.fisNo], ["Ürün", "Kategori", "Renk", "Kaynak", "Cari", "Fiş No"]);
   sayfa("Kasa-Banka bakiyeleri", v.hesapBakiyeleri.map((x) => ({ Hesap: x.hesap, Giriş: x.giris, Çıkış: x.cikis, Bakiye: x.bakiye, "P.B.": x.pb })));
   sayfa("Çekler", v.cekler.map((x) => ({ Vade: x.vade, "Çek No": x.cekNo, Banka: x.banka, Cari: x.cari, Tutar: x.tutar, "P.B.": x.pb })));
   sayfa("Cari bakiyeleri", v.cariBakiyeListesi.flatMap((x) => Object.entries(x.bakiye).map(([pb, t]) => ({ Cari: x.cari, Tip: x.tip, Bakiye: stokYuvarla(t), "P.B.": pb }))));
