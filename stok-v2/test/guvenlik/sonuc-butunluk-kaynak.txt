@@ -1593,7 +1593,7 @@ psql:stok-v2/test/sinama-gece.sql:70: NOTICE:  TAMAM: anonim çağıramıyor
 ── stok-v2/test/r1-yaris.js
   ✓ 0: kurallar açık (canlının 19. adımdan sonraki hâli)
 1) İki kullanıcı aynı kaleme aynı anda 5'er adet (ikisinin ekranında karşılanan 0)
-    istemcinin gönderdiği kalem bilgisi (A): {"satirlar":[{"id":"k-r1-mw0ze4kz","karsilanan":5}],"artis":[{"id":"k-r1-mw0ze4kz","miktar":5}]}
+    istemcinin gönderdiği kalem bilgisi (A): {"satirlar":[{"id":"k-r1-mw10a3i7","karsilanan":5}],"artis":[{"id":"k-r1-mw10a3i7","miktar":5}]}
     A: SF-261103006   B: SF-261103007
     SONUÇ → stok hareketleri toplamı: 10 adet çıkış · kalemin karşılananı: 10 · geçerli fiş: 2
   ✓ 1: iki fiş de kesildi
@@ -1602,8 +1602,8 @@ psql:stok-v2/test/sinama-gece.sql:70: NOTICE:  TAMAM: anonim çağıramıyor
 2) Aynı istek SIRALI tekrar (yanıt kayboldu, istemci yeniden gönderdi)
   ✓ 2: ilk numara döndü (zatenVar), ikinci fiş yok, karşılanan artmadı
 3) Aynı istek EŞZAMANLI iki kez (çift tıklama iki sekmede)
-    1. çağrı: {"fisNo":"SF-261103008","kalemler":[{"id":"k-r1-mw0ze4kz","karsilanan":12}],"zatenVar":false,"bagliFisNo":null,"karsilananDuzeltme":[]}
-    2. çağrı: {"fisNo":"SF-261103008","kalemler":[{"id":"k-r1-mw0ze4kz","karsilanan":12}],"zatenVar":true,"bagliFisNo":null,"karsilananDuzeltme":[]}
+    1. çağrı: {"fisNo":"SF-261103008","kalemler":[{"id":"k-r1-mw10a3i7","karsilanan":12}],"zatenVar":false,"bagliFisNo":null,"karsilananDuzeltme":[]}
+    2. çağrı: {"fisNo":"SF-261103008","kalemler":[{"id":"k-r1-mw10a3i7","karsilanan":12}],"zatenVar":true,"bagliFisNo":null,"karsilananDuzeltme":[]}
   ✓ 3: tek fiş, karşılanan +2 (12), stok çıkışı 12, değişmez tutuyor
   ✓ 3: ikinci kopya hata değil, ilk numarayı aldı (zatenVar)
 4) Ağ kesintisi: sunucu bağlantısı işlem ortasında düşer → hiçbir şey yazılmaz; yeniden gönderim bir kez işlenir
@@ -1643,7 +1643,7 @@ psql:stok-v2/test/sinama-gece.sql:70: NOTICE:  TAMAM: anonim çağıramıyor
   ✓ 6: karşılanan 7 yazıldı (koruma devrede değil)
 ── R1b temiz ──
 ── t-karsilanan
-F0 / D1 karşılanan · önek f0-t-karsilanan-mw0zeew3 · kurallar açık: true
+F0 / D1 karşılanan · önek f0-t-karsilanan-mw10adi7 · kurallar açık: true
   ✓ [D1.eski-eszamanli] iki eski istemci eşzamanlı 5'er → karşılanan = teslim = 10
       önce:     {"karsilanan":0,"teslim":0}
       sonra:    {"karsilanan":10,"teslim":10,"fisler":[true,true]}
@@ -1666,7 +1666,7 @@ F0 / D1 karşılanan · önek f0-t-karsilanan-mw0zeew3 · kurallar açık: true
       sonra:    {"D1a":0,"farkliKalem":0}
 ── t-karsilanan.js: 7 yeşil, 0 kırmızı ──
 ── t-kalem-bag
-F0 / D2–D3 kalem bağı · önek f0-t-kalem-bag-mw0zekvb · kurallar açık: true
+F0 / D2–D3 kalem bağı · önek f0-t-kalem-bag-mw10ajdq · kurallar açık: true
   ✓ [D2.birlestirme] teslimli parçalar birleştirilmez: B durur, toplam karşılanan = toplam teslim (7)
       önce:     {"A":{"var":true,"miktar":10,"karsilanan":3,"renk":"Siyah","urun":"u-yeni","teslim":3},"B":{"var":true,"miktar":10,"karsilanan":4,"renk":"Siyah","urun":"u-yeni","teslim":4}}
       sonra:    {"A":{"var":true,"miktar":10,"karsilanan":3,"renk":"Siyah","urun":"u-yeni","teslim":3},"B":{"var":true,"miktar":10,"karsilanan":4,"renk":"Siyah","urun":"u-yeni","teslim":4},"yazma":[]}
@@ -1687,10 +1687,10 @@ F0 / D2–D3 kalem bağı · önek f0-t-kalem-bag-mw0zekvb · kurallar açık: t
       sonra:    {"D2a":0,"D4a":0}
 ── t-kalem-bag.js: 7 yeşil, 0 kırmızı ──
 ── t-fazla
-F0 / D4 fazla teslim · önek f0-t-fazla-mw0zena8
+F0 / D4 fazla teslim · önek f0-t-fazla-mw10aloj
   ✓ [D4.satis-eszamanli] eşzamanlı teslimde biri reddedilir: teslim 19, karşılanan 19
       önce:     {"karsilanan":14,"teslim":14,"miktar":20}
-      sonra:    {"karsilanan":19,"teslim":19,"kabul":[true,false],"hata":["ERROR:  Satış siparişi miktarı aşılıyor — yönetici onayı ve gerekçe gerekir: [{\"kalem\": \"f0-t-fazla-mw0zena8-e-A\", \"miktar\": 20, \"onceki\": 19, \"istenen\": 5}]"]}
+      sonra:    {"karsilanan":19,"teslim":19,"kabul":[true,false],"hata":["ERROR:  Satış siparişi miktarı aşılıyor — yönetici onayı ve gerekçe gerekir: [{\"kalem\": \"f0-t-fazla-mw10aloj-e-A\", \"miktar\": 20, \"onceki\": 19, \"istenen\": 5}]"]}
   ✓ [D4.satis-onaysiz-fazla] onaysız fazla teslim sunucuda reddedilir (teslim 0)
       önce:     {"karsilanan":0,"teslim":0}
       sonra:    {"karsilanan":0,"teslim":0,"kabul":false}
@@ -1702,10 +1702,10 @@ F0 / D4 fazla teslim · önek f0-t-fazla-mw0zena8
       sonra:    {"D4a":1,"D4b":1}
 ── t-fazla.js: 4 yeşil, 0 kırmızı ──
 ── t-iptal
-F0 / D5 iptal ve durum · önek f0-t-iptal-mw0zeqvr
+F0 / D5 iptal ve durum · önek f0-t-iptal-mw10apcr
   ✓ [D5.iptal-bag-korunur] iptalde 4 teslim tarihsel kalem bağında korunur; geçerli bağ çözülür
       önce:     {"durum":"Bekliyor","karsilanan":4,"bagliTeslim":4,"fis":{"gecerli":true,"gecerliSatir":1,"bagliSatir":1}}
-      sonra:    {"durum":"İptal","karsilanan":4,"bagliTeslim":0,"fis":{"gecerli":true,"gecerliSatir":1,"bagliSatir":0},"bagCoz":{"cari":1,"stok":1,"durum":"İptal","zincir":0,"kalemler":[{"id":"f0-t-iptal-mw0zeqvr-i-A","karsilanan":4}],"baglarAtomik":true}}
+      sonra:    {"durum":"İptal","karsilanan":4,"bagliTeslim":0,"fis":{"gecerli":true,"gecerliSatir":1,"bagliSatir":0},"bagCoz":{"cari":1,"stok":1,"durum":"İptal","zincir":0,"kalemler":[{"id":"f0-t-iptal-mw10apcr-i-A","karsilanan":4}],"baglarAtomik":true}}
   ✓ [D5.iptal-siparise-teslim] iptal edilmiş siparişe teslim reddedilir
       sonra:    {"kabul":false,"durum":"İptal"}
   ✓ [D5.durum-eszamanli] 20 / 20 teslimde durum Tamamlandı (sunucu hesaplar)
@@ -1715,7 +1715,7 @@ F0 / D5 iptal ve durum · önek f0-t-iptal-mw0zeqvr
       sonra:    {"D5a":1,"D5c":0,"D5b":1}
 ── t-iptal.js: 4 yeşil, 0 kırmızı ──
 ── t-yedek
-F0 / YEDEK geri yükleme · önek f0-t-yedek-mw0zet0l
+F0 / YEDEK geri yükleme · önek f0-t-yedek-mw10arkr
   ✓ [Y.tam-kurallar-kapali] çelişen tam geri yükleme hiçbir şeyi değiştirmez (fiş satırı geçerli, 3 / 3, fiyat 150)
       önce:     {"fis":{"gecerli":true,"gecerliSatir":1,"bagliSatir":1},"karsilanan":3,"teslim":3,"fiyat":150}
       sonra:    {"fis":{"gecerli":true,"gecerliSatir":1,"bagliSatir":1},"karsilanan":3,"teslim":3,"fiyat":150,"stokYazmasi":"RED","siparisYazmasi":"RED"}
@@ -1730,7 +1730,7 @@ F0 / YEDEK geri yükleme · önek f0-t-yedek-mw0zet0l
   kurallar test sonunda açık: true
 ── t-yedek.js: 4 yeşil, 0 kırmızı ──
 ── t-surum
-F0 / SÜRÜM · önek f0-t-surum-mw0zevhx
+F0 / SÜRÜM · önek f0-t-surum-mw10au1i
   ✓ [S.mekanizma-var] stk_ayar.min_istemci_surum ve stk_istemci_iz var
       sonra:    {"minIstemciSurum":true,"izTablosu":true}
   ✓ [S.eski-yuk-red] zorlama açıkken sürümsüz eski yük AT001 ile reddedilir (0 / 0)
@@ -1738,7 +1738,7 @@ F0 / SÜRÜM · önek f0-t-surum-mw0zevhx
       sonra:    {"karsilanan":0,"teslim":0,"kabul":false,"hata":"ERROR:  AT001: Uygulama sürümü doğrulanamadı — uygulamayı yenileyin; kayıt değiştirilmedi","zorlama":"açık"}
 ── t-surum.js: 2 yeşil, 0 kırmızı ──
 ── t-kilit
-F0 / KİLİT · önek f0-t-kilit-mw0zew3h
+F0 / KİLİT · önek f0-t-kilit-mw10auq1
   ✓ [K.ters-sira-kilitlenmez] aynı kalemleri ters sırada gönderen iki fiş kilitlenmeden ikisi de tamamlanır
       sonra:    {"A":"kabul","B":"kabul","k1":{"karsilanan":2,"teslim":2},"k2":{"karsilanan":2,"teslim":2}}
   ✓ [K.fis-ile-duzenleme] fiş ile ters sıralı sipariş düzenlemesi kilitlenmeden tamamlanır
@@ -1750,16 +1750,16 @@ F0 / KİLİT · önek f0-t-kilit-mw0zew3h
   • [K.G3-on-kilitli-durum] (gözlem) sipariş satırı baştan kilitli + REST başlık yazması: {"kilitlenme":0,"tetikleyiciTaklidi":"tamam","rest":"tamam"}
 ── t-kilit.js: 3 yeşil, 0 kırmızı ──
 ── t-f1
-F1 başarısızlık testleri · önek f0-t-f1-mw0zf1jt
+F1 başarısızlık testleri · önek f0-t-f1-mw10b042
   ✓ [F1.istemci-alani-kabul] yükteki `istemci` alanı kabul edilir (eski ve yeni SQL)
       sonra:    {"kabul":true}
   ✓ [F1.yanit-kalemler] fis_kes yanıtında kalemler: [{id, karsilanan}] = veritabanı
-      sonra:    {"yanit":[{"id":"f0-t-f1-mw0zf1jt-y-A","karsilanan":4}],"db":4}
+      sonra:    {"yanit":[{"id":"f0-t-f1-mw10b042-y-A","karsilanan":4}],"db":4}
   ✓ [F1.iptal-yanit-kalemler] fis_iptal yanıtında kalemler (iptal sonrası 0)
-      sonra:    {"yanit":[{"id":"f0-t-f1-mw0zf1jt-y-A","karsilanan":0}],"db":0}
+      sonra:    {"yanit":[{"id":"f0-t-f1-mw10b042-y-A","karsilanan":0}],"db":0}
   ✓ [F1.onceden-fark-raporlanir] fark işlemde düzelir (5 / 5) ve iz kaydı + yanıtta düzeltme bilgisi var
       önce:     {"karsilanan":9,"teslim":4}
-      sonra:    {"karsilanan":5,"teslim":5,"iz":[{"tur":"onceden_fark","onceki":9,"hesap":4,"yeni":5,"islem":"fis_kes"}],"yanitDuzeltme":[{"id":"f0-t-f1-mw0zf1jt-f-A","tur":"onceden_fark","yeni":5,"hesap":4,"onceki":9}]}
+      sonra:    {"karsilanan":5,"teslim":5,"iz":[{"tur":"onceden_fark","onceki":9,"hesap":4,"yeni":5,"islem":"fis_kes"}],"yanitDuzeltme":[{"id":"f0-t-f1-mw10b042-f-A","tur":"onceden_fark","yeni":5,"hesap":4,"onceki":9}]}
   ✓ [F1.hayalet-korunur] hayalete teslim: 5 + 2 = 7 (sıfırlanmaz) ve iz 'hayalet_korundu'
       önce:     {"A":5,"B":3}
       sonra:    {"A":7,"teslimA":2,"B":3,"izA":[{"tur":"hayalet_korundu","onceki":5,"hesap":0,"yeni":7,"islem":"fis_kes"}],"izB":[]}
@@ -1772,13 +1772,13 @@ F1 başarısızlık testleri · önek f0-t-f1-mw0zf1jt
   ✓ [F1.G1-yeni-kodla] ön kilitli işlem + fis_kes: kilitlenme yok, ikisi de tamam
       sonra:    {"onKilit":true,"fisKes":true}
   ✓ [F1.tekil-tutucu] 'tekil' tutulurken fis_kes bekler ve tamamlanır (kilitlenme yok)
-      sonra:    {"fisKes":true,"bekledi_ms":825,"karsilanan":1}
+      sonra:    {"fisKes":true,"bekledi_ms":837,"karsilanan":1}
   ✓ [F1.iptal-kes-eszamanli] iptal + ters sıralı yeni fiş: kilitlenme yok, karşılanan = teslim (2 / 2)
       sonra:    {"iptal":true,"kes":true,"k1":[2,2],"k2":[2,2]}
   • [F1.G4-iptal-ile-bag-coz] (gözlem) fis_iptal + aynı siparişin fis_bag_coz'u: {"kilitlenme":0,"iptal":"tamam","bagCoz":"tamam","karsilanan":0,"teslim":0}
 ── t-f1.js: 11 yeşil, 0 kırmızı ──
 ── t-denetim
-F0 / DENETİM doğrulaması · önek f0-t-denetim-mw0zf794
+F0 / DENETİM doğrulaması · önek f0-t-denetim-mw10b5rz
   ✓ [DN.iyi-veri-temiz] iyi veri kümesinde hiçbir kontrol bulgu vermiyor
       sonra:    {}
   ✓ [DN.hayalet] karşılanan 5, hareket yok
@@ -1896,7 +1896,7 @@ F0 / DENETİM doğrulaması · önek f0-t-denetim-mw0zf794
 F4 gerçek PostgreSQL · kurallar açık · doğal N=100
 ✓ F4 zorlanmış sıra iptal → teslim: 3/3; ikinci bağlantının kilit beklediği gözlendi
 ✓ F4 zorlanmış sıra teslim → iptal: 3/3; ikinci bağlantının kilit beklediği gözlendi
-✓ F4 doğal yarış 100: iptal başarılı, geçerli bağ yok, karşılanan tutarlı; teslimin önce tamamlandığı çift 44
+✓ F4 doğal yarış 100: iptal başarılı, geçerli bağ yok, karşılanan tutarlı; teslimin önce tamamlandığı çift 47
 ✓ İç kontrol kilitsiz doğrudan RPC olarak çağrılamaz
 ✓ İstemcinin fiş türü, fazla işareti ve sahte audit sınırı aşamaz
 ✓ Boş sipariş tipi sınırı kapatmaz
@@ -1919,14 +1919,14 @@ F4 gerçek PostgreSQL · kurallar açık · doğal N=100
 ✓ Yuvarlama ham hareket toplamındaki fazlayı gizleyemez
 F3 satış sınırı testleri temiz
 ✓ F3 gerçek PostgreSQL 100 yarış: her çiftte bir kabul/bir kural reddi; 19/20, iki fiş, iki hareket, cari 1900; 0 kilitlenme/bozuk
-{"renk":{"ok":true,"sonuc":{"varyant":1,"tasinanHareket":1},"hata":""},"iptal":{"ok":true,"sonuc":{"fisNo":"SF-261103325","cekler":[],"kalemler":[{"id":"f0-t-renk-kilit-mw0zjl0v-k","karsilanan":0}],"bagliFisNo":null,"zatenIptal":false,"karsilananDuzeltme":[]},"hata":""}}
+{"renk":{"ok":true,"sonuc":{"varyant":1,"tasinanHareket":1},"hata":""},"iptal":{"ok":true,"sonuc":{"fisNo":"SF-261103328","cekler":[],"kalemler":[{"id":"f0-t-renk-kilit-mw10fax3-k","karsilanan":0}],"bagliFisNo":null,"zatenIptal":false,"karsilananDuzeltme":[]},"hata":""}}
 ✓ F8 zorlanmış renk taşıma ∥ fiş iptali (kalemli): iki işlem tamam, hareket ve miktar korunuyor
-F1.1 kilit sırası · önek f0-t-f11-kilit-mw0zjllv · N=100 · zorlanmış tekrar 3 · kurallar açık · iz sütunları 3/3
+F1.1 kilit sırası · önek f0-t-f11-kilit-mw10fbko · N=100 · zorlanmış tekrar 3 · kurallar açık · iz sütunları 3/3
 C) doğal zorlama — her çift × 100, 0–40 ms rastgele aralık, rastgele başlangıç sırası
-  • [F11.C-P8] (gözlem) P8 fis_iptal ∥ stk_renk_tasi (aynı varyantın hareketleri) × 100: {"kilitlenme":0,"oran":"0%","ikisiTamam":"100/100","bozuk":0,"digerHata":{},"ornek":[],"sure_sn":42}
+  • [F11.C-P8] (gözlem) P8 fis_iptal ∥ stk_renk_tasi (aynı varyantın hareketleri) × 100: {"kilitlenme":0,"oran":"0%","ikisiTamam":"100/100","bozuk":0,"digerHata":{},"ornek":[],"sure_sn":41}
 ── t-f11-kilit.js: 0 yeşil, 0 kırmızı ──
 ✓ F8 doğal renk/iptal yarışı: bütün işlemler tamam, sıfır kilitlenme/bozuk
-Bağ koruması ∥ başlık · önek f0-t-bag-kilit-mw0zkiry · N=100 · zorla=3
+Bağ koruması ∥ başlık · önek f0-t-bag-kilit-mw10g7p4 · N=100 · zorla=3
   ✓ [BK.zorla-planlama-kilit] alt_yaz (planlama bağlı kalemler) ∥ bağın hedef siparişinin başlığı · zorlanmış 3: kilitlenme 0
       sonra:    {"kilitlenme":0,"ornek":[]}
   ✓ [BK.zorla-planlama-tamam] zorlanmış 3: iki işlem de tamamlanır (biri bekler)
@@ -1938,7 +1938,7 @@ Bağ koruması ∥ başlık · önek f0-t-bag-kilit-mw0zkiry · N=100 · zorla=3
   ✓ [BK.zorla-rezervasyon-tamam] zorlanmış 3: iki işlem de tamamlanır (biri bekler)
       sonra:    {"tamamlanmayan":0}
   ✓ [BK.dogal-rezervasyon-kilit] alt_yaz (rezervasyon) ∥ başlık × 100: kilitlenme 0
-      sonra:    {"kilitlenme":0,"tamamlanmayan":0,"sure_sn":16}
+      sonra:    {"kilitlenme":0,"tamamlanmayan":0,"sure_sn":15}
 ── t-bag-kilit.js: 6 yeşil, 0 kırmızı ──
   ✓ [SK.servis-rolu-yazar] gerçek null · beklenen null
   ✓ [SK.servis-rolu-gunceller] gerçek null · beklenen null
@@ -1949,33 +1949,33 @@ Bağ koruması ∥ başlık · önek f0-t-bag-kilit-mw0zkiry · N=100 · zorla=3
 ── t-servis-kapi.js: temiz ──
   ✓ [EB.uretim-baska-alan] gerçek null · beklenen null
   ✓ [EB.kalem-alt_yaz-fiyat] gerçek null · beklenen null
-  ✓ [EB.bag-korundu] gerçek "f0-t-eski-bag-mw0zlcyk-eb-ipt" · beklenen "f0-t-eski-bag-mw0zlcyk-eb-ipt"
+  ✓ [EB.bag-korundu] gerçek "f0-t-eski-bag-mw10h0q8-eb-ipt" · beklenen "f0-t-eski-bag-mw10h0q8-eb-ipt"
   ✓ [EB.yeni-bag-red-uretim] gerçek "KR006" · beklenen "KR006"
   ✓ [EB.yeni-bag-red-rezervasyon-eklenir] gerçek "KR006" · beklenen "KR006"
   ✓ [EB.bag-kaldirmak-serbest] gerçek null · beklenen null
   ✓ [EB.kaldirilan-bag-geri-kurulamaz] gerçek "KR006" · beklenen "KR006"
 ── t-eski-bag.js: temiz ──
-t-siparis-sil · önek f0-t-siparis-sil-mw0zldgz · kurallar açık
+t-siparis-sil · önek f0-t-siparis-sil-mw10h18m · kurallar açık
   ✓ [SS.a.fis-iptal] gerçek true · beklenen true
   ✓ [SS.a.siparis-iptal] gerçek ["ok","İptal"] · beklenen ["ok","İptal"]
   ✓ [SS.a.sil] gerçek "ok" · beklenen "ok"
   ✓ [SS.a.siparis-ve-kalem-gitti] gerçek ["yok",false] · beklenen ["yok",false]
-  ✓ [SS.a.iptal-satiri-kaldi-bag-bos-iz-var] gerçek [[true,null,null,null,null,"f0-t-siparis-sil-mw0zldgz-ssa","f0-t-siparis-sil-mw0zldgz-ssaA"]] · beklenen [[true,null,null,null,null,"f0-t-siparis-sil-mw0zldgz-ssa","f0-t-siparis-sil-mw0zldgz-ssaA"]]
+  ✓ [SS.a.iptal-satiri-kaldi-bag-bos-iz-var] gerçek [[true,null,null,null,null,"f0-t-siparis-sil-mw10h18m-ssa","f0-t-siparis-sil-mw10h18m-ssaA"]] · beklenen [[true,null,null,null,null,"f0-t-siparis-sil-mw10h18m-ssa","f0-t-siparis-sil-mw10h18m-ssaA"]]
   ✓ [SS.a.sahipsiz-yok] gerçek [0,0,0] · beklenen [0,0,0]
   ✓ [SS.e.gecmis-bag-baska-yoldan-degismez] gerçek true · beklenen true
   ✓ [SS.b.fis-iptal] gerçek true · beklenen true
   ✓ [SS.b.sil] gerçek "ok" · beklenen "ok"
   ✓ [SS.b.siparis-ve-kalem-gitti] gerçek ["yok",false] · beklenen ["yok",false]
-  ✓ [SS.b.iptal-satiri-kaldi-bag-bos-iz-var] gerçek [[true,null,null,null,null,"f0-t-siparis-sil-mw0zldgz-ssb","f0-t-siparis-sil-mw0zldgz-ssbA"]] · beklenen [[true,null,null,null,null,"f0-t-siparis-sil-mw0zldgz-ssb","f0-t-siparis-sil-mw0zldgz-ssbA"]]
+  ✓ [SS.b.iptal-satiri-kaldi-bag-bos-iz-var] gerçek [[true,null,null,null,null,"f0-t-siparis-sil-mw10h18m-ssb","f0-t-siparis-sil-mw10h18m-ssbA"]] · beklenen [[true,null,null,null,null,"f0-t-siparis-sil-mw10h18m-ssb","f0-t-siparis-sil-mw10h18m-ssbA"]]
   ✓ [SS.b.sahipsiz-yok] gerçek [0,0,0] · beklenen [0,0,0]
   ✓ [SS.c.siparis-iptal] gerçek "ok" · beklenen "ok"
   ✓ [SS.c.gercek-teslimli-silinmez] gerçek "KR002" · beklenen "KR002"
-  ✓ [SS.c.iptal-olarak-kaldi] gerçek ["İptal",true,["f0-t-siparis-sil-mw0zldgz-sscA"]] · beklenen ["İptal",true,["f0-t-siparis-sil-mw0zldgz-sscA"]]
+  ✓ [SS.c.iptal-olarak-kaldi] gerçek ["İptal",true,["f0-t-siparis-sil-mw10h18m-sscA"]] · beklenen ["İptal",true,["f0-t-siparis-sil-mw10h18m-sscA"]]
   ✓ [SS.d.dogrudan-silme-red] gerçek "KR002" · beklenen "KR002"
   ✓ [SS.d.siparis-duruyor] gerçek "İptal" · beklenen "İptal"
 ── t-siparis-sil.js: temiz ──
 ── node t-f2.js
-F2 başarısızlık testleri · önek f0-t-f2-mw0zlkn6 · istemci bugünkü · kurallar açık · iz 3/3
+F2 başarısızlık testleri · önek f0-t-f2-mw10h7av · istemci bugünkü · kurallar açık · iz 3/3
   ✓ [F2.birlestirme-teslimli] teslimli iki kalem birleştirilmez: B durur, toplam karşılanan 7, sahipsiz hareket yok
       önce:     {"A":{"karsilanan":3,"miktar":10,"urun":"u-yeni","renk":"Siyah","beden":null},"B":{"karsilanan":4,"miktar":10,"urun":"u-yeni","renk":"Siyah","beden":null}}
       sonra:    {"A":{"karsilanan":3,"miktar":10,"urun":"u-yeni","renk":"Siyah","beden":null},"B":{"karsilanan":4,"miktar":10,"urun":"u-yeni","renk":"Siyah","beden":null},"yazma":"","D2a":0,"D2b":0,"D2e":0}
@@ -1989,7 +1989,7 @@ F2 başarısızlık testleri · önek f0-t-f2-mw0zlkn6 · istemci bugünkü · k
       sonra:    {"C":"yok","yazma":"REST PATCH siparisler:ok,alt_yaz:ok"}
   • [F2.sil-yalniz-iptal-hareketli] (gözlem) yalnız iptal edilmiş hareketi olan kalem silinince: {"A":{"karsilanan":0,"miktar":20,"urun":"u-yeni","renk":"Siyah","beden":null},"yazma":"RED: Teslim geçmişi olan sipariş kalemi silinemez ya da başka kalemle birleştirilemez (kalem f0","kalemiGosterenIptalSatiri":1,"karar":"§ 9 karar 1"}
   ✓ [F2.sil-iptal-siparis-gecmis-bag] teslim geçmişi olan İPTAL siparişi silinemez (kalem durur), geçmiş bağ sahipsiz kalmaz (D2e 0)
-      sonra:    {"siparis":{"durum":"İptal"},"A":{"karsilanan":3,"miktar":20,"urun":"u-yeni","renk":"Siyah","beden":null},"yazma":"RED: Teslim geçmişi olan sipariş kalemi silinemez ya da başka kalemle birleştirilemez (kalem f0","gecmisBag":"f0-t-f2-mw0zlkn6-gA","D2a":0,"D2b":0,"D2e":0}
+      sonra:    {"siparis":{"durum":"İptal"},"A":{"karsilanan":3,"miktar":20,"urun":"u-yeni","renk":"Siyah","beden":null},"yazma":"RED: Teslim geçmişi olan sipariş kalemi silinemez ya da başka kalemle birleştirilemez (kalem f0","gecmisBag":"f0-t-f2-mw10h7av-gA","D2a":0,"D2b":0,"D2e":0}
   ✓ [F2.sil-bayat-siparis] teslimli sipariş bayat cihazdan silinemez; sahipsiz hareket yok
       sonra:    {"siparis":{"durum":"Bekliyor"},"A":{"karsilanan":4,"miktar":20,"urun":"u-yeni","renk":"Siyah","beden":null},"yazma":"RED: Teslim geçmişi olan sipariş kalemi silinemez ya da başka kalemle birleştirilemez (kalem f0","D2a":0,"D2b":0,"D2e":0}
   ✓ [F2.sil-teslimsiz-siparis] KORUNACAK: teslimsiz sipariş silinir (kalemleriyle)
@@ -2005,21 +2005,21 @@ F2 başarısızlık testleri · önek f0-t-f2-mw0zlkn6 · istemci bugünkü · k
   ✓ [F2.kimlik-teslimsiz] KORUNACAK: teslimsiz kalemin rengi / bedeni değişir
       sonra:    {"A":{"karsilanan":0,"miktar":20,"urun":"u-yeni","renk":"Taba","beden":"42"},"yazma":"REST siparisler (durum):ok,alt_yaz:ok"}
   ✓ [F2.miktar-teslim-alti] miktar teslim edilenin (5) altına inmez (20 kalır)
-      sonra:    {"A":{"karsilanan":5,"miktar":20,"urun":"u-yeni","renk":"Siyah","beden":null},"yazma":"RED: Sipariş miktarı teslim edilenin altına indirilemez (kalem f0-t-f2-mw0zlkn6-qA: istenen 3, "}
+      sonra:    {"A":{"karsilanan":5,"miktar":20,"urun":"u-yeni","renk":"Siyah","beden":null},"yazma":"RED: Sipariş miktarı teslim edilenin altına indirilemez (kalem f0-t-f2-mw10h7av-qA: istenen 3, "}
   ✓ [F2.miktar-teslime-esit] KORUNACAK: miktar teslim edilene (5) eşit olabilir
       sonra:    {"A":{"karsilanan":5,"miktar":5,"urun":"u-yeni","renk":"Siyah","beden":null},"yazma":"REST PATCH siparisler:ok,alt_yaz:ok"}
   ✓ [F2.miktar-gecmis-bag] geçmiş bağlı teslim de sayılır: miktar 5'in altına inmez
-      sonra:    {"A":{"karsilanan":5,"miktar":20,"urun":"u-yeni","renk":"Siyah","beden":null},"yazma":"RED: Sipariş miktarı teslim edilenin altına indirilemez (kalem f0-t-f2-mw0zlkn6-qgA: istenen 2,"}
+      sonra:    {"A":{"karsilanan":5,"miktar":20,"urun":"u-yeni","renk":"Siyah","beden":null},"yazma":"RED: Sipariş miktarı teslim edilenin altına indirilemez (kalem f0-t-f2-mw10h7av-qgA: istenen 2,"}
   ✓ [F2.fazla-teslimli-duzenleme] KORUNACAK: fazla teslimli kalemde miktar değişmeden fiyat değişir
       sonra:    {"A":{"karsilanan":25,"miktar":20,"urun":"u-yeni","renk":"Siyah","beden":null},"fiyat":130,"yazma":"REST siparisler (durum):ok,alt_yaz:ok"}
   ✓ [F2.var-olmayan-kaleme-teslim] var olmayan kaleme bağlı hareket yazılamaz
-      sonra:    {"kabul":false,"hata":"ERROR:  Var olmayan sipariş kalemine teslim yazılamaz (kalem f0-t-f2-mw0zlkn6-hYOK) — sipariş silinmiş ya da değişmiş olabilir; siparişi yenileyip yeniden deneyin","D2a":0,"D2b":0,"D2e":0}
+      sonra:    {"kabul":false,"hata":"ERROR:  Var olmayan sipariş kalemine teslim yazılamaz (kalem f0-t-f2-mw10h7av-hYOK) — sipariş silinmiş ya da değişmiş olabilir; siparişi yenileyip yeniden deneyin","D2a":0,"D2b":0,"D2e":0}
   ✓ [F2.uretim-sil] KORUNACAK: üretim kaydı (ataması ile) silinir
       sonra:    {"yazma":"alt_yaz:ok,REST DELETE uretim:ok"}
   • [F2.uretim-sahipsiz-hareket] (gözlem) üretimi silinmiş geçerli stok hareketi (uretim_id karşılıksız; F2 kapsamı dışı, bilgi): 0
   • [F2.denetim-butun-veri] (gözlem) bütün veride sahipsiz hareket (D2a / D2b / D2e): {"D2a":1,"D2b":1,"D2e":0}
 ── t-f2.js: 19 yeşil, 0 kırmızı ──
-F2 başarısızlık testleri · önek f0-t-f2-mw0zlsjj · istemci F0_ERP · kurallar açık · iz 3/3
+F2 başarısızlık testleri · önek f0-t-f2-mw10heez · istemci F0_ERP · kurallar açık · iz 3/3
   ✓ [E2.birlestirme-teslimli] teslimli iki kalem birleştirilmez: B durur, toplam karşılanan 7, sahipsiz hareket yok
       önce:     {"A":{"karsilanan":3,"miktar":10,"urun":"u-yeni","renk":"Siyah","beden":null},"B":{"karsilanan":4,"miktar":10,"urun":"u-yeni","renk":"Siyah","beden":null}}
       sonra:    {"A":{"karsilanan":3,"miktar":10,"urun":"u-yeni","renk":"Siyah","beden":null},"B":{"karsilanan":4,"miktar":10,"urun":"u-yeni","renk":"Siyah","beden":null},"yazma":"RED: Supabase 400: {\"code\":\"KR002\",\"message\":\"Teslim geçmişi olan sipariş kalemi silinemez ya d","D2a":0,"D2b":0,"D2e":0}
@@ -2033,7 +2033,7 @@ F2 başarısızlık testleri · önek f0-t-f2-mw0zlsjj · istemci F0_ERP · kura
       sonra:    {"C":"yok","yazma":"REST PATCH siparisler:ok,alt_yaz:ok"}
   • [E2.sil-yalniz-iptal-hareketli] (gözlem) yalnız iptal edilmiş hareketi olan kalem silinince: {"A":{"karsilanan":0,"miktar":20,"urun":"u-yeni","renk":"Siyah","beden":null},"yazma":"RED: Supabase 400: {\"code\":\"KR002\",\"message\":\"Teslim geçmişi olan sipariş kalemi silinemez ya d","kalemiGosterenIptalSatiri":1,"karar":"§ 9 karar 1"}
   ✓ [E2.sil-iptal-siparis-gecmis-bag] teslim geçmişi olan İPTAL siparişi silinemez (kalem durur), geçmiş bağ sahipsiz kalmaz (D2e 0)
-      sonra:    {"siparis":{"durum":"İptal"},"A":{"karsilanan":3,"miktar":20,"urun":"u-yeni","renk":"Siyah","beden":null},"yazma":"RED: Supabase 400: {\"code\":\"KR002\",\"message\":\"Teslim geçmişi olan sipariş kalemi silinemez ya d","gecmisBag":"f0-t-f2-mw0zlsjj-gA","D2a":0,"D2b":0,"D2e":0}
+      sonra:    {"siparis":{"durum":"İptal"},"A":{"karsilanan":3,"miktar":20,"urun":"u-yeni","renk":"Siyah","beden":null},"yazma":"RED: Supabase 400: {\"code\":\"KR002\",\"message\":\"Teslim geçmişi olan sipariş kalemi silinemez ya d","gecmisBag":"f0-t-f2-mw10heez-gA","D2a":0,"D2b":0,"D2e":0}
   ✓ [E2.sil-bayat-siparis] teslimli sipariş bayat cihazdan silinemez; sahipsiz hareket yok
       sonra:    {"siparis":{"durum":"Bekliyor"},"A":{"karsilanan":4,"miktar":20,"urun":"u-yeni","renk":"Siyah","beden":null},"yazma":"RED: Supabase 400: {\"code\":\"KR002\",\"message\":\"Teslim geçmişi olan sipariş kalemi silinemez ya d","D2a":0,"D2b":0,"D2e":0}
   ✓ [E2.sil-teslimsiz-siparis] KORUNACAK: teslimsiz sipariş silinir (kalemleriyle)
@@ -2057,20 +2057,20 @@ F2 başarısızlık testleri · önek f0-t-f2-mw0zlsjj · istemci F0_ERP · kura
   ✓ [E2.fazla-teslimli-duzenleme] KORUNACAK: fazla teslimli kalemde miktar değişmeden fiyat değişir
       sonra:    {"A":{"karsilanan":25,"miktar":20,"urun":"u-yeni","renk":"Siyah","beden":null},"fiyat":130,"yazma":"REST siparisler (durum):ok,alt_yaz:ok"}
   ✓ [E2.var-olmayan-kaleme-teslim] var olmayan kaleme bağlı hareket yazılamaz
-      sonra:    {"kabul":false,"hata":"ERROR:  Var olmayan sipariş kalemine teslim yazılamaz (kalem f0-t-f2-mw0zlsjj-hYOK) — sipariş silinmiş ya da değişmiş olabilir; siparişi yenileyip yeniden deneyin","D2a":0,"D2b":0,"D2e":0}
+      sonra:    {"kabul":false,"hata":"ERROR:  Var olmayan sipariş kalemine teslim yazılamaz (kalem f0-t-f2-mw10heez-hYOK) — sipariş silinmiş ya da değişmiş olabilir; siparişi yenileyip yeniden deneyin","D2a":0,"D2b":0,"D2e":0}
   ✓ [E2.uretim-sil] KORUNACAK: üretim kaydı (ataması ile) silinir
       sonra:    {"yazma":"alt_yaz:ok,REST DELETE uretim:ok"}
   • [E2.uretim-sahipsiz-hareket] (gözlem) üretimi silinmiş geçerli stok hareketi (uretim_id karşılıksız; F2 kapsamı dışı, bilgi): 0
   • [E2.denetim-butun-veri] (gözlem) bütün veride sahipsiz hareket (D2a / D2b / D2e): {"D2a":1,"D2b":1,"D2e":0}
 ── t-f2.js: 19 yeşil, 0 kırmızı ──
 ── node t-bekleyen-red.js
-F2 bekleyen defter / kalıcı ret · önek f0-t-bekleyen-red-mw0zm0qn · istemci bugünkü · iz sütunları 3/3
+F2 bekleyen defter / kalıcı ret · önek f0-t-bekleyen-red-mw10hlp9 · istemci bugünkü · iz sütunları 3/3
   ✓ [BR.kontrol-tek-basina] kontrol: ilgisiz değişiklik tek başına yazılır (asgari stok 5)
       sonra:    {"ok":true,"minStok":"5"}
   • [BR.olcum] (gözlem) her tekrar (bekleyenleriYenidenGonder ile aynı çağrı): [{"tur":1,"ok":true,"stkYaz":1,"deneme":null},{"tur":2,"ok":true,"stkYaz":0,"deneme":null},{"tur":3,"ok":true,"stkYaz":0,"deneme":null},{"tur":4,"ok":true,"stkYaz":0,"deneme":null},{"tur":5,"ok":true,"stkYaz":0,"deneme":null}]
   • [BR.hata-metni] (gözlem) defterde saklanan hata: ""
   ✓ [BR.sunucu-korur] sunucu bağı diriltmez (her tekrarda reddeder), iz ve karşılanan aynı
-      sonra:    {"satir":{"iptal":false,"kalem":null,"siparis":null,"no":"SF0-0zm0qn-s (iptal)","gecmisKalem":"f0-t-bekleyen-red-mw0zm0qn-k","gecmisSiparis":"f0-t-bekleyen-red-mw0zm0qn-s","cozum":true},"karsilanan":3}
+      sonra:    {"satir":{"iptal":false,"kalem":null,"siparis":null,"no":"SF0-10hlp9-s (iptal)","gecmisKalem":"f0-t-bekleyen-red-mw10hlp9-k","gecmisSiparis":"f0-t-bekleyen-red-mw10hlp9-s","cozum":true},"karsilanan":3}
   ✓ [BR.yerel-korunur] yerel kayıt silinmez (A cihazının düzenlemesi yerelde duruyor)
       sonra:    {"aciklama":"A cihazında düzenlendi"}
   ✓ [BR.bekleyen-kayit] gönderilemeyen değişiklik kalıcı olarak saklandı (bekleyen kayıt defteri ya da inceleme yedeği)
@@ -2078,17 +2078,17 @@ F2 bekleyen defter / kalıcı ret · önek f0-t-bekleyen-red-mw0zm0qn · istemci
   ✓ [BR.otomatik-tekrar-yok] kalıcı ret 4 otomatik denemede yeniden gönderilmez
       sonra:    {"ilkTurdanSonraStkYaz":0}
   ✓ [BR.inceleme-durumu] kayıt 'inceleme gerekiyor' olarak işaretli (geçici ağ hatasından ayrı), reddedilen yerel hâl yedekte
-      sonra:    {"bekleyenKaydi":{},"inceleme":{"kod":"KR009","sebep":"Fiş defterinde hareketler bu yoldan değiştirilemez — fiş kaydını kullanın. Yerel kayıt inceleme için korundu.","anahtar":"stok:items","zaman":"2026-11-03T17:54:20.207Z","kayit":"var"}}
+      sonra:    {"bekleyenKaydi":{},"inceleme":{"kod":"KR009","sebep":"Fiş defterinde hareketler bu yoldan değiştirilemez — fiş kaydını kullanın. Yerel kayıt inceleme için korundu.","anahtar":"stok:items","zaman":"2026-11-03T18:18:53.378Z","kayit":"var"}}
   ✓ [BR.ilgisiz-degisiklik] aynı tablodaki ilgisiz meşru değişiklik reddedilen satır yüzünden takılmaz
       sonra:    {"tabaMinStok":"7"}
 ── t-bekleyen-red.js: 7 yeşil, 0 kırmızı ──
-F2 bekleyen defter / kalıcı ret · önek f0-t-bekleyen-red-mw0zm28u · istemci F0_ERP · iz sütunları 3/3
+F2 bekleyen defter / kalıcı ret · önek f0-t-bekleyen-red-mw10hmvk · istemci F0_ERP · iz sütunları 3/3
   ✓ [EBR.kontrol-tek-basina] kontrol: ilgisiz değişiklik tek başına yazılır (asgari stok 5)
       sonra:    {"ok":true,"minStok":"5"}
   • [EBR.olcum] (gözlem) her tekrar (bekleyenleriYenidenGonder ile aynı çağrı): [{"tur":1,"ok":false,"stkYaz":1,"deneme":1},{"tur":2,"ok":false,"stkYaz":1,"deneme":2},{"tur":3,"ok":false,"stkYaz":1,"deneme":3},{"tur":4,"ok":false,"stkYaz":1,"deneme":4},{"tur":5,"ok":false,"stkYaz":1,"deneme":5}]
   • [EBR.hata-metni] (gözlem) defterde saklanan hata: "Buluta yazma yetkisi yok — kimlik koruması açık ama giriş yapılmamış. Sağ üstten kullanıcı girişi yapın; giriş yapınca bekleyen kayıtlar gönderilir. (Girişsiz ç"
   ✓ [EBR.sunucu-korur] sunucu bağı diriltmez (her tekrarda reddeder), iz ve karşılanan aynı
-      sonra:    {"satir":{"iptal":false,"kalem":null,"siparis":null,"no":"SF0-0zm28u-s (iptal)","gecmisKalem":"f0-t-bekleyen-red-mw0zm28u-k","gecmisSiparis":"f0-t-bekleyen-red-mw0zm28u-s","cozum":true},"karsilanan":3}
+      sonra:    {"satir":{"iptal":false,"kalem":null,"siparis":null,"no":"SF0-10hmvk-s (iptal)","gecmisKalem":"f0-t-bekleyen-red-mw10hmvk-k","gecmisSiparis":"f0-t-bekleyen-red-mw10hmvk-s","cozum":true},"karsilanan":3}
   ✓ [EBR.yerel-korunur] yerel kayıt silinmez (A cihazının düzenlemesi yerelde duruyor)
       sonra:    {"aciklama":"A cihazında düzenlendi"}
   ✓ [EBR.bekleyen-kayit] gönderilemeyen değişiklik kalıcı olarak saklandı (bekleyen kayıt defteri ya da inceleme yedeği)
@@ -2098,7 +2098,7 @@ F2 bekleyen defter / kalıcı ret · önek f0-t-bekleyen-red-mw0zm28u · istemci
       beklenen: 0
       çıkan:    4
   ✗ [EBR.inceleme-durumu] kayıt 'inceleme gerekiyor' olarak işaretli (geçici ağ hatasından ayrı), reddedilen yerel hâl yedekte
-      sonra:    {"bekleyenKaydi":{"tablo":"urunler","hata":"Buluta yazma yetkisi yok — kimlik koruması açık ama giriş yapılmamış. Sağ üstten kullanıcı girişi yapın; giriş yapınca bekleyen kayıtlar gönderilir. (Girişsiz çalışmak istiyorsanız Supabase'de rls-kimlik.sql'in GERİ ALMA bloğunu çalıştırın.) Ham hata: 400 {\"code\":\"42501\",\"message\":\"Hareket yalnız fi","zaman":"2026-11-03T17:54:22.318Z","deneme":5},"inceleme":null}
+      sonra:    {"bekleyenKaydi":{"tablo":"urunler","hata":"Buluta yazma yetkisi yok — kimlik koruması açık ama giriş yapılmamış. Sağ üstten kullanıcı girişi yapın; giriş yapınca bekleyen kayıtlar gönderilir. (Girişsiz çalışmak istiyorsanız Supabase'de rls-kimlik.sql'in GERİ ALMA bloğunu çalıştırın.) Ham hata: 400 {\"code\":\"42501\",\"message\":\"Hareket yalnız fi","zaman":"2026-11-03T18:18:55.073Z","deneme":5},"inceleme":null}
       beklenen: true
       çıkan:    false
   ✗ [EBR.ilgisiz-degisiklik] aynı tablodaki ilgisiz meşru değişiklik reddedilen satır yüzünden takılmaz
@@ -2107,10 +2107,10 @@ F2 bekleyen defter / kalıcı ret · önek f0-t-bekleyen-red-mw0zm28u · istemci
       çıkan:    false
 ── t-bekleyen-red.js: 4 yeşil, 3 kırmızı ──
 ── node t-f2-kilit.js
-F2 kilit / eşzamanlılık · önek f0-t-f2-kilit-mw0zm3v7 · N=100 · kurallar açık
+F2 kilit / eşzamanlılık · önek f0-t-f2-kilit-mw10ho48 · N=100 · kurallar açık
 A) yazmadan önce kilit — alt_yaz birden çok deyim yazıyor (önce upsert, sonra silme)
   ✓ [F2K.A-alt_yaz-sil] alt_yaz (upsert A + sil B) → silinecek kalem B: ilk yazmadan önce kilitlenir
-      sonra:    {"islem":"ok","bekledi":true,"tekilSerbest":true,"sure_ms":1362,"sonuc":"tamam"}
+      sonra:    {"islem":"ok","bekledi":true,"tekilSerbest":true,"sure_ms":1355,"sonuc":"tamam"}
 B) zorlanmış araya girme — B kalemi 1 sn tutulur, iki sıra × 3
   ✓ [F2K.B-Q1-kilit] Q1 kalem silme (alt_yaz sil B) ∥ fis_kes B'ye teslim · zorlanmış 6: kilitlenme 0
       sonra:    {"kilitlenme":0}
@@ -2134,19 +2134,19 @@ B) zorlanmış araya girme — B kalemi 1 sn tutulur, iki sıra × 3
       sonra:    {"bozuk":0,"ornek":[]}
 C) doğal zorlama × 100, 0–40 ms, rastgele sıra
   ✓ [F2K.C-Q1-kilit] Q1 kalem silme (alt_yaz sil B) ∥ fis_kes B'ye teslim × 100: kilitlenme 0
-      sonra:    {"kilitlenme":0,"ikisiTamam":"49/100","bozuk":0,"ornek":[],"sure_sn":34}
+      sonra:    {"kilitlenme":0,"ikisiTamam":"45/100","bozuk":0,"ornek":[],"sure_sn":32}
   ✓ [F2K.C-Q1-veri] Q1 × 100: sahipsiz / kimlik / miktar bozulması yok
       sonra:    {"bozuk":0}
   ✓ [F2K.C-Q2-kilit] Q2 birleştirme (alt_yaz A=20, sil B) ∥ fis_kes B'ye teslim × 100: kilitlenme 0
-      sonra:    {"kilitlenme":0,"ikisiTamam":"41/100","bozuk":0,"ornek":[],"sure_sn":35}
+      sonra:    {"kilitlenme":0,"ikisiTamam":"30/100","bozuk":0,"ornek":[],"sure_sn":34}
   ✓ [F2K.C-Q2-veri] Q2 × 100: sahipsiz / kimlik / miktar bozulması yok
       sonra:    {"bozuk":0}
   ✓ [F2K.C-Q3-kilit] Q3 teslimsiz sipariş silme (REST DELETE, cascade) ∥ fis_kes B'ye teslim × 100: kilitlenme 0
-      sonra:    {"kilitlenme":0,"ikisiTamam":"0/100","bozuk":0,"ornek":[],"sure_sn":24}
+      sonra:    {"kilitlenme":0,"ikisiTamam":"0/100","bozuk":0,"ornek":[],"sure_sn":21}
   ✓ [F2K.C-Q3-veri] Q3 × 100: sahipsiz / kimlik / miktar bozulması yok
       sonra:    {"bozuk":0}
   ✓ [F2K.C-Q4-kilit] Q4 renk değişimi (alt_yaz B renk Taba) ∥ fis_kes B'ye (Siyah) teslim × 100: kilitlenme 0
-      sonra:    {"kilitlenme":0,"ikisiTamam":"0/100","bozuk":0,"ornek":[],"sure_sn":33}
+      sonra:    {"kilitlenme":0,"ikisiTamam":"0/100","bozuk":0,"ornek":[],"sure_sn":31}
   ✓ [F2K.C-Q4-veri] Q4 × 100: sahipsiz / kimlik / miktar bozulması yok
       sonra:    {"bozuk":0}
   ✓ [F2K.C-Q5-kilit] Q5 miktar indirme (alt_yaz B miktar 1) ∥ fis_kes B'ye 2 teslim × 100: kilitlenme 0

@@ -35,3 +35,13 @@ stk_nrm, stk_sayi, stk_yer_tutucu_mu, stk_zaman, surum_arttir. (guncelleme_yaz v
 
 `canli/` — canlı Bölüm 1 (104 fonksiyon), 2 (satır yok), 3. Yerel sınama: `../test/guvenlik/kos-guvenlik.sh` (çıktı
 `../test/guvenlik/sonuc-yerel.txt`), bütünlük `../test/guvenlik/sonuc-butunluk-kaynak.txt`, geçiş provası `stok-v2/test/butunluk/gecis-provasi.sh`.
+
+## Test sonuçları (3 Kasım, son tur — hepsi çıkış 0)
+
+| Sınama | Sonuç |
+|---|---|
+| Güvenlik sınaması `kos-guvenlik.sh` (`sonuc-yerel.txt`) | **TEMİZ** — canlıyla aynı 100+ fonksiyonluk kurulum (22 / 21 liste depodakiyle aynı); 0 → 0b → 2 sırası Editor gibi; KİLİT eksik listede durdu, hiçbir yetki değişmedi; 0b'nin sabitlediği site_pb atlandı; batarya (fonksiyon × girişsiz / Kullanıcı / Yönetici): Kullanıcı 0 fark, Yönetici 0 fark, girişsizde açık kalan tam 9; vitrin / kayıt / onay / giriş / müşteri sayfası / hesap / sipariş / çıkış akışı önce ve sonra temiz; regresyon (F0, finans, F2, F3, F4, F8, düzeltme) sıkılaştırılmış veritabanında geçti; rls-kimlik.sql yeniden çalışınca site açık kaldı; kaynak dosyalar (site-portal, Editor 1, 18) yeniden çalışınca yetki ve yol aynı; ikinci uygulama zararsız; geri alma → özet ilk hâlle birebir (101 satır), batarya önceyle aynı; geri almadan sonra yeniden uygulama aynı sonuç |
+| `t-portal-hesap.js` | devir / dönem / bakiye / saatli tarih / para birimi boş kalem doğru; eski tanımlar 42883 ve 22023'ü yeniden üretiyor |
+| Bütünlük koşucusu `kos-butunluk.sh` (`sonuc-butunluk-kaynak.txt`) | çıkış 0 — yeni kaynaklarla (search_path, rls-kimlik) bütün sistem |
+| Geçiş provası `gecis-provasi.sh` (`sonuc-gecis-provasi.txt`) | **TEMİZ** — 1.742.1 + değişen Editor dosyaları + rls-kimlik Editor gibi, iki kez; sıfırdan kurulumla aynı gövdeler, 9 kritik test |
+| Editor uyumluluğu (`editor-icin.py`) | 0, 0b, 0b-geri, 1-liste, 2, 3, rls-kimlik uyumlu (site_pb'de dolar işareti chr(36)) |
