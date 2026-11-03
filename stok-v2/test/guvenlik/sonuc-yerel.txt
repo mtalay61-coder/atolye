@@ -1,0 +1,65 @@
+══ 0) canlı benzeri veritabanı
+hazır: atolye_guvenlik
+══ 1) liste + Bölüm 2'nin şemasız adı yakalaması
+   ✓ Bölüm 2 extensions'taki şemasız gen_salt çağrısını yakaladı
+   ✓ liste-uret.js Bölüm 2 satırı varken durdu
+   fonksiyon: 97 · anon'a kapanacak: 20 · yolu sabitlenecek: 19
+   /tmp/guvenlik/2-sikilastir-yerel.sql: listeler yazıldı
+   ✓ depodaki TASLAK listeler bu veritabanının listeleriyle aynı
+══ 2) önce: batarya + vitrin
+   ✓ vitrin akışı (önce) temiz
+══ 3) KİLİT: listede eksik ad → hiçbir şey değişmemeli
+   ✓ KİLİT durdurdu: Listede OLMAYAN: public.degisiklik_bump() 
+   ✓ kilitten sonra yetkiler değişmedi
+══ 4) sıkılaştırma (Editor gibi) → sonra
+   ✓ Güvenlik sıkılaştırması (g1) uygulandı: 20 fonksiyon anon'a kapandı, 19 fonksiyonun yolu sabitlendi
+     · anon: 18 fonksiyon kapandı; açık kalan 8: herkese_acik_vitrin(), portal(text), portal_cikis(text), portal_giris(text,text), portal_hesap(text,date,date), portal_siparis(text,jsonb,text,jsonb), site_ayarlari(), site_kayit_ol(jsonb,text,text)
+     · veli: 0 fark
+     · ali: 0 fark
+   ── karşılaştırma (sikilastir): temiz ──
+   ✓ vitrin akışı (sonra) temiz
+   ✓ anon'un çalıştırabildiği: yalnız 8 site fonksiyonu
+   ✓ search_path'i sabit olmayan fonksiyon kalmadı
+══ 5) regresyon (sıkılaştırılmış veritabanında)
+   ✓ f0
+   ✓ finans-t-cek-iptal
+   ✓ finans-t-cek-yaris
+   ✓ finans-t-hesap-koru
+   ✓ finans-t-kapi-moduller
+   ✓ finans-t-seyrek-alt
+   ✓ finans-t-sonlu-tutar
+   ✓ finans-t-surum-kapi
+   ✓ finans-t-toplu-iptal
+   ✓ finans-t-yetki-tekrar
+   ✓ f4-t-atomik-bag
+   ✓ f4-t-canli-bag
+   ✓ f4-t-rezervasyon-yaris
+   ✓ f4-t-yaris
+   ✓ f3-t-satis-sinir
+   ✓ f3-t-satis-yaris
+   ✓ f8-t-renk-kilit
+   ✓ f8-t-renk-dogal
+   ✓ duzeltme-t-bag-kilit
+   ✓ duzeltme-t-servis-kapi
+   ✓ duzeltme-t-eski-bag
+   ✓ duzeltme-t-siparis-sil
+   ✓ f2
+   • rls-kimlik.sql yeniden çalışınca anon'a kapanan site fonksiyonu: 8 (mevcut davranış, sıkılaştırmadan bağımsız)
+   ✓ site fonksiyonları dışında testler yetki değiştirmedi
+   ✓ site-portal.sql yeniden çalışınca YETKİLER sıkılaştırma sonrasıyla aynı
+   • bulgu: kaynağı yeniden çalışınca search_path'i sıfırlanan: site_pb(text) 
+══ 6) ikinci uygulama → geri alma
+   ✓ ikinci uygulama: zaten uygulanmış
+   ✓ ikinci uygulama yetkileri değiştirmedi
+   ✓ geri alma uygulandı
+   ✓ yetki / ayar özeti İLK hâlle birebir aynı (98 satır)
+     · anon: 0 fark
+     · veli: 0 fark
+     · ali: 0 fark
+   ── karşılaştırma (ayni): temiz ──
+   ✓ ikinci geri alma: yapılacak bir şey yok
+══ 7) geri almadan sonra yeniden sıkılaştırma
+   ✓ yeniden uygulandı
+   ✓ sonuç ilk sıkılaştırmayla aynı
+── GÜVENLİK SINAMASI TEMİZ ──
+CIKIS=0

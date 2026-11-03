@@ -51,3 +51,26 @@ Kullanıcı onayı (3 Kasım): yalnız hazırlık ve yerel test. Canlı veritaba
 (site 401/403 alır). Yerelde ölçüldü: `rls-kimlik.sql` yeniden çalışınca 8 site fonksiyonunun hepsi anon'a kapanıyor, `site-portal.sql`
 çalışınca açılıyor. Canlı Bölüm 1'de bu 8 satırda `anon_calistirir` = false ise doğrulanmış olur. Kalıcı çözüm önerisi (ayrı karar):
 `rls-kimlik.sql`'de anon'dan alma işleminden sonra 8 site fonksiyonunun yetkisini (varsa) yeniden vermek.
+
+## Yan bulgu 3 — kaynak dosyası yeniden çalışınca sabitlenen search_path sıfırlanır
+
+`create or replace function` yetkileri KORUR ama ayarları (search_path) tanımdakiyle DEĞİŞTİRİR. Sıkılaştırmadan sonra
+`site-portal.sql` ya da bir Editor dosyası (ör. 18) yeniden çalışırsa, tanımında `set search_path` olmayan fonksiyonların yolu
+yeniden boşalır (yerelde ölçüldü: `site_pb(text)`). Yetkiler etkilenmez. Kalıcı çözüm: YOL listesindeki fonksiyonların KAYNAK
+tanımlarına `set search_path = public, extensions, pg_temp` eklemek — canlı uygulama onayıyla birlikte yapılmalı (kaynak dosyalar
+yeniden çalıştırıldığında sıkılaştırmanın bir kısmını onaysız uygulamasın diye şimdi yapılmadı).
+
+## Yerel sınama sonucu (3 Kasım) — `stok-v2/test/guvenlik/sonuc-yerel.txt`
+
+`PGHOST=localhost bash stok-v2/test/guvenlik/kos-guvenlik.sh` → **GÜVENLİK SINAMASI TEMİZ**, çıkış 0:
+- Canlı benzeri kurulum (Supabase varsayılan yetkileri kurulumdan ÖNCE; depodaki revoke'lar sonra; rls-kimlik → site-portal):
+  anon 28 fonksiyon çalıştırabiliyor (8 site + 20), search_path'i boş 19 fonksiyon. Bölüm 2: şemasız ad yok; deneme fonksiyonuyla
+  (extensions'taki gen_salt) yakaladığı ve liste-uret.js'in durduğu sınandı. Depodaki TASLAK listeler bu kurulumla aynı.
+- KİLİT: listeden bir ad eksikken durdu, hiçbir yetki değişmedi.
+- Sıkılaştırma (Editor gibi): 20 fonksiyon anon'a kapandı, 19 yol sabit. Davranış bataryası (97 fonksiyon × 3 rol): veli 0 fark,
+  ali (Yönetici) 0 fark, anon yalnız kapananlarda 42501; anon'a açık kalan tam olarak 8 site fonksiyonu.
+- Vitrin / site / giriş akışı (21 adım) önce ve sonra temiz: vitrin, ayarlar, kayıt ol → yönetici onayı → giriş (doğru / yanlış şifre)
+  → müşteri sayfası → hesap → sipariş → çıkış; girişsiz ERP'ye (fis_kes, cariler, yonetici_mi) kapalı, `surum` okuması açık.
+- Regresyon (sıkılaştırılmış veritabanında): F0, finans (9), F4 (4), F3 (2), F8 (2), düzeltme (4), F2 — hepsi geçti.
+- İkinci uygulama zararsız; geri alma → yetki / ayar özeti ilk hâlle birebir (98 satır), batarya önceyle aynı; ikinci geri alma
+  "yapılacak bir şey yok"; geri almadan sonra yeniden sıkılaştırma ilk sonuçla aynı.
