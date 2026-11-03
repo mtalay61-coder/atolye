@@ -20,13 +20,15 @@ G=stok-v2/guvenlik; T=stok-v2/test/guvenlik
 HATA=0
 kirmizi() { echo "   ✗ $*"; HATA=1; }
 editor_ver() {   # $1 dosya — Supabase SQL Editor gibi: her ifade ayrı istek; NOTICE / hata metni $2 dosyasına
-  python3 "$KOK/stok-v2/editor-icin.py" --bol "$1" | node -e '
+  # Editor uyumluluk denetimi (editor-icin.py) düşerse dosya UYGULANMAMIŞ sayılır (önce sessizce boş girdiyle "başarılı" dönüyordu).
+  python3 "$KOK/stok-v2/editor-icin.py" --bol "$1" > "$2.parca" 2> "$2.uyum" || { cat "$2.uyum" > "$2"; return 1; }
+  node -e '
     const { spawnSync } = require("child_process");
     const parcalar = require("fs").readFileSync(0, "utf8").split("\0").filter(Boolean);
     let cikis = 0, metin = "";
     for (const p of parcalar) { const r = spawnSync("psql", ["-X", "-q", "-v", "ON_ERROR_STOP=1", "-d", process.argv[1], "-c", p], { encoding: "utf8" });
       metin += r.stderr; if (r.status !== 0) { cikis = 1; break; } }
-    require("fs").writeFileSync(process.argv[2], metin); process.exit(cikis);' "$DB" "$2"
+    require("fs").writeFileSync(process.argv[2], metin); process.exit(cikis);' "$DB" "$2" < "$2.parca"
 }
 ozet() {   # yetki + ayar özeti: her public fonksiyon (uzantı dışı) için kim / hangi yetki (veren hariç) ve ayarlar; varsayılan yetkiler
   psql -X -At -d "$DB" -c "
