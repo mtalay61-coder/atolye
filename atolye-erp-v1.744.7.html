@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.744.4</title>
+<title>Atölye ERP 1.744.7</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2319,9 +2319,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.744.4";
-const SURUM_TARIHI = "2026-11-02";
-const SURUM_NOTU = "Satış siparişi fazlası yönetici onayı ve gerekçeyle teslim edilebilir; veri bütünlüğü korumaları";
+const SURUM = "1.744.7";
+const SURUM_TARIHI = "2026-11-03";
+const SURUM_NOTU = "Fişleri silinmiş sipariş silinebilir";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2351,6 +2351,9 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 }
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" }; // teklif: v1.723.0, Sipariş'in alt sekmesi
 const SURUM_GECMISI = [
+    { surum: "1.744.7", tarih: "03.11.2026", eklenen: [], degisen: ["Sipariş silmede hata iletisi \"iptal edilemedi\" yerine \"silinemedi\" der."], duzeltilen: ["Fişleri silinmiş (iptal edilmiş) sipariş silinemiyordu (KR002); artık silinir. İptal edilmemiş fişi olan sipariş yine silinmez, iptal edilmiş olarak kalır."] },
+    { surum: "1.744.6", tarih: "03.11.2026", eklenen: [], degisen: ["Cari ekstrenin sade görünümünde bedenli fişler beden matrisiyle gösterilir (fiyat ayrıntısı Detaylı görünümde).", "Stok kartı hareketlerinde çok bedenli fiş tek renkli olsa da matrisle açılır; tek renk ve tek bedenli (bedensiz) fiş tek satır kalır.", "Gün sonu Excel'inde fiş, stok ve üretim hareketleri beden matrisi."], duzeltilen: ["Stok kartı hareket matrisinde bedenler küçükten büyüğe sıralanır."] },
+    { surum: "1.744.5", tarih: "03.11.2026", eklenen: [], degisen: ["Gün sonu raporunda (ekran, PDF, e-posta) alış/satış fiş kalemleri, stok hareketleri ve üretim hareketleri beden matrisiyle gösterilir: satırda ürün ve renk, sütunlarda bedenler, sonda toplam."], duzeltilen: [] },
     { surum: "1.744.4", tarih: "02.11.2026", eklenen: ["Satış siparişini aşan teslimde Yönetici gerekçe yazarak onay verebilir; onay fişe kaydedilir. Yönetici dışında sipariş fazlası yine teslim edilmez."], degisen: [], duzeltilen: ["Sipariş kalemleri kaydedilirken bağlı siparişin başlığı aynı anda düzenlenince oluşan sunucu kilitlenmesi giderildi.", "Sürüm kapısı açıkken otomatik gün sonu raporu durmaz.", "Önceden iptal edilmiş siparişe bağlı eski kayıtlar yeniden düzenlenebilir."] },
     { surum: "1.744.3", tarih: "02.11.2026", eklenen: ["Eski istemcilerin yazmasını durduran sunucu sürüm kapısı (geçişte ayrıca etkinleştirilir)."], degisen: ["Sipariş teslim durumu güncel kalemlerden sunucuda hesaplanır.", "Sipariş iptalinde üretim, koli ve rezervasyon bağları birlikte çözülür."], duzeltilen: ["Aynı çekin iki cihazdan eşzamanlı tahsili engellenir; fiş iptali çek ve kasa kaydını birlikte geri alır.", "Farklı alanları değiştirilen sipariş kalemlerinin gönderilmeyen alanları artık silinmez.", "Bakiyeli kasa/banka hesabı kapatılamaz; geçmişin para birimi değiştirilemez."] },
     { surum: "1.744.2", tarih: "02.11.2026", eklenen: [], degisen: ["Sipariş iptal durumu ve fiş bağlarının çözülmesi sunucuda aynı işlemde kaydedilir."], duzeltilen: ["İptal edilmiş siparişe yeni fiş yazılması ve bayat ekranın iptal durumunu geri açması engellenir."] },
@@ -19198,7 +19201,8 @@ function useSilmeZincirleri(d) {
                 sunucuBaglarAtomik = !!(yanit && yanit.baglarAtomik);
             }
             catch (e) {
-                showToast(`Sipariş iptal edilemedi — fişlerin bağı çözülemedi, hiçbir değişiklik yapılmadı (${String((e && e.message) || e).slice(0, 160)})`);
+                // Silmede "iptal edilemedi" yanıltıyordu (3 Kasım, ALS-1001): kullanıcı silmeye bastı, ileti iptalden söz etti.
+                showToast(`Sipariş ${sil ? "silinemedi" : "iptal edilemedi"} — hiçbir değişiklik yapılmadı (${String((e && e.message) || e).slice(0, 200)})`);
                 gunlukYaz(`Sipariş iptali durdu (fis_bag_coz): ${no}`, "siparis", { siparisId, hata: String((e && e.message) || e).slice(0, 200) });
                 return;
             }
@@ -40592,7 +40596,9 @@ function ProductMatrixCard({ tanimlarTum, onKapasiteKaydet, kurlar, kurGecmisi, 
                         const cariAdi = g.cariId ? ((cariler || []).find((c) => c.id === g.cariId) || {}).unvan : null;
                         const uretimKaynakli = g.kaynak === "Üretim";
                         const gRenkler = Array.from(new Set(g.hareketler.map((h) => h.renk)));
-                        const gBedenler = Array.from(new Set(g.hareketler.map((h) => h.beden)));
+                        // Bedenler küçükten büyüğe (v1.744.6 — sıralanmıyordu: fişte ilk yazılan beden önde çıkıyordu; denetim 17'nin
+                        // `v => v.beden` kalıbı bu satırı yakalamıyordu).
+                        const gBedenler = bedenSirala(Array.from(new Set(g.hareketler.map((h) => h.beden))));
                         // BİRİM FİYAT VE TUTAR CARİ TARAFINDAN OKUNUR.
                         // Stok hareketi fiyat taşımaz (miktar, renk, beden, kaynak). Aynı fiş numarasına
                         // yazılmış CARİ hareketi ise birim fiyatı, para birimini ve tutarı taşıyor —
@@ -40638,15 +40644,18 @@ function ProductMatrixCard({ tanimlarTum, onKapasiteKaydet, kurlar, kurGecmisi, 
                         // ayrıca tıklamak zorunda kalıyor ve başlıkta yalnızca fiş no ile tarih görüyor.
                         // Tıklama artık KAPATMAK için: uzun listede istenmeyen fişler daraltılabilir.
                         const acik = !kapaliFisler.has(g.key);
+                        // TEK HÜCRELİ FİŞ (tek renk, tek beden — metre/desi/"Standart" malzeme): matris tek hücreli bir tabloya döner,
+                        // bilgi eklemeden satırı uzatır (matris kuralı: değişen boyut beden ise). Eskisi gibi başlık satırında kalır.
+                        const tekHucre = gRenkler.length === 1 && gBedenler.length === 1;
                         return (React.createElement("div", { key: g.key, style: {
                                 background: uretimKaynakli ? "#F0F5EE" : "#fff",
                                 border: `1px solid ${uretimKaynakli ? "#8FA888" : "var(--erp-border-2)"}`,
                                 borderRadius: "var(--erp-r-md)", overflow: "hidden",
                             } },
                             React.createElement("div", { 
-                                // Tıklama yalnızca çok renkli fişte anlamlı; tek renklide açılacak içerik yok.
-                                role: gRenkler.length > 1 ? "button" : undefined, tabIndex: gRenkler.length > 1 ? 0 : undefined, onClick: gRenkler.length > 1 ? () => fisKapatToggle(g.key) : undefined, onKeyDown: (e) => { if (gRenkler.length > 1 && (e.key === "Enter" || e.key === " "))
-                                    fisKapatToggle(g.key); }, style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", padding: "8px 10px", cursor: gRenkler.length > 1 ? "pointer" : "default" } },
+                                // Her fiş açılır / kapanır (v1.744.6: tek renkli fiş de matrisle açılıyor).
+                                role: tekHucre ? undefined : "button", tabIndex: tekHucre ? undefined : 0, onClick: tekHucre ? undefined : () => fisKapatToggle(g.key), onKeyDown: (e) => { if (!tekHucre && (e.key === "Enter" || e.key === " "))
+                                    fisKapatToggle(g.key); }, style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", padding: "8px 10px", cursor: tekHucre ? "default" : "pointer" } },
                                 uretimKaynakli && React.createElement(Hammer, { size: 13, color: "var(--erp-primary)" }),
                                 g.fisNo && (onFiseGitNo ? (React.createElement("button", { type: "button", className: "mono", onClick: (e) => { e.stopPropagation(); onFiseGitNo(g.fisNo); }, title: `${g.fisNo} fişini Fişler ekranında aç`, style: {
                                         fontSize: 12, fontWeight: 700, background: "none", border: "none",
@@ -40663,7 +40672,7 @@ function ProductMatrixCard({ tanimlarTum, onKapasiteKaydet, kurlar, kurGecmisi, 
                                 cariAdi && React.createElement("span", { style: { fontSize: 12, color: "var(--erp-text-2)" } },
                                     "\u00B7 ",
                                     cariAdi),
-                                gRenkler.length === 1 && (React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" } },
+                                gRenkler.length === 1 && (!acik || tekHucre) && (React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" } },
                                     React.createElement("span", { className: "mono", style: { fontSize: 13, color: "var(--erp-text-2)" } }, olcuGoster(gRenkler[0])),
                                     gBedenler.map((b) => {
                                         const eslesenler = g.hareketler.filter((x) => x.renk === gRenkler[0] && x.beden === b);
@@ -40693,11 +40702,11 @@ function ProductMatrixCard({ tanimlarTum, onKapasiteKaydet, kurlar, kurGecmisi, 
                                         fisFiyatlari.sembol))),
                                 React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 8 }, onClick: (e) => e.stopPropagation() },
                                     React.createElement(SilOnayButonu, { onConfirm: () => g.hareketler.forEach((h) => onRemoveHareketGlobal(h.id)), baslikNormal: "Bu fi\u015Fin t\u00FCm hareketlerini sil", boyut: 12 })),
-                                gRenkler.length > 1 && (acik
+                                tekHucre ? null : acik
                                     ? React.createElement(ChevronDown, { size: 15, color: "var(--erp-text-3)" })
-                                    : React.createElement(ChevronRight, { size: 15, color: "var(--erp-text-3)" }))),
-                            acik && gRenkler.length > 1 && (React.createElement("div", { style: { padding: "0 10px 10px", overflowX: "auto" } },
-                                React.createElement("table", { style: { width: "auto", minWidth: "100%" } },
+                                    : React.createElement(ChevronRight, { size: 15, color: "var(--erp-text-3)" })),
+                            acik && !tekHucre && (React.createElement("div", { style: { padding: "0 10px 10px", overflowX: "auto" } },
+                                React.createElement("table", { className: "matris-tablo", "data-stok-fis-matris": g.key, style: { width: "auto", minWidth: "100%" } },
                                     React.createElement("thead", null,
                                         React.createElement("tr", null,
                                             React.createElement("th", { style: { fontSize: 13 } }, matrisKoseBasligi(gRenkler, gBedenler, renkBasligi(product), product.olcuTipi || "Beden")),
@@ -53267,6 +53276,40 @@ function cariHareketleriGrupla(hareketler) {
 // BR. FİYAT sütunu kayıt para biriminde; kalem başka parada girildiyse KUR sütunu ham fiyatı ve
 // kullanılan kuru gösterir. Yalnızca çevrilmiş fiyatı yazmak "bu 2.000 ₺ nereden çıktı"
 // sorusunu cevapsız bırakıyordu.
+// SADE GÖRÜNÜMÜN MATRİSİ (v1.744.6 — kullanıcı, 3 Kasım: "listeler matris olsun"). Cari ekstrenin sade kipi ürünlü fişi tek
+// satırlık metne sıkıştırıyordu ("102 Bayan Bot · 2 renk · 152 çift"); bedenler görünmüyordu. Burada yalnız MİKTAR matrisi: satır
+// ürün + renk, sütun beden (FisKalemMatrisi ile aynı sıra), sonda toplam ve tek fiyatlı satırda birim fiyat. Fiyat / kur / KDV
+// sütunları Detaylı görünümde. Bedensiz fişte çağrılmaz (özet metni kalır — tek sütunlu matris bilgi eklemez).
+function SadeBedenMatrisi({ urunGruplari }) {
+    if (!urunGruplari || urunGruplari.length === 0)
+        return null;
+    const bedenler = bedenSirala(Array.from(new Set(urunGruplari.flatMap((ug) => (ug.items || []).map((h) => h.beden)).filter((b) => b != null && b !== ""))));
+    const say = (n) => Number(n || 0).toLocaleString("tr-TR", { maximumFractionDigits: 2 });
+    const hucre = { fontSize: 10, padding: "1px 6px", whiteSpace: "nowrap" };
+    return (React.createElement("div", { "data-ekstre-sade-matris": "1", style: { overflowX: "auto", maxWidth: "100%" } },
+        React.createElement("table", { className: "matris-tablo", style: { width: "auto", borderCollapse: "collapse" } },
+            React.createElement("thead", null,
+                React.createElement("tr", null,
+                    React.createElement("th", { style: { ...hucre, textAlign: "left", color: "var(--erp-text-3)", fontWeight: 600 } }),
+                    bedenler.map((b) => React.createElement("th", { key: b, className: "mono", style: { ...hucre, textAlign: "center", color: "var(--erp-text-3)", fontWeight: 600 } }, olcuGoster(b, "Miktar"))),
+                    React.createElement("th", { className: "mono", style: { ...hucre, textAlign: "right", color: "var(--erp-text-3)", fontWeight: 600, borderLeft: "1px dashed var(--erp-line)" } }, "Toplam"))),
+            React.createElement("tbody", null, urunGruplari.map((ug) => {
+                const items = ug.items || [];
+                const toplam = items.reduce((t, h) => t + (Number(h.miktar) || 0), 0);
+                const fiyatlar = [...new Set(items.map((h) => h.birimFiyat).filter((x) => x != null))];
+                return (React.createElement("tr", { key: ug.key },
+                    React.createElement("td", { style: { ...hucre, fontWeight: 600, color: "var(--erp-text-2)" } }, [ug.urunAd, olcuGoster(ug.renk)].filter(Boolean).join(" · ")),
+                    bedenler.map((b) => {
+                        const m = items.filter((h) => h.beden === b).reduce((t, h) => t + (Number(h.miktar) || 0), 0);
+                        return React.createElement("td", { key: b, className: "mono", style: { ...hucre, textAlign: "center", color: m ? "var(--erp-text)" : "var(--erp-border)" } }, m ? say(m) : "—");
+                    }),
+                    React.createElement("td", { className: "mono", style: { ...hucre, textAlign: "right", fontWeight: 700, borderLeft: "1px dashed var(--erp-line)" } },
+                        say(toplam),
+                        " ",
+                        ug.birim || (items[0] || {}).birim || "",
+                        fiyatlar.length === 1 && fiyatlar[0] ? ` × ${say(fiyatlar[0])}` : "")));
+            })))));
+}
 function FisKalemMatrisi({ urunGruplari, stok, kompakt }) {
     if (!urunGruplari || urunGruplari.length === 0)
         return null;
@@ -53289,7 +53332,7 @@ function FisKalemMatrisi({ urunGruplari, stok, kompakt }) {
     const bh = { fontSize: yazi - 1, fontWeight: 700, color: "var(--erp-text-2)", padding: "3px 6px", whiteSpace: "nowrap" };
     const td = { fontSize: yazi, padding: "4px 6px", whiteSpace: "nowrap" };
     return (React.createElement("div", { style: { overflowX: "auto" } },
-        React.createElement("table", { style: { width: "auto", minWidth: "100%", borderCollapse: "collapse" } },
+        React.createElement("table", { className: "matris-tablo", style: { width: "auto", minWidth: "100%", borderCollapse: "collapse" } },
             React.createElement("thead", null,
                 React.createElement("tr", null,
                     React.createElement("th", { style: { ...bh, textAlign: "left" } }, "\u00DCR\u00DCN"),
@@ -54380,15 +54423,63 @@ const gunSonuPBMetni = (m) => (Object.keys(m || {}).length ? Object.entries(m).m
 // PDF / yazdır / e-posta gövdesi. Tablolar sade (PDF_CIKTI_STILI ile çizilir).
 // BÖLÜMLER (v1.688.4): her bölüm { baslik, kolonlar: [[ad, sağaYaslı]], satirlar: [[hücre…]] } — e-posta/PDF (gunSonuHTML)
 // ve ekran (GunSonuListe: süzgeç, kaydırma, çerçeve — kullanıcı: "her liste rapor mantığında olsun") AYNI listeden çizer.
+// BEDEN MATRİSİ (v1.744.5 — kullanıcı, 3 Kasım: "matris şeklinde düzenler misin"; proje kuralı: düz ürün·beden listesi yerine
+// matris). Satırlar `anahtar` alanlarına göre gruplanır (ürün + renk + fiş…); bedenler SÜTUN olur, sonda toplam. Bölümün bütün
+// satırlarındaki bedenlerin birleşimi kullanılır (sayısal bedenler sayı sırasıyla, sonra XS…XL, sonra ötekiler); bedensiz satırın
+// miktarı en sondaki "—" sütununa düşer. Saf. Döner: { bedenler, gruplar: [{ alanlar, hucre: { beden: miktar }, toplam, birim, tutar: { pb: t } }] }.
+const GUN_SONU_HARF_BEDEN = ["XXS", "XS", "S", "M", "L", "XL", "XXL", "XXXL", "3XL", "4XL", "5XL"];
+function gunSonuBedenSirala(liste) {
+    // Sıra: sayısal bedenler (sayı sırası) → harfli bedenler (XS…XL) → ötekiler (alfabetik) → bedensiz "—" en sonda.
+    const sinif = (x) => (x === "—" ? 3 : !isNaN(parseFloat(x)) ? 0 : GUN_SONU_HARF_BEDEN.includes(String(x).toUpperCase()) ? 1 : 2);
+    return [...liste].sort((a, b) => {
+        const sa = sinif(a), sb = sinif(b);
+        if (sa !== sb)
+            return sa - sb;
+        if (sa === 0)
+            return parseFloat(a) - parseFloat(b) || String(a).localeCompare(String(b), "tr");
+        if (sa === 1)
+            return GUN_SONU_HARF_BEDEN.indexOf(String(a).toUpperCase()) - GUN_SONU_HARF_BEDEN.indexOf(String(b).toUpperCase());
+        return String(a).localeCompare(String(b), "tr");
+    });
+}
+function gunSonuMatris(liste, anahtar) {
+    const m = new Map();
+    const bedenler = new Set();
+    (liste || []).forEach((x) => {
+        const alanlar = anahtar(x);
+        const k = JSON.stringify(alanlar);
+        if (!m.has(k))
+            m.set(k, { alanlar, hucre: {}, toplam: 0, birim: x.birim || "", tutar: {} });
+        const g = m.get(k);
+        const beden = String(x.beden || "") || "—";
+        bedenler.add(beden);
+        g.hucre[beden] = stokYuvarla((g.hucre[beden] || 0) + (Number(x.miktar) || 0));
+        g.toplam = stokYuvarla(g.toplam + (Number(x.miktar) || 0));
+        if (x.tutar != null) {
+            const pb = x.pb || "TRY";
+            g.tutar[pb] = stokYuvarla((g.tutar[pb] || 0) + (Number(x.tutar) || 0));
+        }
+    });
+    return { bedenler: gunSonuBedenSirala([...bedenler]), gruplar: [...m.values()] };
+}
+// Matris bölümünün kolonları ve satırları: önce `basKolonlar` (alanlar), sonra bedenler (sağa yaslı), sonra Toplam (+ `sonKolonlar`).
+function gunSonuMatrisBolumu(mx, basKolonlar, sonKolonlar = [], sonHucreler = () => []) {
+    const say = (n) => (n ? Number(n).toLocaleString("tr-TR") : "");
+    const kolonlar = [...basKolonlar, ...mx.bedenler.map((bd) => [bd, 1]), ["Toplam", 1], ...sonKolonlar];
+    const satirlar = mx.gruplar.map((g) => [...g.alanlar, ...mx.bedenler.map((bd) => say(g.hucre[bd])),
+        `${Number(g.toplam).toLocaleString("tr-TR")} ${g.birim}`.trim(), ...sonHucreler(g)]);
+    return { kolonlar, satirlar };
+}
 function gunSonuBolumleri(v) {
     const sonuc = [];
     const b = (baslik, kolonlar, satirlar) => sonuc.push({ baslik, kolonlar, satirlar });
-    b("Alış / Satış fişleri", [["Tür"], ["Fiş No"], ["Cari"], ["Kalemler"], ["Tutar", 1]], v.fisler.map((x) => [x.tur, x.fisNo, x.cari, x.kalemler.map((k) => `${k.urun} ${[k.renk, k.beden].filter(Boolean).join("/")} × ${k.miktar.toLocaleString("tr-TR")} ${k.birim}`).join("; "), gunSonuPBMetni(x.toplam)]));
+    const bm = (baslik, x) => b(baslik, x.kolonlar, x.satirlar);
+    bm("Alış / Satış fişleri", gunSonuMatrisBolumu(gunSonuMatris(v.fisler.flatMap((f) => f.kalemler.map((k) => ({ ...k, f }))), (k) => [k.f.tur, k.f.fisNo, k.f.cari, k.urun, k.renk]), [["Tür"], ["Fiş No"], ["Cari"], ["Ürün"], ["Renk"]], [["Tutar", 1]], (g) => [gunSonuPBMetni(g.tutar)]));
     b("Tahsilat / ödeme ve diğer cari hareketleri", [["Cari"], ["İşlem"], ["Açıklama"], ["Borç", 1], ["Alacak", 1]], v.cariHareketleri.map((x) => [x.cari, x.tip, x.aciklama, x.yon === "Borç" ? gunSonuPara(x.tutar, x.pb) : "", x.yon !== "Borç" ? gunSonuPara(x.tutar, x.pb) : ""]));
     b("Kasa / banka hareketleri", [["Hesap"], ["Karşı taraf"], ["Açıklama"], ["Giriş", 1], ["Çıkış", 1]], v.kasaHareketleri.map((x) => [x.hesap, x.karsi, x.aciklama, x.yon === "Giriş" ? gunSonuPara(x.tutar, x.pb) : "", x.yon !== "Giriş" ? gunSonuPara(x.tutar, x.pb) : ""]));
-    b("Üretim — stok hareketleri", [["Ürün"], ["Renk/Beden"], ["Sipariş"], ["Fiş"], ["Miktar", 1]], v.uretimHareketleri.map((x) => [x.urun, [x.renk, x.beden].filter(Boolean).join(" / "), x.siparisNo, x.fisNo, `${x.miktar.toLocaleString("tr-TR")} ${x.birim}`]));
+    bm("Üretim — stok hareketleri", gunSonuMatrisBolumu(gunSonuMatris(v.uretimHareketleri, (x) => [x.urun, x.renk, x.siparisNo, x.fisNo]), [["Ürün"], ["Renk"], ["Sipariş"], ["Fiş"]]));
     b("Üretim — proses atamaları", [["Sipariş"], ["Model"], ["Proses"], ["Olay"], ["Personel"], ["Miktar", 1]], v.uretimAsamalari.map((x) => [x.siparisNo, `${x.model} ${x.renk}`.trim(), x.proses, x.olay, x.personel, x.miktar.toLocaleString("tr-TR")]));
-    b("Diğer stok hareketleri", [["Ürün"], ["Renk/Beden"], ["Kaynak"], ["Cari"], ["Fiş"], ["Miktar", 1]], v.stokHareketleri.map((x) => [x.urun, [x.renk, x.beden].filter(Boolean).join(" / "), x.kaynak, x.cari, x.fisNo, `${x.miktar.toLocaleString("tr-TR")} ${x.birim}`]));
+    bm("Diğer stok hareketleri", gunSonuMatrisBolumu(gunSonuMatris(v.stokHareketleri, (x) => [x.urun, x.renk, x.kaynak, x.cari, x.fisNo]), [["Ürün"], ["Renk"], ["Kaynak"], ["Cari"], ["Fiş"]]));
     b("Kasa ve banka bakiyeleri (gün sonu)", [["Hesap"], ["Giriş", 1], ["Çıkış", 1], ["Bakiye", 1]], v.hesapBakiyeleri.map((x) => [x.hesap, gunSonuPara(x.giris, x.pb), gunSonuPara(x.cikis, x.pb), gunSonuPara(x.bakiye, x.pb)]));
     b("Portföydeki çekler (bugünkü durum)", [["Vade"], ["Çek No"], ["Banka"], ["Cari"], ["Tutar", 1]], v.cekler.map((x) => [x.vade ? tarihYaz(x.vade) : "", x.cekNo, x.banka, x.cari, gunSonuPara(x.tutar, x.pb)]));
     b(`Cari bakiyeleri (gün sonu, ${v.bakiyeDefter} defter)`, [["Cari"], ["Tip"], ["Bakiye (+ bize borçlu / − bizden alacaklı)", 1]], v.cariBakiyeListesi.map((x) => [x.cari, x.tip, bakiyeMetni(x.bakiye)]));
@@ -54476,14 +54567,26 @@ function gunSonuExcel(v) {
         return false;
     const wb = XLSX.utils.book_new();
     const sayfa = (ad, satirlar) => XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(satirlar.length ? satirlar : [{ Bilgi: "Kayıt yok" }]), ad);
-    sayfa("Fişler", v.fisler.flatMap((f) => f.kalemler.map((k) => ({ Tür: f.tur, "Fiş No": f.fisNo, Cari: f.cari, Ürün: k.urun, Renk: k.renk, Beden: k.beden, Miktar: k.miktar, Birim: k.birim, "Birim Fiyat": k.birimFiyat, Tutar: k.tutar, "P.B.": k.pb }))));
+    // BEDEN MATRİSİ (v1.744.6 — kullanıcı 3 Kasım: listeler matris olsun; rapordaki gunSonuMatris ile aynı gruplama). Sütun sırası
+    // dizi ile verilir: "36" gibi beden adları nesne anahtarı olunca JavaScript onları öne alıyordu. Hücreler SAYI (Excel'de toplanabilsin).
+    const matrisSayfasi = (ad, liste, anahtar, basliklar, tutarli) => {
+        const mx = gunSonuMatris(liste, anahtar);
+        if (!mx.gruplar.length) {
+            sayfa(ad, []);
+            return;
+        }
+        const pbler = [...new Set(mx.gruplar.flatMap((g) => Object.keys(g.tutar)))];
+        const bas = [...basliklar, ...mx.bedenler, "Toplam", "Birim", ...(tutarli ? pbler.map((pb) => `Tutar ${pb}`) : [])];
+        const satirlar = mx.gruplar.map((g) => [...g.alanlar, ...mx.bedenler.map((bd) => (g.hucre[bd] != null ? g.hucre[bd] : null)), g.toplam, g.birim,
+            ...(tutarli ? pbler.map((pb) => (g.tutar[pb] != null ? g.tutar[pb] : null)) : [])]);
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([bas, ...satirlar]), ad);
+    };
+    matrisSayfasi("Fişler", v.fisler.flatMap((f) => f.kalemler.map((k) => ({ ...k, f }))), (k) => [k.f.tur, k.f.fisNo, k.f.cari, k.urun, k.renk], ["Tür", "Fiş No", "Cari", "Ürün", "Renk"], true);
     sayfa("Cari hareketleri", v.cariHareketleri.map((x) => ({ Cari: x.cari, İşlem: x.tip, Yön: x.yon, Açıklama: x.aciklama, "Fiş No": x.fisNo, Tutar: x.tutar, "P.B.": x.pb, Defter: x.defter })));
     sayfa("Kasa-Banka hareketleri", v.kasaHareketleri.map((x) => ({ Hesap: x.hesap, Yön: x.yon, "Karşı taraf": x.karsi, Açıklama: x.aciklama, "Fiş No": x.fisNo, Tutar: x.tutar, "P.B.": x.pb })));
-    sayfa("Üretim", [
-        ...v.uretimHareketleri.map((x) => ({ Tür: "Stok hareketi", Ürün: x.urun, Renk: x.renk, Beden: x.beden, Sipariş: x.siparisNo, Fiş: x.fisNo, Miktar: x.miktar, Birim: x.birim })),
-        ...v.uretimAsamalari.map((x) => ({ Tür: `Proses ${x.olay}`, Ürün: x.model, Renk: x.renk, Sipariş: x.siparisNo, Fiş: x.proses, Personel: x.personel, Miktar: x.miktar })),
-    ]);
-    sayfa("Stok hareketleri", v.stokHareketleri.map((x) => ({ Ürün: x.urun, Kategori: x.kategori, Renk: x.renk, Beden: x.beden, Kaynak: x.kaynak, Cari: x.cari, "Fiş No": x.fisNo, Miktar: x.miktar, Birim: x.birim })));
+    matrisSayfasi("Üretim stok hareketleri", v.uretimHareketleri, (x) => [x.urun, x.renk, x.siparisNo, x.fisNo], ["Ürün", "Renk", "Sipariş", "Fiş"]);
+    sayfa("Proses atamaları", v.uretimAsamalari.map((x) => ({ Olay: x.olay, Ürün: x.model, Renk: x.renk, Sipariş: x.siparisNo, Proses: x.proses, Personel: x.personel, Miktar: x.miktar })));
+    matrisSayfasi("Stok hareketleri", v.stokHareketleri, (x) => [x.urun, x.kategori, x.renk, x.kaynak, x.cari, x.fisNo], ["Ürün", "Kategori", "Renk", "Kaynak", "Cari", "Fiş No"]);
     sayfa("Kasa-Banka bakiyeleri", v.hesapBakiyeleri.map((x) => ({ Hesap: x.hesap, Giriş: x.giris, Çıkış: x.cikis, Bakiye: x.bakiye, "P.B.": x.pb })));
     sayfa("Çekler", v.cekler.map((x) => ({ Vade: x.vade, "Çek No": x.cekNo, Banka: x.banka, Cari: x.cari, Tutar: x.tutar, "P.B.": x.pb })));
     sayfa("Cari bakiyeleri", v.cariBakiyeListesi.flatMap((x) => Object.entries(x.bakiye).map(([pb, t]) => ({ Cari: x.cari, Tip: x.tip, Bakiye: stokYuvarla(t), "P.B.": pb }))));
@@ -55906,7 +56009,7 @@ function CariCard({ onParaFisi, tanimlar, onTanimlarKaydet, onFiseGitNo, muhaseb
                                                                     ilk.cek.kesideci ? `keşideci ${ilk.cek.kesideci}` : "",
                                                                 ].filter(Boolean).map((p2) => ` · ${p2}`).join(""))),
                                                             ilk.aciklama && urunGruplari.length === 0 && yapisizHareketler.length === 0 && (React.createElement("div", { style: { fontSize: 11, color: "var(--erp-text-2)", marginBottom: 3 } }, ilk.aciklama)),
-                                                            sadeGorunum ? (React.createElement("div", { "data-ekstre-sade-ozet": "1", style: { display: "inline-block", verticalAlign: "middle", maxWidth: "100%", fontSize: 11, color: "var(--erp-text-2)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, hareketSadeOzet(urunGruplari, yapisizHareketler, ilk, g))) : (React.createElement(React.Fragment, null,
+                                                            sadeGorunum ? (urunGruplari.some((ug) => (ug.items || []).some((h) => h.beden != null && h.beden !== "")) ? (React.createElement(SadeBedenMatrisi, { urunGruplari: urunGruplari })) : (React.createElement("div", { "data-ekstre-sade-ozet": "1", style: { display: "inline-block", verticalAlign: "middle", maxWidth: "100%", fontSize: 11, color: "var(--erp-text-2)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, hareketSadeOzet(urunGruplari, yapisizHareketler, ilk, g)))) : (React.createElement(React.Fragment, null,
                                                                 urunGruplari.length > 0 && (React.createElement(FisKalemMatrisi, { urunGruplari: urunGruplari, stok: stok, kompakt: true })),
                                                                 yapisizHareketler.filter((h) => {
                                                                     // OTOMATİK AÇIKLAMA TEKRARI (v1.668.0 — kullanıcı: "alt açıklamada tahsilat banka adı yazıyor,
@@ -72192,7 +72295,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.744.4)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.744.7)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

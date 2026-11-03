@@ -549,6 +549,7 @@ begin
     if coalesce(s ->> 'id', '') = '' then raise exception 'Stok satırında hareket kimliği yok' using errcode = '22023'; end if;
     if fid is null then raise exception 'Hareket % fişsiz — fişsiz hareket yazılamaz', s ->> 'id' using errcode = '22023'; end if;
     m := coalesce((s ->> 'miktar')::numeric, 0);
+    if m::text in ('NaN','Infinity','-Infinity') then raise exception 'Stok miktarı sonlu bir sayı olmalı' using errcode='KR010'; end if;
     if m = 0 then
       update public.stk_hareket set iptal = true, iptal_zamani = now(), iptal_eden = eposta where id = s ->> 'id' and not iptal;
       continue;

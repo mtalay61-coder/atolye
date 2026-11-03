@@ -492,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.744.6";
+const SURUM = "1.744.7";
 const SURUM_TARIHI = "2026-11-03";
-const SURUM_NOTU = "Cari ekstre, stok kartı hareketleri ve gün sonu Excel'i beden matrisiyle";
+const SURUM_NOTU = "Fişleri silinmiş sipariş silinebilir";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -525,6 +525,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" };   // teklif: v1.723.0, Sipariş'in alt sekmesi
 
 const SURUM_GECMISI = [
+  { surum: "1.744.7", tarih: "03.11.2026", eklenen: [], degisen: ["Sipariş silmede hata iletisi \"iptal edilemedi\" yerine \"silinemedi\" der."], duzeltilen: ["Fişleri silinmiş (iptal edilmiş) sipariş silinemiyordu (KR002); artık silinir. İptal edilmemiş fişi olan sipariş yine silinmez, iptal edilmiş olarak kalır."] },
   { surum: "1.744.6", tarih: "03.11.2026", eklenen: [], degisen: ["Cari ekstrenin sade görünümünde bedenli fişler beden matrisiyle gösterilir (fiyat ayrıntısı Detaylı görünümde).", "Stok kartı hareketlerinde çok bedenli fiş tek renkli olsa da matrisle açılır; tek renk ve tek bedenli (bedensiz) fiş tek satır kalır.", "Gün sonu Excel'inde fiş, stok ve üretim hareketleri beden matrisi."], duzeltilen: ["Stok kartı hareket matrisinde bedenler küçükten büyüğe sıralanır."] },
   { surum: "1.744.5", tarih: "03.11.2026", eklenen: [], degisen: ["Gün sonu raporunda (ekran, PDF, e-posta) alış/satış fiş kalemleri, stok hareketleri ve üretim hareketleri beden matrisiyle gösterilir: satırda ürün ve renk, sütunlarda bedenler, sonda toplam."], duzeltilen: [] },
   { surum: "1.744.4", tarih: "02.11.2026", eklenen: ["Satış siparişini aşan teslimde Yönetici gerekçe yazarak onay verebilir; onay fişe kaydedilir. Yönetici dışında sipariş fazlası yine teslim edilmez."], degisen: [], duzeltilen: ["Sipariş kalemleri kaydedilirken bağlı siparişin başlığı aynı anda düzenlenince oluşan sunucu kilitlenmesi giderildi.", "Sürüm kapısı açıkken otomatik gün sonu raporu durmaz.", "Önceden iptal edilmiş siparişe bağlı eski kayıtlar yeniden düzenlenebilir."] },
