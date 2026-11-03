@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-**Son sürüm:** v1.744.7 (3 Kasım 2026 — HAZIR, YAYINDA DEĞİL; canlıda 1.744.6. SQL: editor/18-fis-defteri.sql yeniden çalıştırılmalı)
+**Son sürüm:** v1.744.7 (3 Kasım 2026 — CANLIDA: main + surum.json 1.744.7; kullanıcı 18-fis-defteri.sql çalıştırdı, "sql tamam")
 
 ---
 
