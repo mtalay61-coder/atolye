@@ -23,5 +23,7 @@ q -c "alter table cariler add column if not exists pasif boolean;
       alter table uretim add column if not exists renk text, add column if not exists stoga_eklendi_mi boolean;
       create table if not exists public.surum (id text primary key, surum text, url text);"
 site() { (echo "set check_function_bodies = off;"; cat site-portal.sql) | q > /dev/null 2>&1; }
+# Canlıdaki sıra: surum tablosu varken rls-kimlik.sql (anon'a yalnız surum okuması) → site-portal.sql (site fonksiyonları anon'a)
+q -f rls-kimlik.sql > /dev/null 2>&1
 site
 echo "hazır: $DB"
