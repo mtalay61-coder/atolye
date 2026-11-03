@@ -106,18 +106,26 @@ site_fark=$(diff "$CIK/ozet-1-sikilastir.txt" "$CIK/ozet-1b-regresyon.txt" | gre
 diger_fark=$(diff "$CIK/ozet-1-sikilastir.txt" "$CIK/ozet-1b-regresyon.txt" | grep '^>' | grep -vcE '^> (herkese_acik_vitrin|site_ayarlari|site_kayit_ol|portal)')
 echo "   • rls-kimlik.sql yeniden çalışınca anon'a kapanan site fonksiyonu: $site_fark (mevcut davranış, sıkılaştırmadan bağımsız)"
 [ "$diger_fark" = 0 ] && echo "   ✓ site fonksiyonları dışında testler yetki değiştirmedi" || { kirmizi "regresyon sırasında başka yetkiler de değişti"; diff "$CIK/ozet-1-sikilastir.txt" "$CIK/ozet-1b-regresyon.txt" | head; }
+# Kaynak dosyalar yeniden çalışır (canlıda ileride olacağı gibi): site-portal.sql + Editor 1 (stok) + 18 (fiş defteri). create or
+# replace yetkiyi korur, ayarı TANIMDAKİYLE değiştirir — search_path artık kaynak tanımlarda olduğu için yol da korunmalı.
 (echo "set check_function_bodies = off;"; cat site-portal.sql) | psql -X -q -d "$DB" > /dev/null 2>&1
+editor_ver stok-v2/editor/1-kurulum.sql "$CIK/kaynak-1.txt" || kirmizi "Editor 1 yeniden çalışmadı: $(tail -2 "$CIK/kaynak-1.txt")"
+editor_ver stok-v2/editor/18-fis-defteri.sql "$CIK/kaynak-18.txt" || kirmizi "Editor 18 yeniden çalışmadı: $(tail -2 "$CIK/kaynak-18.txt")"
 ozet > "$CIK/ozet-1c-site.txt"
-# Yetkiler (2. sütun) aynı kalmalı. Ayar (3. sütun): create or replace search_path'i SIFIRLAR — kaynak dosyası yeniden çalışan
-# fonksiyonun sabitlenmiş yolu kaybolur (bilinen bulgu; kalıcı çözüm kaynak tanımlarına SET search_path eklemek).
-cut -d'|' -f1,2 "$CIK/ozet-1-sikilastir.txt" > "$CIK/y1"; cut -d'|' -f1,2 "$CIK/ozet-1c-site.txt" > "$CIK/y2"
-cmp -s "$CIK/y1" "$CIK/y2" && echo "   ✓ site-portal.sql yeniden çalışınca YETKİLER sıkılaştırma sonrasıyla aynı" || { kirmizi "site-portal sonrası yetki farkı"; diff "$CIK/y1" "$CIK/y2" | head; }
-sifirlanan=$(diff "$CIK/ozet-1-sikilastir.txt" "$CIK/ozet-1c-site.txt" | grep '^>' | sed 's/^> //; s/ |.*//' | tr '\n' ' ')
-[ -n "$sifirlanan" ] && echo "   • bulgu: kaynağı yeniden çalışınca search_path'i sıfırlanan: $sifirlanan" || true
+cmp -s "$CIK/ozet-1-sikilastir.txt" "$CIK/ozet-1c-site.txt" && echo "   ✓ kaynak dosyalar (site-portal, Editor 1, 18) yeniden çalışınca YETKİ ve search_path sıkılaştırma sonrasıyla aynı" \
+  || { kirmizi "kaynak yeniden çalışınca fark"; diff "$CIK/ozet-1-sikilastir.txt" "$CIK/ozet-1c-site.txt" | head; }
+echo "══ 5b) portal_hesap tarih düzeltmesi"
+python3 - <<'PY' && echo "   ✓ 0b-portal-hesap-duzelt.sql site-portal.sql'deki tanımla birebir" || kirmizi "0b-portal-hesap-duzelt.sql site-portal.sql'den farklı"
+s=open("site-portal.sql").read(); i=s.index("create or replace function public.portal_hesap("); j=s.index("$$;",i)+3
+k=s.index("grant execute on function public.portal_hesap(",j); k=s.index("\n",k)+1
+d=open("stok-v2/guvenlik/0b-portal-hesap-duzelt.sql").read(); raise SystemExit(0 if d.endswith(s[i:k]) else 1)
+PY
+reg portal-hesap node $T/t-portal-hesap.js "$DB" stok-v2/guvenlik/0b-portal-hesap-geri.sql
+ozet > "$CIK/ozet-1d-portal.txt"; cmp -s "$CIK/ozet-1-sikilastir.txt" "$CIK/ozet-1d-portal.txt" && echo "   ✓ düzeltme ve geri alma denemesi yetki / ayar değiştirmedi" || { kirmizi "portal_hesap sınaması yetki değiştirdi"; diff "$CIK/ozet-1-sikilastir.txt" "$CIK/ozet-1d-portal.txt" | head; }
 
 echo "══ 6) ikinci uygulama → geri alma"
 editor_ver "$SIK" "$CIK/ikinci-cikti.txt" && grep -q "zaten uygulanmış" "$CIK/ikinci-cikti.txt" && echo "   ✓ ikinci uygulama: zaten uygulanmış" || kirmizi "ikinci uygulama: $(tail -2 "$CIK/ikinci-cikti.txt")"
-ozet > "$CIK/ozet-2-ikinci.txt"; cmp -s "$CIK/ozet-1c-site.txt" "$CIK/ozet-2-ikinci.txt" && echo "   ✓ ikinci uygulama yetkileri değiştirmedi" || kirmizi "ikinci uygulama yetkileri değiştirdi"
+ozet > "$CIK/ozet-2-ikinci.txt"; cmp -s "$CIK/ozet-1-sikilastir.txt" "$CIK/ozet-2-ikinci.txt" && echo "   ✓ ikinci uygulama yetkileri değiştirmedi" || kirmizi "ikinci uygulama yetkileri değiştirdi"
 editor_ver $G/3-geri-al.sql "$CIK/geri-al-cikti.txt" && grep -q "geri alındı" "$CIK/geri-al-cikti.txt" && echo "   ✓ geri alma uygulandı" || { kirmizi "geri alma"; tail -3 "$CIK/geri-al-cikti.txt"; }
 ozet > "$CIK/ozet-3-geri.txt"
 if cmp -s "$CIK/ozet-0-once.txt" "$CIK/ozet-3-geri.txt"; then echo "   ✓ yetki / ayar özeti İLK hâlle birebir aynı ($(wc -l < "$CIK/ozet-0-once.txt") satır)"; else

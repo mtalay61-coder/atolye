@@ -179,14 +179,18 @@ language sql stable security definer set search_path = public as $$
   select coalesce((select fis_aktif or nullif(min_istemci_surum,'') is not null from public.stk_ayar where id = 'tekil'), false)
 $$;
 
+-- SABİT search_path (güvenlik madde 5, 3 Kasım): bu dosyadaki yardımcı / tetikleyici fonksiyonlarda `set search_path = public,
+-- extensions, pg_temp` — çağıranın yolu fonksiyonun hangi tabloyu / işlevi bulacağını değiştiremesin (geçici şema EN SONDA).
+-- Uygulamanın (PostgREST) bugünkü yolu public, extensions olduğu için davranış aynı. Kaynakta durması şart: create or replace
+-- ayarı tanımdakiyle değiştirir, yalnız ALTER FUNCTION ile verilen yol dosya yeniden çalışınca kaybolurdu.
 create or replace function public.fis_kapi_acik() returns boolean
-language sql volatile as $$
+language sql volatile set search_path = public, extensions, pg_temp as $$
   select coalesce(current_setting('fis.kapi', true), '') = 'acik'
 $$;
 
 -- Hareket satırı (stok, cari, kasa): silinmez; yalnız fiş kesilirken eklenir ve fiş iptal edilirken iptal işaretlenir.
 create or replace function public.fis_satir_koru() returns trigger
-language plpgsql as $$
+language plpgsql set search_path = public, extensions, pg_temp as $$
 declare
   duzen text := coalesce(current_setting('fis.duzen', true), '');
   yeni_j jsonb;
@@ -265,7 +269,7 @@ end $$;
 -- yalnız fis_bag_coz (`fis.duzen` = bag) ve yalnız tek geçişle yazar: hiç çözülmemiş satır → geçerli bağ boşalır, eski değerler
 -- geçmişe, çözüm zamanı dolar. Çözülmüş satır geçerli bağa yeniden bağlanamaz (eski bir cihazın bayat satırı bağı diriltmesin).
 create or replace function public.fis_bag_iz_koru() returns trigger
-language plpgsql as $$
+language plpgsql set search_path = public, extensions, pg_temp as $$
 begin
   if tg_op = 'INSERT' then
     if new.gecmis_siparis_id is not null or new.gecmis_kalem_id is not null or new.bag_cozum_zamani is not null then
@@ -408,7 +412,7 @@ revoke all on function public.siparis_canli_bag_koru() from public,anon,authenti
 alter table public.stk_ayar add column if not exists siparis_durum_sunucu boolean not null default true;
 update public.stk_ayar set siparis_durum_sunucu=true where id='tekil' and not siparis_durum_sunucu;
 create or replace function public.siparis_durum_hesap(p_id text,p_durum text) returns text
-language sql stable as $$
+language sql stable set search_path = public, extensions, pg_temp as $$
   select case when p_durum='İptal' then 'İptal'
     when count(*)>0 and bool_and(coalesce(k.karsilanan,0)>=coalesce(k.miktar,0)) and bool_or(coalesce(k.miktar,0)>0) then 'Tamamlandı'
     when coalesce(sum(greatest(coalesce(k.karsilanan,0),0)),0)>0 then 'Kısmi Teslim'
@@ -426,7 +430,7 @@ grant select on public.siparisler_okuma to authenticated;
 
 -- F4: iptal edilmiş siparişi bayat bir başlık POST'u yeniden açamaz. Kurallar kapalıyken de geçerli.
 create or replace function public.fis_siparis_iptal_koru() returns trigger
-language plpgsql as $$
+language plpgsql set search_path = public, extensions, pg_temp as $$
 begin
   if new.durum='İptal' and old.durum is distinct from 'İptal' and auth.jwt() is not null
     and coalesce(current_setting('fis.siparis_iptal',true),'')<>'acik' then
@@ -440,7 +444,7 @@ begin
 end $$;
 
 create or replace function public.fis_baslik_koru() returns trigger
-language plpgsql as $$
+language plpgsql set search_path = public, extensions, pg_temp as $$
 declare
   korunan boolean := false;
 begin
@@ -508,7 +512,7 @@ drop function if exists public.fis_tek_kes(jsonb, jsonb, jsonb, jsonb, text);
 -- NUMARA YER TUTUCUSU: uygulama numarayı bilmeden açıklama yazar ("Alış fişi · «FIS»", peşin makbuzda "Ödeme · «ANAFIS»");
 -- sunucu numarayı verince bütün metinde değiştirir. Uygulama aynı değişikliği kendi kopyasında yapar.
 create or replace function public.fis_yer_tutucu(j jsonb, p_fis text, p_ana text) returns jsonb
-language sql immutable as $$
+language sql immutable set search_path = public, extensions, pg_temp as $$
   select case when j is null then null
               else replace(replace(j::text, '«ANAFIS»', coalesce(p_ana, p_fis)), '«FIS»', p_fis)::jsonb end
 $$;
@@ -591,7 +595,7 @@ end $$;
 -- GERİYE UYUM: `artis` olan kalemin satırındaki mutlak `karsilanan` yazılmaz (alt_yaz'dan önce çıkarılır) — eski istemci (yalnız
 -- mutlak değer gönderen) bugünkü gibi çalışır, yeni istemci eski sunucuda da bugünkü davranışı alır; hiçbir sırada çift ekleme olmaz.
 create or replace function public.fis_alt_artissiz(p_alt jsonb) returns jsonb
-language sql immutable as $$
+language sql immutable set search_path = public, extensions, pg_temp as $$
   select case
     when jsonb_typeof(p_alt) <> 'object' or jsonb_typeof(p_alt -> 'siparis_kalemleri' -> 'artis') <> 'array' then p_alt
     else jsonb_set(p_alt, '{siparis_kalemleri,satirlar}', coalesce((
@@ -623,7 +627,7 @@ end $$;
 -- yerel sınamada başka kullanıcının teslimini ezdi (10 → 5, düzenlemede 10 → 0). Satırın öteki alanları yazılır, karşılanan
 -- ESKİ değerinde kalır (hata verilmez — düzenleme kaydı düşmesin). Yeni kalem (ekleme) serbest. Fiş sistemi kapalıyken dokunmaz.
 create or replace function public.fis_kalem_karsilanan_koru() returns trigger
-language plpgsql as $$
+language plpgsql set search_path = public, extensions, pg_temp as $$
 begin
   if new.karsilanan is distinct from old.karsilanan
      and coalesce(current_setting('fis.kalem', true), '') <> 'acik'
@@ -652,7 +656,7 @@ $$;
 
 -- Yükte geçen sipariş kalemleri: stok satırlarının `kalemId`si (bağlı fiş dahil) + alt.siparis_kalemleri satırları
 create or replace function public.fis_kalem_idleri(p jsonb) returns text[]
-language sql immutable as $$
+language sql immutable set search_path = public, extensions, pg_temp as $$
   select coalesce(array_agg(distinct x order by x), '{}'::text[]) from (
     select s ->> 'kalemId' as x from jsonb_array_elements(public.stk_dizi(p -> 'stok' -> 'satirlar')) s
     union all select s ->> 'kalemId' from jsonb_array_elements(public.stk_dizi(p -> 'bagli' -> 'stok' -> 'satirlar')) s
@@ -662,7 +666,7 @@ $$;
 
 -- Fiş işleminde kalem satırından karşılanan HER ZAMAN çıkar (tek yazar fis_kalem_karsilanan_yenile); `artis` yok sayılır.
 create or replace function public.fis_alt_karsilanansiz(p_alt jsonb) returns jsonb
-language sql immutable as $$
+language sql immutable set search_path = public, extensions, pg_temp as $$
   select case
     -- coalesce ŞART: anahtar yoksa jsonb_typeof NULL döner, `<>` NULL olur ve case else'e düşüp (jsonb_set NULL) bütün alt'ı
     -- (üretim atamaları dahil) NULL yapardı — uctan-uca-fis 6 / 8 bunu yakaladı.

@@ -118,12 +118,12 @@ language sql stable security definer set search_path = public as $$
 $$;
 
 create or replace function public.fis_kapi_acik() returns boolean
-language sql volatile as $$
+language sql volatile set search_path = public, extensions, pg_temp as $$
   select coalesce(current_setting('fis.kapi', true), '') = 'acik'
 $$;
 
 create or replace function public.fis_satir_koru() returns trigger
-language plpgsql as $$
+language plpgsql set search_path = public, extensions, pg_temp as $$
 declare
   duzen text := coalesce(current_setting('fis.duzen', true), '');
   yeni_j jsonb;
@@ -181,7 +181,7 @@ begin
 end $$;
 
 create or replace function public.fis_bag_iz_koru() returns trigger
-language plpgsql as $$
+language plpgsql set search_path = public, extensions, pg_temp as $$
 begin
   if tg_op = 'INSERT' then
     if new.gecmis_siparis_id is not null or new.gecmis_kalem_id is not null or new.bag_cozum_zamani is not null then
@@ -300,7 +300,7 @@ revoke all on function public.siparis_canli_bag_koru() from public,anon,authenti
 alter table public.stk_ayar add column if not exists siparis_durum_sunucu boolean not null default true;
 update public.stk_ayar set siparis_durum_sunucu=true where id='tekil' and not siparis_durum_sunucu;
 create or replace function public.siparis_durum_hesap(p_id text,p_durum text) returns text
-language sql stable as $$
+language sql stable set search_path = public, extensions, pg_temp as $$
   select case when p_durum='İptal' then 'İptal'
     when count(*)>0 and bool_and(coalesce(k.karsilanan,0)>=coalesce(k.miktar,0)) and bool_or(coalesce(k.miktar,0)>0) then 'Tamamlandı'
     when coalesce(sum(greatest(coalesce(k.karsilanan,0),0)),0)>0 then 'Kısmi Teslim'
@@ -317,7 +317,7 @@ revoke all on public.siparisler_okuma from public,anon;
 grant select on public.siparisler_okuma to authenticated;
 
 create or replace function public.fis_siparis_iptal_koru() returns trigger
-language plpgsql as $$
+language plpgsql set search_path = public, extensions, pg_temp as $$
 begin
   if new.durum='İptal' and old.durum is distinct from 'İptal' and auth.jwt() is not null
     and coalesce(current_setting('fis.siparis_iptal',true),'')<>'acik' then
@@ -331,7 +331,7 @@ begin
 end $$;
 
 create or replace function public.fis_baslik_koru() returns trigger
-language plpgsql as $$
+language plpgsql set search_path = public, extensions, pg_temp as $$
 declare
   korunan boolean := false;
 begin
@@ -389,7 +389,7 @@ end $$;
 drop function if exists public.fis_tek_kes(jsonb, jsonb, jsonb, jsonb, text);
 
 create or replace function public.fis_yer_tutucu(j jsonb, p_fis text, p_ana text) returns jsonb
-language sql immutable as $$
+language sql immutable set search_path = public, extensions, pg_temp as $$
   select case when j is null then null
               else replace(replace(j::text, '«ANAFIS»', coalesce(p_ana, p_fis)), '«FIS»', p_fis)::jsonb end
 $$;
@@ -457,7 +457,7 @@ begin
 end $$;
 
 create or replace function public.fis_alt_artissiz(p_alt jsonb) returns jsonb
-language sql immutable as $$
+language sql immutable set search_path = public, extensions, pg_temp as $$
   select case
     when jsonb_typeof(p_alt) <> 'object' or jsonb_typeof(p_alt -> 'siparis_kalemleri' -> 'artis') <> 'array' then p_alt
     else jsonb_set(p_alt, '{siparis_kalemleri,satirlar}', coalesce((
@@ -484,7 +484,7 @@ begin
 end $$;
 
 create or replace function public.fis_kalem_karsilanan_koru() returns trigger
-language plpgsql as $$
+language plpgsql set search_path = public, extensions, pg_temp as $$
 begin
   if new.karsilanan is distinct from old.karsilanan
      and coalesce(current_setting('fis.kalem', true), '') <> 'acik'
@@ -507,7 +507,7 @@ language sql stable security definer set search_path = public as $$
 $$;
 
 create or replace function public.fis_kalem_idleri(p jsonb) returns text[]
-language sql immutable as $$
+language sql immutable set search_path = public, extensions, pg_temp as $$
   select coalesce(array_agg(distinct x order by x), '{}'::text[]) from (
     select s ->> 'kalemId' as x from jsonb_array_elements(public.stk_dizi(p -> 'stok' -> 'satirlar')) s
     union all select s ->> 'kalemId' from jsonb_array_elements(public.stk_dizi(p -> 'bagli' -> 'stok' -> 'satirlar')) s
@@ -516,7 +516,7 @@ language sql immutable as $$
 $$;
 
 create or replace function public.fis_alt_karsilanansiz(p_alt jsonb) returns jsonb
-language sql immutable as $$
+language sql immutable set search_path = public, extensions, pg_temp as $$
   select case
     when coalesce(jsonb_typeof(p_alt), '') <> 'object' or coalesce(jsonb_typeof(p_alt -> 'siparis_kalemleri'), '') <> 'object' then p_alt
     else jsonb_set(p_alt, '{siparis_kalemleri}', ((p_alt -> 'siparis_kalemleri') - 'artis') || jsonb_build_object('satirlar', coalesce((

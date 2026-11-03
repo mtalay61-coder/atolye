@@ -35,9 +35,8 @@ adim("site_kayit_onayla (yönetici)", "ali", `public.site_kayit_onayla('${talep}
 adim("portal_giris (yanlış şifre → boş)", "anon", `coalesce(public.portal_giris('${kul}', 'yanlis-sifre'), 'BOS')`, "ok", (d) => d === "BOS");
 const kod = adim("portal_giris", "anon", `public.portal_giris('${kul}', '${sifre}')`, "ok", (d) => d.length >= 16);
 adim("portal (müşteri sayfası)", "anon", `public.portal('${kod}')`, "ok");
-// portal_hesap: cari v2 (1.727) tarihleri METİN tutuyor, fonksiyon `h.tarih < bas` (gün türü) karşılaştırıyor → 42883. Yetki
-// değil, ayrı bir olası hata (kullanıcıya bildirildi). Burada yalnız erişimin değişmediği ölçülür.
-adim("portal_hesap (erişim; gövde 42883 — ayrı hata)", "anon", `public.portal_hesap('${kod}', null, null)`, "42883");
+// portal_hesap: 3 Kasım tarih düzeltmesinden önce 42883 veriyordu (tarih metin < date); ayrıntılı sınama t-portal-hesap.js.
+adim("portal_hesap", "anon", `public.portal_hesap('${kod}', null, null)`, "ok");
 adim("portal_siparis (boş sepet → ret)", "anon", `public.portal_siparis('${kod}', '[]'::jsonb, 'deneme', null)`, "P0001");
 adim("portal_cikis", "anon", `public.portal_cikis('${kod}')`, "ok");
 adim("portal (çıkıştan sonra → geçersiz kod)", "anon", `public.portal('${kod}')`, "P0001");

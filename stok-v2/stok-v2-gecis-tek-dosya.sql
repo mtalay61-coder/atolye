@@ -1,15 +1,15 @@
 create or replace function public.stk_nrm(x text) returns text
-language sql immutable as $$
+language sql immutable set search_path = public, extensions, pg_temp as $$
   select nullif(lower(translate(regexp_replace(btrim(coalesce(x, '')), '\s+', ' ', 'g'), 'İIĞÜŞÖÇ', 'iığüşöç')), '')
 $$;
 
 create or replace function public.stk_yer_tutucu_mu(x text) returns boolean
-language sql immutable as $$
+language sql immutable set search_path = public, extensions, pg_temp as $$
   select public.stk_nrm(x) is null or public.stk_nrm(x) = 'standart'
 $$;
 
 create or replace function public.stk_zaman(x text) returns timestamptz
-language plpgsql immutable as $$
+language plpgsql immutable set search_path = public, extensions, pg_temp as $$
 begin
   if x is null or btrim(x) = '' then return null; end if;
   return x::timestamptz;
@@ -18,7 +18,7 @@ exception when others then
 end $$;
 
 create or replace function public.stk_sayi(x text) returns numeric
-language plpgsql immutable as $$
+language plpgsql immutable set search_path = public, extensions, pg_temp as $$
 begin
   if x is null or btrim(x) = '' then return null; end if;
   return replace(btrim(x), ',', '.')::numeric;
@@ -26,11 +26,11 @@ exception when others then
   return null;
 end $$;
 create or replace function public.stk_dizi(j jsonb) returns jsonb
-language sql immutable as $$
+language sql immutable set search_path = public, extensions, pg_temp as $$
   select case when jsonb_typeof(j) = 'array' then j else '[]'::jsonb end
 $$;
 create or replace function public.stk_mantik(x text) returns boolean
-language sql immutable as $$
+language sql immutable set search_path = public, extensions, pg_temp as $$
   select lower(btrim(coalesce(x, ''))) in ('true', 't', '1', 'evet', 'yes')
 $$;
 
@@ -398,7 +398,7 @@ begin
 end $$;
 
 create or replace function public.stk_kaynak_tur(k text) returns text
-language sql immutable as $$
+language sql immutable set search_path = public, extensions, pg_temp as $$
   select case k when 'Satınalma' then 'Alış' when 'Satış' then 'Satış' when 'Üretim' then 'Üretim' when 'Açılış' then 'Açılış'
                 when 'Numune' then 'Numune' when 'Manuel' then 'Manuel' when 'Sayım' then 'Sayım' when 'Fire' then 'Fire'
                 when 'Transfer' then 'Transfer'

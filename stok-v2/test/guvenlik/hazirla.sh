@@ -21,9 +21,17 @@ q -c "alter table cariler add column if not exists pasif boolean;
         add column if not exists kapak_resmi text, add column if not exists mamul_tipi text, add column if not exists pasif boolean,
         add column if not exists renk_resimleri jsonb, add column if not exists satis_para_birimi text, add column if not exists sezon_yili text;
       alter table uretim add column if not exists renk text, add column if not exists stoga_eklendi_mi boolean;
+      alter table siparisler add column if not exists tarih text, add column if not exists teslim_tarihi text;
       create table if not exists public.surum (id text primary key, surum text, url text);"
 site() { (echo "set check_function_bodies = off;"; cat site-portal.sql) | q > /dev/null 2>&1; }
 # Canlıdaki sıra: surum tablosu varken rls-kimlik.sql (anon'a yalnız surum okuması) → site-portal.sql (site fonksiyonları anon'a)
 q -f rls-kimlik.sql > /dev/null 2>&1
 site
 echo "hazır: $DB"
+# CANLIDAKİ ESKİ TANIMLAR: search_path 3 Kasım'da KAYNAK tanımlara eklendi; canlıdaki fonksiyonlar eski tanımla (yolsuz) duruyor.
+# Canlıyı taklit etmek için 2-sikilastir.sql'in YOL listesindeki fonksiyonların yolu sıfırlanır (sıkılaştırma bunları sabitler;
+# sonra kaynak dosyalar yeniden çalışınca yolun KORUNDUĞU kos-guvenlik.sh § 5'te ölçülür).
+for f in $(sed -n '/LİSTE:YOL BAŞ/,/LİSTE:YOL SON/p' stok-v2/guvenlik/2-sikilastir.sql | grep -o "'public[^']*'" | tr -d "'"); do
+  q -c "alter function $f reset search_path"
+done
+echo "canlı benzeri: yolu sıfırlanan $(sed -n '/LİSTE:YOL BAŞ/,/LİSTE:YOL SON/p' stok-v2/guvenlik/2-sikilastir.sql | grep -c "'public") fonksiyon"

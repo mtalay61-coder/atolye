@@ -80,8 +80,12 @@ $$;
 revoke all on function public.site_kod_cari(text) from public, anon, authenticated;
 
 -- Para birimi koda: ürün kartında "₺/$/€" de yazılmış olabilir.
+-- SABİT search_path (güvenlik madde 5, 3 Kasım): bu dosyadaki yardımcı / tetikleyici fonksiyonlarda `set search_path = public,
+-- extensions, pg_temp` — çağıranın yolu fonksiyonun hangi tabloyu / işlevi bulacağını değiştiremesin (geçici şema EN SONDA).
+-- Uygulamanın (PostgREST) bugünkü yolu public, extensions olduğu için davranış aynı. Kaynakta durması şart: create or replace
+-- ayarı tanımdakiyle değiştirir, yalnız ALTER FUNCTION ile verilen yol dosya yeniden çalışınca kaybolurdu.
 create or replace function public.site_pb(p text)
-returns text language sql immutable as $$
+returns text language sql immutable set search_path = public, extensions, pg_temp as $$
   select case coalesce(nullif(trim(p), ''), 'TRY')
     when '₺' then 'TRY' when 'TL' then 'TRY' when '$' then 'USD' when '€' then 'EUR' else upper(trim(p)) end;
 $$;
@@ -269,6 +273,9 @@ grant execute on function public.site_ayarlari() to anon, authenticated;
 -- (defterKapsar); bakiye = Borç − Alacak, para birimi başına (cariBakiyeleri).
 -- Teslim edilen miktar ERP gibi STOK HAREKETLERİNDEN türetilir (013 siparisKarsilananlariHesapla); hareketi hiç
 -- olmayan eski siparişte kalemdeki sayı kullanılır.
+-- TARİH METİN (3 Kasım düzeltmesi): cari v2'den (1.727) beri cari_hareketleri.tarih METİN ('2026-11-01', ISO). Önce `h.tarih < bas`
+-- (date) yazıyordu → 'operator does not exist: text < date' (42883) — müşteri portalının hesap ekstresi açılmıyordu. Karşılaştırma
+-- ilk 10 karakter (ISO gün) üzerinden METİN olarak: sıralama gün sırasıyla aynı, saat dilimi kayması yok, saatli değer de doğru gün.
 create or replace function public.portal_hesap(p_kod text, p_baslangic date default null, p_bitis date default null)
 returns jsonb
 language plpgsql stable security definer set search_path = public
@@ -296,14 +303,14 @@ begin
           group by 1 having round(sum(case when h.yon = 'Borç' then h.tutar else -h.tutar end)::numeric, 2) <> 0) x), '{}'::jsonb),
       'devir', coalesce((select jsonb_object_agg(pb, t) from (
           select coalesce(h.para_birimi, 'TRY') pb, round(sum(case when h.yon = 'Borç' then h.tutar else -h.tutar end)::numeric, 2) t
-          from cari_hareketleri h where h.cari_id = c.id and coalesce(h.defter, 'Genel') in (d, 'Muhasebe') and h.tarih < bas
+          from cari_hareketleri h where h.cari_id = c.id and coalesce(h.defter, 'Genel') in (d, 'Muhasebe') and left(h.tarih, 10) < to_char(bas, 'YYYY-MM-DD')
           group by 1) x), '{}'::jsonb),
       'hareketler', coalesce((select jsonb_agg(jsonb_build_object(
           'tarih', h.tarih, 'fisNo', h.fis_no, 'siparisNo', h.siparis_no, 'aciklama', h.aciklama, 'urunAd', h.urun_ad,
           'renk', h.renk, 'yon', h.yon, 'tutar', h.tutar, 'paraBirimi', coalesce(h.para_birimi, 'TRY'),
           'odemeSekli', h.odeme_sekli, 'vade', h.vade) order by h.tarih, h.zaman nulls first, h.id)
         from (select * from cari_hareketleri h where h.cari_id = c.id and coalesce(h.defter, 'Genel') in (d, 'Muhasebe')
-              and h.tarih between bas and bit order by h.tarih, h.zaman nulls first limit 2000) h), '[]'::jsonb)
+              and left(h.tarih, 10) between to_char(bas, 'YYYY-MM-DD') and to_char(bit, 'YYYY-MM-DD') order by h.tarih, h.zaman nulls first limit 2000) h), '[]'::jsonb)
     ));
   end loop;
 
