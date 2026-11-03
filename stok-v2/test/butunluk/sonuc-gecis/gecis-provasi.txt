@@ -1,0 +1,46 @@
+══ 1) canlı benzeri 1.742.1 kurulumu
+   atolye_gecis_provasi: 1.742.1 kuruldu; fiş kuralları KAPALI (canlı gibi): t
+   eski sürümde yeni nesne yok: siparis_bag_hedefleri=0
+══ 2) geçiş: değişen dosyalar plandaki sırayla, Editor gibi
+   1-kurulum.sql: 52 parça
+   4-cari-kurulum.sql: 13 parça
+   7-siparis-uretim-kurulum.sql: 13 parça
+   9-kasa-kurulum.sql: 19 parça
+   15-duzeltme.sql: 26 parça
+   18-fis-defteri.sql: 99 parça
+   20-gece-denetimi.sql: 4 parça
+   rls-kimlik.sql: 16 parça
+   veri korundu: fiş 23 → 23, hareket 16 → 16; fiş kuralları hâlâ KAPALI: t; min sürüm: NULL
+══ 3a) yeni nesneler
+   ✓ siparis_bag_hedefleri
+   ✓ siparis_canli_bag_koru
+   ✓ fis_satis_teslim_koru
+   ✓ fis_iptal_toplu
+   ✓ fis_kalem_teslim_koru
+   ✓ stk_istemci_koru
+   ✓ siparis_durum_hesap
+   ✓ siparisler_okuma
+══ 3b) sıfırdan kurulan 1.744.4 ile işlev gövdeleri ve tetikleyiciler
+   ✓ (ilk) sıfırdan kurulumun bütün işlevleri aynı gövdeyle, bütün tetikleyicileri var · yalnız eskide kalan 4 işlev (göç/geçiş): alt_gecis alt_geri_don car_geri_don stk_goc_karsilastir
+══ 3c) kritik testler yükseltilmiş veritabanında
+   ✓ t-servis-kapi
+   ✓ t-eski-bag
+   ✓ t-bag-kilit
+   ✓ t-surum-kapi
+   ✓ t-canli-bag
+   ✓ t-satis-sinir
+   ✓ t-cek-yaris
+   ✓ t-seyrek-alt
+   ✓ t-f2
+══ 3d) aynı sıra ikinci kez (yarıda kalan geçişin tekrarı)
+   1-kurulum.sql: 52 parça
+   4-cari-kurulum.sql: 13 parça
+   7-siparis-uretim-kurulum.sql: 13 parça
+   9-kasa-kurulum.sql: 19 parça
+   15-duzeltme.sql: 26 parça
+   18-fis-defteri.sql: 99 parça
+   20-gece-denetimi.sql: 4 parça
+   rls-kimlik.sql: 16 parça
+   ✓ (ikinci) sıfırdan kurulumun bütün işlevleri aynı gövdeyle, bütün tetikleyicileri var · yalnız eskide kalan 4 işlev (göç/geçiş): alt_gecis alt_geri_don car_geri_don stk_goc_karsilastir
+── GEÇİŞ PROVASI TEMİZ ──
+exit 0

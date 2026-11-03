@@ -600,7 +600,7 @@ useEffect(() => {
       if (yerelKodGoc.degisti) {
         t = yerelKodGoc.tanimlar;
         yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", t), "Tanımlar", t);
-        if (yerelKodGoc.degisenUrun > 0) yazimiIzle(tabloYaz("stok:items", "urunler", yerelKodGoc.stok), "Stok kartları", yerelKodGoc.stok);
+        if (yerelKodGoc.degisenUrun > 0 && !fisKesYolu()) yazimiIzle(tabloYaz("stok:items", "urunler", yerelKodGoc.stok), "Stok kartları", yerelKodGoc.stok);
       }
       // ÇEK GÖRSELLERİ yerel yolda çek başına anahtarlardan toplanıyor.
       try {

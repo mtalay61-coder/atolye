@@ -15,7 +15,7 @@
 let _fisDefteriKurulu = false;
 function fisDefteriKuruluAyarla(v) { _fisDefteriKurulu = !!v; }
 function fisKesYolu() {
-  return _fisDefteriKurulu && supabaseAcikMi() && stokV2Aktif() && cariV2Aktif() && kasaV2Aktif() && altV2Aktif();
+  return _fisDefteriKurulu && supabaseAcikMi();
 }
 
 // NUMARA YER TUTUCUSU — numara sunucudan gelmeden açıklamalar yazılır; sunucu ve uygulama aynı değişikliği yapar.
@@ -56,6 +56,21 @@ function fisKesSiparisKalemleri(siparis, kalemIdler) {
   return cocuk.cikar(siparis).filter((s) => istenen.has(s.id));
 }
 
+// KARŞILANAN DEĞİŞİMİ (saf, v1.742.2 — R1, teknik analiz 31 Ekim): sipariş kaleminin karşılananı yalnız MUTLAK değerle gidiyordu
+// (fisKesSiparisKalemleri); iki kullanıcı aynı kaleme aynı anda teslim edince ikincisi birincinin artışını eziyordu (yerel sınama:
+// stoktan 10 çıktı, karşılanan 5 — stok-v2/test/r1-yaris.js). Değişim GERÇEK ADETTEN kurulur (ekrandaki bayat değerden ve
+// uygulamanın kırpmasından bağımsız); sunucu (fis-defteri.sql fis_kalem_artis) güncel değere ekler, 0..miktar aralığında kırpar.
+// `liste`: [{ id: kalemId, miktar }] — teslim +, iptal −. Aynı kalem toplanır, sıfırlar atılır. Döner: alt.siparis_kalemleri.artis
+function fisKesKalemArtisi(liste) {
+  const m = new Map();
+  (liste || []).forEach((x) => {
+    if (!x || !x.id) return;
+    const d = Number(x.miktar) || 0;
+    if (d) m.set(String(x.id), stokYuvarla((m.get(String(x.id)) || 0) + d));
+  });
+  return [...m.entries()].filter(([, d]) => d).map(([id, miktar]) => ({ id, miktar }));
+}
+
 // Bir ana kaydın değişen alt satırları (alt_yaz biçimi, saf): yeni hâlde olup eskisinden farklı (ya da yeni) olanlar `satirlar`,
 // eskide olup yenide olmayanlar `sil`. Üretim atamaları için (teslim: atama tamamlandı + kalan / tamir ataması doğdu; geri alma:
 // tersi) — yalnız etkilenen satır gider, ötekiler (başka ustanın aynı anda aldığı iş) dokunulmadan kalır.
@@ -69,14 +84,103 @@ function fisKesAltFarki(tablo, cocukTablo, eski, yeni) {
   return { satirlar, sil };
 }
 
+// SATIŞ SİPARİŞİ FAZLASI — YÖNETİCİ ONAYI (v1.744.4, F3; kullanıcı kararı 2 Kasım: "önce onay düğmesi"). 1.744.3 sunucusu
+// (fis_satis_teslim_koru) satış siparişinin miktarını aşan teslimi yalnız `fazlaTeslimOnayi: { onay: true, gerekce }` ile ve
+// çağıran tanımlardaki Yönetici kullanıcıysa kabul eder; onay kaydını (gerçek e-posta, gerekçe, zaman, kalemler) fişe kendisi
+// yazar. Arayüzde onay yolu yoktu: fazla teslim pratikte HİÇ yapılamıyordu. Burası yalnız istemci tarafı: kim onaylayabilir,
+// gerekçe sorulur; yetkinin son sözü sunucuda (istemcideki rol beyanına güvenmez). Alış siparişi bu kurala girmez (sunucu da
+// sınamaz). 19 Eylül kuralı ("sevkiyat fazla yapılamasın") YÖNETİCİ DIŞINDA aynen geçerli.
+// Saf: satış siparişini aşan satırlar → [{ ad, renk, beden, fazla }]. `kalemler`: fiş kalemleri (`kalemId`, `miktar`, `kalan`
+// ya da `fazlaGonderim`); `siparisBul(kalem)` kalemin siparişini döner (tipi için).
+function fazlaTeslimKalemleri(kalemler, siparisBul) {
+  return (kalemler || []).filter((k) => {
+    if (!k || !k.kalemId || !(k.miktar > 0)) return false;
+    const fazla = k.kalan != null ? k.miktar > k.kalan : !!k.fazlaGonderim;
+    if (!fazla) return false;
+    const s = siparisBul(k);
+    return !!s && s.tip !== "Alış";
+  }).map((k) => ({ ad: k.urunAd, renk: k.renk, beden: k.beden, fazla: k.kalan != null ? stokYuvarla(k.miktar - k.kalan) : null }));
+}
+// Saf: fiş kalemlerini sipariş kalemine göre toplar ve KAYIT ANINDAKİ kalanla eşler (tek ekran fişi — 255 / 089). Satırın
+// "sipariş fazlası" işareti yalnız siparişten yüklerken kurulur; miktar kutusu sonra elle büyütülünce işaret güncellenmiyordu
+// (senaryo-fazla-onay: 2 çiftlik kaleme 3 yazıldı, işaretsiz gitti). Sunucu kuralı gibi kalemin toplamına bakılır.
+function fisKalemlerininKalani(kalemler, siparisler) {
+  const m = new Map();
+  (kalemler || []).forEach((k) => {
+    if (!k || !k.kalemId) return;
+    const s = (siparisler || []).find((x) => (k.siparis && k.siparis.id === x.id) || (x.kalemler || []).some((y) => y.id === k.kalemId));
+    const sk = s && (s.kalemler || []).find((y) => y.id === k.kalemId);
+    if (!sk) return;
+    const o = m.get(k.kalemId) || { kalemId: k.kalemId, _siparisId: s.id, urunAd: sk.urunAd || k.urunAd, renk: sk.renk, beden: sk.beden, miktar: 0,
+      kalan: stokYuvarla((Number(sk.miktar) || 0) - (Number(sk.karsilanan) || 0)) };
+    o.miktar = stokYuvarla(o.miktar + Math.abs(Number(k.miktar) || 0));
+    m.set(k.kalemId, o);
+  });
+  return [...m.values()];
+}
+// Onay adımı. Döner: `undefined` fazla yok (devam), `null` durdu (kullanıcı uyarıldı / vazgeçti), `{ onay, gerekce }` onaylandı.
+// `sor`: gerekçe penceresi (varsayılan window.prompt — uygulamanın öteki gerekçe soruları gibi; testte değiştirilir).
+function fazlaTeslimOnayiAl(fazlalar, aktifKullanici, showToast, sor = (m) => window.prompt(m, "")) {
+  if (!fazlalar || fazlalar.length === 0) return undefined;
+  const ozet = fazlalar.map((f) => `${olcuMetni([f.ad, f.renk, f.beden], " ")}${f.fazla != null ? `: ${f.fazla} fazla` : ""}`).join(" · ");
+  if (!(aktifKullanici && aktifKullanici.rol === "Yönetici")) {
+    showToast(`Satış siparişi aşılıyor — ${ozet}. Sipariş fazlası yalnız yönetici onayıyla teslim edilir.`);
+    return null;
+  }
+  const g = sor(`Satış siparişi aşılıyor:\n${ozet}\n\nYönetici onayıyla fazla teslim edilecek. Gerekçeyi yazın (fişe kaydedilir; boş bırakırsanız işlem yapılmaz):`);
+  const gerekce = String(g == null ? "" : g).trim();
+  if (!gerekce) { showToast("Fazla teslim yapılmadı — gerekçe girilmedi"); return null; }
+  return { onay: true, gerekce: gerekce.slice(0, 500) };
+}
+
 // Gönderici. Aynı `istek` ile tekrar çağrılabilir (ağ yeniden denemesi): sunucu ikinci kez yazmaz, ilk numarayı döner.
+// İSTEMCİ KİMLİĞİ (v1.743.0, F1 — VERI-TUTARLILIGI-F0.md § 1 / F7): her fiş isteği sürümünü taşır. Sunucu bugün yalnız kabul
+// eder (zorlama F7'de, `stk_ayar.min_istemci_surum`); eski sunucu bilinmeyen alanı yok sayar — iki yönde de geriye uyumlu.
+const fisIstemciBilgisi = () => ({ surum: SURUM });
 async function fisKesGonder(yuk) {
-  const r = await supabaseIstek("rpc/fis_kes", { method: "POST", body: JSON.stringify({ p: yuk }) });
+  const r = await supabaseIstek("rpc/fis_kes", { method: "POST", body: JSON.stringify({ p: { ...yuk, istemci: fisIstemciBilgisi() } }) });
   if (!r || !r.fisNo) throw new Error("Sunucu fiş numarası döndürmedi");
+  fisKarsilananDuzeltmeBildir(r, "fis_kes");
   return r;
 }
 async function fisIptalGonder(no, sebep, alt) {
-  return supabaseIstek("rpc/fis_iptal", { method: "POST", body: JSON.stringify({ p: { no, sebep: sebep || null, ...(alt ? { alt } : {}) } }) });
+  const r = await supabaseIstek("rpc/fis_iptal", { method: "POST", body: JSON.stringify({ p: { no, sebep: sebep || null, ...(alt ? { alt } : {}), istemci: fisIstemciBilgisi() } }) });
+  fisKarsilananDuzeltmeBildir(r, "fis_iptal");
+  return r;
+}
+
+// SUNUCUNUN KARŞILANANI (v1.743.0, F1 — karşılananın tek yazarı sunucu): fis_kes / fis_iptal yanıtındaki `kalemler`
+// ([{ id, karsilanan }]) yerel siparişlere işlenir. Yerel hesap (081 `Math.min(miktar, …)`, 079 fisGeriAl) yalnız ESKİ sunucuda
+// (yanıtta `kalemler` yok) geçerli kalır: o zaman liste aynen döner. Miktarı aşan teslimde sunucu kırpmaz (24 / 20) — teslimi
+// yapan cihaz da yenilemeden 24'ü görür. Saf; değişiklik yoksa aynı dizi döner.
+function fisKesKalemleriUygula(siparisler, kalemler) {
+  if (!Array.isArray(siparisler) || !Array.isArray(kalemler) || kalemler.length === 0) return siparisler;
+  const deger = new Map(kalemler.filter((k) => k && k.id != null).map((k) => [String(k.id), Number(k.karsilanan) || 0]));
+  let degisti = false;
+  const sonuc = siparisler.map((s) => {
+    if (!s || !Array.isArray(s.kalemler)) return s;
+    let d = false;
+    const kalemler2 = s.kalemler.map((k) => {
+      if (!k || !deger.has(String(k.id))) return k;
+      const v = deger.get(String(k.id));
+      if ((k.karsilanan || 0) === v) return k;
+      d = true;
+      return { ...k, karsilanan: v };
+    });
+    if (!d) return s;
+    degisti = true;
+    return { ...s, kalemler: kalemler2 };
+  });
+  return degisti ? sonuc : siparisler;
+}
+// ÖNCEDEN VAR OLAN FARKIN DEĞİŞMESİ (kullanıcı kararı 1 Kasım, 2): sunucu bir kalemin hareketlerle uyuşmayan karşılananını bu
+// işlemde düzelttiyse (ya da hayaleti koruyup değişimi eklediyse) yanıtta `karsilananDuzeltme` gelir — günlüğe düşer (sunucuda da
+// fis_karsilanan_iz + gece denetimi). Kullanıcıyı işlem anında durdurmaz.
+function fisKarsilananDuzeltmeBildir(r, islem) {
+  const liste = (r && Array.isArray(r.karsilananDuzeltme)) ? r.karsilananDuzeltme : [];
+  if (!liste.length || typeof gunlukYaz !== "function") return;
+  gunlukYaz(`Karşılanan düzeltildi (${r.fisNo || "?"}): ${liste.map((x) => `${x.id} ${x.onceki} → ${x.yeni}${x.tur === "hayalet_korundu" ? " (hareketsiz önceki değer korundu)" : ""}`).join(" · ")}`,
+    "siparis", { fisNo: r.fisNo || null, islem, duzeltme: liste });
 }
 
 // ---- Fark tabanı (025 `_sonHal`) — sunucuya yazılmış kayıtlar "buluttaki hâl" olarak işaretlenir ----
@@ -173,7 +277,7 @@ function paraFisOneki(tip) { return PARA_FIS_ONEKLERI[tip] || "CH"; }
 // satırları (gider / gelir kartı, virman). Döner: `kasaHareketleri` (dizi) ve geriye uyum için `kasaHareketi` (ilki).
 // `cekler` (v1.738.0): fişin doğurduğu / değiştirdiği çek kayıtları (çek alma / verme, ciro, iade, tahsil) — kas_yaz'ın çek satırı,
 // fişle AYNI işlemde.
-function paraFisiYuku({ fis, cariId, hareketler, kasa, cekler, istek, zaman, kullaniciAd }) {
+function paraFisiYuku({ fis, cariId, hareketler, kasa, cekler, cekOnceki, istek, zaman, kullaniciAd }) {
   const cariHareketleri = (hareketler || []).map((h) => ({
     ...h, id: h.id || uid("hrk"), fisNo: FIS_YER, zaman: h.zaman || zaman, kullanici: h.kullanici || kullaniciAd || null,
   }));
@@ -193,7 +297,7 @@ function paraFisiYuku({ fis, cariId, hareketler, kasa, cekler, istek, zaman, kul
     cari: { satirlar: cariId ? cariHareketleri.map((h) => fisKesCariSatiri(cariId, h)) : [] },
     ...(ayaklar.length || (cekler || []).length ? { kasa: {
       hareketler: ayaklar.map((k) => fisKesKasaHareketi(k.hesapId, k.hareket)),
-      ...((cekler || []).length ? { cekler: cekler.map((c) => ({ id: String(c.id), veri: c })) } : {}),
+      ...((cekler || []).length ? { cekler: cekler.map((c) => ({ id: String(c.id), veri: c, onceki: (cekOnceki || []).find((x) => String(x.id) === String(c.id)) || null })) } : {}),
     } } : {}),
   };
   return { yuk, cariHareketleri, kasaHareketi, kasaHareketleri, ayaklar };

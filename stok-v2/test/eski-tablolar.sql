@@ -139,6 +139,10 @@ insert into public.uretim values ('ur-1', '10032', 'u-canta', 'Üretimde', null,
 insert into public.uretim_atamalari values
   ('at-1', 'ur-1', 'Saya', 'p-1', '{"36": 5}', 5, true, '2026-10-20', false, null, null, false, null, null, 0, '[]', '10032-1', null);
 
+-- Sipariş iptali operasyon bağı sınaması: gerçek şemadaki ayrı rezervasyon alanı ve defteri.
+alter table public.uretim add column rezervasyon_siparis_id text;
+create table public.stok_rezervasyonlari(id text primary key,siparis_id text,miktar numeric,tuketilen numeric);
+
 -- KASA & BANKA (kasa v2 sınaması) — bugünkü gibi tek satırlık belge. Kimliksiz eski hareket ve çek bilerek var.
 create table public.muhasebe (id text primary key, veri jsonb);
 insert into public.muhasebe values ('tekil', '{

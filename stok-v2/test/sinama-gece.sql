@@ -18,7 +18,11 @@ begin
 end $$;
 
 begin;
--- Bozuk kayıtlar ancak kurallar KAPALIYKEN kurulabilir (açıkken tetikleyiciler reddediyor — sinama-fis.sql açtı); işlem sonunda geri alınır.
+-- F8: kesilmiş fişler kurallar kapalıyken de korunur. Yalnız bu yerel denetim fixture işlemi
+-- yönetici olarak iki koruma tetikleyicisini geçici kapatıp bilerek bozuk veri kurar.
+-- ROLLBACK veriyi ve tetikleyici durumunu birlikte geri alır; uygulama yolu değildir.
+alter table public.stk_fis disable trigger fis_baslik_koru;
+alter table public.stk_hareket disable trigger fis_satir_koru;
 update public.stk_ayar set fis_aktif = false where id = 'tekil';
 do $$
 declare

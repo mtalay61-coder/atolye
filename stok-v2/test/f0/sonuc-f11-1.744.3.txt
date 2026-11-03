@@ -1,0 +1,252 @@
+── t-f11
+F1.1 başarısızlık testleri · önek f0-t-f11-mvzsthrm · istemci bugünkü (test/erp.cjs) · iz sütunları 3/3
+  ✓ [F11.iz-sutunlari] stk_hareket: gecmis_siparis_id, gecmis_kalem_id, bag_cozum_zamani + 'iki bağ birden yok' kısıtı
+      sonra:    {"sutun":3,"kisit":1}
+  ✓ [F11.bag-coz-iz-yazar] fis_bag_coz: geçerli bağ boşalır, eski kalem ve sipariş GEÇMİŞ sütunlarda
+      önce:     [{"iptal":false,"kalem":"f0-t-f11-mvzsthrm-s1k","siparis":"f0-t-f11-mvzsthrm-s1","no":"SF0-sthrm-s1","gecmisKalem":null,"gecmisSiparis":null,"cozum":false}]
+      sonra:    {"satirlar":[{"iptal":false,"kalem":null,"siparis":null,"no":"SF0-sthrm-s1 (iptal)","gecmisKalem":"f0-t-f11-mvzsthrm-s1k","gecmisSiparis":"f0-t-f11-mvzsthrm-s1","cozum":true}],"fisBagCoz":{"cari":1,"stok":1,"durum":"İptal","zincir":0,"kalemler":[{"id":"f0-t-f11-mvzsthrm-s1k","karsilanan":3}],"baglarAtomik":true}}
+  ✓ [F11.S1-iptal-sonrasi] S1 sipariş iptalinden sonra: karşılanan 3 = hesap 3; hayalet (D1b) yok
+      önce:     {"karsilanan":3,"hesap":3}
+      sonra:    {"karsilanan":3,"hesap":3,"D1b":0}
+  ✓ [F11.iz-bir-kez] ikinci fis_bag_coz: geçmiş bağ ve çözüm zamanı aynı kalır
+      sonra:    {"ilk":"f0-t-f11-mvzsthrm-s1k|2026-11-02 21:56:25.221535+00","ikinci":"f0-t-f11-mvzsthrm-s1k|2026-11-02 21:56:25.221535+00","tekrar":{"cari":0,"stok":0,"durum":"İptal","zincir":0,"kalemler":[{"id":"f0-t-f11-mvzsthrm-s1k","karsilanan":3}],"baglarAtomik":true}}
+  ✓ [F11.S1-fis-iptali] S1 fiş iptalinden sonra: karşılanan 0 = hesap 0, satır iptal, geçmiş bağ korunur, hayalet yok
+      önce:     {"karsilanan":3}
+      sonra:    {"karsilanan":0,"hesap":0,"satirlar":[{"iptal":true,"kalem":null,"siparis":null,"no":"SF0-sthrm-s1 (iptal)","gecmisKalem":"f0-t-f11-mvzsthrm-s1k","gecmisSiparis":"f0-t-f11-mvzsthrm-s1","cozum":true}],"D1b":0,"istemcininKalemDusumu":{},"gonderilenAlt":null,"fisIptal":"tamam"}
+  ✓ [F11.S1-yanit-kalemler] fis_iptal yanıtı geçmiş bağlı kalemi de bildirir (istemci yerel karşılananı düzeltsin)
+      sonra:    {"yanit":[{"id":"f0-t-f11-mvzsthrm-s1k","karsilanan":0}]}
+  ✓ [F11.S1k-kontrol] kontrol (fiş iptali → sipariş iptali): karşılanan 0 = hesap 0
+      sonra:    {"karsilanan":0,"hesap":0,"fisIptal":true,"fisBagCoz":{"cari":0,"stok":1,"durum":"İptal","zincir":0,"kalemler":[{"id":"f0-t-f11-mvzsthrm-kxk","karsilanan":0}],"baglarAtomik":true}}
+  ✓ [F11.S1k-iptal-satiri-izi] iptal edilmiş satır da sipariş iptalinde geçmişe taşınır (geçerli bağ kalmaz)
+      sonra:    {"satirlar":[{"iptal":true,"kalem":null,"siparis":null,"no":"SF0-sthrm-kx (iptal)","gecmisKalem":"f0-t-f11-mvzsthrm-kxk","gecmisSiparis":"f0-t-f11-mvzsthrm-kx","cozum":true}]}
+  ✓ [F11.S2a-eszamanli] S2a zorlanmış (fiş iptali önce) ×3: ikisi tamam, karşılanan 0 = hesap 0, hayalet yok
+      sonra:    [{"ilk":"ok","ikinci":"ok","karsilanan":0,"hesap":0,"fisGecerli":false,"D1b":0}]
+  ✓ [F11.S2a-ters-sira] S2a zorlanmış (sipariş iptali önce) ×3: ikisi tamam, karşılanan 0 = hesap 0, hayalet yok
+      sonra:    [{"ilk":"ok","ikinci":"ok","karsilanan":0,"hesap":0,"fisGecerli":false,"D1b":0}]
+  ✓ [F11.S2-dogal] S2 doğal ×10: kilitlenme 0, her denemede karşılanan = hesap = beklenen
+      sonra:    {"kilitlenme":0,"bozuk":0,"ornek":[]}
+  ✓ [F11.izsiz-eski-kayit] izsiz eski kayıt: geçmiş bağ BOŞ (tahmin yok), karşılanan 3 değişmez, denetimde D5c
+      sonra:    {"satirlar":[{"iptal":false,"kalem":null,"siparis":null,"no":"SF0-sthrm-ez (iptal)","gecmisKalem":null,"gecmisSiparis":null,"cozum":false}],"karsilanan":3,"denetim":{"D1a_karsilanan_hareketten_farkli":0,"D1b_hayalet_karsilanan":1,"D1c_ters_yonlu_net_hareket":0,"D2a_sahipsiz_hareket_kalem_yok":0,"D2b_sahipsiz_hareket_siparis_yok":0,"D2c_hareket_kalem_siparis_uyusmaz":0,"D2d_fis_siparis_yok":0,"D2e_gecmis_bag_kalem_yok":0,"D3_hareket_urunu_kalemden_farkli":0,"D3b_hareket_renk_beden_kalemden_farkli":0,"D4a_onaysiz_fazla_teslim":0,"D4b_isaretli_fazla_teslim":0,"D5a_bagi_cozulmus_teslim":0,"D5b_durum_teslimle_celisiyor":0,"D5c_bagi_cozulmus_izsiz":1,"D6a_satirsiz_stok_fisi":0,"D6b_iptal_fisin_gecerli_satiri":0}}
+  ✓ [F11.izsiz-fis-iptali] izsiz kaydın fişi iptal: karşılanan 3 kalır, geçmiş sütun hâlâ boş (kalem tahmin edilmez)
+      sonra:    {"fisIptal":"tamam","karsilanan":3,"satirlar":[{"iptal":true,"kalem":null,"siparis":null,"no":"SF0-sthrm-ez (iptal)","gecmisKalem":null,"gecmisSiparis":null,"cozum":false}]}
+  ✓ [F11.satir-korumasi] geçmiş sütun: fis_kes yükünden yazılmaz; bag kipinde başka değer, kipsiz, kullanıcıdan ve iki bağ birden reddedilir
+      sonra:    {"fisKes":true,"yuktenYazilan":"|","bagKipiBaskaDeger":"red","kipsiz":"red","kullanici":"red","ikiBag":"red"}
+── t-f11.js: 14 yeşil, 0 kırmızı ──
+── t-f11-kilit
+F1.1 kilit sırası · önek f0-t-f11-kilit-mvzsu67x · N=100 · zorlanmış tekrar 3 · kurallar açık · iz sütunları 3/3
+A) yazmadan önce kilit — tutucu L'yi 1,5 sn tutar; işlem bekliyorsa, tekil serbest mi?
+  ✓ [F11.A-fis_kes-kalem] fis_kes → kalem satırı
+      sonra:    {"islem":"ok","bekledi":true,"tekilSerbest":true,"sure_ms":1443,"sonuc":"tamam"}
+  ✓ [F11.A-fis_iptal-kalem] fis_iptal → kalem satırı
+      sonra:    {"islem":"ok","bekledi":true,"tekilSerbest":true,"sure_ms":1415,"sonuc":"tamam"}
+  ✓ [F11.A-fis_iptal-fis] fis_iptal → iptal edilen fiş satırı
+      sonra:    {"islem":"ok","bekledi":true,"tekilSerbest":true,"sure_ms":1392,"sonuc":"tamam"}
+  ✓ [F11.A-fis_iptal-makbuz] fis_iptal → BAĞLI makbuz satırı
+      sonra:    {"islem":"ok","bekledi":true,"tekilSerbest":true,"sure_ms":1395,"sonuc":"tamam"}
+  ✓ [F11.A-fis_iptal-makbuz-kalemsiz] fis_iptal → BAĞLI makbuz satırı (siparişsiz peşin satış)
+      sonra:    {"islem":"ok","bekledi":true,"tekilSerbest":true,"sure_ms":1382,"sonuc":"tamam"}
+  ✓ [F11.A-fis_iptal-gecmis-kalem] fis_iptal → sipariş iptalinden sonra GEÇMİŞ kalem satırı
+      sonra:    {"islem":"ok","bekledi":true,"tekilSerbest":true,"sure_ms":1377,"sonuc":"tamam"}
+  ✓ [F11.A-fis_bag_coz-kalem] fis_bag_coz → siparişin kalem satırı
+      sonra:    {"islem":"ok","bekledi":true,"tekilSerbest":true,"sure_ms":1402,"sonuc":"tamam"}
+  ✓ [F11.A-fis_bag_coz-fis] fis_bag_coz → siparişe bağlı fiş satırı
+      sonra:    {"islem":"ok","bekledi":true,"tekilSerbest":true,"sure_ms":1378,"sonuc":"tamam"}
+  ✓ [F11.A-alt_yaz-kalem] alt_yaz (tek deyim) → kalem satırı
+      sonra:    {"islem":"ok","bekledi":true,"tekilSerbest":true,"sure_ms":1391,"sonuc":"tamam"}
+  • [F11.A-stk_renk_tasi-hareket] (gözlem) stk_renk_tasi → hareket satırı (P8, açık risk): {"islem":"ok","bekledi":true,"tekilSerbest":true,"sure_ms":1373,"sonuc":"tamam"}
+  • [F11.A-stk_yaz-fis] (gözlem) stk_yaz satır iptali (eski yol, kurallar kapalı) → fiş satırı (P9, açık risk): {"islem":"ERROR:  Hareket yalnız fiş kesilerek yazılır (stk_hareket f0","bekledi":false,"tekilSerbest":true,"sure_ms":61,"sonuc":"kilitlemiyor"}
+B) zorlanmış araya girme — her kilit noktası × iki başlangıç sırası × 3
+  ✓ [F11.B-P1-kalem-kilit] P1 fis_iptal ∥ fis_bag_coz (aynı sipariş) · tutulan: kalem · 6 deneme: kilitlenme 0
+      sonra:    {"kilitlenme":0}
+  ✓ [F11.B-P1-kalem-veri] P1 · tutulan: kalem: karşılanan = beklenen, D1b / D2 / D6 = 0
+      sonra:    {"bozuk":0,"ornek":[]}
+  ✓ [F11.B-P1-fis-kilit] P1 fis_iptal ∥ fis_bag_coz (aynı sipariş) · tutulan: fis · 6 deneme: kilitlenme 0
+      sonra:    {"kilitlenme":0}
+  ✓ [F11.B-P1-fis-veri] P1 · tutulan: fis: karşılanan = beklenen, D1b / D2 / D6 = 0
+      sonra:    {"bozuk":0,"ornek":[]}
+  ✓ [F11.B-P1-hareket-kilit] P1 fis_iptal ∥ fis_bag_coz (aynı sipariş) · tutulan: hareket · 6 deneme: kilitlenme 0
+      sonra:    {"kilitlenme":0}
+  ✓ [F11.B-P1-hareket-veri] P1 · tutulan: hareket: karşılanan = beklenen, D1b / D2 / D6 = 0
+      sonra:    {"bozuk":0,"ornek":[]}
+  ✓ [F11.B-P1-tekil-kilit] P1 fis_iptal ∥ fis_bag_coz (aynı sipariş) · tutulan: tekil · 6 deneme: kilitlenme 0
+      sonra:    {"kilitlenme":0}
+  ✓ [F11.B-P1-tekil-veri] P1 · tutulan: tekil: karşılanan = beklenen, D1b / D2 / D6 = 0
+      sonra:    {"bozuk":0,"ornek":[]}
+  ✓ [F11.B-P6-kalem-kilit] P6 fis_iptal (ana fiş) ∥ fis_iptal (bağlı makbuz) · tutulan: kalem · 6 deneme: kilitlenme 0
+      sonra:    {"kilitlenme":0}
+  ✓ [F11.B-P6-kalem-veri] P6 · tutulan: kalem: karşılanan = beklenen, D1b / D2 / D6 = 0
+      sonra:    {"bozuk":0,"ornek":[]}
+  ✓ [F11.B-P6-fis-kilit] P6 fis_iptal (ana fiş) ∥ fis_iptal (bağlı makbuz) · tutulan: fis · 6 deneme: kilitlenme 0
+      sonra:    {"kilitlenme":0}
+  ✓ [F11.B-P6-fis-veri] P6 · tutulan: fis: karşılanan = beklenen, D1b / D2 / D6 = 0
+      sonra:    {"bozuk":0,"ornek":[]}
+  ✓ [F11.B-P6-hareket-kilit] P6 fis_iptal (ana fiş) ∥ fis_iptal (bağlı makbuz) · tutulan: hareket · 6 deneme: kilitlenme 0
+      sonra:    {"kilitlenme":0}
+  ✓ [F11.B-P6-hareket-veri] P6 · tutulan: hareket: karşılanan = beklenen, D1b / D2 / D6 = 0
+      sonra:    {"bozuk":0,"ornek":[]}
+  ✓ [F11.B-P6-tekil-kilit] P6 fis_iptal (ana fiş) ∥ fis_iptal (bağlı makbuz) · tutulan: tekil · 6 deneme: kilitlenme 0
+      sonra:    {"kilitlenme":0}
+  ✓ [F11.B-P6-tekil-veri] P6 · tutulan: tekil: karşılanan = beklenen, D1b / D2 / D6 = 0
+      sonra:    {"bozuk":0,"ornek":[]}
+  ✓ [F11.B-P6-makbuz-kilit] P6 fis_iptal (ana fiş) ∥ fis_iptal (bağlı makbuz) · tutulan: makbuz · 6 deneme: kilitlenme 0
+      sonra:    {"kilitlenme":0}
+  ✓ [F11.B-P6-makbuz-veri] P6 · tutulan: makbuz: karşılanan = beklenen, D1b / D2 / D6 = 0
+      sonra:    {"bozuk":0,"ornek":[]}
+  ✓ [F11.B-P6b-kalem-kilit] P6b fis_iptal (ana fiş) ∥ fis_iptal (bağlı makbuz) — siparişsiz peşin satış (kalem kilidi yok) · tutulan: kalem · 6 deneme: kilitlenme 0
+      sonra:    {"kilitlenme":0}
+  ✓ [F11.B-P6b-kalem-veri] P6b · tutulan: kalem: karşılanan = beklenen, D1b / D2 / D6 = 0
+      sonra:    {"bozuk":0,"ornek":[]}
+  ✓ [F11.B-P6b-fis-kilit] P6b fis_iptal (ana fiş) ∥ fis_iptal (bağlı makbuz) — siparişsiz peşin satış (kalem kilidi yok) · tutulan: fis · 6 deneme: kilitlenme 0
+      sonra:    {"kilitlenme":0}
+  ✓ [F11.B-P6b-fis-veri] P6b · tutulan: fis: karşılanan = beklenen, D1b / D2 / D6 = 0
+      sonra:    {"bozuk":0,"ornek":[]}
+  ✓ [F11.B-P6b-hareket-kilit] P6b fis_iptal (ana fiş) ∥ fis_iptal (bağlı makbuz) — siparişsiz peşin satış (kalem kilidi yok) · tutulan: hareket · 6 deneme: kilitlenme 0
+      sonra:    {"kilitlenme":0}
+  ✓ [F11.B-P6b-hareket-veri] P6b · tutulan: hareket: karşılanan = beklenen, D1b / D2 / D6 = 0
+      sonra:    {"bozuk":0,"ornek":[]}
+  ✓ [F11.B-P6b-tekil-kilit] P6b fis_iptal (ana fiş) ∥ fis_iptal (bağlı makbuz) — siparişsiz peşin satış (kalem kilidi yok) · tutulan: tekil · 6 deneme: kilitlenme 0
+      sonra:    {"kilitlenme":0}
+  ✓ [F11.B-P6b-tekil-veri] P6b · tutulan: tekil: karşılanan = beklenen, D1b / D2 / D6 = 0
+      sonra:    {"bozuk":0,"ornek":[]}
+  ✓ [F11.B-P6b-makbuz-kilit] P6b fis_iptal (ana fiş) ∥ fis_iptal (bağlı makbuz) — siparişsiz peşin satış (kalem kilidi yok) · tutulan: makbuz · 6 deneme: kilitlenme 0
+      sonra:    {"kilitlenme":0}
+  ✓ [F11.B-P6b-makbuz-veri] P6b · tutulan: makbuz: karşılanan = beklenen, D1b / D2 / D6 = 0
+      sonra:    {"bozuk":0,"ornek":[]}
+C) doğal zorlama — her çift × 100, 0–40 ms rastgele aralık, rastgele başlangıç sırası
+  ✓ [F11.C-P1-kilit] P1 fis_iptal ∥ fis_bag_coz (aynı sipariş) × 100: kilitlenme 0
+      sonra:    {"kilitlenme":0,"oran":"0%","ikisiTamam":"100/100","bozuk":0,"digerHata":{},"ornek":[],"sure_sn":54}
+  ✓ [F11.C-P1-veri] P1 × 100: her denemede karşılanan = beklenen, D1b / D2 / D6 = 0
+      sonra:    {"bozuk":0}
+  ✓ [F11.C-P2-kilit] P2 fis_bag_coz ∥ fis_bag_coz (iki cihaz aynı siparişi iptal eder) × 100: kilitlenme 0
+      sonra:    {"kilitlenme":0,"oran":"0%","ikisiTamam":"100/100","bozuk":0,"digerHata":{},"ornek":[],"sure_sn":53}
+  ✓ [F11.C-P2-veri] P2 × 100: her denemede karşılanan = beklenen, D1b / D2 / D6 = 0
+      sonra:    {"bozuk":0}
+  ✓ [F11.C-P3-kilit] P3 fis_bag_coz ∥ fis_kes (aynı kaleme yeni teslim) × 100: kilitlenme 0
+      sonra:    {"kilitlenme":0,"oran":"0%","ikisiTamam":"48/100","bozuk":0,"digerHata":{"ERROR:  İptal edilmiş siparişe yeni fiş yazılamaz (sipariş f0-t-f11-ki":52},"ornek":[],"sure_sn":54}
+  ✓ [F11.C-P3-veri] P3 × 100: her denemede karşılanan = beklenen, D1b / D2 / D6 = 0
+      sonra:    {"bozuk":0}
+  ✓ [F11.C-P4-kilit] P4 fis_bag_coz ∥ alt_yaz (aynı siparişin düzenlemesi) × 100: kilitlenme 0
+      sonra:    {"kilitlenme":0,"oran":"0%","ikisiTamam":"100/100","bozuk":0,"digerHata":{},"ornek":[],"sure_sn":62}
+  ✓ [F11.C-P4-veri] P4 × 100: her denemede karşılanan = beklenen, D1b / D2 / D6 = 0
+      sonra:    {"bozuk":0}
+  ✓ [F11.C-P5-kilit] P5 fis_iptal ∥ fis_kes (aynı kalem) × 100: kilitlenme 0
+      sonra:    {"kilitlenme":0,"oran":"0%","ikisiTamam":"100/100","bozuk":0,"digerHata":{},"ornek":[],"sure_sn":65}
+  ✓ [F11.C-P5-veri] P5 × 100: her denemede karşılanan = beklenen, D1b / D2 / D6 = 0
+      sonra:    {"bozuk":0}
+  ✓ [F11.C-P6-kilit] P6 fis_iptal (ana fiş) ∥ fis_iptal (bağlı makbuz) × 100: kilitlenme 0
+      sonra:    {"kilitlenme":0,"oran":"0%","ikisiTamam":"100/100","bozuk":0,"digerHata":{},"ornek":[],"sure_sn":65}
+  ✓ [F11.C-P6-veri] P6 × 100: her denemede karşılanan = beklenen, D1b / D2 / D6 = 0
+      sonra:    {"bozuk":0}
+  ✓ [F11.C-P6b-kilit] P6b fis_iptal (ana fiş) ∥ fis_iptal (bağlı makbuz) — siparişsiz peşin satış (kalem kilidi yok) × 100: kilitlenme 0
+      sonra:    {"kilitlenme":0,"oran":"0%","ikisiTamam":"100/100","bozuk":0,"digerHata":{},"ornek":[],"sure_sn":57}
+  ✓ [F11.C-P6b-veri] P6b × 100: her denemede karşılanan = beklenen, D1b / D2 / D6 = 0
+      sonra:    {"bozuk":0}
+  ✓ [F11.C-P7-kilit] P7 fis_bag_coz ∥ REST sipariş başlığı (durum İptal) × 100: kilitlenme 0
+      sonra:    {"kilitlenme":0,"oran":"0%","ikisiTamam":"44/100","bozuk":0,"digerHata":{"ERROR:  Sipariş iptali yalnız bağları birlikte çözen işlemden yapılır ":56},"ornek":[],"sure_sn":58}
+  ✓ [F11.C-P7-veri] P7 × 100: her denemede karşılanan = beklenen, D1b / D2 / D6 = 0
+      sonra:    {"bozuk":0}
+  • [F11.C-P8] (gözlem) P8 fis_iptal ∥ stk_renk_tasi (aynı varyantın hareketleri) × 100: {"kilitlenme":0,"oran":"0%","ikisiTamam":"100/100","bozuk":0,"digerHata":{},"ornek":[],"sure_sn":68}
+  • [F11.C-P9] (gözlem) P9 fis_iptal ∥ eski yol stk_yaz satır iptali (kurallar KAPALI) × 100: {"kilitlenme":0,"oran":"0%","ikisiTamam":"39/100","bozuk":0,"digerHata":{"ERROR:  Hareket yalnız fiş kesilerek yazılır (stk_hareket f0-t-f11-kil":61},"ornek":[],"sure_sn":56}
+── t-f11-kilit.js: 53 yeşil, 0 kırmızı ──
+── t-f11-eski
+F1.1 eski istemci · 1.742.1 (/home/user/atolye/stok-v2/test/f0/.eski-istemci/erp.cjs) · önek f0-t-f11-eski-mvzta68e · iz sütunları 3/3 · kurallar açık
+  ✓ [E11.siparis-iptali] eski istemci sipariş iptali: fis_bag_coz + başlık yazması kabul, geçmiş bağ yazılır, karşılanan 3 = hesap 3
+      sonra:    {"fisBagCoz":{"cari":1,"stok":1,"durum":"İptal","zincir":0,"kalemler":[{"id":"f0-t-f11-eski-mvzta68e-s1k","karsilanan":3}],"baglarAtomik":true},"yazma":{"hata":null,"istekler":["REST siparisler (durum):ok"]},"karsilanan":3,"hesap":3,"satirlar":[{"iptal":false,"kalem":null,"siparis":null,"no":"SF0-ta68e-s1 (iptal)","gecmisKalem":"f0-t-f11-eski-mvzta68e-s1k","gecmisSiparis":"f0-t-f11-eski-mvzta68e-s1","cozum":true}]}
+  ✓ [E11.S1-fis-iptali] eski istemci S1 fiş iptali: karşılanan 0 = hesap 0, hayalet yok
+      sonra:    {"fisIptal":"tamam","istemcininKalemDusumu":{},"gonderilenAlt":null,"karsilanan":0,"hesap":0,"D1b":0}
+  ✓ [E11.S2a-eszamanli] eski istemci S2a (fiş iptali önce) ×3: ikisi tamam, karşılanan 0 = hesap 0
+      sonra:    [{"ilk":"ok","ikinci":"ok","karsilanan":0,"hesap":0,"D1b":0}]
+  ✓ [E11.S2a-ters-sira] eski istemci S2a (sipariş iptali önce) ×3: ikisi tamam, karşılanan 0 = hesap 0
+      sonra:    [{"ilk":"ok","ikinci":"ok","karsilanan":0,"hesap":0,"D1b":0}]
+  ✓ [E11.birlestirme] AÇIK RİSK (F2) — birleştirmede teslim kaybolmaz: kalan kalemlerin karşılananı 7, sahipsiz hareket yok
+      önce:     {"A":{"karsilanan":3,"miktar":10},"B":{"karsilanan":4,"miktar":10}}
+      sonra:    {"A":{"karsilanan":3,"miktar":10},"B":{"karsilanan":4,"miktar":10},"yazma":{"hata":"Supabase 400: {\"code\":\"KR002\",\"message\":\"Teslim geçmişi olan sipariş kalemi silinemez ya da başka kalemle birleştirilemez (kalem f0-t-f11-eski-mvzta68e-mB: Yeni Ürün Siyah, teslim edilen 4) — kalem kalmalı; gerekir","istekler":["REST siparisler (durum):ok","alt_yaz:RED"]},"D2a":0,"D1a":0}
+  ✓ [E11.bayat-satir] kurallar kapalı, bayat yerel veri: bağı çözülmüş hareket yeniden siparişe bağlanmaz, iz ve karşılanan aynı
+      önce:     {"karsilanan":3,"satirlar":[{"iptal":false,"kalem":null,"siparis":null,"no":"SF0-zta68e-y (iptal)","gecmisKalem":"f0-t-f11-eski-mvzta68e-yk","gecmisSiparis":"f0-t-f11-eski-mvzta68e-y","cozum":true}]}
+      sonra:    {"yazma":{"hata":"Buluta yazma yetkisi yok — kimlik koruması açık ama giriş yapılmamış. Sağ üstten kullanıcı girişi yapın; giriş yapınca bekleyen kayıtlar gönderilir. (Girişsiz çalışmak istiyorsanız Supabase'de rls-kimlik.sql'in GERİ ALMA bloğunu çalıştırın.","istekler":["REST POST urunler:ok","stk_yaz:RED"]},"karsilanan":3,"hesap":3,"satirlar":[{"iptal":false,"kalem":null,"siparis":null,"no":"SF0-zta68e-y (iptal)","gecmisKalem":"f0-t-f11-eski-mvzta68e-yk","gecmisSiparis":"f0-t-f11-eski-mvzta68e-y","cozum":true}]}
+  ✓ [E11.geri-yukleme-kapali] AÇIK RİSK (F5) — kurallar kapalı: geri yüklemeden sonra karşılanan = hesap, D1 / D2 / D6 temiz
+      önce:     {"karsilanan":3,"hesap":3}
+      sonra:    {"karsilanan":3,"hesap":3,"fisGecerli":true,"stokYazmasi":"RED","siparisYazmasi":"kabul","denetim":[]}
+  ✓ [E11.geri-yukleme-acik] AÇIK RİSK (F5) — kurallar açık: geri yüklemeden sonra karşılanan = hesap, D1 / D2 / D6 temiz
+      önce:     {"karsilanan":3,"hesap":3}
+      sonra:    {"karsilanan":3,"hesap":3,"fisGecerli":true,"stokYazmasi":"RED","siparisYazmasi":"kabul","denetim":[]}
+── t-f11-eski.js: 8 yeşil, 0 kırmızı ──
+
+══ F0 ÖZET (beklenen-f11.txt ile) ══
+  F11.iz-sutunlari             YESIL    (beklenen)
+  F11.bag-coz-iz-yazar         YESIL    (beklenen)
+  F11.S1-iptal-sonrasi         YESIL    (beklenen)
+  F11.iz-bir-kez               YESIL    (beklenen)
+  F11.S1-fis-iptali            YESIL    (beklenen)
+  F11.S1-yanit-kalemler        YESIL    (beklenen)
+  F11.S1k-kontrol              YESIL    (beklenen)
+  F11.S1k-iptal-satiri-izi     YESIL    (beklenen)
+  F11.S2a-eszamanli            YESIL    (beklenen)
+  F11.S2a-ters-sira            YESIL    (beklenen)
+  F11.S2-dogal                 YESIL    (beklenen)
+  F11.izsiz-eski-kayit         YESIL    (beklenen)
+  F11.izsiz-fis-iptali         YESIL    (beklenen)
+  F11.satir-korumasi           YESIL    (beklenen)
+  F11.A-fis_kes-kalem          YESIL    (beklenen)
+  F11.A-fis_iptal-kalem        YESIL    (beklenen)
+  F11.A-fis_iptal-fis          YESIL    (beklenen)
+  F11.A-fis_iptal-makbuz       YESIL    (beklenen)
+  F11.A-fis_iptal-makbuz-kalemsiz YESIL    (beklenen)
+  F11.A-fis_iptal-gecmis-kalem YESIL    (beklenen)
+  F11.A-fis_bag_coz-kalem      YESIL    (beklenen)
+  F11.A-fis_bag_coz-fis        YESIL    (beklenen)
+  F11.A-alt_yaz-kalem          YESIL    (beklenen)
+  F11.B-P1-kalem-kilit         YESIL    (beklenen)
+  F11.B-P1-kalem-veri          YESIL    (beklenen)
+  F11.B-P1-fis-kilit           YESIL    (beklenen)
+  F11.B-P1-fis-veri            YESIL    (beklenen)
+  F11.B-P1-hareket-kilit       YESIL    (beklenen)
+  F11.B-P1-hareket-veri        YESIL    (beklenen)
+  F11.B-P1-tekil-kilit         YESIL    (beklenen)
+  F11.B-P1-tekil-veri          YESIL    (beklenen)
+  F11.B-P6-kalem-kilit         YESIL    (beklenen)
+  F11.B-P6-kalem-veri          YESIL    (beklenen)
+  F11.B-P6-fis-kilit           YESIL    (beklenen)
+  F11.B-P6-fis-veri            YESIL    (beklenen)
+  F11.B-P6-hareket-kilit       YESIL    (beklenen)
+  F11.B-P6-hareket-veri        YESIL    (beklenen)
+  F11.B-P6-tekil-kilit         YESIL    (beklenen)
+  F11.B-P6-tekil-veri          YESIL    (beklenen)
+  F11.B-P6-makbuz-kilit        YESIL    (beklenen)
+  F11.B-P6-makbuz-veri         YESIL    (beklenen)
+  F11.B-P6b-kalem-kilit        YESIL    (beklenen)
+  F11.B-P6b-kalem-veri         YESIL    (beklenen)
+  F11.B-P6b-fis-kilit          YESIL    (beklenen)
+  F11.B-P6b-fis-veri           YESIL    (beklenen)
+  F11.B-P6b-hareket-kilit      YESIL    (beklenen)
+  F11.B-P6b-hareket-veri       YESIL    (beklenen)
+  F11.B-P6b-tekil-kilit        YESIL    (beklenen)
+  F11.B-P6b-tekil-veri         YESIL    (beklenen)
+  F11.B-P6b-makbuz-kilit       YESIL    (beklenen)
+  F11.B-P6b-makbuz-veri        YESIL    (beklenen)
+  F11.C-P1-kilit               YESIL    (beklenen)
+  F11.C-P1-veri                YESIL    (beklenen)
+  F11.C-P2-kilit               YESIL    (beklenen)
+  F11.C-P2-veri                YESIL    (beklenen)
+  F11.C-P3-kilit               YESIL    (beklenen)
+  F11.C-P3-veri                YESIL    (beklenen)
+  F11.C-P4-kilit               YESIL    (beklenen)
+  F11.C-P4-veri                YESIL    (beklenen)
+  F11.C-P5-kilit               YESIL    (beklenen)
+  F11.C-P5-veri                YESIL    (beklenen)
+  F11.C-P6-kilit               YESIL    (beklenen)
+  F11.C-P6-veri                YESIL    (beklenen)
+  F11.C-P6b-kilit              YESIL    (beklenen)
+  F11.C-P6b-veri               YESIL    (beklenen)
+  F11.C-P7-kilit               YESIL    (beklenen)
+  F11.C-P7-veri                YESIL    (beklenen)
+  E11.siparis-iptali           YESIL    (beklenen)
+  E11.S1-fis-iptali            YESIL    (beklenen)
+  E11.S2a-eszamanli            YESIL    (beklenen)
+  E11.S2a-ters-sira            YESIL    (beklenen)
+  E11.birlestirme              YESIL    (beklenen)
+  E11.bayat-satir              YESIL    (beklenen)
+  E11.geri-yukleme-kapali      YESIL    (beklenen)
+  E11.geri-yukleme-acik        YESIL    (beklenen)
+  kurallar sonda açık: t
+── F0 durumu beklenenle AYNI ──

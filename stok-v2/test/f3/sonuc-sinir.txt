@@ -1,0 +1,21 @@
+✓ İç kontrol kilitsiz doğrudan RPC olarak çağrılamaz
+✓ İstemcinin fiş türü, fazla işareti ve sahte audit sınırı aşamaz
+✓ Boş sipariş tipi sınırı kapatmaz
+✓ Yönetici gerekçesiz fazla gönderemez
+✓ Metin true, gerçek onay değildir
+✓ Yetkisiz kullanıcı onayı taklit edemez
+✓ Aynı yükte miktar artırarak eski sınır aşılamaz
+✓ Birden çok satırın toplamı denetlenir
+✓ Ana ve bağlı fiş birlikte sınanır
+✓ Pozitif satır fazla çıkışı gizleyemez
+✓ Aynı yükte yeni kalemin miktarı da denetlenir
+✓ Hayalet karşılanan yok sayılıp fazla sevk edilmez
+✓ Normal kullanıcı sınırda 20 teslim edebilir; sahte audit saklanmaz
+✓ Gerekçeli yönetici istisnası 25 olarak kaydedilir, gerçek kimlik audit olur, tekrar çift yazmaz
+✓ Sunucu fazla işareti yazılır; normal not değişir, onay kaydı açık/kapalı kuralda değiştirilemez
+✓ Sonlu olmayan miktar reddedilir: NaN
+✓ Sonlu olmayan miktar reddedilir: Infinity
+✓ Sonlu olmayan miktar reddedilir: -Infinity
+✓ Miktar doğrulaması kalem kimliğinin metniyle karıştırılmaz
+✓ Yuvarlama ham hareket toplamındaki fazlayı gizleyemez
+F3 satış sınırı testleri temiz

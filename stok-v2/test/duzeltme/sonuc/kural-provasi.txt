@@ -1,0 +1,4 @@
+prova kayıtları: /tmp/kural-provasi-eZU6Ye
+kural provası: 260 senaryo, fiş yolunda eski yol hareket yazması: 0
+ağa çıkmadan engellenen eski yol girişimi: 12
+senaryo çalıştırma hatası: 0

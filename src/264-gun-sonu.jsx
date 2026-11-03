@@ -206,6 +206,22 @@ function fisDenetimiSorunSayisi(d) {
   return n(d.fissizCari && d.fissizCari.kuraldanSonra) + n(d.fissizKasa && d.fissizKasa.kuraldanSonra)
     + (d.satirsizFis || []).length + (d.iptalTutarsiz || []).length + (d.tutarFarki || []).length;
 }
+// KARŞILANAN (v1.743.0, F1 — kullanıcı kararları 1 Kasım): sipariş kaleminin karşılananı ↔ geçerli stok hareketleri. Hayalet
+// (hareketsiz karşılanan) OTOMATİK SIFIRLANMAZ, burada açıkça raporlanır; fark (hareketle uyuşmayan) ve günün düzeltmeleri (bir fiş
+// işleminin değiştirdiği önceden var olan fark) ayrı satırlar. Sorun sayısına katılmaz (eski veri her gün raporu kırmızı yapmasın)
+// ama turuncu / kırmızı yazılır. Eski sunucu (bölüm yok) → hiçbir şey çıkmaz.
+function karsilananHTML(k) {
+  if (!k) return "";
+  const e = htmlKacis;
+  const n = (x) => Number(x && x.sayi) || 0;
+  const liste = (x, bicim) => ((x && x.ornek) || []).map((o) => e(bicim(o))).join("<br/>");
+  const bolum = (renk, baslik, x, bicim) => !n(x) ? "" :
+    `<div style="margin-top:6px;font-size:11px"><b style="color:${renk}">${e(baslik)} (${e(n(x))})</b><br/>${liste(x, bicim)}${n(x) > ((x.ornek || []).length) ? `<br/>… ve ${e(n(x) - x.ornek.length)} tane daha` : ""}</div>`;
+  return `<div style="margin-top:8px;font-size:11px"><b>Sipariş karşılananı</b> — hayalet ${e(n(k.hayalet))} · hareketle farklı ${e(n(k.fark))} · bugün düzeltilen ${e(n(k.duzeltme))}</div>`
+    + bolum("#B3261E", "Karşılanan stok hareketleriyle uyuşmuyor", k.fark, (o) => `${o.siparisNo || "?"} · kalem ${o.kalem}: karşılanan ${o.karsilanan}, hareket ${o.hareket}`)
+    + bolum("#B26A00", "Hareketi olmayan karşılanan (hayalet — sıfırlanmadı)", k.hayalet, (o) => `${o.siparisNo || "?"} · kalem ${o.kalem}: ${o.karsilanan}`)
+    + bolum("#B26A00", "Bugün bir fiş işleminin değiştirdiği önceki fark", k.duzeltme, (o) => `${o.fisNo || "?"} · kalem ${o.kalem}: ${o.onceki} → ${o.yeni} (hareket ${o.hesap}${o.tur === "hayalet_korundu" ? ", hayalet korundu" : ""})${o.eden ? ` — ${o.eden}` : ""}`);
+}
 function fisDenetimiHTML(d) {
   if (!d) return "";
   const e = htmlKacis;
@@ -223,6 +239,7 @@ function fisDenetimiHTML(d) {
     ${satir("Satırsız fiş", d.satirsizFis, (x) => `${x.fisNo} · ${x.tur}`)}
     ${satir("İptal edilmiş fişin geçerli satırı", d.iptalTutarsiz, (x) => `${x.fisNo} · ${x.tur} (stok ${x.stok}, cari ${x.cari}, kasa ${x.kasa})`)}
     ${satir("Başlık tutarı satırlardan farklı", d.tutarFarki, (x) => `${x.fisNo} · ${x.tur}: başlık ${x.baslik}, satırlar ${x.satirlar}`)}
+    ${karsilananHTML(d.karsilanan)}
     ${(g.iptal || []).length ? `<div style="margin-top:6px;font-size:11px;color:#555"><b>Bugün iptal edilen fişler</b><br/>${g.iptal.map((x) => e(`${x.fisNo} · ${x.tur}${x.sebep ? ` — ${x.sebep}` : ""}${x.eden ? ` (${x.eden})` : ""}`)).join("<br/>")}</div>` : ""}
   `;
 }

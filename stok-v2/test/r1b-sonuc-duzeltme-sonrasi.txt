@@ -1,0 +1,19 @@
+── stok-v2/test/r1b-turetme.js
+  kurallar açık: t · v2 modülleri: t
+1) Eski veriyle iki cihaz karşılananı mutlak yazarken (5) başka kullanıcı 5 teslim eder
+    SONUÇ → stok hareketleri: 10 · karşılanan: 10
+  ✓ 1: üç istek de kabul edildi
+  ✓ 1: karşılanan = stok hareketleri = 10
+2) Sipariş düzenleme: fiyat 120 yapılır, satırda ekrandaki eski karşılanan (0) var
+    SONUÇ → fiyat: 120 · karşılanan: 10
+  ✓ 2: fiyat yazıldı, karşılanan ezilmedi (10)
+3) 20'lik kaleme eşzamanlı 24 teslim (önce 14, sonra iki kullanıcı 5'er; ikisinin ekranında 14)
+    SONUÇ → stok hareketleri: 24 · karşılanan: 24 (miktar 20)
+  ✓ 3: iki fiş, stok 24, karşılanan 24 — fazla 4 sipariş kaydında görünüyor
+4) Yeni kalem eklenir (karşılanan 0)
+  ✓ 4: kalem eklendi, karşılanan 0
+5) Eski uygulama (artis yok) fis_kes içinden mutlak karşılanan gönderir — fiş işlemi içinde serbest
+  ✓ 5: kabul edildi, karşılanan 3
+6) Fiş sistemi KAPALI (v2 modülleri etkin değil): mutlak yazma bugünkü gibi
+  ✓ 6: karşılanan 7 yazıldı (koruma devrede değil)
+── R1b temiz ──

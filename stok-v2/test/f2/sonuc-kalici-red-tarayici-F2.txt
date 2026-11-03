@@ -1,0 +1,10 @@
+F2 kalıcı ret — tarayıcı (saat 10 dk ileri) · ilk yazma POST: 6
+  • [BRT.seyir] (gözlem) dakika başına toplam POST: [7,7,7,7,7,7,7,7,7,7]
+  ✓ [BRT.serit] şerit ve hata metni görünür (ret kullanıcıya gösterilir)
+      sonra:    {"once":{"post":7,"deneme":6,"hata":"kalıcı ret (test): bu kayıt sunucu kuralına aykırı [KR003]","serit":{"sayi":2,"metin":"Buluta gönderilemeyen kayıt var: Tanımlar — inceleme gerekiyor (kendiliğinden denenmez) Fiş defteri Bu cihazdaki veri güncel; diğer cihazlar eksik görür, kapatm"}},"sonra":{"post":7,"deneme":7,"hata":"kalıcı ret (test): bu kayıt sunucu kuralına aykırı [KR003]","serit":{"sayi":4,"metin":"Buluta gönderilemeyen kayıt var: Tanımlar — inceleme gerekiyor (kendiliğinden denenmez) Fiş defteri (9×) Cari kartları (3×) Stok kartları (3×) Bu cihazdaki veri"}}}
+  ✓ [BRT.yerel-korunur] yerel kayıt silinmez
+      sonra:    {"yerelde":true}
+  ✓ [BRT.otomatik-tekrar-yok] kalıcı ret 10 dakikada otomatik yeniden gönderilmez
+      sonra:    {"onceki":7,"sonraki":7,"deneme":7}
+  ✓ [BRT.inceleme] şerit kaydı 'inceleme gerekiyor' olarak ayırır (geçici ağ hatasından farklı)
+      sonra:    {"serit":{"sayi":4,"metin":"Buluta gönderilemeyen kayıt var: Tanımlar — inceleme gerekiyor (kendiliğinden denenmez) Fiş defteri (9×) Cari kartları (3×) Stok kartları (3×) Bu cihazdaki veri"}}

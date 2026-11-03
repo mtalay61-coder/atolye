@@ -1,0 +1,27 @@
+F1 başarısızlık testleri · önek f0-t-f1-mvywxg7g
+  ✓ [F1.istemci-alani-kabul] yükteki `istemci` alanı kabul edilir (eski ve yeni SQL)
+      sonra:    {"kabul":true}
+  ✓ [F1.yanit-kalemler] fis_kes yanıtında kalemler: [{id, karsilanan}] = veritabanı
+      sonra:    {"yanit":[{"id":"f0-t-f1-mvywxg7g-y-A","karsilanan":4}],"db":4}
+  ✓ [F1.iptal-yanit-kalemler] fis_iptal yanıtında kalemler (iptal sonrası 0)
+      sonra:    {"yanit":[{"id":"f0-t-f1-mvywxg7g-y-A","karsilanan":0}],"db":0}
+  ✓ [F1.onceden-fark-raporlanir] fark işlemde düzelir (5 / 5) ve iz kaydı + yanıtta düzeltme bilgisi var
+      önce:     {"karsilanan":9,"teslim":4}
+      sonra:    {"karsilanan":5,"teslim":5,"iz":[{"tur":"onceden_fark","onceki":9,"hesap":4,"yeni":5,"islem":"fis_kes"}],"yanitDuzeltme":[{"id":"f0-t-f1-mvywxg7g-f-A","tur":"onceden_fark","yeni":5,"hesap":4,"onceki":9}]}
+  ✓ [F1.hayalet-korunur] hayalete teslim: 5 + 2 = 7 (sıfırlanmaz) ve iz 'hayalet_korundu'
+      önce:     {"A":5,"B":3}
+      sonra:    {"A":7,"teslimA":2,"B":3,"izA":[{"tur":"hayalet_korundu","onceki":5,"hesap":0,"yeni":7,"islem":"fis_kes"}],"izB":[]}
+  ✓ [F1.hayalet-dokunulmaz] fişe girmeyen hayalet kalem (B) değişmez, izi yok
+      sonra:    {"A":7,"teslimA":2,"B":3,"izA":[{"tur":"hayalet_korundu","onceki":5,"hesap":0,"yeni":7,"islem":"fis_kes"}],"izB":[]}
+  ✓ [F1.gece-raporu] gece denetiminde `karsilanan` bölümü: hayalet + fark + günün düzeltmeleri
+      sonra:    {"hayalet":15,"fark":7,"duzeltme":66}
+  ✓ [F1.iz-erisimi] fis_karsilanan_iz doğrudan okunamaz (RLS / yetki)
+      sonra:    {"sonuc":"reddedildi"}
+  ✓ [F1.G1-yeni-kodla] ön kilitli işlem + fis_kes: kilitlenme yok, ikisi de tamam
+      sonra:    {"onKilit":true,"fisKes":true}
+  ✓ [F1.tekil-tutucu] 'tekil' tutulurken fis_kes bekler ve tamamlanır (kilitlenme yok)
+      sonra:    {"fisKes":true,"bekledi_ms":783,"karsilanan":1}
+  ✓ [F1.iptal-kes-eszamanli] iptal + ters sıralı yeni fiş: kilitlenme yok, karşılanan = teslim (2 / 2)
+      sonra:    {"iptal":true,"kes":true,"k1":[2,2],"k2":[2,2]}
+  • [F1.G4-iptal-ile-bag-coz] (gözlem) fis_iptal + aynı siparişin fis_bag_coz'u: {"kilitlenme":0,"iptal":"tamam","bagCoz":"tamam","karsilanan":0,"teslim":0}
+── t-f1.js: 11 yeşil, 0 kırmızı ──

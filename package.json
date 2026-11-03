@@ -3,10 +3,12 @@
   "private": true,
   "description": "Atölye ERP — derleme ve test araçları (uygulamanın kendisi tek HTML dosyası, CDN'den React yüklüyor)",
   "scripts": {
+    "test:f4": "node stok-v2/test/f4/kos-gomulu.js",
     "yap": "./yap.sh",
     "test": "./test/kosu.sh"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.14",
     "playwright": "1.56.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

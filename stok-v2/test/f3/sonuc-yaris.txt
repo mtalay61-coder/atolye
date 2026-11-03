@@ -1,0 +1,1 @@
+✓ F3 gerçek PostgreSQL 100 yarış: her çiftte bir kabul/bir kural reddi; 19/20, iki fiş, iki hareket, cari 1900; 0 kilitlenme/bozuk

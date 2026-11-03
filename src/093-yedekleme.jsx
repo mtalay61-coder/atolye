@@ -151,6 +151,16 @@ useEffect(() => {
 // yükleme YOKTU; yedekte muhasebe (kasa/banka/ÇEK) ve koliler de yoktu.
 const yedegiUygula = useCallback(async (y, kaynakAd) => {
   if (!y || !Array.isArray(y.stok)) { showToast("Yedek okunamadı veya bozuk"); return false; }
+  // F5 ilk koruma: tablo tablo geri yükleme fiş ve hareketlerini aynı işlemde geri alamıyor.
+  // Kurallar kapalı olsa veya bağlantı düşse de kurulu fiş defteri korunmalı; fisKesYolu()
+  // bağlantıya/modül bayraklarına bağlı olduğundan burada güvenli bir engel ölçütü değildir.
+  // Ayar okunamadığında eski sistem varsayarak yerel durumu değiştirmek de veri kaybettirir.
+  if (_fisDefteriKurulu || (supabaseAcikMi() && v2AyarBilinmiyorMu())) {
+    showToast(_fisDefteriKurulu
+      ? "Fiş defteri kullanılan sistemde tam yedek geri yükleme kapalı. Mevcut kayıtlar değiştirilmedi; yedeği inceleme için saklayın."
+      : "Sunucu ayarları doğrulanamadığı için geri yükleme durduruldu. Bağlantıyı yenileyip yeniden deneyin.");
+    return false;
+  }
   // SİLİNECEKLER ÖNCE GÖSTERİLİR (v1.712.0, toplu silme kilidi — 040 `topluSilmeEngeliMi`). Eski bir yedek, bugünkü
   // üretimleri / hareketleri "yedekte yok" diye buluttan siler; bu, uygulamadaki en kolay veri kaybı yolu. Kayıt
   // sayıları kullanıcıya yazılır; kilidi aşacak ölçüde silme varsa ayrıca onay istenir ve yazmalar ancak o onayla

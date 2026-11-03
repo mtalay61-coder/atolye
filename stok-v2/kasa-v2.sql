@@ -93,6 +93,100 @@ select 'tekil'::text as id,
 --  Tekrara dayanıklı: kimlikle yazılır; iptal edilen satır yeniden gelirse açılır.
 --  Yetki (rls-yazma.sql ile aynı kural): yalnız kur güncellemesi (kurlar / kurGecmisi) herkese açık — açılışta otomatik;
 --  geri kalanı muhasebe | fisler | cari "kaydetme".
+-- Çek güncellemeleri kayıp yazmaya karşı önceki belgeyle karşılaştırılır.
+-- Kilitler fis_kes tarafından ilk fiş/sayaç yazmasından ÖNCE de alınır.
+create or replace function public.kas_cek_kilitle(p jsonb, p_fis boolean default false) returns void
+language plpgsql security definer set search_path=public as $$
+declare
+  kid text;
+  c public.kas_cek;
+  v_satir jsonb;
+  beklenen jsonb;
+  sil boolean;
+begin
+  -- Geçiş öncesi eski kasa kurulumunda davranış değişmez; fiş defteri kurulduğunda kapı zorunludur.
+  if to_regprocedure('public.fis_kapi_acik()') is null then return; end if;
+  if exists(select 1 from jsonb_array_elements(public.stk_dizi(p->'cekler')) x
+            group by x->>'id' having count(*)>1) then
+    raise exception 'Aynı çek bir işlemde birden çok kez değiştirilemez' using errcode='KR008';
+  end if;
+  for kid in select distinct id from (
+    select x->>'id' as id from jsonb_array_elements(public.stk_dizi(p->'cekler')) x
+    union all select jsonb_array_elements_text(public.stk_dizi(p->'cekIptal'))) a order by id loop
+    if coalesce(kid,'')='' then raise exception 'Çek kimliği eksik' using errcode='KR008'; end if;
+    perform pg_advisory_xact_lock(hashtextextended('kas_cek:'||kid,0));
+    select * into c from public.kas_cek where id=kid;
+    select y into v_satir from jsonb_array_elements(public.stk_dizi(p->'cekler')) with ordinality as e(y,n)
+      where y->>'id'=kid order by n desc limit 1;
+    sil := exists(select 1 from jsonb_array_elements_text(public.stk_dizi(p->'cekIptal')) i where i=kid);
+    if sil and v_satir is not null then raise exception 'Çek aynı işlemde yazılıp silinemez (%)',kid using errcode='KR008'; end if;
+    beklenen := case when sil then p->'cekOnceki'->kid else v_satir->'onceki' end;
+    if c.id is null then
+      if beklenen is not null and beklenen <> 'null'::jsonb then
+        raise exception 'Çek başka cihazda değişmiş veya silinmiş (%) — yenileyin',kid using errcode='KR008';
+      end if;
+    else
+      -- Bağımsız metadata isteğinin cevabı kaybolursa aynı yeni belge zararsız tekrardır.
+      -- Yeni bir fiş isteği için bu kestirme YOK: aksi halde aynı tahsil iki kez yazılabilir.
+      if not p_fis and not sil and not c.iptal and c.veri=v_satir->'veri' then continue; end if;
+      if c.iptal or beklenen is distinct from c.veri then
+        raise exception 'Çek başka cihazda değişmiş veya iptal edilmiş (%) — yenileyip işlemi tekrar seçin',kid using errcode='KR008';
+      end if;
+      if coalesce(c.veri->>'durum','Portföyde') is distinct from coalesce(v_satir->'veri'->>'durum','Portföyde') and not sil then
+        if coalesce(c.veri->>'durum','Portföyde') not in ('Portföyde','Tahsilde')
+           or coalesce(v_satir->'veri'->>'durum','Portföyde') not in ('Tahsilde','Ciro Edildi','İade Edildi','Tahsil Edildi','Karşılıksız')
+           or (c.veri->>'durum'='Tahsilde' and v_satir->'veri'->>'durum' in ('Tahsilde','Ciro Edildi'))
+           or (coalesce(c.veri->>'tip','Alınan')='Verilen' and v_satir->'veri'->>'durum' in ('Tahsilde','Ciro Edildi'))
+           or (not p_fis and v_satir->'veri'->>'durum' in ('Ciro Edildi','İade Edildi','Tahsil Edildi')) then
+          raise exception 'Çek durum geçişi geçersiz veya fiş gerektiriyor (%)',kid using errcode='KR008';
+        end if;
+      end if;
+    end if;
+  end loop;
+end $$;
+revoke all on function public.kas_cek_kilitle(jsonb,boolean) from public,anon,authenticated;
+
+-- Kasa/banka hesabı ilk fiş yazmasından önce kilitlenir; bakiyeli hesap gizlenemez.
+create or replace function public.kas_hesap_kilitle(p jsonb) returns void
+language plpgsql security definer set search_path=public as $$
+declare
+  kid text;
+  c public.kas_hesap;
+  v_satir jsonb;
+  sil boolean;
+begin
+  if to_regprocedure('public.fis_kapi_acik()') is null then return; end if;
+  for kid in select distinct id from (
+    select x->>'id' as id from jsonb_array_elements(public.stk_dizi(p->'hesaplar')) x
+    union all select x->>'hesap_id' from jsonb_array_elements(public.stk_dizi(p->'hareketler')) x
+    union all select jsonb_array_elements_text(public.stk_dizi(p->'hesapSil'))) a order by id loop
+    if coalesce(kid,'')='' then raise exception 'Kasa/banka hesap kimliği yok' using errcode='KR010'; end if;
+    perform pg_advisory_xact_lock(hashtextextended('kas_hesap:'||kid,0));
+    select * into c from public.kas_hesap where id=kid;
+    select y into v_satir from jsonb_array_elements(public.stk_dizi(p->'hesaplar')) with ordinality as e(y,n)
+      where y->>'id'=kid order by n desc limit 1;
+    sil:=exists(select 1 from jsonb_array_elements_text(public.stk_dizi(p->'hesapSil')) i where i=kid);
+    if exists(select 1 from jsonb_array_elements(public.stk_dizi(p->'hareketler')) x where x->>'hesap_id'=kid) then
+      if sil or ((c.id is null or not c.aktif) and v_satir is null) then
+        raise exception 'Hareketin kasa/banka hesabı yok veya kapalı (%)',kid using errcode='KR010';
+      end if;
+    end if;
+    if c.id is null then continue; end if;
+    if v_satir is not null and exists(select 1 from public.kas_hareket where hesap_id=kid) then
+      if c.tur is distinct from v_satir->>'tur'
+        or coalesce(c.veri->>'paraBirimi','TRY') is distinct from coalesce(v_satir->'veri'->>'paraBirimi','TRY') then
+        raise exception 'Hareket geçmişi olan hesabın türü/para birimi değişmez (%)',kid using errcode='KR010';
+      end if;
+    end if;
+    if sil and exists(select 1 from public.kas_hareket h where h.hesap_id=kid and not h.iptal
+      group by coalesce(h.veri->>'paraBirimi',c.veri->>'paraBirimi','TRY')
+      having sum(case when h.veri->>'yon'='Çıkış' then -1 else 1 end * coalesce(public.stk_sayi(h.veri->>'tutar'),0))<>0) then
+      raise exception 'Bakiyesi olan kasa/banka hesabı kapatılamaz (%) — önce bakiyeyi aktarın',kid using errcode='KR010';
+    end if;
+  end loop;
+end $$;
+revoke all on function public.kas_hesap_kilitle(jsonb) from public,anon,authenticated;
+
 create or replace function public.kas_yaz(p jsonb) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare
@@ -122,6 +216,15 @@ begin
      or exists (select 1 from jsonb_array_elements(public.stk_dizi(p -> 'cekler')) x
                 where coalesce(x ->> 'id', '') = '' or jsonb_typeof(x -> 'veri') <> 'object') then
     raise exception 'Kasa kaydında kimlik, hesap ya da tür eksik' using errcode = '22023';
+  end if;
+
+  perform public.kas_cek_kilitle(p, coalesce(current_setting('fis.kapi',true),'')='acik');
+  perform public.kas_hesap_kilitle(p);
+
+  if exists(select 1 from jsonb_array_elements(public.stk_dizi(p->'hareketler')) x
+    where (public.stk_sayi(x->'veri'->>'tutar') is null and to_regprocedure('public.fis_kapi_acik()') is not null)
+      or coalesce(public.stk_sayi(x->'veri'->>'tutar'),0)::text in ('NaN','Infinity','-Infinity')) then
+    raise exception 'Kasa/banka hareket tutarı sonlu bir sayı olmalı' using errcode='KR010';
   end if;
 
   -- Hesaplar (ekle / güncelle / yeniden etkinleştir) ve kaldırılanlar (pasif — hareketleri iz olarak kalır)

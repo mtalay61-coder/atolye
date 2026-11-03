@@ -47,6 +47,7 @@ declare
 begin
   for t in
     select tablename from pg_tables where schemaname = 'public'
+      and tablename not in ('fis_sayac','fis_karsilanan_iz','fis_cek_iz')
       and tablename <> 'silinen_arsiv'   -- yalnız okunur arşiv; kendi politikası silinen-arsiv.sql'de
       and tablename not like 'stk\_%' and tablename not like 'car\_%' and tablename not like 'kas\_%' and tablename not like 'lst\_%'   -- v2: yalnız okunur, yazma sunucu işlemleriyle (v1.726.0+)
   loop
@@ -94,6 +95,22 @@ begin
       revoke insert, update, delete, truncate on public.siparis_kalemleri, public.uretim_atamalari from authenticated;
     end if;
   end if;
+end $$;
+-- Fiş sayaç/audit kayıtları özel kalır: genel grant veya eski politikanın tekrar çalışması açamaz.
+do $$
+declare t text; p record;
+begin
+ foreach t in array array['fis_sayac','fis_karsilanan_iz','fis_cek_iz','stk_istemci_iz'] loop
+  if to_regclass('public.'||t) is not null then
+   execute format('revoke all on public.%I from public,anon,authenticated',t);
+   for p in select policyname from pg_policies where schemaname='public' and tablename=t loop
+    execute format('drop policy %I on public.%I',p.policyname,t);
+   end loop;
+  end if;
+ end loop;
+ foreach t in array array['fis_karsilanan_iz_id_seq','stk_istemci_iz_id_seq'] loop
+  if to_regclass('public.'||t) is not null then execute format('revoke all on sequence public.%I from public,anon,authenticated',t); end if;
+ end loop;
 end $$;
 alter default privileges in schema public grant all on tables to authenticated;
 alter default privileges in schema public grant all on sequences to authenticated;

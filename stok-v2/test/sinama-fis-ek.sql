@@ -13,6 +13,12 @@ grant all on _no to authenticated;
 -- sinama-fis.sql'nin bıraktığı gibi bulmalı.
 begin;
 
+-- F2 (2 Kasım): hareket var olmayan kaleme bağlanamaz (KR005 / yabancı anahtar). Bağ çözme sınamasının siparişi ve kalemi önce
+-- kurulur (eskiden fiş kurgusal sip-9 / k-1'e bağlanıyordu); işlem sonunda geri alındığı için iz bırakmaz.
+insert into public.siparisler (id, siparis_no, tip, cari_id, durum) values ('sip-9', 'SAT-9', 'Satış', 'c-yeni', 'Bekliyor') on conflict do nothing;
+insert into public.siparis_kalemleri (id, siparis_id, urun_id, urun_ad, renk, miktar, karsilanan, fiyat, para_birimi, birim, sira)
+  values ('k-1', 'sip-9', 'u-yeni', 'Yeni Ürün', 'Siyah', 5, 0, 80, 'TRY', 'çift', 0) on conflict do nothing;
+
 set role authenticated;
 select pg_temp.kullanici('ali@atolye.local');
 

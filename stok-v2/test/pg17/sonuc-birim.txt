@@ -1,0 +1,2084 @@
+
+── test/birim-acilis-fisi.js
+  ✓ hareketsiz üründe tüm miktar açık
+  ✓ kısmen açıklanmış ürün
+  ✓ tam açıklanmış üründe fark yok
+  ✓ hareket fazlaysa açılış eksi
+  ✓ yalnız açığı olan iki ürüne yazıldı
+  ✓ ürün başına TEK fiş numarası
+  ✓ fiş numarası var
+  ✓ kaynağı Açılış
+  ✓ dokunulmayan ürün aynı nesne
+  ✓ miktarlar değişmedi
+  ✓ açık sıfırlandı
+  ✓ ikinci çağırı hareket üretmiyor
+  ✓ açık listesi iki satır
+  ✓ satır ürünü tanımlıyor
+  ✓ varyantlar aynı fişe bağlı
+  ✓ varyant başına bir hareket
+
+── açılış fişi testi temiz ──
+
+── test/birim-adim-kurali.js
+  ✓ Kesim verilmeden Saya'ya akış yok
+  ✓ Kesim kısmen teslim → Saya'ya o kadar
+  ✓ iki ara proses art arda da şeffaf
+  ✓ ilk adım siparişin tamamı
+  ✓ denetim bozuğu bulur, doğruyu bulmaz
+── adım kuralı testi temiz ──
+
+── test/birim-alis-ortalama.js
+Yardımcılar
+  ✓ 3 ay önce (ay sonu taşması)
+  ✓ gün kuru: o gün ya da öncesi en yakın
+Son 3 ay ortalaması
+  ✓ miktar ağırlıklı (10×100 + 30×80)/40 = 85; eski ve başka renk yok
+  ✓ kaynak yazısı
+  ✓ boy ayrı
+  ✓ reçetede 'Tüm Bedenler' boy sayılmaz
+  ✓ hepsi USD → USD ortalama (10×2 + 30×3)/40 = 2,75 $, TL = 110
+3 aydan eski son alış
+  ✓ 64 ₺ / 32 = 2 $ → bugün 80 ₺
+  ✓ o günün kuru yoksa olduğu gibi, kaynakta yazar
+  ✓ rapor tarihinden sonraki alış sayılmaz
+Alış yoksa eski davranış
+  ✓ alışı olmayan renk → kart
+  ✓ bağlam yok → kart (eski çağrılar)
+  ✓ sonAlisMaliyeti alış yoksa null
+Kâr/zarar maliyeti
+  ✓ reçeteli mamul: 2 × 0,5 × 85 = 85 (işçilik hariç); reçetesiz: 2 × 60 = 120
+
+── test/birim-ambalaj.js
+  ✓ kutu ambalaj tipinde
+  ✓ deri ambalaj tipinde değil
+  ✓ alan yoksa ürün tipine bakılır (eski satır)
+  ✓ alan yoksa normal malzeme sabittir
+  ✓ tipi Ambalaj olmayan üründe de satır işareti geçerli
+  ✓ ambalaj tipli üründe satır sabit işaretliyse sabittir
+  ✓ eski satırda renk siparişten gelir
+  ✓ sabit satır değişken değildir
+  ✓ sabit satırda reçetedeki renk korunur
+  ✓ değişken satırda sipariş rengi uygulanır
+  ✓ deri satırı siparişten etkilenmez
+  ✓ sabit ambalaj satırı eksik renk uyarısı verir
+  ✓ değişken ambalaj satırı kapsam denetiminden muaf
+  ✓ seçenek yazılmamışsa o hammaddenin tüm renkleri
+  ✓ seçenek yazılmışsa yalnızca onlar
+  ✓ sabit satır siparişe seçenek üretmez
+  ✓ birden çok ambalaj satırı birleşir, deri karışmaz
+  ✓ reçetesiz mamulde seçenek yok
+  ✓ tipsiz kutu da siparişe seçenek üretir
+── ambalaj birim testi temiz ──
+
+── test/birim-ara-proses.js
+  ✓ sıra: Kesim → Boya* → Temizleme* → Saya → Ütü* (eski tek kimlik) → Montaj
+  ✓ ara adımların kimliği ve carisi
+  ✓ ara sırası asılın arasında
+  ✓ aynı ara proses iki yerde → tek adım
+  ✓ reçetesiz → tek 'Üretim' adımı
+  ✓ araProsesIdleri: dizi ve tek kimlik
+  ✓ araProsesCiftleri
+── ara proses testi temiz ──
+
+── test/birim-atolye-barkod.js
+  ✓ ilk parça -1
+  ✓ ikinci parça -2
+  ✓ en büyükten devam eder
+  ✓ silinen parçanın kodu tekrar kullanılmaz
+  ✓ başka üretimin kodları karışmaz
+  ✓ personel barkodu tanınır
+  ✓ parça barkodu tanınır
+  ✓ ana üretim kodu tanınır
+  ✓ bilinmeyen kod → null
+  ✓ boş kod → null
+  ✓ sırası gelen adım Kesim
+  ✓ Kesim bitince sıra Saya
+  ✓ hepsi bitmişse sıradaki yok
+  ✓ kalan dağıtılmamış miktar
+  ✓ tamamı dağıtılmışsa boş
+  ✓ hiç kayıt yoksa taban 10000 → ilk üretim 10001
+  ✓ eski 4 haneli numaralar tabanı düşürmez
+  ✓ en büyük mevcut numara
+  ✓ silinen numara çöpten okunur
+  ✓ çöpteki başka tür sayılmaz
+  ✓ ek barkoddan gelir
+  ✓ silmeden sonra ek kaymaz
+  ✓ barkodsuz eski kayıtta konum
+  ✓ tek atamada ek yok
+  ✓ atamasız (ara proses) ek yok
+  ✓ bölünmemiş üretim
+  ✓ bölünmemişte parça kodu yok
+  ✓ bölünmüş üretim tanınır
+  ✓ parça kodları sırayla
+  ✓ bölünmüşte sıradaki kod 10006-3
+── atölye barkod testi temiz ──
+
+── test/birim-banka.js
+  ✓ Ziraat IBAN'ı tanınır
+  ✓ Garanti IBAN'ı tanınır
+  ✓ İş Bankası tanınır
+  ✓ boşluklar ve küçük harf sorun değil
+  ✓ bilinmeyen banka kodu → boş
+  ✓ IBAN değilse → boş
+  ✓ boş girdi → boş
+  ✓ yabancı IBAN → boş
+  ✓ yalnızca o bankanın şubeleri, tekrarsız ve sıralı
+  ✓ banka verilmezse hepsi
+  ✓ geçmiş yoksa boş liste
+  ✓ banka listesi dolu
+── banka testi temiz ──
+
+── test/birim-barkod-semasi.js
+  ✓ dört seviye uzunluğu
+  ✓ uzunluklar çakışmıyor
+  ✓ kod sıfırla dolduruluyor
+  ✓ hane taşarsa boş
+  ✓ sıfır geçerli — Standart için ayrılmış
+  ✓ null kod → boş
+  ✓ tanımsız kod → boş
+  ✓ atanan sayıları
+  ✓ hiçbir aile dolmadı
+  ✓ stok no 1'den başlıyor
+  ✓ beden kodları sırayla
+  ✓ sayaçlar kayıtlı
+  ✓ ikinci atama kod değiştirmiyor
+  ✓ kodlar aynı kaldı
+  ✓ ton kodu korunuyor
+  ✓ barkod kodu ayrı alanda
+  ✓ ad değişse de stok no aynı
+  ✓ silinen renk numarası yeniden kullanılmıyor
+  ✓ son numara (99) verildi
+  ✓ sınırı aşan koda kod verilmiyor
+  ✓ dolan aile bildiriliyor
+  ✓ sadece stok
+  ✓ stok + renk
+  ✓ stok + renk + beden
+  ✓ stok + renk + asorti
+  ✓ eksik parça → boş kod
+  ✓ varyant barkodu
+  ✓ boyut ölçüsü kendi kodunu kullanıyor
+  ✓ stok seviyesi
+  ✓ renk seviyesi
+  ✓ beden seviyesi
+  ✓ asorti kodu 13 hane
+  ✓ asorti dağılımı
+  ✓ asorti toplamı 8 çift
+  ✓ eksik beden yok
+  ✓ eksik bedenler bildiriliyor
+  ✓ eksik olmayan beden ekleniyor
+  ✓ ölçüsüz varyantın barkodu kuruluyor
+  ✓ renksiz VE ölçüsüz varyantın barkodu kuruluyor
+  ✓ ölçüsüz kod çözülüyor
+  ✓ renksiz kod çözülüyor
+  ✓ Standart eksik olarak bildirilmiyor
+  ✓ tanımlanmış Standart kendi kodunu alır
+  ✓ ön eki yanlış → null
+  ✓ rakam olmayan → null
+  ✓ tanınmayan stok no → null
+  ✓ tanınmayan renk kodu → null
+  ✓ üründe olmayan renk → null
+  ✓ üründe olmayan beden → null
+  ✓ geçersiz uzunluk → null
+  ✓ boş kod → null
+  ✓ carilere kod atandı
+  ✓ cari sayacı kayıtlı
+  ✓ ekranda dört hane
+  ✓ kodsuz cari boş metin
+  ✓ unvan değişince kod aynı
+  ✓ ikinci atama kod vermiyor
+  ✓ silinen numara yeniden kullanılmıyor
+  ✓ cari aralığı dolunca bildiriliyor
+  ✓ model rengi tanımsız SAYILMIYOR
+  ✓ barkod kombinasyon koduyla kuruluyor (renk kodu 1001)
+  ✓ okutulunca model rengine çözülüyor
+  ✓ etiket adı değişse kod başından eşleşir
+  ✓ renk sayacı kombinasyon kodunu (1001) atlıyor
+
+Barkod şeması: tamam
+
+── test/birim-barkod.js
+  ✓ tek karakterde 25 öğe (bitiş çubuğu dahil)
+  ✓ Start B deseni doğru
+  ✓ bitiş deseni ve kapanış çubuğu
+  ✓ iki karakterde 31 öğe
+  ✓ kontrol deseni doğru (102)
+  ✓ boş metin → null
+  ✓ Türkçe karakter → null (Code128-B dışı)
+  ✓ svg üretiliyor
+  ✓ kod yazısı svg içinde
+  ✓ geçersiz kodda boş svg
+── barkod testi temiz ──
+
+── test/birim-bayat-denetim.js
+  ✓ yakalar — A: set sonrası okuma
+  ✓ yakalar — A: hook'a d ile gelen state
+  ✓ yakalar — A: iç içe callback'te okuma
+  ✓ yakalar — B: await sonrası okuma
+  ✓ yakalar — B: try içindeki return hata yolunda atlanır
+  ✓ yakalar — B: catch'te geri alma
+  ✓ yakalar — C: useCallback dizisinde state yok
+  ✓ yakalar — C: dizide olmayan başka useCallback (v1.406 hatası)
+  ✓ yakalar — C: hook'tan dönen fonksiyon
+  ✓ yakalar — C/efekt: zamanlayıcıda eski fonksiyon (bağlantı gelince veri kaybı)
+  ✓ yakalar — C/efekt: saklanan onClick (başlık Kaydet)
+  ✓ yakalar — C/efekt: await sonrası
+  ✓ yakalar — T: bağımlılık dizisinde aşağıda tanımlı ad
+  ✓ geçer — C/efekt: senkron tetikleyici (bilinçli eksik)
+  ✓ geçer — C/efekt: ref üzerinden güncel fonksiyon
+  ✓ geçer — C: tam bağımlılık
+  ✓ geçer — C: setter, ref ve sabit ifade dizide aranmaz
+  ✓ geçer — C: modül düzeyi ad
+  ✓ geçer — C: ölü koddaki okuma
+  ✓ geçer — yeni değer değişkende
+  ✓ geçer — fonksiyonlu set
+  ✓ geçer — if / else dışlayan dallar
+  ✓ geçer — set sonrası return
+  ✓ geçer — yerel gölge değişken
+  ✓ geçer — await ÖNCESİ okuma
+  ✓ geçer — ölü kod (return sonrası)
+  ✓ geçer — gerekçeli muafiyet
+  ✓ geçer — setter'ın kendisi
+  ✓ gerekçesiz muafiyet geçmez
+
+── test/birim-bekleyen-kayit.js
+  ✓ internetsiz yazma düştü
+  ✓ defterde Jut 'yaz'
+  ✓ Jut da buluta gitti (eskiden yalnız reçete gidiyordu)
+  ✓ başarıdan sonra defter temiz
+  ✓ yeni oturumda ilk yazma Jut 2'yi gönderdi
+  ✓ başka cihazın hareketi (h1) silinmedi, ürünler de silinmedi
+  ✓ yerel hareket (h2) gönderildi
+  ✓ yerel + bulutta yeni ürün
+  ✓ defterdeki A yerelden + buluttaki hareketi
+  ✓ defterde olmayan P buluttan (B'nin değişikliği korunur)
+  ✓ reçetede olup stokta olmayan: Jut
+  ✓ aynı kimlikle hammadde kartı
+  ✓ stokta varsa kayıp sayılmaz
+  ✓ kasa fişleri: internetsiz + başka cihaz
+  ✓ buluttaki yeni hesap eklendi
+  ✓ aynı alanda yerel kazanır, yeni anahtar gelir
+  ✓ bulut yoksa yerel
+birim-bekleyen-kayit: tamam
+
+── test/birim-bulut-sayim.js
+  ✓ cihaz sayımı
+  ✓ boş girdi
+  ✓ aynı
+  ✓ cihazda fazla + arşivde var → silinmiş olabilir
+  ✓ bulutta fazla → cihaz bayat
+  ✓ okunamayan
+  ✓ Content-Range 0-0/1234
+  ✓ Content-Range */0
+  ✓ Content-Range bozuk
+  ✓ arşiv: yalnız DELETE + tablo, yinelenen kayıtta en yeni
+  ✓ varyant anahtarı
+  ✓ üretim anahtarı yok (id)
+  ✓ varyant: bileşik anahtarla tekilleşir
+  ✓ geri yükleme sırası: üst tablo önce
+  ✓ üretim verilmedi → null
+  ✓ üretim verilmedi → durum bilinmiyor, sahte fark yok
+  ✓ kimlik farkı: bulutta olup cihazda olmayan + bekleyen silme
+  ✓ kimlik farkı: cihazda olup bulutta olmayan
+  ✓ kimlik farkı: defter yoksa da çalışır
+  ✓ v2 kapalı → bugünkü yol
+  ✓ stok v2: varyant / hareket geri yüklenemez
+  ✓ cari v2: car_yaz
+  ✓ alt v2: alt_yaz
+  ✓ ana tablolar bugünkü yol
+birim-bulut-sayim: tamam
+
+── test/birim-cari-rapor.js
+  ✓ bakiye: alacak 250 $
+  ✓ sipariş: iptal sayılmaz, başka cari sayılmaz
+  ✓ adet/teslim/kalan + tutar/kalan tutar
+  ✓ siparişe bağlı tahsilat ve kalan
+  ✓ gecikme ve toplamlar
+  ✓ son tahsilat 10 gün → iyi
+  ✓ 45 gün → takip
+  ✓ 90 gün → riskli
+  ✓ hiç tahsilat yok, borç 100 gün → riskli + neden
+  ✓ alacak yok → iyi
+  ✓ tedarikçi borcumuz, ödeme yok → takip
+  ✓ HTML: başlık, bakiye, durum, sipariş
+
+── test/birim-cari-yon.js
+  ✓ Satış → Borç (müşteri bize borçlanır)
+  ✓ Alış → Alacak (biz tedarikçiye borçlanırız)
+  ✓ Ödeme → Borç (borcumuzu kapatır)
+  ✓ Tahsilat → Alacak (alacağımızı kapatır)
+  ✓ İşçilik → Alacak (biz personele borçlanırız)
+  ✓ işçilik ile alış aynı yönde (ikisi de alım)
+  ✓ işçilik ile ödeme ters yönde (ödeme işçilik borcunu kapatır)
+  ✓ alış ve satış ters yönde
+  ✓ satış ile ödeme aynı yönde (ikisi de bakiyeyi artırır)
+  ✓ alış ile tahsilat aynı yönde (ikisi de bakiyeyi azaltır)
+── cari yön testi temiz ──
+
+── test/birim-cek-bag.js
+1. ciro hareketi silinir
+  ✓ engel yok
+  ✓ ciro hareketi silindi
+  ✓ çek SİLİNMİYOR
+  ✓ çek portföye döndü
+  ✓ geçmiş iki satır
+  ✓ ilk satıra dokunulmadı
+  ✓ geri alma satırı geçişi anlatıyor
+  ✓ hangi satırın geri alındığı kimlikle bağlı
+  ✓ geri alma anı ve kullanıcı
+  ✓ çağırana bildirildi
+  ✓ girdi değiştirilmedi
+  ✓ yeniden ciro edilebilir
+  ✓ geri alınmış ciro silme kilidini tutmaz
+  ✓ sonra giriş hareketi silinebilir
+  ✓ çek girişiyle birlikte gider
+2. işlem görmüş çekin girişi silinmez
+  ✓ engel çek-işlemde
+  ✓ HİÇBİR ŞEY DEĞİŞMEDİ — cariler
+  ✓ HİÇBİR ŞEY DEĞİŞMEDİ — çekler
+  ✓ silinen yok
+  ✓ mesaj ciro fişini söylüyor
+  ✓ mesaj alıcı cariyi söylüyor
+  ✓ tahsildeki çekin girişi de kilitli
+  ✓ mesaj aşamayı söylüyor
+  ✓ temiz çekte engel yok
+  ✓ temiz çek girişiyle gider
+  ✓ kimliksiz eski çekte de kilit
+3. kilit yardımcısı
+  ✓ giriş hareketi kilitli
+  ✓ ciro hareketi kilitli değil
+  ✓ ilgisiz hareket kilitli değil
+4. kenar durumlar
+  ✓ portföydeki çeke dokunulmuyor
+  ✓ eski biçim ciro geri dönüyor
+  ✓ ciro alanları temizlendi
+5. iade
+  ✓ alınan çekin iadesi ÖDEME, Borç
+  ✓ tutar ve birim girişin aynası
+  ✓ çeke bağlı ve fişli
+  ✓ dövizli girişte iade aynı dövizde
+  ✓ giriş + iade bakiyeyi sıfırlıyor
+  ✓ şahsi çekin iadesi TAHSİLAT, Alacak
+  ✓ carisiz çekte hareket yok
+  ✓ iadeli çekin girişi kilitli
+  ✓ mesaj iade fişini ve yolu söylüyor
+  ✓ iade fişi silinince çek portföye döner
+  ✓ geri alma satırı
+  ✓ tahsilden iade geri alınınca Tahsilde
+6. tahsil
+  ✓ alınan çekin tahsili hesaba GİRİŞ
+  ✓ cari yok — borç çek alınırken kapandı
+  ✓ şahsi çekin tahsili hesaptan ÇIKIŞ
+  ✓ tahsil çekin defterinde
+  ✓ hareket doğru bankaya, en üste
+  ✓ diğer hesaplara dokunulmadı
+  ✓ girdi değişmedi
+  ✓ tahsil satırı hesap bağını taşıyor
+  ✓ banka hareketi silinince Tahsilde
+  ✓ geri alma satırı
+  ✓ ilgisiz hareket çeke dokunmuyor
+  ✓ tahsil edilmiş çekin girişi kilitli
+  ✓ mesaj hesabı ve yolu söylüyor
+  ✓ tahsil geri alınınca kilit Tahsilde aşamasıyla sürüyor
+
+── çek bağı testi temiz ──
+
+── test/birim-cek.js
+  ✓ portföyde beş işlem
+  ✓ ciro edilmişte işlem yok
+  ✓ tahsildeki üç işlem
+  ✓ temiz portföy çeki silinebilir
+  ✓ ciro edilmiş silinemez
+  ✓ geçmişi olan silinemez
+  ✓ durum Tahsilde
+  ✓ banka üst alanda
+  ✓ geçmişe bir satır eklendi
+  ✓ satır geçişi anlatıyor
+  ✓ geçmiş birikiyor
+  ✓ ilk satır duruyor
+  ✓ son durum
+  ✓ banka bilgisi korunuyor
+  ✓ ciro edilmişi tekrar ciro etmek null
+  ✓ bilinmeyen işlem null
+  ✓ şahsi çekte ciro/tahsile yok
+  ✓ şahsi çeki ciro etme reddedilir
+
+── çek testi temiz ──
+
+── test/birim-code128-cozucu.js
+  ✓ temiz etiket: 4 seviye × 2 yön doğru okunuyor
+  ✓ iyi kare (keskin, az gürültü): okuma %100 (en az %97)
+  ✓ orta kare (hafif bulanık, gölgeli): okuma %94 (en az %80)
+  ✓ kötü kare (bulanık, gürültülü): okuma %6 (en az %0)
+  ✓ YANLIŞ OKUMA: 0 (1800 karede) — sıfır olmalı
+  ✓ barkodsuz 2000 rastgele çizgi deseninden kod çıkmıyor (çıkan: 0)
+── code128 çözücü testi temiz ──
+
+── test/birim-cop.js
+  ✓ 90 günden eski düşer, 89 günlük kalır
+  ✓ 400 yeni kayıt kesilmeden kalır
+  ✓ Kullanıcı 40 günlük kaydı silemez
+  ✓ Yönetici 10 günlük kaydı silemez
+  ✓ …sebep kalan günü söyler
+  ✓ Yönetici 30 günlük kaydı siler
+  ✓ oturum yoksa silinemez
+  ✓ 19 silme uyarmaz
+  ✓ 20 silme uyarır
+  ✓ 5 dk önce uyarıldıysa yeniden uyarmaz
+  ✓ 11 dk önce uyarıldıysa yeniden uyarır
+  ✓ 1 dk arayla 20 silme: pencerede yalnız 11 kalır
+  ✓ listeden düşen görev
+  ✓ renk, tip ve kullanıcı düşer; nesne alan (firma) karışmaz
+  ✓ kullanıcı çöpe şifresiz düşer
+  ✓ ad değişikliği silme sayılmaz
+  ✓ tanım başlığı
+  ✓ iç içe şifre atılır
+  ✓ ürün satırı
+  ✓ çöp satırı başlığı
+  ✓ görüntü satırı
+birim-cop: tamam
+
+── test/birim-defter.js
+  ✓ Genel kaydı Genel'e girer
+  ✓ Genel kaydı Resmi'ye girmez
+  ✓ Resmi kaydı Resmi'ye girer
+  ✓ Muhasebe kaydı Genel'e girer
+  ✓ Muhasebe kaydı Resmi'ye girer
+  ✓ defteri boş kayıt Genel sayılır
+  ✓ defteri boş kayıt Resmi sayılmaz
+  ✓ Tümü her şeyi kapsar
+  ✓ defter verilmezse her şey kapsanır
+  ✓ hesap toplamı tek sayar
+  ✓ Genel = Genel + Muhasebe
+  ✓ Resmi = Resmi + Muhasebe
+  ✓ çıkış Genel'den düşer
+  ✓ çıkış Resmi'den düşer
+  ✓ bir ikiz birleşti
+  ✓ kayıt sayısı bire düştü
+  ✓ GENEL ikizin kimliği korundu
+  ✓ defteri Muhasebe oldu
+  ✓ esId düştü
+  ✓ ikizsiz kayıt dokunulmadı
+  ✓ yetim yarım korundu
+  ✓ ikinci göç bir şey değiştirmiyor
+  ✓ Genel bakiye göçten etkilenmedi
+  ✓ Resmi bakiye doğru
+  ✓ TL kasada soru döviz üzerinden
+  ✓ öneri dövizin TL fiyatı
+  ✓ yön bölme
+  ✓ 3655 TRY = 65,27 EUR
+  ✓ EUR kasada da soru döviz üzerinden
+  ✓ yön çarpma
+  ✓ 100 EUR = 5600 TRY
+  ✓ çapraz kur doğrudan
+  ✓ çapraz öneri iki TL kurundan
+  ✓ aynı para biriminde soru yok
+  ✓ kur bilinmiyorsa öneri yok
+  ✓ geçersiz kur null döner
+  ✓ ₺ → TRY
+  ✓ $ → USD
+  ✓ € → EUR
+  ✓ TRY → TRY
+  ✓ USD → USD
+  ✓ kaldırılmış sembol (£) tanınmıyor
+  ✓ hiç bilinmeyen sembol
+  ✓ boş değer null
+  ✓ tanımsız null
+  ✓ 42000 TL / 1000 USD = 42 kur
+  ✓ gidiş-dönüş tutarlı
+  ✓ 1000 USD / 42000 TL = 42 kur
+  ✓ döviz kasada da tutarlı
+  ✓ sıfır hedef null
+  ✓ sıfır kaynak null
+
+── defter testi temiz ──
+
+── test/birim-degisiklik.js
+  ✓ kalem → siparişler, cariler, muhasebe; ürünler değişmedi; bilinmeyen yok
+  ✓ 5 sn önce bizim yazdığımız cariler + bekleyen muhasebe ertelenir
+  ✓ 20 sn önceki yazma artık ertelenmez
+  ✓ görüldü: ertelenenler eski değerde
+  ✓ ilk okuma (önceki yok) → hepsi değişmiş sayılmaz çünkü 100 ilk okumayı 'görüldü' yapar; burada boş önceki ile fark
+  ✓ alan tabloları
+  ✓ ana tablo damgası alt tabloları da kapsar (alan bazında)
+  ✓ başka alanın damgası kapsamaz (stok yazması carileri ertelemez)
+  ✓ anahtar sırası önemsiz (jsonb yeniden sıralar)
+  ✓ undefined alan yok sayılır
+  ✓ dizi sırası önemli, değer farkı yakalanır
+  ✓ düz karşılaştırma aynı içeriği FARKLI sanıyordu (hatanın kendisi)
+  ✓ yazma biçiminde karşılaştırma: aynı
+  ✓ başka cihazın yeni hareketi: farklı
+  ✓ tutar değişti: farklı
+── değişiklik sayacı testi temiz ──
+
+── test/birim-demirbas.js
+  ✓ alım ayında 1 aylık pay
+  ✓ alımdan önceki ay 0
+  ✓ 24. ay (Eylül 2028) son pay
+  ✓ süre bitince 0
+  ✓ yıllık aralık 3 ay (Eki-Ara)
+  ✓ dönem amortismanı kart kart (USD kurla)
+  ✓ ürün payı
+  ✓ bağsız ürüne pay yok
+── demirbaş testi temiz ──
+
+── test/birim-demo.js
+  ✓ anahtarlar
+  ✓ stokta hareket karşılığı olmayan miktar yok
+  ✓ her ürünün açılış fişi var
+  ✓ reçete hammaddeleri var
+  ✓ sipariş ürünleri var
+  ✓ sipariş carileri var
+  ✓ varyant renkleri tanımlı
+  ✓ varyant bedenleri tanımlı (ya da bedensiz)
+  ✓ giriş kapalı, kurulum tamam (sihirbaz açılmaz)
+  ✓ renk kodları tekil
+
+── test/birim-denetim-1639.js
+  ✓ yalnız değişen kayıt işlenir, öteki değişiklikler korunur
+  ✓ bu işlemin sildiği kayıt düşer, eklediği gelir
+  ✓ önceki prosese giden tamir dağıtılmamış sayılır
+  ✓ sonraki prosese giden tamir bu adımdan geçmiş sayılır
+  ✓ hurda dağıtılmış sayılır
+  ✓ açılış farkı Standart/boş ayrımı yapmaz
+  ✓ kalan KDV dahil
+  ✓ KDV yoksa eski davranış
+  ✓ fiş ailesi atamadaki numaradan
+  ✓ numarasız (eski) atamada konumdan
+  ✓ farklı ekleme ayrı grup
+  ✓ aynı ekleme tek grup
+  ✓ kur yok: tl 0, kurEksik
+  ✓ kur var: çevrilir
+
+── test/birim-denetim-1640.js
+  ✓ kur varken eksik maliyet TL (10 desi × 10 $ × 40)
+  ✓ kur yokken 0 + kurEksik
+
+── test/birim-denetim-iptal.js
+  ✓ teslim edilmiş, bağlı sipariş → bulgu yok
+  ✓ iptal: hareketin bağı çözüldü, karşılanan kaldı
+  ✓ iptal edilmiş sipariş → ciddi bulgu YOK
+  ✓ aynı durum iptal edilmemiş siparişte → hâlâ bulgu (kontrol çalışıyor)
+  ✓ üretim listesi verilmediyse rezervasyon 'silinmiş' sayılmaz
+  ✓ üretim var → rezervasyonu yetim değil
+  ✓ üretim gerçekten silinmiş → bulgu
+
+TAMAM
+
+── test/birim-depo-sahiplik.js
+  ✓ yalnız tanımadığımız anahtar başka uygulamanın
+  ✓ önekli anahtar önek atılarak listeleniyor
+  ✓ firma:gorunum bize ait
+── depo sahiplik testi temiz ──
+
+── test/birim-efatura.js
+Taslak fişten
+  ✓ satırlar: ad, miktar, birim kodu, matrah, oran, KDV (peşin tahsilat satırı yok)
+  ✓ toplam = cariye yazılan
+  ✓ senaryo cari kartından (mükellef → Temel), seri, önizleme no
+  ✓ eksiksiz: engel yok, uyarı yok
+Eksikler
+  ✓ KDV'siz fiş engel
+  ✓ mükellefiyet bilinmiyor → senaryo engeli
+  ✓ mükellef değil → e-Arşiv serisi + e-posta uyarısı
+  ✓ alıcı: hatalı vergi no, daire, il
+  ✓ satıcı daire + geçersiz seri
+  ✓ %0 KDV → istisna kodu engeli, kod girilince kalkar
+  ✓ 7 gün kuralı uyarısı
+  ✓ engel var mı
+Numara ve kimlik
+  ✓ 16 karakter biçim
+  ✓ seri geçerliliği
+  ✓ sıra seri+yıl içinde, taslaklar (numarasız) sayılmaz
+  ✓ ETTN UUID v4
+  ✓ ticari profil Tanımlar'dan
+UBL-TR XML
+  ✓ profil
+  ✓ numara
+  ✓ TR1.2
+  ✓ ETTN
+  ✓ satıcı VKN
+  ✓ alıcı unvan kaçışlı
+  ✓ toplam KDV
+  ✓ %10 alt toplam
+  ✓ ödenecek
+  ✓ satır birimi
+  ✓ KDV kodu
+  ✓ yazıyla
+  ✓ fiş notu
+  ✓ satır sayısı
+  ✓ TRY faturada kur yok
+  ✓ öğe sırası şemaya uygun
+  ✓ TCKN'li alıcı: şema ve ad/soyad, vergi dairesi zorunlu değil
+  ✓ döviz: USD belge, kur 40
+  ✓ belge PB
+  ✓ kur
+  ✓ USD tutar
+  ✓ yazıyla USD
+  ✓ taslakta seçilen kur kullanılır
+Birim ve yazıyla
+  ✓ birim kodları
+  ✓ tutar yazıyla (çek bordrosuyla aynı yardımcı)
+Faturalı fiş kilidi (v1.504.0)
+  ✓ numaralı fatura → engel, hiçbir şey değişmez
+  ✓ taslak (numarasız) engel değil
+  ✓ iptal edilmiş fatura engel değil
+  ✓ faturalar verilmeyen eski çağrı
+
+── test/birim-ekran-duzeni.js
+  ✓ kayıt yoksa kodun sırası ve varsayılan genişlik
+  ✓ kayıtlı sıra, genişlik, gizli; kodda olmayan blok yok sayılır; yeni blok sona
+  ✓ gizlenemez blok gizlenmez, geçersiz genişlik varsayılana döner
+  ✓ aynı blok iki kez kayıtlıysa bir kez
+serbest genişlik (v1.528.0)
+  ✓ 1–12 arası sayı geçerli; 0, 13, kesirli ve yazıyla sayı varsayılana döner
+  ✓ sütun: ad → sayı, sayı → sayı, geçersiz → 12
+  ✓ çekerken 4/6/12 adıyla yazılır
+  ✓ taşı: c → a'nın yerine
+  ✓ taşı: a → c'nin yerine
+  ✓ taşı: bilinmeyen hedef → değişmez
+boyut ayarı
+  ✓ geçerli değerler korunur, geçersiz → normal
+  ✓ boş → hepsi normal
+
+── ekran düzeni testi temiz ──
+
+── test/birim-finans-ek.js
+  ✓ dönem: hazır değerler 800 → 500
+  ✓ dönem: net varlık farkı
+  ✓ nakit: başlangıç kasa
+  ✓ nakit: vadesi geçmiş borç
+  ✓ nakit: 1. hafta (vadesiz alacak +30 gün, verilen çek)
+  ✓ nakit: 2. hafta alınan çek (ciro edilen girmez)
+  ✓ nakit: sonrası USD alacak kurla
+  ✓ nakit: en düşük nokta vadesi geçmiş satırı (bugün beklenen borç)
+  ✓ nakit: vadesi geçenler katılmayınca 1. hafta birikimli ve en düşük
+  ✓ nakit: aylık dönemler
+  ✓ maliyet: devam eden — plan adedi (10) üzerinden
+  ✓ maliyet: tamamlanan — stoğa giren 4 çift, fire + reçete dışı tutkal
+  ✓ maliyet: kalem ayrıntısı (farka göre)
+  ✓ maliyet: yalnız tamamlananlar
+── finans ek testi temiz ──
+
+── test/birim-finans-rapor.js
+  ✓ kasa bakiyesi
+  ✓ TRY'de çek fazlası borç tarafına düşer
+  ✓ USD alacak kurla
+  ✓ kuru olmayan birim: TL yok, net 0, not var
+  ✓ ciro edilen vadesi gelmemiş çek bilgi satırı
+  ✓ şahsi çek yükümlülük
+  ✓ stok değerleri
+  ✓ alacak satırı yalnız Alacak sütununda, borç satırı yalnız Borç sütununda (eksi)
+  ✓ Alacak + Borç = Net
+  ✓ bilgi satırı Alacak/Borç'a girmez
+  ✓ Resmi: 500 + Muhasebe 200
+  ✓ Resmi'de Genel defterli çek yok
+  ✓ Genel'de kasa var
+  ✓ 10 Eylül kasa
+  ✓ 10 Eylül çek portföyde
+  ✓ 10 Eylül deri miktarı
+  ✓ mamul satış fiyatıyla
+  ✓ özet
+  ✓ FIFO bakiye
+  ✓ FIFO açık kalemler: S1 kapandı, S2'nin 300'ü, S3
+  ✓ dilimler
+  ✓ ortalama gecikme / en eski
+  ✓ USD ayrı
+  ✓ varsayılan vade 30: S2 30 gün gecikmiş
+  ✓ borç yaşlandırma
+  ✓ rapor satırında dilimler
+  ✓ üretimdeki mal gerçekleşen değer
+  ✓ işçilik ödenen / ödenmemiş (FIFO)
+  ✓ yalnız kesim bitmişken
+  ✓ mamul stok: hammadde + işçilik payı
+  ✓ üretim satırı raporda
+  ✓ yalnız hammadde yöntemi
+  ✓ tamamlanan üretim listede yok
+
+── test/birim-firma.js
+  ✓ kod: Türkçe harf + boşluk + büyük harf
+  ✓ adres: supabase.co kabul
+  ✓ adres: başka alan adı ret
+  ✓ adres: http ret
+  ✓ anahtar: publishable kabul
+  ✓ anahtar: secret ret
+  ✓ anahtar: eski anon JWT kabul
+  ✓ anahtar: service_role JWT ret
+  ✓ ref
+  ✓ engel: bekleyen yok → serbest
+  ✓ engel: bekleyen yazma var → sebep
+  ✓ değişim oldu
+  ✓ seçim yazıldı (kod sade)
+  ✓ ana firmanın oturumu saklandı, ortada kalmadı
+  ✓ cihaz ayarı yerinde
+  ✓ gizli anahtarla değişim reddedilir
+  ✓ aynı proje ilk seçim: değişti (yenile)
+  ✓ aynı proje: oturum yerinde, saklama kutusu yok, kod sade
+  ✓ aynı seçim ikinci kez: değişiklik yok
+  ✓ demoya geçiş
+  ✓ defter + oturum ana kutusunda, ortada yok
+  ✓ ana koda dönüş (seçimsiz = ana proje)
+  ✓ defter ve oturum geri geldi, kutu kapandı
+
+── test/birim-fisno.js
+  ✓ Tahsilat → THS
+  ✓ Ödeme → ODM
+  ✓ Alış → AF
+  ✓ Satış → SF
+  ✓ bilinmeyen tip → EL
+  ✓ ilk numara 001
+  ✓ ikinci numara 002
+  ✓ boşluk atlanmaz, en büyükten devam
+  ✓ ödeme kendi sayacını tutar
+  ✓ dünkü numara bugünü etkilemez
+  ✓ eski rastgele numara sayaca karışmaz
+  ✓ çakışma varsa atlanır
+  ✓ cari hareketlerinden numara toplama
+── fiş no testi temiz ──
+
+── test/birim-fisyaz-gerial.js
+  ✓ stok başlangıca döndü
+  ✓ cariler başlangıca döndü
+  ✓ siparişin karşılananı ve durumu geri döndü
+  ✓ silinen kayıt sayısı
+  ✓ Muhasebe defterinde KALEM BAŞINA TEK cari hareketi
+  ✓ defteri Muhasebe
+  ✓ ikiz bağı yok
+  ✓ kimlikler stok hareketiyle aynı
+  ✓ geri alınca cariler başlangıca döndü
+  ✓ eski ikizde yalnız biri verilse de ikisi de silindi
+  ✓ hesap seçilmezse kasa hareketi yok
+  ✓ kasa hareketi üretildi
+  ✓ hesap doğru
+  ✓ alışta kasadan çıkış
+  ✓ tutar peşin kadar
+  ✓ cariye kapatan kayıt yazıldı
+  ✓ bağ aynı
+  ✓ kapatan kaydın fiş numarası var
+  ✓ alışta kapatan kayıt Ödeme (Borç) yönünde
+  ✓ peşin ödeme cari bakiyeyi +500 değiştirir
+  ✓ geri alınca kasa bağı bildirildi
+  ✓ geri alınca cariler başlangıca döndü
+  ✓ hatalı alış peşini düzelir
+  ✓ satış peşine dokunulmaz
+  ✓ zaten doğru kayıt aynı kalır
+  ✓ bağsız kayıt dokunulmaz
+  ✓ Deri miktarı geri düştü
+  ✓ Bot miktarı değişmedi
+  ✓ diğer kalemin hareketleri duruyor
+  ✓ üretim fişi izinsiz silinemez
+  ✓ engellenince hiçbir şey değişmedi
+  ✓ işçilik fişi silinince hammadde çıkışı da silindi
+  ✓ hammadde stoğa geri döndü
+  ✓ mamul girişi de silindi
+  ✓ mamul stoktan düştü
+  ✓ işçilik cari kaydı silindi
+  ✓ atama teslim alınmamışa döndü
+  ✓ adım tamamlanmamışa döndü
+  ✓ atama personelde duruyor (silinmedi)
+  ✓ mamul stoğa eklendi işareti kalktı
+  ✓ aşama o prosese geri alındı
+  ✓ hareket yazıldı
+  ✓ stok hareketle tutuyor
+  ✓ karşılıksız hareket için varyant açıldı
+  ✓ yeni varyant AÇILMADI
+  ✓ miktar Standart varyantına yazıldı
+  ✓ gerçek renk bozulmadı
+── birim testi temiz ──
+
+── test/birim-fiyat-kurali.js
+fiyat kuralı — cari + renk + beden
+  ✓ en özel kural kazanır (Siyah/40)
+  ✓ beden tutmazsa renk seviyesi (Siyah/41)
+  ✓ renk tutmazsa cari geneli (Bej/40)
+  ✓ alış kuralı satışla karışmaz
+  ✓ cari yoksa kart fiyatı
+  ✓ kaynak etiketi kırılımı söyler
+  ✓ eski kayıt (renk/beden alanı yok)
+── fiyat kuralı testi temiz ──
+
+── test/birim-fiyat-listesi.js
+  ✓ kaynaklar: 2 genel + maliyet + gruplar, grup birimi koda çevrili
+  ✓ grup fiyatı (renk kırılımlı kural karışmaz)
+  ✓ grupta fiyat yok → boş (null)
+  ✓ genel satış
+  ✓ genel 0 → boş
+  ✓ %14 artış
+  ✓ 10 TL indirim
+  ✓ %14 + 5'e yuvarla (456 → 455)
+  ✓ kuruş artığı yok (0,1 + 0,2)
+  ✓ eksiye düşen → boş
+  ✓ boş fiyat dönüşmez
+  ✓ işlem yok → aynı fiyat
+  ✓ maliyete kâr satıştan (v1.583.0): 1000, %30 → 1428,57
+  ✓ iki ürün değişti
+  ✓ var olan kural güncellendi (kimlik ve birim korunur)
+  ✓ renkli kural yerinde
+  ✓ yeni kural grubun biriminde
+  ✓ geçmişe düştü
+  ✓ fiş (fiyatBul) yazılanı görüyor
+  ✓ aynı fiyat → değişiklik sayılmaz
+  ✓ boşaltmak grup kuralını siler, renkli kural kalır
+  ✓ genel satış yazılır
+  ✓ listede olmayan ürüne dokunulmaz
+  ✓ aynı birim: olduğu gibi, boş satır yazılmaz
+  ✓ USD'ye kurla
+  ✓ kur yoksa atlanır ve sayılır
+  ✓ yeni gruba yazıldı, kaynak grup değişmedi
+  ✓ USD grubunda fiyat yok → boş
+  ✓ seçenekler: yalnız dolu ve uyan değerler
+  ✓ tek alan süzgeci
+  ✓ iki alan (VE)
+  ✓ boş seçim süzmez
+  ✓ aynı adlı alanlar tek seçenek (değerler birleşik)
+  ✓ temsilci kimlikle süzgeç bütün aynı adlı alanlara bakar
+  ✓ başlıklar
+  ✓ satırlar
+  ✓ resimler
+  ✓ önizleme yokken yeni sütun yok
+birim-fiyat-listesi: tamam
+  ✓ liste resmi: renk resmi önce
+  ✓ liste resmi: renk yoksa kapak
+  ✓ liste resmi: hiç yoksa boş
+  ✓ grup kaynağı: fiyat listesi yazımının tarihi (grupId ile)
+  ✓ başka grup: tarih yok
+  ✓ eski kayıt: etiketle grup adı eşleşir
+  ✓ genel kaynak: grup adı içermeyen kayıt
+  ✓ maliyet kaynağında tarih yok
+
+── test/birim-gecerli-rezervasyon.js
+  ✓ silinmiş üretimin (10033) rezervasyonu düşer; sayı/dize karışık numaralar eşleşir; üretimsiz satır kalır
+  ✓ hepsi geçerliyse AYNI dizi döner (gereksiz çizim yok)
+  ✓ aynı dizi kimliği
+  ✓ boş girdiler
+  ✓ üretim listesi boşsa üretimli rezervasyonların hepsi düşer
+  ✓ silinmiş a geri gelmez; b'ye +5 fark binmiş (3→8); c aynı; yeni d korunur
+  ✓ c nesnesi aynı kaldı
+  ✓ fark yoksa aynı dizi
+  ✓ ad değişikliği fark olarak uygulanır
+  ✓ kimliksiz kayıt sipariş+ürün+renk+beden+tarih ile eşlenir
+birim-gecerli-rezervasyon: tamam
+
+── test/birim-gecmis-renk.js
+  ✓ aynı hammadde, en son karar
+  ✓ başka hammadde: bu hammaddede bulunan en son karar (Taba yok → Kahve)
+  ✓ başka hammaddenin kararı (renk bu hammaddede var)
+  ✓ kombinasyon pozisyonu: 'Kırmızı' → Bordo, 'Bej' → Krem
+  ✓ değişken ambalaj hafızada yok
+  ✓ kayıt yoksa boş
+  ✓ satır pozisyon rengi
+── geçmiş renk testi temiz ──
+
+── test/birim-gorsel-depo.js
+  ✓ görselsiz ürün için paket üretilmiyor
+  ✓ kapak boşaltıldı
+  ✓ alan duruyor, sadece boş
+  ✓ diğer alanlar korundu
+  ✓ yerel kayıt küçüldü
+  ✓ görseller geri geldi
+  ✓ haritasız birleştirme çökmez
+  ✓ bulut hali ezilmiyor
+  ✓ ilk seferde hepsi yazılıyor
+  ✓ silinecek yok
+  ✓ değişmeyen görsel yeniden yazılmıyor
+  ✓ yalnız değişen yazılıyor
+  ✓ yetim anahtar siliniyor
+  ✓ görselsiz ürün null
+  ✓ boş renk görseli saklanmıyor
+
+── görsel deposu testi temiz ──
+
+── test/birim-gorsel-eslestirme.js
+  ✓ imza histogramı normalize
+  ✓ aHash 64 bit
+  ✓ kendine benzerlik tam
+  ✓ aynı mal farklı ışıkta hâlâ yakın
+  ✓ siyah ile bej ayrışıyor
+  ✓ doygun renk gri ekseninden ayrı
+  ✓ renk aynı, desen farklı → tam eşleşme değil
+  ✓ renk aynı olduğu için yine de yüksek
+  ✓ en yakın aday başta
+  ✓ hepsi listeleniyor
+  ✓ skorlar azalan sırada
+  ✓ görselsiz aday listede kalıyor
+  ✓ görselsiz aday en sonda
+  ✓ görselsiz aday işaretli
+  ✓ enFazla uygulanıyor
+  ✓ boş havuz → boş liste
+  ✓ imzasız hedef → sıfır skor
+
+── görsel eşleştirme testi temiz ──
+
+── test/birim-gun-sonu-sunucu.js
+  ✓ ilk çağrı gönderdi
+  ✓ iki alıcı, tek e-posta
+  ✓ gönderim kaydı yazıldı
+  ✓ ikinci çağrı aynı gün göndermez
+  ✓ satış fişi raporda
+  ✓ kasa gün sonu bakiyesi
+  ✓ cari bakiye (satış 500 − tahsilat 300)
+  ✓ Deri tek satır, son alış fiyatıyla
+  ✓ Bot tek satır, kart fiyatıyla
+  ✓ renk/beden sütunu yok
+  ✓ ek dosya HTML
+  ✓ özet metinde stok tutarı
+  ✓ saat gelmeden göndermez
+  ✓ otomatik kapalıyken göndermez
+  ✓ yanlış anahtar reddedilir
+  ✓ deneme gönderir, kayıt yazmaz
+  ✓ denetim işlevi yokken bölüm yok
+  ✓ denetim bölümü: 3 sorun
+  ✓ kural sonrası fişsiz satır, satırsız fiş, tutar farkı, iptal listesi
+  ✓ özet metinde sorun
+  ✓ temiz denetim: eski fişsiz satır sorun sayılmaz
+birim-gun-sonu-sunucu: tamam
+
+── test/birim-hammadde-durum.js
+  ✓ eksik yok → yeterli
+  ✓ eksik yok, yolda olsa da → yeterli
+  ✓ eksiğin tamamı yolda → yolda
+  ✓ yolda eksikten fazla → yolda
+  ✓ bir kısmı yolda → kismen
+  ✓ hiç sipariş yok → eksik
+  ✓ alış yok → eksik
+  ✓ 10 yolda → kismen
+  ✓ 15 yolda → yolda
+  ✓ başka siparişin alışı sayılmaz
+  ✓ toplu: hepsi yeterli
+  ✓ toplu: eksiklerin hepsi yolda
+  ✓ toplu: biri yolda biri siparişsiz → kismen
+  ✓ toplu: hiç sipariş yok
+  ✓ toplu: boş liste
+
+── test/birim-hareket-etiketi.js
+  ✓ hammadde: hepsi çıkış → Üretime Çıkış
+  ✓ mamul: hepsi giriş → Üretimden Giriş
+  ✓ karışık → sade Üretim
+  ✓ üretim hareketi yoksa → sade Üretim
+  ✓ boş liste → sade Üretim
+  ✓ çok gruplu çıkış
+  ✓ Satınalma → Alış Fişi
+  ✓ Satış → Satış Fişi
+  ✓ Üretim yöne göre
+  ✓ bilinmeyen kaynak olduğu gibi
+── hareket etiketi testi temiz ──
+
+── test/birim-harici-barkod.js
+1. çözme
+  ✓ harici kod beden seviyesinde
+  ✓ boşluk ve baştaki/sondaki fark önemsiz
+2. kendi şemamız önce
+  ✓ 90'lı kod şemadan çözülüyor
+3. silinmiş beden
+  ✓ bağlı beden üründe yoksa eşleşme yok
+  ✓ tanınmayan kodun sebebi harici barkodu anıyor
+4. çakışma
+  ✓ başka bedenin harici kodu
+  ✓ kendi kodunu yeniden yazmak serbest
+  ✓ bizim barkodumuzla çakışma
+  ✓ yeni kod serbest
+5. ayarla
+  ✓ aynı bedenin kodu değişti, tek kayıt
+  ✓ boş kod siliyor
+  ✓ liste yoksa da çalışır
+
+── harici barkod testi temiz ──
+
+── test/birim-kalici-ret.js
+  ✓ KR kodu + stk_hareket satırı
+  ✓ KR kodu + kalem satırı (iki nokta öncesi)
+  ✓ KR kodu + sipariş
+  ✓ AT001 eski sürüm kalıcı ret
+  ✓ 42501 kural reddi sayılmaz
+  ✓ JSON olmayan gövde
+  ✓ açıklama: kural reddi yetki / bağlantı değil
+  ✓ teslimsiz kalemler birleşir
+  ✓ teslimli kalem birleşmez (ne katılır ne alır)
+── kalıcı ret birim testi temiz ──
+
+── test/birim-kapasite.js
+  ✓ kalıp+bıçak darboğaz × makine adedi
+  ✓ bıçak 38'de daha yavaş
+  ✓ kalıpta olmayan beden eksik
+  ✓ kalıpsız makine kendi hızı
+  ✓ bağsız proses eksik
+  ✓ iş yükü
+  ✓ eleman günlük saat (mola düşer)
+  ✓ gece vardiyası
+  ✓ 3 pres, 1 bıçak → aynı anda tek pres
+  ✓ bıçak adedi boş → 3 preste ortak
+── kapasite testi temiz ──
+
+── test/birim-karsilanan-sunucu.js
+  ✓ miktarı aşan teslim: sunucunun 24'ü yerelde (Math.min'in 20'si değil)
+  ✓ öteki kalem ve sipariş aynı nesne
+  ✓ durum DEĞİŞMEZ (F1 kapsamı dışı — F4)
+  ✓ girdi değişmedi (saf)
+  ✓ eski sunucu (kalemler yok): aynı dizi
+  ✓ boş liste: aynı dizi
+  ✓ değer zaten aynı: aynı dizi
+  ✓ listede olmayan kalem kimliği yok sayılır
+  ✓ iptal sonrası 0 ve metin sayı
+  ✓ sayı kimlikli kalem (metin eşleşir)
+  ✓ bozuk girdi atlanır
+
+── sunucu karşılananı testi temiz ──
+
+── test/birim-karzarar.js
+Gerçek fiş yazımından
+  ✓ stok hareketinde fiyat yok (hatanın kökü)
+  ✓ KDV'siz: gelir = tutar
+  ✓ KDV'li: gelir = matrah (cari tutarı 240)
+  ✓ USD satır: cariye çevrilmiş TL
+Cari ayağı yoksa
+  ✓ stoktaki fiyat, yoksa 0 + sayılır
+Eksik kur uyarısı (v1.538.0)
+  ✓ kuru olmayan para birimi raporlanır
+  ✓ kur varsa uyarı yok, tutar çevrilir
+Defter seçimi (v1.543.0)
+  ✓ Tümü: hepsi
+  ✓ Genel: Genel satış + Muhasebe/Genel gider, Resmi işçilik yok
+  ✓ Resmi: Resmi satış + işçilik + Muhasebe gideri
+  ✓ işçilik defteri ayarı: yoksa Genel, geçersizse Genel
+  ✓ fişin defteri: cari ayağından; yoksa null; Muhasebe öncelikli
+
+── test/birim-kasa-aciklama.js
+  ✓ otomatik tahsilat açıklaması tamamen düşer
+  ✓ otomatik ödeme açıklaması tamamen düşer
+  ✓ elle yazılan not kalır
+  ✓ carisiz serbest açıklama aynen
+  ✓ kur bilgisi kalır
+  ✓ tip + kur parantezi kalır (v1.537.0)
+  ✓ boş → boş
+
+── kasa açıklama testi temiz ──
+
+── test/birim-kasa-v2.js
+1) Saf fark
+  ✓ taban = yeni → boş
+  ✓ boş fark boş sayılır
+  ✓ anahtar sırası farklı (jsonb geri okuması) → boş
+  ✓ yeni hareket → yalnız o
+  ✓ silinen hareket → iptal (silme değil)
+  ✓ değişen hareket → yalnız o
+  ✓ hesabı değişen hareket → yeni hesapla
+  ✓ hesap adı değişti → yalnız hesap (hareketleri gitmez)
+  ✓ hesap yükünde hareketler ve kimlik yok, sıra yok
+  ✓ hesap kaldırıldı → hesapSil
+  ✓ yeni hesap → tür banka
+  ✓ yalnız kur → yalnız ayar (herkese açık kur yazması)
+  ✓ çek silindi → çek iptal
+  ✓ ayar anahtarı kalktı → ayarSil
+   bayat / boş cihaz
+  ✓ başka cihazın kaydına dokunulmaz
+  ✓ taban yok + boş hâl (bulut okunamamış telefon) → hiçbir şey silinmez, yalnız kur
+  ✓ taban yok + dolu hâl → yalnız ekleme / güncelleme
+   kimliksiz eski kayıt
+  ✓ iki aynı kimliksiz hareket → iki ayrı kalıcı kimlik
+  ✓ aynı içerik her seferinde aynı kimlik
+  ✓ kimliksiz çek de kimlik alır
+  ✓ kimliksiz kayıt değişmedikçe fark yok
+2) tekilYaz — kas_yaz, belge yazılmaz
+  ✓ tek rpc/kas_yaz, muhasebe'ye GET/POST yok
+  ✓ yük yalnız yeni hareket
+  ✓ taban ilerledi
+  ✓ aynı hâl yeniden → istek yok
+3) Düşen yazma
+Supabase yazma hatası: muhasebe Error: Failed to fetch — POST rpc/kas_yaz · gövde 0 KB · adres 11 karakter
+    at supabaseIstek (/workspace/scratch/8db966c7705d/atolye/test/erp.cjs:5270:26)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async v2KopruGonder (/workspace/scratch/8db966c7705d/atolye/test/erp.cjs:7358:26) {
+  agHatasi: true
+}
+  ✓ bekleyen defterde
+  ✓ taban ilerlemedi
+  ✓ sonraki yazma düşen farkı da taşır
+  ✓ defter temizlendi
+4) Zarf — kasa + cari tek fis_yaz
+  ✓ tek rpc: fis_yaz (kas_yaz / car_yaz ayrı yok)
+  ✓ kasa ve cari parçası
+  ✓ zarftan sonra taban ilerledi
+   zarf düşerse ikisi de bekleyende
+Supabase yazma hatası: muhasebe Error: Failed to fetch — POST rpc/fis_yaz · gövde 1 KB · adres 11 karakter
+    at supabaseIstek (/workspace/scratch/8db966c7705d/atolye/test/erp.cjs:5270:26)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async v2KopruGonder (/workspace/scratch/8db966c7705d/atolye/test/erp.cjs:7324:19)
+    at async _zarfUygula (/workspace/scratch/8db966c7705d/atolye/test/erp.cjs:7920:13) {
+  agHatasi: true
+}
+  ✓ cari reddedildi, kasa bekleyende, taban yerinde
+  ✓ yeniden gönderim ikisini birlikte taşır
+   kasa v2 değilse zarf kasayı beklemez
+  ✓ kasaZarfiAc → null
+  ✓ cari hemen gitti (zarf beklemesi yok)
+5) Büyük yük parça parça
+  ✓ 3 parça, hareketler bölündü
+  ✓ hesaplar ve ayar son parçada
+  ✓ üç kas_yaz isteği
+6) Toplu iptal kilidi
+Supabase yazma hatası: muhasebe Error: Toplu silme engellendi: Kasa & Banka'da 30 hareket (eldeki 30 kayıttan) tek yazmada kaldırılacaktı; bu bir hata belirtisidir, buluta DOKUNULMADI. Sayfayı yenileyip buluttaki hâli yükleyin.
+    at kasaV2YukHazirla (/workspace/scratch/8db966c7705d/atolye/test/erp.cjs:7105:19)
+    at kasaIsi (/workspace/scratch/8db966c7705d/atolye/test/erp.cjs:5549:21)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  topluSilmeEngeli: true
+}
+  ✓ 30 hareketin hepsi iptal olacaktı → sunucuya istek yok, bekleyen defterde değil
+  ✓ günlüğe TOPLU SİLME ENGELLENDİ düştü
+Supabase yazma hatası: muhasebe Error: Toplu silme engellendi: Kasa & Banka'da 30 hareket (eldeki 30 kayıttan) tek yazmada kaldırılacaktı; bu bir hata belirtisidir, buluta DOKUNULMADI. Sayfayı yenileyip buluttaki hâli yükleyin.
+    at kasaV2YukHazirla (/workspace/scratch/8db966c7705d/atolye/test/erp.cjs:7105:19)
+    at kasaIsi (/workspace/scratch/8db966c7705d/atolye/test/erp.cjs:5549:21)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  topluSilmeEngeli: true
+}
+  ✓ bütün hesaplar birden kalkacaktı → sunucuya istek yok
+  ✓ tek hareket silmek serbest
+  ✓ yedekten geri yükleme (izinli) geçer
+Supabase yazma hatası: muhasebe Error: Toplu silme engellendi: Kasa & Banka'da 30 hareket (eldeki 30 kayıttan) tek yazmada kaldırılacaktı; bu bir hata belirtisidir, buluta DOKUNULMADI. Sayfayı yenileyip buluttaki hâli yükleyin.
+    at kasaV2YukHazirla (/workspace/scratch/8db966c7705d/atolye/test/erp.cjs:7105:19)
+    at /workspace/scratch/8db966c7705d/atolye/test/erp.cjs:7884:46
+    at Array.map (<anonymous>)
+    at _zarfUygula (/workspace/scratch/8db966c7705d/atolye/test/erp.cjs:7884:14)
+    at /workspace/scratch/8db966c7705d/atolye/test/erp.cjs:7947:53
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  topluSilmeEngeli: true
+}
+  ✓ zarfta kilit → hiçbir istek, cari de reddedildi
+
+TAMAM
+
+── test/birim-kdv.js
+Oran önceliği
+  ✓ açma anahtarı
+  ✓ varsayılan mamul / diğer
+  ✓ Tanımlarda yoksa %20
+  ✓ ürün kartındaki oran varsayılanı ezer
+  ✓ satırda seçilen her şeyi ezer (0 dahil)
+  ✓ satırda yoksa ürünün
+Hesap ve döküm
+  ✓ kuruş yuvarlama
+  ✓ oran bazında döküm
+fisYaz
+  ✓ KDV'li: tutar dahil, matrah/oran/KDV ayrı, birim fiyat hariç; USD satır TL matrah üstüne
+  ✓ oran taşımayan kalem eskisi gibi
+  ✓ sipariş yolu: birim fiyat KDV'den önce (tutar/miktar)
+
+── test/birim-kullanici-damga.js
+  ✓ yeni hareket damgalı, eski boş, sistem korunur
+  ✓ değişmeyen kayıt aynı nesne
+  ✓ kullanıcı yoksa aynı dizi
+  ✓ yeni hareket yoksa aynı dizi
+  ✓ yeni sipariş olusturan alır, eski almaz, olusturuldu korunur
+── kullanıcı damgası testi temiz ──
+
+── test/birim-kurulum.js
+  ✓ boş firma + Yönetici → açılır
+  ✓ ürün varsa açılmaz
+  ✓ renk varsa açılmaz
+  ✓ tamamlandıysa açılmaz
+  ✓ Yönetici değilse açılmaz
+  ✓ giriş kapalıysa herkes
+  ✓ liste ayrıştırma
+  ✓ firma: unvan kırpıldı, logo korundu, boş alan yazılmadı, KDV
+  ✓ ölçü: 38 tekrar açılmadı, boyut yerinde
+  ✓ renk: siyah tekrar açılmadı; kodlar 107,108 (106 model rengi atlandı)
+  ✓ proses: Kesim tekrar yok; sıra ve binlik aralık
+  ✓ tamamlandı işareti
+  ✓ girdi değişmedi
+
+── test/birim-liste-v2.js
+1) Saf fark
+  ✓ aynı → boş
+  ✓ anahtar sırası farklı → boş
+  ✓ başa eklenen → eksi sıra
+  ✓ sona eklenen → artı sıra
+  ✓ başa iki kayıt: ekrandaki sırayı korur
+  ✓ değişen → sırasız, yalnız o
+  ✓ silinen → iptal
+  ✓ başka cihazın kaydı (ne tabanda ne ekranda) → dokunulmaz
+  ✓ taban yok + boş liste → hiçbir şey silinmez
+  ✓ taban yok + dolu → yalnız yazma, sıra yok
+  ✓ boş taban → yeni kayıtlar sırayla sona
+  ✓ kimliksiz iki aynı kayıt → iki kalıcı kimlik
+2) tekilYaz — lst_yaz, dizi yazılmaz
+  ✓ yalnız bilinen listeler
+  ✓ tek rpc/lst_yaz, teklifler'e GET/POST yok
+  ✓ yük: tablo + yalnız yeni kayıt
+  ✓ taban ilerledi
+  ✓ aynı hâl → istek yok
+3) Geçiş yapılmamış liste bugünkü yoldan
+  ✓ koliler: belge POST'u, lst_yaz yok
+4) Düşen yazma ve toplu iptal kilidi
+Supabase yazma hatası: teklifler Error: Failed to fetch — POST rpc/lst_yaz · gövde 0 KB · adres 11 karakter
+    at supabaseIstek (/workspace/scratch/8db966c7705d/atolye/test/erp.cjs:5270:26)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async listeV2Gonder (/workspace/scratch/8db966c7705d/atolye/test/erp.cjs:7227:17) {
+  agHatasi: true
+}
+  ✓ bekleyen defterde, taban yerinde
+  ✓ sonraki yazma düşen farkı da taşır
+Supabase yazma hatası: faturalar Error: Toplu silme engellendi: faturalar listesinden 30 kayıt (eldeki 30 kayıttan) tek yazmada kaldırılacaktı; bu bir hata belirtisidir, buluta DOKUNULMADI. Sayfayı yenileyip buluttaki hâli yükleyin.
+    at listeV2YukHazirla (/workspace/scratch/8db966c7705d/atolye/test/erp.cjs:7215:19)
+    at listeIsi (/workspace/scratch/8db966c7705d/atolye/test/erp.cjs:5556:21)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  topluSilmeEngeli: true
+}
+  ✓ 30 kaydın hepsi iptal olacaktı → sunucuya istek yok, defter yok
+  ✓ tek kayıt silmek serbest
+  ✓ yedekten geri yükleme (izinli) geçer
+
+TAMAM
+
+── test/birim-maliyet-onay.js
+  ✓ reçete: 192 + 50 + 20 = 262 (kartla aynı)
+  ✓ eksik yok
+  ✓ kur yoksa eksik
+  ✓ işçiliksiz reçete eksik
+  ✓ fiyatı olmayan hammadde eksik
+  ✓ hedef yokken genel gider eksik
+  ✓ reçetesiz: alış 3 $ × 48
+  ✓ reçete de alış da yok
+  ✓ onay yok
+  ✓ onay kaydı
+  ✓ onaylı ve değişmemiş → ok
+  ✓ kur biraz oynadı (%0,5 altı) → hâlâ ok
+  ✓ işçilik arttı → eskidi
+  ✓ fiyat listesi maliyet kaynağı = 262 TL
+  ✓ %25 kâr → 327,5
+birim-maliyet-onay: tamam
+
+── test/birim-mamul-depo.js
+  ✓ kolisiz: 16 talep, 16 serbest → açık 0
+  ✓ kendi kolisinde 16 → açık 0 (önce 16'ydı), serbest 0
+  ✓ S1'in kolisi S2'nin açığını kapatmaz
+  ✓ koli siparişin kalanını aşarsa yalnız kalan kadar
+  ✓ aşan kısım başka siparişe sayılmaz
+  ✓ sipariş no'suz ama carisi belli koli içerikten çözülür
+  ✓ hiç çözülemeyen (sipariş ve cari yok) koli açığı kapatmaz
+  ✓ sevk edilmiş koli sayılmaz
+
+── test/birim-mamul-renk-kodlama.js
+1) Plan
+  ✓ var olan 1 renkli kombinasyon yeniden kullanılır
+  ✓ tanımlı renge yeni kombinasyon: sonraki kod 1004
+  ✓ bilinmeyen renk: renk 104 açılır, kombinasyon 1005
+  ✓ kodlu ad olduğu gibi döner
+  ✓ boş ve Standart atlanır
+  ✓ boşluklu yazım kırpılır, aynı renge gider
+  ✓ açılan renk: kod 104, görünüm rengi sorudan
+  ✓ açılan kombinasyonlar: Taba ve Kırmızı
+  ✓ tanımlar yeni nesne, girdi değişmedi
+  ✓ değişiklik yoksa aynı tanımlar referansı
+  ✓ boş tanımlarda ilk kodlar 101 / 1001
+2) Kodsuz liste
+  ✓ yalnız mamul, kodsuz, ürün başına tekil
+3) Yeniden adlandırma
+  ✓ sayılar
+  ✓ varyantlar
+  ✓ renk resmi anahtarı
+  ✓ hareketler
+  ✓ harici barkod
+  ✓ reçete mamulRenk değişir, hammadde rengi kalır
+  ✓ hammadde ürünü dokunulmaz (aynı referans)
+  ✓ sipariş kalemleri: yalnız o ürünün; hammadde kalemi kalır
+  ✓ değişmeyen sipariş aynı referans
+  ✓ üretim: büyük/küçük harf farkı eşleşir, başka ürün kalır
+  ✓ koli kalemleri
+  ✓ teklif kalemleri
+  ✓ boş eşleşme: her liste aynı referans
+birim-mamul-renk-kodlama: tamam
+
+── test/birim-ozel-kod-coklu.js
+  ✓ eski tek kapsam göçsüz okunur
+  ✓ eski genel = boş
+  ✓ çok tipli: Ayakkabı ürününe uyar
+  ✓ çok tipli: sezonu uyan ürüne uyar
+  ✓ çok tipli: hiçbirine uymayan ürüne uymaz
+  ✓ ürün alanları: genel önce, sonra uyanlar
+  ✓ aynı adla başka tip: yeni alan açılmaz, tip eklenir
+  ✓ aynı ad aynı tip: değişiklik yok
+  ✓ aynı ad Genel istenirse alan genel olur
+  ✓ yeni ad: yeni alan
+  ✓ 3 ikiz birleşti
+  ✓ kalan alanlar ve kapsamları
+  ✓ değer taşındı (ikiz anahtarı silindi)
+  ✓ çakışma bildirildi, kalan değer korundu
+  ✓ çakışan ürün değişmedi (ikiz değeri durur)
+  ✓ değeri olmayan ürün yazılmaz
+  ✓ ikiz yoksa hiçbir şey değişmez
+── özel kod çoklu tip testi temiz ──
+
+── test/birim-ozel-kod.js
+  ✓ genel alan her ürüne uyar
+  ✓ başka tipin alanı uymaz
+  ✓ mamul tipi alanı hammaddeye uymaz
+  ✓ tip eşleşmesi büyük/küçük harf duyarsız
+  ✓ deriye uygulanan alanlar
+  ✓ tabana uygulanan alanlar
+  ✓ bota uygulanan alanlar
+  ✓ sezon alanı eşleşen sezonda çıkıyor
+  ✓ sezon alanı başka sezonda çıkmıyor
+  ✓ sezonsuz üründe sezon alanı yok
+  ✓ Tüm Sezon joker değil
+  ✓ tipsiz üründe yalnız genel
+  ✓ genel alan başta
+  ✓ dolu kodlar etiketiyle
+  ✓ boş değer listelenmiyor
+  ✓ arama metni
+  ✓ eşleşen kod
+  ✓ eşleşmeyen sorgu
+  ✓ tip değişinde eski değer görünmüyor
+  ✓ eski değer kayıtta duruyor
+  ✓ tip geri alınınca değer dönüyor
+  ✓ boş etiketler alan açmıyor
+  ✓ alanlar genel kapsamlı
+  ✓ değerler kimliğe bağlandı
+  ✓ boş değer taşınmıyor
+  ✓ zaten nesne olan dokunulmuyor
+  ✓ değişim bildiriliyor
+  ✓ ikinci göç alan eklemiyor
+  ✓ ikinci göç değerleri bozmuyor
+  ✓ ikinci göçte değişim yok
+  ✓ boş kurulum
+
+── özel kod testi temiz ──
+
+── test/birim-pdf-cikti.js
+  ✓ tam belge
+  ✓ zoom 1 ve metin ölçeği sabit
+  ✓ aralıklar normal, th dönüşümsüz
+  ✓ gövde içeride, genişlik 794
+
+── test/birim-personel-mesai.js
+  ✓ mesai tutarı
+  ✓ kişiye özel aylık saat
+  ✓ Fasoncu bölüme bağlı proseste bile cariye
+  ✓ bölüm personeli bölüme bağlı olmayan proseste de bölüme
+  ✓ ikisi de değil → prosesin bölümü
+  ✓ ikisi de değil, bölümsüz proses → cariye
+  ✓ mesai fişi maaş sayılır
+  ✓ bölüm değişince kayıt taşınır, bilgiler korunur
+
+── test/birim-proses-planlama.js
+  ✓ Kesim kuyruğu: verilen ve biten üretim hariç
+  ✓ Saya: hazır olan/olmayan
+  ✓ ekle sırası dizi sırasıyla
+  ✓ kaydırınca sıra + birikimli gün
+  ✓ bitiş: 1 gün bugün, 3 gün çarşamba
+  ✓ cumartesiden 2 gün → pazartesi
+  ✓ personel kuyruğu ayrı ve kişinin hızıyla
+  ✓ çıkar
+── proses planlama testi temiz ──
+
+── test/birim-rapor.js
+1. düz satırlar
+  ✓ satış: her kalem aşamalarına bölünür, alış dışarıda
+  ✓ cari adı çözüldü
+  ✓ kalan ve tutar hesaplandı
+  ✓ planlama tipi ve referansı
+  ✓ alış tarafı ayrı, aşaması 'bekleniyor'
+1b. resim: renk resmi varsa o, yoksa kapak
+  ✓ renk resmi / kapak / yok
+  ✓ resimde arama yapılmıyor
+  ✓ gruplamada ilk resim
+  ✓ matriste resim anahtar değil, satırda ilk resim
+2. süzgeç
+  ✓ metin eşit (büyük/küçük harf duyarsız)
+  ✓ sayı büyük
+  ✓ tarih sonrası
+  ✓ iki süzgeç VE
+  ✓ boş değerli süzgeç yok sayılır
+  ✓ tanınmayan alan yok sayılır
+  ✓ dolu/boş işlemleri
+2b. serbest arama
+  ✓ metin sütunlarında arar, harf duyarsız
+  ✓ aşama ve planlama metninde de arar (planlanmamış üç kalemin dört satırı)
+  ✓ sayıda aramaz
+  ✓ boş arama hepsini bırakır
+  ✓ hesapta arama süzgeçten önce
+2c. sütun aramaları
+  ✓ metin sütunu içerir
+  ✓ iki sütun birden (VE)
+  ✓ sayı eşit
+  ✓ sayı büyük
+  ✓ sayı aralık
+  ✓ küçük eşit, virgüllü
+  ✓ boş kutu süzmez
+  ✓ anlaşılmayan sayı girdisi hiçbir satırı geçirmez
+  ✓ bilinmeyen sütun yok sayılır
+  ✓ sayı koşulu: boş → null
+  ✓ tarih kutusu gün.ay.yıl anlıyor
+  ✓ tarih kutusu yıl olmadan ay.gün
+  ✓ tarih kutusu ISO da olur
+  ✓ gruplu raporda sütun araması satırlara uygulanır
+3. gruplama
+  ✓ dört grup (ürün·renk·aşama)
+  ✓ aşama miktarı toplandı
+  ✓ metin sütununda farklı değerler sayıldı
+  ✓ tek değerli metin olduğu gibi
+  ✓ gruplama yoksa satırlar aynen
+4. hesap: süz + grupla + sırala + toplam
+  ✓ gruplama alanları başa alınır
+  ✓ süzülüp gruplandı, azalan
+  ✓ toplam satırı
+  ✓ ham satır sayısı
+  ✓ karışık para biriminde tutar toplanmıyor
+  ✓ sıralama artan
+  ✓ bilinmeyen sütun ve grup atlanır
+4b. kalem bazlı sayılar aşama satırlarında BİR kez sayılır
+  ✓ kalem iki aşama satırı
+  ✓ grupta miktar ve tutar bir kez, aşama miktarı toplam
+  ✓ gruplamasız toplam satırında da bir kez
+4c. tutarlar ve toplanmayan birim fiyat
+  ✓ kalem tutarları
+  ✓ toplamda birim fiyat YOK, tutarlar kalem başına bir kez, aşama tutarı her satır
+  ✓ grupta birim fiyat toplanmıyor, tek değer olduğu gibi
+5. üretim aşama dağılımı — kullanıcının örneği
+  ✓ aşamalar
+  ✓ sipariş satırları — kullanıcının örneği
+  ✓ aşama satırları prosesini taşıyor (ikon için)
+  ✓ aşama miktarları sipariş toplamını veriyor
+  ✓ hurda ayrı satır, sağlam akıyor
+  ✓ prosessiz üretim
+  ✓ satın alma: teslim alınan ve yolda
+6. matris — kullanıcının örneği: 36 kesimde, 37-38 bitmiş
+  ✓ matris açık, bedenler sütun
+  ✓ aşaması farklı beden AYRI satır, aynı olanlar TEK satır
+  ✓ anahtar sütunlar beden dışındaki metinler
+  ✓ diğer sayısal sütun kalem başına bir kez
+  ✓ beden toplamları ve genel toplam
+  ✓ gruplama varsa anahtar gruplama alanları
+  ✓ aşama gruplarına dağılan kalemin genel toplamı bir kez
+  ✓ liste gruplamasında da genel toplam bir kez
+  ✓ aşama seçili değilse TEK satır
+  ✓ hücrede aşama dökümü (prosesiyle)
+  ✓ hücre toplamları ve satır toplamı
+  ✓ aynı bedende iki aşama → hücrede iki satır
+  ✓ matris kapalı → satır düzeni
+
+── rapor testi temiz ──
+
+── test/birim-recete-gerceklesme.js
+  ✓ ilk ölçüm kaydedildi
+  ✓ üç ölçüm
+  ✓ ortalama
+  ✓ planlanan korunuyor
+  ✓ küçük fark öneri doğurmuyor
+  ✓ iki ölçümde öneri yok
+  ✓ üç ölçüm + %10 fark → öneri
+  ✓ fark oranı
+  ✓ reçete fazla yazılmışsa da öneri
+  ✓ fark negatif
+  ✓ sıfır tüketim sayılmıyor
+  ✓ hiç ölçüm yoksa null
+  ✓ başka renk ayrı tutuluyor
+  ✓ girdi değiştirilmiyor
+  ✓ planlanan güncelleniyor
+  ✓ reçete fazla düşüyorsa teşhis 'reçete'
+  ✓ şüpheli mamül adlandırılıyor
+  ✓ tüketim uyumluysa teşhis 'giriş'
+  ✓ ölçülen fazlaysa reçete suçlanmıyor
+  ✓ ölçüm yoksa 'bilinmiyor'
+  ✓ başka renk karışmıyor
+  ✓ tek ölçümde reçete suçlanmıyor
+
+── reçete gerçekleşme testi temiz ──
+
+── test/birim-recete-onay.js
+  ✓ tam reçete → eksik yok
+  ✓ tam ama onaysız → onaysiz
+  ✓ onaysız → kapı kapalı
+  ✓ onaylı → onayli
+  ✓ onaylı → kapı açık
+  ✓ hammadde adı değişince onay düşmez
+  ✓ satır sırası değişince onay düşmez
+  ✓ miktar değişince → degisti
+  ✓ değişti → kapı mesajı
+  ✓ yeni renk eklendi, reçetesi yok → eksik
+  ✓ eksik renk cümlesi
+  ✓ beden eksik → cümle
+  ✓ miktarsız satır
+  ✓ kırmızı renk onaylanmamış
+  ✓ kırmızı ✓ ile onaylanınca (renkOnayli) imza değişmez
+  ✓ boş reçete
+  ✓ eksik reçete kapı mesajı
+  ✓ onay kaydı olsa da eksikse onaylı değil
+── reçete onay testi temiz ──
+
+── test/birim-recete-sablon.js
+  ✓ mamul rengiyle aynı deri pozisyon 1, diğerleri sabit
+  ✓ şablon işçiliği: sıfır ücret girmez
+  ✓ her mamul rengi kendi derisini alır
+  ✓ sabit renk (Nikel) her renkte aynı
+  ✓ pozisyonlu satır '1. Renk' açıklaması
+  ✓ miktar taşınır
+  ✓ işçilik: boş olan dolar, dolu (Saya 20) ezilmez
+  ✓ ara proses ve ücreti gelir
+  ✓ her hammaddenin kendi eklemeId'si, renkler arasında ortak
+  ✓ eklemeId 'sablon-' önekli (geri alma)
+  ✓ reçete görünümü: 3 kart (hammadde başına)
+  ✓ eski tek-kimlikli şablon satırları da ayrışır
+  ✓ ikinci uygulamada hepsi zaten var
+  ✓ kombinasyonda 2. bileşen
+  ✓ hedef model renginde 2. bileşen (Taba)
+  ✓ pozisyonsuz eski şablon: renk aynen
+  ✓ bedene göre değişenler şablona girer, hiçbiri atlanmaz
+  ✓ taban: hammadde no = mamul no
+  ✓ bağcık (tek boy) bedensiz satır
+  ✓ taban her bedene (kaynakta olmayan 39 dahil)
+  ✓ haritalı: beden ve miktar haritadan; 39 karşılıksız
+  ✓ karşılıksız beden adıyla bildirilir
+  ✓ bağcık tüm bedenler
+  ✓ yalnız 38'de olan malzeme yalnız 38'e (tüm bedenlere yayılmaz)
+  ✓ kısmi malzeme yalnız 38'e, uyarısız
+  ✓ bedenli şablon ikinci kez eklenmez
+  ✓ aynı adlı renk: Taba Süet deri → Taba Süet
+  ✓ geçmişten hatırlanan işaretli (Siyah Süet → Bağcık Siyah*)
+  ✓ bilinmeyen boş (Pudra Süet → Bağcık)
+  ✓ bilinmeyen boş (Pudra Süet → Taban)
+  ✓ tek renkli hammadde sabit (Yapıştırıcı Beyaz)
+  ✓ 'Standart' rengi olan sabit (Silme Suyu)
+  ✓ boşlar listelenir
+  ✓ başka hammaddedeki karar da öneri (normal eklemeyle aynı): Taban Siyah*
+  ✓ geçmiş sayısı
+  ✓ yeniden uygulama: hepsi zaten var
+birim-recete-sablon: tamam
+
+── test/birim-renksiz.js
+Renksiz / bedensiz kuralı
+  ✓ Standart/Standart renksiz ve bedensiz
+  ✓ boş/boş renksiz ve bedensiz
+  ✓ hiç varyant yok: renksiz ve bedensiz
+  ✓ renksiz ama bedenli
+  ✓ renkli ama bedensiz
+  ✓ gerçek renk varsa renksiz değil (yer tutucu satır olsa da)
+  ✓ ürün yoksa false
+Stok eşleşmesi ("Standart" ↔ "")
+  ✓ reçetenin Standart satırı boş kayıtlı stoğu buluyor
+
+── test/birim-satir-esitle.js
+  ✓ her satır aynı anahtar kümesi
+  ✓ eksikler null, değerler korunur
+  ✓ boş paket
+  ✓ tek satır olduğu gibi
+  ✓ ham kalemlerin anahtar kümesi farklı (hatanın sebebi)
+  ✓ eşitlenince aynı küme, ek null
+── satır eşitleme testi temiz ──
+
+── test/birim-siparis-ciktisi.js
+numara normalize
+  ✓ 05xx → 905xx
+  ✓ 5xx → 905xx
+  ✓ +90 korunur
+  ✓ 00 90 korunur
+  ✓ boş → boş
+özet metni ve bağlantı
+  ✓ başlık, cari, matris satırları
+  ✓ toplam ve not
+  ✓ WhatsApp önce whatsapp numarası
+  ✓ whatsapp yoksa telefon
+  ✓ numara yoksa numarasız bağlantı
+çıktı HTML (matris)
+  ✓ firma, sipariş no, cari
+  ✓ beden sütunları
+  ✓ ürün+renk satırı (2 grup)
+  ✓ model bloğu bir kez, resim hücresi iki renk + başlık + toplamı kapsıyor
+  ✓ model toplamı: beden beden (13, 6) ve 19 çift
+  ✓ durum sütunu yok
+  ✓ genel toplam adet
+  ✓ tek renkli modelde Toplam satırı yok
+  ✓ tutar dolar (400 + 81 = 481)
+  ✓ HTML kaçışı
+
+── sipariş çıktısı testi temiz ──
+
+── test/birim-siparis-ek.js
+  ✓ sipariş: şema dışı alanlar ek'te
+  ✓ kalem: KDV ve notlar ek'te
+  ✓ şema dışı alanı olmayan kalemde ek hiç yok (SQL'siz kayıt etkilenmesin)
+  ✓ okuma: sipariş alanları kökte
+  ✓ okuma: kalemin KDV oranı ve notları kökte
+  ✓ sütun değeri ek'tekini ezer
+  ✓ ek yoksa / null ise kayıt aynen
+  ✓ ürün: renk başlığı gidiş-dönüş
+  ✓ stok hareketi: şema dışı alanlar gidiş-dönüş
+  ✓ cari: şema dışı alan + elle sayılan ek birlikte
+  ✓ cari hareketi: İŞLEM TİPİ ve çek kimliği ek'te (önce hiç gitmiyordu)
+  ✓ üretim: şema dışı alanlar gidiş-dönüş
+  ✓ atama: şema dışı alan gidiş-dönüş
+  ✓ üretimin proses dizisi ek'e kopyalanmıyor (zaten sütunda)
+  ✓ eksik alan defterden doldu (işlem tipi, matrah)
+  ✓ var olan değere dokunulmadı (tutar 100 kaldı)
+  ✓ bağ alanları doldurulmadı (esId, siparisId)
+  ✓ iptal edilmiş fişin kopyası kullanılmadı; dokunulmayan kayıt aynı nesne
+  ✓ stok hareketi: birim fiyat ve ürün adı doldu, urunId eklenmedi
+  ✓ sayılar
+  ✓ ikinci çalıştırma hiçbir şey değiştirmiyor (kendini sınırlıyor)
+
+── sipariş ek testi temiz ──
+
+── test/birim-siparis-iptal-sunucu.js
+  ✓ Yerelde bağ görünmese de sunucu iptali ilk işlem; ret gelince yerel değişiklik yok
+
+── test/birim-siparis-iptal.js
+önizleme
+  ✓ fişler, alış, üretim, koli, ayrılan
+  ✓ işlem görmüş → iptal
+  ✓ önizleme hiçbir şeyi değiştirmez
+iptal
+  ✓ fiş hareketi SİLİNMEDİ, miktar aynı, bağ koptu
+  ✓ stok miktarı değişmedi
+  ✓ cari hareketi (tutar) aynı, bağ koptu
+  ✓ mamul girişinin 'bu satış için' zinciri boşaldı
+  ✓ başka siparişin hareketine dokunulmadı
+  ✓ sipariş İptal durumunda kalıyor (silinmedi)
+  ✓ alış DEVAM: durum aynı, zincir ve bu siparişin rezervasyonu kalktı, diğerininki duruyor
+  ✓ SAT-1001 ('SAT-10' ile başlıyor) etkilenmedi
+  ✓ üretim DEVAM: zincir boş, not işaretli
+  ✓ koli duruyor, siparişsiz
+  ✓ hammadde rezervasyonu kalktı (diğer sipariş duruyor)
+  ✓ fiş defteri: kayıt ve kopyası bağsız
+serbest stok
+  ✓ önce: 6 çift kolide, serbest 0 · sonra: kolide 0, serbest 6, talep 0
+boş sipariş → silme
+  ✓ bağı olmayan sipariş işlem görmemiş sayılır
+yalnız fiş girişi iptale zorlar (v1.544.0)
+  ✓ fişsiz, satışa bağlı alış → silinebilir (bağ var ama bilgi)
+  ✓ silmede de satışın planlaması boşalıyor, alış iptale dönmüyor
+  ✓ planlanmış ama fişsiz satış → silinebilir
+  ✓ teslim alınmış (karşılanan) → iptal
+  ✓ fiş hareketi varsa → iptal
+mevcut yetim hareketler
+  ✓ silinmiş siparişe bağlı olanlar bağsız, miktar/tutar aynı; var olana dokunulmadı
+
+── sipariş iptal testi temiz ──
+
+── test/birim-siparis-odeme.js
+  ✓ satışta yalnız Tahsilat (alan ya da THS- ön eki); birime göre ayrı; kalan siparişin biriminden
+  ✓ alışta yalnız Ödeme; fazla ödemede kalan 0
+  ✓ siparişin biriminde ödeme yoksa ödenen 0, kalan tam
+  ✓ carisiz çağrı boş
+  ✓ kalan kuruşa yuvarlanır
+
+── test/birim-son-alis.js
+son alış fiyatları
+  ✓ yalnız alış fişleri, en yeni önce, harf duyarsız
+  ✓ renge göre
+  ✓ sınır
+  ✓ çevrimli alışta kalemin kendi birimi
+  ✓ bilinmeyen ürün → boş
+  ✓ boş ad → boş
+
+── son alış testi temiz ──
+
+── test/birim-stok-degisim.js
+  ✓ aynı ad: Siyah→Siyah, Kahve→Kahve
+  ✓ stok, birim değişti; miktar/proses kaldı
+  ✓ id taşınmaz (yeni satır)
+  ✓ çözülemeyen renk eski değerle kalır, sayılır
+  ✓ renksiz stok: Standart
+  ✓ bedensiz stok: beden satırları tek 'Tüm Bedenler'
+  ✓ miktarlar farklıysa bedenler korunur
+  ✓ bedenli stok: mamul bedenlerine açılır
+  ✓ kombinasyonda pozisyon rengi (2. Renk = Siyah)
+
+── test/birim-stok-durumu.js
+  ✓ hiçbir değerde küsurat yok
+  ✓ stok / ayrılan / serbest
+  ✓ satın alma teslim alınanı saymaz
+  ✓ yoldan tahsisli
+  ✓ açık yok
+  ✓ talep denklemi tutuyor
+  ✓ teslim alınmış alış yolda görünmez
+  ✓ talep stoktan karşılanır
+  ✓ beklenen serbest = serbest
+  ✓ stok yoksa ayrılan 0
+  ✓ yoldaki tamamı
+  ✓ tamamı talebe tahsisli → beklenen serbest 0
+  ✓ açık yok
+  ✓ tahsis yok
+  ✓ beklenen serbest = serbest + sahipsiz yolda
+  ✓ ihtiyaç kadar dağıtılır, küsurat yok
+  ✓ yetmeyen miktar sırayla
+  ✓ fazlası rezerve edilmez
+  ✓ kesirli ihtiyaç korunur
+── stok durumu testi temiz ──
+
+── test/birim-stok-no-onar.js
+  ✓ yerel çift: eski 7'de kalır, yeni 10 (9 dolu), sayaç 10
+  ✓ çakışma yoksa aynı nesneler, değişen yok
+  ✓ bulutta 7 başka üründe → Eski 13 (12 bulutta dolu); Başka 9 kendi kimliğinde kalır
+  ✓ stok no'suz ürüne dokunulmaz
+── stok no onarımı testi temiz ──
+
+── test/birim-stok-v2-kopru.js
+1) Yeni fiş: kimlikle tek istek
+  ✓ tek rpc isteği
+  ✓ alt tablolara REST isteği yok
+  ✓ model rengi kodundan, beden adından
+  ✓ hammadde rengi adından, Standart ölçüsüz
+  ✓ miktarı değişen varyant gönderilmez (stok sunucuda hesaplanır)
+2) Yeniden adlandırma: istek yok
+  ✓ ad değişikliği hiçbir stok isteği üretmedi
+3) Kodsuz renk model rengine: hareket yeni kimlikle, eski varyant kaldırılır
+  ✓ h5 yeniden yazıldı (kombi-1 / b-37)
+  ✓ yeni varyant açıldı
+  ✓ eski varyant kaldırıldı
+4) Silme → iptal; varyant kaldır; min stok
+  ✓ hareket iptal
+  ✓ satır gönderilmedi
+  ✓ Siyah varyantı kaldırıldı
+  ✓ min stok
+5) İstek düşerse: bellek geri, bekleyen defter, yeniden gönderim aynı yük
+  ✓ söz reddedildi
+  ✓ bekleyen defterde ürünün hareketi
+  ✓ yeniden gönderimde h12 yine gitti
+6) Büyük yük parçalanır
+  ✓ üç parça (500/500/200)
+  ✓ varyant açma ilk, iptal ve kaldırma son parçada
+  ✓ boş satırlı yük tek parça
+7) Fiş numarası olmayan hareket OTO- fişine
+  ✓ OTO-q1
+8) Bayrak kapalı: bugünkü yol
+  ✓ rpc yok, REST stok_hareketleri POST var
+9) Türkçe ad karşılaştırması
+  ✓ IŞIK GRİ / ipek / boşluklar
+  ✓ ölçü tipine göre
+  ✓ stokV2Nrm
+
+TAMAM
+
+── test/birim-surum.js
+sürüm karşılaştırma
+  ✓ yeni yama
+  ✓ aynı sürüm
+  ✓ eski sürüm
+  ✓ iki haneli ara sürüm (metin karşılaştırması burada yanılırdı)
+  ✓ ters yön
+  ✓ eksik hane
+  ✓ boş değer
+
+── sürüm testi temiz ──
+
+── test/birim-tanim-birlestir.js
+  ✓ başkasının eklediği renk ve model rengi korunur
+  ✓ bu cihazda silinen (Gri) geri gelmez
+  ✓ aynı kimlikte yerel kazanır
+  ✓ düz liste ve nesneler yerelden
+  ✓ bulut yoksa yerel aynen
+  ✓ yerelde hiç olmayan liste buluttan gelir
+  ✓ yalnız kombinasyonu olmayan etiketler (1001 var, düz renk sayılmaz)
+  ✓ kod aynı, renkler eşleşti
+  ✓ tanımda olmayan renk (Yılan Deri) yeni renk olarak
+  ✓ '/' içeren renk adı en uzun eşleşmeyle
+  ✓ barkod renk tanımı artık bulunuyor, kodu 1017
+  ✓ onarım sonrası kayıp yok
+  ✓ eski renk 44'ü korur, Siyah değişmez
+  ✓ yeni renk ve model rengiyle çakışan renk yeni kod alır, hepsi tekil
+  ✓ değişenler raporlanır
+  ✓ ton kodu (kod) dokunulmaz
+  ✓ çakışma yoksa aynı nesne
+  ✓ başka cihazda silinen çıkarılır, silinenler taşınır
+  ✓ 120 günü geçen silinen budanır, öğe geri gelir
+birim-tanim-birlestir: tamam
+
+── test/birim-tekil-birlestir.js
+1) Saf kural — kimlikli liste (teklifler)
+  ✓ başka cihazın yenisi korunur, bu cihazın yenisi eklenir
+  ✓ bu cihazın silmesi gider
+  ✓ başka cihazın silmesi gider (bu cihaz dokunmamış)
+  ✓ başka cihazın değişikliği korunur (bu cihaz dokunmamış)
+  ✓ iki taraf farklı alanı değiştirdi → ikisi de
+  ✓ aynı alan → bu cihaz kazanır
+  ✓ bu cihaz sildi ama başka cihaz değiştirdi → kalır (bulut hâli)
+  ✓ başka cihaz sildi ama bu cihaz değiştirdi → kalır (yerel hâl)
+2) Saf kural — iç içe nesne (Kasa & Banka)
+  ✓ aynı kasaya iki cihazdan iki hareket → ikisi de
+  ✓ kur bu cihazdan
+  ✓ taban yok (bulut okunamamıştı) + boş hâl → buluttaki kasalar/bankalar/çekler korunur
+  ✓ taban var, bu cihaz bilerek boşalttı → boşalır
+3) tekilYaz akışı
+  ✓ önce bulut okundu, sonra yazıldı
+  ✓ buluta birleşik liste gitti (B korunuyor)
+  ✓ ekrana birleşik bildirildi
+  ✓ taban = bu cihazın gönderdiği hâl
+  ✓ ikinci yazma: ekranda olmayan B yine korunur
+Supabase yazma hatası: teklifler Error: Failed to fetch — GET teklifler · gövde 0 KB · adres 33 karakter
+    at supabaseIstek (/workspace/scratch/8db966c7705d/atolye/test/erp.cjs:5270:26)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  agHatasi: true
+}
+  ✓ bulut okunamadı → POST yok
+  ✓ bekleyen deftere düştü
+  ✓ birleştirmesiz: GET yok, yalnız Z
+  ✓ bulutta satır yok → yerel aynen
+birim-tekil-birlestir: tamam
+
+── test/birim-teklif.js
+  ✓ ilk numara TKL-1001
+  ✓ en büyük + 1, çöp dahil
+  ✓ durum: saklanan
+  ✓ durum: süresi doldu (açık + tarih geçti)
+  ✓ durum: dönüşmüş teklif süresi dolmaz
+  ✓ toplam para birimi başına (KDV'li)
+  ✓ sipariş: SAT numarası, Satış, Bekliyor, teklif bağı
+  ✓ sipariş kalemleri birebir, yeni kimlik, karşılanan 0
+  ✓ sipariş kalemi ambalaj null, kdvsiz kalemde kdvOrani yok, planlama taşınmaz
+  ✓ kalem notu ve ambalaj birebir geçer (form aynı)
+  ✓ doğrulama: boş
+  ✓ doğrulama: miktarsız
+  ✓ doğrulama: tamam
+  ✓ gruplama ürün+renk, ölçüler sıralı
+  ✓ çıktı: başlık, müşteri, kalem, KDV ve toplam
+  ✓ çıktı: HTML kaçışı
+birim-teklif: tamam
+
+── test/birim-toplu-silme-kilidi.js
+  ✓ eşik 20
+  ✓ 19 silme (hepsi) geçer — küçük tablo
+  ✓ 20 silme, 100 kayıttan: geçer (yarıdan az)
+  ✓ 50 silme, 100 kayıttan: engel (yarısı)
+  ✓ 30 silme, 30 kayıttan: engel
+  ✓ 0 silme: geçer
+  ✓ engel bulucu: ana tablo
+  ✓ engel bulucu: temiz
+  ✓ 30/30 üretim silmesi engellendi
+  ✓ hiç veri isteği gitmedi
+  ✓ günlüğe TOPLU SİLME ENGELLENDİ düştü
+  ✓ bekleyen kayıt defterine düşmedi
+  ✓ ikinci deneme de engellendi (bellek geri alınmış)
+  ✓ izinle DELETE gitti
+  ✓ 30'dan 3 silme geçti
+  ✓ 40/40 stok hareketi silmesi engellendi
+  ✓ ürün PATCH'i bile gitmedi (varyant 0'a ezilmedi)
+  ✓ 40 varyantın rengi değişti → geçti (net kayıp 0)
+  ✓ eski adlı varyantlar silindi, yenileri yazıldı
+  ✓ Bot'un 40 varyantı yerine bir şey gelmeden gitti → engel
+  ✓ Bot'un kaybını Terlik'in 40 yeni satırı örtmez → engel
+  ✓ yedek: üretim 30 ve hareket 40 silinecek diye yazar
+  ✓ kilidi aşanlar: hareket ve üretim (varyant 1 değil)
+  ✓ güncel yedek: silinecek yok
+  ✓ saf: yalnız eksik olanlar
+  ✓ köprü yokken HEAD gitmez
+  ✓ köprü varken üretim + iş ataması sayıldı
+  ✓ bulut = elde → bildirim yok
+  ✓ bulutta 3 eksik → bildirim
+  ✓ günlüğe YAZMA DOĞRULAMA düştü
+  ✓ bulutta fazla → sessiz (başka cihaz eklemiş olabilir)
+  ✓ sayı okunamadı → sessiz
+  ✓ değişiklik yoksa doğrulama yok
+birim-toplu-silme-kilidi: tamam
+
+── test/birim-transaction-tekrar.js
+✓ SQL 40P01/40001: aynı gövdeyle en çok iki tekrar; AT001 kalıcı ret tek deneme
+
+── test/birim-tutar-yaziyla.js
+  ✓ 0
+  ✓ 7
+  ✓ 100 — 'bir yüz' değil
+  ✓ 1000 — 'bir bin' değil
+  ✓ 1001
+  ✓ 42000
+  ✓ 101000 — binlerde 1 başka rakamla söylenir
+  ✓ 250375
+  ✓ 1000000
+  ✓ 2001010
+  ✓ TL kuruşlu
+  ✓ USD
+  ✓ EUR sentli, yuvarlama
+  ✓ kuruş tek hane
+
+── test/birim-uretim-gider-bag.js
+  ✓ proses fiş ekinden
+  ✓ uzun ad önce
+  ✓ işçilik değil
+  ✓ bağsızken karşılıksız sayılır
+  ✓ bağlanınca yalnız bağsız proses kalır
+  ✓ kesim kartı ekstresi
+  ✓ hammadde kartı ekstresi (3 × 10)
+  ✓ Kâr/Zarar: bağlı işçilik karta geçer
+  ✓ Kâr/Zarar: net kâr değişmez (çift sayım yok)
+  ✓ aynı adlı kart bağlanır, eksik açılır
+  ✓ ikinci çağrı değişiklik yapmaz
+  ✓ elle kurulan bağa dokunulmaz
+  ✓ stok giriş/çıkış kartları açılır
+  ✓ stok girişi gelir kartında (2×10 + 4×5)
+  ✓ stok çıkışı gider kartında, açılış sayılmaz
+  ✓ satış gelir kartında
+  ✓ alış gider kartında
+  ✓ satış kartı Satışlar grubunda
+  ✓ elle taşınan satış kartı geri çekilmez
+  ✓ bölümsüz maaş karşılıksız sayılır
+
+── test/birim-uretim-raporu.js
+  ✓ hafta Pzt–Paz
+  ✓ ay gün sayısı
+  ✓ elle hedef
+  ✓ kapasiteden hedef
+  ✓ Kesim haftalık: gerçekleşen/hurda/bekleyen/hedef(6 iş günü)/oran
+  ✓ Saya personelde
+  ✓ personel gün gün
+  ✓ açık üretimler (biten hariç) ve Kesim ✓
+  ✓ biten üretim = son proseste teslim (u1 Saya bitmedi, u3 Kesim son adım)
+  ✓ günlük yalnız o gün
+── üretim raporu testi temiz ──
+
+── test/birim-v2-koruma.js
+1) Taban yokken yazılmaz
+Supabase yazma hatası: muhasebe Error: Kasa & Banka: buluttaki hâl bu açılışta okunamadı — yazma bekletildi (sayfayı yenileyin; kayıt kaybolmaz)
+    at v2TabanYokHatasi (/workspace/scratch/8db966c7705d/atolye/test/erp.cjs:7095:12)
+    at kasaV2YukHazirla (/workspace/scratch/8db966c7705d/atolye/test/erp.cjs:7100:15)
+    at kasaIsi (/workspace/scratch/8db966c7705d/atolye/test/erp.cjs:5549:21)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+Supabase yazma hatası: teklifler Error: teklifler: buluttaki hâl bu açılışta okunamadı — yazma bekletildi (sayfayı yenileyin; kayıt kaybolmaz)
+    at v2TabanYokHatasi (/workspace/scratch/8db966c7705d/atolye/test/erp.cjs:7095:12)
+    at listeV2YukHazirla (/workspace/scratch/8db966c7705d/atolye/test/erp.cjs:7211:15)
+    at listeIsi (/workspace/scratch/8db966c7705d/atolye/test/erp.cjs:5556:21)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+  ✓ kasa / liste: sunucuya istek yok
+  ✓ ikisi de bekleyende
+2) Sunucu ayarı okunamadıysa bekletilir
+Supabase yazma hatası: cariler Error: Sunucu ayarı (v2 geçişi) henüz okunamadı — cariler yazması bekletildi, bağlantı gelince gönderilir
+    at v2AyarYazmaEngeli (/workspace/scratch/8db966c7705d/atolye/test/erp.cjs:8236:12)
+    at _tabloEsitleUygula (/workspace/scratch/8db966c7705d/atolye/test/erp.cjs:7838:70)
+    at /workspace/scratch/8db966c7705d/atolye/test/erp.cjs:7522:42
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+  ✓ cari yazması: istek yok, sonuç başarısız, bekleyende
+Supabase yazma hatası: muhasebe Error: Sunucu ayarı (v2 geçişi) henüz okunamadı — muhasebe yazması bekletildi, bağlantı gelince gönderilir
+    at v2AyarYazmaEngeli (/workspace/scratch/8db966c7705d/atolye/test/erp.cjs:8236:12)
+    at tekilYaz (/workspace/scratch/8db966c7705d/atolye/test/erp.cjs:5560:66)
+    at /workspace/scratch/8db966c7705d/atolye/test/birim-v2-koruma.js:44:9
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+  ✓ kasa yazması da bekletildi
+3) fis_yaz yanıtında eksik parça → hata
+  ✓ eksik kasa parçası hata verdi
+  ✓ tam yanıt → hata yok
+
+TAMAM
+
+── test/birim-vergino.js
+Algoritmalar
+  ✓ normalleştirme
+  ✓ geçerli VKN
+  ✓ son hanesi bozuk VKN
+  ✓ VKN 10 hane değilse
+  ✓ geçerli TCKN
+  ✓ bozuk TCKN (10. / 11. hane, 0 ile başlayan)
+Vergi No alanı
+  ✓ boş
+  ✓ VKN
+  ✓ TCKN
+  ✓ bozuk VKN mesajı
+  ✓ harf (eski kayıtta dairesiyle tek kutu)
+  ✓ hane sayısı
+  ✓ TCKN alanı
+Mükerrer
+  ✓ aynı VKN (boşluklu kayıt)
+  ✓ TCKN alanındaki numara da
+  ✓ kendisi sayılmaz
+  ✓ boş numara eşleşmez
+  ✓ uyarılar: hatalı + mükerrer ayrı ayrı
+  ✓ uyarılar: temiz
+  ✓ uyarılar: hatalı
+Kaydedilen biçim
+  ✓ geçerli numara yalın rakam
+  ✓ geçersiz olduğu gibi (kırpılmış)
+
+── test/birim-yazma-dayaniklilik.js
+1) Ağ hatasında yeniden deneme
+  ✓ 2 kopuş sonrası 3. deneme geçti (tek kayıtlı istek)
+  ✓ aralar beklendi (≥ 2,2 sn)
+  ✓ 4 kopuş: 3 yeniden denemeden sonra hata yukarı, düşen istek yazılı
+  ✓ okuma denenmez: ilk kopuşta hemen hata
+2) Parçalı POST
+  ✓ 950 satır → 3 istek (400 · 400 · 150)
+  ✓ satır anahtarları eşitlendi (eksik alan null)
+  ✓ merge-duplicates
+2b) Boyuta göre parçalama
+  ✓ 10 × 300 KB satır → 900 KB sınırında 2'şerli parçalar
+  ✓ tek satır sınırdan büyükse tek başına
+  ✓ küçük satırlar 400'lük
+3) Gruplu bileşik silme
+  ✓ 9 satır → 5 istek (u1 Siyah, u1 Taba, u2 Siyah, u2 null, u3)
+  ✓ ürün+renk grubu beden listesiyle
+  ✓ NULL beden tek başına is.null
+  ✓ tırnaklı renk kaçışlı
+  ✓ hepsi DELETE
+  ✓ 250 beden → 100'erlik 3 istek
+birim-yazma-dayaniklilik: tamam
+
+── test/birim-yazma-zarfi.js
+1) Stok + cari v2: tek fis_yaz
+  ✓ tek rpc: fis_yaz
+  ✓ stok kısmı
+  ✓ cari kısmı (bugünkü sütun adlarıyla)
+  ✓ alt tablolara REST yok
+  ✓ iki söz de çözüldü
+2) Yalnız stok v2: stk_yaz + cari REST
+  ✓ stk_yaz + REST cari_hareketleri POST
+3) İstek düşerse: ikisi de reddedilir, ikisi de bekleyen defterde, yeniden gönderim aynı satırlar
+  ✓ iki söz de reddedildi
+  ✓ bekleyen defterde iki taraf
+  ✓ yeniden gönderim: ikisi birlikte, aynı satırlar
+4) Zarfın öteki tablosu gelmezse bekleme dolunca tek başına yazılır
+  ✓ yalnız stok: stk_yaz
+5) Cari silme → iptal; değişmeyen satır gitmez
+  ✓ cariV2Yuku
+  ✓ tek car_yaz, yalnız iptal
+6) birlikteYaz: iki yazma birlikte, tek sonuç
+  ✓ ok + tek fis_yaz
+7) Sipariş sevki: sipariş kalemi (karşılanan) + stok + cari TEK fis_yaz (v1.728.0)
+  ✓ tek fis_yaz: stok + cari + kalem
+  ✓ kalem tablosuna REST yok
+  ✓ altV2Yuku silme
+  ✓ kalem silme → alt_yaz sil
+
+TAMAM
+
+── test/birim-yedek-fis-kilidi.js
+  ✓ Fiş kurulu — kuralların açık olmasına bağlı değil
+  ✓ Fiş kurulu — bağlantı kapansa da engel sürer
+  ✓ Sunucu ayarı okunamadı — önce veri korunur
+  ✓ Fişsiz eski sistem — geri yükleme yolu korunur
+
+── test/birim-yeni-renk-recete.js
+  ✓ aynı adlı renk (Deri Bej Süet), açıklama korunur
+  ✓ geçmişten (Bağcık Bej*)
+  ✓ bütün renklerde aynı → sabit (Yapıştırıcı Beyaz)
+  ✓ tek renkli / Standart
+  ✓ bilinmeyen boş (Taban)
+  ✓ bedenli satır bedenleriyle kopyalanır (tek renkli hammadde)
+  ✓ id taşınmaz, yeni renk
+  ✓ zaten varsa hiçbir şey
+  ✓ kısmen dolu renkte kalan gruplar dolar, Deri tekrar açılmaz
+  ✓ tek bedende farklı boy → Tüm Bedenler satırı bedenlere açılır
+  ✓ Hepsi → açılmaz, boy değişir
+  ✓ açılmış satırda tek beden
+  ✓ aynı değer → değişiklik yok
+  ✓ aynı renk AYNEN (Deri, açıklama, miktar)
+  ✓ aynı renk: taban numaraları + hedefte olan 42 açılır (no = no)
+  ✓ haritalı bedende 42 karşılıksız → bildirilir
+  ✓ yeni renk: aynı ad (Deri Bej Süet) ve geçmiş (Bağcık Bej*)
+  ✓ yeni renk: bilinmeyen boş (Taban · Bej Süet)
+  ✓ kopya- kimliği, kaynak eklemesi başına bir
+  ✓ işçilik boşsa gelir
+  ✓ ikinci kez: hepsi zaten var
+  ✓ aynı ad + Standart kullanım + geçmiş dolar, bilinmeyen boş
+  ✓ tamamsa boş
+  ✓ kartı olmayan hammaddede seçenekler reçetelerden
+  ✓ kart renkleri önce, reçetedeki fazlalar sonra
+  ✓ renk renk ayrı eklenmiş hammadde: çift satır yok
+  ✓ yeni renk: ayrı eklemelerden tek satır
+  ✓ tekli renge '2. Renk' açılmaz
+  ✓ sabit malzeme aynı-ad kuralından önce (Toka Nikel kalır)
+  ✓ kopyada aynı hammaddenin ikinci kullanımı gelir
+  ✓ en yakın beden (sayısal)
+  ✓ eksik beden bulunur (42)
+  ✓ Tüm Bedenler satırı varsa eksik yok
+  ✓ eşleştir… seçilince satır en yakın bedenden açılır
+  ✓ varyantlar verilmezse eski davranış (satır açılmaz)
+  ✓ Hepsi → eksikleri de doldurur
+  ✓ hatırlanan boy aynı değerle seçilince işaret düşer
+  ✓ boy seçenekleri: kart yoksa reçetelerden
+  ✓ stoktan çek: 42 geçmişten (kırmızı), 43 bilinmiyor → boş + adı
+  ✓ şablon: 42 geçmişten (miktar en yakın bedenden), 43 boş + adı
+  ✓ şablon: boy = numara, miktar bedene göre → eksik numara düşmez
+birim-yeni-renk-recete: tamam

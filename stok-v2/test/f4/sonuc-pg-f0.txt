@@ -1,0 +1,254 @@
+── t-karsilanan
+F0 / D1 karşılanan · önek f0-t-karsilanan-mvyu8jfk · kurallar açık: true
+  ✓ [D1.eski-eszamanli] iki eski istemci eşzamanlı 5'er → karşılanan = teslim = 10
+      önce:     {"karsilanan":0,"teslim":0}
+      sonra:    {"karsilanan":10,"teslim":10,"fisler":[true,true]}
+  ✓ [D1.eski-tekrar-iptal] eski istemcinin tekrar gelen iptali karşılananı ezmez (8 / 8)
+      önce:     {"karsilanan":8,"teslim":8}
+      sonra:    {"karsilanan":8,"teslim":8,"iptal":[true,true]}
+  ✓ [D1.karisik-yeni-once] yeni önce, eski arkasından → 10 / 10
+      önce:     {"karsilanan":0,"teslim":0}
+      sonra:    {"karsilanan":10,"teslim":10}
+  ✓ [D1.yeni-eszamanli] iki yeni istemci eşzamanlı 5'er → 10 / 10
+      önce:     {"karsilanan":0,"teslim":0}
+      sonra:    {"karsilanan":10,"teslim":10}
+  ✓ [D1.yeni-iptal-tekrar] yeni istemci iptal + tekrar → 5 / 5
+      önce:     {"karsilanan":10,"teslim":10}
+      sonra:    {"karsilanan":5,"teslim":5}
+  ✓ [D1.alis-eski-eszamanli] alışta iki eski istemci → 10 / 10
+      önce:     {"karsilanan":0,"teslim":0}
+      sonra:    {"karsilanan":10,"teslim":10,"fisler":[true,true]}
+  ✓ [D1.denetim-yakalar] denetim D1a = bu koşuda karşılananı teslimden farklı kalem sayısı
+      sonra:    {"D1a":0,"farkliKalem":0}
+── t-karsilanan.js: 7 yeşil, 0 kırmızı ──
+── t-kalem-bag
+F0 / D2–D3 kalem bağı · önek f0-t-kalem-bag-mvyu8n5x · kurallar açık: true
+  ✓ [D2.birlestirme] teslimli parçalar birleştirilmez: B durur, toplam karşılanan = toplam teslim (7)
+      önce:     {"A":{"var":true,"miktar":10,"karsilanan":3,"renk":"Siyah","urun":"u-yeni","teslim":3},"B":{"var":true,"miktar":10,"karsilanan":4,"renk":"Siyah","urun":"u-yeni","teslim":4}}
+      sonra:    {"A":{"var":true,"miktar":10,"karsilanan":3,"renk":"Siyah","urun":"u-yeni","teslim":3},"B":{"var":true,"miktar":10,"karsilanan":4,"renk":"Siyah","urun":"u-yeni","teslim":4},"yazma":[]}
+  ✓ [D2.teslimli-sil] teslimli kalem silinemez (A durur, 5 / 5)
+      önce:     {"A":{"var":true,"miktar":20,"karsilanan":5,"renk":"Siyah","urun":"u-yeni","teslim":5}}
+      sonra:    {"A":{"var":true,"miktar":20,"karsilanan":5,"renk":"Siyah","urun":"u-yeni","teslim":5},"yazma":"RED"}
+  ✓ [D2.teslimsiz-sil] teslimsiz kalem silinebilir
+      sonra:    {"C":false}
+  ✓ [D3.renk-degisir] teslimli kalemin rengi değişmez (Siyah kalır)
+      önce:     {"A":{"var":true,"miktar":20,"karsilanan":5,"renk":"Siyah","urun":"u-yeni","teslim":5}}
+      sonra:    {"A":{"var":true,"miktar":20,"karsilanan":5,"renk":"Siyah","urun":"u-yeni","teslim":5},"yazma":"RED"}
+  ✓ [D3.miktar-teslim-alti] miktar teslim edilenin altına inemez (20 kalır)
+      önce:     {"A":{"var":true,"miktar":20,"karsilanan":5,"renk":"Siyah","urun":"u-yeni","teslim":5}}
+      sonra:    {"A":{"var":true,"miktar":20,"karsilanan":5,"renk":"Siyah","urun":"u-yeni","teslim":5},"yazma":"RED"}
+  ✓ [D3.miktar-teslim-ustu] miktar teslim edilenin üstünde değişebilir (15)
+      sonra:    {"miktar":15}
+  ✓ [D2.denetim-yakalar] senaryolardan sonra denetimde sahipsiz hareket yok (D2a 0)
+      sonra:    {"D2a":0,"D4a":0}
+── t-kalem-bag.js: 7 yeşil, 0 kırmızı ──
+── t-fazla
+F0 / D4 fazla teslim · önek f0-t-fazla-mvyu8o0z
+  ✗ [D4.satis-eszamanli] eşzamanlı teslimde biri reddedilir: teslim 19, karşılanan 19
+      önce:     {"karsilanan":14,"teslim":14,"miktar":20}
+      sonra:    {"karsilanan":24,"teslim":24,"kabul":[true,true],"hata":[]}
+      beklenen: [1,19,19]
+      çıkan:    [2,24,24]
+  ✗ [D4.satis-onaysiz-fazla] onaysız fazla teslim sunucuda reddedilir (teslim 0)
+      önce:     {"karsilanan":0,"teslim":0}
+      sonra:    {"karsilanan":25,"teslim":25,"kabul":true}
+      beklenen: [false,0]
+      çıkan:    [true,25]
+  ✓ [D4.satis-tam-sinir] tam miktar kabul edilir (20 / 20)
+      sonra:    {"kabul":true,"teslim":20}
+  • [D4.alis-eszamanli] (gözlem) alış 14 + 5 + 5 (miktar 20): {"kabul":[true,true],"teslim":24,"karsilanan":24}
+  • [D4.alis-tek-fazla] (gözlem) alış tek istekte 25 (miktar 20): {"kabul":true,"teslim":25,"karsilanan":25,"fazlaIsareti":"t"}
+  ✓ [D4.denetim-yakalar] denetim onaysız fazlayı (D4a) ve işaretli fazlayı (D4b) ayırıyor
+      sonra:    {"D4a":2,"D4b":2}
+── t-fazla.js: 2 yeşil, 2 kırmızı ──
+── t-iptal
+F0 / D5 iptal ve durum · önek f0-t-iptal-mvyu8q6x
+  ✗ [D5.iptal-bag-korunur] iptalden sonra: durum İptal, karşılanan 4 = bağlı teslim 4, fiş satırı bağlı
+      önce:     {"durum":"Bekliyor","karsilanan":4,"bagliTeslim":4,"fis":{"gecerli":true,"gecerliSatir":1,"bagliSatir":1}}
+      sonra:    {"durum":"İptal","karsilanan":4,"bagliTeslim":0,"fis":{"gecerli":true,"gecerliSatir":1,"bagliSatir":0},"bagCoz":{"cari":1,"stok":1,"durum":"İptal","zincir":0,"kalemler":[{"id":"f0-t-iptal-mvyu8q6x-i-A","karsilanan":4}]}}
+      beklenen: ["İptal",4,4,1]
+      çıkan:    ["İptal",4,0,0]
+  ✓ [D5.iptal-siparise-teslim] iptal edilmiş siparişe teslim reddedilir
+      sonra:    {"kabul":false,"durum":"İptal"}
+  ✗ [D5.durum-eszamanli] 20 / 20 teslimde durum Tamamlandı (sunucu hesaplar)
+      önce:     {"durum":"Kısmi Teslim","teslim":10}
+      sonra:    {"durum":"Kısmi Teslim","teslim":20,"karsilanan":20}
+      beklenen: "Tamamlandı"
+      çıkan:    "Kısmi Teslim"
+  ✓ [D5.denetim-yakalar] denetim bağı çözülmüş teslimi (D5a izli / D5c izsiz) ve durum çelişkisini (D5b) görüyor
+      sonra:    {"D5a":1,"D5c":0,"D5b":1}
+── t-iptal.js: 2 yeşil, 2 kırmızı ──
+── t-yedek
+F0 / YEDEK geri yükleme · önek f0-t-yedek-mvyu8ra4
+  ✗ [Y.tam-kurallar-kapali] çelişen tam geri yükleme hiçbir şeyi değiştirmez (fiş satırı geçerli, 3 / 3, fiyat 150)
+      önce:     {"fis":{"gecerli":true,"gecerliSatir":1,"bagliSatir":1},"karsilanan":3,"teslim":3,"fiyat":150}
+      sonra:    {"fis":{"gecerli":true,"gecerliSatir":0,"bagliSatir":0},"karsilanan":3,"teslim":0,"fiyat":100,"stokYazmasi":"kabul","siparisYazmasi":"kabul"}
+      beklenen: [1,3,3,150]
+      çıkan:    [0,3,0,100]
+  ✗ [Y.tam-kurallar-acik] kısmi işlem yok: stok reddedildiyse sipariş de değişmez (fiyat 150)
+      önce:     {"fis":{"gecerli":true,"gecerliSatir":1,"bagliSatir":1},"karsilanan":3,"teslim":3,"fiyat":150}
+      sonra:    {"fis":{"gecerli":true,"gecerliSatir":1,"bagliSatir":1},"karsilanan":3,"teslim":3,"fiyat":100,"stokYazmasi":"RED","siparisYazmasi":"kabul"}
+      beklenen: [1,3,3,150]
+      çıkan:    [1,3,3,100]
+  ✓ [Y.kart-referans] teslimli kalemi silecek kart geri yüklemesi reddedilir (C durur, 2 / 2)
+      önce:     {"C":{"var":true,"miktar":5,"karsilanan":2,"renk":"Siyah","urun":"u-yeni"},"teslimC":2}
+      sonra:    {"C":{"var":true,"miktar":5,"karsilanan":2,"renk":"Siyah","urun":"u-yeni"},"teslimC":2,"yazma":"RED"}
+  ✓ [Y.denetim-yakalar] denetim satırsız fişi (D6a) görüyor; sahipsiz hareket oluşmadı (D2a 0, F2)
+      sonra:    {"D6a":1,"D2a":0}
+  kurallar test sonunda açık: true
+── t-yedek.js: 2 yeşil, 2 kırmızı ──
+── t-surum
+F0 / SÜRÜM · önek f0-t-surum-mvyu8sa0
+  ✗ [S.mekanizma-var] stk_ayar.min_istemci_surum ve stk_istemci_iz var
+      sonra:    {"minIstemciSurum":false,"izTablosu":false}
+      beklenen: [true,true]
+      çıkan:    [false,false]
+  ✗ [S.eski-yuk-red] zorlama açıkken sürümsüz eski yük AT001 ile reddedilir (0 / 0)
+      önce:     {"karsilanan":0,"teslim":0}
+      sonra:    {"karsilanan":5,"teslim":5,"kabul":true,"hata":null,"zorlama":"mekanizma yok — yük doğrudan gönderildi"}
+      beklenen: [false,true,0]
+      çıkan:    [true,false,5]
+── t-surum.js: 0 yeşil, 2 kırmızı ──
+── t-kilit
+F0 / KİLİT · önek f0-t-kilit-mvyu8sje
+  ✓ [K.ters-sira-kilitlenmez] aynı kalemleri ters sırada gönderen iki fiş kilitlenmeden ikisi de tamamlanır
+      sonra:    {"A":"kabul","B":"kabul","k1":{"karsilanan":2,"teslim":2},"k2":{"karsilanan":2,"teslim":2}}
+  ✓ [K.fis-ile-duzenleme] fiş ile ters sıralı sipariş düzenlemesi kilitlenmeden tamamlanır
+      sonra:    {"fisKes":"kabul","duzenleme":"kabul","m1":{"karsilanan":1,"teslim":1},"m2":{"karsilanan":1,"teslim":1}}
+  ✓ [K.kilitlenmede-veri-tutarli] kilitlenme olsa da geri alınan işlem iz bırakmaz (karşılanan = teslim)
+      sonra:    {"fisKes":"kabul","duzenleme":"kabul","m1":{"karsilanan":1,"teslim":1},"m2":{"karsilanan":1,"teslim":1}}
+  • [K.G1-onkilit-ile-bugunku-fis] (gözlem) ön kilitli işlem + bugünkü fis_kes: {"kilitlenme":0,"onKilit":"tamam","fisKes":"tamam"}
+  • [K.G2-durum-tetikleyici-ile-rest] (gözlem) kalem→sipariş güncelleyen işlem + REST başlık yazması: {"kilitlenme":1,"tetikleyiciTaklidi":"tamam","rest":"ERROR:  deadlock detected"}
+  • [K.G3-on-kilitli-durum] (gözlem) sipariş satırı baştan kilitli + REST başlık yazması: {"kilitlenme":0,"tetikleyiciTaklidi":"tamam","rest":"tamam"}
+── t-kilit.js: 3 yeşil, 0 kırmızı ──
+── t-f1
+F1 başarısızlık testleri · önek f0-t-f1-mvyu8xfp
+  ✓ [F1.istemci-alani-kabul] yükteki `istemci` alanı kabul edilir (eski ve yeni SQL)
+      sonra:    {"kabul":true}
+  ✓ [F1.yanit-kalemler] fis_kes yanıtında kalemler: [{id, karsilanan}] = veritabanı
+      sonra:    {"yanit":[{"id":"f0-t-f1-mvyu8xfp-y-A","karsilanan":4}],"db":4}
+  ✓ [F1.iptal-yanit-kalemler] fis_iptal yanıtında kalemler (iptal sonrası 0)
+      sonra:    {"yanit":[{"id":"f0-t-f1-mvyu8xfp-y-A","karsilanan":0}],"db":0}
+  ✓ [F1.onceden-fark-raporlanir] fark işlemde düzelir (5 / 5) ve iz kaydı + yanıtta düzeltme bilgisi var
+      önce:     {"karsilanan":9,"teslim":4}
+      sonra:    {"karsilanan":5,"teslim":5,"iz":[{"tur":"onceden_fark","onceki":9,"hesap":4,"yeni":5,"islem":"fis_kes"}],"yanitDuzeltme":[{"id":"f0-t-f1-mvyu8xfp-f-A","tur":"onceden_fark","yeni":5,"hesap":4,"onceki":9}]}
+  ✓ [F1.hayalet-korunur] hayalete teslim: 5 + 2 = 7 (sıfırlanmaz) ve iz 'hayalet_korundu'
+      önce:     {"A":5,"B":3}
+      sonra:    {"A":7,"teslimA":2,"B":3,"izA":[{"tur":"hayalet_korundu","onceki":5,"hesap":0,"yeni":7,"islem":"fis_kes"}],"izB":[]}
+  ✓ [F1.hayalet-dokunulmaz] fişe girmeyen hayalet kalem (B) değişmez, izi yok
+      sonra:    {"A":7,"teslimA":2,"B":3,"izA":[{"tur":"hayalet_korundu","onceki":5,"hesap":0,"yeni":7,"islem":"fis_kes"}],"izB":[]}
+  ✓ [F1.gece-raporu] gece denetiminde `karsilanan` bölümü: hayalet + fark + günün düzeltmeleri
+      sonra:    {"hayalet":11,"fark":4,"duzeltme":62}
+  ✓ [F1.iz-erisimi] fis_karsilanan_iz doğrudan okunamaz (RLS / yetki)
+      sonra:    {"sonuc":"reddedildi"}
+  ✓ [F1.G1-yeni-kodla] ön kilitli işlem + fis_kes: kilitlenme yok, ikisi de tamam
+      sonra:    {"onKilit":true,"fisKes":true}
+  ✓ [F1.tekil-tutucu] 'tekil' tutulurken fis_kes bekler ve tamamlanır (kilitlenme yok)
+      sonra:    {"fisKes":true,"bekledi_ms":780,"karsilanan":1}
+  ✓ [F1.iptal-kes-eszamanli] iptal + ters sıralı yeni fiş: kilitlenme yok, karşılanan = teslim (2 / 2)
+      sonra:    {"iptal":true,"kes":true,"k1":[2,2],"k2":[2,2]}
+  • [F1.G4-iptal-ile-bag-coz] (gözlem) fis_iptal + aynı siparişin fis_bag_coz'u: {"kilitlenme":0,"iptal":"tamam","bagCoz":"tamam","karsilanan":0,"teslim":0}
+── t-f1.js: 11 yeşil, 0 kırmızı ──
+── t-denetim
+F0 / DENETİM doğrulaması · önek f0-t-denetim-mvyu91j3
+  ✓ [DN.iyi-veri-temiz] iyi veri kümesinde hiçbir kontrol bulgu vermiyor
+      sonra:    {}
+  ✓ [DN.hayalet] karşılanan 5, hareket yok
+      sonra:    {"D1b_hayalet_karsilanan":1}
+  ✓ [DN.karsilanan-farki] 4 teslimli kalemin karşılananı 9 yapılır
+      sonra:    {"D1a_karsilanan_hareketten_farkli":1}
+  ✓ [DN.ters-yon] satış kalemine net giriş (+2)
+      sonra:    {"D1c_ters_yonlu_net_hareket":1}
+  ✓ [DN.sahipsiz-kalem] hareket var olmayan kaleme bağlı (F2 öncesi veri)
+      sonra:    {"D2a_sahipsiz_hareket_kalem_yok":1}
+  ✓ [DN.sahipsiz-siparis] fiş ve hareket var olmayan siparişe bağlı
+      sonra:    {"D2b_sahipsiz_hareket_siparis_yok":1,"D2d_fis_siparis_yok":1}
+  ✓ [DN.kalem-baska-sipariste] hareketin kalemi başka siparişin
+      sonra:    {"D2c_hareket_kalem_siparis_uyusmaz":1,"D5b_durum_teslimle_celisiyor":1}
+  ✓ [DN.urun-farki] teslimli kalemin ürünü değiştirilir
+      sonra:    {"D3_hareket_urunu_kalemden_farkli":1}
+  ✓ [DN.renk-farki] teslimli kalemin rengi değiştirilir
+      sonra:    {"D3b_hareket_renk_beden_kalemden_farkli":1}
+  ✓ [DN.onaysiz-fazla] 4 teslimli kalemin miktarı 2'ye indirilir
+      sonra:    {"D4a_onaysiz_fazla_teslim":1}
+  ✓ [DN.isaretli-fazla] 20'lik kaleme işaretli 25
+      sonra:    {"D4b_isaretli_fazla_teslim":1}
+  ✓ [DN.bag-cozulmus] teslimli sipariş iptal edilir (fis_bag_coz) — F1.1: bağ geçmişe taşınır (izli), hayalet yok; 1.742.x: izsiz + hayalet
+      sonra:    {"D5a_bagi_cozulmus_teslim":1}
+  ✓ [DN.bag-cozulmus-izsiz] izsiz bağı çözülmüş teslim (eski kayıt)
+      sonra:    {"D1b_hayalet_karsilanan":1,"D5c_bagi_cozulmus_izsiz":1}
+  ✓ [DN.durum-celiskisi] 10 / 10 teslimli sipariş 'Bekliyor'
+      sonra:    {"D5b_durum_teslimle_celisiyor":1}
+  ✓ [DN.satirsiz-fis] fişin tek satırı fiş dışından iptal edilir
+      sonra:    {"D6a_satirsiz_stok_fisi":1}
+  ✓ [DN.iptal-fis-gecerli-satir] fiş başlığı satırları iptal edilmeden iptal edilir
+      sonra:    {"D6b_iptal_fisin_gecerli_satiri":1}
+  ✓ [DN.canli-ayni-sorgu] canli-salt-okur-kontrol.sql'deki denetim sorgusu denetim.sql ile aynı
+  ✓ [DN.canli-yalniz-okur] canlı dosyasında yazma / tanım / oturum komutu yok
+      sonra:    {"bulunan":[]}
+  ✓ [DN.canli-calisir] canlı dosyasının iki bölümü yerel şemada hatasız çalışıyor
+── t-denetim.js: 19 yeşil, 0 kırmızı ──
+
+══ F0 ÖZET (beklenen.txt ile) ══
+  D1.eski-eszamanli            YESIL    (beklenen)
+  D1.eski-tekrar-iptal         YESIL    (beklenen)
+  D1.karisik-yeni-once         YESIL    (beklenen)
+  D1.yeni-eszamanli            YESIL    (beklenen)
+  D1.yeni-iptal-tekrar         YESIL    (beklenen)
+  D1.alis-eski-eszamanli       YESIL    (beklenen)
+  D1.denetim-yakalar           YESIL    (beklenen)
+  D2.birlestirme               YESIL    (beklenen)
+  D2.teslimli-sil              YESIL    (beklenen)
+  D2.teslimsiz-sil             YESIL    (beklenen)
+  D3.renk-degisir              YESIL    (beklenen)
+  D3.miktar-teslim-alti        YESIL    (beklenen)
+  D3.miktar-teslim-ustu        YESIL    (beklenen)
+  D2.denetim-yakalar           YESIL    (beklenen)
+  D4.satis-eszamanli           KIRMIZI  (beklenen)
+  D4.satis-onaysiz-fazla       KIRMIZI  (beklenen)
+  D4.satis-tam-sinir           YESIL    (beklenen)
+  D4.denetim-yakalar           YESIL    (beklenen)
+  D5.iptal-bag-korunur         KIRMIZI  (beklenen)
+  D5.iptal-siparise-teslim     YESIL    (beklenen)
+  D5.durum-eszamanli           KIRMIZI  (beklenen)
+  D5.denetim-yakalar           YESIL    (beklenen)
+  Y.tam-kurallar-kapali        KIRMIZI  (beklenen)
+  Y.tam-kurallar-acik          KIRMIZI  (beklenen)
+  Y.kart-referans              YESIL    (beklenen)
+  Y.denetim-yakalar            YESIL    (beklenen)
+  S.mekanizma-var              KIRMIZI  (beklenen)
+  S.eski-yuk-red               KIRMIZI  (beklenen)
+  K.ters-sira-kilitlenmez      YESIL    (beklenen)
+  K.fis-ile-duzenleme          YESIL    (beklenen)
+  K.kilitlenmede-veri-tutarli  YESIL    (beklenen)
+  F1.istemci-alani-kabul       YESIL    (beklenen)
+  F1.yanit-kalemler            YESIL    (beklenen)
+  F1.iptal-yanit-kalemler      YESIL    (beklenen)
+  F1.onceden-fark-raporlanir   YESIL    (beklenen)
+  F1.hayalet-korunur           YESIL    (beklenen)
+  F1.hayalet-dokunulmaz        YESIL    (beklenen)
+  F1.gece-raporu               YESIL    (beklenen)
+  F1.iz-erisimi                YESIL    (beklenen)
+  F1.G1-yeni-kodla             YESIL    (beklenen)
+  F1.tekil-tutucu              YESIL    (beklenen)
+  F1.iptal-kes-eszamanli       YESIL    (beklenen)
+  DN.iyi-veri-temiz            YESIL    (beklenen)
+  DN.hayalet                   YESIL    (beklenen)
+  DN.karsilanan-farki          YESIL    (beklenen)
+  DN.ters-yon                  YESIL    (beklenen)
+  DN.sahipsiz-kalem            YESIL    (beklenen)
+  DN.sahipsiz-siparis          YESIL    (beklenen)
+  DN.kalem-baska-sipariste     YESIL    (beklenen)
+  DN.urun-farki                YESIL    (beklenen)
+  DN.renk-farki                YESIL    (beklenen)
+  DN.onaysiz-fazla             YESIL    (beklenen)
+  DN.isaretli-fazla            YESIL    (beklenen)
+  DN.bag-cozulmus              YESIL    (beklenen)
+  DN.durum-celiskisi           YESIL    (beklenen)
+  DN.satirsiz-fis              YESIL    (beklenen)
+  DN.iptal-fis-gecerli-satir   YESIL    (beklenen)
+  DN.canli-ayni-sorgu          YESIL    (beklenen)
+  DN.canli-yalniz-okur         YESIL    (beklenen)
+  DN.canli-calisir             YESIL    (beklenen)
+  kurallar sonda açık: t
+── F0 durumu beklenenle AYNI ──

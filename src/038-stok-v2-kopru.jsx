@@ -409,7 +409,7 @@ function kasaV2Yuku(taban, yeni) {
   });
   y.cekler.forEach((c, id) => {
     const e = t.cekler.get(id);
-    if (!e || e.json !== c.json) yuk.cekler.push({ id, veri: c.veri });
+    if (!e || e.json !== c.json) yuk.cekler.push({ id, veri: c.veri, onceki: e ? e.veri : null });
   });
   Object.keys(y.ayar).forEach((k) => {
     if (!(k in t.ayar) || kararliJson(t.ayar[k]) !== kararliJson(y.ayar[k])) yuk.ayar[k] = y.ayar[k];
@@ -417,7 +417,7 @@ function kasaV2Yuku(taban, yeni) {
   if (tabanVar) {
     t.hesaplar.forEach((_, id) => { if (!y.hesaplar.has(id)) yuk.hesapSil.push(id); });
     t.hareketler.forEach((_, id) => { if (!y.hareketler.has(id)) yuk.hareketIptal.push(id); });
-    t.cekler.forEach((_, id) => { if (!y.cekler.has(id)) yuk.cekIptal.push(id); });
+    t.cekler.forEach((_, id) => { if (!y.cekler.has(id)) { yuk.cekIptal.push(id); (yuk.cekOnceki ||= {})[id] = t.cekler.get(id).veri; } });
     Object.keys(t.ayar).forEach((k) => { if (!(k in y.ayar)) yuk.ayarSil.push(k); });
   }
   return yuk;
@@ -483,7 +483,7 @@ function kasaV2Parcala(yuk, enFazlaBayt = STOK_V2_PARCA_BAYT, enFazlaSatir = STO
     const son = i === gruplar.length - 1;
     const p = { hareketler: g.filter((s) => s[0] === "hareketler").map((s) => s[1]), cekler: g.filter((s) => s[0] === "cekler").map((s) => s[1]) };
     if (son) {
-      Object.assign(p, { hesaplar: yuk.hesaplar, hesapSil: yuk.hesapSil, hareketIptal: yuk.hareketIptal, cekIptal: yuk.cekIptal, ayarSil: yuk.ayarSil });
+      Object.assign(p, { hesaplar: yuk.hesaplar, hesapSil: yuk.hesapSil, hareketIptal: yuk.hareketIptal, cekIptal: yuk.cekIptal, ayarSil: yuk.ayarSil, ...(yuk.cekOnceki ? { cekOnceki: yuk.cekOnceki } : {}) });
       if (Object.keys(yuk.ayar).length) p.ayar = yuk.ayar;
     }
     return p;
@@ -617,7 +617,7 @@ function v2KopruYuku(y) {
 // fis_iptal yazar; köprüden (stk_yaz / car_yaz / kas_yaz / fis_yaz) HAREKET SATIRI taşıyan yazma reddedilir. Fiş kesici tabanı
 // önceden ilerlettiği için onun ardındaki yazmanın farkı boştur — buraya hareket satırıyla gelen her yük eski yoldur. Yalnız test
 // açar (`window.__eskiYolKaydi` dizisi); uygulamada hiçbir şey yapmaz. Hesap tanımı, çek kaydı, ayar, varyant açma kurallara takılmaz.
-function eskiYolKaydinaYaz(dolu) {
+function eskiYolKaydinaYaz(dolu, engellendi = false) {
   if (typeof window === "undefined" || !Array.isArray(window.__eskiYolKaydi)) return;
   dolu.forEach((k) => {
     const y = k.yuk || {};
@@ -626,7 +626,7 @@ function eskiYolKaydinaYaz(dolu) {
     if (k.tur === "alt" || (!satir && !iptal)) return;
     const ornek = (k.tur === "kasa" ? (y.hareketler || []).map((h) => (h.veri && (h.veri.aciklama || h.veri.fisNo)) || h.id)
       : (y.satirlar || []).map((h) => [h.kaynak || h.islemTipi || h.tip, h.fisId || h.fis_no || h.fisNo, h.aciklama].filter(Boolean).join(" · "))).slice(0, 3);
-    window.__eskiYolKaydi.push({ tur: k.tur, satir, iptal, fisYolu: typeof fisKesYolu === "function" ? fisKesYolu() : null, ornek });
+    window.__eskiYolKaydi.push({ tur: k.tur, satir, iptal, engellendi, fisYolu: typeof fisKesYolu === "function" ? fisKesYolu() : null, ornek });
   });
 }
 
@@ -637,6 +637,17 @@ function eskiYolKaydinaYaz(dolu) {
 async function v2KopruGonder(kopruler) {
   const dolu = (kopruler || []).filter((k) => k && k.yuk);
   if (!dolu.length) return null;
+  const eskiHareket = dolu.some((k) => k.tur !== "alt" && ((k.yuk.satirlar || []).length || (k.yuk.iptal || []).length || (k.yuk.hareketler || []).length || (k.yuk.hareketIptal || []).length));
+  if (_fisDefteriKurulu && eskiHareket) {
+    eskiYolKaydinaYaz(dolu, true);
+    const e = new Error("Fiş defterinde hareketler bu yoldan değiştirilemez — fiş kaydını kullanın. Yerel kayıt inceleme için korundu.");
+    e.kaliciRet = true; e.kod = "KR009";
+    const parca = dolu.find((k) => k.tur !== "alt" && ((k.yuk.satirlar || []).length || (k.yuk.iptal || []).length || (k.yuk.hareketler || []).length || (k.yuk.hareketIptal || []).length));
+    const ilk = parca && (parca.yuk.satirlar || parca.yuk.hareketler || [])[0];
+    const iptalId = parca && (parca.yuk.iptal || parca.yuk.hareketIptal || [])[0];
+    e.satirId = ilk && ilk.id ? String(ilk.id) : iptalId ? String(iptalId) : null;
+    throw e;
+  }
   eskiYolKaydinaYaz(dolu);
   const stok = dolu.find((k) => k.tur === "stok");
   const cari = dolu.find((k) => k.tur === "cari");

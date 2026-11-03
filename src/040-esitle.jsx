@@ -234,6 +234,9 @@ function _yazmaHazirla(tablo, kayitlar, secenek = {}) {
     const kimlikli = duz.map((c) => ({ ...c, __k: cocuk.anahtar(c) }));
     return { cocuk, cFark: tabloFarki(`${tablo}::${cocuk.tablo}`, kimlikli.map((c) => ({ ...c, id: c.__k }))) };
   });
+  // İNCELEMEDEKİ SATIRLAR PAKETTEN AYRILIR (v1.744.0, F2): sunucunun kalıcı olarak reddettiği satır (030 incelemeOku) gönderilmez;
+  // fark belleği o satır için ESKİ hâline döner (gönderilmedi sayılır, sonraki yazmada yine farktır), yerel hâli yedeklenir.
+  incelemeyiAyikla(tablo, fark, cocukFarklari, bellekYedegi);
   // TOPLU SİLME KİLİDİ — ağa çıkmadan önce (yukarıdaki yorum). `secenek.topluSilmeIzni` yalnız sıfırlama,
   // çöp boşaltma ve kullanıcının silinecek sayıyı görüp onayladığı yedek geri yüklemesinden gelir.
   const engel = secenek && secenek.topluSilmeIzni ? null : topluSilmeEngeliBul(tablo, fark, cocukFarklari, bellekYedegi);
@@ -248,6 +251,34 @@ function _yazmaHazirla(tablo, kayitlar, secenek = {}) {
     throw e;
   }
   return { tablo, kayitlar, secenek: secenek || {}, sema, bellekYedegi, bellegiGeriAl, fark, cocukFarklari, sayim: null };
+}
+
+// İnceleme ayıklaması (yukarıda). Satır kimliğiyle ya da üst kaydının kimliğiyle (silinen siparişin kalemleri) eşleşen kayıt
+// farktan çıkar; bellek o kayıt için yedekteki hâline döner. Saf değil (fark belleği); incelemedeki satır yoksa hiçbir şey yapmaz.
+function incelemeyiAyikla(tablo, fark, cocukFarklari, bellekYedegi) {
+  const haric = typeof incelemedekiSatirlar === "function" ? incelemedekiSatirlar(tablo) : null;
+  if (!haric || haric.size === 0) return;
+  const ustAlanlar = ["siparis_id", "uretim_id", "urun_id", "cari_id"];
+  const eslesir = (k) => !!k && (haric.has(String(k.id)) || ustAlanlar.some((a) => k[a] != null && haric.has(String(k[a]))));
+  const geriKoy = (bellek, kayitlar) => {
+    const yedek = bellekYedegi[bellek];
+    if (!_sonHal[bellek]) _sonHal[bellek] = new Map();
+    kayitlar.forEach((k) => {
+      if (yedek && yedek.has(k.id)) _sonHal[bellek].set(k.id, yedek.get(k.id)); else _sonHal[bellek].delete(k.id);
+      if (typeof incelemeKayitYedekle === "function" && haric.has(String(k.id))) incelemeKayitYedekle(tablo, String(k.id), k);
+    });
+  };
+  const ayikla = (bellek, f) => {
+    const cikan = [];
+    ["eklenen", "guncellenen"].forEach((a) => { f[a] = f[a].filter((k) => (eslesir(k) ? (cikan.push(k), false) : true)); });
+    const silinenKayitlar = [];
+    f.silinenKayitlar = (f.silinenKayitlar || []).filter((k) => (eslesir(k) ? (silinenKayitlar.push(k), false) : true));
+    const silinenIdler = new Set(silinenKayitlar.map((k) => String(k.id)));
+    f.silinen = f.silinen.filter((id) => !silinenIdler.has(String(id)) && !haric.has(String(id)));
+    geriKoy(bellek, [...cikan, ...silinenKayitlar]);
+  };
+  ayikla(tablo, fark);
+  cocukFarklari.forEach(({ cocuk, cFark }) => ayikla(`${tablo}::${cocuk.tablo}`, cFark));
 }
 
 // Ana kayıtlar (ekle / sürüm kilitli güncelle). Çakışmada bellek geri alınır ve { __cakisma } döner — alt kayıtlara geçilmez.
@@ -397,7 +428,7 @@ async function _silinenAnaKayitlariYaz(y) {
 function _yazmaDustu(y) {
   // Kural provası (v1.742.0, 038 eskiYolKaydinaYaz): düşen yazmanın farkı da kaydedilir — test ortamında bulut okunmadığı için
   // eski yol yazmaları köprüye varmadan buraya düşüyor. Yalnız test açar; hesap saf (v2KopruYuku).
-  if (typeof window !== "undefined" && Array.isArray(window.__eskiYolKaydi)) { try { eskiYolKaydinaYaz([v2KopruYuku(y)].filter(Boolean)); } catch (e) { /* */ } }
+  if (typeof window !== "undefined" && Array.isArray(window.__eskiYolKaydi)) { try { eskiYolKaydinaYaz([v2KopruYuku(y)].filter(Boolean), true); } catch (e) { /* */ } }
   y.bellegiGeriAl();
   bekleyenKayitEkle(y.tablo, y.fark, y.cocukFarklari);
 }
@@ -687,6 +718,23 @@ function tabloYaz(anahtar, tablo, kayitlar, yerelKayitlar, secenek) {
         // bulutun önüne geçer — korumanın engellediği şeyin ta kendisi. Yalnız şerit ve günlük.
         // AMA anahtar defterde ZATEN varsa (önceki bir ağ hatasından) kaydın metni güncellenir (v1.725.0): yoksa ekranda
         // eski sebep ("Failed to fetch") kalıyor, asıl engel hiç görünmüyordu. Yeni kayıt açılmaz.
+        // KALICI RET (v1.744.0, F2): sunucu kuralı reddetti (KRnnn). Satır biliniyorsa "inceleme gerekiyor"a alınır ve paketten
+        // ayrılarak AYNI tablo hemen yeniden gönderilir (öteki değişiklikler takılmasın); her turda en çok bir yeni satır ayrılır,
+        // 5 turdan sonra durur. Satır bilinmiyorsa bütün tablo inceleme kaydı olur — 100'deki dakikalık deneme onu atlar.
+        if (e && e.kaliciRet) {
+          const tur = (secenek && secenek.__incelemeTuru) || 0;
+          const zatenHaric = e.satirId && typeof incelemedekiSatirlar === "function" && incelemedekiSatirlar(tablo).has(String(e.satirId));
+          if (e.satirId && !zatenHaric && tur < 5) {
+            incelemeEkle(tablo, String(e.satirId), { kod: e.kod || null, sebep: mesaj.slice(0, 300), anahtar });
+            gunlukYaz(`Sunucu kuralı reddetti (${e.kod}): ${tablo} ${e.satirId} — inceleme gerekiyor, öteki değişiklikler gönderiliyor`, "guvenlik",
+              { tablo, satir: e.satirId, kod: e.kod, hata: mesaj.slice(0, 300) });
+            const { zarf: _z, ...kalan } = secenek || {};
+            return tabloYaz(anahtar, tablo, kayitlar, yerelKayitlar, { ...kalan, __incelemeTuru: tur + 1 });
+          }
+          bekleyenYazmaEkle(anahtar, tablo, mesaj, { inceleme: true, kod: e.kod });
+          if (typeof window !== "undefined" && window.__supabaseHataBildir) window.__supabaseHataBildir(tablo, mesaj);
+          return { ok: false, bulut: true, hata: mesaj, kaliciRet: true };
+        }
         if (!(e && e.topluSilmeEngeli) || bekleyenYazmalariOku()[anahtar]) bekleyenYazmaEkle(anahtar, tablo, mesaj);   // yerel güncel, bulut değil: açılışta yerel kazansın
         if (typeof window !== "undefined" && window.__supabaseHataBildir) {
           window.__supabaseHataBildir(tablo, mesaj);

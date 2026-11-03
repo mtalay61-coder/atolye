@@ -11,7 +11,7 @@
 // siparişi). Fiş numarası ve sayaç ANA siparişten gelir, karşılanan miktar ise her siparişin
 // kendisine yazılır — tek fişle iki siparişi kapatmak mümkün.
 // Sipariş teslim fişinin fis_kes yükü (saf, v1.732.1).
-function siparisTeslimSunucuYuku({ siparis, fisGovdesi2, sonuc, islenenler, defterKaydi, oncekiSiparisler, nextSiparisler, etkilenenIdler, yeniSayac, kullaniciAd, zaman, istek }) {
+function siparisTeslimSunucuYuku({ siparis, fisGovdesi2, sonuc, islenenler, defterKaydi, oncekiSiparisler, nextSiparisler, etkilenenIdler, yeniSayac, kullaniciAd, zaman, istek, fazlaOnayi = null }) {
   const kimlikler = new Set([...(sonuc.kimlikler || new Map()).values()]);
   const stokSatirlari = [];
   (sonuc.stok || []).forEach((u) => (u.hareketler || []).forEach((h) => { if (kimlikler.has(h.id)) stokSatirlari.push(fisKesStokSatiri(u.id, h)); }));
@@ -32,7 +32,11 @@ function siparisTeslimSunucuYuku({ siparis, fisGovdesi2, sonuc, islenenler, deft
     },
     stok: { satirlar: stokSatirlari },
     cari: { satirlar: cariHareketleri.map((h) => fisKesCariSatiri(siparis.cariId, h)) },
-    ...(altSatirlar.length ? { alt: { siparis_kalemleri: { satirlar: altSatirlar } } } : {}),
+    // Karşılanan DEĞİŞİMİ de gider (v1.742.2, R1): teslim edilen adet — sunucu güncel değere ekler (eşzamanlı teslim ezilmez).
+    ...(altSatirlar.length ? { alt: { siparis_kalemleri: { satirlar: altSatirlar,
+      artis: fisKesKalemArtisi(islenenler.filter((k) => k.kalemId && k.miktar > 0).map((k) => ({ id: k.kalemId, miktar: k.miktar }))) } } } : {}),
+    // F3 yönetici onayı (078 `fazlaTeslimOnayiAl`): üst düzey alan — sunucu yalnız buradan okur, yetkiyi kendisi doğrular.
+    ...(fazlaOnayi ? { fazlaTeslimOnayi: fazlaOnayi } : {}),
   };
   return { yuk, kimlikler, cariHareketleri, etkSiparis };
 }
@@ -47,11 +51,11 @@ function useSiparisTeslim(d) {
 // `fis_kes` ile TEK işlemde: fiş + stok satırları + cari satırları + bütün etkilenen siparişlerin kalemleri (karşılanan).
 // Sunucu yazınca numara yerleşir, ekran güncellenir; yazamazsa hiçbir şey değişmez (çağıran false alır, koli listede kalır).
 const siparisTeslimSunucuyaKes = useCallback(async ({ hesap, defterKaydi, koliIdler }) => {
-  const { sonuc, islenenler, fisGovdesi2, siparis, nextSiparisler, etkilenenIdler, yeniSayac, tumuTam, rezervasyonUyarisi } = hesap;
+  const { sonuc, islenenler, fisGovdesi2, siparis, nextSiparisler, etkilenenIdler, yeniSayac, tumuTam, rezervasyonUyarisi, fazlaOnayi } = hesap;
   const kullaniciAd = (aktifKullanici && aktifKullanici.ad) || null;
   const zaman = new Date().toISOString();
   const { yuk, kimlikler, cariHareketleri, etkSiparis } = siparisTeslimSunucuYuku({ siparis, fisGovdesi2, sonuc, islenenler, defterKaydi,
-    oncekiSiparisler: siparisler, nextSiparisler, etkilenenIdler, yeniSayac, kullaniciAd, zaman, istek: uid("fis") });
+    oncekiSiparisler: siparisler, nextSiparisler, etkilenenIdler, yeniSayac, kullaniciAd, zaman, istek: uid("fis"), fazlaOnayi });
   // Taban için eski hâller bekleme ÖNCESİ (hesabı yapan fotoğraf).
   const urunIdler = [...new Set(islenenler.map((k) => k.urunId))];
   const stokEskiler = (stok || []).filter((u) => urunIdler.includes(u.id));
@@ -78,9 +82,11 @@ const siparisTeslimSunucuyaKes = useCallback(async ({ hesap, defterKaydi, koliId
   });
   if (cariEski) fisKesTabaniKur("cariler", [cariEski], [{ ...cariEski, hareketler: [...yeniCari, ...(cariEski.hareketler || [])] }]);
   // Siparişler: kalemler (karşılanan) sunucuda yazıldı (taban); ana satır (durum, teslim sayacı, defter tercihi) bugünkü yoldan.
-  fisKesTabaniKur("siparisler", etkSiparis.eskiler, etkSiparis.yeniler, { anaDahil: false });
+  // Karşılanan SUNUCUNUN değeri (v1.743.0, F1): yanıttaki `kalemler` — eşzamanlı başka teslim ve miktarı aşan teslim dahil.
+  const etkYeniler = fisKesKalemleriUygula(etkSiparis.yeniler, r.kalemler);
+  fisKesTabaniKur("siparisler", etkSiparis.eskiler, etkYeniler, { anaDahil: false });
   setSiparisler((onceki) => {
-    const n = degisenKayitlariBirlestir(onceki, etkSiparis.eskiler, etkSiparis.yeniler);
+    const n = degisenKayitlariBirlestir(onceki, etkSiparis.eskiler, etkYeniler);
     yazimiIzle(tabloYaz("siparis:data", "siparisler", n), "Siparişler", n);
     return n;
   });
@@ -90,7 +96,7 @@ const siparisTeslimSunucuyaKes = useCallback(async ({ hesap, defterKaydi, koliId
   const kayit = { ...doldur(defterKaydi), id: no, fisNo: no, aile: "stok", sunucu: true, bagliFis: null, ek: yuk.fis.ek, tutar: yuk.fis.tutar };
   setFisDefteri((onceki) => [kayit, ...(onceki || [])]);
   gunlukYaz(`Sipariş teslimi: ${siparis.siparisNo} → ${no}`, "siparis", { siparisId: siparis.id, fisNo: no });
-  showToast(`${no} kaydedildi (${siparis.siparisNo}) — ${tumuTam ? "Sipariş tamamlandı" : "Kısmi teslim/tahsil işlendi, eksik var"}${rezervasyonUyarisi}`, {
+  showToast(`${no} kaydedildi (${siparis.siparisNo}) — ${tumuTam ? "Sipariş tamamlandı" : "Kısmi teslim/tahsil işlendi, eksik var"}${fazlaOnayi ? " · yönetici onaylı sipariş fazlası" : ""}${rezervasyonUyarisi}`, {
     geriAl: () => fisGeriAlRef && fisGeriAlRef.current && fisGeriAlRef.current(no, [...kimlikler, ...yeniCari.map((h) => h.id)]),
   });
   return true;
@@ -210,7 +216,14 @@ const siparisGerceklestir = useCallback(async (siparisId, teslimler, defter = "G
     // "sipariş aşılıyor" demek kullanıcıya nereyi düzelteceğini söylemiyordu.
     const fazlalar = islenenler.filter((k) => k.fazlaGonderim)
       .map((k) => ({ ad: k.urunAd, renk: k.renk, beden: k.beden, fazla: k.miktar - k.kalan }));
-    if (fazlalar.length > 0) {
+    // YÖNETİCİ İSTİSNASI (v1.744.4, F3 — 078 `fazlaTeslimOnayiAl`): fiş defteri yolunda SATIŞ siparişinin fazlası, Yönetici
+    // gerekçe yazarsa teslim edilir; onay sunucuya gider, sunucu yetkiyi doğrular ve kaydı fişe yazar. Yönetici dışı, alış
+    // siparişi ve eski yol: 19 Eylül kuralı (hiç yapılmaz).
+    let fazlaOnayi = null;
+    if (fazlalar.length > 0 && sunucuYolu && siparis.tip !== "Alış") {
+      fazlaOnayi = fazlaTeslimOnayiAl(fazlaTeslimKalemleri(islenenler, (k) => siparisBul(k._siparisId)), aktifKullanici, showToast);
+      if (!fazlaOnayi) return null;
+    } else if (fazlalar.length > 0) {
       showToast(`Sipariş aşılıyor — ${fazlalar.map((f) => `${olcuMetni([f.ad, f.renk, f.beden], " ")}: ${f.fazla} fazla`).join(" · ")}`);
       return null;
     }
@@ -289,7 +302,7 @@ const siparisGerceklestir = useCallback(async (siparisId, teslimler, defter = "G
       }
     }
 
-    return { nextSiparisler, nextStok, nextCariler, sonuc, islenenler, fisGovdesi2, siparis, etkilenenIdler, yeniSayac, tumuTam, rezervasyonUyarisi, bildirim: fazlalar.length > 0
+    return { nextSiparisler, nextStok, nextCariler, sonuc, islenenler, fisGovdesi2, siparis, etkilenenIdler, yeniSayac, tumuTam, rezervasyonUyarisi, fazlaOnayi, bildirim: fazlalar.length > 0
       ? `${fisNo} · Sipariş fazlası gönderildi: ${fazlalar.map((f) => `${olcuMetni([f.ad, f.renk, f.beden], " ")} (+${f.fazla})`).join(", ")}${rezervasyonUyarisi}`
       : `${fisNo} kaydedildi — ${tumuTam ? "Sipariş tamamlandı" : "Kısmi teslim/tahsil işlendi, eksik var"}${rezervasyonUyarisi}` };
   })();

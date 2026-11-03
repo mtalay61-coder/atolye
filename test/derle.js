@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// TEST DERLEYİCİSİ — atolye-erp.jsx -> test/erp.cjs
+// TEST DERLEYİCİSİ — güncel src/ (veya açıkça verilen eski kaynak) -> test/erp.cjs
 //
 // Neden var: değişikliği göndermeden önce mantığı İZOLE ÇALIŞTIRIP test etmek gerekiyor.
 // Denetleyiciler + derleme kontrolü bu oturumlarda bulunan gizli hataların hiçbirini yakalayamazdı.
@@ -19,7 +19,7 @@ const cikti = process.argv[3] || path.join(__dirname, "erp.cjs");
 const DISA_AKTAR = [
   "fisKesStokSatiri", "fisKesCariSatiri", "fisKesKasaHareketi", "fisKesGonder", "fisIptalGonder", "fisKesTabaniKur", "fisKesKasaTabaniKur", "fisYerTutucuDoldur",
   "FIS_YER", "ANA_FIS_YER", "fisDefteriKuruluAyarla", "fisKesYolu", "defterSunucuFisleriyleBirlestir", "stokFisiSunucuYuku", "stokFisiSunucuSonucu",
-  "fisKesEtkilenen", "fisKesDegisenIdler", "kasadanBaglariCikar", "fisSiparisleriGuncelle", "sunucuFisleriniOku", "stokMiktarlariniHesapla", "fisDefterKaydiKur", "siparisTeslimSunucuYuku",   // tek fiş defteri (v1.732.0)
+  "fisKesEtkilenen", "fisKesDegisenIdler", "kasadanBaglariCikar", "fisSiparisleriGuncelle", "sunucuFisleriniOku", "stokMiktarlariniHesapla", "fisDefterKaydiKur", "siparisTeslimSunucuYuku", "fisKesSiparisKalemleri", "fisKesKalemArtisi", "fisKesKalemleriUygula",   // tek fiş defteri (v1.732.0)
   "uretimTeslimSunucuYuku", "fisKesAltFarki", "uretimSunucuFisSatirlari", "fisKesTabandanCikar",   // üretim teslimi tek fiş (v1.733.0)
   "paraFisiYuku", "paraFisOneki", "kasaCariHareketiKur", "stokFisiYuku", "sunucuFisKaydi", "fisKesStokUygula", "fisYerTutucuAileyeDoldur",   // ara proses + numune (v1.733.1)
   "v2AyarDurumuAyarla", "v2AyarBilinmiyorMu", "arsivV2Yolu", "listeV2Yuku", "listeV2TablolariAyarla", "listeV2Aktif", "sayimKimlikFarki", "kasaV2Yuku", "kasaV2Parcala", "kasaV2YukBosMu", "kasaV2AktifAyarla", "kasaV2Aktif", "kasaZarfiAc", "v2KopruGonder", "bekleyenYazmalariOku",   // kasa v2 köprüsü (v1.729.0)
@@ -43,7 +43,7 @@ const DISA_AKTAR = [
   "fiyatBul",   // fiyat çözümleme: cari/renk/beden kırılımı (18 Eylül)
   "useFisDefteriYazma",   // fiş defteri yazma kancası — bayat okuma senaryosu (22 Eylül)
   "karZararHesapla", "iscilikDefteri", "fisinDefteri", "hammaddeBirimFiyati", "mamulDeposuDurumu", "faturaKur", "faturaDogrula", "faturaEngelVarMi", "ublTrXml", "efaturaBirimKodu", "faturaNoBicimi", "sonrakiFaturaSirasi", "faturaSeriGecerliMi", "ettnUret", "efaturaVarsayilanSenaryo", "faturaTutarYaziyla", "faturaSatirlari", "tumFisleriTopla", "sonAlisMaliyeti", "aylarOnce", "gunKuru",      // işçilik yönü senaryosu: rapor işçiliği saymaya devam ediyor mu (22 Eylül)
-  "useCopKutusu", "yazimiIzle", "tabloYaz",   // yazma hatası senaryosu (22 Eylül, v1.410.0)
+  "useCopKutusu", "yazimiIzle", "tabloYaz", "kuralReddiOku", "incelemeOku", "incelemeEkle", "incelemeSil", "incelemedekiSatirlar", "bekleyenKalemleriBirlestir", "bulutHatasiAciklamasi", "fazlaTeslimKalemleri", "fazlaTeslimOnayiAl", "fisKalemlerininKalani",   // F2 kalıcı ret (v1.744.0)   // yazma hatası senaryosu (22 Eylül, v1.410.0)
   "code128Cubuklar", "code128SatirdanCoz", "kameraKaresiCoz",   // kamera çözücüsü (22 Eylül)
   "fisYaz", "fisGeriAl",
   "stokYuvarla", "paraCevirGenel", "fisNoUret", "fiseAitCariHareketiMi",
@@ -53,7 +53,9 @@ const DISA_AKTAR = [
   "KOD_HANE", "BARKOD_UZUNLUK", "kodMetni", "kodlariAta", "stokNoCakismalariniOnar", "cariKodlariAta", "cariKodMetni", "urunBarkoduKur", "hariciBarkodCoz", "hariciBarkodCakismasi", "hariciBarkodAyarla", "barkodTaninmamaSebebi", "urunBarkoduCoz", "varyantinBarkodu", "renkKoduBul", "bedenKoduBul", "barkodEksikleri", "imzaHesapla", "imzaBenzerligi", "gorselEslestir", "ozelKodGoc", "urunOzelKodAlanlari", "ozelKodCiftleri", "ozelKodMetni", "eslesenOzelKodlar", "ozelKodAlaniUyar", "ozelKodAlaniAdla", "ozelKodAlanlariniBirlestir", "ozelKodKapsamlari", "ozelKodKapsamYaz", "siradakiAdim", "dagitilmamis", "enBuyukUretimNo", "uretimAtamaEki", "uretimBolunmusMu", "uretimParcaKodlari", "stokDurumu", "rezervasyonKarsilama", "hammaddeRezervasyonDagit", "uretimKaynakEtiketi", "kaynakEtiketi",
 ];
 
-let kaynak = fs.readFileSync(girdi, "utf8");
+// Varsayılan test her zaman güncel kaynak parçalarını alır; unutulmuş birleşik dosya sessiz eski-kod testi üretemez.
+let kaynak = process.argv[2] ? fs.readFileSync(girdi, "utf8") : fs.readdirSync(path.join(KOK,"src"))
+  .filter((f) => f.endsWith(".jsx")).sort().map((f) => fs.readFileSync(path.join(KOK,"src",f),"utf8")).join("");
 
 // ---- import satırlarını sahtele ---------------------------------------------------------------
 // lucide-react ve xlsx testte hiç çizilmiyor; her ikon adı için boş bir bileşen yeterli.

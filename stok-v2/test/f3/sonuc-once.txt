@@ -1,0 +1,18 @@
+F0 / D4 fazla teslim · önek f0-t-fazla-mvyy9hac
+  ✗ [D4.satis-eszamanli] eşzamanlı teslimde biri reddedilir: teslim 19, karşılanan 19
+      önce:     {"karsilanan":14,"teslim":14,"miktar":20}
+      sonra:    {"karsilanan":24,"teslim":24,"kabul":[true,true],"hata":[]}
+      beklenen: [1,19,19]
+      çıkan:    [2,24,24]
+  ✗ [D4.satis-onaysiz-fazla] onaysız fazla teslim sunucuda reddedilir (teslim 0)
+      önce:     {"karsilanan":0,"teslim":0}
+      sonra:    {"karsilanan":25,"teslim":25,"kabul":true}
+      beklenen: [false,0]
+      çıkan:    [true,25]
+  ✓ [D4.satis-tam-sinir] tam miktar kabul edilir (20 / 20)
+      sonra:    {"kabul":true,"teslim":20}
+  • [D4.alis-eszamanli] (gözlem) alış 14 + 5 + 5 (miktar 20): {"kabul":[true,true],"teslim":24,"karsilanan":24}
+  • [D4.alis-tek-fazla] (gözlem) alış tek istekte 25 (miktar 20): {"kabul":true,"teslim":25,"karsilanan":25,"fazlaIsareti":"t"}
+  ✓ [D4.denetim-yakalar] denetim onaysız fazlayı (D4a) ve işaretli fazlayı (D4b) ayırıyor
+      sonra:    {"D4a":2,"D4b":2}
+── t-fazla.js: 2 yeşil, 2 kırmızı ──

@@ -1,0 +1,74 @@
+F2 kilit / eşzamanlılık · önek f0-t-f2-kilit-mvy4t80d · N=100 · kurallar açık
+A) yazmadan önce kilit — alt_yaz birden çok deyim yazıyor (önce upsert, sonra silme)
+  ✗ [F2K.A-alt_yaz-sil] alt_yaz (upsert A + sil B) → silinecek kalem B: ilk yazmadan önce kilitlenir
+      sonra:    {"islem":"ok","bekledi":true,"tekilSerbest":false,"sure_ms":1342,"sonuc":"TERS SIRA (yazdıktan sonra bekliyor)"}
+      beklenen: "tamam"
+      çıkan:    "TERS SIRA (yazdıktan sonra bekliyor)"
+B) zorlanmış araya girme — B kalemi 1 sn tutulur, iki sıra × 3
+  ✓ [F2K.B-Q1-kilit] Q1 kalem silme (alt_yaz sil B) ∥ fis_kes B'ye teslim · zorlanmış 6: kilitlenme 0
+      sonra:    {"kilitlenme":0}
+  ✗ [F2K.B-Q1-veri] Q1 · zorlanmış: sahipsiz / kimlik / miktar bozulması yok
+      sonra:    {"bozuk":3,"ornek":[{"ilk":"b","a":"ok","b":"ok","b2":{"D2a_sahipsiz_hareket_kalem_yok":1}},{"ilk":"b","a":"ok","b":"ok","b2":{"D2a_sahipsiz_hareket_kalem_yok":1}}]}
+      beklenen: 0
+      çıkan:    3
+  ✗ [F2K.B-Q2-kilit] Q2 birleştirme (alt_yaz A=20, sil B) ∥ fis_kes B'ye teslim · zorlanmış 6: kilitlenme 0
+      sonra:    {"kilitlenme":3}
+      beklenen: 0
+      çıkan:    3
+  ✓ [F2K.B-Q2-veri] Q2 · zorlanmış: sahipsiz / kimlik / miktar bozulması yok
+      sonra:    {"bozuk":0,"ornek":[]}
+  ✗ [F2K.B-Q3-kilit] Q3 teslimsiz sipariş silme (REST DELETE, cascade) ∥ fis_kes B'ye teslim · zorlanmış 6: kilitlenme 0
+      sonra:    {"kilitlenme":3}
+      beklenen: 0
+      çıkan:    3
+  ✓ [F2K.B-Q3-veri] Q3 · zorlanmış: sahipsiz / kimlik / miktar bozulması yok
+      sonra:    {"bozuk":0,"ornek":[]}
+  ✓ [F2K.B-Q4-kilit] Q4 renk değişimi (alt_yaz B renk Taba) ∥ fis_kes B'ye (Siyah) teslim · zorlanmış 6: kilitlenme 0
+      sonra:    {"kilitlenme":0}
+  ✗ [F2K.B-Q4-veri] Q4 · zorlanmış: sahipsiz / kimlik / miktar bozulması yok
+      sonra:    {"bozuk":6,"ornek":[{"ilk":"a","a":"ok","b":"ok","b2":{"D3b_hareket_renk_beden_kalemden_farkli":1}},{"ilk":"a","a":"ok","b":"ok","b2":{"D3b_hareket_renk_beden_kalemden_farkli":1}}]}
+      beklenen: 0
+      çıkan:    6
+  ✓ [F2K.B-Q5-kilit] Q5 miktar indirme (alt_yaz B miktar 1) ∥ fis_kes B'ye 2 teslim · zorlanmış 6: kilitlenme 0
+      sonra:    {"kilitlenme":0}
+  ✗ [F2K.B-Q5-veri] Q5 · zorlanmış: sahipsiz / kimlik / miktar bozulması yok
+      sonra:    {"bozuk":3,"ornek":[{"ilk":"b","a":"ok","b":"ok","b2":{"miktarTeslimAltinda":1}},{"ilk":"b","a":"ok","b":"ok","b2":{"miktarTeslimAltinda":1}}]}
+      beklenen: 0
+      çıkan:    3
+C) doğal zorlama × 100, 0–40 ms, rastgele sıra
+  ✓ [F2K.C-Q1-kilit] Q1 kalem silme (alt_yaz sil B) ∥ fis_kes B'ye teslim × 100: kilitlenme 0
+      sonra:    {"kilitlenme":0,"ikisiTamam":"100/100","bozuk":51,"ornek":[{"a":"ok","b":"ok","b2":{"D2a_sahipsiz_hareket_kalem_yok":1}},{"a":"ok","b":"ok","b2":{"D2a_sahipsiz_hareket_kalem_yok":1}}],"sure_sn":30}
+  ✗ [F2K.C-Q1-veri] Q1 × 100: sahipsiz / kimlik / miktar bozulması yok
+      sonra:    {"bozuk":51}
+      beklenen: 0
+      çıkan:    51
+  ✗ [F2K.C-Q2-kilit] Q2 birleştirme (alt_yaz A=20, sil B) ∥ fis_kes B'ye teslim × 100: kilitlenme 0
+      sonra:    {"kilitlenme":3,"ikisiTamam":"97/100","bozuk":51,"ornek":[{"a":"ok","b":"ok","b2":{"D2a_sahipsiz_hareket_kalem_yok":1}},{"a":"ok","b":"ok","b2":{"D2a_sahipsiz_hareket_kalem_yok":1}}],"sure_sn":31}
+      beklenen: 0
+      çıkan:    3
+  ✗ [F2K.C-Q2-veri] Q2 × 100: sahipsiz / kimlik / miktar bozulması yok
+      sonra:    {"bozuk":51}
+      beklenen: 0
+      çıkan:    51
+  ✗ [F2K.C-Q3-kilit] Q3 teslimsiz sipariş silme (REST DELETE, cascade) ∥ fis_kes B'ye teslim × 100: kilitlenme 0
+      sonra:    {"kilitlenme":28,"ikisiTamam":"20/100","bozuk":20,"ornek":[{"a":"ok","b":"ok","b2":{"D2a_sahipsiz_hareket_kalem_yok":1,"D2b_sahipsiz_hareket_siparis_yok":1}},{"a":"ok","b":"ok","b2":{"D2a_sahipsiz_hareket_kalem_yok":1,"D2b_sahipsiz_hareket_siparis_yok":1}}],"sure_sn":48}
+      beklenen: 0
+      çıkan:    28
+  ✗ [F2K.C-Q3-veri] Q3 × 100: sahipsiz / kimlik / miktar bozulması yok
+      sonra:    {"bozuk":20}
+      beklenen: 0
+      çıkan:    20
+  ✓ [F2K.C-Q4-kilit] Q4 renk değişimi (alt_yaz B renk Taba) ∥ fis_kes B'ye (Siyah) teslim × 100: kilitlenme 0
+      sonra:    {"kilitlenme":0,"ikisiTamam":"100/100","bozuk":100,"ornek":[{"a":"ok","b":"ok","b2":{"D3b_hareket_renk_beden_kalemden_farkli":1}},{"a":"ok","b":"ok","b2":{"D3b_hareket_renk_beden_kalemden_farkli":1}}],"sure_sn":29}
+  ✗ [F2K.C-Q4-veri] Q4 × 100: sahipsiz / kimlik / miktar bozulması yok
+      sonra:    {"bozuk":100}
+      beklenen: 0
+      çıkan:    100
+  ✓ [F2K.C-Q5-kilit] Q5 miktar indirme (alt_yaz B miktar 1) ∥ fis_kes B'ye 2 teslim × 100: kilitlenme 0
+      sonra:    {"kilitlenme":0,"ikisiTamam":"100/100","bozuk":45,"ornek":[{"a":"ok","b":"ok","b2":{"miktarTeslimAltinda":1}},{"a":"ok","b":"ok","b2":{"miktarTeslimAltinda":1}}],"sure_sn":32}
+  ✗ [F2K.C-Q5-veri] Q5 × 100: sahipsiz / kimlik / miktar bozulması yok
+      sonra:    {"bozuk":45}
+      beklenen: 0
+      çıkan:    45
+── t-f2-kilit.js: 8 yeşil, 13 kırmızı ──
+bitti

@@ -1,0 +1,258 @@
+F2 başarısızlık testleri · önek f0-t-f2-mvy4yi6c · istemci bugünkü · kurallar açık · iz 3/3
+  ✗ [F2.birlestirme-teslimli] teslimli iki kalem birleştirilmez: B durur, toplam karşılanan 7, sahipsiz hareket yok
+      önce:     {"A":{"karsilanan":3,"miktar":10,"urun":"u-yeni","renk":"Siyah","beden":null},"B":{"karsilanan":4,"miktar":10,"urun":"u-yeni","renk":"Siyah","beden":null}}
+      sonra:    {"A":{"karsilanan":3,"miktar":20,"urun":"u-yeni","renk":"Siyah","beden":null},"B":"yok","yazma":"REST siparisler (durum):ok,alt_yaz:ok","D2a":1,"D2b":0,"D2e":0}
+      beklenen: [true,7,0]
+      çıkan:    [false,3,1]
+  ✓ [F2.birlestirme-teslimsiz] KORUNACAK: teslimsiz iki kalem birleşir (tek kalem, miktar 20)
+      sonra:    {"A":{"karsilanan":0,"miktar":20,"urun":"u-yeni","renk":"Siyah","beden":null},"B":"yok","yazma":"REST siparisler (durum):ok,alt_yaz:ok"}
+  ✗ [F2.birlestirme-karisik] teslimli kalem (B) birleştirmede silinmez; sahipsiz hareket yok
+      sonra:    {"A":{"karsilanan":0,"miktar":20,"urun":"u-yeni","renk":"Siyah","beden":null},"B":"yok","yazma":"REST siparisler (durum):ok,alt_yaz:ok","D2a":1,"D2b":0,"D2e":0}
+      beklenen: [true,0]
+      çıkan:    [false,1]
+  ✗ [F2.sil-teslimli] teslimli kalem silinemez (A durur 5 / 5), sahipsiz hareket yok
+      sonra:    {"A":"yok","yazma":"REST siparisler (durum):ok,alt_yaz:ok","D2a":1,"D2b":0,"D2e":0}
+      beklenen: [true,0]
+      çıkan:    [false,1]
+  ✓ [F2.sil-teslimsiz] KORUNACAK: teslimsiz kalem silinir
+      sonra:    {"C":"yok","yazma":"REST PATCH siparisler:ok,alt_yaz:ok"}
+  • [F2.sil-yalniz-iptal-hareketli] (gözlem) yalnız iptal edilmiş hareketi olan kalem silinince: {"A":"yok","yazma":"REST siparisler (durum):ok,alt_yaz:ok","kalemiGosterenIptalSatiri":1,"karar":"§ 9 karar 1"}
+  ✗ [F2.sil-iptal-siparis-gecmis-bag] teslim geçmişi olan İPTAL siparişi silinemez (kalem durur), geçmiş bağ sahipsiz kalmaz (D2e 0)
+      sonra:    {"siparis":"yok","A":"yok","yazma":"alt_yaz:ok,REST DELETE siparisler:ok","gecmisBag":"f0-t-f2-mvy4yi6c-gA","D2a":0,"D2b":0,"D2e":1}
+      beklenen: [true,0]
+      çıkan:    [false,1]
+  ✗ [F2.sil-bayat-siparis] teslimli sipariş bayat cihazdan silinemez; sahipsiz hareket yok
+      sonra:    {"siparis":"yok","A":"yok","yazma":"alt_yaz:ok,REST DELETE siparisler:ok","D2a":1,"D2b":1,"D2e":0}
+      beklenen: [true,true,0,0]
+      çıkan:    [false,false,1,1]
+  ✓ [F2.sil-teslimsiz-siparis] KORUNACAK: teslimsiz sipariş silinir (kalemleriyle)
+      sonra:    {"yazma":"alt_yaz:ok,REST DELETE siparisler:ok","A":"yok"}
+  ✗ [F2.kimlik-renk] teslimli kalemin rengi değişmez
+      sonra:    {"A":{"karsilanan":5,"miktar":20,"urun":"u-yeni","renk":"Taba","beden":null},"yazma":"REST siparisler (durum):ok,alt_yaz:ok"}
+      beklenen: false
+      çıkan:    true
+  ✗ [F2.kimlik-beden] teslimli kalemin bedeni değişmez
+      sonra:    {"A":{"karsilanan":5,"miktar":20,"urun":"u-yeni","renk":"Siyah","beden":"42"},"yazma":"REST siparisler (durum):ok,alt_yaz:ok"}
+      beklenen: false
+      çıkan:    true
+  ✗ [F2.kimlik-urun] teslimli kalemin ürünü değişmez
+      sonra:    {"A":{"karsilanan":5,"miktar":20,"urun":"u-baska","renk":"Siyah","beden":null},"yazma":"REST siparisler (durum):ok,alt_yaz:ok"}
+      beklenen: false
+      çıkan:    true
+  ✗ [F2.kimlik-gecmis-bag] iptal edilmiş siparişin teslimli (geçmiş bağlı) kaleminin rengi değişmez
+      sonra:    {"A":{"karsilanan":5,"miktar":20,"urun":"u-yeni","renk":"Taba","beden":null},"yazma":"REST PATCH siparisler:ok,alt_yaz:ok"}
+      beklenen: "Siyah"
+      çıkan:    "Taba"
+  ✓ [F2.kimlik-teslimsiz] KORUNACAK: teslimsiz kalemin rengi / bedeni değişir
+      sonra:    {"A":{"karsilanan":0,"miktar":20,"urun":"u-yeni","renk":"Taba","beden":"42"},"yazma":"REST siparisler (durum):ok,alt_yaz:ok"}
+  ✗ [F2.miktar-teslim-alti] miktar teslim edilenin (5) altına inmez (20 kalır)
+      sonra:    {"A":{"karsilanan":5,"miktar":3,"urun":"u-yeni","renk":"Siyah","beden":null},"yazma":"REST siparisler (durum):ok,alt_yaz:ok"}
+      beklenen: 20
+      çıkan:    3
+  ✓ [F2.miktar-teslime-esit] KORUNACAK: miktar teslim edilene (5) eşit olabilir
+      sonra:    {"A":{"karsilanan":5,"miktar":5,"urun":"u-yeni","renk":"Siyah","beden":null},"yazma":"REST PATCH siparisler:ok,alt_yaz:ok"}
+  ✗ [F2.miktar-gecmis-bag] geçmiş bağlı teslim de sayılır: miktar 5'in altına inmez
+      sonra:    {"A":{"karsilanan":5,"miktar":2,"urun":"u-yeni","renk":"Siyah","beden":null},"yazma":"REST PATCH siparisler:ok,alt_yaz:ok"}
+      beklenen: 20
+      çıkan:    2
+  ✓ [F2.fazla-teslimli-duzenleme] KORUNACAK: fazla teslimli kalemde miktar değişmeden fiyat değişir
+      sonra:    {"A":{"karsilanan":25,"miktar":20,"urun":"u-yeni","renk":"Siyah","beden":null},"fiyat":130,"yazma":"REST siparisler (durum):ok,alt_yaz:ok"}
+  ✗ [F2.var-olmayan-kaleme-teslim] var olmayan kaleme bağlı hareket yazılamaz
+      sonra:    {"kabul":true,"D2a":1,"D2b":0,"D2e":0}
+      beklenen: [false,0]
+      çıkan:    [true,1]
+  ✓ [F2.uretim-sil] KORUNACAK: üretim kaydı (ataması ile) silinir
+      sonra:    {"yazma":"alt_yaz:ok,REST DELETE uretim:ok"}
+  • [F2.uretim-sahipsiz-hareket] (gözlem) üretimi silinmiş geçerli stok hareketi (uretim_id karşılıksız; F2 kapsamı dışı, bilgi): 0
+  • [F2.denetim-butun-veri] (gözlem) bütün veride sahipsiz hareket (D2a / D2b / D2e): {"D2a":182,"D2b":53,"D2e":3}
+── t-f2.js: 7 yeşil, 12 kırmızı ──
+F2 başarısızlık testleri · önek f0-t-f2-mvy4yp9d · istemci F0_ERP · kurallar açık · iz 3/3
+  ✗ [E2.birlestirme-teslimli] teslimli iki kalem birleştirilmez: B durur, toplam karşılanan 7, sahipsiz hareket yok
+      önce:     {"A":{"karsilanan":3,"miktar":10,"urun":"u-yeni","renk":"Siyah","beden":null},"B":{"karsilanan":4,"miktar":10,"urun":"u-yeni","renk":"Siyah","beden":null}}
+      sonra:    {"A":{"karsilanan":3,"miktar":20,"urun":"u-yeni","renk":"Siyah","beden":null},"B":"yok","yazma":"REST siparisler (durum):ok,alt_yaz:ok","D2a":1,"D2b":0,"D2e":0}
+      beklenen: [true,7,0]
+      çıkan:    [false,3,1]
+  ✓ [E2.birlestirme-teslimsiz] KORUNACAK: teslimsiz iki kalem birleşir (tek kalem, miktar 20)
+      sonra:    {"A":{"karsilanan":0,"miktar":20,"urun":"u-yeni","renk":"Siyah","beden":null},"B":"yok","yazma":"REST siparisler (durum):ok,alt_yaz:ok"}
+  ✗ [E2.birlestirme-karisik] teslimli kalem (B) birleştirmede silinmez; sahipsiz hareket yok
+      sonra:    {"A":{"karsilanan":0,"miktar":20,"urun":"u-yeni","renk":"Siyah","beden":null},"B":"yok","yazma":"REST siparisler (durum):ok,alt_yaz:ok","D2a":1,"D2b":0,"D2e":0}
+      beklenen: [true,0]
+      çıkan:    [false,1]
+  ✗ [E2.sil-teslimli] teslimli kalem silinemez (A durur 5 / 5), sahipsiz hareket yok
+      sonra:    {"A":"yok","yazma":"REST siparisler (durum):ok,alt_yaz:ok","D2a":1,"D2b":0,"D2e":0}
+      beklenen: [true,0]
+      çıkan:    [false,1]
+  ✓ [E2.sil-teslimsiz] KORUNACAK: teslimsiz kalem silinir
+      sonra:    {"C":"yok","yazma":"REST PATCH siparisler:ok,alt_yaz:ok"}
+  • [E2.sil-yalniz-iptal-hareketli] (gözlem) yalnız iptal edilmiş hareketi olan kalem silinince: {"A":"yok","yazma":"REST siparisler (durum):ok,alt_yaz:ok","kalemiGosterenIptalSatiri":1,"karar":"§ 9 karar 1"}
+  ✗ [E2.sil-iptal-siparis-gecmis-bag] teslim geçmişi olan İPTAL siparişi silinemez (kalem durur), geçmiş bağ sahipsiz kalmaz (D2e 0)
+      sonra:    {"siparis":"yok","A":"yok","yazma":"alt_yaz:ok,REST DELETE siparisler:ok","gecmisBag":"f0-t-f2-mvy4yp9d-gA","D2a":0,"D2b":0,"D2e":1}
+      beklenen: [true,0]
+      çıkan:    [false,1]
+  ✗ [E2.sil-bayat-siparis] teslimli sipariş bayat cihazdan silinemez; sahipsiz hareket yok
+      sonra:    {"siparis":"yok","A":"yok","yazma":"alt_yaz:ok,REST DELETE siparisler:ok","D2a":1,"D2b":1,"D2e":0}
+      beklenen: [true,true,0,0]
+      çıkan:    [false,false,1,1]
+  ✓ [E2.sil-teslimsiz-siparis] KORUNACAK: teslimsiz sipariş silinir (kalemleriyle)
+      sonra:    {"yazma":"alt_yaz:ok,REST DELETE siparisler:ok","A":"yok"}
+  ✗ [E2.kimlik-renk] teslimli kalemin rengi değişmez
+      sonra:    {"A":{"karsilanan":5,"miktar":20,"urun":"u-yeni","renk":"Taba","beden":null},"yazma":"REST siparisler (durum):ok,alt_yaz:ok"}
+      beklenen: false
+      çıkan:    true
+  ✗ [E2.kimlik-beden] teslimli kalemin bedeni değişmez
+      sonra:    {"A":{"karsilanan":5,"miktar":20,"urun":"u-yeni","renk":"Siyah","beden":"42"},"yazma":"REST siparisler (durum):ok,alt_yaz:ok"}
+      beklenen: false
+      çıkan:    true
+  ✗ [E2.kimlik-urun] teslimli kalemin ürünü değişmez
+      sonra:    {"A":{"karsilanan":5,"miktar":20,"urun":"u-baska","renk":"Siyah","beden":null},"yazma":"REST siparisler (durum):ok,alt_yaz:ok"}
+      beklenen: false
+      çıkan:    true
+  ✗ [E2.kimlik-gecmis-bag] iptal edilmiş siparişin teslimli (geçmiş bağlı) kaleminin rengi değişmez
+      sonra:    {"A":{"karsilanan":5,"miktar":20,"urun":"u-yeni","renk":"Taba","beden":null},"yazma":"REST PATCH siparisler:ok,alt_yaz:ok"}
+      beklenen: "Siyah"
+      çıkan:    "Taba"
+  ✓ [E2.kimlik-teslimsiz] KORUNACAK: teslimsiz kalemin rengi / bedeni değişir
+      sonra:    {"A":{"karsilanan":0,"miktar":20,"urun":"u-yeni","renk":"Taba","beden":"42"},"yazma":"REST siparisler (durum):ok,alt_yaz:ok"}
+  ✗ [E2.miktar-teslim-alti] miktar teslim edilenin (5) altına inmez (20 kalır)
+      sonra:    {"A":{"karsilanan":5,"miktar":3,"urun":"u-yeni","renk":"Siyah","beden":null},"yazma":"REST siparisler (durum):ok,alt_yaz:ok"}
+      beklenen: 20
+      çıkan:    3
+  ✓ [E2.miktar-teslime-esit] KORUNACAK: miktar teslim edilene (5) eşit olabilir
+      sonra:    {"A":{"karsilanan":5,"miktar":5,"urun":"u-yeni","renk":"Siyah","beden":null},"yazma":"REST PATCH siparisler:ok,alt_yaz:ok"}
+  ✗ [E2.miktar-gecmis-bag] geçmiş bağlı teslim de sayılır: miktar 5'in altına inmez
+      sonra:    {"A":{"karsilanan":5,"miktar":2,"urun":"u-yeni","renk":"Siyah","beden":null},"yazma":"REST PATCH siparisler:ok,alt_yaz:ok"}
+      beklenen: 20
+      çıkan:    2
+  ✓ [E2.fazla-teslimli-duzenleme] KORUNACAK: fazla teslimli kalemde miktar değişmeden fiyat değişir
+      sonra:    {"A":{"karsilanan":25,"miktar":20,"urun":"u-yeni","renk":"Siyah","beden":null},"fiyat":130,"yazma":"REST siparisler (durum):ok,alt_yaz:ok"}
+  ✗ [E2.var-olmayan-kaleme-teslim] var olmayan kaleme bağlı hareket yazılamaz
+      sonra:    {"kabul":true,"D2a":1,"D2b":0,"D2e":0}
+      beklenen: [false,0]
+      çıkan:    [true,1]
+  ✓ [E2.uretim-sil] KORUNACAK: üretim kaydı (ataması ile) silinir
+      sonra:    {"yazma":"alt_yaz:ok,REST DELETE uretim:ok"}
+  • [E2.uretim-sahipsiz-hareket] (gözlem) üretimi silinmiş geçerli stok hareketi (uretim_id karşılıksız; F2 kapsamı dışı, bilgi): 0
+  • [E2.denetim-butun-veri] (gözlem) bütün veride sahipsiz hareket (D2a / D2b / D2e): {"D2a":187,"D2b":54,"D2e":4}
+── t-f2.js: 7 yeşil, 12 kırmızı ──
+F2 bekleyen defter / kalıcı ret · önek f0-t-bekleyen-red-mvy4ywlp · istemci bugünkü · iz sütunları 3/3
+  ✓ [BR.kontrol-tek-basina] kontrol: ilgisiz değişiklik tek başına yazılır (asgari stok 5)
+      sonra:    {"ok":true,"minStok":"5"}
+  • [BR.olcum] (gözlem) her tekrar (bekleyenleriYenidenGonder ile aynı çağrı): [{"tur":1,"ok":false,"stkYaz":1,"deneme":1},{"tur":2,"ok":false,"stkYaz":1,"deneme":2},{"tur":3,"ok":false,"stkYaz":1,"deneme":3},{"tur":4,"ok":false,"stkYaz":1,"deneme":4},{"tur":5,"ok":false,"stkYaz":1,"deneme":5}]
+  • [BR.hata-metni] (gözlem) defterde saklanan hata: "Supabase 400: ERROR:  Bağı çözülmüş (iptal edilmiş siparişin) hareketi yeniden siparişe bağlanamaz (stk_hareket hrk-mvy4yx3e-fzal)"
+  ✓ [BR.sunucu-korur] sunucu bağı diriltmez (her tekrarda reddeder), iz ve karşılanan aynı
+      sonra:    {"satir":{"iptal":false,"kalem":null,"siparis":null,"no":"SF0-y4ywlp-s (iptal)","gecmisKalem":"f0-t-bekleyen-red-mvy4ywlp-k","gecmisSiparis":"f0-t-bekleyen-red-mvy4ywlp-s","cozum":true},"karsilanan":3}
+  ✓ [BR.yerel-korunur] yerel kayıt silinmez (A cihazının düzenlemesi yerelde duruyor)
+      sonra:    {"aciklama":"A cihazında düzenlendi"}
+  ✓ [BR.bekleyen-kayit] gönderilemeyen fark kalıcı deftere yazıldı (uygulama kapanınca kaybolmaz)
+      sonra:    {"kayitVar":true}
+  ✗ [BR.otomatik-tekrar-yok] kalıcı ret 4 otomatik denemede yeniden gönderilmez
+      sonra:    {"ilkTurdanSonraStkYaz":4,"deneme":5}
+      beklenen: 0
+      çıkan:    4
+  ✗ [BR.inceleme-durumu] kayıt 'inceleme gerekiyor' olarak işaretli (geçici ağ hatasından ayrı)
+      sonra:    {"kayit":{"tablo":"urunler","hata":"Supabase 400: ERROR:  Bağı çözülmüş (iptal edilmiş siparişin) hareketi yeniden siparişe bağlanamaz (stk_hareket hrk-mvy4yx3e-fzal)","zaman":"2026-11-01T18:01:01.193Z","deneme":5}}
+      beklenen: true
+      çıkan:    false
+  ✗ [BR.ilgisiz-degisiklik] aynı tablodaki ilgisiz meşru değişiklik reddedilen satır yüzünden takılmaz
+      sonra:    {"tabaMinStok":"5"}
+      beklenen: true
+      çıkan:    false
+── t-bekleyen-red.js: 4 yeşil, 3 kırmızı ──
+F2 bekleyen defter / kalıcı ret · önek f0-t-bekleyen-red-mvy4yy73 · istemci F0_ERP · iz sütunları 3/3
+  ✓ [EBR.kontrol-tek-basina] kontrol: ilgisiz değişiklik tek başına yazılır (asgari stok 5)
+      sonra:    {"ok":true,"minStok":"5"}
+  • [EBR.olcum] (gözlem) her tekrar (bekleyenleriYenidenGonder ile aynı çağrı): [{"tur":1,"ok":false,"stkYaz":1,"deneme":1},{"tur":2,"ok":false,"stkYaz":1,"deneme":2},{"tur":3,"ok":false,"stkYaz":1,"deneme":3},{"tur":4,"ok":false,"stkYaz":1,"deneme":4},{"tur":5,"ok":false,"stkYaz":1,"deneme":5}]
+  • [EBR.hata-metni] (gözlem) defterde saklanan hata: "Supabase 400: ERROR:  Bağı çözülmüş (iptal edilmiş siparişin) hareketi yeniden siparişe bağlanamaz (stk_hareket hrk-mvy4yyog-j7y3)"
+  ✓ [EBR.sunucu-korur] sunucu bağı diriltmez (her tekrarda reddeder), iz ve karşılanan aynı
+      sonra:    {"satir":{"iptal":false,"kalem":null,"siparis":null,"no":"SF0-y4yy73-s (iptal)","gecmisKalem":"f0-t-bekleyen-red-mvy4yy73-k","gecmisSiparis":"f0-t-bekleyen-red-mvy4yy73-s","cozum":true},"karsilanan":3}
+  ✓ [EBR.yerel-korunur] yerel kayıt silinmez (A cihazının düzenlemesi yerelde duruyor)
+      sonra:    {"aciklama":"A cihazında düzenlendi"}
+  ✓ [EBR.bekleyen-kayit] gönderilemeyen fark kalıcı deftere yazıldı (uygulama kapanınca kaybolmaz)
+      sonra:    {"kayitVar":true}
+  ✗ [EBR.otomatik-tekrar-yok] kalıcı ret 4 otomatik denemede yeniden gönderilmez
+      sonra:    {"ilkTurdanSonraStkYaz":4,"deneme":5}
+      beklenen: 0
+      çıkan:    4
+  ✗ [EBR.inceleme-durumu] kayıt 'inceleme gerekiyor' olarak işaretli (geçici ağ hatasından ayrı)
+      sonra:    {"kayit":{"tablo":"urunler","hata":"Supabase 400: ERROR:  Bağı çözülmüş (iptal edilmiş siparişin) hareketi yeniden siparişe bağlanamaz (stk_hareket hrk-mvy4yyog-j7y3)","zaman":"2026-11-01T18:01:03.226Z","deneme":5}}
+      beklenen: true
+      çıkan:    false
+  ✗ [EBR.ilgisiz-degisiklik] aynı tablodaki ilgisiz meşru değişiklik reddedilen satır yüzünden takılmaz
+      sonra:    {"tabaMinStok":"5"}
+      beklenen: true
+      çıkan:    false
+── t-bekleyen-red.js: 4 yeşil, 3 kırmızı ──
+F2 kilit / eşzamanlılık · önek f0-t-f2-kilit-mvy4t80d · N=100 · kurallar açık
+A) yazmadan önce kilit — alt_yaz birden çok deyim yazıyor (önce upsert, sonra silme)
+  ✗ [F2K.A-alt_yaz-sil] alt_yaz (upsert A + sil B) → silinecek kalem B: ilk yazmadan önce kilitlenir
+      sonra:    {"islem":"ok","bekledi":true,"tekilSerbest":false,"sure_ms":1342,"sonuc":"TERS SIRA (yazdıktan sonra bekliyor)"}
+      beklenen: "tamam"
+      çıkan:    "TERS SIRA (yazdıktan sonra bekliyor)"
+B) zorlanmış araya girme — B kalemi 1 sn tutulur, iki sıra × 3
+  ✓ [F2K.B-Q1-kilit] Q1 kalem silme (alt_yaz sil B) ∥ fis_kes B'ye teslim · zorlanmış 6: kilitlenme 0
+      sonra:    {"kilitlenme":0}
+  ✗ [F2K.B-Q1-veri] Q1 · zorlanmış: sahipsiz / kimlik / miktar bozulması yok
+      sonra:    {"bozuk":3,"ornek":[{"ilk":"b","a":"ok","b":"ok","b2":{"D2a_sahipsiz_hareket_kalem_yok":1}},{"ilk":"b","a":"ok","b":"ok","b2":{"D2a_sahipsiz_hareket_kalem_yok":1}}]}
+      beklenen: 0
+      çıkan:    3
+  ✗ [F2K.B-Q2-kilit] Q2 birleştirme (alt_yaz A=20, sil B) ∥ fis_kes B'ye teslim · zorlanmış 6: kilitlenme 0
+      sonra:    {"kilitlenme":3}
+      beklenen: 0
+      çıkan:    3
+  ✓ [F2K.B-Q2-veri] Q2 · zorlanmış: sahipsiz / kimlik / miktar bozulması yok
+      sonra:    {"bozuk":0,"ornek":[]}
+  ✗ [F2K.B-Q3-kilit] Q3 teslimsiz sipariş silme (REST DELETE, cascade) ∥ fis_kes B'ye teslim · zorlanmış 6: kilitlenme 0
+      sonra:    {"kilitlenme":3}
+      beklenen: 0
+      çıkan:    3
+  ✓ [F2K.B-Q3-veri] Q3 · zorlanmış: sahipsiz / kimlik / miktar bozulması yok
+      sonra:    {"bozuk":0,"ornek":[]}
+  ✓ [F2K.B-Q4-kilit] Q4 renk değişimi (alt_yaz B renk Taba) ∥ fis_kes B'ye (Siyah) teslim · zorlanmış 6: kilitlenme 0
+      sonra:    {"kilitlenme":0}
+  ✗ [F2K.B-Q4-veri] Q4 · zorlanmış: sahipsiz / kimlik / miktar bozulması yok
+      sonra:    {"bozuk":6,"ornek":[{"ilk":"a","a":"ok","b":"ok","b2":{"D3b_hareket_renk_beden_kalemden_farkli":1}},{"ilk":"a","a":"ok","b":"ok","b2":{"D3b_hareket_renk_beden_kalemden_farkli":1}}]}
+      beklenen: 0
+      çıkan:    6
+  ✓ [F2K.B-Q5-kilit] Q5 miktar indirme (alt_yaz B miktar 1) ∥ fis_kes B'ye 2 teslim · zorlanmış 6: kilitlenme 0
+      sonra:    {"kilitlenme":0}
+  ✗ [F2K.B-Q5-veri] Q5 · zorlanmış: sahipsiz / kimlik / miktar bozulması yok
+      sonra:    {"bozuk":3,"ornek":[{"ilk":"b","a":"ok","b":"ok","b2":{"miktarTeslimAltinda":1}},{"ilk":"b","a":"ok","b":"ok","b2":{"miktarTeslimAltinda":1}}]}
+      beklenen: 0
+      çıkan:    3
+C) doğal zorlama × 100, 0–40 ms, rastgele sıra
+  ✓ [F2K.C-Q1-kilit] Q1 kalem silme (alt_yaz sil B) ∥ fis_kes B'ye teslim × 100: kilitlenme 0
+      sonra:    {"kilitlenme":0,"ikisiTamam":"100/100","bozuk":51,"ornek":[{"a":"ok","b":"ok","b2":{"D2a_sahipsiz_hareket_kalem_yok":1}},{"a":"ok","b":"ok","b2":{"D2a_sahipsiz_hareket_kalem_yok":1}}],"sure_sn":30}
+  ✗ [F2K.C-Q1-veri] Q1 × 100: sahipsiz / kimlik / miktar bozulması yok
+      sonra:    {"bozuk":51}
+      beklenen: 0
+      çıkan:    51
+  ✗ [F2K.C-Q2-kilit] Q2 birleştirme (alt_yaz A=20, sil B) ∥ fis_kes B'ye teslim × 100: kilitlenme 0
+      sonra:    {"kilitlenme":3,"ikisiTamam":"97/100","bozuk":51,"ornek":[{"a":"ok","b":"ok","b2":{"D2a_sahipsiz_hareket_kalem_yok":1}},{"a":"ok","b":"ok","b2":{"D2a_sahipsiz_hareket_kalem_yok":1}}],"sure_sn":31}
+      beklenen: 0
+      çıkan:    3
+  ✗ [F2K.C-Q2-veri] Q2 × 100: sahipsiz / kimlik / miktar bozulması yok
+      sonra:    {"bozuk":51}
+      beklenen: 0
+      çıkan:    51
+  ✗ [F2K.C-Q3-kilit] Q3 teslimsiz sipariş silme (REST DELETE, cascade) ∥ fis_kes B'ye teslim × 100: kilitlenme 0
+      sonra:    {"kilitlenme":28,"ikisiTamam":"20/100","bozuk":20,"ornek":[{"a":"ok","b":"ok","b2":{"D2a_sahipsiz_hareket_kalem_yok":1,"D2b_sahipsiz_hareket_siparis_yok":1}},{"a":"ok","b":"ok","b2":{"D2a_sahipsiz_hareket_kalem_yok":1,"D2b_sahipsiz_hareket_siparis_yok":1}}],"sure_sn":48}
+      beklenen: 0
+      çıkan:    28
+  ✗ [F2K.C-Q3-veri] Q3 × 100: sahipsiz / kimlik / miktar bozulması yok
+      sonra:    {"bozuk":20}
+      beklenen: 0
+      çıkan:    20
+  ✓ [F2K.C-Q4-kilit] Q4 renk değişimi (alt_yaz B renk Taba) ∥ fis_kes B'ye (Siyah) teslim × 100: kilitlenme 0
+      sonra:    {"kilitlenme":0,"ikisiTamam":"100/100","bozuk":100,"ornek":[{"a":"ok","b":"ok","b2":{"D3b_hareket_renk_beden_kalemden_farkli":1}},{"a":"ok","b":"ok","b2":{"D3b_hareket_renk_beden_kalemden_farkli":1}}],"sure_sn":29}
+  ✗ [F2K.C-Q4-veri] Q4 × 100: sahipsiz / kimlik / miktar bozulması yok
+      sonra:    {"bozuk":100}
+      beklenen: 0
+      çıkan:    100
+  ✓ [F2K.C-Q5-kilit] Q5 miktar indirme (alt_yaz B miktar 1) ∥ fis_kes B'ye 2 teslim × 100: kilitlenme 0
+      sonra:    {"kilitlenme":0,"ikisiTamam":"100/100","bozuk":45,"ornek":[{"a":"ok","b":"ok","b2":{"miktarTeslimAltinda":1}},{"a":"ok","b":"ok","b2":{"miktarTeslimAltinda":1}}],"sure_sn":32}
+  ✗ [F2K.C-Q5-veri] Q5 × 100: sahipsiz / kimlik / miktar bozulması yok
+      sonra:    {"bozuk":45}
+      beklenen: 0
+      çıkan:    45
+── t-f2-kilit.js: 8 yeşil, 13 kırmızı ──
+bitti

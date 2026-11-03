@@ -1,0 +1,84 @@
+# F1.1 BEKLENEN DURUM (kos-f11.sh bununla karşılaştırır). Satır: kimlik DURUM — F1.1 SQL (bu dal) gerçek sonucu.
+# Kaynak koşu: sonuc-f11-F1.1.txt (2 Kasım, yerel PG, kurallar açık, F11_N=100, F11_ZORLA=3). 1.743.0 durumu: sonuc-f11-1.743.0.txt.
+# F2 (1.744.0) ile E11.birlestirme KIRMIZI → YESIL (teslimli kalem birleştirilmez; sunucu KR002, istemci önler). Kaynak: sonuc-f11-F2.txt.
+# BİLEREK KIRMIZI: artık yok (E11.birlestirme F2 ile, E11.geri-yukleme-kapali 1.744.3 ile yeşile döndü).
+# 1.744.3 (Codex F8, 834f625) ile E11.geri-yukleme-kapali KIRMIZI → YESIL: fis_kes ile kesilmiş fişin hareketi kurallar kapalıyken
+#   de eski yoldan değişmez (geri yüklemenin stok yazması RED, karşılanan = hesap, denetim temiz). Codex kos-f11.sh'i koşmadığından
+#   satır güncellenmemişti; 2 Kasım 1.744.3 düzeltme turunda ölçüldü (sonuc-f11-1.744.3.txt).
+# Gözlem satırları (puanlanmaz): F11.A-stk_renk_tasi-hareket, F11.A-stk_yaz-fis, F11.C-P8, F11.C-P9 (F1.1 kapsamı dışı açık riskler).
+# Doğal zorlama (F11.C-*-kilit) olasılıklı; F1.1 ile statik sıra (A yoklaması) da tamam olduğundan 0 beklenir.
+F11.iz-sutunlari YESIL
+F11.bag-coz-iz-yazar YESIL
+F11.S1-iptal-sonrasi YESIL
+F11.iz-bir-kez YESIL
+F11.S1-fis-iptali YESIL
+F11.S1-yanit-kalemler YESIL
+F11.S1k-kontrol YESIL
+F11.S1k-iptal-satiri-izi YESIL
+F11.S2a-eszamanli YESIL
+F11.S2a-ters-sira YESIL
+F11.S2-dogal YESIL
+F11.izsiz-eski-kayit YESIL
+F11.izsiz-fis-iptali YESIL
+F11.satir-korumasi YESIL
+F11.A-fis_kes-kalem YESIL
+F11.A-fis_iptal-kalem YESIL
+F11.A-fis_iptal-fis YESIL
+F11.A-fis_iptal-makbuz YESIL
+F11.A-fis_iptal-makbuz-kalemsiz YESIL
+F11.A-fis_iptal-gecmis-kalem YESIL
+F11.A-fis_bag_coz-kalem YESIL
+F11.A-fis_bag_coz-fis YESIL
+F11.A-alt_yaz-kalem YESIL
+F11.B-P1-kalem-kilit YESIL
+F11.B-P1-kalem-veri YESIL
+F11.B-P1-fis-kilit YESIL
+F11.B-P1-fis-veri YESIL
+F11.B-P1-hareket-kilit YESIL
+F11.B-P1-hareket-veri YESIL
+F11.B-P1-tekil-kilit YESIL
+F11.B-P1-tekil-veri YESIL
+F11.B-P6-kalem-kilit YESIL
+F11.B-P6-kalem-veri YESIL
+F11.B-P6-fis-kilit YESIL
+F11.B-P6-fis-veri YESIL
+F11.B-P6-hareket-kilit YESIL
+F11.B-P6-hareket-veri YESIL
+F11.B-P6-tekil-kilit YESIL
+F11.B-P6-tekil-veri YESIL
+F11.B-P6-makbuz-kilit YESIL
+F11.B-P6-makbuz-veri YESIL
+F11.B-P6b-kalem-kilit YESIL
+F11.B-P6b-kalem-veri YESIL
+F11.B-P6b-fis-kilit YESIL
+F11.B-P6b-fis-veri YESIL
+F11.B-P6b-hareket-kilit YESIL
+F11.B-P6b-hareket-veri YESIL
+F11.B-P6b-tekil-kilit YESIL
+F11.B-P6b-tekil-veri YESIL
+F11.B-P6b-makbuz-kilit YESIL
+F11.B-P6b-makbuz-veri YESIL
+F11.C-P1-kilit YESIL
+F11.C-P1-veri YESIL
+F11.C-P2-kilit YESIL
+F11.C-P2-veri YESIL
+F11.C-P3-kilit YESIL
+F11.C-P3-veri YESIL
+F11.C-P4-kilit YESIL
+F11.C-P4-veri YESIL
+F11.C-P5-kilit YESIL
+F11.C-P5-veri YESIL
+F11.C-P6-kilit YESIL
+F11.C-P6-veri YESIL
+F11.C-P6b-kilit YESIL
+F11.C-P6b-veri YESIL
+F11.C-P7-kilit YESIL
+F11.C-P7-veri YESIL
+E11.siparis-iptali YESIL
+E11.S1-fis-iptali YESIL
+E11.S2a-eszamanli YESIL
+E11.S2a-ters-sira YESIL
+E11.birlestirme YESIL
+E11.bayat-satir YESIL
+E11.geri-yukleme-kapali YESIL
+E11.geri-yukleme-acik YESIL

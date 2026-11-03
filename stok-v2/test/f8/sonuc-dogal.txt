@@ -1,0 +1,5 @@
+F1.1 kilit sırası · önek f0-t-f11-kilit-mvywwytv · N=100 · zorlanmış tekrar 3 · kurallar açık · iz sütunları 3/3
+C) doğal zorlama — her çift × 100, 0–40 ms rastgele aralık, rastgele başlangıç sırası
+  • [F11.C-P8] (gözlem) P8 fis_iptal ∥ stk_renk_tasi (aynı varyantın hareketleri) × 100: {"kilitlenme":0,"oran":"0%","ikisiTamam":"100/100","bozuk":0,"digerHata":{},"ornek":[],"sure_sn":22}
+── t-f11-kilit.js: 0 yeşil, 0 kırmızı ──
+✓ F8 doğal renk/iptal yarışı: bütün işlemler tamam, sıfır kilitlenme/bozuk

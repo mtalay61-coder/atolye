@@ -65,6 +65,15 @@ async function calistir() {
   };
   let onayMetni = "";
   sayfa.on("dialog", (d) => { onayMetni = d.message(); d.accept(); });
+  if (await sayfa.locator("[data-arsiv-goruntu-birlestir]").first().isDisabled()) {
+    // Fiş defteri kipinde eski finans belgesini birleştirmek güvenli değildir: engel ve sıfır yazma ölçülür.
+    require("assert/strict").equal(yazilan.length,0);
+    await sayfa.evaluate(() => document.querySelector("[data-arsiv-goruntu-birlestir]").click());
+    await sayfa.waitForTimeout(250);
+    require("assert/strict").equal(yazilan.length,0);
+    await tarayici.close();
+    return {satirBasligi,ozet,birlestirmeEngelli:true,yazmaSayisi:0,hatalar};
+  }
   await sayfa.locator("[data-arsiv-goruntu-birlestir]").first().click();
   await sayfa.waitForTimeout(800);
   const toast = await sayfa.evaluate(() => (document.body.innerText.match(/Kasa\/Banka birleştirildi[^\n]*/) || ["yok"])[0]);

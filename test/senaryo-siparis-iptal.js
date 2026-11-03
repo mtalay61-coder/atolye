@@ -90,7 +90,9 @@ async function calistir() {
   await sayfa.waitForTimeout(700);
   const yetimUyarisi = await sayfa.evaluate(() => /bağlantısız stok hareketi/.test(document.body.innerText));
 
-  // İptal edilmiş siparişi ikinci kez sil: bu sefer listeden çıkar (bağı kalmadı), fiş yine durur.
+  // İptal edilmiş siparişi ikinci kez sil. v1.744.0 (F2, bilerek değişti): teslim geçmişi olan (hy1 → ky1, geçmiş bağ) iptal
+  // edilmiş sipariş SİLİNMEZ — sunucu KR002 ile reddeder, istemci hiç denemez, uyarı gösterir; sipariş "İptal" olarak kalır.
+  // Önce: listeden çıkıyordu ve teslim hareketi sahipsiz kalıyordu. Fiş yine durur.
   const onay2 = await kartiAcVeSil(sayfa);
   const sip2 = (await depoOku(sayfa, "siparis:data")) || [];
   const b3 = ((await depoOku(sayfa, "stok:items")) || []).find((p) => p.id === "u2") || {};
