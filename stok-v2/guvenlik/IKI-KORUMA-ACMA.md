@@ -21,7 +21,7 @@ yapar. İki **gerçekten ayrı, ayrı ayrı gözlenebilir** adım için sıra: *
 | Ne | Sonuç | Çıktı |
 |---|---|---|
 | Tarayıcı senaryoları, 1.744.7 paketi, ağ denetimi (`test/kural-provasi.js`, 261 senaryo) | ağa çıkan **12 308 yazmanın hepsi** `x-atolye-surum: 1.744.7` taşıyor; başlıksız 0, başka sürüm 0, hareket tablosuna doğrudan yazma 0, satır taşıyan köprü isteği 0, eski yol hareket yazması 0 | `stok-v2/test/iki-koruma/sonuc-kural-provasi.txt` |
-| Gerçek PostgreSQL, **iki koruma birlikte açık** (`stok-v2/test/iki-koruma/kos-iki-koruma.sh`): uygulamanın fiş yolu uçtan uca (satış + peşin tahsilat, iptal, sipariş teslimi, üretim, kasa, eşitleme), gece denetimi, R1 / R1b yarışları, çek (iptal, yarış), kasa / banka hesap koruması, seyrek alt satır, sonlu tutar, toplu iptal, yetki + tekrar, F4 bağ / rezervasyon / yarış, F3 satış sınırı + yarış, F8 renk kilidi + eski fiş, F1.1 / F2 bağ ve teslimli kalem korumaları, sipariş silme | bkz. `sonuc-iki-koruma.txt` | `stok-v2/test/iki-koruma/sonuc-iki-koruma.txt` |
+| Gerçek PostgreSQL, **iki koruma birlikte açık** (`stok-v2/test/iki-koruma/kos-iki-koruma.sh`): uygulamanın fiş yolu uçtan uca (satış + peşin tahsilat, iptal, sipariş teslimi, üretim, kasa, eşitleme), gece denetimi, R1 / R1b yarışları, çek (iptal, yarış), kasa / banka hesap koruması, seyrek alt satır, sonlu tutar, toplu iptal, yetki + tekrar, F4 bağ / rezervasyon / yarış, F3 satış sınırı + yarış, F8 renk kilidi + eski fiş, F1.1 / F2 bağ ve teslimli kalem korumaları, sipariş silme | **TEMİZ** (commit 000e48f): kos.sh içi uçtan uca + gece + R1 + R1b, ardından 24 test; korumayı kapatan test 0. Tek kırmızı (t-eski-fis) testin kodu sabit beklemesiydi: kapı açıkken sunucu aynı reddi KR009 ile verir ve kurallar kapatılamaz — test iki kipe göre düzeltildi | `stok-v2/test/iki-koruma/sonuc-iki-koruma.txt` |
 | Dayanıklılık, iki koruma açık (`t-dayaniklilik.js`, 43 denetim) | eski istemci (başlıksız / 1.744.6 / bozuk) AT001, satır yok, numara sayacı ilerlemez; eski yol (köprüden hareket ekleme / iptal) red; aynı istek arka arkaya ve iki bağlantıdan aynı anda → tek fiş; 20 eşzamanlı fiş → 20 benzersiz numara, stok = Σ hareket; commit'ten önce kopan bağlantı → hiçbir satır, sayaç geri, yeniden deneme tek fiş; **uygulamanın kendi yolu** yanıtı kaybolan isteği yeniden dener → `zatenVar`, aynı numara, satırlar bir kez, iki denemede de başlık 1.744.7; yarıda hata veren fiş → hiçbir parçası yazılmaz | aynı dosya |
 | Açma / doğrulama / geri alma paketleri (`stok-v2/test/guvenlik/t-koruma-paketleri.sh`, canlı benzeri kopya) | 35/35 — sıra koruması, iz koruması, açma + doğrulama, davranış (1.744.7 geçer, başlıksız / 1.744.6 AT001, köprü hareketi red, site girişi çalışır), ters sırayla geri alma, canlının bugünkü hâline dönüş (7-sonra 6/6), Editor uyumu | `stok-v2/test/guvenlik/sonuc-koruma-paketleri.txt` |
 
@@ -29,6 +29,14 @@ yapar. İki **gerçekten ayrı, ayrı ayrı gözlenebilir** adım için sıra: *
 iptal etmek isteyen akış — eski bir üretimi / ürünü silmek gibi — fiş defteri kurulu olduğu için **bugün de** ağa çıkmadan
 durdurulur ("fiş kaydını kullanın; yerel kayıt inceleme için korundu"). Provada 3 senaryo (eski tohum verisi) buna takıldı
 (12 girişim, hiçbiri ağa çıkmadı). Canlıda böyle satır olup olmadığını `11-eski-hareket-salt-okur.sql` gösterir; varsa ayrı iş.
+
+Normal kip (IKI_KORUMA kapalı) regresyon: `kos-butunluk.sh` çıkış 0, F0 / F2 beklenenle AYNI (commit 000e48f,
+`stok-v2/test/iki-koruma/sonuc-butunluk-normal-kip.txt`); beş tarayıcı senaryosu (fis-kes, kasa-islemler, cek-fis-kes,
+siparis-iptal, uretim) altınla AYNI.
+
+**Sınamanın bulduğu, koruma değil test düzeneği olan iki durum:** (1) `sinama-gece.sql` alarmları sınamak için kuralları kapatıp
+fişsiz satır enjekte eder — kapı açıkken kurallar kapanmadığından reddedildi; bu, kapının kuralları atlatmayı engellediğinin
+kanıtı (iki koruma kipinde yalnız o enjeksiyon süresince kapı kapatılır). (2) `t-eski-fis` red kodunu 42501 bekliyordu.
 
 ## Adımlar
 
