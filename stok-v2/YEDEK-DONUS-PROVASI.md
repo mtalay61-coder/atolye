@@ -14,7 +14,7 @@ Sıra: **1 panel kontrolü → 2 envanter → 3 bağımsız döküm → 4 ayrı 
 
 **Free plan; Scheduled backups erişimi YOK; PITR açık DEĞİL.** Ücretli yükseltme yapılmadı. Sonuç: Supabase tarafında geri
 yüklenebilir yedek yok — **tek yedek, kullanıcının alacağı bağımsız döküm** (§ 3). Yol: bağımsız döküm + ayrı ortamda geri
-yükleme. Free plana özgü notlar: doğrudan bağlantı (Direct) yalnız IPv6 olabilir → **Session pooler** kullanılır; ayrı Supabase
+yükleme. Sunucu sürümü **17.6** → pg_dump / psql 17 ya da daha yeni. Kullanıcı kararı: döküm bilgisayarda alınacak (tablette değil). Free plana özgü notlar: doğrudan bağlantı (Direct) yalnız IPv6 olabilir → **Session pooler** kullanılır; ayrı Supabase
 prova projesi için ikinci ücretsiz proje hakkı gerekir (yoksa yerel PostgreSQL hedefi); döküm düzenli alınmazsa felakette
 dönülecek nokta son dökümdür.
 

@@ -3,7 +3,7 @@
 Her satırda "durum" yalnız kanıta dayanır; kanıtı olmayan iş tamamlandı sayılmaz.
 
 **Veri güvenilirliği sırası (kullanıcı, 4 Kasım):** 1) geri yüklenebilir yedek (madde 6) → 2) bütün cihazlarda 1.744.7 →
-3) sürüm kapısı → 4) fiş kuralları. Her adım ayrı onayla. Panel kontrolü YAPILDI (4 Kasım): Free plan, Scheduled backups erişimi yok, PITR kapalı, yükseltme yok → Supabase'de geri yüklenebilir yedek YOK; yol bağımsız döküm + ayrı ortam. Şu an kullanıcıda: bilgisayarda PostgreSQL istemcisi kurulumu (adım 1).
+3) sürüm kapısı → 4) fiş kuralları. Her adım ayrı onayla. Panel kontrolü YAPILDI (4 Kasım): Free plan, Scheduled backups erişimi yok, PITR kapalı, yükseltme yok → Supabase'de geri yüklenebilir yedek YOK; yol bağımsız döküm + ayrı ortam. Sunucu sürümü 17.6 → istemci (pg_dump / psql) 17 ya da daha yeni olmalı. BEKLİYOR: kullanıcı bilgisayara geçince istemci kurulumu (adım 1); tablette (Termux) yapılmayacak.
 PR #348: birleştirme onayı YOK. Sürüm kapısı ve fiş kuralları KAPALI. Elle kullanım ve cihaz kontrolleri BEKLİYOR.
 
 | # | İş | Durum | Kanıt / eksik | Sonraki adım |
