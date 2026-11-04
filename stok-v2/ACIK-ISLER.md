@@ -17,3 +17,14 @@ Her satırda "durum" yalnız kanıta dayanır; kanıtı olmayan iş tamamlandı 
 - Site girişi onarımı (`0-site-yetki-onar.sql`, 3 Kasım): 8 fonksiyon `girissiz_calistirir = true`, kullanıcı "Giriş çalıştı".
 - Hesap sayfası düzeltmesi (`0b`, 3 Kasım): A 4× true, B satır yok, C hatasız, sayfa açıldı. **Değerler (devir / dönem / bakiye) canlıda veri eksikliği nedeniyle doğrulanamadı** — tek site hesabının hareketi yok; yalnız yerel `t-portal-hesap.js`. İlk gerçek hareketli site müşterisinde hesap sayfası ↔ ERP cari kartı karşılaştırılacak.
 - Sıkılaştırma SQL doğrulaması (`2-sikilastir.sql`, 4 Kasım): 8/8. (Elle kullanım → madde 1.)
+
+## 6 ve 7 — son durum (4 Kasım; HAZIR, canlıya UYGULANMADI, ayrı onay bekliyor)
+
+Test edilen commit **92cf0ee** (kaynak + 6 + 7 + testler); sonra yalnız salt-okur `7-sonra-dogrula.sql` eklendi (17ba480).
+
+| Koşu | Sonuç | Çıktı |
+|---|---|---|
+| Bütünlük `kos-butunluk.sh` | çıkış 0 | `test/guvenlik/sonuc-butunluk-kaynak.txt` |
+| Güvenlik `kos-guvenlik.sh` (t-site-surum-kapisi dahil) | TEMİZ, çıkış 0 | `test/guvenlik/sonuc-yerel.txt` |
+| Geçiş provası `gecis-provasi.sh` | TEMİZ, çıkış 0 | `test/guvenlik/sonuc-gecis-provasi.txt` |
+| `7-sonra-dogrula.sql` (yerel, canlı benzeri) | 7 öncesi: site tabloları 0/5 istisnada; 7 sonrası 6/6 tamam (kurallar canlıdaki gibi kapalıyken); bozulma denemesinde eksik ERP tablosunu adıyla ve açık kapıyı yakaladı | — |
