@@ -1,21 +1,17 @@
-# 1.744.8 regresyon koşuları · 4 Kasım 2026
-# Uygulama kaynağı ve SQL: commit 0649412 (sonrası yalnız t-uretim-paketi.sh testi değişti → kos-guvenlik 876124c üzerinde)
+# 1.744.8 regresyon — SON HÂL · test edilen commit 996f719 (4 Kasım 2026)
+# src/ 0649412'den beri değişmedi; 996f719'da değişen çalıştırılabilir kod yalnız SQL (uretim_sil kilit sırası) + testler.
 
-kos-butunluk.sh (t-uretim-sil dahil) ........ CIKIS 0 · BÜTÜNLÜK ADAYI: bütün süreçler 0
-  t-uretim-sil: ── t-uretim-sil.js: temiz ──
-kos-iki-koruma.sh (kurallar + kapı açık) .... CIKIS 0 · ── İKİ KORUMA: TEMİZ ──
+kos-butunluk.sh (t-uretim-sil + t-uretim-kilit dahil) ... CIKIS 0 · BÜTÜNLÜK ADAYI: bütün süreçler 0
+  ── t-uretim-sil.js: temiz ──
+  ── t-uretim-kilit.js: temiz ──
+kos-iki-koruma.sh (kurallar + kapı açık) ............. CIKIS 0 · ── İKİ KORUMA: TEMİZ ──
     ✓ stok-v2/test/uretim-sil/t-uretim-sil.js · korumalar sonra: true/1.744.8
-kos-guvenlik.sh (876124c) ................... CIKIS 0 · ── GÜVENLİK SINAMASI TEMİZ ──
+    ✓ stok-v2/test/uretim-sil/t-uretim-kilit.js · korumalar sonra: true/1.744.8
+kos-guvenlik.sh ...................................... CIKIS 0 · ── GÜVENLİK SINAMASI TEMİZ ──
      ✓ t-koruma-paketleri 34 yeşil
-     ✓ t-uretim-paketi 12 yeşil
-gecis-provasi.sh ............................ CIKIS 0 · ── GEÇİŞ PROVASI TEMİZ ──
-test/kosu.sh (tarayıcı, KOSU_IS=4) .......... 257 AYNI, 4 FARKLI:
-    senaryo bekleyen-birak FARKLI
-    senaryo sekmeler FARKLI
-    senaryo tedarik-girisleri FARKLI
-    senaryo resim-damga FARKLI
-  tedarik-girisleri: bu ortamda ağ kısıtı (CLAUDE.md'de bilinen).
-  bekleyen-birak, sekmeler, resim-damga: tek başına da FARKLI; 1.744.7 (değişiklik öncesi, ayrı çalışma ağacı) çıktısıyla BİREBİR AYNI
-  → bu değişiklikten değil, önceden var olan fark (altın güncellenmedi).
-kural provası (1.744.8, üretim/çöp senaryoları): sapma-silinen-uretim engellenen 8 → 0 (yalnız rpc/uretim_sil, üretim REST silmesi YOK);
-  logo-kucult 1 + yazma-hatasi 3 engel kaldı (tohum açılış hareketi / test düzeneğinin tek ürünlü stok listesi — çöp kaydının kendisi hareketsiz).
+     ✓ t-uretim-paketi 21 yeşil
+gecis-provasi.sh ..................................... CIKIS 0 · ── GEÇİŞ PROVASI TEMİZ ──
+
+Tarayıcı (test/kosu.sh) — 0649412 üzerinde (src aynı, yeniden koşulmadı): 257 AYNI, 4 FARKLI (açık iş: ACIK-ISLER madde 9).
+  tedarik-girisleri: ağ kısıtı (bilinen) · bekleyen-birak, sekmeler, resim-damga: 1.744.7 çıktısıyla birebir aynı — önceden var.
+yap.sh — 0649412 üzerinde: bütün denetimler temiz (src aynı).

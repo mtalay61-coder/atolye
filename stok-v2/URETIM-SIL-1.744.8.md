@@ -77,7 +77,7 @@ veri satırı. Sınandı: geri almadan sonra 12-sonra-dogrula satır 1–3 tamam
 |---|---|---|
 | `t-uretim-sil.js` — gerçek PG, uygulamanın kendi `useUretimSil` / `useCopKutusu` kodu: eski fişli, eski fişli + işlem yok, fişsiz, sunucu fişli, S1–S5, çöp (eski fişli ürün, fişsiz cari), tutarlılık | 18 kırmızı (`sonuc-once.txt`) | 31/31 (`sonuc-sonra.txt`) |
 | `t-uretim-kilit.js` — kilitlenme | 4 kırmızı, 40P01 (`sonuc-kilit-once.txt`) | temiz |
-| `t-uretim-paketi.sh` — paket 12, sıkılaştırılmış canlı benzeri kopya, kurallar ve kapı KAPALI: kur, 6/6, tekrar zararsız, sıkılaştırma uygunluğu, yetkiler, kilit, davranış, geri alma (neyi kaldırdığı), veri aynı, Editor | — | `sonuc-regresyon.txt` |
+| `t-uretim-paketi.sh` — paket 12, sıkılaştırılmış canlı benzeri kopya, kurallar ve kapı KAPALI: kur, 6/6, tekrar zararsız, sıkılaştırma uygunluğu, yetkiler, kilit, davranış, geri alma (neyi kaldırdığı), veri aynı, Editor | — | 21/21 (`sonuc-regresyon.txt`) |
 
 Regresyon (son hâl): `stok-v2/test/uretim-sil/sonuc-regresyon.txt`.
 
