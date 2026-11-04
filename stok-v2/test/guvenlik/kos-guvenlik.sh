@@ -70,6 +70,15 @@ editor_ver stok-v2/guvenlik/0-site-yetki-onar.sql "$CIK/0-cikti.txt" && echo "  
 editor_ver stok-v2/guvenlik/0b-portal-hesap-duzelt.sql "$CIK/0b-cikti.txt" && echo "   ✓ 0b-portal-hesap-duzelt.sql (Editor gibi)" || kirmizi "0b düştü: $(tail -2 "$CIK/0b-cikti.txt")"
 ozet > "$CIK/ozet-0-once.txt"
 
+python3 - <<'PY' && echo "   ✓ 2-on-kontrol-salt-okur.sql listeleri 2-sikilastir.sql ile birebir" || kirmizi "2-on-kontrol-salt-okur.sql listeleri 2-sikilastir.sql'den farklı"
+import re
+s=open("stok-v2/guvenlik/2-sikilastir.sql").read(); o=open("stok-v2/guvenlik/2-on-kontrol-salt-okur.sql").read()
+ad=lambda t: sorted(re.findall(r"'(public\.[^']+)'", re.sub(r"--[^\n]*", "", t)))
+bl=lambda d, k: re.search(k + r" text\[\] := array\[(.*?)\];", d, re.S).group(1)
+on=lambda k: re.search(k + r" as \(select [^(]*\(x\)[^(]* from unnest\(array\[(.*?)\]::text\[\]\)", o, re.S).group(1)
+raise SystemExit(0 if all(ad(bl(s, a)) == ad(on(b)) for a, b in (("acik_birak", "acik"), ("kapanacak", "kap"), ("yol", "yol"))) else 1)
+PY
+
 echo "══ 2) önce: batarya + vitrin"
 node $T/davranis.js "$DB" > "$CIK/davranis-once.json" || kirmizi "batarya (önce) çalışmadı"
 node $T/vitrin.js "$DB" once > "$CIK/vitrin-once.txt" 2>&1 && echo "   ✓ vitrin akışı (önce) temiz" || { kirmizi "vitrin (önce)"; cat "$CIK/vitrin-once.txt"; }
