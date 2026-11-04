@@ -75,7 +75,7 @@ import re
 s=open("stok-v2/guvenlik/2-sikilastir.sql").read(); o=open("stok-v2/guvenlik/2-on-kontrol-salt-okur.sql").read()
 ad=lambda t: sorted(re.findall(r"'(public\.[^']+)'", re.sub(r"--[^\n]*", "", t)))
 bl=lambda d, k: re.search(k + r" text\[\] := array\[(.*?)\];", d, re.S).group(1)
-on=lambda k: re.search(k + r" as \(select [^(]*\(x\)[^(]* from unnest\(array\[(.*?)\]::text\[\]\)", o, re.S).group(1)
+on=lambda k: re.search(r"\b" + k + r"\s+as \(select.*?unnest\(array\[(.*?)\]::text\[\]\)", o, re.S).group(1)
 raise SystemExit(0 if all(ad(bl(s, a)) == ad(on(b)) for a, b in (("acik_birak", "acik"), ("kapanacak", "kap"), ("yol", "yol"))) else 1)
 PY
 
