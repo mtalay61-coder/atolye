@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # 12 — ÜRETİM SİLME TEK İŞLEM PAKETİ SINAMASI (4 Kasım). Yalnız yerel; Supabase'e bağlanmaz.
-# Veritabanı: atolye_guvenlik'in (canlı benzeri, düzeltme ÖNCESİ fis-defteri.sql) kopyası, canlının bugünkü hâli: fiş kuralları ve
+# Veritabanı: atolye_guvenlik'in (canlı benzeri) kopyası; 12-geri-al ile canlının bugünkü hâline indirilir (uretim_sil yok), fiş kuralları ve
 # sürüm kapısı KAPALI. Kahin:
 #   ÖNCE    12-sonra-dogrula tamam DEĞİL (işlem yok).
 #   KUR     12-uretim-sil-kur.sql hatasız; 12-sonra-dogrula 6/6; ikinci kez çalıştırmak zararsız (yine 6/6).
@@ -20,6 +20,8 @@ sayim() { q -c "select (select count(*) from public.stk_hareket) || '/' || (sele
 
 psql -X -q -d postgres -c "drop database if exists $DB" -c "create database $DB template atolye_guvenlik"
 q -c "update public.stk_ayar set fis_aktif = false, min_istemci_surum = null where id = 'tekil'"
+# atolye_guvenlik bugünkü kaynakla kurulur (uretim_sil içinde) — canlının bugünkü hâline indirmek için önce paket geri alınır.
+psql -X -q -v ON_ERROR_STOP=1 -d "$DB" -f $G/12-geri-al.sql > /dev/null 2>&1
 echo "t-uretim-paketi · $DB (atolye_guvenlik kopyası; kurallar ve kapı kapalı — canlı gibi)"
 k "ONCE.islem-yok" "$(q -c "select count(*) from pg_proc where proname = 'uretim_sil'")" 0
 k "KUR.hatasiz" "$(dosya $G/12-uretim-sil-kur.sql)" 0
