@@ -57,3 +57,9 @@ Başka satır yok → KİLİT'ler canlıyla uyuşuyor; `guvenlik.yedek` henüz y
 Devir, dönem hareketleri ve bakiye canlıda sınanamadı; yalnız yerel `t-portal-hesap.js` ile doğrulandı. Kullanıcı kararı: sırf test
 için canlıya hareket eklenmez. Canlıda doğrulanan: düzeltme yerinde (A), para birimi boş kayıt yok (B), sayfa hatasız açılıyor (C).
 Açık iş: ilk gerçek site müşterisinin hareketi oluşunca hesap sayfası ile ERP cari kartı karşılaştırılacak.
+
+## 2-sikilastir.sql CANLIDA (4 Kasım)
+
+Kullanıcı onayıyla çalıştırıldı (Editor: Success). `2-sonra-dogrula.sql` 8/8 tamam: girişsiz çalıştırabilen 9 (site 8 + yonetici_mi),
+search_path'i sabit olmayan 0, yedek 31 fonksiyon + 1 varsayılan yetki, authenticated ve service_role'de değişen 0, yeni fonksiyonlar
+girişsiz kullanıcıya kapalı. Elle deneme sonucu bekleniyor. Geri alma: `3-geri-al.sql`.
