@@ -1494,12 +1494,14 @@ create or replace function public.stk_istemci_kapi_kur() returns void
 language plpgsql as $$
 declare t text;
 begin
-  -- SİTE TABLOLARI HARİÇ (4 Kasım): site (newdiamond-web) sürüm başlığı göndermez; site_* tablolarına yalnız site fonksiyonları
-  -- (security definer) yazar. Sürüm kapısı açılınca müşteri girişi / kayıt / site siparişi AT001 ile reddediliyordu (yerelde
-  -- üretildi; canlıda iz tablosunda site_oturumlari kaydı). Bu tablolar ERP verisi değil — kapının koruduğu yazmalar dışında.
+  -- SİTE TABLOLARI HARİÇ (4 Kasım): site (newdiamond-web) sürüm başlığı göndermez; aşağıdaki BEŞ tabloya yalnız site fonksiyonları
+  -- (security definer, site-portal.sql) yazar. Sürüm kapısı açılınca müşteri girişi / kayıt / site siparişi AT001 ile reddediliyordu
+  -- (yerelde üretildi; canlıda iz tablosunda site_oturumlari kaydı). Bu tablolar ERP verisi değil. AÇIK LİSTE: adı site_ ile başlayan
+  -- YENİ bir tablo kendiliğinden kapsam dışına çıkmaz — kapının içinde doğar; site yeni bir tabloya yazacaksa buraya ve
+  -- stok-v2/guvenlik/7-surum-kapisi-site-istisna.sql'e eklenir (t-site-surum-kapisi.js sınar).
   for t in select tablename from pg_tables where schemaname='public' and tablename <> 'stk_istemci_iz' order by tablename loop
     execute format('drop trigger if exists stk_istemci_koru on public.%I',t);
-    if t not like 'site\_%' then
+    if t <> all (array['site_giris_kaydi','site_hesaplari','site_kayit_talepleri','site_oturumlari','site_talepleri']) then
       execute format('create trigger stk_istemci_koru before insert or update or delete on public.%I for each row execute function public.stk_istemci_koru()',t);
     end if;
   end loop;

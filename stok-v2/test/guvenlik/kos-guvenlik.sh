@@ -138,6 +138,8 @@ for ad in ("site_pb", "portal_hesap"):
     if s[i:j] not in d: raise SystemExit(1)
 PY
 reg portal-hesap node $T/t-portal-hesap.js "$DB" stok-v2/guvenlik/0b-portal-hesap-geri.sql
+# Sürüm kapısı × site (7): t-portal-hesap'in açtığı site hesabıyla; kapı test içinde açılıp kapanır
+reg site-surum-kapisi node $T/t-site-surum-kapisi.js "$DB" "$(psql -X -At -d "$DB" -c "select kullanici from site_hesaplari where kullanici like 'ph%' order by olusturma desc limit 1")" 'Sifre123!'
 ozet > "$CIK/ozet-1d-portal.txt"; cmp -s "$CIK/ozet-1-sikilastir.txt" "$CIK/ozet-1d-portal.txt" && echo "   ✓ düzeltme ve geri alma denemesi yetki / ayar değiştirmedi" || { kirmizi "portal_hesap sınaması yetki değiştirdi"; diff "$CIK/ozet-1-sikilastir.txt" "$CIK/ozet-1d-portal.txt" | head; }
 
 echo "══ 6) ikinci uygulama → geri alma"
