@@ -1,0 +1,19 @@
+# Açık işler — öncelik sırası (kullanıcı, 4 Kasım)
+
+Her satırda "durum" yalnız kanıta dayanır; kanıtı olmayan iş tamamlandı sayılmaz.
+
+| # | İş | Durum | Kanıt / eksik | Sonraki adım |
+|---|---|---|---|---|
+| 1 | **Elle kullanım doğrulaması** (sıkılaştırma sonrası: site girişi + vitrin + hesap sayfası, ERP'de bir kayıt, gün sonu raporu) | **BEKLİYOR** — kullanıcı sonra yapacak | `2-sikilastir.sql` canlıda; `2-sonra-dogrula.sql` 8/8 (4 Kasım). Elle deneme yapılmadı. | Kullanıcı üç denemeyi yapıp sonucu bildirir; sorun → `stok-v2/guvenlik/3-geri-al.sql` |
+| 2 | **Fiş kuralları** (`19-fis-kural-ac.sql`) ve **sürüm kapısı** (`min_istemci_surum`) — kalan veri bütünlüğü korumaları | **AÇIK** — ayrı onay | Ön koşul: bütün cihazlar uygun sürümde. Canlıda kanıt yok. | `stok-v2/guvenlik/5-surum-durum-salt-okur.sql` (salt-okur): geçişten (3 Kasım) sonra eski uygulama yazması 0 olmalı; sınırı: hiç yazmamış açık sekmeyi göremez. Ayrıca her cihazda Tanımlar'da sürüm 1.744.7 görülmeli. Sonra sırayla sürüm kapısı → kurallar, ayrı onaylarla. |
+| 3 | **Kalıcılık değişiklikleri** (rls-kimlik.sql site fonksiyonlarını geri açar; 19 fonksiyonun kaynak tanımında search_path; 0b kaynağı site-portal.sql) | **DALDA, main'e birleşmedi** | `claude/erp-uygulamasi-devam-0601mp`; yerelde sınandı (kos-guvenlik, kos-butunluk, gecis-provasi temiz). Canlıda yeniden çalıştırma GEREKMEZ. | main'e birleştirme (ayrı onay). Uygulama kodu değişmediyse sürüm / surum.json değişmez (aşağıda). |
+| 4 | **Sızmış parola denetimi** | **AÇIK** — ayrı güvenlik ayarı | Plan uygunluğu ve mevcut ayar doğrulanmadı. | Supabase › Authentication parola güvenliği ayarı ve plan kontrolü (kullanıcı). |
+| 5 | **Yabancı anahtar doğrulaması** (`stk_hareket_kalem_fk`, `stk_hareket_gecmis_kalem_fk` — F2'de NOT VALID, karar K5) | **AÇIK — tamamlandı kanıtı YOK** | Bütün belgelerde "ayrı onayla" (GECIS-1.744.4 § 4.3, VERI-TUTARLILIGI-F2). Canlıda `convalidated` hiç sorgulanmadı. | `stok-v2/guvenlik/4-fk-durum-salt-okur.sql` (salt-okur): `dogrulanmis` ve `ihlal_eden`. İhlal 0 ise `VALIDATE CONSTRAINT` ayrı onayla; değilse sahipsiz satırlar tek tek incelenir (otomatik silme yok). |
+| 6 | **Yedekten dönüş provası** | **AÇIK — tamamlandı kanıtı YOK** | VERI-TUTARLILIGI-F0 § 6 ve GECIS-1.744.4 § 1.1 planı istiyordu (son günlük yedeğin tarihi / pg_dump); kaydı yok. Yerelde sınanan yalnız SQL geri dönüş dosyaları (geri-donus-*.sql, 3-geri-al.sql) — veri yedeğinden geri yükleme DEĞİL. Uygulama içi JSON tam geri yükleme fiş defteri kuruluyken kapalı (F5). | (a) Supabase panelinde yedeklerin varlığı, sıklığı, saklama süresi ve plan (kullanıcı); (b) kullanıcının kendi bilgisayarında `pg_dump` (parola depoya girmez); (c) prova: dökümü ayrı bir veritabanına geri yükleyip salt-okur kontrol (`canli-salt-okur-kontrol.sql`) + satır sayılarını karşılaştırmak. Döküm gerçek müşteri verisi içerir — nereye yükleneceği kullanıcı kararı. |
+| 7 | **main'e birleştirme, dağıtım, surum.json** | **AÇIK** — ayrı ayrı onaylanır | Dalda yalnız SQL / test / belge değişiklikleri var (site-portal.sql, rls-kimlik.sql, stok-v2/*). Uygulama kaynağı (`src/`) 1.744.7'den beri değişmedi. | Birleştirme tek başına yapılabilir; uygulama kodu değişmediği için SURUM / HTML / surum.json değişikliği GEREKMEZ (CLAUDE.md değişiklik akışı yalnız uygulama değişince sürüm artırır). |
+
+## Kapanmış (kanıtlı)
+
+- Site girişi onarımı (`0-site-yetki-onar.sql`, 3 Kasım): 8 fonksiyon `girissiz_calistirir = true`, kullanıcı "Giriş çalıştı".
+- Hesap sayfası düzeltmesi (`0b`, 3 Kasım): A 4× true, B satır yok, C hatasız, sayfa açıldı. **Değerler (devir / dönem / bakiye) canlıda veri eksikliği nedeniyle doğrulanamadı** — tek site hesabının hareketi yok; yalnız yerel `t-portal-hesap.js`. İlk gerçek hareketli site müşterisinde hesap sayfası ↔ ERP cari kartı karşılaştırılacak.
+- Sıkılaştırma SQL doğrulaması (`2-sikilastir.sql`, 4 Kasım): 8/8. (Elle kullanım → madde 1.)
