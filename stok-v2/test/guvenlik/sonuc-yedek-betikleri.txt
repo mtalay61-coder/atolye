@@ -1,3 +1,4 @@
+# t-yedek-betikleri.sh · test edilen commit 4d602d9 (4 Kasım 2026) · çıkış 0 · 34/34
 t-yedek-betikleri · kaynak yedek_kaynak (atolye_guvenlik kopyası + sahte auth/storage)
   ✓ [DOKUM.depo-icine-red] 2
   ✓ [DOKUM.hata-cikis] sifirdan-farkli

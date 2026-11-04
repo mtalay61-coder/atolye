@@ -1,3 +1,4 @@
+# kos-guvenlik.sh · test edilen commit 4004e9b (4 Kasım 2026) · çıkış 0
 ══ 0) canlı benzeri veritabanı
 hazır: atolye_guvenlik
 canlı benzeri: yolu sıfırlanan 21 fonksiyon
@@ -71,4 +72,3 @@ canlı benzeri: yolu sıfırlanan 21 fonksiyon
    ✓ yeniden uygulandı
    ✓ sonuç ilk sıkılaştırmayla aynı
 ── GÜVENLİK SINAMASI TEMİZ ──
-CIKIS=0

@@ -1,3 +1,4 @@
+# gecis-provasi.sh · test edilen commit 4004e9b (4 Kasım 2026) · çıkış 0
 ══ 1) canlı benzeri 1.742.1 kurulumu
    atolye_gecis_provasi: 1.742.1 kuruldu; fiş kuralları KAPALI (canlı gibi): t
    eski sürümde yeni nesne yok: siparis_bag_hedefleri=0
@@ -43,4 +44,3 @@
    rls-kimlik.sql: 17 parça
    ✓ (ikinci) sıfırdan kurulumun bütün işlevleri aynı gövdeyle, bütün tetikleyicileri var · yalnız eskide kalan 4 işlev (göç/geçiş): alt_gecis alt_geri_don car_geri_don stk_goc_karsilastir
 ── GEÇİŞ PROVASI TEMİZ ──
-CIKIS=0

@@ -2,6 +2,10 @@
 
 Her satırda "durum" yalnız kanıta dayanır; kanıtı olmayan iş tamamlandı sayılmaz.
 
+**Veri güvenilirliği sırası (kullanıcı, 4 Kasım):** 1) geri yüklenebilir yedek (madde 6) → 2) bütün cihazlarda 1.744.7 →
+3) sürüm kapısı → 4) fiş kuralları. Her adım ayrı onayla. Şu an kullanıcıda: § 1 panel kontrolü (YEDEK-DONUS-PROVASI.md).
+PR #348: birleştirme onayı YOK. Sürüm kapısı ve fiş kuralları KAPALI. Elle kullanım ve cihaz kontrolleri BEKLİYOR.
+
 | # | İş | Durum | Kanıt / eksik | Sonraki adım |
 |---|---|---|---|---|
 | 1 | **Elle kullanım doğrulaması** (sıkılaştırma sonrası: site girişi + vitrin + hesap sayfası, ERP'de bir kayıt, gün sonu raporu) | **BEKLİYOR** — kullanıcı sonra yapacak | `2-sikilastir.sql` canlıda; `2-sonra-dogrula.sql` 8/8 (4 Kasım). Elle deneme yapılmadı. | Kullanıcı üç denemeyi yapıp sonucu bildirir; sorun → `stok-v2/guvenlik/3-geri-al.sql` |
@@ -18,13 +22,22 @@ Her satırda "durum" yalnız kanıta dayanır; kanıtı olmayan iş tamamlandı 
 - Hesap sayfası düzeltmesi (`0b`, 3 Kasım): A 4× true, B satır yok, C hatasız, sayfa açıldı. **Değerler (devir / dönem / bakiye) canlıda veri eksikliği nedeniyle doğrulanamadı** — tek site hesabının hareketi yok; yalnız yerel `t-portal-hesap.js`. İlk gerçek hareketli site müşterisinde hesap sayfası ↔ ERP cari kartı karşılaştırılacak.
 - Sıkılaştırma SQL doğrulaması (`2-sikilastir.sql`, 4 Kasım): 8/8. (Elle kullanım → madde 1.)
 
-## 6 ve 7 — son durum (4 Kasım). İKİSİ DE CANLIDA TAMAMLANDI (6: iki anahtar convalidated=true; 7: 7-sonra-dogrula 6/6)
+## Son test koşusu (4 Kasım, 13:00–13:30 UTC)
 
-Test edilen commit **92cf0ee** (kaynak + 6 + 7 + testler); sonra yalnız salt-okur `7-sonra-dogrula.sql` eklendi (17ba480).
+| Koşu | Test edilen commit | Sonuç | Çıktı |
+|---|---|---|---|
+| Bütünlük `kos-butunluk.sh` | **4004e9b** | çıkış 0 | `test/guvenlik/sonuc-butunluk-kaynak.txt` |
+| Güvenlik `kos-guvenlik.sh` (t-site-surum-kapisi dahil) | **4004e9b** | TEMİZ, çıkış 0 | `test/guvenlik/sonuc-yerel.txt` |
+| Geçiş provası `gecis-provasi.sh` | **4004e9b** | TEMİZ, çıkış 0 | `test/guvenlik/sonuc-gecis-provasi.txt` |
+| Yedek betikleri `t-yedek-betikleri.sh` | **4d602d9** | 34/34 temiz, çıkış 0 | `test/guvenlik/sonuc-yedek-betikleri.txt` |
 
-| Koşu | Sonuç | Çıktı |
-|---|---|---|
-| Bütünlük `kos-butunluk.sh` | çıkış 0 | `test/guvenlik/sonuc-butunluk-kaynak.txt` |
-| Güvenlik `kos-guvenlik.sh` (t-site-surum-kapisi dahil) | TEMİZ, çıkış 0 | `test/guvenlik/sonuc-yerel.txt` |
-| Geçiş provası `gecis-provasi.sh` | TEMİZ, çıkış 0 | `test/guvenlik/sonuc-gecis-provasi.txt` |
-| `7-sonra-dogrula.sql` (yerel, canlı benzeri) | 7 öncesi: site tabloları 0/5 istisnada; 7 sonrası 6/6 tamam (kurallar canlıdaki gibi kapalıyken); bozulma denemesinde eksik ERP tablosunu adıyla ve açık kapıyı yakaladı | — |
+4004e9b → 4d602d9 farkı yalnız `stok-v2/yedek/*`, `t-yedek-betikleri.sh` ve belgeler; ilk üç koşunun kullandığı dosyalara
+dokunmaz. Yedek sınaması iki gerçek kusur buldu ve düzeltildi: dökümdeki `CREATE SCHEMA public` geri yüklemeyi ilk adımda
+durduruyordu; iki hata denetimi doğru sonucu yanlış nedenle veriyordu (artık durulan adım ve hatanın kaynağı da denetleniyor).
+**Bu sınama yedekten dönüş provası DEĞİLDİR** — madde 6 gerçek döküm + ayrı ortamda geri yükleme yapılana kadar AÇIK.
+
+PR #348: main (6914e21) dalın atası, çatışma yok; GitHub `mergeable_state: clean` (önceki `mergeable: false` ilk açılıştaki
+geçici hesaplamaydı). Birleştirilmedi.
+
+Önceki koşu (6 ve 7 canlıya uygulanmadan önce): commit 92cf0ee, üç koşu temiz; 7-sonra-dogrula.sql yerelde 6/6 ve bozulma
+denemesinde eksik ERP tablosunu ve açık kapıyı yakaladı. Canlıda 6 (iki anahtar convalidated=true) ve 7 (6/6) tamamlandı.
