@@ -24,6 +24,23 @@ q -c "update public.stk_ayar set fis_aktif = false, min_istemci_surum = null whe
 psql -X -q -v ON_ERROR_STOP=1 -d "$DB" -f $G/12-geri-al.sql > /dev/null 2>&1
 echo "t-uretim-paketi · $DB (atolye_guvenlik kopyası; kurallar ve kapı kapalı — canlı gibi)"
 k "ONCE.islem-yok" "$(q -c "select count(*) from pg_proc where proname = 'uretim_sil'")" 0
+# 13 — 12 ÖNCESİ SALT-OKUR SORGU: geçmişte oluşmuş yarım silmeyi (üretim yok, hareket geçerli) bulur, hiçbir şeyi değiştirmez.
+# Yarım silme 1.744.7'nin yaptığı gibi kurulur (yalnız bu kopyada, tetikleyiciler atlanarak): üretim + eski fişli stok + cari, sonra
+# üretim kaydı silinir.
+YU=pk-yarim-$$
+q -c "set session_replication_role = replica;
+  insert into public.uretim (id, siparis_no, urun_id, ek) values ('$YU', '$YU-NO', 'u-yeni', '{}');
+  insert into public.stk_fis (id, aile, onek, istek, tur, kaynak, uretim_id) values ('$YU-EF', 'stok', 'ÜRT', null, 'Üretim', 'Üretim', '$YU');
+  insert into public.stk_hareket (id, fis_id, varyant_id, urun_id, miktar, kaynak, uretim_id) select '$YU-h', '$YU-EF', varyant_id, 'u-yeni', -2, 'Üretim', '$YU' from public.stk_hareket where urun_id = 'u-yeni' limit 1;
+  insert into public.car_hareket (id, cari_id, tutar, yon, fis_id, uretim_id) values ('$YU-c', 'c-yeni', 40, 'Alacak', '$YU-EF', '$YU');
+  delete from public.uretim where id = '$YU';"
+s13() { psql -X -q -At -F'|' -d "$DB" -f $G/13-uretim-hareket-salt-okur.sql; }
+once13=$(sayim)
+k "13.yarim-silme-stok-bulundu" "$(s13 | awk -F'|' -v u="$YU" '$2 ~ /stok hareketi geçerli/ && index($5, u) { print "bulundu" }')" bulundu
+k "13.yarim-silme-cari-bulundu" "$(s13 | awk -F'|' -v u="$YU" '$2 ~ /cari hareketi geçerli/ && index($5, u) { print "bulundu" }')" bulundu
+k "13.yarim-silme-fis-basligi-bulundu" "$(s13 | awk -F'|' -v u="$YU" '$2 ~ /fiş başlığı geçerli/ && index($5, u) { print "bulundu" }')" bulundu
+k "13.hicbir-sey-degismedi (salt-okur)" "$(sayim)" "$once13"
+k "13.yarim-kayitlar-degismedi (hareketler hâlâ geçerli)" "$(q -c "select (select count(*) from public.stk_hareket where id = '$YU-h' and not iptal) + (select count(*) from public.car_hareket where id = '$YU-c' and not iptal)")" 2
 k "KUR.hatasiz" "$(dosya $G/12-uretim-sil-kur.sql)" 0
 k "KUR.12-sonra-dogrula" "$(tamam)" "6/6"
 k "KUR.ikinci-kez-zararsiz" "$(dosya $G/12-uretim-sil-kur.sql):$(tamam)" "0:6/6"
@@ -58,6 +75,25 @@ if STOK_V2_DB=$DB node stok-v2/test/uretim-sil/t-uretim-sil.js > /tmp/uretim-pak
 grep -E "✗" /tmp/uretim-paket-davranis.txt | head -5
 k "DAVRANIS.t-uretim-sil (kurallar kapalı, canlı gibi)" "$d · $(grep -c '✓' /tmp/uretim-paket-davranis.txt) yeşil" "temiz · $(grep -c '✓' /tmp/uretim-paket-davranis.txt) yeşil"
 k "DAVRANIS.kurallar-ve-kapi-hala-kapali" "$(q -c "select public.fis_kural_aktif()::text || '/' || coalesce(min_istemci_surum, '-') from public.stk_ayar")" "false/-"
+# DURDUR — geri alma gerekirse önce bütün üretim silmeleri durdurulur (Yönetici dahil, REST ve uretim_sil); hiçbir şey değişmez.
+DU=pk-durdur-$$
+q -c "set session_replication_role = replica; insert into public.uretim (id, siparis_no, urun_id, ek) values ('$DU', '$DU-NO', 'u-yeni', '{}');"
+uyg() { psql -X -q -At -d "$DB" 2>&1 <<SQL | grep -oE "ERROR: +[0-9A-Z]{5}|^tamam$" | head -1 | sed -E 's/ERROR: +//'
+\set VERBOSITY verbose
+begin;
+select set_config('request.jwt.claims', '{"email":"ali@atolye.local","role":"authenticated"}', true);
+set local role authenticated;
+$1;
+select 'tamam';
+commit;
+SQL
+}
+k "DURDUR.kur" "$(dosya $G/12-silme-durdur.sql)" 0
+k "DURDUR.REST-silme-red (1.744.7 yolu)" "$(uyg "delete from public.uretim where id = '$DU'")" KR011
+k "DURDUR.uretim_sil-red (1.744.8 yolu)" "$(uyg "select public.uretim_sil('{\"id\":\"$DU\",\"stokIdler\":[],\"cariIdler\":[]}'::jsonb)")" KR011
+k "DURDUR.uretim-duruyor" "$(q -c "select count(*) from public.uretim where id = '$DU'")" 1
+k "DURDUR.kaldir" "$(dosya $G/12-silme-durdur-kaldir.sql)" 0
+k "DURDUR.kaldirinca-silme-yeniden-calisir" "$(uyg "select public.uretim_sil('{\"id\":\"$DU\",\"stokIdler\":[],\"cariIdler\":[]}'::jsonb)"):$(q -c "select count(*) from public.uretim where id = '$DU'")" "tamam:0"
 once=$(sayim)
 k "GERI.hatasiz" "$(dosya $G/12-geri-al.sql)" 0
 k "GERI.islem-ve-tetikleyiciler-yok" "$(q -c "select (select count(*) from pg_proc where proname in ('uretim_sil', 'uretim_bag_koru', 'uretim_silme_koru')) + (select count(*) from pg_trigger where tgname in ('uretim_bag_koru', 'uretim_silme_koru', 'uretim_geri_yukle'))")" 0
@@ -66,6 +102,6 @@ k "GERI.kalan (iz tablosu durur, veri; sürüm kapısı tetikleyicisi onunla)" "
 # 12-geri-al YALNIZ üç korumayı kaldırır: uretim_sil işlemi (satır 1), üretim silme koruması (satır 2), silinmiş üretime hareket
 # kilidi (satır 3). İz tablosu, RLS'i ve sürüm kapısı tetikleyicisi KALIR (satır 4–5); kurallar / kapı zaten kapalı (satır 6).
 k "GERI.kalkan-uc-koruma (12-sonra: 1–3 değil, 4–6 tamam)" "$(psql -X -q -At -F'|' -d "$DB" -f $G/12-sonra-dogrula.sql | awk -F'|' '{ printf "%s", ($4 == "t" ? "t" : "f") }')" "fffttt"
-for f in 12-uretim-sil-kur 12-sonra-dogrula 12-geri-al; do python3 stok-v2/editor-icin.py $G/$f.sql > /dev/null 2>&1; k "EDITOR.$f" "$?" 0; done
+for f in 12-uretim-sil-kur 12-sonra-dogrula 12-geri-al 12-silme-durdur 12-silme-durdur-kaldir 13-uretim-hareket-salt-okur; do python3 stok-v2/editor-icin.py $G/$f.sql > /dev/null 2>&1; k "EDITOR.$f" "$?" 0; done
 psql -X -q -d postgres -c "drop database $DB"
 echo "── t-uretim-paketi.sh: $([ $hata = 0 ] && echo temiz || echo "$hata kırmızı") ──"; exit $([ $hata = 0 ] && echo 0 || echo 1)
