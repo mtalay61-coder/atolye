@@ -35,3 +35,22 @@ AĞ DENETİMİ (sürüm 1.744.7) — ağa çıkan yazma isteği: 12308 (+ Edge F
       POST urunler: 54
 senaryo çalıştırma hatası: 0
 CIKIS 0
+
+## SENARYO AYRIMI (4 Kasım, kayıtlardan sayıldı — /tmp/kural-provasi-BzAXpW, 260 kayıt dosyası)
+Kural provası senaryo çıktısını altınla KARŞILAŞTIRMAZ (sahte sunucu fiş defteri kurulu gibi yanıt verir); "geçti" burada
+"ağ denetimi ve eski yol denetiminde bulgu yok" demektir. Davranış eşitliği ayrıca normal kipte altınla ölçüldü (aşağıda).
+  koşulan senaryo:                         261 (senaryo-fis.js ortak yardımcı, koşulmaz) · çalıştırma hatası 0
+  TAM GEÇEN (bulgu yok):                   257 — bunlardan 256'sı sunucuya yazdı, 1'i (demo-firma) hiç sunucu yazması yapmaz
+  ESKİ VERİYE TAKILAN (ağa çıkmadan engel): 3  — logo-kucult (1 girişim), sapma-silinen-uretim (8), yazma-hatasi (3)
+  DENETİM DIŞI:                            1  — depo-koprusu: ortak düzeneği kullanmaz, yalnız IndexedDB köprüsünü sınar, sunucuya yazmaz
+  toplam: 257 + 3 + 1 = 261
+Takılan 3 senaryonun ayrıntısı (her biri tohumda fis_kes ile kesilmemiş eski hareket taşır):
+  logo-kucult          açılışta "hareketsiz başlangıç miktarı" için açılış hareketi üretmeye çalışır (varyant miktarı > hareket
+                       toplamı; v2'de varyant miktarı hareketlerden türediği için canlıda oluşamaz) — 5 satır, engellendi.
+  sapma-silinen-uretim üretim silinirken eski hareketlerin iptali (stok 2+2+1+1, cari 1+1+1+1) engellendi; üretim kaydı (DELETE
+                       uretim) ve sipariş satırı (alt_yaz) sunucuya GİTTİ → eski veride YARIM İŞLEM: üretim silinir, stok/cari
+                       etkisi geri alınmaz.
+  yazma-hatasi         çöpten geri yüklemede eski hareketlerin iptali (3 × 2 stok) engellendi; senaryonun konusu yerel depo hatası.
+Normal kipte (fiş defteri kurulu değil) beşi de altınla AYNI: logo-kucult, sapma-silinen-uretim, yazma-hatasi, depo-koprusu, demo-firma.
+Canlıda böyle satır var mı: stok-v2/guvenlik/11-eski-hareket-salt-okur.sql. Eski fiş → fis_iptal çalışır (yerelde iki koruma
+açıkken ALS-1 iptal edildi, satırı da iptal oldu); fişsiz → sunucuda iptal yolu yok.
