@@ -1,97 +1,96 @@
-# Yedekten dönüş provası — plan (4 Kasım)
+# Yedekten dönüş provası — plan (4 Kasım; öncelikli iş)
 
 Amaç: canlı veritabanı kaybolursa / bozulursa **gerçekten geri dönülebildiğini** kanıtlamak. Bugüne kadar yalnız **SQL geri
 dönüş dosyaları** (geri-donus-*.sql, guvenlik/3-geri-al.sql) sınandı; bunlar şemayı / fonksiyonları geri alır, **veriyi geri
 getirmez**. Veri yedeğinden geri yükleme hiç denenmedi (ACIK-ISLER madde 6).
 
-**Kural: prova canlıya DOKUNMAZ.** Canlıda yalnız salt-okur sorgu (envanter) ve yedeğin alınması (okuma) olur. Geri yükleme her
-zaman AYRI bir veritabanına yapılır. Döküm gerçek müşteri verisi içerir: nerede tutulacağı ve hangi ortama yükleneceği kullanıcı
-kararıdır; döküm ve veritabanı parolası **depoya, sohbete, bu ortama girmez**.
+**Kurallar.** Prova canlıya DOKUNMAZ: canlıda yalnız okuma (envanter, döküm) olur; geri yükleme her zaman AYRI, BOŞ bir
+veritabanına yapılır. Parola, gizli değer (SMTP, gün sonu anahtarı, service_role) ve döküm dosyası **depoya, sohbete, bulut
+oturumuna girmez**. Sohbete yalnız `ozet.txt` / envanter / karşılaştırma çıktısı yapıştırılır (sayı, boyut, özet — kişisel veri yok).
 
-## 1. Bugünkü yedek kapsamı (bilinen / bilinmeyen)
+Sıra: **1 panel kontrolü → 2 envanter → 3 bağımsız döküm → 4 ayrı ortamda geri yükleme → 5 doğrulama → 6 temizlik.**
 
-| Yedek | Ne içerir | Durum | Eksik / risk |
+## 1. Panel yedeği ve PITR — kontrol adımları (kullanıcı; hiçbir şey değiştirmez)
+
+Menü adları Supabase sürümüne göre değişebilir; bulunamayan adımı "bulamadım" diye bildirin. Hiçbir düğmeye ("Restore",
+"Enable PITR", "Upgrade") basmayın — panelden geri yükleme **canlı projenin üstüne** yazar.
+
+| # | Nerede | Neye bakılır | Bildirilecek |
 |---|---|---|---|
-| Supabase otomatik yedeği (panel › Database › Backups) | Veritabanının tamamı (public, auth, storage şemalarının **satırları**) | **DOĞRULANMADI** — varlığı, sıklığı, saklama süresi, PITR olup olmadığı plana bağlı; kimse panelde bakmadı | Ücretsiz planda indirilebilir günlük yedek yok / kısıtlı; Pro'da günlük, 7 gün; PITR ek ücret. Geri yükleme **aynı projenin üstüne** yazar — prova için kullanılamaz (canlıyı ezer). |
-| `pg_dump` (kullanıcı bilgisayarında) | Tam mantıksal döküm | **YOK** — VERI-TUTARLILIGI-F0 § 6 ve GECIS-1.744.4 § 1.1 istedi, kaydı yok | Tek bağımsız, indirilebilir kopya bu olurdu. |
-| Uygulama otomatik yedeği (`093-yedekleme.jsx`) | Uygulamanın gördüğü veri, JSON | Her cihazda günde bir, **son 3 gün, yalnız o tarayıcıda** | Cihaz / tarayıcı verisi silinince gider; sunucu tarafını (fonksiyonlar, kullanıcılar, fiş defteri bağları, iz tabloları) içermez. |
-| Uygulama "JSON Yedek İndir" (Tanımlar) | Aynı JSON, dosya olarak | Elle; düzenli alındığına dair kayıt yok | **Fiş defteri kuruluyken JSON'dan tam geri yükleme KAPALI** (F5) — yalnız okuma / karşılaştırma işine yarar. |
-| Depodaki SQL (şema + fonksiyon kaynakları) | Şemayı sıfırdan kurmak | Var, yerelde sınanmış | Veri içermez. |
+| 1.1 | Organization › **Billing** (ya da Project Settings › Billing) | Plan adı (Free / Pro / Team / Enterprise), varsa **PITR** ve **Compute** eklentileri | plan + eklentiler |
+| 1.2 | Proje › **Database › Backups** (sekmeler: *Scheduled backups*, *Point in time*, *Restore to new project*) | Liste dolu mu; **en son yedeğin tarihi / saati**; kaç gün geriye gidiyor; her satırda **Download** var mı | son yedek tarihi, kaç adet, indirilebilir mi |
+| 1.3 | Aynı sayfa › **Point in time** | "Enabled" mı, saklama süresi (7 / 14 / 28 gün), en eski geri dönülebilir an | açık/kapalı + süre |
+| 1.4 | Aynı sayfa › **Restore to new project** (varsa) | Seçenek görünüyor mu (yalnız bakın, BAŞLATMAYIN) | var / yok |
+| 1.5 | Proje › **Storage** | Kova adları, her kovada kabaca dosya sayısı / boyut | kova listesi |
+| 1.6 | Proje › **Edge Functions › Secrets** | Yalnız **adlar** (SMTP_SIFRE, GUN_SONU_ANAHTAR …) — değerleri KOPYALAMAYIN | ad listesi + "değerler parola yöneticisinde mi?" evet/hayır |
 
-**Veritabanı yedeğinde OLMAYANLAR** (hangi yöntem seçilirse seçilsin ayrıca ele alınmalı):
+**Yorum (genel bilgi; panelde gördüğünüz esas alınır):** Ücretsiz planda indirilebilir / geri yüklenebilir proje yedeği yoktur
+ya da çok kısıtlıdır. Ücretli planlarda günlük yedek tutulur (saklama süresi plana göre); PITR ayrı ücretli eklentidir ve
+açıldığında günlük yedeklerin yerini alır. Hiçbir panel yedeği **Storage dosyalarını** içermez (yalnız `storage.objects`
+satırları). Bu yüzden plan ne olursa olsun § 3'teki bağımsız döküm gerekir. (Bu bulut oturumundan supabase.com belgelerine
+erişilemedi; ayrıntılar orada teyit edilmeli: "Database Backups" ve "Backup and Restore using the CLI" sayfaları.)
 
-1. **Storage dosyaları** (görseller vb.). Veritabanı yedeği yalnız `storage.objects` satırlarını (ad, boyut) taşır, dosyanın
-   kendisini taşımaz. Canlıda `storage.objects` üzerinde `gorsel_yonetici_yazar` politikası var → en az bir kova kullanılıyor.
-   Envanter (§ 3) kova başına dosya sayısı ve boyutu gösterir.
-2. **Edge Function'lar ve gizli değerleri**: kod depoda (`supabase-*.ts`), ama `SMTP_SIFRE`, `GUN_SONU_ANAHTAR` ve proje
-   anahtarları Supabase panelinde (Edge Functions › Secrets). Kaybolursa yeniden girilmesi gerekir; nerede saklandığı kullanıcıda.
-3. **Proje ayarları**: Authentication ayarları (site adresi, yönlendirmeler, e-posta şablonları, parola kuralları), API ayarları,
-   alan adı. Bunlar veritabanında değil.
-4. **pg_cron işleri** (gün sonu raporu): `cron` şeması `pg_dump` ile gelir ama `pg_cron` / `pg_net` uzantısı hedefte kurulu
-   değilse geri yükleme bu kısımda hata verir. Envanter zamanlanmış işleri listeler.
+## 2. Envanter (canlı, SALT-OKUR)
 
-## 2. Ne zaman "tamam" sayılır (başarı ölçütü)
+SQL Editor'da `stok-v2/guvenlik/8-yedek-envanter-salt-okur.sql` → CSV indir. Kişisel veri döndürmez (tablo satır sayıları,
+fonksiyon/tetikleyici md5, auth.users sayısı, kova başına dosya sayısı ve bayt, cron işleri, uzantılar). `dokum-al.sh` aynı
+sorguyu dökümden hemen önce kendisi de alır; Editor'daki kopya panel kontrolüyle birlikte bildirmek içindir.
 
-1. Döküm alındı; tarihi ve boyutu kayda geçti (dosyanın kendisi değil).
-2. Döküm ayrı bir veritabanına **hatasız** (ya da yalnız açıklanmış, beklenen uyarılarla) geri yüklendi.
-3. `guvenlik/8-yedek-envanter-salt-okur.sql` canlıda ve provada çalıştı; `karsilastir = true` olan bütün satırlar **aynı**
-   (her tablonun satır sayısı, fonksiyon ve tetikleyici özeti, auth.users sayısı, uzantılar, cron işleri). Döküm ile canlı
-   envanteri arasında yazma olduysa fark açıklanır (envanteri dökümden hemen önce / sonra alın).
-4. `canli-salt-okur-kontrol.sql` (D1–D6) provada çalıştı; sonuç canlıdaki son sonuçla aynı.
-5. `guvenlik/7-sonra-dogrula.sql` ve `guvenlik/2-sonra-dogrula.sql` provada canlıdaki gibi tamam (yetkiler ve kapı dökümle geldi).
-6. Süre kaydı: dökümün ve geri yüklemenin kaç dakika sürdüğü (gerçek felakette ne kadar beklenir).
+## 3. Bağımsız döküm (kullanıcının bilgisayarı) — `stok-v2/yedek/dokum-al.sh`
 
-Storage ve gizli değerler 3–5'e girmez; ayrı satır olarak "kapsam dışı / şurada saklanıyor" diye kayda geçer.
-
-## 3. Adımlar
-
-**A — panel kontrolü (kullanıcı, canlıya yazmaz).** Supabase › Project Settings › Billing: plan. Database › Backups: yedek var mı,
-en son tarih, kaç gün saklanıyor, PITR açık mı. Storage: kovalar ve kabaca boyut. Sonucu bildirin (ekran görüntüsü yeter).
-
-**B — envanter (canlı, SALT-OKUR).** SQL Editor'da `stok-v2/guvenlik/8-yedek-envanter-salt-okur.sql` → CSV indir. Kişisel veri
-döndürmez; sohbete yapıştırılabilir. Editor 100 satır gösterir; tablo sayısı fazlaysa CSV indirmek yeterli.
-
-**C — döküm (kullanıcının bilgisayarı).** Bağlantı dizesi panelde: Connect › Session pooler (IPv4) veya Direct. Parola komut
-satırına değil ortam değişkenine / sorulduğunda girilir:
+Gerekenler: PostgreSQL istemcisi (`pg_dump`, `psql`; sürümü sunucu sürümünden eski olmamalı — envanterde "sunucu sürümü"),
+bash, python3. Bağlantı bilgisi panelde **Connect › Session pooler** (host ve `postgres.<proje>` kullanıcı adı). Parolayı betik
+sorar; komut satırına, dosyaya, sohbete yazılmaz.
 
 ```bash
-# PostgreSQL istemcisi, sunucu sürümüyle aynı ya da daha yeni olmalı (envanterde "sunucu sürümü")
-pg_dump "postgresql://postgres.<proje>@<host>:5432/postgres" \
-  --format=custom --no-owner \
-  --schema=public --schema=auth --schema=storage --schema=cron \
-  --file=atolye-$(date +%F).dump
-# Yalnız rol tanımları (parolasız) — Supabase rolleri hedefte zaten var, bu yalnız karşılaştırma için
-pg_dumpall --roles-only --no-role-passwords -d "<aynı dize>" > roller-$(date +%F).sql
+KAYNAK_HOST=<pooler host> KAYNAK_KULLANICI=postgres.<proje> \
+  ./stok-v2/yedek/dokum-al.sh ~/AtolyeYedek/2026-11-05      # klasör DEPO DIŞINDA ve boş olmalı
 ```
 
-Kısa yol olarak Supabase CLI da olur (`supabase db dump`, `supabase db dump --data-only`); hangisi seçilirse seçilsin dosya
-kullanıcının bilgisayarında kalır, şifreli bir yerde saklanır.
+Betik: salt-okur oturumda envanter → `public.dump` (şema + satır + fonksiyon + yetki) → `auth-storage.sql` (yalnız auth ve
+storage satırları) → `ozet.txt` (tarih, süreler, boyut, sha256 başı). Dosyalar 600, klasör 700. Depo içindeki klasörü, dolu
+klasörü, eski `pg_dump`'ı reddeder. **cron işlerini bilerek dökmez** (provada çalışırsa canlı gün sonu fonksiyonunu
+çağırabilir); envanterde listelenir. Sohbete yalnız `ozet.txt`.
 
-**D — geri yükleme hedefi (kullanıcı seçer).** İki seçenek; ikisi de canlıdan bağımsız:
+Klasör şifreli bir yerde saklanır (şifreli disk / parola korumalı arşiv). Nerede tutulacağı kullanıcı kararı.
 
-| | Ayrı Supabase projesi (önerilen) | Kendi bilgisayarında PostgreSQL |
+## 4. Ayrı ortamda geri yükleme — `stok-v2/yedek/prova-geri-yukle.sh`
+
+Hedef (kullanıcı seçer, ikisi de canlıdan bağımsız):
+
+| | Yeni, boş Supabase projesi (önerilen) | Kendi bilgisayarında PostgreSQL |
 |---|---|---|
-| Benzerlik | auth / storage / roller canlıyla aynı; uygulama bile denenebilir | anon / authenticated / service_role ve `auth` şeması elle kurulmalı (depodaki test düzeneği bunu yapıyor) |
-| Maliyet | ücretsiz plan genelde yeter (veri küçük: envanterde "veritabanı boyutu") | yok |
+| Benzerlik | auth / storage / roller canlıyla aynı; istenirse uygulama bile bağlanıp denenebilir | anon / authenticated / service_role ve auth / storage şemaları önce kurulmalı |
 | Risk | müşteri verisi ikinci bir bulut projesinde durur → prova biter bitmez proje silinir | veri yalnız o bilgisayarda |
 
 ```bash
-# Hedef BOŞ olmalı. --clean KULLANMAYIN (yanlış dizeyle canlıya bağlanırsa siler); dizeyi iki kez kontrol edin.
-pg_restore --no-owner -d "<PROVA dizesi>" atolye-YYYY-MM-DD.dump 2> geri-yukleme-hatalari.txt
+PROVA_HOST=<PROVA projesinin pooler host'u> PROVA_KULLANICI=postgres.<PROVA proje> \
+  ./stok-v2/yedek/prova-geri-yukle.sh ~/AtolyeYedek/2026-11-05
 ```
 
-Ayrı Supabase projesinde `auth` / `storage` şemaları zaten dolu kurulur; bu şemalarda "zaten var" uyarıları beklenir, satırlar
-için `--data-only --schema=auth --schema=storage` ile ikinci geçiş gerekebilir. Hatalar dosyasını paylaşın (müşteri verisi
-içermez; içeriyorsa ilgili satırları çıkarın), birlikte sınıflarız.
+Korumalar: hedefte canlı proje kimliği geçiyorsa durur; hedefin public şemasında tablo varsa durur (`--clean` yok, üstüne
+yazmaz); "PROVA" yazılmadan başlamaz. Hataları dosyaya toplar (durmaz), sonda prova üzerinde envanteri alıp
+`envanter-karsilastir.sh` ile kaynakla karşılaştırır, `prova-<zaman>/ozet.txt` yazar.
 
-**E — doğrulama (PROVA veritabanında).** § 2'deki 3–5. Canlı envanteriyle satır satır karşılaştırma.
+Beklenen ve açıklanabilir farklar: yeni projede `uzantılar` satırı (projede fazladan açık uzantılar); `cron` satırları (bilerek
+taşınmadı). Bunların dışındaki her fark (satır sayısı, fonksiyon/tetikleyici md5, auth.users) provanın BAŞARISIZ olduğu yerdir.
 
-**F — temizlik.** Prova projesi / veritabanı silinir; döküm dosyası kullanıcının seçtiği yerde kalır ya da silinir. Kayda yalnız
-tarih, süre, boyut ve sonuç geçer.
+## 5. Ne zaman "tamam" sayılır
 
-## 4. Sonrası (öneri, ayrı karar)
+1. Panel kontrolü (§ 1) bildirildi: plan, son yedek tarihi, PITR durumu, kovalar, gizli değer adları.
+2. Döküm alındı; `ozet.txt` (tarih, süre, boyut) kayda geçti.
+3. Prova geri yüklemesi bitti; `hatalar-*.txt` boş ya da her satırı açıklanmış.
+4. `envanter-karsilastir.sh`: AYNI (ya da yalnız § 4'teki açıklanmış farklar).
+5. PROVA veritabanında `canli-salt-okur-kontrol.sql` (D1–D6) canlıdaki son sonuçla aynı; `guvenlik/2-sonra-dogrula.sql`
+   8/8 ve `guvenlik/7-sonra-dogrula.sql` 6/6 (yetkiler ve kapı dökümle geldi).
+6. Süreler kayda geçti (felakette ne kadar beklenir).
 
-- Düzenli döküm: haftada bir (ya da büyük işlemden önce) `pg_dump`, son N kopya saklanır. Zamanlama kullanıcının bilgisayarında.
-- Storage dosyalarının ayrı kopyası (panelden indirme ya da `supabase storage` komutları).
-- Gizli değerlerin (SMTP, gün sonu anahtarı) parola yöneticisinde saklandığının teyidi.
-- Planda indirilebilir günlük yedek / PITR yoksa: "felakette en fazla ne kadar veri kaybını kabul ederiz" kararı.
+Kapsam dışı, ayrı satır olarak kayda geçer: Storage dosyaları, Edge Function gizli değerleri, Authentication / proje ayarları,
+cron işleri (envanterden elle yeniden kurulur).
+
+## 6. Temizlik ve sonrası
+
+Prova projesi / veritabanı silinir; döküm kullanıcının seçtiği yerde kalır ya da silinir. Kayda yalnız tarih, süre, boyut, sonuç
+geçer. Öneriler (ayrı karar): haftalık `dokum-al.sh` (ya da büyük işlemden önce), son N kopya; Storage dosyalarının ayrı kopyası;
+gizli değerlerin parola yöneticisinde olduğunun teyidi; planda indirilebilir yedek / PITR yoksa "en fazla ne kadar veri kaybı
+kabul edilir" kararı.
