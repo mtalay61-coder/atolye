@@ -45,3 +45,8 @@ stk_nrm, stk_sayi, stk_yer_tutucu_mu, stk_zaman, surum_arttir. (guncelleme_yaz v
 | Bütünlük koşucusu `kos-butunluk.sh` (`sonuc-butunluk-kaynak.txt`) | çıkış 0 — yeni kaynaklarla (search_path, rls-kimlik) bütün sistem |
 | Geçiş provası `gecis-provasi.sh` (`sonuc-gecis-provasi.txt`) | **TEMİZ** — 1.742.1 + değişen Editor dosyaları + rls-kimlik Editor gibi, iki kez; sıfırdan kurulumla aynı gövdeler, 9 kritik test |
 | Editor uyumluluğu (`editor-icin.py`) | 0, 0b, 0b-geri, 1-liste, 2, 3, rls-kimlik uyumlu (site_pb'de dolar işareti chr(36)) |
+
+## Canlı ön kontrol (4 Kasım, salt-okur `2-on-kontrol-salt-okur.sql`)
+
+Sonuç beklenenle birebir: `ozet | kapanacak 22 · yolu sabitlenecek 20 · girişsiz açık kalacak 9` ve `yol_zaten_sabit | public.site_pb(text)`.
+Başka satır yok → KİLİT'ler canlıyla uyuşuyor; `guvenlik.yedek` henüz yok (ilk uygulama).
