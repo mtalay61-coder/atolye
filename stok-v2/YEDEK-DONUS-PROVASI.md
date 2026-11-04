@@ -68,9 +68,24 @@ PROVA_HOST=<PROVA projesinin pooler host'u> PROVA_KULLANICI=postgres.<PROVA proj
   ./stok-v2/yedek/prova-geri-yukle.sh ~/AtolyeYedek/2026-11-05
 ```
 
-Korumalar: hedefte canlı proje kimliği geçiyorsa durur; hedefin public şemasında tablo varsa durur (`--clean` yok, üstüne
-yazmaz); "PROVA" yazılmadan başlamaz. Hataları dosyaya toplar (durmaz), sonda prova üzerinde envanteri alıp
-`envanter-karsilastir.sh` ile kaynakla karşılaştırır, `prova-<zaman>/ozet.txt` yazar.
+Hedef karışmasına karşı üç bağımsız koruma (biri tutmasa öteki durdurur):
+1. hedef host / kullanıcı / veritabanı adında canlı proje kimliği geçiyorsa (büyük-küçük harf fark etmez) **bağlanmadan** durur;
+2. hedef, dökümün alındığı bağlantıyla aynıysa (ozet.txt'deki kaynak kimliği özeti) **bağlanmadan** durur;
+3. hedefin public şemasında tek tablo bile varsa durur — canlıda onlarca tablo var; `--clean` yok, hiçbir şey silinmez.
+Ardından "PROVA" yazılmadan başlamaz.
+
+**Hatada durur:** her adım tek işlemdir (`pg_restore --exit-on-error --single-transaction`, `psql ON_ERROR_STOP
+--single-transaction`); ilk hatada o adımın tamamı geri alınır, sonraki adım çalışmaz, ozet "BAŞARISIZ — '<adım>'" yazar, çıkış 1.
+Tek istisna: dökümdeki `CREATE SCHEMA public` satırı (hedefte public zaten var) listeden çıkarılır; başka nesne atlanırsa durur.
+**Gizlilik:** parolayı betikler hiç görmez (psql / pg_dump sorar). Host, kullanıcı ve veritabanı adı ekrana ve dosyalara
+yazılmaz; ozet'te yalnız 16 haneli kimlik özeti var; hata metinlerinde geçerse `<hedef-host>` / `<hedef-kullanici>` /
+`<hedef-db>` ile değiştirilir. Sonda prova üzerinde envanter alınıp `envanter-karsilastir.sh` ile kaynakla karşılaştırılır.
+
+Sınama: `stok-v2/test/guvenlik/t-yedek-betikleri.sh` (yalnız yerel; 34/34, `sonuc-yedek-betikleri.txt`) — depo içine döküm
+reddi, hatada yarım dosya silme, canlı kimliği (kullanıcıda / host'ta büyük harfle), hedef = kaynak, dolu hedef (kaynak envanteri
+değişmeden), public adımında planlanan hata (hedefte tablo 0 kalır), auth adımında hata (geri alınır), mutlu yol (envanter AYNI),
+parola ve kullanıcı adının hiçbir çıktıda geçmemesi. Bu sınama **gerçek provanın yerini tutmaz**: yalnız betiklerin korumalarını
+kanıtlar; Supabase'e özgü farklar (yönetilen şemalar, roller, uzantılar) ancak gerçek döküm + ayrı projede görülür.
 
 Beklenen ve açıklanabilir farklar: yeni projede `uzantılar` satırı (projede fazladan açık uzantılar); `cron` satırları (bilerek
 taşınmadı). Bunların dışındaki her fark (satır sayısı, fonksiyon/tetikleyici md5, auth.users) provanın BAŞARISIZ olduğu yerdir.

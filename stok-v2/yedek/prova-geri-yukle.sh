@@ -58,7 +58,14 @@ adim() {  # adim <ad> <hata dosyası> <komut…>: hata olursa DURUR, hatayı giz
 }
 t0=$(date +%s)
 echo "1/3 public şeması (pg_restore, tek işlem, ilk hatada durur)…"
-adim "public şeması" hatalar-public.txt pg_restore --no-owner --exit-on-error --single-transaction "${BAG[@]}" "$KLASOR/public.dump"
+# Döküm "CREATE SCHEMA public" içerebilir; hedefte public zaten var (Supabase ve her yeni veritabanı). Yalnız o tek satır
+# listeden çıkarılır — başka hiçbir nesne atlanmaz (liste satır sayısı ozet'e yazılır).
+pg_restore -l "$KLASOR/public.dump" > "$RAPOR/liste-tam.txt"
+grep -vE '^[0-9]+; [0-9]+ [0-9]+ SCHEMA - public ' "$RAPOR/liste-tam.txt" > "$RAPOR/liste.txt" || true
+atlanan=$(( $(grep -vc '^;' "$RAPOR/liste-tam.txt") - $(grep -vc '^;' "$RAPOR/liste.txt") ))
+[ "$atlanan" -le 1 ] || dur "liste süzgeci beklenenden fazla satır attı ($atlanan)."
+sed -i -E 's/^(;.*)$//' "$RAPOR/liste-tam.txt"   # liste dosyalarında yalnız nesne adları var; başlıktaki ad / tarih satırları silinir
+adim "public şeması" hatalar-public.txt pg_restore --no-owner --exit-on-error --single-transaction -L "$RAPOR/liste.txt" "${BAG[@]}" "$KLASOR/public.dump"
 t1=$(date +%s)
 echo "2/3 auth + storage satırları (tek işlem, ilk hatada durur)…"
 adim "auth + storage satırları" hatalar-auth-storage.txt psql -X -q -v ON_ERROR_STOP=1 --single-transaction "${BAG[@]}" \
@@ -67,7 +74,7 @@ t2=$(date +%s)
 echo "3/3 prova envanteri + karşılaştırma…"
 adim "prova envanteri" hatalar-envanter.txt bash -c 'psql -X -q --csv -v ON_ERROR_STOP=1 "$@" -c "set default_transaction_read_only = on" -f "'"$ENVANTER"'" > "'"$RAPOR"'/envanter-prova.csv"' _ "${BAG[@]}"
 set +e; "$BURASI/envanter-karsilastir.sh" "$KLASOR/envanter-kaynak.csv" "$RAPOR/envanter-prova.csv" > "$RAPOR/karsilastirma.txt"; r=$?; set -e
-ozet "süre: public $((t1 - t0)) sn · auth+storage $((t2 - t1)) sn" \
+ozet "public: $(grep -vc '^;' "$RAPOR/liste.txt") nesne yüklendi, atlanan $atlanan (CREATE SCHEMA public)" "süre: public $((t1 - t0)) sn · auth+storage $((t2 - t1)) sn" \
      "yükleme: hatasız (iki adım da tek işlemde tamamlandı)" \
      "SONUÇ: envanter $([ $r = 0 ] && echo AYNI || echo 'FARKLI — aşağıdaki satırları açıklayın')" "$(cat "$RAPOR/karsilastirma.txt")"
 echo "Sonra: canli-salt-okur-kontrol.sql, guvenlik/2-sonra-dogrula.sql, guvenlik/7-sonra-dogrula.sql PROVA veritabanında."

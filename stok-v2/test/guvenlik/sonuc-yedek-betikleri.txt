@@ -1,0 +1,36 @@
+t-yedek-betikleri · kaynak yedek_kaynak (atolye_guvenlik kopyası + sahte auth/storage)
+  ✓ [DOKUM.depo-icine-red] 2
+  ✓ [DOKUM.hata-cikis] sifirdan-farkli
+  ✓ [DOKUM.hata-yarim-dosya-yok] YARIM-KALDI.txt 
+  ✓ [DOKUM.basari] 0
+  ✓ [DOKUM.dosyalar] auth-storage.sql envanter-kaynak.csv ozet.txt public.dump 
+  ✓ [DOKUM.ozet-kimlik-ozeti] 1
+  ✓ [DOKUM.dolu-klasore-yazmaz] 2
+  ✓ [KORUMA.canli-kullanici] 2
+  ✓ [KORUMA.canli-mesaj] 1
+  ✓ [KORUMA.canli-host-buyuk-harf] 2
+  ✓ [KORUMA.hedef-kaynakla-ayni] 2
+  ✓ [KORUMA.ayni-mesaj] 1
+  ✓ [KORUMA.dolu-hedef (127.0.0.1 ile aynı kaynak)] 2
+  ✓ [KORUMA.dolu-mesaj] 1
+  ✓ [KORUMA.kaynak-degismedi] ayni
+  ✓ [HATA.public-cikis] 1
+  ✓ [HATA.public-ozet-basarisiz] 1
+  ✓ [HATA.public-hata-planlanan-nesnede] 1
+  ✓ [HATA.public-hedefte-tablo-0] 0
+  ✓ [HATA.envanter-adimi-calismadi] 0
+  ✓ [HATA.auth-cikis] 1
+  ✓ [HATA.auth-adiminda-durdu] 1
+  ✓ [HATA.auth-oncesi-public-yuklendi] evet
+  ✓ [HATA.auth-storage-geri-alindi] 0
+  ✓ [HATA.auth-envanter-yok] 0
+  ✓ [MUTLU.cikis] 0
+  ✓ [MUTLU.envanter-AYNI] 1
+  ✓ [MUTLU.auth-users] 2
+  ✓ [MUTLU.migrations-cakismadi] 1
+  ✓ [GIZLI.parola-hicbir-yerde] 0
+  ✓ [GIZLI.kullanici-dosyalarda] 0
+  ✓ [GIZLI.kullanici-ekranda] 0
+  ✓ [GIZLI.baglanti-hatasi-cikis] 2
+  ✓ [GIZLI.baglanti-hatasi-gizli] 0:1
+── t-yedek-betikleri.sh: temiz ──

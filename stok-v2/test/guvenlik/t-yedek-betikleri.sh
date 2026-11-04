@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # YEDEK BETİKLERİ SINAMASI (4 Kasım). Yalnız YEREL test sunucusu (PGHOST=localhost); Supabase'e bağlanmaz.
 # Kaynak: atolye_guvenlik'in kopyası + Supabase benzeri auth / storage şemaları (sahte satırlar, gerçek veri yok).
+# Hedefler: yeni bir Supabase projesi gibi — supabase-taklit.sql (auth.jwt/uid, roller), extensions.pgcrypto, boş auth/storage.
 # Kahin:
 #   DÖKÜM   depo içine yazmayı reddeder; hatada yarım dosyaları siler (YARIM-KALDI); başarıda ozet'te kimlik ÖZETİ var.
 #   KORUMA  canlı proje kimliği (küçük / BÜYÜK harf, kullanıcı ya da host'ta) → DUR, bağlanmadan; hedef = kaynak → DUR;
@@ -19,7 +20,7 @@ p() { psql -X -q -At -U postgres "$@"; }
 
 p -d postgres -c "drop database if exists yedek_kaynak" -c "drop database if exists yedek_prova" -c "drop database if exists yedek_prova2" \
   -c "drop role if exists $KUL" -c "create role $KUL login superuser password '$PGPASSWORD'"
-p -d postgres -c "create database yedek_kaynak template atolye_guvenlik owner $KUL"
+p -d postgres -c "create database yedek_kaynak template atolye_guvenlik"
 SUPA="create schema if not exists auth; create table if not exists auth.users (id uuid primary key, email text);
   create table if not exists auth.schema_migrations (version text primary key);
   create schema if not exists storage; create table if not exists storage.buckets (id text primary key);
@@ -28,7 +29,8 @@ SUPA="create schema if not exists auth; create table if not exists auth.users (i
   insert into auth.schema_migrations values ('20240101') on conflict do nothing; insert into storage.migrations values (1) on conflict do nothing;"
 p -d yedek_kaynak -c "$SUPA" -c "insert into auth.users values (gen_random_uuid(), 'a@deneme.local'), (gen_random_uuid(), 'b@deneme.local');
   insert into storage.buckets values ('gorseller'); insert into storage.objects (bucket_id, name, metadata) values ('gorseller', 'x.png', '{\"size\":123}');"
-for d in yedek_prova yedek_prova2; do p -d postgres -c "create database $d owner $KUL"; p -d $d -c "$SUPA" -c "create extension if not exists pgcrypto"; done
+for d in yedek_prova yedek_prova2; do p -d postgres -c "create database $d owner $KUL"; p -d $d -f ../supabase-taklit.sql -c "$SUPA" \
+  -c "create schema if not exists extensions; create extension if not exists pgcrypto schema extensions"; done  # yeni Supabase projesi gibi
 ORT=(KAYNAK_HOST=localhost KAYNAK_PORT="${PGPORT:-5432}" KAYNAK_KULLANICI=$KUL KAYNAK_DB=yedek_kaynak)
 echo "t-yedek-betikleri · kaynak yedek_kaynak (atolye_guvenlik kopyası + sahte auth/storage)"
 
@@ -60,12 +62,15 @@ k "KORUMA.kaynak-degismedi" "$([ "$once" = "$sonra" ] && echo ayni)" ayni
 ilk=$(p -d yedek_kaynak -c "select p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.prokind = 'f' and pg_get_function_identity_arguments(p.oid) = '' order by 1 limit 1")
 p -d yedek_prova2 -c "create function public.$ilk() returns int language sql as 'select 1'"
 k "HATA.public-cikis" "$(pr PROVA_HOST=localhost PROVA_PORT="${PGPORT:-5432}" PROVA_KULLANICI=$KUL PROVA_DB=yedek_prova2)" 1
-k "HATA.public-ozet-basarisiz" "$(grep -c 'BAŞARISIZ' "$IS/son.txt")" 1
+k "HATA.public-ozet-basarisiz" "$(grep -c "BAŞARISIZ — 'public şeması'" "$IS/son.txt")" 1
+k "HATA.public-hata-planlanan-nesnede" "$(grep -c "function $ilk() already exists\|function \"$ilk\" already exists" "$IS/son.txt")" 1
 k "HATA.public-hedefte-tablo-0" "$(p -d yedek_prova2 -c "select count(*) from pg_tables where schemaname = 'public'")" 0
 k "HATA.envanter-adimi-calismadi" "$(ls "$IS"/d/prova-*/envanter-prova.csv 2>/dev/null | wc -l)" 0
 # HATA — auth adımı: hedefte auth.users yok → public yüklenir ama auth adımı durur, auth satırı yok, çıkış 1
 p -d yedek_prova2 -c "drop function public.$ilk()" -c "drop table auth.users"
 k "HATA.auth-cikis" "$(pr PROVA_HOST=localhost PROVA_PORT="${PGPORT:-5432}" PROVA_KULLANICI=$KUL PROVA_DB=yedek_prova2)" 1
+k "HATA.auth-adiminda-durdu" "$(grep -c "BAŞARISIZ — 'auth + storage satırları'" "$IS/son.txt")" 1
+k "HATA.auth-oncesi-public-yuklendi" "$([ "$(p -d yedek_prova2 -c "select count(*) from pg_tables where schemaname = 'public'")" -gt 0 ] && echo evet)" evet
 k "HATA.auth-storage-geri-alindi" "$(p -d yedek_prova2 -c "select count(*) from storage.objects")" 0
 k "HATA.auth-envanter-yok" "$(ls "$IS"/d/prova-*/envanter-prova.csv 2>/dev/null | wc -l)" 0
 
