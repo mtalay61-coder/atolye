@@ -22,4 +22,6 @@ node stok-v2/test/duzeltme/t-servis-kapi.js
 node stok-v2/test/duzeltme/t-eski-bag.js
 node stok-v2/test/duzeltme/t-siparis-sil.js
 F2_N=100 F2_ZORLA=3 bash stok-v2/test/f2/kos-f2.sh
+# 1.744.8: üretim silme / çöpten geri yükleme yarım kalmaz (eski fişli, fişsiz, sunucu fişi, yarış, hata, görünmeyen hareket)
+node stok-v2/test/uretim-sil/t-uretim-sil.js
 echo 'BÜTÜNLÜK ADAYI: bütün süreçler 0'

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.744.5</title>
+<title>Atölye ERP 1.744.8</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2319,9 +2319,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.744.5";
-const SURUM_TARIHI = "2026-11-03";
-const SURUM_NOTU = "Gün sonu raporunda fiş kalemleri ve stok hareketleri beden matrisiyle";
+const SURUM = "1.744.8";
+const SURUM_TARIHI = "2026-11-04";
+const SURUM_NOTU = "Üretim silme ve çöpten geri yükleme yarım kalmaz";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2351,6 +2351,9 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 }
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" }; // teklif: v1.723.0, Sipariş'in alt sekmesi
 const SURUM_GECMISI = [
+    { surum: "1.744.8", tarih: "04.11.2026", eklenen: [], degisen: ["Üretim silme sunucuda tek işlemde yapılır: fişler iptal edilir ve üretim silinir, ya da hiçbiri (sunucuda uretim_sil kuruluysa).", "Fiş kesilmeden yazılmış eski hareketi olan çöp kaydı (ürün / cari) geri yüklenmez; kayıt çöpte kalır."], duzeltilen: ["Eski (fiş kesilmeden yazılmış) hareketi olan üretim silinince üretim kaydı gidiyor, hareketleri sunucuda geçerli kalıyordu; artık ya tamamı yapılır ya hiçbir kayıt değişmez.", "Fişsiz eski cari hareketi olan üretim silinmez; sebep söylenir.", "Başka cihazın az önce yazdığı ve ekranda görünmeyen hareketi olan üretim sessizce silinmez."] },
+    { surum: "1.744.7", tarih: "03.11.2026", eklenen: [], degisen: ["Sipariş silmede hata iletisi \"iptal edilemedi\" yerine \"silinemedi\" der."], duzeltilen: ["Fişleri silinmiş (iptal edilmiş) sipariş silinemiyordu (KR002); artık silinir. İptal edilmemiş fişi olan sipariş yine silinmez, iptal edilmiş olarak kalır."] },
+    { surum: "1.744.6", tarih: "03.11.2026", eklenen: [], degisen: ["Cari ekstrenin sade görünümünde bedenli fişler beden matrisiyle gösterilir (fiyat ayrıntısı Detaylı görünümde).", "Stok kartı hareketlerinde çok bedenli fiş tek renkli olsa da matrisle açılır; tek renk ve tek bedenli (bedensiz) fiş tek satır kalır.", "Gün sonu Excel'inde fiş, stok ve üretim hareketleri beden matrisi."], duzeltilen: ["Stok kartı hareket matrisinde bedenler küçükten büyüğe sıralanır."] },
     { surum: "1.744.5", tarih: "03.11.2026", eklenen: [], degisen: ["Gün sonu raporunda (ekran, PDF, e-posta) alış/satış fiş kalemleri, stok hareketleri ve üretim hareketleri beden matrisiyle gösterilir: satırda ürün ve renk, sütunlarda bedenler, sonda toplam."], duzeltilen: [] },
     { surum: "1.744.4", tarih: "02.11.2026", eklenen: ["Satış siparişini aşan teslimde Yönetici gerekçe yazarak onay verebilir; onay fişe kaydedilir. Yönetici dışında sipariş fazlası yine teslim edilmez."], degisen: [], duzeltilen: ["Sipariş kalemleri kaydedilirken bağlı siparişin başlığı aynı anda düzenlenince oluşan sunucu kilitlenmesi giderildi.", "Sürüm kapısı açıkken otomatik gün sonu raporu durmaz.", "Önceden iptal edilmiş siparişe bağlı eski kayıtlar yeniden düzenlenebilir."] },
     { surum: "1.744.3", tarih: "02.11.2026", eklenen: ["Eski istemcilerin yazmasını durduran sunucu sürüm kapısı (geçişte ayrıca etkinleştirilir)."], degisen: ["Sipariş teslim durumu güncel kalemlerden sunucuda hesaplanır.", "Sipariş iptalinde üretim, koli ve rezervasyon bağları birlikte çözülür."], duzeltilen: ["Aynı çekin iki cihazdan eşzamanlı tahsili engellenir; fiş iptali çek ve kasa kaydını birlikte geri alır.", "Farklı alanları değiştirilen sipariş kalemlerinin gönderilmeyen alanları artık silinmez.", "Bakiyeli kasa/banka hesabı kapatılamaz; geçmişin para birimi değiştirilemez."] },
@@ -12614,24 +12617,56 @@ function useUretimSil(d) {
             // silinmez. İptal edilemezse hiçbir şey değişmez (üretim yerinde kalır). İptal edilen satırlar fark tabanından çıkar; eski usul
             // satırlar, ana kayıtlar ve üretim kaydı aşağıdaki adımlarla bugünkü yoldan.
             const silinenCariKayitlari = cariler.flatMap((c) => (c.hareketler || []).filter(buUretimeAitCariHareketiMi).map((h) => ({ cari: c, hareket: h })));
-            const sunucuSatirlari = fisKesYolu() ? uretimSunucuFisSatirlari(silinenStokKayitlari, silinenCariKayitlari) : null;
-            if (sunucuSatirlari && sunucuSatirlari.fisler.length) {
-                const iptalEdilen = [];
+            // HEPSİ YA DA HİÇBİRİ (v1.744.8 — kural provası bulgusu, 4 Kasım). Fiş defteri kuruluyken fis_kes ile KESİLMEMİŞ (eski) bir
+            // hareketin iptali köprüde ağa çıkmadan durdurulur (038, KR009); 040 o satırı "inceleme"ye ayırıp kalanı gönderdiği için adım
+            // başarılı sayılıyor, üretim kaydı siliniyordu → sunucuda üretim YOK, hareketleri GEÇERLİ; ekranda ise hareketler silinmiş.
+            // Şimdi EKRANA DOKUNMADAN önce sunucu tek işlemde karar verir (078 uretimSilGonder): fişleri iptal edip üretimi siler ya da
+            // reddeder — reddedilirse hiçbir kayıt (sunucu, ekran, çöp) değişmez. Sunucuda işlem kurulu değilse (canlıda SQL ayrı onayla
+            // kurulur) eski hareket varken silme hiç denenmez; yalnız sunucu fişli (ÜRT) hareketi olan üretim bugünkü yoldan silinir.
+            if (fisKesYolu()) {
+                const sunucuSatirlari = uretimSunucuFisSatirlari(silinenStokKayitlari, silinenCariKayitlari);
+                const eskiSatirSayisi = [...silinenStokKayitlari, ...silinenCariKayitlari].filter(({ hareket: h }) => !(h && h.uretimFisAdi && h.fisNo)).length;
+                const stokIdler = silinenStokKayitlari.map(({ hareket: h }) => h && h.id).filter(Boolean);
+                const cariIdler = silinenCariKayitlari.map(({ hareket: h }) => h && h.id).filter(Boolean);
+                const hataMetni = (e) => String((e && e.message) || e).slice(0, 220);
+                let sunucuSildi = false;
                 try {
-                    for (const no of sunucuSatirlari.fisler) {
-                        await fisIptalGonder(no, `Üretim ${siparis.siparisNo} silindi`);
-                        iptalEdilen.push(no);
-                    }
+                    const r = await uretimSilGonder({ id: uretimId, sebep: `Üretim ${siparis.siparisNo} silindi`, stokIdler, cariIdler });
+                    sunucuSildi = true;
+                    gunlukYaz(`Üretim sunucuda tek işlemde silindi: ${siparis.siparisNo}${r.fisler && r.fisler.length ? ` — iptal edilen fiş: ${r.fisler.join(", ")}` : ""}`, "uretim", { uretimId, fisler: r.fisler || [] });
                 }
                 catch (e) {
-                    showToast(`⚠ Üretim SİLİNMEDİ — fiş iptal edilemedi (${String((e && e.message) || e).slice(0, 160)}).`
-                        + (iptalEdilen.length ? ` İptal edilen: ${iptalEdilen.join(", ")}; sayfayı yenileyip yeniden deneyin.` : ""));
-                    gunlukYaz(`Üretim silme: fiş iptal edilemedi (${siparis.siparisNo})`, "uretim", { iptalEdilen, hata: String((e && e.message) || e).slice(0, 200) });
-                    return { ok: false };
+                    if (!uretimSilSunucuYok(e)) {
+                        showToast(`⚠ Üretim SİLİNMEDİ — ${hataMetni(e)}. Hiçbir kayıt değişmedi.`);
+                        gunlukYaz(`Üretim silme reddedildi (${siparis.siparisNo})`, "uretim", { uretimId, hata: hataMetni(e) });
+                        return { ok: false };
+                    }
+                    if (eskiSatirSayisi > 0) {
+                        showToast(`⚠ Üretim SİLİNMEDİ — ${eskiSatirSayisi} hareketi fiş kesilmeden (eski yoldan) yazılmış; sunucuda tek işlemli üretim silme `
+                            + "(uretim_sil) kurulu olmadığı için bu silme yarım kalırdı. Hiçbir kayıt değişmedi.");
+                        gunlukYaz(`Üretim silme durduruldu: eski hareket, sunucu işlemi yok (${siparis.siparisNo})`, "uretim", { uretimId, eskiSatirSayisi });
+                        return { ok: false };
+                    }
+                    // Eski sunucu, yalnız sunucu fişli satırlar: bugünkü yol — fişler sırayla iptal, üretim kaydı aşağıdaki adımlarda.
+                    const iptalEdilen = [];
+                    try {
+                        for (const no of sunucuSatirlari.fisler) {
+                            await fisIptalGonder(no, `Üretim ${siparis.siparisNo} silindi`);
+                            iptalEdilen.push(no);
+                        }
+                    }
+                    catch (e2) {
+                        showToast(`⚠ Üretim SİLİNMEDİ — fiş iptal edilemedi (${hataMetni(e2)}).`
+                            + (iptalEdilen.length ? ` İptal edilen: ${iptalEdilen.join(", ")}; sayfayı yenileyip yeniden deneyin.` : ""));
+                        gunlukYaz(`Üretim silme: fiş iptal edilemedi (${siparis.siparisNo})`, "uretim", { iptalEdilen, hata: hataMetni(e2) });
+                        return { ok: false };
+                    }
+                    if (sunucuSatirlari.fisler.length)
+                        gunlukYaz(`Üretim fişleri iptal edildi: ${sunucuSatirlari.fisler.join(", ")} (${siparis.siparisNo} silindi)`, "uretim", { uretimId });
                 }
-                fisKesTabandanCikar("urunler", "stok_hareketleri", sunucuSatirlari.stokIdler);
-                fisKesTabandanCikar("cariler", "cari_hareketleri", sunucuSatirlari.cariIdler);
-                gunlukYaz(`Üretim fişleri iptal edildi: ${sunucuSatirlari.fisler.join(", ")} (${siparis.siparisNo} silindi)`, "uretim", { uretimId });
+                // İptal edilen satırlar fark tabanından çıkar (yeniden gönderilmesin); tek işlemde bütün eşleşen satırlar iptal edildi.
+                fisKesTabandanCikar("urunler", "stok_hareketleri", sunucuSildi ? stokIdler : sunucuSatirlari.stokIdler);
+                fisKesTabandanCikar("cariler", "cari_hareketleri", sunucuSildi ? cariIdler : sunucuSatirlari.cariIdler);
             }
             // SIRA BİLİNÇLİ: hammadde ve cari etkileri önce geri alınır, üretim kaydı EN SON silinir.
             // Yarıda kalırsa geriye "etkileri geri alınmış ama hâlâ duran" bir üretim kalır — bu
@@ -12714,8 +12749,22 @@ function useUretimSil(d) {
             return { ok: true };
         }
         // Etkisiz üretim: temizlenecek hareket yok, yine de sonuç DOĞRULANIR.
-        // bayat-muaf: ayrı dal — yukarıdaki `await`ler (sunucu iptali, adımlar) yalnız temizlik dalında; buraya beklemeden gelinir.
+        // bayat-muaf: ayrı dal — tek bekleme aşağıdaki sunucu kararı (v1.744.8); listeler (kalanUretim, nextSiparisler) ondan ÖNCE kurulur.
         const kalanUretim = uretim.filter((o) => o.id !== uretimId);
+        // Bu ekranda hareketi yok — ama başka bir cihaz az önce teslim yazmış olabilir. Fiş defteri kuruluyken sunucu tek işlemde
+        // karar verir (boş satır listesiyle: görünmeyen geçerli hareket varsa KR010, hiçbir şey değişmez). İşlem kurulu değilse bugünkü yol.
+        if (fisKesYolu()) {
+            try {
+                await uretimSilGonder({ id: uretimId, sebep: `Üretim ${siparis.siparisNo} silindi`, stokIdler: [], cariIdler: [] });
+            }
+            catch (e) {
+                if (!uretimSilSunucuYok(e)) {
+                    showToast(`⚠ Üretim SİLİNMEDİ — ${String((e && e.message) || e).slice(0, 220)}. Hiçbir kayıt değişmedi.`);
+                    gunlukYaz(`Üretim silme reddedildi (${siparis.siparisNo})`, "uretim", { uretimId, hata: String((e && e.message) || e).slice(0, 220) });
+                    return { ok: false };
+                }
+            }
+        }
         const sadeAdimlar = [];
         if (etkilendiMi) {
             sadeAdimlar.push({ ad: "bağlı satış siparişi", yerelUygula: () => setSiparisler(nextSiparisler),
@@ -13886,6 +13935,17 @@ function useCopKutusu(d) {
             showToast(`Bu ${TUR.ad} zaten listede — geri yükleme yapılmadı`);
             return;
         }
+        // HAREKETLİ ESKİ ÇÖP KAYDI (v1.744.8 — kural provası, 4 Kasım): fiş defteri kuruluyken hareket yalnız fiş kesilerek yazılır;
+        // çöpteki ürün / cari kopyasının hareketleri geri yazılmak istense köprü onları ağa çıkmadan durdurur (038, KR009), 040 satırı
+        // incelemeye ayırıp kalanı gönderir → kart geri gelir, hareketleri GELMEZ (yarım). Bugün hareketli kart silinemiyor (087), bu
+        // yalnız eski çöp kayıtlarında olur. Hiçbir şeye dokunmadan durulur: kayıt çöpte kalır, ekran ve sunucu değişmez.
+        const copHareketi = (kayit.tur === "urun" || kayit.tur === "cari") ? ((kayit.veri && kayit.veri.hareketler) || []).length : 0;
+        if (copHareketi > 0 && fisKesYolu()) {
+            gunlukYaz(`Çöpten geri yükleme durduruldu: ${kayit.baslik} (${copHareketi} hareket)`, "cop", { copId, tur: kayit.tur, hareket: copHareketi });
+            showToast(`⚠ "${kayit.baslik}" geri yüklenemez — ${copHareketi} hareketi var; fiş defterinde hareket yalnız fiş kesilerek yazılır. `
+                + "Kayıt çöpte kalıyor, hiçbir şey değişmedi. Kartı hareketsiz yeniden açıp hareketleri fişle girin.");
+            return;
+        }
         const onceki = TUR.liste;
         const n = TUR.basa ? [kayit.veri, ...onceki] : [...onceki, kayit.veri];
         TUR.set(n);
@@ -14938,6 +14998,21 @@ function uretimSunucuFisSatirlari(stokKayitlari, cariKayitlari) {
         cariIdler.push(h.id);
     } });
     return { fisler: [...fisler].sort(), stokIdler, cariIdler };
+}
+// ÜRETİM SİLME — TEK SUNUCU İŞLEMİ (v1.744.8, fis-defteri.sql `uretim_sil`). Fiş defteri kuruluyken üretim silme eskiden fişleri
+// tek tek iptal edip üretim kaydını ayrı REST isteğiyle siliyordu; fis_kes ile kesilmemiş (eski) hareketlerin iptali köprüde ağa
+// çıkmadan durdurulduğu için sunucuda "üretim yok, hareketleri geçerli" yarım hâli kalıyordu (kural provası, 4 Kasım). Şimdi
+// hepsi TEK işlemde: sunucu üretimin hareketlerini kendisi bulur (+ bu ekranın eşleştirdiği satır kimlikleri), fişsiz eski satır,
+// başka kayıt taşıyan eski fiş ya da bu ekranda görünmeyen hareket varsa reddeder (KR010) — hiçbir şey değişmez; değilse fişleri
+// iptal eder ve üretimi siler. Sunucuda işlem kurulu değilse (eski sunucu) `uretimSilSunucuYok` doğru döner; çağıran ona göre davranır.
+async function uretimSilGonder(p) {
+    const r = await supabaseIstek("rpc/uretim_sil", { method: "POST", body: JSON.stringify({ p: { ...p, istemci: fisIstemciBilgisi() } }) });
+    if (!r || (r.silindi !== true && r.zatenYok !== true))
+        throw new Error("Sunucu üretim silme sonucunu döndürmedi");
+    return r;
+}
+function uretimSilSunucuYok(e) {
+    return /PGRST202|Could not find the function|uretim_sil/i.test(String((e && e.message) || e)) && !/KR010/.test(String((e && e.message) || e));
 }
 // STOK TARAFINI UYGULA (v1.733.1 — üretim, numune ve ileride stok formları ortak): sunucu yazdıktan sonra etkilenen ürünlerin yeni
 // hâli (`doldur` yer tutucuyu numarayla değiştirir) ekrana, yerel kopyaya ve fark tabanına. Ürünün ANA satırı da değiştiyse (reçete
@@ -19199,7 +19274,8 @@ function useSilmeZincirleri(d) {
                 sunucuBaglarAtomik = !!(yanit && yanit.baglarAtomik);
             }
             catch (e) {
-                showToast(`Sipariş iptal edilemedi — fişlerin bağı çözülemedi, hiçbir değişiklik yapılmadı (${String((e && e.message) || e).slice(0, 160)})`);
+                // Silmede "iptal edilemedi" yanıltıyordu (3 Kasım, ALS-1001): kullanıcı silmeye bastı, ileti iptalden söz etti.
+                showToast(`Sipariş ${sil ? "silinemedi" : "iptal edilemedi"} — hiçbir değişiklik yapılmadı (${String((e && e.message) || e).slice(0, 200)})`);
                 gunlukYaz(`Sipariş iptali durdu (fis_bag_coz): ${no}`, "siparis", { siparisId, hata: String((e && e.message) || e).slice(0, 200) });
                 return;
             }
@@ -40593,7 +40669,9 @@ function ProductMatrixCard({ tanimlarTum, onKapasiteKaydet, kurlar, kurGecmisi, 
                         const cariAdi = g.cariId ? ((cariler || []).find((c) => c.id === g.cariId) || {}).unvan : null;
                         const uretimKaynakli = g.kaynak === "Üretim";
                         const gRenkler = Array.from(new Set(g.hareketler.map((h) => h.renk)));
-                        const gBedenler = Array.from(new Set(g.hareketler.map((h) => h.beden)));
+                        // Bedenler küçükten büyüğe (v1.744.6 — sıralanmıyordu: fişte ilk yazılan beden önde çıkıyordu; denetim 17'nin
+                        // `v => v.beden` kalıbı bu satırı yakalamıyordu).
+                        const gBedenler = bedenSirala(Array.from(new Set(g.hareketler.map((h) => h.beden))));
                         // BİRİM FİYAT VE TUTAR CARİ TARAFINDAN OKUNUR.
                         // Stok hareketi fiyat taşımaz (miktar, renk, beden, kaynak). Aynı fiş numarasına
                         // yazılmış CARİ hareketi ise birim fiyatı, para birimini ve tutarı taşıyor —
@@ -40639,15 +40717,18 @@ function ProductMatrixCard({ tanimlarTum, onKapasiteKaydet, kurlar, kurGecmisi, 
                         // ayrıca tıklamak zorunda kalıyor ve başlıkta yalnızca fiş no ile tarih görüyor.
                         // Tıklama artık KAPATMAK için: uzun listede istenmeyen fişler daraltılabilir.
                         const acik = !kapaliFisler.has(g.key);
+                        // TEK HÜCRELİ FİŞ (tek renk, tek beden — metre/desi/"Standart" malzeme): matris tek hücreli bir tabloya döner,
+                        // bilgi eklemeden satırı uzatır (matris kuralı: değişen boyut beden ise). Eskisi gibi başlık satırında kalır.
+                        const tekHucre = gRenkler.length === 1 && gBedenler.length === 1;
                         return (React.createElement("div", { key: g.key, style: {
                                 background: uretimKaynakli ? "#F0F5EE" : "#fff",
                                 border: `1px solid ${uretimKaynakli ? "#8FA888" : "var(--erp-border-2)"}`,
                                 borderRadius: "var(--erp-r-md)", overflow: "hidden",
                             } },
                             React.createElement("div", { 
-                                // Tıklama yalnızca çok renkli fişte anlamlı; tek renklide açılacak içerik yok.
-                                role: gRenkler.length > 1 ? "button" : undefined, tabIndex: gRenkler.length > 1 ? 0 : undefined, onClick: gRenkler.length > 1 ? () => fisKapatToggle(g.key) : undefined, onKeyDown: (e) => { if (gRenkler.length > 1 && (e.key === "Enter" || e.key === " "))
-                                    fisKapatToggle(g.key); }, style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", padding: "8px 10px", cursor: gRenkler.length > 1 ? "pointer" : "default" } },
+                                // Her fiş açılır / kapanır (v1.744.6: tek renkli fiş de matrisle açılıyor).
+                                role: tekHucre ? undefined : "button", tabIndex: tekHucre ? undefined : 0, onClick: tekHucre ? undefined : () => fisKapatToggle(g.key), onKeyDown: (e) => { if (!tekHucre && (e.key === "Enter" || e.key === " "))
+                                    fisKapatToggle(g.key); }, style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", padding: "8px 10px", cursor: tekHucre ? "default" : "pointer" } },
                                 uretimKaynakli && React.createElement(Hammer, { size: 13, color: "var(--erp-primary)" }),
                                 g.fisNo && (onFiseGitNo ? (React.createElement("button", { type: "button", className: "mono", onClick: (e) => { e.stopPropagation(); onFiseGitNo(g.fisNo); }, title: `${g.fisNo} fişini Fişler ekranında aç`, style: {
                                         fontSize: 12, fontWeight: 700, background: "none", border: "none",
@@ -40664,7 +40745,7 @@ function ProductMatrixCard({ tanimlarTum, onKapasiteKaydet, kurlar, kurGecmisi, 
                                 cariAdi && React.createElement("span", { style: { fontSize: 12, color: "var(--erp-text-2)" } },
                                     "\u00B7 ",
                                     cariAdi),
-                                gRenkler.length === 1 && (React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" } },
+                                gRenkler.length === 1 && (!acik || tekHucre) && (React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" } },
                                     React.createElement("span", { className: "mono", style: { fontSize: 13, color: "var(--erp-text-2)" } }, olcuGoster(gRenkler[0])),
                                     gBedenler.map((b) => {
                                         const eslesenler = g.hareketler.filter((x) => x.renk === gRenkler[0] && x.beden === b);
@@ -40694,11 +40775,11 @@ function ProductMatrixCard({ tanimlarTum, onKapasiteKaydet, kurlar, kurGecmisi, 
                                         fisFiyatlari.sembol))),
                                 React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 8 }, onClick: (e) => e.stopPropagation() },
                                     React.createElement(SilOnayButonu, { onConfirm: () => g.hareketler.forEach((h) => onRemoveHareketGlobal(h.id)), baslikNormal: "Bu fi\u015Fin t\u00FCm hareketlerini sil", boyut: 12 })),
-                                gRenkler.length > 1 && (acik
+                                tekHucre ? null : acik
                                     ? React.createElement(ChevronDown, { size: 15, color: "var(--erp-text-3)" })
-                                    : React.createElement(ChevronRight, { size: 15, color: "var(--erp-text-3)" }))),
-                            acik && gRenkler.length > 1 && (React.createElement("div", { style: { padding: "0 10px 10px", overflowX: "auto" } },
-                                React.createElement("table", { style: { width: "auto", minWidth: "100%" } },
+                                    : React.createElement(ChevronRight, { size: 15, color: "var(--erp-text-3)" })),
+                            acik && !tekHucre && (React.createElement("div", { style: { padding: "0 10px 10px", overflowX: "auto" } },
+                                React.createElement("table", { className: "matris-tablo", "data-stok-fis-matris": g.key, style: { width: "auto", minWidth: "100%" } },
                                     React.createElement("thead", null,
                                         React.createElement("tr", null,
                                             React.createElement("th", { style: { fontSize: 13 } }, matrisKoseBasligi(gRenkler, gBedenler, renkBasligi(product), product.olcuTipi || "Beden")),
@@ -53268,6 +53349,40 @@ function cariHareketleriGrupla(hareketler) {
 // BR. FİYAT sütunu kayıt para biriminde; kalem başka parada girildiyse KUR sütunu ham fiyatı ve
 // kullanılan kuru gösterir. Yalnızca çevrilmiş fiyatı yazmak "bu 2.000 ₺ nereden çıktı"
 // sorusunu cevapsız bırakıyordu.
+// SADE GÖRÜNÜMÜN MATRİSİ (v1.744.6 — kullanıcı, 3 Kasım: "listeler matris olsun"). Cari ekstrenin sade kipi ürünlü fişi tek
+// satırlık metne sıkıştırıyordu ("102 Bayan Bot · 2 renk · 152 çift"); bedenler görünmüyordu. Burada yalnız MİKTAR matrisi: satır
+// ürün + renk, sütun beden (FisKalemMatrisi ile aynı sıra), sonda toplam ve tek fiyatlı satırda birim fiyat. Fiyat / kur / KDV
+// sütunları Detaylı görünümde. Bedensiz fişte çağrılmaz (özet metni kalır — tek sütunlu matris bilgi eklemez).
+function SadeBedenMatrisi({ urunGruplari }) {
+    if (!urunGruplari || urunGruplari.length === 0)
+        return null;
+    const bedenler = bedenSirala(Array.from(new Set(urunGruplari.flatMap((ug) => (ug.items || []).map((h) => h.beden)).filter((b) => b != null && b !== ""))));
+    const say = (n) => Number(n || 0).toLocaleString("tr-TR", { maximumFractionDigits: 2 });
+    const hucre = { fontSize: 10, padding: "1px 6px", whiteSpace: "nowrap" };
+    return (React.createElement("div", { "data-ekstre-sade-matris": "1", style: { overflowX: "auto", maxWidth: "100%" } },
+        React.createElement("table", { className: "matris-tablo", style: { width: "auto", borderCollapse: "collapse" } },
+            React.createElement("thead", null,
+                React.createElement("tr", null,
+                    React.createElement("th", { style: { ...hucre, textAlign: "left", color: "var(--erp-text-3)", fontWeight: 600 } }),
+                    bedenler.map((b) => React.createElement("th", { key: b, className: "mono", style: { ...hucre, textAlign: "center", color: "var(--erp-text-3)", fontWeight: 600 } }, olcuGoster(b, "Miktar"))),
+                    React.createElement("th", { className: "mono", style: { ...hucre, textAlign: "right", color: "var(--erp-text-3)", fontWeight: 600, borderLeft: "1px dashed var(--erp-line)" } }, "Toplam"))),
+            React.createElement("tbody", null, urunGruplari.map((ug) => {
+                const items = ug.items || [];
+                const toplam = items.reduce((t, h) => t + (Number(h.miktar) || 0), 0);
+                const fiyatlar = [...new Set(items.map((h) => h.birimFiyat).filter((x) => x != null))];
+                return (React.createElement("tr", { key: ug.key },
+                    React.createElement("td", { style: { ...hucre, fontWeight: 600, color: "var(--erp-text-2)" } }, [ug.urunAd, olcuGoster(ug.renk)].filter(Boolean).join(" · ")),
+                    bedenler.map((b) => {
+                        const m = items.filter((h) => h.beden === b).reduce((t, h) => t + (Number(h.miktar) || 0), 0);
+                        return React.createElement("td", { key: b, className: "mono", style: { ...hucre, textAlign: "center", color: m ? "var(--erp-text)" : "var(--erp-border)" } }, m ? say(m) : "—");
+                    }),
+                    React.createElement("td", { className: "mono", style: { ...hucre, textAlign: "right", fontWeight: 700, borderLeft: "1px dashed var(--erp-line)" } },
+                        say(toplam),
+                        " ",
+                        ug.birim || (items[0] || {}).birim || "",
+                        fiyatlar.length === 1 && fiyatlar[0] ? ` × ${say(fiyatlar[0])}` : "")));
+            })))));
+}
 function FisKalemMatrisi({ urunGruplari, stok, kompakt }) {
     if (!urunGruplari || urunGruplari.length === 0)
         return null;
@@ -53290,7 +53405,7 @@ function FisKalemMatrisi({ urunGruplari, stok, kompakt }) {
     const bh = { fontSize: yazi - 1, fontWeight: 700, color: "var(--erp-text-2)", padding: "3px 6px", whiteSpace: "nowrap" };
     const td = { fontSize: yazi, padding: "4px 6px", whiteSpace: "nowrap" };
     return (React.createElement("div", { style: { overflowX: "auto" } },
-        React.createElement("table", { style: { width: "auto", minWidth: "100%", borderCollapse: "collapse" } },
+        React.createElement("table", { className: "matris-tablo", style: { width: "auto", minWidth: "100%", borderCollapse: "collapse" } },
             React.createElement("thead", null,
                 React.createElement("tr", null,
                     React.createElement("th", { style: { ...bh, textAlign: "left" } }, "\u00DCR\u00DCN"),
@@ -54525,14 +54640,26 @@ function gunSonuExcel(v) {
         return false;
     const wb = XLSX.utils.book_new();
     const sayfa = (ad, satirlar) => XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(satirlar.length ? satirlar : [{ Bilgi: "Kayıt yok" }]), ad);
-    sayfa("Fişler", v.fisler.flatMap((f) => f.kalemler.map((k) => ({ Tür: f.tur, "Fiş No": f.fisNo, Cari: f.cari, Ürün: k.urun, Renk: k.renk, Beden: k.beden, Miktar: k.miktar, Birim: k.birim, "Birim Fiyat": k.birimFiyat, Tutar: k.tutar, "P.B.": k.pb }))));
+    // BEDEN MATRİSİ (v1.744.6 — kullanıcı 3 Kasım: listeler matris olsun; rapordaki gunSonuMatris ile aynı gruplama). Sütun sırası
+    // dizi ile verilir: "36" gibi beden adları nesne anahtarı olunca JavaScript onları öne alıyordu. Hücreler SAYI (Excel'de toplanabilsin).
+    const matrisSayfasi = (ad, liste, anahtar, basliklar, tutarli) => {
+        const mx = gunSonuMatris(liste, anahtar);
+        if (!mx.gruplar.length) {
+            sayfa(ad, []);
+            return;
+        }
+        const pbler = [...new Set(mx.gruplar.flatMap((g) => Object.keys(g.tutar)))];
+        const bas = [...basliklar, ...mx.bedenler, "Toplam", "Birim", ...(tutarli ? pbler.map((pb) => `Tutar ${pb}`) : [])];
+        const satirlar = mx.gruplar.map((g) => [...g.alanlar, ...mx.bedenler.map((bd) => (g.hucre[bd] != null ? g.hucre[bd] : null)), g.toplam, g.birim,
+            ...(tutarli ? pbler.map((pb) => (g.tutar[pb] != null ? g.tutar[pb] : null)) : [])]);
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([bas, ...satirlar]), ad);
+    };
+    matrisSayfasi("Fişler", v.fisler.flatMap((f) => f.kalemler.map((k) => ({ ...k, f }))), (k) => [k.f.tur, k.f.fisNo, k.f.cari, k.urun, k.renk], ["Tür", "Fiş No", "Cari", "Ürün", "Renk"], true);
     sayfa("Cari hareketleri", v.cariHareketleri.map((x) => ({ Cari: x.cari, İşlem: x.tip, Yön: x.yon, Açıklama: x.aciklama, "Fiş No": x.fisNo, Tutar: x.tutar, "P.B.": x.pb, Defter: x.defter })));
     sayfa("Kasa-Banka hareketleri", v.kasaHareketleri.map((x) => ({ Hesap: x.hesap, Yön: x.yon, "Karşı taraf": x.karsi, Açıklama: x.aciklama, "Fiş No": x.fisNo, Tutar: x.tutar, "P.B.": x.pb })));
-    sayfa("Üretim", [
-        ...v.uretimHareketleri.map((x) => ({ Tür: "Stok hareketi", Ürün: x.urun, Renk: x.renk, Beden: x.beden, Sipariş: x.siparisNo, Fiş: x.fisNo, Miktar: x.miktar, Birim: x.birim })),
-        ...v.uretimAsamalari.map((x) => ({ Tür: `Proses ${x.olay}`, Ürün: x.model, Renk: x.renk, Sipariş: x.siparisNo, Fiş: x.proses, Personel: x.personel, Miktar: x.miktar })),
-    ]);
-    sayfa("Stok hareketleri", v.stokHareketleri.map((x) => ({ Ürün: x.urun, Kategori: x.kategori, Renk: x.renk, Beden: x.beden, Kaynak: x.kaynak, Cari: x.cari, "Fiş No": x.fisNo, Miktar: x.miktar, Birim: x.birim })));
+    matrisSayfasi("Üretim stok hareketleri", v.uretimHareketleri, (x) => [x.urun, x.renk, x.siparisNo, x.fisNo], ["Ürün", "Renk", "Sipariş", "Fiş"]);
+    sayfa("Proses atamaları", v.uretimAsamalari.map((x) => ({ Olay: x.olay, Ürün: x.model, Renk: x.renk, Sipariş: x.siparisNo, Proses: x.proses, Personel: x.personel, Miktar: x.miktar })));
+    matrisSayfasi("Stok hareketleri", v.stokHareketleri, (x) => [x.urun, x.kategori, x.renk, x.kaynak, x.cari, x.fisNo], ["Ürün", "Kategori", "Renk", "Kaynak", "Cari", "Fiş No"]);
     sayfa("Kasa-Banka bakiyeleri", v.hesapBakiyeleri.map((x) => ({ Hesap: x.hesap, Giriş: x.giris, Çıkış: x.cikis, Bakiye: x.bakiye, "P.B.": x.pb })));
     sayfa("Çekler", v.cekler.map((x) => ({ Vade: x.vade, "Çek No": x.cekNo, Banka: x.banka, Cari: x.cari, Tutar: x.tutar, "P.B.": x.pb })));
     sayfa("Cari bakiyeleri", v.cariBakiyeListesi.flatMap((x) => Object.entries(x.bakiye).map(([pb, t]) => ({ Cari: x.cari, Tip: x.tip, Bakiye: stokYuvarla(t), "P.B.": pb }))));
@@ -55955,7 +56082,7 @@ function CariCard({ onParaFisi, tanimlar, onTanimlarKaydet, onFiseGitNo, muhaseb
                                                                     ilk.cek.kesideci ? `keşideci ${ilk.cek.kesideci}` : "",
                                                                 ].filter(Boolean).map((p2) => ` · ${p2}`).join(""))),
                                                             ilk.aciklama && urunGruplari.length === 0 && yapisizHareketler.length === 0 && (React.createElement("div", { style: { fontSize: 11, color: "var(--erp-text-2)", marginBottom: 3 } }, ilk.aciklama)),
-                                                            sadeGorunum ? (React.createElement("div", { "data-ekstre-sade-ozet": "1", style: { display: "inline-block", verticalAlign: "middle", maxWidth: "100%", fontSize: 11, color: "var(--erp-text-2)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, hareketSadeOzet(urunGruplari, yapisizHareketler, ilk, g))) : (React.createElement(React.Fragment, null,
+                                                            sadeGorunum ? (urunGruplari.some((ug) => (ug.items || []).some((h) => h.beden != null && h.beden !== "")) ? (React.createElement(SadeBedenMatrisi, { urunGruplari: urunGruplari })) : (React.createElement("div", { "data-ekstre-sade-ozet": "1", style: { display: "inline-block", verticalAlign: "middle", maxWidth: "100%", fontSize: 11, color: "var(--erp-text-2)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, hareketSadeOzet(urunGruplari, yapisizHareketler, ilk, g)))) : (React.createElement(React.Fragment, null,
                                                                 urunGruplari.length > 0 && (React.createElement(FisKalemMatrisi, { urunGruplari: urunGruplari, stok: stok, kompakt: true })),
                                                                 yapisizHareketler.filter((h) => {
                                                                     // OTOMATİK AÇIKLAMA TEKRARI (v1.668.0 — kullanıcı: "alt açıklamada tahsilat banka adı yazıyor,
@@ -72241,7 +72368,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.744.5)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.744.8)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

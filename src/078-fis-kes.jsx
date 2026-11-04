@@ -220,6 +220,21 @@ function uretimSunucuFisSatirlari(stokKayitlari, cariKayitlari) {
   return { fisler: [...fisler].sort(), stokIdler, cariIdler };
 }
 
+// ÜRETİM SİLME — TEK SUNUCU İŞLEMİ (v1.744.8, fis-defteri.sql `uretim_sil`). Fiş defteri kuruluyken üretim silme eskiden fişleri
+// tek tek iptal edip üretim kaydını ayrı REST isteğiyle siliyordu; fis_kes ile kesilmemiş (eski) hareketlerin iptali köprüde ağa
+// çıkmadan durdurulduğu için sunucuda "üretim yok, hareketleri geçerli" yarım hâli kalıyordu (kural provası, 4 Kasım). Şimdi
+// hepsi TEK işlemde: sunucu üretimin hareketlerini kendisi bulur (+ bu ekranın eşleştirdiği satır kimlikleri), fişsiz eski satır,
+// başka kayıt taşıyan eski fiş ya da bu ekranda görünmeyen hareket varsa reddeder (KR010) — hiçbir şey değişmez; değilse fişleri
+// iptal eder ve üretimi siler. Sunucuda işlem kurulu değilse (eski sunucu) `uretimSilSunucuYok` doğru döner; çağıran ona göre davranır.
+async function uretimSilGonder(p) {
+  const r = await supabaseIstek("rpc/uretim_sil", { method: "POST", body: JSON.stringify({ p: { ...p, istemci: fisIstemciBilgisi() } }) });
+  if (!r || (r.silindi !== true && r.zatenYok !== true)) throw new Error("Sunucu üretim silme sonucunu döndürmedi");
+  return r;
+}
+function uretimSilSunucuYok(e) {
+  return /PGRST202|Could not find the function|uretim_sil/i.test(String((e && e.message) || e)) && !/KR010/.test(String((e && e.message) || e));
+}
+
 // STOK TARAFINI UYGULA (v1.733.1 — üretim, numune ve ileride stok formları ortak): sunucu yazdıktan sonra etkilenen ürünlerin yeni
 // hâli (`doldur` yer tutucuyu numarayla değiştirir) ekrana, yerel kopyaya ve fark tabanına. Ürünün ANA satırı da değiştiyse (reçete
 // gerçekleşmesi gibi — fiş satırı değil) o ana satır bugünkü yoldan yazılır; hareket ve varyant satırları tabanda (yeniden gitmez).
