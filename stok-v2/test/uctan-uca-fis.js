@@ -24,7 +24,11 @@ global.fetch = async (url, sec = {}) => {
     const metin = JSON.stringify(p);
     if (metin.includes("$j$")) throw new Error("test: yük $j$ içeriyor");
     try {
+      // İKİ KORUMA KİPİ (IKI_KORUMA=1): uygulamanın gönderdiği sürüm başlığı oturuma yazılır (yoksa '{}' → kapı reddeder).
+      const h = (sec.headers || {})["x-atolye-surum"];
+      const baslik = process.env.IKI_KORUMA === "1" ? `select set_config('request.headers', '${JSON.stringify(h ? { "x-atolye-surum": h } : {})}', false);` : "";
       const sonuc = psql(`select set_config('request.jwt.claims', '{"email":"ali@atolye.local","role":"authenticated"}', false);
+                          ${baslik}
                           set role authenticated;
                           select public.${rpcAdi}($j$${metin}$j$::jsonb);`).split("\n").pop();
       return { ok: true, status: 200, json: async () => JSON.parse(sonuc), text: async () => sonuc };

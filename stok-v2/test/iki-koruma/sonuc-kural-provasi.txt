@@ -1,0 +1,37 @@
+# test/kural-provasi.js (ağ denetimiyle) · uygulama 1.744.7 · 4 Kasım 2026 · KOSU_IS=6
+kural provası: 261 senaryo, fiş yolunda eski yol hareket yazması: 0
+ağa çıkmadan engellenen eski yol girişimi: 12
+  engellenen · senaryo-logo-kucult: 1
+  engellenen · senaryo-sapma-silinen-uretim: 8
+  engellenen · senaryo-yazma-hatasi: 3
+AĞ DENETİMİ (sürüm 1.744.7) — ağa çıkan yazma isteği: 12308 (+ Edge Function 6)
+  sürüm başlığı OLMAYAN yazma (kapı açıkken AT001): 0
+  başka sürüm başlıklı yazma: 0
+  hareket tablosuna DOĞRUDAN yazma (kurallar açıkken red): 0
+  satır taşıyan köprü isteği (kurallar açıkken red): 0
+  kapsam — sunucu işlemleri (istek gören senaryo sayısı):
+      alt_yaz: 1
+      fis_bag_coz: 1
+      fis_bilgi: 1
+      fis_iptal: 14
+      fis_kes: 56
+      site_hesap_bilgi: 5
+      site_hesap_kaydet: 1
+      site_hesap_sil: 1
+      site_kayit_listesi: 259
+      stk_renk_tasi: 1
+  kapsam — tablo yazmaları (istek gören senaryo sayısı):
+      DELETE cop: 1
+      DELETE stok_rezervasyonlari: 1
+      DELETE uretim: 1
+      POST cariler: 254
+      POST cek_gorselleri: 1
+      POST cop: 10
+      POST gunluk: 89
+      POST siparisler: 39
+      POST stok_rezervasyonlari: 4
+      POST tanimlar: 257
+      POST uretim: 16
+      POST urunler: 54
+senaryo çalıştırma hatası: 0
+CIKIS 0

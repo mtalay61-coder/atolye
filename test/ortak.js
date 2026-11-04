@@ -65,6 +65,20 @@ async function uygulamaAc(tohum = {}, { hataYaz = true, onceRota = null, tarayic
     // Kancanın kendi sınaması: PROVA_FISSIZ=1 → fiş defteri KURULMAMIŞ v2 sunucu (eski yol çalışmalı ve kayda düşmeli).
     if (process.env.PROVA_FISSIZ === "1") { stkAyar = { ...stkAyar }; delete stkAyar.fis_aktif; }
     await sayfa.addInitScript(() => { window.__eskiYolKaydi = []; });
+    // AĞ DENETİMİ (4 Kasım, iki koruma öncesi): uygulamanın kendi kaydına (eskiYolKaydi) ek olarak AĞA ÇIKAN her yazma isteği
+    // kaydedilir — sürüm kapısı her yazmada `x-atolye-surum` ister (yoksa / eskiyse AT001), fiş kuralları hareket tablolarına
+    // doğrudan yazmayı ve köprüden satır taşıyan yazmayı reddeder. Kahin kural-provasi.js'de: başlıksız / yanlış sürümlü yazma 0,
+    // doğrudan hareket tablosu yazması 0, satır taşıyan köprü isteği 0. Edge Function çağrıları ayrı sayılır (servis rolüyle
+    // yazar, kapı onları denetlemez).
+    const agKaydi = [];
+    sayfa.on("request", (q) => {
+      const m = q.method(); const u = q.url();
+      if (!/\/(rest|functions)\/v1\//.test(u) || /^(GET|HEAD|OPTIONS)$/.test(m)) return;
+      const yol = u.replace(/^.*?\/(rest|functions)\/v1\//, "$1/").replace(/\?.*$/, "");
+      let govde = ""; try { govde = q.postData() || ""; } catch (e) { /* gövdesiz */ }
+      agKaydi.push({ ag: true, m, yol, surum: q.headers()["x-atolye-surum"] || null,
+        satirli: /rpc\/(stk_yaz|car_yaz|kas_yaz|fis_yaz)$/.test(yol) && /"(satirlar|hareketler|iptal|hareketIptal)":\[(\{|")/.test(govde) });
+    });
     let sira = 0;
     await sayfa.route("**/rest/v1/rpc/fis_kes**", (r) => {
       const p = (JSON.parse(r.request().postData() || "{}").p) || {};
@@ -85,7 +99,8 @@ async function uygulamaAc(tohum = {}, { hataYaz = true, onceRota = null, tarayic
         const dizin = process.env.PROVA_DIZIN || "/tmp/kural-provasi";
         fs.mkdirSync(dizin, { recursive: true });
         const ad = path.basename(process.argv[1] || "senaryo", ".js");
-        fs.appendFileSync(path.join(dizin, `${ad}.jsonl`), kayit.map((k) => JSON.stringify(k)).join("\n") + (kayit.length ? "\n" : ""));
+        const hepsi = [...kayit, ...agKaydi];
+        fs.appendFileSync(path.join(dizin, `${ad}.jsonl`), hepsi.map((k) => JSON.stringify(k)).join("\n") + (hepsi.length ? "\n" : ""));
       } catch (e) { /* sayfa kapanmış */ }
       return kapat();
     };
