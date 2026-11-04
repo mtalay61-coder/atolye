@@ -1238,7 +1238,9 @@ declare t text;
 begin
   for t in select tablename from pg_tables where schemaname='public' and tablename <> 'stk_istemci_iz' order by tablename loop
     execute format('drop trigger if exists stk_istemci_koru on public.%I',t);
-    execute format('create trigger stk_istemci_koru before insert or update or delete on public.%I for each row execute function public.stk_istemci_koru()',t);
+    if t not like 'site\_%' then
+      execute format('create trigger stk_istemci_koru before insert or update or delete on public.%I for each row execute function public.stk_istemci_koru()',t);
+    end if;
   end loop;
 end $$;
 select public.stk_istemci_kapi_kur();
