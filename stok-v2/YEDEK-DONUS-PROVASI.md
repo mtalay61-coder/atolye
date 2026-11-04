@@ -10,6 +10,14 @@ oturumuna girmez**. Sohbete yalnız `ozet.txt` / envanter / karşılaştırma ç
 
 Sıra: **1 panel kontrolü → 2 envanter → 3 bağımsız döküm → 4 ayrı ortamda geri yükleme → 5 doğrulama → 6 temizlik.**
 
+## 0. Panel sonucu (kullanıcı, 4 Kasım)
+
+**Free plan; Scheduled backups erişimi YOK; PITR açık DEĞİL.** Ücretli yükseltme yapılmadı. Sonuç: Supabase tarafında geri
+yüklenebilir yedek yok — **tek yedek, kullanıcının alacağı bağımsız döküm** (§ 3). Yol: bağımsız döküm + ayrı ortamda geri
+yükleme. Free plana özgü notlar: doğrudan bağlantı (Direct) yalnız IPv6 olabilir → **Session pooler** kullanılır; ayrı Supabase
+prova projesi için ikinci ücretsiz proje hakkı gerekir (yoksa yerel PostgreSQL hedefi); döküm düzenli alınmazsa felakette
+dönülecek nokta son dökümdür.
+
 ## 1. Panel yedeği ve PITR — kontrol adımları (kullanıcı; hiçbir şey değiştirmez)
 
 Menü adları Supabase sürümüne göre değişebilir; bulunamayan adımı "bulamadım" diye bildirin. Hiçbir düğmeye ("Restore",
