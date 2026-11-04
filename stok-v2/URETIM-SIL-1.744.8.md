@@ -54,7 +54,13 @@ Kapsam: eski fişli (stok + cari) · eski fişli + sunucu işlemi yok · fişsiz
 yarış iki yönde · başka kayıt taşıyan eski fiş · son adımda hata · görünmeyen hareket · çöp: eski fişli ürün, fişsiz cari ·
 tutarlılık (silinmiş üretime geçerli hareket yok; iptal fişte geçerli satır yok; geçerli fişte iptal satır yok).
 
-Regresyon: bkz. DEVAM-NOTU "1.744.8" ve PR açıklaması (kos-butunluk, iki koruma, kos-guvenlik, gecis-provasi, tarayıcı senaryoları).
+Regresyon (`stok-v2/test/uretim-sil/sonuc-regresyon.txt`; uygulama + SQL commit 0649412):
+- `kos-butunluk.sh` (t-uretim-sil dahil) çıkış 0 · `kos-iki-koruma.sh` (kurallar + kapı açık, t-uretim-sil dahil) TEMİZ ·
+  `kos-guvenlik.sh` (876124c; t-koruma-paketleri, t-uretim-paketi dahil) TEMİZ · `gecis-provasi.sh` TEMİZ · `./yap.sh` bütün denetimler temiz.
+- Tarayıcı (`test/kosu.sh`): 257 AYNI, 4 FARKLI — `tedarik-girisleri` bu ortamda ağ kısıtı (bilinen); `bekleyen-birak`, `sekmeler`,
+  `resim-damga` tek başına da farklı ve 1.744.7 (değişiklik öncesi) çıktısıyla BİREBİR AYNI → önceden var olan fark, bu değişiklikten
+  değil; altınlar güncellenmedi (ayrı inceleme konusu).
+- Kural provası: `sapma-silinen-uretim` ağa çıkmadan engellenen girişim 8 → 0 (yalnız `rpc/uretim_sil`, üretim REST silmesi yok).
 
 ## Canlıya (ayrı onaylar; şimdi YAPILMADI)
 1. `guvenlik/12-uretim-sil-kur.sql` → `12-sonra-dogrula.sql` 6/6 (veriye dokunmaz; geri alma `12-geri-al.sql`).

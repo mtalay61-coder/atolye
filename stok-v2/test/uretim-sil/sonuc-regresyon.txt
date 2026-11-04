@@ -1,0 +1,21 @@
+# 1.744.8 regresyon koşuları · 4 Kasım 2026
+# Uygulama kaynağı ve SQL: commit 0649412 (sonrası yalnız t-uretim-paketi.sh testi değişti → kos-guvenlik 876124c üzerinde)
+
+kos-butunluk.sh (t-uretim-sil dahil) ........ CIKIS 0 · BÜTÜNLÜK ADAYI: bütün süreçler 0
+  t-uretim-sil: ── t-uretim-sil.js: temiz ──
+kos-iki-koruma.sh (kurallar + kapı açık) .... CIKIS 0 · ── İKİ KORUMA: TEMİZ ──
+    ✓ stok-v2/test/uretim-sil/t-uretim-sil.js · korumalar sonra: true/1.744.8
+kos-guvenlik.sh (876124c) ................... CIKIS 0 · ── GÜVENLİK SINAMASI TEMİZ ──
+     ✓ t-koruma-paketleri 34 yeşil
+     ✓ t-uretim-paketi 12 yeşil
+gecis-provasi.sh ............................ CIKIS 0 · ── GEÇİŞ PROVASI TEMİZ ──
+test/kosu.sh (tarayıcı, KOSU_IS=4) .......... 257 AYNI, 4 FARKLI:
+    senaryo bekleyen-birak FARKLI
+    senaryo sekmeler FARKLI
+    senaryo tedarik-girisleri FARKLI
+    senaryo resim-damga FARKLI
+  tedarik-girisleri: bu ortamda ağ kısıtı (CLAUDE.md'de bilinen).
+  bekleyen-birak, sekmeler, resim-damga: tek başına da FARKLI; 1.744.7 (değişiklik öncesi, ayrı çalışma ağacı) çıktısıyla BİREBİR AYNI
+  → bu değişiklikten değil, önceden var olan fark (altın güncellenmedi).
+kural provası (1.744.8, üretim/çöp senaryoları): sapma-silinen-uretim engellenen 8 → 0 (yalnız rpc/uretim_sil, üretim REST silmesi YOK);
+  logo-kucult 1 + yazma-hatasi 3 engel kaldı (tohum açılış hareketi / test düzeneğinin tek ürünlü stok listesi — çöp kaydının kendisi hareketsiz).
