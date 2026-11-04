@@ -50,3 +50,10 @@ stk_nrm, stk_sayi, stk_yer_tutucu_mu, stk_zaman, surum_arttir. (guncelleme_yaz v
 
 Sonuç beklenenle birebir: `ozet | kapanacak 22 · yolu sabitlenecek 20 · girişsiz açık kalacak 9` ve `yol_zaten_sabit | public.site_pb(text)`.
 Başka satır yok → KİLİT'ler canlıyla uyuşuyor; `guvenlik.yedek` henüz yok (ilk uygulama).
+
+## 0b canlı değer doğrulaması (4 Kasım) — VERİ EKSİKLİĞİ NEDENİYLE DOĞRULANAMADI
+
+`0b-hareketli-musteri.sql`: canlıda tek site hesabı var (deneme.musteri, Deneme Müşteri, defter Genel) ve **hiç cari hareketi yok**.
+Devir, dönem hareketleri ve bakiye canlıda sınanamadı; yalnız yerel `t-portal-hesap.js` ile doğrulandı. Kullanıcı kararı: sırf test
+için canlıya hareket eklenmez. Canlıda doğrulanan: düzeltme yerinde (A), para birimi boş kayıt yok (B), sayfa hatasız açılıyor (C).
+Açık iş: ilk gerçek site müşterisinin hareketi oluşunca hesap sayfası ile ERP cari kartı karşılaştırılacak.
