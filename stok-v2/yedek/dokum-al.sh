@@ -7,7 +7,9 @@
 #   public.dump        public şeması: tablolar, satırlar, fonksiyonlar, tetikleyiciler, yetkiler (pg_dump -Fc)
 #   auth-storage.sql   auth ve storage şemalarının yalnız SATIRLARI (kullanıcılar, kova kayıtları). Dosyaların kendisi YOK.
 #   envanter-kaynak.csv  dökümden HEMEN ÖNCE alınan envanter (karşılaştırmanın kaynağı)
-#   ozet.txt           tarih, süreler, dosya boyutları, sha256 — içerik değil; sohbete yapıştırılabilir
+#   ozet.txt           tarih, süreler, dosya boyutları, sha256 ve kaynak bağlantısının yalnız ÖZETİ (host / kullanıcı adı
+#                      yazılmaz) — prova-geri-yukle.sh bu özetle "hedef = kaynak" karışmasını reddeder; sohbete yapıştırılabilir
+# HATADA DURUR: herhangi bir adım hata verirse yarım dosyalar silinir, klasörde yalnız YARIM-KALDI.txt kalır, çıkış ≠ 0.
 # cron işleri BİLEREK dökülmez: provada çalışırsa canlı gün sonu fonksiyonunu çağırabilir. Envanterde listelenir.
 #
 # Kullanım:
@@ -24,10 +26,15 @@ if git -C "$HEDEF" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   echo "DUR: $HEDEF bir git deposunun içinde. Döküm müşteri verisi içerir — depo dışında bir klasör seçin."; exit 2; fi
 if [ -n "$(ls -A "$HEDEF")" ]; then echo "DUR: $HEDEF boş değil (eski dökümün üstüne yazılmaz)."; exit 2; fi
 umask 077
+bitti=0
+temizle() { if [ "$bitti" != 1 ]; then rm -f "$HEDEF"/public.dump "$HEDEF"/auth-storage.sql "$HEDEF"/envanter-kaynak.csv "$HEDEF"/ozet.txt
+  echo "döküm YARIM KALDI ($(date -u +%FT%TZ)); dosyalar silindi. Hata ekranda." > "$HEDEF/YARIM-KALDI.txt"
+  echo "DUR: döküm tamamlanmadı; yarım dosyalar silindi." >&2; fi; }
+trap temizle EXIT
 for a in pg_dump psql sha256sum; do command -v "$a" >/dev/null || { echo "DUR: $a bulunamadı (PostgreSQL istemcisi kurulu olmalı)."; exit 2; }; done
 
 BAG=(-h "$KAYNAK_HOST" -p "$PORT" -U "$KAYNAK_KULLANICI" -d "$DB")
-sunucu=$(psql -X -At "${BAG[@]}" -c "show server_version_num")
+sunucu=$(psql -X -At -v ON_ERROR_STOP=1 "${BAG[@]}" -c "show server_version_num")
 istemci=$(pg_dump --version | grep -oE '[0-9]+' | head -1)
 if [ "$istemci" -lt $((sunucu / 10000)) ]; then
   echo "DUR: pg_dump $istemci, sunucu $((sunucu / 10000)). pg_dump sunucu sürümünden eski olamaz."; exit 2; fi
@@ -47,6 +54,7 @@ pg_dump "${BAG[@]}" --format=plain --data-only --no-owner --schema=auth --schema
 
 {
   echo "döküm tarihi: $(date -u +%FT%TZ) · sunucu $sunucu · pg_dump $(pg_dump --version | awk '{print $NF}')"
+  echo "kaynak kimliği (özet): $(printf '%s|%s|%s|%s' "$(printf '%s' "$KAYNAK_HOST" | tr '[:upper:]' '[:lower:]')" "$PORT" "$KAYNAK_KULLANICI" "$DB" | sha256sum | cut -c1-16)"
   echo "süre: public $((t1 - t0)) sn · auth+storage $((t2 - t1)) sn"
   for f in public.dump auth-storage.sql envanter-kaynak.csv; do
     echo "$f · $(wc -c < "$HEDEF/$f") bayt · sha256 $(sha256sum "$HEDEF/$f" | cut -c1-16)…"; done
@@ -54,5 +62,6 @@ pg_dump "${BAG[@]}" --format=plain --data-only --no-owner --schema=auth --schema
   echo "kapsam dışı: storage DOSYALARI, Edge Function gizli değerleri, Authentication/proje ayarları, cron işleri (envanterde listeli)"
 } > "$HEDEF/ozet.txt"
 chmod 600 "$HEDEF"/*
+bitti=1
 cat "$HEDEF/ozet.txt"
 echo "TAMAM. Klasörü şifreli bir yerde saklayın; sohbete yalnız ozet.txt yapıştırılabilir."
