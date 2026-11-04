@@ -906,16 +906,36 @@ declare
   v_id text := nullif(btrim(coalesce(p ->> 'id', '')), '');
   v_stk text[] := array(select jsonb_array_elements_text(public.stk_dizi(p -> 'stokIdler')));
   v_car text[] := array(select jsonb_array_elements_text(public.stk_dizi(p -> 'cariIdler')));
+  v_kilitli text[];
   v_fisler text[];
+  v_kalemler text[];
   v_fissiz text;
   v_yabanci text;
   v_iptal jsonb := null;
+  kid text;
 begin
   perform public.stk_yetki(array['uretim'], 'silme');
   if v_id is null then raise exception 'Üretim kimliği yok' using errcode = '22023'; end if;
-  perform pg_advisory_xact_lock(hashtextextended('uretim:' || v_id, 0));
+  select array_agg(distinct x order by x) into v_kilitli from (
+    select fis_id as x from public.stk_hareket where not iptal and (uretim_id = v_id or id = any(v_stk))
+    union select fis_id from public.car_hareket where not iptal and fis_id is not null and (uretim_id = v_id or id = any(v_car))
+    union select id from public.stk_fis where not iptal and uretim_id = v_id) a;
+  select array_agg(distinct x order by x) into v_kilitli from (
+    select unnest(coalesce(v_kilitli, '{}')) as x
+    union select bagli_fis from public.stk_fis where id = any(coalesce(v_kilitli, '{}')) and bagli_fis is not null) a;
+  v_kilitli := coalesce(v_kilitli, '{}');
+  select array_agg(distinct coalesce(kalem_id, gecmis_kalem_id) order by coalesce(kalem_id, gecmis_kalem_id)) into v_kalemler
+    from public.stk_hareket where fis_id = any(v_kilitli) and coalesce(kalem_id, gecmis_kalem_id) is not null;
+  perform public.fis_kalem_kilitle(v_kalemler);
+  for kid in select distinct cek_id from public.fis_cek_iz where fis_id = any(v_kilitli) order by cek_id loop
+    perform pg_advisory_xact_lock(hashtextextended('kas_cek:' || kid, 0));
+  end loop;
+  perform public.kas_hesap_kilitle(jsonb_build_object('hesaplar', (select coalesce(jsonb_agg(jsonb_build_object('id', a.id, 'tur', a.tur, 'veri', a.veri)), '[]'::jsonb)
+    from public.kas_hesap a where a.id in (select hesap_id from public.kas_hareket where fis_id = any(v_kilitli)))));
+  perform 1 from public.stk_fis where id = any(v_kilitli) order by id for update;
   perform 1 from public.uretim where id = v_id for update;
   if not found then return jsonb_build_object('silindi', false, 'zatenYok', true, 'fisler', '[]'::jsonb); end if;
+  perform pg_advisory_xact_lock(hashtextextended('uretim:' || v_id, 0));
   select string_agg(id, ', ' order by id) into v_fissiz from public.car_hareket
    where not iptal and fis_id is null and (uretim_id = v_id or id = any(v_car));
   if v_fissiz is not null then
@@ -933,6 +953,10 @@ begin
     select fis_id as x from public.stk_hareket where not iptal and (uretim_id = v_id or id = any(v_stk))
     union select fis_id from public.car_hareket where not iptal and fis_id is not null and (uretim_id = v_id or id = any(v_car))
     union select id from public.stk_fis where not iptal and uretim_id = v_id) a;
+  select string_agg(x, ', ' order by x) into v_yabanci from unnest(coalesce(v_fisler, '{}')) x where not x = any(v_kilitli);
+  if v_yabanci is not null then
+    raise exception 'KR010: Silme sırasında üretime yeni fiş yazıldı (%) — sayfayı yenileyip yeniden deneyin; hiçbir kayıt değişmedi', v_yabanci using errcode = 'KR010';
+  end if;
   select string_agg(f.id, ', ' order by f.id) into v_yabanci from public.stk_fis f
    where f.id = any(coalesce(v_fisler, '{}')) and not (f.istek is not null and f.uretim_id is not distinct from v_id) and (
      exists (select 1 from public.stk_hareket h where h.fis_id = f.id and not h.iptal and h.uretim_id is distinct from v_id and not h.id = any(v_stk))

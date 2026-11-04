@@ -1061,8 +1061,8 @@ grant execute on function public.fis_iptal_toplu(jsonb) to authenticated;
 --   2) uretim_silme_koru — üretim kaydı (hangi yoldan olursa olsun: eski istemci, REST) geçerli stok / cari hareketi varken
 --      SİLİNEMEZ. SQL Editor / bakım oturumu (jwt yok) muaftır.
 --   3) uretim_bag_koru + uretim_silinen — yarış: silme ile aynı üretime yeni fiş aynı anda gelirse işlem kilidi (üretim başına
---      danışma kilidi; silme özel, hareket yazımı paylaşımlı) sıraya sokar. Önce fiş: silme bekler ve yeni fişi de görür. Önce silme:
---      fiş bekler, üretimin silindiğini (iz tablosu) görür ve KR010 ile reddedilir. Var olmayan / henüz eşitlenmemiş üretime yazma
+--      danışma kilidi; silme özel, hareket yazımı paylaşımlı) sıraya sokar. Önce fiş: silme bekler, araya giren fişi görür ve KR010
+--      ile reddedilir (hiçbir şey değişmez). Önce silme: fiş bekler, üretimin silindiğini (iz tablosu) görür ve KR010 ile reddedilir. Var olmayan / henüz eşitlenmemiş üretime yazma
 --      ENGELLENMEZ — yalnız SİLİNMİŞ üretime (çöpten geri yükleme izi kaldırır).
 create table if not exists public.uretim_silinen (
   id text primary key,
@@ -1114,22 +1114,56 @@ create trigger uretim_bag_koru before insert or update of uretim_id on public.ca
 -- p = { id, sebep?, stokIdler?, cariIdler? } — satır kimlikleri istemcinin eşleştirdiği eski satırlar (uretim_id taşımayan eski
 -- kayıtta bağ yalnız fiş numarasında olabilir). Liste verilirse listede olmayan geçerli hareket reddedilir (görünmeyen hareket).
 -- Dönüş: { silindi, zatenYok?, fisler }.
+--
+-- YETKİ: security definer (tablolara uygulama yetkisi gerekmez), sabit search_path; çağıran giriş yapmış olmalı ve Üretim modülünde
+-- SİLME yetkisi taşımalı (stk_yetki); fis_iptal_toplu fiş iptali için ayrıca denetler. anon / PUBLIC çalıştıramaz.
+-- KİLİT SIRASI (kilitlenme olmasın — fis_kes ve doğrudan silmeyle AYNI sıra):
+--   1) iptal edilecek fişlerin kalem / çek / kasa hesabı / fiş başlığı kilitleri (fis_iptal_toplu'nun sırası: kalem → çek → kasa →
+--      fiş). fis_kes de önce kalem / kasa kilitlerini alır, üretim kilidini satır yazarken (uretim_bag_koru) ister;
+--   2) üretim satırı (FOR UPDATE) — doğrudan REST silme de önce satırı kilitler;
+--   3) üretim danışma kilidi (özel) — uretim_silme_koru ve uretim_bag_koru (paylaşımlı) ile aynı anahtar.
+--   Kilitler alındıktan SONRA fiş kümesi yeniden hesaplanır; 1)'de kilitlenmemiş yeni bir fiş çıktıysa (başka cihaz o arada yazdı)
+--   KR010 ile reddedilir — yeni kilit istemek sırayı bozardı.
+-- HATA: işlemin her adımı aynı veritabanı işleminde; herhangi bir raise (KR010, fis_iptal_toplu hatası, silme koruması, sürüm
+--   kapısı AT001) işlemi TAMAMEN geri alır — fiş iptalleri dahil.
 create or replace function public.uretim_sil(p jsonb) returns jsonb
 language plpgsql security definer set search_path = public, extensions, pg_temp as $$
 declare
   v_id text := nullif(btrim(coalesce(p ->> 'id', '')), '');
   v_stk text[] := array(select jsonb_array_elements_text(public.stk_dizi(p -> 'stokIdler')));
   v_car text[] := array(select jsonb_array_elements_text(public.stk_dizi(p -> 'cariIdler')));
+  v_kilitli text[];
   v_fisler text[];
+  v_kalemler text[];
   v_fissiz text;
   v_yabanci text;
   v_iptal jsonb := null;
+  kid text;
 begin
   perform public.stk_yetki(array['uretim'], 'silme');
   if v_id is null then raise exception 'Üretim kimliği yok' using errcode = '22023'; end if;
-  perform pg_advisory_xact_lock(hashtextextended('uretim:' || v_id, 0));
+  -- 1) fiş kilitleri — fis_iptal_toplu'nun sırasıyla (hedef + bağlı fiş)
+  select array_agg(distinct x order by x) into v_kilitli from (
+    select fis_id as x from public.stk_hareket where not iptal and (uretim_id = v_id or id = any(v_stk))
+    union select fis_id from public.car_hareket where not iptal and fis_id is not null and (uretim_id = v_id or id = any(v_car))
+    union select id from public.stk_fis where not iptal and uretim_id = v_id) a;
+  select array_agg(distinct x order by x) into v_kilitli from (
+    select unnest(coalesce(v_kilitli, '{}')) as x
+    union select bagli_fis from public.stk_fis where id = any(coalesce(v_kilitli, '{}')) and bagli_fis is not null) a;
+  v_kilitli := coalesce(v_kilitli, '{}');
+  select array_agg(distinct coalesce(kalem_id, gecmis_kalem_id) order by coalesce(kalem_id, gecmis_kalem_id)) into v_kalemler
+    from public.stk_hareket where fis_id = any(v_kilitli) and coalesce(kalem_id, gecmis_kalem_id) is not null;
+  perform public.fis_kalem_kilitle(v_kalemler);
+  for kid in select distinct cek_id from public.fis_cek_iz where fis_id = any(v_kilitli) order by cek_id loop
+    perform pg_advisory_xact_lock(hashtextextended('kas_cek:' || kid, 0));
+  end loop;
+  perform public.kas_hesap_kilitle(jsonb_build_object('hesaplar', (select coalesce(jsonb_agg(jsonb_build_object('id', a.id, 'tur', a.tur, 'veri', a.veri)), '[]'::jsonb)
+    from public.kas_hesap a where a.id in (select hesap_id from public.kas_hareket where fis_id = any(v_kilitli)))));
+  perform 1 from public.stk_fis where id = any(v_kilitli) order by id for update;
+  -- 2) üretim satırı, 3) üretim danışma kilidi
   perform 1 from public.uretim where id = v_id for update;
   if not found then return jsonb_build_object('silindi', false, 'zatenYok', true, 'fisler', '[]'::jsonb); end if;
+  perform pg_advisory_xact_lock(hashtextextended('uretim:' || v_id, 0));
   -- Fişsiz eski satır (yalnız cari / kasa'da olabilir; stk_hareket.fis_id zorunlu): sunucuda iptal yolu YOK → reddet.
   select string_agg(id, ', ' order by id) into v_fissiz from public.car_hareket
    where not iptal and fis_id is null and (uretim_id = v_id or id = any(v_car));
@@ -1150,6 +1184,11 @@ begin
     select fis_id as x from public.stk_hareket where not iptal and (uretim_id = v_id or id = any(v_stk))
     union select fis_id from public.car_hareket where not iptal and fis_id is not null and (uretim_id = v_id or id = any(v_car))
     union select id from public.stk_fis where not iptal and uretim_id = v_id) a;
+  -- Kilitler alınırken araya yeni fiş girdiyse (kilitlenmemiş) — yeni kilit istemek sırayı bozar: reddet.
+  select string_agg(x, ', ' order by x) into v_yabanci from unnest(coalesce(v_fisler, '{}')) x where not x = any(v_kilitli);
+  if v_yabanci is not null then
+    raise exception 'KR010: Silme sırasında üretime yeni fiş yazıldı (%) — sayfayı yenileyip yeniden deneyin; hiçbir kayıt değişmedi', v_yabanci using errcode = 'KR010';
+  end if;
   -- Fişin TAMAMI iptal edilir: üretime ait olduğu fiş başlığından (sunucu fişi: stk_fis.uretim_id) ya da bütün geçerli satırlarından
   -- (eski fiş) kesin değilse reddet — başka bir kaydın satırı birlikte iptal edilmesin.
   select string_agg(f.id, ', ' order by f.id) into v_yabanci from public.stk_fis f

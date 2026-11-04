@@ -1,68 +1,94 @@
-# 1.744.8 — Üretim silme ve çöpten geri yükleme yarım kalmaz (incelemeye; 4 Kasım)
+# 1.744.8 — Üretim silme ve çöpten geri yükleme yarım kalmaz (İNCELEME PAKETİ; 4 Kasım)
 
-Dalda; **yayınlanmadı** (surum.json 1.744.7'de), main'e birleştirilmedi, canlıya SQL uygulanmadı. Canlı veri silinmedi,
+Dalda; **yayınlanmadı** (surum.json 1.744.7), main'e birleştirilmedi, canlıya SQL (12) uygulanmadı. Canlı veri silinmedi,
 dönüştürülmedi, iptal edilmedi. Koruma ayarları (fiş kuralları, sürüm kapısı) kapalı.
 
-## Hata (kural provası bulgusu)
+## 1. Hata
 
-Fiş defteri kuruluyken (canlıda kurulu) üretim silme:
-1. sunucu fişli (ÜRT) satırların fişlerini **tek tek** `fis_iptal` ile iptal ediyor,
-2. kalan (fis_kes ile **kesilmemiş**, eski) satırların iptalini köprüden göndermek istiyor — köprü bunu ağa çıkmadan durduruyor
-   (038, KR009), 040 kalıcı ret satırı "inceleme"ye ayırıp tabloyu kalanla yeniden gönderiyor ve **başarılı** dönüyor,
-3. adım başarılı sayıldığı için üretim kaydını ayrı REST isteğiyle siliyor.
+Fiş defteri kuruluyken (canlıda kurulu) üretim silme: sunucu fişli (ÜRT) fişleri tek tek iptal ediyor, kalan (fis_kes ile
+**kesilmemiş**, eski) satırların iptalini köprüden göndermek istiyor — köprü bunu ağa çıkmadan durduruyor (038, KR009), 040 kalıcı
+ret satırı "inceleme"ye ayırıp tabloyu kalanla yeniden gönderiyor ve **başarılı** dönüyor (`src/040-esitle.jsx:724`), üretim kaydı
+ayrı REST isteğiyle siliniyor. Gerçek PostgreSQL'de yeniden üretildi (`stok-v2/test/uretim-sil/sonuc-once.txt`, 18 kırmızı):
+sunucuda **üretim yok, stok ve cari hareketleri geçerli**; ekran hareketleri silinmiş gösteriyor, "silindi" deniyor, kopya çöpe
+gidiyor. Fişsiz eski cari hareketinde aynı. Çöpten geri yükleme: hareketli eski çöp kaydında kart yalnız ekranda geri geliyor.
 
-Sonuç (gerçek PostgreSQL'de yeniden üretildi, `stok-v2/test/uretim-sil/sonuc-once.txt`): sunucuda **üretim yok, stok ve cari
-hareketleri geçerli** (stok / cari etkisi geri alınmadı), ekranda hareketler silinmiş görünüyor, kullanıcıya "silindi" deniyor,
-kopyası çöpe gidiyor. Fişsiz eski cari hareketinde aynı. Ayrıca (1)'deki sıralı iptal yarıda koparsa ilk fişler iptal kalıyordu.
+## 2. Sunucu düzeltmesi (`stok-v2/fis-defteri.sql`; canlı için `stok-v2/guvenlik/12-uretim-sil-kur.sql` — aynı metin)
 
-Çöpten geri yükleme: hareketi olan eski çöp kaydı (ürün / cari) geri yüklenince kart ekranda geri geliyor, çöpten çıkıyor ama
-sunucuya hiçbir şey gitmiyor (köprü hareket satırlarını durduruyor) — ekran ve sunucu ayrışıyor.
+### 2.1 Yetkiler
 
-## Düzeltme
+| Nesne | Tür | search_path | authenticated | anon | PUBLIC | Not |
+|---|---|---|---|---|---|---|
+| `uretim_sil(jsonb)` | security definer | `public, extensions, pg_temp` | **çalıştırır** | hayır | hayır | içeride `stk_yetki(['uretim'],'silme')` — Üretim silme yetkisi olmayan kullanıcı 42501; `fis_iptal_toplu` fiş iptali yetkisini ayrıca denetler |
+| `uretim_silme_koru()` | security definer, tetikleyici | aynı | hayır | hayır | hayır | `uretim` BEFORE DELETE + AFTER INSERT (geri yükleme izi siler) |
+| `uretim_bag_koru()` | security definer, tetikleyici | aynı | hayır | hayır | hayır | `stk_hareket`, `car_hareket` BEFORE INSERT / UPDATE OF uretim_id |
+| `uretim_silinen` | tablo (iz) | — | yetki yok | yetki yok | yetki yok | RLS açık; yalnız tetikleyici yazar; sürüm kapısı tetikleyicisi kurulu |
 
-**Sunucu (stok-v2/fis-defteri.sql; canlı için ayrı paket `guvenlik/12-uretim-sil-kur.sql`):**
-- `uretim_sil(p)` — TEK İŞLEM. Üretimi kilitler; geçerli hareketlerini sunucunun kendi bağından (`uretim_id`) + istemcinin
-  eşleştirdiği satır kimliklerinden toplar. **Reddeder (KR010, hiçbir şey değişmez):** fişsiz eski satır; başka kayıt da taşıyan
-  eski fiş; istemcinin listesinde olmayan (bu ekranda görünmeyen, ör. başka cihazın az önce yazdığı) geçerli hareket. Değilse bütün
-  fişleri `fis_iptal_toplu` ile iptal eder, iptalden sonra geçerli satır kalmadığını denetler, üretimi siler. Herhangi bir adımda
-  hata → hepsi geri alınır.
-- `uretim_silme_koru` — geçerli stok / cari hareketi olan üretim **hangi yoldan olursa olsun** (eski istemci, REST) silinemez.
-  SQL Editor / bakım oturumu muaf. Çöpten geri yüklenen üretimin izini kaldırır.
-- `uretim_bag_koru` + `uretim_silinen` — yarış: silme ile aynı üretime yeni fiş aynı anda gelirse üretim başına danışma kilidi
-  sıraya sokar; önce fiş → silme bekler ve yeni fişi de görür; önce silme → fiş bekler, silinmiş üretime yazamaz (KR010).
-  Henüz eşitlenmemiş (var olmayan) üretime yazma ENGELLENMEZ — yalnız silinmiş olana.
+Önceki güvenlik sıkılaştırmasına (2-sikilastir) uygunluk, canlı benzeri sıkılaştırılmış kopyada 12'den SONRA doğrulandı
+(`t-uretim-paketi.sh`): `2-sonra-dogrula.sql` 8/8 tamam (girişsiz çalıştırabilen yine yalnız 9 site + yonetici_mi; search_path'i
+sabit olmayan fonksiyon 0; yeni fonksiyonlar girişsize kapalı), tablodaki her satır tek tek ölçüldü.
 
-**İstemci (1.744.8):**
-- `076-uretim-sil.jsx` — fiş defteri kuruluyken ekrana / çöpe DOKUNMADAN önce `uretim_sil` çağrılır; reddedilirse sebep söylenir,
-  hiçbir kayıt değişmez. Sunucuda işlem kurulu değilse (canlının bugünkü hâli): eski hareket varsa silme **hiç denenmez**; yalnız
-  sunucu fişli üretim bugünkü yoldan silinir (ve paket kuruluysa REST silme de korumaya tabidir). Hareketsiz üretim de önce
-  sunucuya sorulur (görünmeyen hareket).
-- `077-cop.jsx` — fiş defteri kuruluyken hareketli eski çöp kaydı (ürün / cari) geri yüklenmez; kayıt çöpte kalır, sebep söylenir.
+### 2.2 Kilit sırası (kilitlenme olmaz)
+
+`uretim_sil` her yerde AYNI sırayla kilitler — `fis_kes` ve doğrudan silmeyle uyumlu:
+1. iptal edilecek fişlerin (+ bağlı fiş) kalem → çek → kasa hesabı → fiş başlığı kilitleri (`fis_iptal_toplu`'nun sırası);
+   `fis_kes` de önce kalem / kasa kilitlerini alır, üretim kilidini satır yazarken (`uretim_bag_koru`, paylaşımlı) ister;
+2. üretim satırı (`FOR UPDATE`) — doğrudan REST silme de önce satırı kilitler;
+3. üretim danışma kilidi (`uretim:<id>`, özel) — `uretim_silme_koru` ile aynı anahtar.
+
+Kilitler alındıktan SONRA fiş kümesi yeniden hesaplanır; 1)'de kilitlenmemiş yeni fiş çıktıysa (başka cihaz o arada yazdı) KR010 —
+yeni kilit istemek sırayı bozardı. **İnceleme sırasında bulunan hata:** 0649412'deki ilk sürüm üretim kilidini kalemden ÖNCE alıyordu;
+aynı kaleme eşzamanlı teslimle **kilitlenme (40P01)** oluşuyordu (veri tutarlı kalıyordu, ama kullanıcının teslimi nedensiz hatayla
+düşüyordu). `t-uretim-kilit.js` eski sırada 4 kırmızı (40P01, `sonuc-kilit-once.txt`), yeni sırada temiz.
+
+### 2.3 Hata durumunda tam geri alma
+
+Bütün adımlar TEK veritabanı işleminde. Herhangi bir `raise` — KR010 (fişsiz eski satır / başka kayıt taşıyan eski fiş / ekranda
+görünmeyen hareket / araya giren fiş / iptal sonrası kalan hareket), `fis_iptal_toplu` hatası, silme koruması, sürüm kapısı AT001,
+kilitlenme — işlemi **tamamen** geri alır, fiş iptalleri dahil. Sınandı: S3 (eski fiş başka kayıt taşıyor → aynı üretimin sunucu fişi
+de iptal EDİLMEZ), S4 (son adımda yapay hata → iptaller geri), S5 (görünmeyen hareket), F (bağlantı kopması, t-dayaniklilik).
+
+### 2.4 Eski istemci koruması
+
+1.744.7 (ve daha eski) cihazlar üretimi REST ile siler. `uretim_silme_koru` geçerli stok / cari hareketi olan üretimin silinmesini
+**hangi yoldan olursa olsun** reddeder (KR010; S1) → eski istemcide de "üretim yok, hareket geçerli" oluşmaz. Eski istemci ekranda
+"YARIM KALDI" görür, yenileyince düzelir. Silinmiş üretime hareket yazılamaz (`uretim_bag_koru` + iz tablosu; S2b). SQL Editor /
+bakım oturumu (jwt yok) muaf. Var olmayan / henüz eşitlenmemiş üretime yazma engellenmez — yalnız silinmiş olana.
+
+### 2.5 `12-geri-al.sql` neyi kaldırır
+
+**Kaldırır (üç koruma):** `uretim_sil` işlemi; üretim silme koruması (`uretim_silme_koru` tetikleyicileri ve işlevi); silinmiş
+üretime hareket kilidi (`uretim_bag_koru` tetikleyicileri ve işlevi). Geri almadan sonra 1.744.8 cihazlar eski hareketi olan
+üretimi SİLMEZ (hiçbir kayıt değişmez), yalnız sunucu fişli üretimi bugünkü (sıralı) yoldan siler; 1.744.7 cihazlar eski davranışa
+döner (yarım silme yeniden mümkün).
+**Kaldırmaz:** iz tablosu `uretim_silinen` (yalnız silinmiş üretim kimlikleri; RLS'i ve sürüm kapısı tetikleyicisiyle durur), hiçbir
+veri satırı. Sınandı: geri almadan sonra 12-sonra-dogrula satır 1–3 tamam değil, 4–6 tamam; satır sayıları aynı.
+
+## 3. İstemci (1.744.8; `src/` 0649412'den beri değişmedi)
+
+- `076-uretim-sil.jsx` — fiş defteri kuruluyken ekrana / çöpe DOKUNMADAN önce `uretim_sil`; reddedilirse sebep, hiçbir kayıt değişmez.
+  İşlem sunucuda yoksa (canlının bugünkü hâli): eski hareket varsa silme hiç denenmez; yalnız sunucu fişli üretim bugünkü yoldan.
+  Hareketsiz üretim de önce sunucuya sorulur (görünmeyen hareket).
+- `077-cop.jsx` — fiş defteri kuruluyken hareketli eski çöp kaydı (ürün / cari) geri yüklenmez.
 - `078-fis-kes.jsx` — `uretimSilGonder`, `uretimSilSunucuYok`.
 
-Uygulama kodunun geri kalanı değişmedi. 1.744.7 cihazlar paket 12 kurulunca da korunur: yarım silme REST adımında sunucu
-tarafından reddedilir (ekranda "YARIM KALDI" uyarısı; yenileyince düzelir) — veri tutarlı kalır.
+## 4. Testler
 
-## Testler (yerel)
-
-| Test | Önce (1.744.7 + eski SQL) | Sonra (1.744.8 + yeni SQL) |
+| Test | Önce | Sonra |
 |---|---|---|
-| `stok-v2/test/uretim-sil/t-uretim-sil.js` — gerçek PG, uygulamanın kendi `useUretimSil` / `useCopKutusu` kodu | **18 kırmızı** (`sonuc-once.txt`) | **31/31** (`sonuc-sonra.txt`) |
-| `t-uretim-paketi.sh` — paket 12, canlı benzeri kopya, kurallar ve kapı KAPALI (canlı gibi): kur, 6/6 doğrulama, tekrar zararsız, davranış testi, geri alma, veri değişmedi, Editor uyumu | — | 12/12 |
+| `t-uretim-sil.js` — gerçek PG, uygulamanın kendi `useUretimSil` / `useCopKutusu` kodu: eski fişli, eski fişli + işlem yok, fişsiz, sunucu fişli, S1–S5, çöp (eski fişli ürün, fişsiz cari), tutarlılık | 18 kırmızı (`sonuc-once.txt`) | 31/31 (`sonuc-sonra.txt`) |
+| `t-uretim-kilit.js` — kilitlenme | 4 kırmızı, 40P01 (`sonuc-kilit-once.txt`) | temiz |
+| `t-uretim-paketi.sh` — paket 12, sıkılaştırılmış canlı benzeri kopya, kurallar ve kapı KAPALI: kur, 6/6, tekrar zararsız, sıkılaştırma uygunluğu, yetkiler, kilit, davranış, geri alma (neyi kaldırdığı), veri aynı, Editor | — | `sonuc-regresyon.txt` |
 
-Kapsam: eski fişli (stok + cari) · eski fişli + sunucu işlemi yok · fişsiz cari · sunucu fişli (ÜRT) · doğrudan REST silme ·
-yarış iki yönde · başka kayıt taşıyan eski fiş · son adımda hata · görünmeyen hareket · çöp: eski fişli ürün, fişsiz cari ·
-tutarlılık (silinmiş üretime geçerli hareket yok; iptal fişte geçerli satır yok; geçerli fişte iptal satır yok).
+Regresyon (son hâl): `stok-v2/test/uretim-sil/sonuc-regresyon.txt`.
 
-Regresyon (`stok-v2/test/uretim-sil/sonuc-regresyon.txt`; uygulama + SQL commit 0649412):
-- `kos-butunluk.sh` (t-uretim-sil dahil) çıkış 0 · `kos-iki-koruma.sh` (kurallar + kapı açık, t-uretim-sil dahil) TEMİZ ·
-  `kos-guvenlik.sh` (876124c; t-koruma-paketleri, t-uretim-paketi dahil) TEMİZ · `gecis-provasi.sh` TEMİZ · `./yap.sh` bütün denetimler temiz.
-- Tarayıcı (`test/kosu.sh`): 257 AYNI, 4 FARKLI — `tedarik-girisleri` bu ortamda ağ kısıtı (bilinen); `bekleyen-birak`, `sekmeler`,
-  `resim-damga` tek başına da farklı ve 1.744.7 (değişiklik öncesi) çıktısıyla BİREBİR AYNI → önceden var olan fark, bu değişiklikten
-  değil; altınlar güncellenmedi (ayrı inceleme konusu).
-- Kural provası: `sapma-silinen-uretim` ağa çıkmadan engellenen girişim 8 → 0 (yalnız `rpc/uretim_sil`, üretim REST silmesi yok).
+## 5. 1.744.5 HTML
 
-## Canlıya (ayrı onaylar; şimdi YAPILMADI)
-1. `guvenlik/12-uretim-sil-kur.sql` → `12-sonra-dogrula.sql` 6/6 (veriye dokunmaz; geri alma `12-geri-al.sql`).
-2. 1.744.8'in yayını (main + surum.json) ayrı karar.
-Sıra önerisi: 12 → 1.744.8 yayını. 12 tek başına da güvenli (1.744.7 ile).
+`yap.sh` her derlemede yalnız en yeni 3 sürüm dosyasını bırakır (`git rm`); 1.744.8 eklenince 1.744.5 silinmişti. Hiçbir yer ona
+bağlantı vermiyor (surum.json → 1.744.7; index.html ve sw.js sürüm dosyası adı tutmaz). Bu düzeltme için gerekmediğinden silme PR'dan
+ÇIKARILDI (dosya main'deki hâliyle geri). Bir sonraki `yap.sh` derlemesi onu yeniden silecek — yayın derlemesinde karar verilir.
+
+## 6. Açık işler
+
+- Tarayıcı senaryolarında 4 fark (ACIK-ISLER madde 9): `tedarik-girisleri` (ağ kısıtı), `bekleyen-birak`, `sekmeler`, `resim-damga`
+  (1.744.7'de de birebir aynı — önceden var).
+- Canlıya (ayrı onaylar): 12 → 12-sonra-dogrula 6/6 → 1.744.8 yayını (main + surum.json).

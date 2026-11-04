@@ -54,6 +54,7 @@ TESTLER=(
   stok-v2/test/f2/t-f2.js
   stok-v2/test/f2/t-f2-kilit.js
   stok-v2/test/uretim-sil/t-uretim-sil.js
+  stok-v2/test/uretim-sil/t-uretim-kilit.js
 )
 kirmizi=0; kapatan=()
 for t in "${TESTLER[@]}"; do

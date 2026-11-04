@@ -27,6 +27,33 @@ k "ONCE.islem-yok" "$(q -c "select count(*) from pg_proc where proname = 'uretim
 k "KUR.hatasiz" "$(dosya $G/12-uretim-sil-kur.sql)" 0
 k "KUR.12-sonra-dogrula" "$(tamam)" "6/6"
 k "KUR.ikinci-kez-zararsiz" "$(dosya $G/12-uretim-sil-kur.sql):$(tamam)" "0:6/6"
+# GÜVENLİK SIKILAŞTIRMASINA UYGUNLUK (2-sikilastir / 2-sonra-dogrula, 4 Kasım): kopya sıkılaştırılmış (kos-guvenlik son hâli).
+#   - 2-sonra-dogrula.sql'in BÜTÜN satırları 12'den sonra da tamam (girişsiz yalnız 9 site + yonetici_mi; search_path sabit olmayan 0);
+#   - uretim_sil: security definer, search_path = public, extensions, pg_temp; authenticated ÇALIŞTIRIR; anon ve PUBLIC çalıştıramaz;
+#   - tetikleyici işlevleri (uretim_silme_koru, uretim_bag_koru): security definer, sabit search_path; anon / authenticated /
+#     PUBLIC çalıştıramaz (tetikleyici olarak çalışırlar, doğrudan çağrılamazlar);
+#   - iz tablosu (uretim_silinen): RLS açık, anon / authenticated hiçbir yetki yok.
+k "GUVENLIK.2-sonra-dogrula (12 sonrası)" "$(psql -X -q -At -F'|' -d "$DB" -f $G/2-sonra-dogrula.sql | awk -F'|' '{ n++; if ($4 == "t") t++; else bad = bad $1 "(" $3 ") " } END { print (bad == "" ? "hepsi " t "/" n : bad) }')" "hepsi 8/8"
+fn() { q -c "select p.prosecdef::text || '|' || coalesce(array_to_string(p.proconfig, ','), '-') || '|auth=' || has_function_privilege('authenticated', p.oid, 'execute')::text
+  || '|anon=' || has_function_privilege('anon', p.oid, 'execute')::text
+  || '|public=' || exists (select 1 from aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) a where a.grantee = 0 and a.privilege_type = 'EXECUTE')::text
+  from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = '$1'"; }
+YOL='search_path=public, extensions, pg_temp'
+k "GUVENLIK.uretim_sil" "$(fn uretim_sil)" "true|$YOL|auth=true|anon=false|public=false"
+k "GUVENLIK.uretim_silme_koru" "$(fn uretim_silme_koru)" "true|$YOL|auth=false|anon=false|public=false"
+k "GUVENLIK.uretim_bag_koru" "$(fn uretim_bag_koru)" "true|$YOL|auth=false|anon=false|public=false"
+k "GUVENLIK.iz-tablosu" "$(q -c "select c.relrowsecurity::text || '|' || has_table_privilege('anon', c.oid, 'select,insert,update,delete')::text || '|' || has_table_privilege('authenticated', c.oid, 'select,insert,update,delete')::text from pg_class c where c.oid = 'public.uretim_silinen'::regclass")" "true|false|false"
+k "GUVENLIK.yetki-denetimi (Üretim silme yetkisi yoksa red)" "$(psql -X -q -At -d "$DB" 2>&1 <<SQL | grep -oE "ERROR: +[0-9A-Z]{5}|SONUC" | head -1 | sed -E 's/ERROR: +//'
+\set VERBOSITY verbose
+begin;
+select set_config('request.jwt.claims', '{"email":"yetkisiz@atolye.local","role":"authenticated"}', true);
+set local role authenticated;
+select 'SONUC' || public.uretim_sil('{"id":"yok-boyle"}'::jsonb)::text;
+rollback;
+SQL
+)" 42501
+if STOK_V2_DB=$DB node stok-v2/test/uretim-sil/t-uretim-kilit.js > /tmp/uretim-paket-kilit.txt 2>/dev/null; then kl=temiz; else kl=kirmizi; fi
+k "DAVRANIS.t-uretim-kilit (kilitlenme yok)" "$kl" temiz
 if STOK_V2_DB=$DB node stok-v2/test/uretim-sil/t-uretim-sil.js > /tmp/uretim-paket-davranis.txt 2>/dev/null; then d=temiz; else d=kirmizi; fi
 grep -E "✗" /tmp/uretim-paket-davranis.txt | head -5
 k "DAVRANIS.t-uretim-sil (kurallar kapalı, canlı gibi)" "$d · $(grep -c '✓' /tmp/uretim-paket-davranis.txt) yeşil" "temiz · $(grep -c '✓' /tmp/uretim-paket-davranis.txt) yeşil"
@@ -35,6 +62,10 @@ once=$(sayim)
 k "GERI.hatasiz" "$(dosya $G/12-geri-al.sql)" 0
 k "GERI.islem-ve-tetikleyiciler-yok" "$(q -c "select (select count(*) from pg_proc where proname in ('uretim_sil', 'uretim_bag_koru', 'uretim_silme_koru')) + (select count(*) from pg_trigger where tgname in ('uretim_bag_koru', 'uretim_silme_koru', 'uretim_geri_yukle'))")" 0
 k "GERI.veri-degismedi" "$(sayim)" "$once"
+k "GERI.kalan (iz tablosu durur, veri; sürüm kapısı tetikleyicisi onunla)" "$(q -c "select (to_regclass('public.uretim_silinen') is not null)::text")" "true"
+# 12-geri-al YALNIZ üç korumayı kaldırır: uretim_sil işlemi (satır 1), üretim silme koruması (satır 2), silinmiş üretime hareket
+# kilidi (satır 3). İz tablosu, RLS'i ve sürüm kapısı tetikleyicisi KALIR (satır 4–5); kurallar / kapı zaten kapalı (satır 6).
+k "GERI.kalkan-uc-koruma (12-sonra: 1–3 değil, 4–6 tamam)" "$(psql -X -q -At -F'|' -d "$DB" -f $G/12-sonra-dogrula.sql | awk -F'|' '{ printf "%s", ($4 == "t" ? "t" : "f") }')" "fffttt"
 for f in 12-uretim-sil-kur 12-sonra-dogrula 12-geri-al; do python3 stok-v2/editor-icin.py $G/$f.sql > /dev/null 2>&1; k "EDITOR.$f" "$?" 0; done
 psql -X -q -d postgres -c "drop database $DB"
 echo "── t-uretim-paketi.sh: $([ $hata = 0 ] && echo temiz || echo "$hata kırmızı") ──"; exit $([ $hata = 0 ] && echo 0 || echo 1)

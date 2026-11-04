@@ -10,7 +10,7 @@
 //   SUNUCU FİŞİ ÜRT fişi fis_kes ile kesilmiş → fiş iptal + üretim silinir (tutarlı).
 // Sunucu güvencesi (istemcinin ön kontrolünden bağımsız):
 //   S1 doğrudan silme (eski istemci / REST) geçerli hareketi olan üretimi silemez.
-//   S2 yarış: uretim_sil ∥ aynı üretime yeni fiş — hangi sıra olursa olsun silinmiş üretime geçerli hareket kalmaz.
+//   S2 yarış: uretim_sil ∥ aynı üretime yeni fiş — önce fiş: silme reddedilir; önce silme: fiş reddedilir; ikisi de tutarlı.
 //   S3 eski fiş başka kayıt taşıyorsa reddedilir, aynı üretimin sunucu fişi de iptal EDİLMEZ (hepsi ya da hiçbiri).
 //   S4 son adımda hata (üretim silinemedi) → fiş iptalleri de geri alınır.
 //   S5 ekranın bilmediği (başka cihazın yazdığı) geçerli hareket varsa sessizce iptal edilmez — reddedilir.
@@ -169,7 +169,7 @@ function oturum(s, bekleSn = 0) {
   console.log("S2 — yarış: silme ∥ aynı üretime yeni fiş");
   if (!sunucuIslemiVar()) k("S2.uretim_sil", "yok", "var");
   else {
-    // (a) önce fiş (açık işlem), sonra silme: silme bekler, yeni fişi de iptal eder
+    // (a) önce fiş (açık işlem), sonra silme: silme bekler, araya giren fişi görür ve reddeder (hiçbir şey değişmez)
     const u = `${ON}-s2a`; sql(`set session_replication_role = replica; insert into public.uretim (id, siparis_no, urun_id, ek) values ('${u}', '${u}-NO', 'u-yeni', '{}');`);
     const p = { istek: `${u}-i`, fis: { aile: "stok", tur: "Üretim", onek: "ÜRT", kaynak: "Üretim", uretimId: u },
       stok: { satirlar: [{ id: `${u}-i-h`, urunId: "u-yeni", renk: "Siyah", miktar: -1, kaynak: "Üretim", uretimId: u }] } };
@@ -178,8 +178,8 @@ function oturum(s, bekleSn = 0) {
     const silIsi = oturum(`select public.uretim_sil('{"id":"${u}","sebep":"yarış"}'::jsonb)`);
     const [r1, r2] = await Promise.all([fisIsi, silIsi]);
     const d = durum(u);
-    k("S2a.sonuc (fiş ∥ silme)", [r1, r2], ["tamam", "tamam"]);
-    k("S2a.silinmis-uretime-gecerli-hareket-yok", [d.uretim, d.stok], ["yok", 0]);
+    k("S2a.sonuc (fiş ∥ silme)", [r1, r2], ["tamam", "KR010"]);
+    k("S2a.tutarli (üretim duruyor, yeni fiş geçerli)", [d.uretim, d.stok], ["var", 1]);
     // (b) önce silme (açık işlem), sonra fiş: fiş bekler, üretim silinmiş → reddedilir
     const u2 = `${ON}-s2b`; sql(`set session_replication_role = replica; insert into public.uretim (id, siparis_no, urun_id, ek) values ('${u2}', '${u2}-NO', 'u-yeni', '{}');`);
     const p2 = JSON.parse(JSON.stringify(p).split(u).join(u2));
