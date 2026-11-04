@@ -62,4 +62,7 @@ Açık iş: ilk gerçek site müşterisinin hareketi oluşunca hesap sayfası il
 
 Kullanıcı onayıyla çalıştırıldı (Editor: Success). `2-sonra-dogrula.sql` 8/8 tamam: girişsiz çalıştırabilen 9 (site 8 + yonetici_mi),
 search_path'i sabit olmayan 0, yedek 31 fonksiyon + 1 varsayılan yetki, authenticated ve service_role'de değişen 0, yeni fonksiyonlar
-girişsiz kullanıcıya kapalı. Elle deneme sonucu bekleniyor. Geri alma: `3-geri-al.sql`.
+girişsiz kullanıcıya kapalı. Geri alma: `3-geri-al.sql`.
+
+**DURUM: Uygulandı; elle kullanım doğrulaması bekliyor.** Kullanıcı sonra yapacak: (a) site girişi, vitrin, hesap sayfası; (b) ERP'de bir
+kayıt; (c) gün sonu raporu. Tamamen doğrulandı diye kapatılmadı.
