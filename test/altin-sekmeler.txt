@@ -20,7 +20,7 @@
  "karsilamaBandi": {
   "aciklamaKaldirildi": true,
   "baslikBoyutu": "22px",
-  "yukseklik": 59,
+  "kompakt": true,
   "zemin": "rgb(255, 255, 255)"
  },
  "kaydirma": {
@@ -47,7 +47,7 @@
  "modulBasligi": {
   "aciklamaKaldirildi": true,
   "baslikBoyutu": "22px",
-  "ilkIcerikUstu": 298,
+  "ilkIcerikYukarida": true,
   "kurMenude": false
  },
  "palet": {

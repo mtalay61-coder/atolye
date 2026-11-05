@@ -9,6 +9,8 @@ async function calistir() {
   const t = { ...TOHUM };
   t["bekleyen:yazma"] = JSON.stringify({ "stok:items": { tablo: "urunler", zaman: "2026-10-28T10:29:00.000Z", deneme: 5, hata: "Failed to fetch — POST varyantlar · gövde 512 KB · adres 52 karakter" } });
   t["bekleyen:kayitlar"] = JSON.stringify({ urunler: { ana: { u2: "yaz" }, cocuk: { varyantlar: { "u2|Siyah|40": { t: "sil", p: "u2" }, "u2|1001 - Siyah|40": { t: "yaz", p: "u2" } } } } });
+  // İki varyant değişikliği bilerek tohumlanır (eski renk silinir, kodlu renk yazılır).
+  // Onay bunları da söylemeli; eski altın çıktı bu iki alt kaydı eksik sayıyordu.
   const hatalar = [];
   const { tarayici, sayfa } = await uygulamaAc(t, { hataYaz: false, onceRota: async (s) => {
     await s.addInitScript((p)=>{

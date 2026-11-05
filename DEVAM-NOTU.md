@@ -4,11 +4,13 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-**Son sürüm:** v1.744.7 CANLIDA (3 Kasım: main + surum.json 1.744.7). **v1.744.8 YALNIZ DALDA** (4 Kasım; surum.json DEĞİŞMEDİ, yayınlanmadı, main'e birleşmedi; sunucu paketi guvenlik/12 canlıya uygulanmadı)
+**Son sürüm:** v1.744.7 CANLIDA (3 Kasım: main + surum.json 1.744.7). **v1.744.8 ve v1.744.9 YALNIZ DALDA** (v1.744.9: 5 Kasım, codex/tarayici-dort-fark; surum.json DEĞİŞMEDİ, yayınlanmadı, main'e birleşmedi; sunucu paketi guvenlik/12 canlıya uygulanmadı)
 
 ---
 
 ## YENİ OTURUM — BURADAN BAŞLA
+
+**Codex tarayıcıdaki dört fark (5 Kasım 2026):** `codex/tarayici-dort-fark`, PR #348 başı `82fc011` üzerine. 1.744.9 yalnız geliştirmede; canlı/main/deploy/surum.json ve SQL değişmedi. Tedarik testindeki çift aç/kapa ve kaldırılmış liste ayrıntısı kullanımı düzeltildi; WhatsApp pop-up isteği bağlam rotasında yerel yanıtlanır. Gerçek hata: tam ekran siparişten fişe gitmek hedefi açsa da sipariş önde kalıyordu; `fiseGit` pencereyi kapatmadan küçültür. Bekleyen bırak altını, fixture'daki iki varyantı da içerir. Sekme testi fonta bağlı tam piksel yerine görünür/kompakt sınırları ölçer; damga testi harf kenarında tek piksel yerine açık zemin alanını ölçer. Sonuç ve kapsam: `stok-v2/TARAYICI-DORT-FARK.md`. Son doğrulama: derleme temiz, 1661 birim kontrolü yeşil, yedek fiş kilidi 2/2, 260 tarayıcı senaryosu son karşılaştırmada AYNI. Chromium kurulumuna denk gelen senaryolar tekrar koşuldu; saat içeren iki senaryo UTC ile karşılaştırıldı. Tanım başlıkları oynaklığı son tekil koşuda geçti; beklenti değiştirilmedi.
 
 **Codex F3 satış sınırı (2 Kasım 2026):** codex/f3-satis-fazla-teslim, F8 2ddb6a1 üzerine. SQL-only, istemci sürümü değişmedi; canlı/main/deploy/surum.json yok. fis_kes ilk yazmadan önce, mevcut sipariş/kalem kilitleri altındayken fis_satis_teslim_koru çağırır. Alış dışındaki kalem bağlı çıkışların ana+bağlı fiş toplamı, DB miktarı ve büyük olan ham geçerli hareket toplamı/saklı karşılananla denetlenir; KR007 reddi. Miktar aynı yükte büyütülerek, pozitif satırla dengeleyerek veya sahte rol/onayla aşılamaz. İstisna: doğrulanmış yönetici + gerçek boolean onay + dolu gerekçe; gerçek kimlik/zaman/kalem değerleri ana fiş ek.fazlaTeslimOnayi alanına sunucudan yazılır, fazla işareti sunucudan verilir. Bu audit alanı kurallar kapalıyken bile değiştirilemez/silinemez; normal fiş notu serbest. Yeni helper doğrudan RPC'ye kapalı. 20 senaryo, 100 doğal yarış geçti; F0 54 yeşil/6 bilinen kırmızı, F2 70/3 beklenen; yeni temiz kurulum + R1/R1b geçti. Tarihsel fazla hesap testlerinin fixture'ları açık yönetici onaylı kurulur; eski onaysız fazla yük artık reddedilir. Alış davranışı değiştirilmedi, onay UI'si eklenmedi, eski stok yazma kapıları F8 kapsamında açık. Ayrıntı: stok-v2/CODEX-F3-SATIS-SINIRI.md.
 

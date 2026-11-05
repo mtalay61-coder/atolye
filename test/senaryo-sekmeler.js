@@ -145,7 +145,9 @@ async function calistir() {
     while (bant && getComputedStyle(bant).backgroundColor === "rgba(0, 0, 0, 0)") bant = bant.parentElement;
     return {
       zemin: bant ? getComputedStyle(bant).backgroundColor : null,
-      yukseklik: bant ? Math.round(bant.getBoundingClientRect().height) : null,
+      // Font metrikleri 59/60 px oynayabilir. Kullanıcının istediği kompakt
+      // bandı ölç: görünür kalsın ve 64 px'i aşmasın; taşmayı normalleştirme.
+      kompakt: !!bant && bant.getBoundingClientRect().height > 0 && bant.getBoundingClientRect().height <= 64,
       baslikBoyutu: getComputedStyle(h1).fontSize,
       // Açıklama cümlesi kaldırıldı: her gün açan kişiye ne işe yaradığını anlatmak gürültü.
       aciklamaKaldirildi: !/tek yerden yönetin/.test(document.body.innerText),
@@ -171,7 +173,10 @@ async function calistir() {
       kurMenude: menu ? /\$|₺/.test(menu.textContent) : false,
       // Açıklama cümlesi kaldırıldı; ne olduğu başlıkta zaten yazılı.
       aciklamaKaldirildi: !/ürün matrisi oluşturun/.test(document.body.innerText),
-      ilkIcerikUstu: arama ? Math.round(arama.getBoundingClientRect().top) : null,
+      // Yazı tipi/satır kırılması 273/298 px üretebilir. İçerik eski kabul edilen
+      // 298 px'in altında kalmalı; gizli ya da ekran dışındaki alan geçemez.
+      ilkIcerikYukarida: !!arama && arama.getBoundingClientRect().width > 0
+        && arama.getBoundingClientRect().top >= 0 && arama.getBoundingClientRect().top <= 300,
     };
   });
 

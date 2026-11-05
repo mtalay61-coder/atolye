@@ -640,9 +640,12 @@ function AtolyeUygulamasi() {
   const [hedefFisNo, setHedefFisNo] = useState(null);
   const fiseGit = useCallback((fisNo) => {
     if (!fisNo) return;
+    // Tam ekran siparişten fişe gidince kart önde kalıp hedef ekranı örtüyordu.
+    // Pencereyi kapatma: küçültülmüş sekmede yarım girişler korunur.
+    setAktifPencereId(null);
     setHedefFisNo(fisNo);
     setTab("fisler");
-  }, [setTab]);
+  }, [setTab, setAktifPencereId]);
 
 
   // DEPO > ALIŞ FİŞİ — DOĞRUDAN ALIŞ GİRİŞİ.

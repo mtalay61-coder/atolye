@@ -40,6 +40,19 @@ async function calistir() {
   t["cari:data"] = JSON.stringify(cariler);
 
   const { tarayici, sayfa } = await uygulamaAc(t, { hataYaz: false });
+  // Pop-up'ın ilk isteğini sayfa rotası yakalayamaz. Sohbet adresini yerelde yanıtla:
+  // gerçek WhatsApp'a gitmeden numarayı ve açılan pencereyi sınarız.
+  await sayfa.context().route("https://wa.me/**", (r) => r.fulfill({
+    status: 200, contentType: "text/html", body: "<!doctype html><title>WhatsApp test</title>",
+  }));
+  // Kart sekmeleri aç/kapa çalışır. Zaten açık Fişler'e ikinci kez basmak geçmişi
+  // kapatıyordu; test yanlışlıkla olmayan matrisi ölçüp alış satırını atlıyordu.
+  const fisGecmisiniAc = async () => {
+    if (!await sayfa.locator('[data-tedarik-girisleri]:visible').count()) {
+      await sayfa.locator('[data-kart-bolum="fisler"][data-kart-bolum-acik="0"]:visible').first().click();
+    }
+    await sayfa.locator('[data-tedarik-girisleri]:visible').first().waitFor();
+  };
   const hatalar = []; sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2200);
   await modulAc(sayfa, "Sipariş");
@@ -71,7 +84,7 @@ async function calistir() {
   const tedarikPdfIndi = !!tedarikPdf;
 
   // TEDARİK GİRİŞLERİ artık "Fişler" sekmesinde (15 Eylül). Ölçüm tam ekran kartta yapılıyor.
-  await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /^Fişler/.test(x.textContent.trim()) && x.getBoundingClientRect().width > 0); if (b) b.click(); });
+  await fisGecmisiniAc();
   await sayfa.waitForTimeout(700);
   const tedarik = await sayfa.evaluate(() => {
     const kap = document.querySelector("[data-tedarik-girisleri]");
@@ -83,7 +96,7 @@ async function calistir() {
   });
   // SEVK MATRİSİ (13 Eylül): sütun = beden, hücrede miktar ve kaynak İKONLARI (ipucunda açıklama).
   // Sevk matrisi FİŞ GEÇMİŞİ içinde; o da artık "Fişler" sekmesinde (15 Eylül).
-  await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /^Fişler/.test(x.textContent.trim()) && x.getBoundingClientRect().width > 0); if (b) b.click(); });
+  await fisGecmisiniAc();
   await sayfa.waitForTimeout(700);
   const kaynakSatirlari = await sayfa.evaluate(() => {
     const tb = document.querySelector("[data-sevk-matris]");
@@ -96,18 +109,16 @@ async function calistir() {
     return { bas, hucreler };
   });
 
-  // Tam ekranı küçült: sonraki ölçümler liste kartında.
-  await sayfa.evaluate(() => { const b = [...document.querySelectorAll('button[title="Küçült — sekme çubuğunda kalır"]')].find((x) => x.getBoundingClientRect().height > 0); if (b) b.click(); });
-  await sayfa.waitForTimeout(500);
-  // Liste kartında da Fişler sekmesine geç (sekme seçimi kart başına).
-  await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /^Fişler/.test(x.textContent.trim()) && x.getBoundingClientRect().width > 0); if (b) b.click(); });
-  await sayfa.waitForTimeout(600);
-  // Alış satırına tıkla → Fişler'de o fiş.
-  await sayfa.evaluate(() => { const tr = document.querySelector('[data-tedarik-giris="AF-20260912-001"]'); if (tr) tr.click(); });
+  // Güncel arayüzde geçmiş tam ekran karttadır; liste özeti bu bölümü içermez.
+  // Görünür alış satırını gerçekten tıkla (yoksa sessizce atlamak yerine test dursun).
+  await sayfa.locator('[data-tedarik-giris="AF-20260912-001"]:visible').click();
   await sayfa.waitForTimeout(1000);
   const fisAcildi = await sayfa.evaluate(() => {
     const h1 = document.querySelector("h1");
-    return { modul: h1 ? h1.textContent.trim() : null, fisGorunur: [...document.querySelectorAll("*")].some((e) => e.textContent.trim() === "AF-20260912-001" && e.children.length === 0 && e.getBoundingClientRect().width > 0) };
+    const pencereler = [...document.querySelectorAll('[data-siparis-karti="s1"]')];
+    return { modul: h1 ? h1.textContent.trim() : null,
+      siparisPenceresiKuculdu: pencereler.length > 0 && pencereler.every((e) => e.getBoundingClientRect().width === 0),
+      fisGorunur: [...document.querySelectorAll("*")].some((e) => e.textContent.trim() === "AF-20260912-001" && e.children.length === 0 && e.getBoundingClientRect().width > 0) };
   });
 
   // YAZDIR + WHATSAPP (13 Eylül): kartta iki düğme; WhatsApp bağlantısı cari kartındaki numaraya
@@ -149,6 +160,7 @@ async function calistir() {
     sayfa.waitForEvent("popup", { timeout: 15000 }).catch(() => null),
     sayfa.evaluate(() => document.querySelector("[data-siparis-islem-menusu] [data-paylas-whatsapp]").click()),
   ]);
+  if (popup) await popup.waitForURL(/^https:\/\/wa\.me\//);
   const whatsappAcildi = popup ? decodeURIComponent(popup.url()).split("?")[0] : null;
   if (popup) await popup.close();
   // PDF düğmesi: kütüphane yüklenemeyince yazdırılabilir HTML indiriyor (yedek yol).
@@ -177,7 +189,7 @@ async function calistir() {
 }
 
 if (require.main === module) {
-  calistir().then((s) => console.log(normalles(s)));
+  calistir().then((s) => console.log(normalles(s))).catch((e) => { console.error(e); process.exit(1); });
 }
 
 module.exports = { calistir };

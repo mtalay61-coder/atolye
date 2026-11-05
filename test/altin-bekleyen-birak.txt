@@ -3,7 +3,7 @@
   "birakDugmesi": [
     "Bu cihazdakini bırak, buluttan yükle"
   ],
-  "onay": "Stok kartları: bu cihazda bekleyen ve buluta gidemeyen değişiklikler BIRAKILACAK (2 kayıt değişikliği, 5 stok hareketi).",
+  "onay": "Stok kartları: bu cihazda bekleyen ve buluta gidemeyen değişiklikler BIRAKILACAK (2 kayıt değişikliği, 2 ürün varyantı, 5 stok hareketi).",
   "defterHemen": {
     "stokYazma": false,
     "stokKayit": false

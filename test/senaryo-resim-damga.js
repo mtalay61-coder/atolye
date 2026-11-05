@@ -24,19 +24,33 @@ async function calistir() {
     const kur = (w, h, renk) => { const c = document.createElement("canvas"); c.width = w; c.height = h; const x = c.getContext("2d"); x.fillStyle = renk; x.fillRect(0, 0, w, h); return c.toDataURL("image/png"); };
     return { kirmizi: kur(300, 200, "#ff0000"), mavi: kur(60, 30, "#0000ff") };
   });
-  const ornekle = (dataUrl) => sayfa.evaluate((src) => new Promise((cozul) => {
+  const ornekle = (dataUrl, logoVar = true) => sayfa.evaluate(([src, logoVar]) => new Promise((cozul) => {
     const im = new Image(); im.onload = () => {
       const c = document.createElement("canvas"); c.width = im.width; c.height = im.height; const x = c.getContext("2d"); x.drawImage(im, 0, 0);
       const px = (a, b) => { const d = x.getImageData(a, b, 1, 1).data; return d[0] > 180 && d[1] < 80 && d[2] < 80 ? "kirmizi" : d[2] > 180 && d[0] < 80 ? "mavi" : d[0] > 200 && d[1] > 200 && d[2] > 200 ? "acik" : "diger"; };
       const w = im.width, h = im.height, kenar = Math.round(w * 0.03), lw = Math.round(w * 0.22);
-      cozul({ boyut: `${w}x${h}`, sagUstLogo: px(w - kenar - Math.round(lw / 2), kenar + 8), logoAlti: px(w - kenar - 1, kenar + Math.round(lw / 2) + 8 + Math.round(w * 0.015) + 6), solAlt: px(5, h - 5) });
+      // Harfin kenarındaki tek piksel fonta/JPEG'e göre koyulaşıyordu. Metnin
+      // üstündeki zemin satırını örnekle; logo merkezini ayrıca mavi doğrula.
+      const metinY = kenar + (logoVar ? Math.round(lw / 2) + 8 + Math.round(w * 0.015) : 0);
+      // Beyaz (%85 opak) kutunun sağ iç şeridi: JPEG kenar karışımı ve harf
+      // yumuşatması tek pikseli etkiler. Alanın çoğu açık olmalı; kırmızı fotoğraf geçemez.
+      const zemin = () => {
+        const d = x.getImageData(w - kenar - 2, metinY + 4, 3, 8).data;
+        let acik = 0;
+        for (let i = 0; i < d.length; i += 4) if (d[i] > 220 && d[i + 1] > 180 && d[i + 2] > 180) acik++;
+        return acik > d.length / 8 ? "acik" : "diger";
+      };
+      cozul({ boyut: `${w}x${h}`, sagUstLogo: logoVar
+        ? px(w - kenar - Math.round(lw / 2), kenar + 8) : zemin(),
+        logoAlti: logoVar ? zemin()
+          : px(w - kenar - 1, kenar + Math.round(lw / 2) + 8 + Math.round(w * 0.015) + 6), solAlt: px(5, h - 5) });
     }; im.src = src;
-  }), dataUrl);
+  }), [dataUrl, logoVar]);
 
   const damgali = await sayfa.evaluate(([src, logo]) => window.__resimDamga.resmeDamgaVur(src, { logo, satirlar: ["27322 D", "1031 - Kırmızı"] }), [kirmizi, mavi]);
   const logosuz = await sayfa.evaluate(([src]) => window.__resimDamga.resmeDamgaVur(src, { logo: "", satirlar: ["27322 D"] }), [kirmizi]);
   const bos = await sayfa.evaluate(([src]) => window.__resimDamga.resmeDamgaVur(src, { logo: "", satirlar: [] }), [kirmizi]);
-  const dogrudan = { damgali: await ornekle(damgali), logosuz: await ornekle(logosuz), bosAynen: bos === kirmizi,
+  const dogrudan = { damgali: await ornekle(damgali), logosuz: await ornekle(logosuz, false), bosAynen: bos === kirmizi,
     tikKapali: await sayfa.evaluate(() => window.__resimDamga.stokResmiDamgasi({ logo: "x", resimDamgasi: false }, ["a"]) === undefined),
     varsayilan: await sayfa.evaluate(() => JSON.stringify(window.__resimDamga.stokResmiDamgasi({ logo: "L" }, ["27322 D", "", "Siyah"]))) };
 
