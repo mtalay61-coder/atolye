@@ -1,0 +1,22 @@
+# ONEDRIVE'I BAĞLA — BİR KEZ (7 Kasım). Telefondan: Actions › "OneDrive'ı bağla" › Run workflow; iş kaydındaki (ya da Summary'deki)
+# adımları izleyin. Ayrıntı: stok-v2/GECE-YEDEK-KURULUM.md § 3, stok-v2/yedek/onedrive-baglan.sh.
+name: OneDrive'ı bağla (bir kez)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: onedrive-baglan
+  cancel-in-progress: true
+jobs:
+  bagla:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: rclone
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq rclone > /dev/null && rclone version | head -1
+      - name: Bağla
+        env:
+          GH_TOKEN: ${{ secrets.YEDEK_PAT }}
+        run: stok-v2/yedek/onedrive-baglan.sh

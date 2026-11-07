@@ -57,7 +57,7 @@ KAYNAK_HOST=<pooler host> KAYNAK_KULLANICI=postgres.<proje> \
 
 Betik: salt-okur oturumda envanter → `public.dump` (şema + satır + fonksiyon + yetki) → `auth-storage.sql` (yalnız auth ve
 storage satırları) → `ozet.txt` (tarih, süreler, boyut, sha256 başı). Dosyalar 600, klasör 700. Depo içindeki klasörü, dolu
-klasörü, eski `pg_dump`'ı reddeder. **cron işlerini bilerek dökmez** (provada çalışırsa canlı gün sonu fonksiyonunu
+klasörü, eski `pg_dump`'ı reddeder. **Tek anlık görüntü (7 Kasım):** envanter ve iki döküm aynı veritabanı anından alınır (pg_export_snapshot + pg_dump --snapshot); bağlantı desteklemezse eski yola düşer ve ozet'e "anlık görüntü: yok" yazar. **Otomatik gece yedeği:** `GECE-YEDEK-KURULUM.md`. **cron işlerini bilerek dökmez** (provada çalışırsa canlı gün sonu fonksiyonunu
 çağırabilir); envanterde listelenir. Sohbete yalnız `ozet.txt`.
 
 Klasör şifreli bir yerde saklanır (şifreli disk / parola korumalı arşiv). Nerede tutulacağı kullanıcı kararı.

@@ -1,0 +1,24 @@
+t-onedrive-baglan.sh · 2026-11-07 · ağsız (sahte rclone / gh / curl)
+t-onedrive-baglan · sahte rclone / gh / curl
+  ✓ [MUTLU.cikis] 0
+  ✓ [MUTLU.jeton-saklandi] YENILEME-JETONU-SIR
+  ✓ [MUTLU.surucu-saklandi] SURUCU-KIMLIGI-SIR
+  ✓ [MUTLU.kod-degiskeni-silindi] silindi
+  ✓ [MUTLU.benioku-yazildi] 1
+  ✓ [MUTLU.ozet-giris-baglantisi] 1
+  ✓ [MUTLU.kayit-BAGLANDI] 1
+  ✓ [GIZLI.ERISIM-JETONU-SIR yalnız maske satırında] 0
+  ✓ [GIZLI.ERISIM-JETONU-SIR maskelendi] evet
+  ✓ [GIZLI.YENILEME-JETONU-SIR yalnız maske satırında] 0
+  ✓ [GIZLI.YENILEME-JETONU-SIR maskelendi] evet
+  ✓ [GIZLI.SURUCU-KIMLIGI-SIR yalnız maske satırında] 0
+  ✓ [GIZLI.SURUCU-KIMLIGI-SIR maskelendi] evet
+  ✓ [GIZLI.KOD-SIR-1 yalnız maske satırında] 0
+  ✓ [GIZLI.KOD-SIR-1 maskelendi] evet
+  ✓ [YANLIS-STATE.cikis] hata
+  ✓ [YANLIS-STATE.secret-yok] 0
+  ✓ [EKSIK-ADRES.cikis] hata
+  ✓ [EKSIK-ADRES.mesaj] 1
+  ✓ [IS-HESABI.cikis] hata
+  ✓ [IS-HESABI.jeton-yazilmadi] yok
+── t-onedrive-baglan.sh: temiz ──
