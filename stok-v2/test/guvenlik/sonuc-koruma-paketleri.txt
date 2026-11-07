@@ -1,0 +1,36 @@
+  ✓ [BASLANGIC.6-fk-dogrula] 0
+t-koruma-paketleri · atolye_koruma_paket (atolye_guvenlik kopyası, canlının bugünkü hâli: false/-/false)
+  ✓ [BASLANGIC.7-sonra-dogrula] hepsi
+  ✓ [SIRA.10-once-9-DUR] 3:1
+  ✓ [SIRA.10-once-9-degismedi] false/-/false
+  ✓ [ACMA.9] 0
+  ✓ [ACMA.9-sonra-dogrula] hepsi
+  ✓ [ACMA.9-ikinci-kez-DUR] 3:1
+  ✓ [ACMA.9-sonra-davranis.kopru-hareket-red] 42501
+  ✓ [ACMA.9-sonra-davranis.basliksiz-fis_kes-gecer (kapı kapalı)] true
+  ✓ [IZ.taze-baslksiz-yazma-10-DUR] 3:1
+  ✓ [IZ.10-acilmadi] true/-/true
+  ✓ [ACMA.10] 0
+  ✓ [ACMA.10-sonra-dogrula] hepsi
+  ✓ [ACMA.10-ikinci-kez-DUR] 3:1
+  ✓ [DAV.1.744.7-fis_kes-gecer] true
+  ✓ [DAV.basliksiz-AT001] AT001
+  ✓ [DAV.1.744.6-AT001] AT001
+  ✓ [DAV.reddedilenlerden-satir-yok] 0
+  ✓ [DAV.kopru-hareket-red] KR009
+  ✓ [DAV.site-girisi-calisir (kapı açık)] kod
+  ✓ [DAV.10-sonra-dogrula-iz-hala-0] hepsi
+  ✓ [GERI.9-kapi-acikken-DUR] 3:1
+  ✓ [GERI.9-degismedi] true/1.744.7/true
+  ✓ [GERI.10] 0
+  ✓ [GERI.10-sonra-kurallar-hala-acik] true/-/true
+  ✓ [GERI.9] 0
+  ✓ [GERI.ikisi-kapali] false/-/false
+  ✓ [GERI.7-sonra-dogrula (canlının bugünkü hâli)] hepsi
+  ✓ [EDITOR.9-kurallar-ac] 0
+  ✓ [EDITOR.9-sonra-dogrula] 0
+  ✓ [EDITOR.9-geri-al] 0
+  ✓ [EDITOR.10-surum-kapisi-ac] 0
+  ✓ [EDITOR.10-sonra-dogrula] 0
+  ✓ [EDITOR.10-geri-al] 0
+── t-koruma-paketleri.sh: temiz ──

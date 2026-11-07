@@ -1,0 +1,24 @@
+# 7 Kasım · 39eb016 · atolye_istemci_sinama (atolye_guvenlik kopyası, 12 KURULU, kurallar KAPALI)
+t-istemci-uretim-sil · istemci 1.744.7 (../../..<scratchpad>/w1747/test/erp-1747.cjs) · atolye_istemci_sinama · uretim_sil KURULU · kurallar f
+YENI — istemci: tamam · TAMAMLANDI · mesaj: Üretim siparişi silindi — 1 stok hareketi, 1 cari hareketi de birlikte temizlendi · bağlı satış kalemi yeniden planlanabilir
+  ✓ [yeni.kismi-degisiklik-yok] "yok"
+  ✓ [yeni.tutarli (fişler iptal, bağlı hareket 0, stok/cari üretim öncesi, karşılanan = teslim)] {"fisler":true,"bagliGecerli":0,"stok":-4558.9994,"cari":249109.94,"karsilanan":3}
+  ✓ [yeni.ekran-sunucuyla-ayni] [0,0]
+ESKI — istemci: olmadı · KISMİ · mesaj: ⚠ Silme YARIM KALDI — "üretim kaydı" adımı kaydedilemedi (üretim silinemedi (KR010) [KR010]). Tamamlanan: hammadde ve cari hareketleri, bağlı satış si
+    önce  {"uretim":1,"fisler":"f0-ist1747-mw69bjxc-eski-EF:gecerli","bagliGecerli":2,"stok":-4563.9994,"cari":249369.94,"karsilanan":3,"planlama":"{\"tip\": \"Üretim\", \"referansNo\": \"f0-ist1747-mw69bjxc-eski-NO\"}","teslim":3}
+    sonra {"uretim":1,"fisler":"f0-ist1747-mw69bjxc-eski-EF:gecerli","bagliGecerli":2,"stok":-4563.9994,"cari":249369.94,"karsilanan":3,"planlama":"null","teslim":3}
+  ✗ [eski.kismi-degisiklik-yok] "KISMİ" · beklenen "yok"
+KARMA — istemci: olmadı · KISMİ · mesaj: ⚠ Silme YARIM KALDI — "üretim kaydı" adımı kaydedilemedi (üretim silinemedi (KR010) [KR010]). Tamamlanan: hammadde ve cari hareketleri, bağlı satış si
+    önce  {"uretim":1,"fisler":"f0-ist1747-mw69bjxc-karma-EF:gecerli,ÜRT-261107012:gecerli","bagliGecerli":4,"stok":-4571.9994,"cari":249599.94,"karsilanan":3,"planlama":"{\"tip\": \"Üretim\", \"referansNo\": \"f0-ist1747-mw69bjxc-karma-NO\"}","teslim":3}
+    sonra {"uretim":1,"fisler":"f0-ist1747-mw69bjxc-karma-EF:gecerli,ÜRT-261107012:iptal","bagliGecerli":2,"stok":-4568.9994,"cari":249629.94,"karsilanan":3,"planlama":"null","teslim":3}
+  ✗ [karma.kismi-degisiklik-yok] "KISMİ" · beklenen "yok"
+FISSIZ — istemci: olmadı · KISMİ · mesaj: ⚠ Silme YARIM KALDI — "üretim kaydı" adımı kaydedilemedi (üretim silinemedi (KR010) [KR010]). Tamamlanan: hammadde ve cari hareketleri, bağlı satış si
+    önce  {"uretim":1,"fisler":"f0-ist1747-mw69bjxc-fissiz-EF:gecerli","bagliGecerli":2,"stok":-4573.9994,"cari":249889.94,"karsilanan":3,"planlama":"{\"tip\": \"Üretim\", \"referansNo\": \"f0-ist1747-mw69bjxc-fissiz-NO\"}","teslim":3}
+    sonra {"uretim":1,"fisler":"f0-ist1747-mw69bjxc-fissiz-EF:gecerli","bagliGecerli":2,"stok":-4573.9994,"cari":249889.94,"karsilanan":3,"planlama":"null","teslim":3}
+  ✗ [fissiz.kismi-degisiklik-yok] "KISMİ" · beklenen "yok"
+BAYAT — istemci: olmadı · KISMİ · mesaj: ⚠ Silme YARIM KALDI — "üretim kaydı" adımı kaydedilemedi (üretim silinemedi (KR010) [KR010]). Tamamlanan: hammadde ve cari hareketleri, bağlı satış si
+    önce  {"uretim":1,"fisler":"ÜRT-261107013:gecerli,ÜRT-261107014:gecerli","bagliGecerli":4,"stok":-4582.9994,"cari":250129.94,"karsilanan":3,"planlama":"{\"tip\": \"Üretim\", \"referansNo\": \"f0-ist1747-mw69bjxc-bayat-NO\"}","teslim":3}
+    sonra {"uretim":1,"fisler":"ÜRT-261107013:iptal,ÜRT-261107014:gecerli","bagliGecerli":2,"stok":-4579.9994,"cari":250159.94,"karsilanan":3,"planlama":"null","teslim":3}
+  ✗ [bayat.kismi-degisiklik-yok] "KISMİ" · beklenen "yok"
+  özet (1.744.7): yeni: TAMAMLANDI · eski: KISMİ · karma: KISMİ · fissiz: KISMİ · bayat: KISMİ
+── t-istemci-uretim-sil (1.744.7): 3 geçti, 4 kaldı ──

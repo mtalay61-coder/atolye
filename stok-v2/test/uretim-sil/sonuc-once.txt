@@ -1,0 +1,36 @@
+# t-uretim-sil.js · DÜZELTME ÖNCESİ — istemci 1.744.7 (commit 405414d kaynağı, ayrı çalışma ağacında derlendi) + SQL düzeltme öncesi (yeni nesneler kaldırılmış kopya) · 4 Kasım 2026
+# Beklenen: KIRMIZI (hata yeniden üretildi). TUTARLILIK bölümü bu veritabanında koşamadı: iz tablosu (uretim_silinen) düzeltmeyle geliyor.
+t-uretim-sil · atolye_uretim_once · önek f0-t-uretim-sil-mw2bhhqc · sunucu işlemi uretim_sil YOK · kurallar t
+ESKİ FİŞ (istek'siz fiş: stok + cari)
+  ✗ [ESKI.yarim-islem-yok (üretim yok ⇒ satır yok)] 2 · beklenen 0
+  ✗ [ESKI.tamami-yapildi] [true,"yok",1,1,"f"] · beklenen [true,"yok",0,0,"t"]
+  ✗ [ESKI.ekran-sunucuyla-ayni] ["yok",0,0] · beklenen ["yok",1,1]
+ESKİ FİŞ — sunucu işlemi kurulu değil (canlının bugünkü hâli)
+  ✗ [ESKI0.hicbir-kayit-degismedi (sunucu)] ["yok",1,1,"f"] · beklenen ["var",1,1,"f"]
+  ✗ [ESKI0.ekran-degismedi] [true,"yok",0,0,1] · beklenen [false,"var",1,1,0]
+FİŞSİZ (üretimin fişsiz eski cari hareketi)
+  ✗ [FISSIZ.hicbir-kayit-degismedi (sunucu)] ["yok",1,1,"f"] · beklenen ["var",1,1,"f"]
+  ✗ [FISSIZ.ekran-degismedi] [true,"yok",0,0,1] · beklenen [false,"var",1,1,0]
+  ✗ [FISSIZ.kullaniciya-sebep] false · beklenen true
+SUNUCU FİŞİ (ÜRT fis_kes ile)
+  ✓ [SUNUCU.tamami-yapildi] [true,"yok",0,0,"t"]
+  ✓ [SUNUCU.ekran-sunucuyla-ayni] ["yok",0,0]
+S1 — doğrudan silme (eski istemci / REST) geçerli hareketi olan üretimi silemez
+  ✗ [S1.red] "tamam" · beklenen "KR010"
+  ✗ [S1.degismedi] {"uretim":"yok","stok":1,"cari":1,"fisIptal":"f"} · beklenen {"uretim":"var","stok":1,"cari":1,"fisIptal":"f"}
+S2 — yarış: silme ∥ aynı üretime yeni fiş
+  ✗ [S2.uretim_sil] "yok" · beklenen "var"
+S3 — eski fiş başka kayıt taşıyor: hiçbiri iptal edilmez
+  ✗ [S3.uretim_sil] "yok" · beklenen "var"
+S4 — son adımda hata: fiş iptalleri de geri alınır
+  ✗ [S4.uretim_sil] "yok" · beklenen "var"
+S5 — ekranda görünmeyen geçerli hareket (başka cihaz) sessizce iptal edilmez
+  ✗ [S5.uretim_sil] "yok" · beklenen "var"
+ÇÖPTEN GERİ YÜKLEME — hareketli eski çöp kaydı
+  ✓ [COP.eski-fisli-urun.sunucu-degismedi (kart / hareket)] {"kart":0,"hareket":0}
+  ✗ [COP.eski-fisli-urun.ekran-degismedi (kart yok, çöpte duruyor)] {"kart":1,"cop":0} · beklenen {"kart":0,"cop":1}
+  ✗ [COP.eski-fisli-urun.kullaniciya-sebep] false · beklenen true
+  ✓ [COP.fissiz-cari.sunucu-degismedi (kart / hareket)] {"kart":0,"hareket":0}
+  ✗ [COP.fissiz-cari.ekran-degismedi (kart yok, çöpte duruyor)] {"kart":1,"cop":0} · beklenen {"kart":0,"cop":1}
+  ✗ [COP.fissiz-cari.kullaniciya-sebep] false · beklenen true
+TUTARLILIK — bütün koşu (üretim, stok, cari birlikte)

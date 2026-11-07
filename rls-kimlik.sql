@@ -73,6 +73,19 @@ end $$;
 revoke all on all tables in schema public from anon;
 revoke all on all sequences in schema public from anon;
 revoke all on all functions in schema public from anon;
+-- SİTE FONKSİYONLARI GERİ AÇILIR (3 Kasım): yukarıdaki satır sitenin (newdiamond-web) girişsiz çağırdığı 8 fonksiyonu da kapatıyordu —
+-- 1.744.4 geçişinin son adımı bu dosyaydı, müşteri girişi / kayıt / vitrin "Bağlantı kurulamadı" dedi (canlıda 0-site-yetki-onar.sql
+-- ile açıldı). Aynı yetkiler site-portal.sql'de de var; bu dosya yeniden çalışınca kapanmasın diye burada da verilir. Fonksiyon yoksa
+-- (site kurulmamış) atlanır.
+do $$
+declare f text;
+begin
+  foreach f in array array['public.herkese_acik_vitrin()', 'public.site_ayarlari()', 'public.site_kayit_ol(jsonb, text, text)',
+    'public.portal_giris(text, text)', 'public.portal(text)', 'public.portal_hesap(text, date, date)',
+    'public.portal_siparis(text, jsonb, text, jsonb)', 'public.portal_cikis(text)'] loop
+    if to_regprocedure(f) is not null then execute format('grant execute on function %s to anon', f); end if;
+  end loop;
+end $$;
 alter default privileges in schema public revoke all on tables from anon;
 alter default privileges in schema public revoke all on sequences from anon;
 

@@ -39,20 +39,24 @@ begin;
 
 -- Ad karşılaştırma anahtarı: Türkçe büyük/küçük harf, baş/son boşluk ve çoklu boşluk farkı yok sayılır.
 -- (`lower` C yereli altında İ/I'yı doğru çevirmez; önce elle çevrilir.)
+-- SABİT search_path (güvenlik madde 5, 3 Kasım): bu dosyadaki yardımcı / tetikleyici fonksiyonlarda `set search_path = public,
+-- extensions, pg_temp` — çağıranın yolu fonksiyonun hangi tabloyu / işlevi bulacağını değiştiremesin (geçici şema EN SONDA).
+-- Uygulamanın (PostgREST) bugünkü yolu public, extensions olduğu için davranış aynı. Kaynakta durması şart: create or replace
+-- ayarı tanımdakiyle değiştirir, yalnız ALTER FUNCTION ile verilen yol dosya yeniden çalışınca kaybolurdu.
 create or replace function public.stk_nrm(x text) returns text
-language sql immutable as $$
+language sql immutable set search_path = public, extensions, pg_temp as $$
   select nullif(lower(translate(regexp_replace(btrim(coalesce(x, '')), '\s+', ' ', 'g'), 'İIĞÜŞÖÇ', 'iığüşöç')), '')
 $$;
 
 -- "Standart" ve boş: renk/ölçü YOK demek (bugünkü yer tutucu; 012 `stokAnahtarNrm`).
 create or replace function public.stk_yer_tutucu_mu(x text) returns boolean
-language sql immutable as $$
+language sql immutable set search_path = public, extensions, pg_temp as $$
   select public.stk_nrm(x) is null or public.stk_nrm(x) = 'standart'
 $$;
 
 -- Hatasız zaman çevirisi: bugünkü tabloda tarih metin de olabilir, zaman damgası da.
 create or replace function public.stk_zaman(x text) returns timestamptz
-language plpgsql immutable as $$
+language plpgsql immutable set search_path = public, extensions, pg_temp as $$
 begin
   if x is null or btrim(x) = '' then return null; end if;
   return x::timestamptz;
@@ -63,7 +67,7 @@ end $$;
 -- Hatasız sayı / doğru-yanlış çevirisi (göç, bugünkü JSON'dan okurken): boş ya da bozuk değer NULL — tek bozuk kayıt
 -- bütün geçişi durdurmasın (28 Ekim: tek tutarsız fiş defteri kaydı geçişi durdurdu).
 create or replace function public.stk_sayi(x text) returns numeric
-language plpgsql immutable as $$
+language plpgsql immutable set search_path = public, extensions, pg_temp as $$
 begin
   if x is null or btrim(x) = '' then return null; end if;
   return replace(btrim(x), ',', '.')::numeric;
@@ -72,11 +76,11 @@ exception when others then
 end $$;
 -- Dizi olmayan JSON (bozuk ya da eski biçimli alan) boş dizi sayılır: jsonb_array_elements hata vermesin.
 create or replace function public.stk_dizi(j jsonb) returns jsonb
-language sql immutable as $$
+language sql immutable set search_path = public, extensions, pg_temp as $$
   select case when jsonb_typeof(j) = 'array' then j else '[]'::jsonb end
 $$;
 create or replace function public.stk_mantik(x text) returns boolean
-language sql immutable as $$
+language sql immutable set search_path = public, extensions, pg_temp as $$
   select lower(btrim(coalesce(x, ''))) in ('true', 't', '1', 'evet', 'yes')
 $$;
 
@@ -502,7 +506,7 @@ end $$;
 
 -- Hareket kaynağından fiş türü (bugünkü `kaynak` → fiş başlığı).
 create or replace function public.stk_kaynak_tur(k text) returns text
-language sql immutable as $$
+language sql immutable set search_path = public, extensions, pg_temp as $$
   select case k when 'Satınalma' then 'Alış' when 'Satış' then 'Satış' when 'Üretim' then 'Üretim' when 'Açılış' then 'Açılış'
                 when 'Numune' then 'Numune' when 'Manuel' then 'Manuel' when 'Sayım' then 'Sayım' when 'Fire' then 'Fire'
                 when 'Transfer' then 'Transfer'

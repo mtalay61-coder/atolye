@@ -1,0 +1,47 @@
+# 7 Kasım · 1b414f4 · t-istemci-uretim-sil.sh (12 kurulu, kurallar KAPALI)
+  ✓ [12-geri-al (canlı hâli)] 0
+  ✓ [12-kur] 0
+  ✓ [12-sonra-dogrula] tttttttt
+  ✓ [eski istemci sürümü] const SURUM = "1.744.7"
+t-istemci-uretim-sil · istemci 1.744.7 (../../..<gecici>/erp-eski.cjs) · atolye_istemci_sinama · uretim_sil KURULU · kurallar f
+YENI — istemci: olmadı · REDDEDİLDİ (değişiklik yok) · mesaj: ⚠ Üretim SİLİNMEDİ — fiş iptal edilemedi (KR012: Üretim artık tek işlemle silinir; bu cihazdaki uygulama eski — sayfayı yenileyip (1.744.8) yeniden de
+  ✓ [yeni.kismi-degisiklik-yok] "yok"
+  • [yeni.ekran] (gözlem, yalnız bu cihazın görüntüsü) üretim 1 · hareket 2/2
+ESKI — istemci: olmadı · REDDEDİLDİ (değişiklik yok) · mesaj: ⚠ Silme YARIM KALDI — "bağlı satış siparişi" adımı kaydedilemedi (KR012: Bağlı üretim f0-ist1747-mw69o7t3-eski-NO duruyor — planlama bağı üretim silin
+  ✓ [eski.kismi-degisiklik-yok] "yok"
+  • [eski.ekran] (gözlem, yalnız bu cihazın görüntüsü) üretim 1 · hareket 0/2
+KARMA — istemci: olmadı · REDDEDİLDİ (değişiklik yok) · mesaj: ⚠ Üretim SİLİNMEDİ — fiş iptal edilemedi (KR012: Üretim artık tek işlemle silinir; bu cihazdaki uygulama eski — sayfayı yenileyip (1.744.8) yeniden de
+  ✓ [karma.kismi-degisiklik-yok] "yok"
+  • [karma.ekran] (gözlem, yalnız bu cihazın görüntüsü) üretim 1 · hareket 4/4
+FISSIZ — istemci: olmadı · REDDEDİLDİ (değişiklik yok) · mesaj: ⚠ Silme YARIM KALDI — "bağlı satış siparişi" adımı kaydedilemedi (KR012: Bağlı üretim f0-ist1747-mw69o7t3-fissiz-NO duruyor — planlama bağı üretim sil
+  ✓ [fissiz.kismi-degisiklik-yok] "yok"
+  • [fissiz.ekran] (gözlem, yalnız bu cihazın görüntüsü) üretim 1 · hareket 0/2
+BAYAT — istemci: olmadı · REDDEDİLDİ (değişiklik yok) · mesaj: ⚠ Üretim SİLİNMEDİ — fiş iptal edilemedi (KR012: Üretim artık tek işlemle silinir; bu cihazdaki uygulama eski — sayfayı yenileyip (1.744.8) yeniden de
+  ✓ [bayat.kismi-degisiklik-yok] "yok"
+  • [bayat.ekran] (gözlem, yalnız bu cihazın görüntüsü) üretim 1 · hareket 2/2
+  özet (1.744.7): yeni: REDDEDİLDİ (değişiklik yok) · eski: REDDEDİLDİ (değişiklik yok) · karma: REDDEDİLDİ (değişiklik yok) · fissiz: REDDEDİLDİ (değişiklik yok) · bayat: REDDEDİLDİ (değişiklik yok)
+── t-istemci-uretim-sil (1.744.7): 5 geçti, 0 kaldı ──
+  ✓ [1.744.7] 0
+t-istemci-uretim-sil · istemci 1.744.8 (test/erp.cjs) · atolye_istemci_sinama · uretim_sil KURULU · kurallar f
+YENI — istemci: tamam · TAMAMLANDI · mesaj: Üretim siparişi silindi — 1 stok hareketi, 1 cari hareketi de birlikte temizlendi · bağlı satış kalemi yeniden planlanabilir
+  ✓ [yeni.kismi-degisiklik-yok] "yok"
+  ✓ [yeni.tutarli (fişler iptal, bağlı hareket 0, stok/cari üretim öncesi, karşılanan = teslim)] {"fisler":true,"bagliGecerli":0,"stok":-4494.9994,"cari":241149.94,"karsilanan":3}
+  ✓ [yeni.ekran-sunucuyla-ayni] [0,0]
+ESKI — istemci: tamam · TAMAMLANDI · mesaj: Üretim siparişi silindi — 1 stok hareketi, 1 cari hareketi de birlikte temizlendi · bağlı satış kalemi yeniden planlanabilir
+  ✓ [eski.kismi-degisiklik-yok] "yok"
+  ✓ [eski.tutarli (fişler iptal, bağlı hareket 0, stok/cari üretim öncesi, karşılanan = teslim)] {"fisler":true,"bagliGecerli":0,"stok":-4497.9994,"cari":241449.94,"karsilanan":3}
+  ✓ [eski.ekran-sunucuyla-ayni] [0,0]
+KARMA — istemci: tamam · TAMAMLANDI · mesaj: Üretim siparişi silindi — 2 stok hareketi, 2 cari hareketi de birlikte temizlendi · bağlı satış kalemi yeniden planlanabilir
+  ✓ [karma.kismi-degisiklik-yok] "yok"
+  ✓ [karma.tutarli (fişler iptal, bağlı hareket 0, stok/cari üretim öncesi, karşılanan = teslim)] {"fisler":true,"bagliGecerli":0,"stok":-4500.9994,"cari":241749.94,"karsilanan":3}
+  ✓ [karma.ekran-sunucuyla-ayni] [0,0]
+FISSIZ — istemci: olmadı · REDDEDİLDİ (değişiklik yok) · mesaj: ⚠ Üretim SİLİNMEDİ — KR010: Üretimin fiş kesilmeden yazılmış eski cari hareketi var (f0-ist1748-mw69ocjf-fissiz-c1) — üretim silinemez; hiçbir kayıt d
+  ✓ [fissiz.kismi-degisiklik-yok] "yok"
+  ✓ [fissiz.ekran-degismedi] [1,2]
+BAYAT — istemci: olmadı · REDDEDİLDİ (değişiklik yok) · mesaj: ⚠ Üretim SİLİNMEDİ — KR010: Üretimin bu ekranda görünmeyen hareketi var (f0-ist1748-mw69ocjf-bayat-i2-c, f0-ist1748-mw69ocjf-bayat-i2-h) — sayfayı yen
+  ✓ [bayat.kismi-degisiklik-yok] "yok"
+  ✓ [bayat.ekran-degismedi] [1,2]
+  özet (1.744.8): yeni: TAMAMLANDI · eski: TAMAMLANDI · karma: TAMAMLANDI · fissiz: REDDEDİLDİ (değişiklik yok) · bayat: REDDEDİLDİ (değişiklik yok)
+── t-istemci-uretim-sil (1.744.8): 13 geçti, 0 kaldı ──
+  ✓ [1.744.8] 0
+── t-istemci-uretim-sil.sh: TEMİZ ──

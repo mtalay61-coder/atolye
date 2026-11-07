@@ -1,0 +1,22 @@
+# 7 Kasım · 39eb016 · atolye_istemci_sinama (12 KURULU, kurallar KAPALI)
+t-istemci-uretim-sil · istemci 1.744.8 (test/erp.cjs) · atolye_istemci_sinama · uretim_sil KURULU · kurallar f
+YENI — istemci: tamam · TAMAMLANDI · mesaj: Üretim siparişi silindi — 1 stok hareketi, 1 cari hareketi de birlikte temizlendi · bağlı satış kalemi yeniden planlanabilir
+  ✓ [yeni.kismi-degisiklik-yok] "yok"
+  ✓ [yeni.tutarli (fişler iptal, bağlı hareket 0, stok/cari üretim öncesi, karşılanan = teslim)] {"fisler":true,"bagliGecerli":0,"stok":-4582.9994,"cari":250459.94,"karsilanan":3}
+  ✓ [yeni.ekran-sunucuyla-ayni] [0,0]
+ESKI — istemci: tamam · TAMAMLANDI · mesaj: Üretim siparişi silindi — 1 stok hareketi, 1 cari hareketi de birlikte temizlendi · bağlı satış kalemi yeniden planlanabilir
+  ✓ [eski.kismi-degisiklik-yok] "yok"
+  ✓ [eski.tutarli (fişler iptal, bağlı hareket 0, stok/cari üretim öncesi, karşılanan = teslim)] {"fisler":true,"bagliGecerli":0,"stok":-4585.9994,"cari":250759.94,"karsilanan":3}
+  ✓ [eski.ekran-sunucuyla-ayni] [0,0]
+KARMA — istemci: tamam · TAMAMLANDI · mesaj: Üretim siparişi silindi — 2 stok hareketi, 2 cari hareketi de birlikte temizlendi · bağlı satış kalemi yeniden planlanabilir
+  ✓ [karma.kismi-degisiklik-yok] "yok"
+  ✓ [karma.tutarli (fişler iptal, bağlı hareket 0, stok/cari üretim öncesi, karşılanan = teslim)] {"fisler":true,"bagliGecerli":0,"stok":-4588.9994,"cari":251059.94,"karsilanan":3}
+  ✓ [karma.ekran-sunucuyla-ayni] [0,0]
+FISSIZ — istemci: olmadı · REDDEDİLDİ (değişiklik yok) · mesaj: ⚠ Üretim SİLİNMEDİ — KR010: Üretimin fiş kesilmeden yazılmış eski cari hareketi var (f0-ist1748-mw69bomr-fissiz-c1) — üretim silinemez; hiçbir kayıt d
+  ✓ [fissiz.kismi-degisiklik-yok] "yok"
+  ✓ [fissiz.ekran-degismedi] [1,2]
+BAYAT — istemci: olmadı · REDDEDİLDİ (değişiklik yok) · mesaj: ⚠ Üretim SİLİNMEDİ — KR010: Üretimin bu ekranda görünmeyen hareketi var (f0-ist1748-mw69bomr-bayat-i2-c, f0-ist1748-mw69bomr-bayat-i2-h) — sayfayı yen
+  ✓ [bayat.kismi-degisiklik-yok] "yok"
+  ✓ [bayat.ekran-degismedi] [1,2]
+  özet (1.744.8): yeni: TAMAMLANDI · eski: TAMAMLANDI · karma: TAMAMLANDI · fissiz: REDDEDİLDİ (değişiklik yok) · bayat: REDDEDİLDİ (değişiklik yok)
+── t-istemci-uretim-sil (1.744.8): 13 geçti, 0 kaldı ──

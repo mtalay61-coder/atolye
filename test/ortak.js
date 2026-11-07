@@ -12,7 +12,9 @@ const { chromium } = require("playwright");
 // `adres`: uygulamayı file:// yerine bu http(s) adresinden aç — çağıran `onceRota` ile o adresi
 // test.html'e yönlendirir (sürüm dosyası gibi göreli okumalar yalnız http'de çalışıyor).
 async function uygulamaAc(tohum = {}, { hataYaz = true, onceRota = null, tarayiciArgs = [], adres = null, cevrimdisiKilidi = false, yuklemeyiBekle = true, tanimBasliklariKapali = false, receteOnayKapisi = false, firmaSecili = true, kurulumSihirbazi = false, stkAyar = null, stkAyarHata = false } = {}) {
-  const tarayici = await chromium.launch({ args: tarayiciArgs });
+  // UTF-8 YEREL AYAR (7 Kasım): bu konteynerde LANG boş; Chromium o zaman Türkçe harfli indirme adını ("SAT-1 - Müşteri B.html")
+  // reddedip dosyayı "download" adıyla indiriyor — uygulama doğru adı veriyor, ortam bozuyordu (tedarik-girisleri farkı).
+  const tarayici = await chromium.launch({ args: tarayiciArgs, env: { ...process.env, LANG: process.env.LANG || "C.UTF-8", LC_ALL: process.env.LC_ALL || "C.UTF-8" } });
   // Geniş pencere: dar ekranda kenar çubuğu daralıyor ve sekme düğmeleri gizleniyor.
   const sayfa = await tarayici.newPage({ viewport: { width: 1400, height: 950 } });
   // Senaryolar yalnız açıkça taklit ettikleri HTTP uçlarına erişir. Pop-up dahil gerçek Supabase/e-posta/ağ yazması yok.
@@ -65,6 +67,20 @@ async function uygulamaAc(tohum = {}, { hataYaz = true, onceRota = null, tarayic
     // Kancanın kendi sınaması: PROVA_FISSIZ=1 → fiş defteri KURULMAMIŞ v2 sunucu (eski yol çalışmalı ve kayda düşmeli).
     if (process.env.PROVA_FISSIZ === "1") { stkAyar = { ...stkAyar }; delete stkAyar.fis_aktif; }
     await sayfa.addInitScript(() => { window.__eskiYolKaydi = []; });
+    // AĞ DENETİMİ (4 Kasım, iki koruma öncesi): uygulamanın kendi kaydına (eskiYolKaydi) ek olarak AĞA ÇIKAN her yazma isteği
+    // kaydedilir — sürüm kapısı her yazmada `x-atolye-surum` ister (yoksa / eskiyse AT001), fiş kuralları hareket tablolarına
+    // doğrudan yazmayı ve köprüden satır taşıyan yazmayı reddeder. Kahin kural-provasi.js'de: başlıksız / yanlış sürümlü yazma 0,
+    // doğrudan hareket tablosu yazması 0, satır taşıyan köprü isteği 0. Edge Function çağrıları ayrı sayılır (servis rolüyle
+    // yazar, kapı onları denetlemez).
+    const agKaydi = [];
+    sayfa.on("request", (q) => {
+      const m = q.method(); const u = q.url();
+      if (!/\/(rest|functions)\/v1\//.test(u) || /^(GET|HEAD|OPTIONS)$/.test(m)) return;
+      const yol = u.replace(/^.*?\/(rest|functions)\/v1\//, "$1/").replace(/\?.*$/, "");
+      let govde = ""; try { govde = q.postData() || ""; } catch (e) { /* gövdesiz */ }
+      agKaydi.push({ ag: true, m, yol, surum: q.headers()["x-atolye-surum"] || null,
+        satirli: /rpc\/(stk_yaz|car_yaz|kas_yaz|fis_yaz)$/.test(yol) && /"(satirlar|hareketler|iptal|hareketIptal)":\[(\{|")/.test(govde) });
+    });
     let sira = 0;
     await sayfa.route("**/rest/v1/rpc/fis_kes**", (r) => {
       const p = (JSON.parse(r.request().postData() || "{}").p) || {};
@@ -85,7 +101,8 @@ async function uygulamaAc(tohum = {}, { hataYaz = true, onceRota = null, tarayic
         const dizin = process.env.PROVA_DIZIN || "/tmp/kural-provasi";
         fs.mkdirSync(dizin, { recursive: true });
         const ad = path.basename(process.argv[1] || "senaryo", ".js");
-        fs.appendFileSync(path.join(dizin, `${ad}.jsonl`), kayit.map((k) => JSON.stringify(k)).join("\n") + (kayit.length ? "\n" : ""));
+        const hepsi = [...kayit, ...agKaydi];
+        fs.appendFileSync(path.join(dizin, `${ad}.jsonl`), hepsi.map((k) => JSON.stringify(k)).join("\n") + (hepsi.length ? "\n" : ""));
       } catch (e) { /* sayfa kapanmış */ }
       return kapat();
     };
