@@ -158,3 +158,36 @@ ediyor). Tam önlem: bütün cihazlar 1.744.8 (ya da sürüm kapısı, madde 10)
 ### 7.3 Sürüm geri dönüşü — dikkat
 `surumeOtomatikGec` yalnız DAHA YENİ sürüme geçer (`surumDahaYeniMi`). `surum.json`'u 1.744.7'ye geri yazmak 1.744.8'e geçmiş cihazları
 GERİ DÖNDÜRMEZ. Uygulama geri dönüşü = 1.744.7 kodunu daha büyük numarayla (ör. 1.744.9) yayınlamak. (Denenmedi; kod okumasıyla.)
+
+## 8. Eski istemcinin üretim silme yolu sunucuda durdurulur (7 Kasım, 1b414f4)
+
+§7.2'deki kısmi değişikliği kapatır. 12 paketine iki tetikleyici eklendi (`fis-defteri.sql` ile aynı metin; Editor kopyası yeniden üretildi):
+
+| Koruma | Nerede | Durdurduğu | Geçirdiği |
+|---|---|---|---|
+| `uretim_eski_silme_koru` | `stk_fis` BEFORE UPDATE OF iptal | DURAN üretimin fişi, sebebi "Üretim … silindi" ve `uretim_sil` işleminin DIŞINDAN iptal (1.744.7'nin ilk adımı) → KR012 | teslim geri alma ("Üretim teslimi geri alındı …"), hareket silme, Fişler ekranından iptal, `uretim_sil`'in kendi iptali (işlem içi işaret, yalnız o üretim), üretimi olmayan fiş, SQL Editor |
+| `uretim_planlama_koru` | `siparis_kalemleri` BEFORE UPDATE OF planlama | bağlı üretim DURURKEN "Üretim" planlama bağını boşaltmak (1.744.7'nin, fişsiz / eski fişli üretimde ilk yazan adımı) → KR012 | üretim silindikten sonra (1.744.8 sırası), silinmiş üretimin bağını temizleme, Satınalma bağı, bağı başka üretime taşıma, planlamaya dokunmayan güncelleme, SQL Editor |
+
+- **Sürüme dayanmaz:** başlık / `istemci.surum` okunmaz; karar sunucu durumundan (üretim duruyor mu, `uretim_sil` işlemi içinde mi) ve
+  isteğin kendisinden (iptal sebebi, planlama değişikliği). İşlem içi işaret `set_config(..., true)` — işlem bitince düşer; aynı işlemde
+  başka üretimi kapsamaz (sınandı).
+- **Ret mesajı satır kimliği taşımaz:** 1.744.7 (040) kalıcı reddi tabloya yazar ve adımı başarısız sayar; sonraki adımlar (atama silme,
+  üretim DELETE) GİTMEZ. `fis_iptal` tek işlem: ret onun bütün değişikliklerini geri alır.
+- `12-sonra-dogrula.sql` 8 satır (7: fiş iptali koruması, 8: planlama koruması). `12-geri-al.sql` beş korumayı kaldırır (doğrulama
+  `ffftttff`).
+
+**Sonuç (12 kurulu, kurallar KAPALI; `t-istemci-uretim-sil.sh`):**
+
+| Durum | 1.744.7 önce (§7.2) | 1.744.7 şimdi | 1.744.8 |
+|---|---|---|---|
+| YENİ | tamamlandı | **durdu (KR012, ilk fiş iptali), hiçbir kayıt değişmedi** | tamamlandı, tutarlı |
+| ESKİ | KISMİ (planlama) | **durdu (KR012, planlama), hiçbir kayıt değişmedi** | tamamlandı, tutarlı |
+| KARMA | KISMİ (fiş iptal + planlama) | **durdu (KR012), değişmedi** | tamamlandı, tutarlı |
+| FİŞSİZ | KISMİ (planlama) | **durdu (KR012), değişmedi** | reddedildi (KR010), değişmedi |
+| BAYAT EKRAN | KISMİ (fiş iptal + planlama) | **durdu (KR012), değişmedi** | reddedildi (KR010), değişmedi |
+
+Ölçülen her durumda: üretim, üretimin fişleri, bağlı geçerli hareket, stok, cari bakiye, kalem karşılanan ve planlama bağı, iş ataması,
+sipariş başlığı. 1.744.7 + 5 durum 5/5, 1.744.8 13/13, `t-eski-istemci-koru` 22/22 (normal iptaller ve planlama değişiklikleri). Gözlem:
+1.744.7 eski / fişsiz durumda hareketleri sunucuya sormadan EKRANDAN düşürür; yalnız o cihazın görüntüsü, yenileyince sunucudaki hâl gelir.
+1.744.7 her kaydetmede sipariş başlığını ekrandaki hâliyle yazar (günlük davranışı; ekran güncelse değişiklik yok).
+`kos-guvenlik.sh` tamamı (1b414f4): TEMİZ, 55 ✓ / 0 ✗ (`sonuc-kos-guvenlik.txt`).

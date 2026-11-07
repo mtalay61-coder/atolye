@@ -1,12 +1,12 @@
-# 7 Kasım · 39eb016 · kos-guvenlik.sh tamamı (8 dk 23 sn, çıkış 0)
+# 7 Kasım · 1b414f4 · kos-guvenlik.sh tamamı (8 dk 47 sn, çıkış 0)
 ══ 0) canlı benzeri veritabanı
 hazır: atolye_guvenlik
 canlı benzeri: yolu sıfırlanan 21 fonksiyon
 ══ 1) liste + Bölüm 2'nin şemasız adı yakalaması
    ✓ Bölüm 2 extensions'taki şemasız gen_salt çağrısını yakaladı
    ✓ liste-uret.js Bölüm 2 satırı varken durdu
-   fonksiyon: 103 · anon'a kapanacak: 22 · yolu sabitlenecek: 21
-   <scratchpad>/guvenlik-cikti/2-sikilastir-yerel.sql: listeler yazıldı
+   fonksiyon: 105 · anon'a kapanacak: 22 · yolu sabitlenecek: 21
+   <scratchpad>/guvenlik-cikti2/2-sikilastir-yerel.sql: listeler yazıldı
    ✓ depodaki TASLAK listeler bu veritabanının listeleriyle aynı
    ✓ 0-site-yetki-onar.sql (Editor gibi)
    ✓ 0b-portal-hesap-duzelt.sql (Editor gibi)
@@ -62,7 +62,7 @@ canlı benzeri: yolu sıfırlanan 21 fonksiyon
    ✓ ikinci uygulama: zaten uygulanmış
    ✓ ikinci uygulama yetkileri değiştirmedi
    ✓ geri alma uygulandı
-   ✓ yetki / ayar özeti İLK hâlle birebir aynı (104 satır)
+   ✓ yetki / ayar özeti İLK hâlle birebir aynı (106 satır)
      · anon: 0 fark
      · veli: 0 fark
      · ali: 0 fark
@@ -75,4 +75,5 @@ canlı benzeri: yolu sıfırlanan 21 fonksiyon
    ✓ t-koruma-paketleri 34 yeşil
    ✓ t-uretim-paketi 35 yeşil
    ✓ t-uretim-bakiye 114 yeşil
+   ✓ t-istemci-uretim-sil (1.744.7 + 1.744.8 + koruma) 47 yeşil
 ── GÜVENLİK SINAMASI TEMİZ ──
