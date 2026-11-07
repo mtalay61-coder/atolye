@@ -398,6 +398,9 @@ function TanimlarModule({ onaylar, onYetimRezervasyonSil, onDefterFisIptal, onCa
     const uretimSayisi = (uretim || []).filter((o) => !o.stogaEklendiMi && (o.prosesIlerleme || []).some((x) => x.proses === ad && !x.tamamlandiMi)).length;
     if ((receteSayisi > 0 || uretimSayisi > 0)
       && !window.confirm(`"${ad}" prosesi ${receteSayisi} reçete satırında ve ${uretimSayisi} açık üretimde kullanılıyor. Silinince bu kayıtlarda proses adı kalır ama tanımsız olur (sıra/ücret bilgisi kaybolur).\n\nYine de silinsin mi?`)) return;
+    // Kullanılmayan proses de ONAYLA silinir (v1.744.9): düğme artık dokunmatik ekranda taşı düğmelerinin hemen yanında —
+    // yanlış dokunuş sessizce tanımı silmesin.
+    if (receteSayisi === 0 && uretimSayisi === 0 && !window.confirm(`"${ad}" prosesi silinsin mi?`)) return;
     onSave({ ...tanimlar, prosesler: (tanimlar.prosesler || []).filter((p) => p.id !== id) });
   }
 
@@ -1951,8 +1954,11 @@ function TanimlarModule({ onaylar, onYetimRezervasyonSil, onDefterFisIptal, onCa
               // engelliyordu — renk ancak tutarlı olduğunda bilgi taşır.
               <div
                 key={p.id}
+                // SARILAN SATIR (v1.744.9): satır tek satıra sığmak zorundaydı, kutu taşanı kesiyordu (overflow: hidden) —
+                // tablette sağdaki "aşağı taşı" ve "sil" düğmeleri görünmüyordu (kullanıcı: "Proses sil göremedim").
+                // Artık dar ekranda alt satıra kayar; taşı / sil düğmeleri tek grupta, her zaman sağda kalır.
                 style={{
-                  display: "flex", alignItems: "center", gap: 8, padding: "8px 12px",
+                  display: "flex", alignItems: "center", gap: 8, rowGap: 6, flexWrap: "wrap", padding: "8px 12px",
                   borderLeft: `4px solid ${prosesRengi(p.ad, i)}`,
                   background: prosesZemini(p.ad, i),
                   borderBottom: i === arr.length - 1 ? "none" : "1px solid var(--erp-line-soft)",
@@ -1994,7 +2000,7 @@ function TanimlarModule({ onaylar, onYetimRezervasyonSil, onDefterFisIptal, onCa
                 <span style={{ display: "flex", alignItems: "center", color: prosesRengi(p.ad, i), flexShrink: 0 }}>
                   <ProsesIkonu proses={p.ad} tanimlarProsesler={tanimlar.prosesler} size={18} />
                 </span>
-                <span style={{ fontSize: 14, fontWeight: 600, flex: 1, color: prosesRengi(p.ad, i) }}>{p.ad}</span>
+                <span style={{ fontSize: 14, fontWeight: 600, flex: "1 1 80px", minWidth: 60, color: prosesRengi(p.ad, i) }}>{p.ad}</span>
                 {/* GİDER KARTI (v1.693): prosesin işçilik fişleri bu karta yazılır (Gelir / Gider, Kâr/Zarar). */}
                 <select data-proses-gider-karti={p.ad} value={(tanimlar.prosesGiderKartlari || {})[p.ad] || ""}
                   title="Bu prosesin işçilik fişlerinin yazıldığı gider kartı"
@@ -2013,6 +2019,7 @@ function TanimlarModule({ onaylar, onYetimRezervasyonSil, onDefterFisIptal, onCa
                     style={{ width: 60, padding: "2px 5px", fontSize: 11, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }}
                   />
                 </label>
+                <span style={{ display: "flex", alignItems: "center", gap: 2, marginLeft: "auto", flexShrink: 0 }}>
                 <button
                   onClick={() => prosesSiraDegistir(p.id, -1)}
                   disabled={i === 0}
@@ -2029,9 +2036,11 @@ function TanimlarModule({ onaylar, onYetimRezervasyonSil, onDefterFisIptal, onCa
                 >
                   <ChevronDown size={16} />
                 </button>
-                <button onClick={() => removeProses(p.id)} style={{ border: "none", background: "none", cursor: "pointer", color: "var(--erp-text-3)", display: "flex" }}>
-                  <X size={14} />
+                <button data-proses-sil={p.ad} onClick={() => removeProses(p.id)} title="Prosesi sil" aria-label={`${p.ad} prosesini sil`}
+                  style={{ border: "none", background: "none", cursor: "pointer", color: "var(--erp-danger)", display: "flex", padding: 4 }}>
+                  <Trash2 size={16} />
                 </button>
+                </span>
               </div>
             ))}
           </div>
