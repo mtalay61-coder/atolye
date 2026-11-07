@@ -24,19 +24,22 @@ async function calistir() {
     const kur = (w, h, renk) => { const c = document.createElement("canvas"); c.width = w; c.height = h; const x = c.getContext("2d"); x.fillStyle = renk; x.fillRect(0, 0, w, h); return c.toDataURL("image/png"); };
     return { kirmizi: kur(300, 200, "#ff0000"), mavi: kur(60, 30, "#0000ff") };
   });
-  const ornekle = (dataUrl) => sayfa.evaluate((src) => new Promise((cozul) => {
+  // `yaziKutusu`: logosuz damgada sağ üstte yazı kutusu var; eski nokta (logo merkezi) yazının harflerine denk gelebiliyordu ve
+  // sonucu yazı tipine bağlıydı (bu ortamda Liberation Sans ile harf kenarı → "diger"). Yazı sağa yaslı ve kutunun sağ iç
+  // payında biter (w - kenar - 3); (w - kenar - 1, kenar + 2) kutunun içinde, harflerin dışında — yazı tipinden bağımsız.
+  const ornekle = (dataUrl, yaziKutusu = false) => sayfa.evaluate(([src, yaziKutusu]) => new Promise((cozul) => {
     const im = new Image(); im.onload = () => {
       const c = document.createElement("canvas"); c.width = im.width; c.height = im.height; const x = c.getContext("2d"); x.drawImage(im, 0, 0);
       const px = (a, b) => { const d = x.getImageData(a, b, 1, 1).data; return d[0] > 180 && d[1] < 80 && d[2] < 80 ? "kirmizi" : d[2] > 180 && d[0] < 80 ? "mavi" : d[0] > 200 && d[1] > 200 && d[2] > 200 ? "acik" : "diger"; };
       const w = im.width, h = im.height, kenar = Math.round(w * 0.03), lw = Math.round(w * 0.22);
-      cozul({ boyut: `${w}x${h}`, sagUstLogo: px(w - kenar - Math.round(lw / 2), kenar + 8), logoAlti: px(w - kenar - 1, kenar + Math.round(lw / 2) + 8 + Math.round(w * 0.015) + 6), solAlt: px(5, h - 5) });
+      cozul({ boyut: `${w}x${h}`, sagUstLogo: yaziKutusu ? px(w - kenar - 1, kenar + 2) : px(w - kenar - Math.round(lw / 2), kenar + 8), logoAlti: px(w - kenar - 1, kenar + Math.round(lw / 2) + 8 + Math.round(w * 0.015) + 6), solAlt: px(5, h - 5) });
     }; im.src = src;
-  }), dataUrl);
+  }), [dataUrl, yaziKutusu]);
 
   const damgali = await sayfa.evaluate(([src, logo]) => window.__resimDamga.resmeDamgaVur(src, { logo, satirlar: ["27322 D", "1031 - Kırmızı"] }), [kirmizi, mavi]);
   const logosuz = await sayfa.evaluate(([src]) => window.__resimDamga.resmeDamgaVur(src, { logo: "", satirlar: ["27322 D"] }), [kirmizi]);
   const bos = await sayfa.evaluate(([src]) => window.__resimDamga.resmeDamgaVur(src, { logo: "", satirlar: [] }), [kirmizi]);
-  const dogrudan = { damgali: await ornekle(damgali), logosuz: await ornekle(logosuz), bosAynen: bos === kirmizi,
+  const dogrudan = { damgali: await ornekle(damgali), logosuz: await ornekle(logosuz, true), bosAynen: bos === kirmizi,
     tikKapali: await sayfa.evaluate(() => window.__resimDamga.stokResmiDamgasi({ logo: "x", resimDamgasi: false }, ["a"]) === undefined),
     varsayilan: await sayfa.evaluate(() => JSON.stringify(window.__resimDamga.stokResmiDamgasi({ logo: "L" }, ["27322 D", "", "Siyah"]))) };
 

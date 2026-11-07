@@ -145,7 +145,9 @@ async function calistir() {
     while (bant && getComputedStyle(bant).backgroundColor === "rgba(0, 0, 0, 0)") bant = bant.parentElement;
     return {
       zemin: bant ? getComputedStyle(bant).backgroundColor : null,
-      yukseklik: bant ? Math.round(bant.getBoundingClientRect().height) : null,
+      // Piksel değil ORAN (7 Kasım): bant yüksekliği yazı tipine bağlı (aynı kodda Inter 60, DM Sans 63, altın 59 px) ve ekranın
+      // yazı tipi cihazdan cihaza değişiyor. Şikâyet "ekranın üçte biri"ydi; ölçülen: bant pencerenin %10'undan kısa mı.
+      yukseklikOndaBirdenAz: bant ? bant.getBoundingClientRect().height < window.innerHeight * 0.1 : null,
       baslikBoyutu: getComputedStyle(h1).fontSize,
       // Açıklama cümlesi kaldırıldı: her gün açan kişiye ne işe yaradığını anlatmak gürültü.
       aciklamaKaldirildi: !/tek yerden yönetin/.test(document.body.innerText),
@@ -171,7 +173,10 @@ async function calistir() {
       kurMenude: menu ? /\$|₺/.test(menu.textContent) : false,
       // Açıklama cümlesi kaldırıldı; ne olduğu başlıkta zaten yazılı.
       aciklamaKaldirildi: !/ürün matrisi oluşturun/.test(document.body.innerText),
-      ilkIcerikUstu: arama ? Math.round(arama.getBoundingClientRect().top) : null,
+      // BAŞLIĞA GÖRE (7 Kasım): ekranın üstünden ölçülen konum, aradaki "Buluta gönderilemeyen kayıt" şeridinin satır sayısına bağlıydı
+      // (test ortamında hangi yazmaların düştüğüne göre 40 → 70 px; arama 273 → 303). Asıl soru başlık ile ilk içerik arası:
+      // başlığın altı ile arama kutusu arasında 120 px'den az (bugün 81: aradaki tek uyarı kutusu; eski büyük başlık + açıklama 150+).
+      ilkIcerikBaslikAltinda: arama && h1 ? arama.getBoundingClientRect().top - h1.getBoundingClientRect().bottom < 120 : null,
     };
   });
 

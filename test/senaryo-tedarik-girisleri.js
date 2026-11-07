@@ -39,7 +39,17 @@ async function calistir() {
   });
   t["cari:data"] = JSON.stringify(cariler);
 
-  const { tarayici, sayfa } = await uygulamaAc(t, { hataYaz: false });
+  // WHATSAPP: ortak.js bütün dış adresleri keser (gerçek ağ yok); wa.me yerel boş sayfayla yanıtlanır ki açılan pencerenin ADRESİ
+  // ölçülebilsin (kesilince "chrome-error://chromewebdata/" görünüyordu — uygulamanın açtığı adres değil, ağ hatası sayfası).
+  const { tarayici, sayfa } = await uygulamaAc(t, { hataYaz: false, onceRota: async (s) => {
+    await s.context().route("https://wa.me/**", (r) => r.fulfill({ status: 200, contentType: "text/html", body: "<html></html>" }));
+  } });
+  // FİŞLER SEKMESİ AÇ/KAPA (v1.547.0): sekme düğmesine ikinci tıklama sekmeyi KAPATIR. Senaryo üç ayrı yerde "Fişler"e tıklıyordu;
+  // ikincisi açık sekmeyi kapatıyor, sevk matrisi (kaynakSatirlari) ve alış satırı (fisAcildi) bulunamıyordu. Kapalıysa açılır.
+  const fislerSekmesiniAc = () => sayfa.evaluate(() => {
+    const b = [...document.querySelectorAll('button[data-kart-bolum="fisler"]')].find((x) => x.getBoundingClientRect().width > 0);
+    if (b && b.getAttribute("data-kart-bolum-acik") !== "1") b.click();
+  });
   const hatalar = []; sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2200);
   await modulAc(sayfa, "Sipariş");
@@ -71,7 +81,7 @@ async function calistir() {
   const tedarikPdfIndi = !!tedarikPdf;
 
   // TEDARİK GİRİŞLERİ artık "Fişler" sekmesinde (15 Eylül). Ölçüm tam ekran kartta yapılıyor.
-  await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /^Fişler/.test(x.textContent.trim()) && x.getBoundingClientRect().width > 0); if (b) b.click(); });
+  await fislerSekmesiniAc();
   await sayfa.waitForTimeout(700);
   const tedarik = await sayfa.evaluate(() => {
     const kap = document.querySelector("[data-tedarik-girisleri]");
@@ -83,7 +93,7 @@ async function calistir() {
   });
   // SEVK MATRİSİ (13 Eylül): sütun = beden, hücrede miktar ve kaynak İKONLARI (ipucunda açıklama).
   // Sevk matrisi FİŞ GEÇMİŞİ içinde; o da artık "Fişler" sekmesinde (15 Eylül).
-  await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /^Fişler/.test(x.textContent.trim()) && x.getBoundingClientRect().width > 0); if (b) b.click(); });
+  await fislerSekmesiniAc();
   await sayfa.waitForTimeout(700);
   const kaynakSatirlari = await sayfa.evaluate(() => {
     const tb = document.querySelector("[data-sevk-matris]");
@@ -100,7 +110,7 @@ async function calistir() {
   await sayfa.evaluate(() => { const b = [...document.querySelectorAll('button[title="Küçült — sekme çubuğunda kalır"]')].find((x) => x.getBoundingClientRect().height > 0); if (b) b.click(); });
   await sayfa.waitForTimeout(500);
   // Liste kartında da Fişler sekmesine geç (sekme seçimi kart başına).
-  await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /^Fişler/.test(x.textContent.trim()) && x.getBoundingClientRect().width > 0); if (b) b.click(); });
+  await fislerSekmesiniAc();
   await sayfa.waitForTimeout(600);
   // Alış satırına tıkla → Fişler'de o fiş.
   await sayfa.evaluate(() => { const tr = document.querySelector('[data-tedarik-giris="AF-20260912-001"]'); if (tr) tr.click(); });

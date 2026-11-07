@@ -54,14 +54,43 @@ de iptal EDİLMEZ), S4 (son adımda yapay hata → iptaller geri), S5 (görünme
 "YARIM KALDI" görür, yenileyince düzelir. Silinmiş üretime hareket yazılamaz (`uretim_bag_koru` + iz tablosu; S2b). SQL Editor /
 bakım oturumu (jwt yok) muaf. Var olmayan / henüz eşitlenmemiş üretime yazma engellenmez — yalnız silinmiş olana.
 
-### 2.5 `12-geri-al.sql` neyi kaldırır
+### 2.5 `12-geri-al.sql` neyi kaldırır — ve GERİ ALMA PLANI
 
 **Kaldırır (üç koruma):** `uretim_sil` işlemi; üretim silme koruması (`uretim_silme_koru` tetikleyicileri ve işlevi); silinmiş
-üretime hareket kilidi (`uretim_bag_koru` tetikleyicileri ve işlevi). Geri almadan sonra 1.744.8 cihazlar eski hareketi olan
-üretimi SİLMEZ (hiçbir kayıt değişmez), yalnız sunucu fişli üretimi bugünkü (sıralı) yoldan siler; 1.744.7 cihazlar eski davranışa
-döner (yarım silme yeniden mümkün).
+üretime hareket kilidi (`uretim_bag_koru` tetikleyicileri ve işlevi).
 **Kaldırmaz:** iz tablosu `uretim_silinen` (yalnız silinmiş üretim kimlikleri; RLS'i ve sürüm kapısı tetikleyicisiyle durur), hiçbir
 veri satırı. Sınandı: geri almadan sonra 12-sonra-dogrula satır 1–3 tamam değil, 4–6 tamam; satır sayıları aynı.
+
+> **⚠ RİSK GERİ GELİR.** 12 kaldırılırsa **1.744.7 (ve eski) cihazlarda YARIM SİLME yeniden mümkündür**: eski hareketi olan üretim
+> silinince üretim kaydı gider, stok / cari hareketleri geçerli kalır (1.744.7 hatası). 1.744.8 cihazlar işlem yokken eski hareketi
+> olan üretimi SİLMEZ (hiçbir kayıt değişmez), yalnız sunucu fişli üretimi eski (sıralı) yoldan siler.
+
+**Geri alma gerekirse üretim silme önce DURDURULUR** — `12-silme-durdur.sql`: `uretim` üzerinde BEFORE DELETE tetikleyicisi, oturumlu
+(jwt'li) her silmeyi KR011 "Üretim silme geçici olarak durduruldu (bakım) — hiçbir kayıt değişmedi" ile reddeder; REST silme
+de `uretim_sil` de durur, **Yönetici dahil**. Yetkiyi kapatmak YETMEZ: `rls-yazma.sql` `silme_koruma` Yönetici'yi her zaman geçirir.
+SQL Editor / bakım oturumu (jwt yok) muaf. Fonksiyon security definer, search_path sabit, kimseye EXECUTE yok. Sıra:
+
+1. `12-silme-durdur.sql` (üretim silme durur; veri değişmez)
+2. `12-geri-al.sql`
+3. sorun giderilip 12 yeniden kurulunca → `12-sonra-dogrula.sql` 6/6 → `12-silme-durdur-kaldir.sql` (silme yeniden açılır)
+
+Durdurmadan geri almak yalnız bütün cihazlar 1.744.8'deyse ve `13` bölüm B = 0 ise kabul edilebilir. 12 kurulu değilken
+`12-silme-durdur-kaldir.sql` çalıştırılırsa yarım silme riski 1.744.7 cihazlarda yeniden açılır (dosya başlığında yazılı).
+Sınandı (`t-uretim-paketi.sh`): durdurma açıkken REST ve `uretim_sil` KR011, hiçbir satır değişmedi; kaldırınca silme çalışıyor.
+
+### 2.6 12 öncesi salt-okur kontrol — `13-uretim-hareket-salt-okur.sql`
+
+Hiçbir şey yazmaz, silmez, iptal etmez, dönüştürmez. Satırlar: bölüm · kontrol · sayı · miktar/tutar · örnek (en çok 10 kimlik;
+ünvan / açıklama dönmez).
+- **A — geçmişte oluşmuş yarım silme:** üretim kaydı YOK ama stok hareketi / cari hareketi / fiş başlığı geçerli; etkilenen üretim
+  kimlikleri. "Kayıt yok" = silinmiş YA DA bu cihazdan buluta hiç yazılmamış — örnek kimliklerle ayırt edilir. **Bulunanlar
+  değiştirilmez**; ne yapılacağı ayrı karar (seçenekler: dokunma; fiş numarasıyla fiş iptali; çöpten üretimi geri yükleme).
+- **B — 1.744.8'in reddedeceği üretimler:** duran üretimde eski fişli (istek boş) ya da fişsiz geçerli hareket — 12 ve 1.744.8 sonrası
+  uygulamadan silinemez (hiçbir kayıt değişmeden reddedilir).
+- **C — genel:** üretim sayısı, geçerli hareketli üretim sayısı, `uretim_sil` kurulu mu.
+- Sınır: bağ yalnız `uretim_id` sütunundan okunur; bağı yalnız fiş numarasında olan çok eski satırlar görünmez.
+- Sınandı (`t-uretim-paketi.sh`): yerelde bilerek oluşturulan yarım silme A1 (stok), A2 (cari), A3 (fiş başlığı) satırlarında bulundu;
+  sorgu sonrası satır sayıları aynı, yarım kalan hareketler hâlâ geçerli (salt-okur).
 
 ## 3. İstemci (1.744.8; `src/` 0649412'den beri değişmedi)
 
@@ -89,6 +118,6 @@ bağlantı vermiyor (surum.json → 1.744.7; index.html ve sw.js sürüm dosyas�
 
 ## 6. Açık işler
 
-- Tarayıcı senaryolarında 4 fark (ACIK-ISLER madde 9): `tedarik-girisleri` (ağ kısıtı), `bekleyen-birak`, `sekmeler`, `resim-damga`
-  (1.744.7'de de birebir aynı — önceden var).
-- Canlıya (ayrı onaylar): 12 → 12-sonra-dogrula 6/6 → 1.744.8 yayını (main + surum.json).
+- Tarayıcı senaryolarında 4 fark (ACIK-ISLER madde 9): kök nedenleri kanıtlandı (7 Kasım, `TARAYICI-4-FARK.md`) — dördü de test
+  düzeneği / ortam; uygulama hatası yok, `src/` değişmedi. Testler düzeltildi; altın değişiklikleri gerekçeli.
+- Canlıya (ayrı onaylar; **12 ve yayın yedek alınmadan YOK**): 13 (salt-okur — yedekten bağımsız, istenince çalıştırılabilir) → yedek → 12 → 12-sonra-dogrula 6/6 → 1.744.8 yayını (main + surum.json).

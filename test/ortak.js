@@ -12,7 +12,9 @@ const { chromium } = require("playwright");
 // `adres`: uygulamayı file:// yerine bu http(s) adresinden aç — çağıran `onceRota` ile o adresi
 // test.html'e yönlendirir (sürüm dosyası gibi göreli okumalar yalnız http'de çalışıyor).
 async function uygulamaAc(tohum = {}, { hataYaz = true, onceRota = null, tarayiciArgs = [], adres = null, cevrimdisiKilidi = false, yuklemeyiBekle = true, tanimBasliklariKapali = false, receteOnayKapisi = false, firmaSecili = true, kurulumSihirbazi = false, stkAyar = null, stkAyarHata = false } = {}) {
-  const tarayici = await chromium.launch({ args: tarayiciArgs });
+  // UTF-8 YEREL AYAR (7 Kasım): bu konteynerde LANG boş; Chromium o zaman Türkçe harfli indirme adını ("SAT-1 - Müşteri B.html")
+  // reddedip dosyayı "download" adıyla indiriyor — uygulama doğru adı veriyor, ortam bozuyordu (tedarik-girisleri farkı).
+  const tarayici = await chromium.launch({ args: tarayiciArgs, env: { ...process.env, LANG: process.env.LANG || "C.UTF-8", LC_ALL: process.env.LC_ALL || "C.UTF-8" } });
   // Geniş pencere: dar ekranda kenar çubuğu daralıyor ve sekme düğmeleri gizleniyor.
   const sayfa = await tarayici.newPage({ viewport: { width: 1400, height: 950 } });
   // Senaryolar yalnız açıkça taklit ettikleri HTTP uçlarına erişir. Pop-up dahil gerçek Supabase/e-posta/ağ yazması yok.
