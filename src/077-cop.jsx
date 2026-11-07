@@ -222,6 +222,17 @@ const coptanGeriYukle = useCallback(async (copId) => {
     return;
   }
   if (zatenVarMi(TUR.liste)) { showToast(`Bu ${TUR.ad} zaten listede — geri yükleme yapılmadı`); return; }
+  // HAREKETLİ ESKİ ÇÖP KAYDI (v1.744.8 — kural provası, 4 Kasım): fiş defteri kuruluyken hareket yalnız fiş kesilerek yazılır;
+  // çöpteki ürün / cari kopyasının hareketleri geri yazılmak istense köprü onları ağa çıkmadan durdurur (038, KR009), 040 satırı
+  // incelemeye ayırıp kalanı gönderir → kart geri gelir, hareketleri GELMEZ (yarım). Bugün hareketli kart silinemiyor (087), bu
+  // yalnız eski çöp kayıtlarında olur. Hiçbir şeye dokunmadan durulur: kayıt çöpte kalır, ekran ve sunucu değişmez.
+  const copHareketi = (kayit.tur === "urun" || kayit.tur === "cari") ? ((kayit.veri && kayit.veri.hareketler) || []).length : 0;
+  if (copHareketi > 0 && fisKesYolu()) {
+    gunlukYaz(`Çöpten geri yükleme durduruldu: ${kayit.baslik} (${copHareketi} hareket)`, "cop", { copId, tur: kayit.tur, hareket: copHareketi });
+    showToast(`⚠ "${kayit.baslik}" geri yüklenemez — ${copHareketi} hareketi var; fiş defterinde hareket yalnız fiş kesilerek yazılır. `
+      + "Kayıt çöpte kalıyor, hiçbir şey değişmedi. Kartı hareketsiz yeniden açıp hareketleri fişle girin.");
+    return;
+  }
 
   const onceki = TUR.liste;
   const n = TUR.basa ? [kayit.veri, ...onceki] : [...onceki, kayit.veri];

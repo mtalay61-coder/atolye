@@ -118,12 +118,12 @@ language sql stable security definer set search_path = public as $$
 $$;
 
 create or replace function public.fis_kapi_acik() returns boolean
-language sql volatile as $$
+language sql volatile set search_path = public, extensions, pg_temp as $$
   select coalesce(current_setting('fis.kapi', true), '') = 'acik'
 $$;
 
 create or replace function public.fis_satir_koru() returns trigger
-language plpgsql as $$
+language plpgsql set search_path = public, extensions, pg_temp as $$
 declare
   duzen text := coalesce(current_setting('fis.duzen', true), '');
   yeni_j jsonb;
@@ -181,7 +181,7 @@ begin
 end $$;
 
 create or replace function public.fis_bag_iz_koru() returns trigger
-language plpgsql as $$
+language plpgsql set search_path = public, extensions, pg_temp as $$
 begin
   if tg_op = 'INSERT' then
     if new.gecmis_siparis_id is not null or new.gecmis_kalem_id is not null or new.bag_cozum_zamani is not null then
@@ -300,7 +300,7 @@ revoke all on function public.siparis_canli_bag_koru() from public,anon,authenti
 alter table public.stk_ayar add column if not exists siparis_durum_sunucu boolean not null default true;
 update public.stk_ayar set siparis_durum_sunucu=true where id='tekil' and not siparis_durum_sunucu;
 create or replace function public.siparis_durum_hesap(p_id text,p_durum text) returns text
-language sql stable as $$
+language sql stable set search_path = public, extensions, pg_temp as $$
   select case when p_durum='İptal' then 'İptal'
     when count(*)>0 and bool_and(coalesce(k.karsilanan,0)>=coalesce(k.miktar,0)) and bool_or(coalesce(k.miktar,0)>0) then 'Tamamlandı'
     when coalesce(sum(greatest(coalesce(k.karsilanan,0),0)),0)>0 then 'Kısmi Teslim'
@@ -317,7 +317,7 @@ revoke all on public.siparisler_okuma from public,anon;
 grant select on public.siparisler_okuma to authenticated;
 
 create or replace function public.fis_siparis_iptal_koru() returns trigger
-language plpgsql as $$
+language plpgsql set search_path = public, extensions, pg_temp as $$
 begin
   if new.durum='İptal' and old.durum is distinct from 'İptal' and auth.jwt() is not null
     and coalesce(current_setting('fis.siparis_iptal',true),'')<>'acik' then
@@ -331,7 +331,7 @@ begin
 end $$;
 
 create or replace function public.fis_baslik_koru() returns trigger
-language plpgsql as $$
+language plpgsql set search_path = public, extensions, pg_temp as $$
 declare
   korunan boolean := false;
 begin
@@ -389,7 +389,7 @@ end $$;
 drop function if exists public.fis_tek_kes(jsonb, jsonb, jsonb, jsonb, text);
 
 create or replace function public.fis_yer_tutucu(j jsonb, p_fis text, p_ana text) returns jsonb
-language sql immutable as $$
+language sql immutable set search_path = public, extensions, pg_temp as $$
   select case when j is null then null
               else replace(replace(j::text, '«ANAFIS»', coalesce(p_ana, p_fis)), '«FIS»', p_fis)::jsonb end
 $$;
@@ -457,7 +457,7 @@ begin
 end $$;
 
 create or replace function public.fis_alt_artissiz(p_alt jsonb) returns jsonb
-language sql immutable as $$
+language sql immutable set search_path = public, extensions, pg_temp as $$
   select case
     when jsonb_typeof(p_alt) <> 'object' or jsonb_typeof(p_alt -> 'siparis_kalemleri' -> 'artis') <> 'array' then p_alt
     else jsonb_set(p_alt, '{siparis_kalemleri,satirlar}', coalesce((
@@ -484,7 +484,7 @@ begin
 end $$;
 
 create or replace function public.fis_kalem_karsilanan_koru() returns trigger
-language plpgsql as $$
+language plpgsql set search_path = public, extensions, pg_temp as $$
 begin
   if new.karsilanan is distinct from old.karsilanan
      and coalesce(current_setting('fis.kalem', true), '') <> 'acik'
@@ -507,7 +507,7 @@ language sql stable security definer set search_path = public as $$
 $$;
 
 create or replace function public.fis_kalem_idleri(p jsonb) returns text[]
-language sql immutable as $$
+language sql immutable set search_path = public, extensions, pg_temp as $$
   select coalesce(array_agg(distinct x order by x), '{}'::text[]) from (
     select s ->> 'kalemId' as x from jsonb_array_elements(public.stk_dizi(p -> 'stok' -> 'satirlar')) s
     union all select s ->> 'kalemId' from jsonb_array_elements(public.stk_dizi(p -> 'bagli' -> 'stok' -> 'satirlar')) s
@@ -516,7 +516,7 @@ language sql immutable as $$
 $$;
 
 create or replace function public.fis_alt_karsilanansiz(p_alt jsonb) returns jsonb
-language sql immutable as $$
+language sql immutable set search_path = public, extensions, pg_temp as $$
   select case
     when coalesce(jsonb_typeof(p_alt), '') <> 'object' or coalesce(jsonb_typeof(p_alt -> 'siparis_kalemleri'), '') <> 'object' then p_alt
     else jsonb_set(p_alt, '{siparis_kalemleri}', ((p_alt -> 'siparis_kalemleri') - 'artis') || jsonb_build_object('satirlar', coalesce((
@@ -852,6 +852,168 @@ begin
 end $$;
 revoke all on function public.fis_iptal_toplu(jsonb) from public,anon;
 grant execute on function public.fis_iptal_toplu(jsonb) to authenticated;
+
+create table if not exists public.uretim_silinen (
+  id text primary key,
+  zaman timestamptz not null default now()
+);
+alter table public.uretim_silinen enable row level security;
+revoke all on public.uretim_silinen from public, anon, authenticated;
+
+create or replace function public.uretim_silme_koru() returns trigger
+language plpgsql security definer set search_path = public, extensions, pg_temp as $$
+begin
+  if auth.jwt() is null then return case when tg_op = 'DELETE' then old else new end; end if;   -- SQL Editor / bakım
+  if tg_op = 'INSERT' then   -- çöpten geri yükleme: aynı kimlik yeniden yazılabilir
+    delete from public.uretim_silinen where id = new.id;
+    return new;
+  end if;
+  perform pg_advisory_xact_lock(hashtextextended('uretim:' || old.id, 0));
+  if exists (select 1 from public.stk_hareket where uretim_id = old.id and not iptal)
+     or exists (select 1 from public.car_hareket where uretim_id = old.id and not iptal) then
+    raise exception 'KR010: Üretimin geçerli stok / cari hareketi var (%) — üretim silinmedi; önce fişleri iptal edilmeli', old.id using errcode = 'KR010';
+  end if;
+  insert into public.uretim_silinen (id) values (old.id) on conflict (id) do update set zaman = now();
+  return old;
+end $$;
+revoke all on function public.uretim_silme_koru() from public, anon, authenticated;
+drop trigger if exists uretim_silme_koru on public.uretim;
+create trigger uretim_silme_koru before delete on public.uretim for each row execute function public.uretim_silme_koru();
+drop trigger if exists uretim_geri_yukle on public.uretim;
+create trigger uretim_geri_yukle after insert on public.uretim for each row execute function public.uretim_silme_koru();
+
+create or replace function public.uretim_bag_koru() returns trigger
+language plpgsql security definer set search_path = public, extensions, pg_temp as $$
+begin
+  if new.uretim_id is null or auth.jwt() is null then return new; end if;
+  if tg_op = 'UPDATE' and new.uretim_id is not distinct from old.uretim_id then return new; end if;
+  perform pg_advisory_xact_lock_shared(hashtextextended('uretim:' || new.uretim_id, 0));
+  if exists (select 1 from public.uretim_silinen where id = new.uretim_id)
+     and not exists (select 1 from public.uretim where id = new.uretim_id) then
+    raise exception 'KR010: Üretim silinmiş (%) — bu üretime hareket yazılamaz; sayfayı yenileyin', new.uretim_id using errcode = 'KR010';
+  end if;
+  return new;
+end $$;
+revoke all on function public.uretim_bag_koru() from public, anon, authenticated;
+drop trigger if exists uretim_bag_koru on public.stk_hareket;
+create trigger uretim_bag_koru before insert or update of uretim_id on public.stk_hareket for each row execute function public.uretim_bag_koru();
+drop trigger if exists uretim_bag_koru on public.car_hareket;
+create trigger uretim_bag_koru before insert or update of uretim_id on public.car_hareket for each row execute function public.uretim_bag_koru();
+
+create or replace function public.uretim_sil(p jsonb) returns jsonb
+language plpgsql security definer set search_path = public, extensions, pg_temp as $$
+declare
+  v_id text := nullif(btrim(coalesce(p ->> 'id', '')), '');
+  v_stk text[] := array(select jsonb_array_elements_text(public.stk_dizi(p -> 'stokIdler')));
+  v_car text[] := array(select jsonb_array_elements_text(public.stk_dizi(p -> 'cariIdler')));
+  v_kilitli text[];
+  v_fisler text[];
+  v_kalemler text[];
+  v_fissiz text;
+  v_yabanci text;
+  v_iptal jsonb := null;
+  kid text;
+begin
+  perform public.stk_yetki(array['uretim'], 'silme');
+  if v_id is null then raise exception 'Üretim kimliği yok' using errcode = '22023'; end if;
+  select array_agg(distinct x order by x) into v_kilitli from (
+    select fis_id as x from public.stk_hareket where not iptal and (uretim_id = v_id or id = any(v_stk))
+    union select fis_id from public.car_hareket where not iptal and fis_id is not null and (uretim_id = v_id or id = any(v_car))
+    union select id from public.stk_fis where not iptal and uretim_id = v_id) a;
+  select array_agg(distinct x order by x) into v_kilitli from (
+    select unnest(coalesce(v_kilitli, '{}')) as x
+    union select bagli_fis from public.stk_fis where id = any(coalesce(v_kilitli, '{}')) and bagli_fis is not null) a;
+  v_kilitli := coalesce(v_kilitli, '{}');
+  select array_agg(distinct coalesce(kalem_id, gecmis_kalem_id) order by coalesce(kalem_id, gecmis_kalem_id)) into v_kalemler
+    from public.stk_hareket where fis_id = any(v_kilitli) and coalesce(kalem_id, gecmis_kalem_id) is not null;
+  perform public.fis_kalem_kilitle(v_kalemler);
+  for kid in select distinct cek_id from public.fis_cek_iz where fis_id = any(v_kilitli) order by cek_id loop
+    perform pg_advisory_xact_lock(hashtextextended('kas_cek:' || kid, 0));
+  end loop;
+  perform public.kas_hesap_kilitle(jsonb_build_object('hesaplar', (select coalesce(jsonb_agg(jsonb_build_object('id', a.id, 'tur', a.tur, 'veri', a.veri)), '[]'::jsonb)
+    from public.kas_hesap a where a.id in (select hesap_id from public.kas_hareket where fis_id = any(v_kilitli)))));
+  perform 1 from public.stk_fis where id = any(v_kilitli) order by id for update;
+  perform 1 from public.uretim where id = v_id for update;
+  if not found then return jsonb_build_object('silindi', false, 'zatenYok', true, 'fisler', '[]'::jsonb); end if;
+  perform pg_advisory_xact_lock(hashtextextended('uretim:' || v_id, 0));
+  select string_agg(id, ', ' order by id) into v_fissiz from public.car_hareket
+   where not iptal and fis_id is null and (uretim_id = v_id or id = any(v_car));
+  if v_fissiz is not null then
+    raise exception 'KR010: Üretimin fiş kesilmeden yazılmış eski cari hareketi var (%) — üretim silinemez; hiçbir kayıt değişmedi', v_fissiz using errcode = 'KR010';
+  end if;
+  if p ? 'stokIdler' or p ? 'cariIdler' then
+    select string_agg(id, ', ' order by id) into v_yabanci from (
+      select id from public.stk_hareket where uretim_id = v_id and not iptal and not id = any(v_stk)
+      union all select id from public.car_hareket where uretim_id = v_id and not iptal and not id = any(v_car)) g;
+    if v_yabanci is not null then
+      raise exception 'KR010: Üretimin bu ekranda görünmeyen hareketi var (%) — sayfayı yenileyip yeniden deneyin; hiçbir kayıt değişmedi', v_yabanci using errcode = 'KR010';
+    end if;
+  end if;
+  select array_agg(distinct x order by x) into v_fisler from (
+    select fis_id as x from public.stk_hareket where not iptal and (uretim_id = v_id or id = any(v_stk))
+    union select fis_id from public.car_hareket where not iptal and fis_id is not null and (uretim_id = v_id or id = any(v_car))
+    union select id from public.stk_fis where not iptal and uretim_id = v_id) a;
+  select string_agg(x, ', ' order by x) into v_yabanci from unnest(coalesce(v_fisler, '{}')) x where not x = any(v_kilitli);
+  if v_yabanci is not null then
+    raise exception 'KR010: Silme sırasında üretime yeni fiş yazıldı (%) — sayfayı yenileyip yeniden deneyin; hiçbir kayıt değişmedi', v_yabanci using errcode = 'KR010';
+  end if;
+  select string_agg(f.id, ', ' order by f.id) into v_yabanci from public.stk_fis f
+   where f.id = any(coalesce(v_fisler, '{}')) and not (f.istek is not null and f.uretim_id is not distinct from v_id) and (
+     exists (select 1 from public.stk_hareket h where h.fis_id = f.id and not h.iptal and h.uretim_id is distinct from v_id and not h.id = any(v_stk))
+     or exists (select 1 from public.car_hareket c where c.fis_id = f.id and not c.iptal and c.uretim_id is distinct from v_id and not c.id = any(v_car))
+     or exists (select 1 from public.kas_hareket k where k.fis_id = f.id and not k.iptal));
+  if v_yabanci is not null then
+    raise exception 'KR010: % fişi bu üretimden başka kayıt da taşıyor — üretim silinemez; hiçbir kayıt değişmedi', v_yabanci using errcode = 'KR010';
+  end if;
+  perform set_config('uretim.sil_islemi', v_id, true);
+  if coalesce(cardinality(v_fisler), 0) > 0 then
+    v_iptal := public.fis_iptal_toplu(jsonb_build_object('fisler', to_jsonb(v_fisler), 'sebep', coalesce(nullif(p ->> 'sebep', ''), 'Üretim silindi')));
+  end if;
+  if exists (select 1 from public.stk_hareket where not iptal and (uretim_id = v_id or id = any(v_stk)))
+     or exists (select 1 from public.car_hareket where not iptal and (uretim_id = v_id or id = any(v_car))) then
+    raise exception 'KR010: Fiş iptalinden sonra üretimin geçerli hareketi kaldı (%) — hiçbir kayıt değişmedi', v_id using errcode = 'KR010';
+  end if;
+  delete from public.uretim where id = v_id;   -- uretim_silme_koru: hareket kalmadığını bir kez daha denetler, izi yazar
+  return jsonb_build_object('silindi', true, 'fisler', coalesce(to_jsonb(v_fisler), '[]'::jsonb), 'iptal', v_iptal);
+end $$;
+revoke all on function public.uretim_sil(jsonb) from public, anon;
+grant execute on function public.uretim_sil(jsonb) to authenticated;
+
+create or replace function public.uretim_eski_silme_koru() returns trigger
+language plpgsql security definer set search_path = public, extensions, pg_temp as $$
+begin
+  if auth.jwt() is null then return new; end if;
+  if new.iptal and not coalesce(old.iptal, false) and new.uretim_id is not null
+     and coalesce(new.iptal_sebebi, '') like 'Üretim % silindi'
+     and coalesce(current_setting('uretim.sil_islemi', true), '') is distinct from new.uretim_id
+     and exists (select 1 from public.uretim u where u.id = new.uretim_id) then
+    raise exception 'KR012: Üretim artık tek işlemle silinir; bu cihazdaki uygulama eski — sayfayı yenileyip (1.744.8) yeniden deneyin. Hiçbir kayıt değişmedi'
+      using errcode = 'KR012';
+  end if;
+  return new;
+end $$;
+revoke all on function public.uretim_eski_silme_koru() from public, anon, authenticated;
+drop trigger if exists uretim_eski_silme_koru on public.stk_fis;
+create trigger uretim_eski_silme_koru before update of iptal on public.stk_fis for each row execute function public.uretim_eski_silme_koru();
+
+create or replace function public.uretim_planlama_koru() returns trigger
+language plpgsql security definer set search_path = public, extensions, pg_temp as $$
+declare v_no text;
+begin
+  if auth.jwt() is null then return new; end if;
+  if jsonb_typeof(old.planlama) = 'object' and old.planlama ->> 'tip' = 'Üretim' then
+    v_no := nullif(btrim(coalesce(old.planlama ->> 'referansNo', '')), '');
+    if v_no is not null and (new.planlama is null or jsonb_typeof(new.planlama) <> 'object' or nullif(btrim(coalesce(new.planlama ->> 'referansNo', '')), '') is null)
+       and exists (select 1 from public.uretim u where u.siparis_no = v_no) then
+      raise exception 'KR012: Bağlı üretim % duruyor — planlama bağı üretim silinmeden kaldırılamaz; sayfayı yenileyip (1.744.8) yeniden deneyin. Hiçbir kayıt değişmedi', v_no
+        using errcode = 'KR012';
+    end if;
+  end if;
+  return new;
+end $$;
+revoke all on function public.uretim_planlama_koru() from public, anon, authenticated;
+drop trigger if exists uretim_planlama_koru on public.siparis_kalemleri;
+create trigger uretim_planlama_koru before update of planlama on public.siparis_kalemleri for each row execute function public.uretim_planlama_koru();
 
 create or replace function public.fis_bilgi(p jsonb) returns jsonb
 language plpgsql security definer set search_path = public as $$
@@ -1238,7 +1400,9 @@ declare t text;
 begin
   for t in select tablename from pg_tables where schemaname='public' and tablename <> 'stk_istemci_iz' order by tablename loop
     execute format('drop trigger if exists stk_istemci_koru on public.%I',t);
-    execute format('create trigger stk_istemci_koru before insert or update or delete on public.%I for each row execute function public.stk_istemci_koru()',t);
+    if t <> all (array['site_giris_kaydi','site_hesaplari','site_kayit_talepleri','site_oturumlari','site_talepleri']) then
+      execute format('create trigger stk_istemci_koru before insert or update or delete on public.%I for each row execute function public.stk_istemci_koru()',t);
+    end if;
   end loop;
 end $$;
 select public.stk_istemci_kapi_kur();

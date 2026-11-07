@@ -1,0 +1,84 @@
+# kos-iki-koruma.sh · test edilen commit 000e48f (4 Kasım 2026) · çıkış 0
+İKİ KORUMA · sürüm 1.744.7 · çıktılar <geçici klasör>
+✓ kurulum + uctan-uca-fis + gece denetimi + R1 + R1b iki koruma açıkken (kos.sh)
+  ✓ stok-v2/test/iki-koruma/t-dayaniklilik.js · korumalar sonra: true/1.744.7
+  ✓ stok-v2/test/finans/t-cek-iptal.js · korumalar sonra: true/1.744.7
+  ✓ stok-v2/test/finans/t-cek-yaris.js · korumalar sonra: true/1.744.7
+  ✓ stok-v2/test/finans/t-hesap-koru.js · korumalar sonra: true/1.744.7
+  ✓ stok-v2/test/finans/t-seyrek-alt.js · korumalar sonra: true/1.744.7
+  ✓ stok-v2/test/finans/t-sonlu-tutar.js · korumalar sonra: true/1.744.7
+  ✓ stok-v2/test/finans/t-toplu-iptal.js · korumalar sonra: true/1.744.7
+  ✓ stok-v2/test/finans/t-yetki-tekrar.js · korumalar sonra: true/1.744.7
+  ✓ stok-v2/test/f4/t-atomik-bag.js · korumalar sonra: true/1.744.7
+  ✓ stok-v2/test/f4/t-canli-bag.js · korumalar sonra: true/1.744.7
+  ✓ stok-v2/test/f4/t-rezervasyon-yaris.js · korumalar sonra: true/1.744.7
+  ✓ stok-v2/test/f4/t-yaris.js · korumalar sonra: true/1.744.7
+  ✓ stok-v2/test/f3/t-satis-sinir.js · korumalar sonra: true/1.744.7
+  ✓ stok-v2/test/f3/t-satis-yaris.js · korumalar sonra: true/1.744.7
+  ✓ stok-v2/test/f8/t-renk-kilit.js · korumalar sonra: true/1.744.7
+  ✓ stok-v2/test/f8/t-renk-dogal.js · korumalar sonra: true/1.744.7
+  ✓ stok-v2/test/f8/t-eski-fis.js · korumalar sonra: true/1.744.7
+  ✓ stok-v2/test/f8/t-eski-fis-yaris.js · korumalar sonra: true/1.744.7
+  ✓ stok-v2/test/duzeltme/t-bag-kilit.js · korumalar sonra: true/1.744.7
+  ✓ stok-v2/test/duzeltme/t-eski-bag.js · korumalar sonra: true/1.744.7
+  ✓ stok-v2/test/duzeltme/t-siparis-sil.js · korumalar sonra: true/1.744.7
+  ✓ stok-v2/test/f2/t-f2.js · korumalar sonra: true/1.744.7
+  ✓ stok-v2/test/f2/t-f2-kilit.js · korumalar sonra: true/1.744.7
+korumayı kapatan test: 0 
+── İKİ KORUMA: TEMİZ ──
+
+## kos.sh içinde iki koruma açıkken (0-kurulum.txt'ten)
+UÇTAN UCA TAMAM
+── İKİ KORUMA AÇIK: fiş kuralları + sürüm kapısı (1.744.7) — true/1.744.7
+── uçtan uca (fiş defteri) temiz ──
+── İKİ KORUMA yeniden açık (gece enjeksiyonundan sonra)
+── stok-v2/test/r1-yaris.js
+── R1 temiz ──
+── stok-v2/test/r1b-turetme.js
+── R1b temiz ──
+
+## t-dayaniklilik.js
+t-dayaniklilik · sürüm 1.744.7 · önek f0-t-dayaniklilik-mw2a0cht
+  ✓ [0.iki-koruma-acik] "true/1.744.7/true"
+  ✓ [A.basliksiz.fis_kes-AT001] "AT001"
+  ✓ [A.basliksiz.satir-yok] {"fis":0,"stok":0,"cari":0,"kasa":0}
+  ✓ [A.basliksiz.sayac-ilerlemedi] "ACL:1,AF:2,GD:1,NUM:1,SF:18,TH:5,VRM:1,ÇT:1,ÖD:1,ÜRT:3"
+  ✓ [A.basliksiz.tablo-yazmasi-AT001] "AT001"
+  ✓ [A.eski-1.744.6.fis_kes-AT001] "AT001"
+  ✓ [A.eski-1.744.6.satir-yok] {"fis":0,"stok":0,"cari":0,"kasa":0}
+  ✓ [A.eski-1.744.6.sayac-ilerlemedi] "ACL:1,AF:2,GD:1,NUM:1,SF:18,TH:5,VRM:1,ÇT:1,ÖD:1,ÜRT:3"
+  ✓ [A.eski-1.744.6.tablo-yazmasi-AT001] "AT001"
+  ✓ [A.bozuk.fis_kes-AT001] "AT001"
+  ✓ [A.bozuk.satir-yok] {"fis":0,"stok":0,"cari":0,"kasa":0}
+  ✓ [A.bozuk.sayac-ilerlemedi] "ACL:1,AF:2,GD:1,NUM:1,SF:18,TH:5,VRM:1,ÇT:1,ÖD:1,ÜRT:3"
+  ✓ [A.bozuk.tablo-yazmasi-AT001] "AT001"
+  ✓ [B.kopru-hareket-ekleme-red] "red"
+  ✓ [B.satir-yok] {"fis":0,"stok":0,"cari":0,"kasa":0}
+  ✓ [C.ilk] true
+  ✓ [C.tekrar-zatenVar-ayni-no] [true,true,true]
+  ✓ [C.satirlar-bir-kez] {"fis":2,"stok":1,"cari":2,"kasa":1}
+  ✓ [B2.kopru-iptal-red] "red"
+  ✓ [B2.satir-iptal-olmadi] "false"
+  ✓ [D.en-az-biri-basarili-tek-numara] [true,1]
+  ✓ [D.satirlar-bir-kez] {"fis":2,"stok":1,"cari":2,"kasa":1}
+  ✓ [D.sonra-tekrar-zatenVar] true
+  ✓ [E.hepsi-basarili] 20
+  ✓ [E.numaralar-benzersiz] 20
+  ✓ [E.fis-ve-satir-sayisi] {"fis":40,"stok":20,"cari":40,"kasa":20}
+  ✓ [E.stok-toplami] 40
+  ✓ [E.gorunum-miktari-hareketle-uyumlu (varyantlar = Σ hareket)] "true"
+  ✓ [F.oturum-uykuda (fis_kes çalıştı, commit yok)] true
+  ✓ [F.istemci-hata-aldi] false
+  ✓ [F.satir-yok] {"fis":0,"stok":0,"cari":0,"kasa":0}
+  ✓ [F.sayac-geri] "ACL:1,AF:24,GD:1,NUM:1,SF:18,TH:5,VRM:1,ÇT:1,ÖD:23,ÜRT:3"
+  ✓ [F.yeniden-deneme-basarili] true
+  ✓ [F.satirlar-bir-kez] {"fis":2,"stok":1,"cari":2,"kasa":1}
+  ✓ [G.uygulama-yeniden-denedi] 2
+  ✓ [G.her-denemede-surum-basligi] ["1.744.7","1.744.7"]
+  ✓ [G.ikinci-yanit-zatenVar] [null,true,true]
+  ✓ [G.satirlar-bir-kez] {"fis":2,"stok":1,"cari":2,"kasa":1}
+  ✓ [H.hata] false
+  ✓ [H.hicbir-parca-yazilmadi] {"fis":0,"stok":0,"cari":0,"kasa":0}
+  ✓ [H.sayac-geri] "ACL:1,AF:26,GD:1,NUM:1,SF:18,TH:5,VRM:1,ÇT:1,ÖD:25,ÜRT:3"
+  ✓ [Z.iki-koruma-hala-acik] "true/1.744.7"
+── t-dayaniklilik.js: temiz ──

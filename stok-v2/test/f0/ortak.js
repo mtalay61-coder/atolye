@@ -24,8 +24,14 @@ const hataMetni = (e) => String((e && (e.stderr || e.message)) || e).split("\n")
 
 // Tek bağlantıda, giriş yapmış kullanıcı olarak (zaman uyumlu)
 // Hatanın SQLSTATE'i (PostgREST gövdesindeki `code`): psql VERBOSITY verbose "ERROR:  KR002: …" yazar (v1.744.0, F2 kural kodları).
-function rpc(ad, p) {
-  try { return { ok: true, sonuc: JSON.parse(psql(`\\set VERBOSITY verbose\n${KIM} select public.${ad}($j$${JSON.stringify(p)}$j$::jsonb);`).split("\n").pop()) }; }
+// İKİ KORUMA KİPİ (IKI_KORUMA=1, 4 Kasım — iki-koruma/kos-iki-koruma.sh): sürüm kapısı açıkken her yazma oturumu
+// `x-atolye-surum` başlığı ister. `baslik` verilirse (uygulamanın fetch'te gönderdiği başlık) oturuma O yazılır — uygulama başlık
+// koymadıysa '{}' yazılır ve kapı reddeder (gizlenmez). Verilmezse (testin elle kurduğu çağrı) veritabanının varsayılanı geçer.
+// Kip kapalıyken hiçbir şey değişmez (F0 beklenen çıktıları stk_istemci_iz'e bakıyor).
+const baslikSql = (baslik) => (process.env.IKI_KORUMA === "1" && baslik !== undefined
+  ? `select set_config('request.headers', '${JSON.stringify(baslik || {}).replace(/'/g, "''")}', false);` : "");
+function rpc(ad, p, baslik) {
+  try { return { ok: true, sonuc: JSON.parse(psql(`\\set VERBOSITY verbose\n${KIM} ${baslikSql(baslik)} select public.${ad}($j$${JSON.stringify(p)}$j$::jsonb);`).split("\n").pop()) }; }
   catch (e) {
     const satir = String((e && e.stderr) || "").split("\n").find((x) => /ERROR:/.test(x)) || "";
     const m = satir.match(/ERROR:\s+([0-9A-Z]{5}):\s*(.*)$/);
@@ -59,7 +65,8 @@ global.fetch = async (url, sec = {}) => {
   const yol = String(url).replace(/^.*\/rest\/v1\//, "");
   const ad = (yol.match(/^rpc\/([a-z_]+)/) || [])[1];
   if (ad) {
-    const r = rpc(ad, JSON.parse(sec.body).p);
+    const h = sec.headers || {};
+    const r = rpc(ad, JSON.parse(sec.body).p, h["x-atolye-surum"] ? { "x-atolye-surum": h["x-atolye-surum"] } : null);
     giden.push({ ad, ok: r.ok, hata: r.hata });
     // Gerçek PostgREST gövdesi gibi: { code, message } (kod yoksa yalnız mesaj — eski davranış)
     const govde = r.kod ? JSON.stringify({ code: r.kod, message: r.mesaj, details: null, hint: null }) : r.hata;

@@ -173,23 +173,54 @@ const uretimSil = useCallback(async (uretimId, cascade) => {
     // silinmez. İptal edilemezse hiçbir şey değişmez (üretim yerinde kalır). İptal edilen satırlar fark tabanından çıkar; eski usul
     // satırlar, ana kayıtlar ve üretim kaydı aşağıdaki adımlarla bugünkü yoldan.
     const silinenCariKayitlari = cariler.flatMap((c) => (c.hareketler || []).filter(buUretimeAitCariHareketiMi).map((h) => ({ cari: c, hareket: h })));
-    const sunucuSatirlari = fisKesYolu() ? uretimSunucuFisSatirlari(silinenStokKayitlari, silinenCariKayitlari) : null;
-    if (sunucuSatirlari && sunucuSatirlari.fisler.length) {
-      const iptalEdilen = [];
+    // HEPSİ YA DA HİÇBİRİ (v1.744.8 — kural provası bulgusu, 4 Kasım). Fiş defteri kuruluyken fis_kes ile KESİLMEMİŞ (eski) bir
+    // hareketin iptali köprüde ağa çıkmadan durdurulur (038, KR009); 040 o satırı "inceleme"ye ayırıp kalanı gönderdiği için adım
+    // başarılı sayılıyor, üretim kaydı siliniyordu → sunucuda üretim YOK, hareketleri GEÇERLİ; ekranda ise hareketler silinmiş.
+    // Şimdi EKRANA DOKUNMADAN önce sunucu tek işlemde karar verir (078 uretimSilGonder): fişleri iptal edip üretimi siler ya da
+    // reddeder — reddedilirse hiçbir kayıt (sunucu, ekran, çöp) değişmez. Sunucuda işlem kurulu değilse (canlıda SQL ayrı onayla
+    // kurulur) eski hareket varken silme hiç denenmez; yalnız sunucu fişli (ÜRT) hareketi olan üretim bugünkü yoldan silinir.
+    if (fisKesYolu()) {
+      const sunucuSatirlari = uretimSunucuFisSatirlari(silinenStokKayitlari, silinenCariKayitlari);
+      const eskiSatirSayisi = [...silinenStokKayitlari, ...silinenCariKayitlari].filter(({ hareket: h }) => !(h && h.uretimFisAdi && h.fisNo)).length;
+      const stokIdler = silinenStokKayitlari.map(({ hareket: h }) => h && h.id).filter(Boolean);
+      const cariIdler = silinenCariKayitlari.map(({ hareket: h }) => h && h.id).filter(Boolean);
+      const hataMetni = (e) => String((e && e.message) || e).slice(0, 220);
+      let sunucuSildi = false;
       try {
-        for (const no of sunucuSatirlari.fisler) {
-          await fisIptalGonder(no, `Üretim ${siparis.siparisNo} silindi`);
-          iptalEdilen.push(no);
-        }
+        const r = await uretimSilGonder({ id: uretimId, sebep: `Üretim ${siparis.siparisNo} silindi`, stokIdler, cariIdler });
+        sunucuSildi = true;
+        gunlukYaz(`Üretim sunucuda tek işlemde silindi: ${siparis.siparisNo}${r.fisler && r.fisler.length ? ` — iptal edilen fiş: ${r.fisler.join(", ")}` : ""}`,
+          "uretim", { uretimId, fisler: r.fisler || [] });
       } catch (e) {
-        showToast(`⚠ Üretim SİLİNMEDİ — fiş iptal edilemedi (${String((e && e.message) || e).slice(0, 160)}).`
-          + (iptalEdilen.length ? ` İptal edilen: ${iptalEdilen.join(", ")}; sayfayı yenileyip yeniden deneyin.` : ""));
-        gunlukYaz(`Üretim silme: fiş iptal edilemedi (${siparis.siparisNo})`, "uretim", { iptalEdilen, hata: String((e && e.message) || e).slice(0, 200) });
-        return { ok: false };
+        if (!uretimSilSunucuYok(e)) {
+          showToast(`⚠ Üretim SİLİNMEDİ — ${hataMetni(e)}. Hiçbir kayıt değişmedi.`);
+          gunlukYaz(`Üretim silme reddedildi (${siparis.siparisNo})`, "uretim", { uretimId, hata: hataMetni(e) });
+          return { ok: false };
+        }
+        if (eskiSatirSayisi > 0) {
+          showToast(`⚠ Üretim SİLİNMEDİ — ${eskiSatirSayisi} hareketi fiş kesilmeden (eski yoldan) yazılmış; sunucuda tek işlemli üretim silme `
+            + "(uretim_sil) kurulu olmadığı için bu silme yarım kalırdı. Hiçbir kayıt değişmedi.");
+          gunlukYaz(`Üretim silme durduruldu: eski hareket, sunucu işlemi yok (${siparis.siparisNo})`, "uretim", { uretimId, eskiSatirSayisi });
+          return { ok: false };
+        }
+        // Eski sunucu, yalnız sunucu fişli satırlar: bugünkü yol — fişler sırayla iptal, üretim kaydı aşağıdaki adımlarda.
+        const iptalEdilen = [];
+        try {
+          for (const no of sunucuSatirlari.fisler) {
+            await fisIptalGonder(no, `Üretim ${siparis.siparisNo} silindi`);
+            iptalEdilen.push(no);
+          }
+        } catch (e2) {
+          showToast(`⚠ Üretim SİLİNMEDİ — fiş iptal edilemedi (${hataMetni(e2)}).`
+            + (iptalEdilen.length ? ` İptal edilen: ${iptalEdilen.join(", ")}; sayfayı yenileyip yeniden deneyin.` : ""));
+          gunlukYaz(`Üretim silme: fiş iptal edilemedi (${siparis.siparisNo})`, "uretim", { iptalEdilen, hata: hataMetni(e2) });
+          return { ok: false };
+        }
+        if (sunucuSatirlari.fisler.length) gunlukYaz(`Üretim fişleri iptal edildi: ${sunucuSatirlari.fisler.join(", ")} (${siparis.siparisNo} silindi)`, "uretim", { uretimId });
       }
-      fisKesTabandanCikar("urunler", "stok_hareketleri", sunucuSatirlari.stokIdler);
-      fisKesTabandanCikar("cariler", "cari_hareketleri", sunucuSatirlari.cariIdler);
-      gunlukYaz(`Üretim fişleri iptal edildi: ${sunucuSatirlari.fisler.join(", ")} (${siparis.siparisNo} silindi)`, "uretim", { uretimId });
+      // İptal edilen satırlar fark tabanından çıkar (yeniden gönderilmesin); tek işlemde bütün eşleşen satırlar iptal edildi.
+      fisKesTabandanCikar("urunler", "stok_hareketleri", sunucuSildi ? stokIdler : sunucuSatirlari.stokIdler);
+      fisKesTabandanCikar("cariler", "cari_hareketleri", sunucuSildi ? cariIdler : sunucuSatirlari.cariIdler);
     }
 
     // SIRA BİLİNÇLİ: hammadde ve cari etkileri önce geri alınır, üretim kaydı EN SON silinir.
@@ -280,8 +311,21 @@ const uretimSil = useCallback(async (uretimId, cascade) => {
   }
 
   // Etkisiz üretim: temizlenecek hareket yok, yine de sonuç DOĞRULANIR.
-  // bayat-muaf: ayrı dal — yukarıdaki `await`ler (sunucu iptali, adımlar) yalnız temizlik dalında; buraya beklemeden gelinir.
+  // bayat-muaf: ayrı dal — tek bekleme aşağıdaki sunucu kararı (v1.744.8); listeler (kalanUretim, nextSiparisler) ondan ÖNCE kurulur.
   const kalanUretim = uretim.filter((o) => o.id !== uretimId);
+  // Bu ekranda hareketi yok — ama başka bir cihaz az önce teslim yazmış olabilir. Fiş defteri kuruluyken sunucu tek işlemde
+  // karar verir (boş satır listesiyle: görünmeyen geçerli hareket varsa KR010, hiçbir şey değişmez). İşlem kurulu değilse bugünkü yol.
+  if (fisKesYolu()) {
+    try {
+      await uretimSilGonder({ id: uretimId, sebep: `Üretim ${siparis.siparisNo} silindi`, stokIdler: [], cariIdler: [] });
+    } catch (e) {
+      if (!uretimSilSunucuYok(e)) {
+        showToast(`⚠ Üretim SİLİNMEDİ — ${String((e && e.message) || e).slice(0, 220)}. Hiçbir kayıt değişmedi.`);
+        gunlukYaz(`Üretim silme reddedildi (${siparis.siparisNo})`, "uretim", { uretimId, hata: String((e && e.message) || e).slice(0, 220) });
+        return { ok: false };
+      }
+    }
+  }
   const sadeAdimlar = [];
   if (etkilendiMi) {
     sadeAdimlar.push({ ad: "bağlı satış siparişi", yerelUygula: () => setSiparisler(nextSiparisler),

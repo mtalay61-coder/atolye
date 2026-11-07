@@ -1,0 +1,118 @@
+veritabanı atolye_ekran hazır · uretim_sil 0 · kurallar f
+istemci const SURUM = "1.744.7"
+ekran-stok · atolye_ekran · istemci ERP test · kurallar KAPALI
+0 · başlangıç
+  ✓ [0 · başlangıç · sunucu (stk_stok)] {"Siyah/40":0,"Siyah/41":0,"Taba/40":0,"Taba/41":0}
+  ✓ [0 · başlangıç · ekran ("mevcut:")] {"Siyah/40":0,"Siyah/41":0,"Taba/40":0,"Taba/41":0}
+    giriş fişi MNL-261107001 · Stok girişi kaydedildi — fiş: MNL-261107001
+1 · giriş Siyah 40:5 41:3
+  ✓ [1 · giriş Siyah 40:5 41:3 · sunucu (stk_stok)] {"Siyah/40":5,"Siyah/41":3,"Taba/40":0,"Taba/41":0}
+  ✓ [1 · giriş Siyah 40:5 41:3 · ekran ("mevcut:")] {"Siyah/40":5,"Siyah/41":3,"Taba/40":0,"Taba/41":0}
+    giriş fişi MNL-261107002
+2 · giriş Taba 40:2
+  ✓ [2 · giriş Taba 40:2 · sunucu (stk_stok)] {"Siyah/40":5,"Siyah/41":3,"Taba/40":2,"Taba/41":0}
+  ✓ [2 · giriş Taba 40:2 · ekran ("mevcut:")] {"Siyah/40":5,"Siyah/41":3,"Taba/40":2,"Taba/41":0}
+    çıkış fişi MNL-261107003 · bildirim: Stok çıkışı kaydedildi — fiş: MNL-261107003
+3 · çıkış Siyah 40:2
+  ✓ [3 · çıkış Siyah 40:2 · sunucu (stk_stok)] {"Siyah/40":3,"Siyah/41":3,"Taba/40":2,"Taba/41":0}
+  ✓ [3 · çıkış Siyah 40:2 · ekran ("mevcut:")] {"Siyah/40":3,"Siyah/41":3,"Taba/40":2,"Taba/41":0}
+    çıkıştan ~5 sn sonra ekran: {"Siyah/40":3,"Siyah/41":3,"Taba/40":2,"Taba/41":0}
+    çıkıştan ~15 sn sonra ekran: {"Siyah/40":3,"Siyah/41":3,"Taba/40":2,"Taba/41":0}
+    iptal: fiş kartı bulundu · menü Sil seçildi · "MNL-261107003" iptal edildi — 1 stok satırı
+  ✓ [4 · çıkış fişi sunucuda iptal] true
+4 · çıkış fişinin iptali
+  ✓ [4 · çıkış fişinin iptali · sunucu (stk_stok)] {"Siyah/40":5,"Siyah/41":3,"Taba/40":2,"Taba/41":0}
+  ✓ [4 · çıkış fişinin iptali · ekran ("mevcut:")] {"Siyah/40":5,"Siyah/41":3,"Taba/40":2,"Taba/41":0}
+5 · sayfa yenilendi
+  ✓ [5 · sayfa yenilendi · sunucu (stk_stok)] {"Siyah/40":5,"Siyah/41":3,"Taba/40":2,"Taba/41":0}
+  ✓ [5 · sayfa yenilendi · ekran ("mevcut:")] {"Siyah/40":5,"Siyah/41":3,"Taba/40":2,"Taba/41":0}
+  ✓ [6 · çift tık → tek fiş] 1
+6 · Kaydet'e çift tık (Taba 41:4)
+  ✓ [6 · Kaydet'e çift tık (Taba 41:4) · sunucu (stk_stok)] {"Siyah/40":5,"Siyah/41":3,"Taba/40":2,"Taba/41":4}
+  ✓ [6 · Kaydet'e çift tık (Taba 41:4) · ekran ("mevcut:")] {"Siyah/40":5,"Siyah/41":3,"Taba/40":2,"Taba/41":4}
+    tekrar: [200,200] · {"fisNo":"MNL-261107005","kalemler":[],"zatenVar":true,"bagliFisNo":null,"karsilananDuzeltme":[]}
+  ✓ [7 · aynı istek iki kez → tek fiş] 1
+7 · aynı kaydetme isteği ağda iki kez (Siyah 41:1)
+  ✓ [7 · aynı kaydetme isteği ağda iki kez (Siyah 41:1) · sunucu (stk_stok)] {"Siyah/40":5,"Siyah/41":4,"Taba/40":2,"Taba/41":4}
+  ✓ [7 · aynı kaydetme isteği ağda iki kez (Siyah 41:1) · ekran ("mevcut:")] {"Siyah/40":5,"Siyah/41":4,"Taba/40":2,"Taba/41":4}
+    yanıt kaybı: form kapandı · Stok girişi kaydedildi — fiş: MNL-261107006
+  ✓ [8 · yanıt kaybı → tek fiş] 1
+8 · yanıt kaybı (Taba 40:3)
+  ✓ [8 · yanıt kaybı (Taba 40:3) · sunucu (stk_stok)] {"Siyah/40":5,"Siyah/41":4,"Taba/40":5,"Taba/41":4}
+  ✓ [8 · yanıt kaybı (Taba 40:3) · ekran ("mevcut:")] {"Siyah/40":5,"Siyah/41":4,"Taba/40":5,"Taba/41":4}
+9 · sayfa yenilendi
+  ✓ [9 · sayfa yenilendi · sunucu (stk_stok)] {"Siyah/40":5,"Siyah/41":4,"Taba/40":5,"Taba/41":4}
+  ✓ [9 · sayfa yenilendi · ekran ("mevcut:")] {"Siyah/40":5,"Siyah/41":4,"Taba/40":5,"Taba/41":4}
+FİŞLER (sunucu)
+    MNL-261107001 Giriş geçerli Siyah/40:5,Siyah/41:3
+    MNL-261107002 Giriş geçerli Taba/40:2
+    MNL-261107003 Çıkış İPTAL —
+    MNL-261107004 Giriş geçerli Taba/41:4
+    MNL-261107005 Giriş geçerli Siyah/41:1
+    MNL-261107006 Giriş geçerli Taba/40:3
+  ağ: 198 istek, hatalı 0 []
+── ekran-stok: 24 geçti, 0 kaldı ──
+ekran-kasa · atolye_ekran · kurallar KAPALI
+0 · başlangıç
+  ✓ [0 · başlangıç · sunucu (kas_hareket)] 50400
+  ✓ [0 · başlangıç · ekran (Kasa & Banka)] 50400
+    gelir: Ekran Gelir · gelir (kasaya giriş) · Merkez Kasa · fiş GL-261107001 · Gelir kaydedildi — GL-261107001 Geri al
+1 · gelir 1.000
+  ✓ [1 · gelir 1.000 · sunucu (kas_hareket)] 51400
+  ✓ [1 · gelir 1.000 · ekran (Kasa & Banka)] 51400
+    gider: Ekran Gider · gider (kasadan çıkış) · Merkez Kasa · fiş GD-261107002 · Başka cihazdan güncellendi: Stok
+2 · gider 250
+  ✓ [2 · gider 250 · sunucu (kas_hareket)] 51150
+  ✓ [2 · gider 250 · ekran (Kasa & Banka)] 51150
+    iptal: satır bulundu · "GL-261107001" iptal edildi — 1 kasa satırı
+  ✓ [3 · gelir fişi sunucuda iptal] true
+3 · gelirin iptali
+  ✓ [3 · gelirin iptali · sunucu (kas_hareket)] 50150
+  ✓ [3 · gelirin iptali · ekran (Kasa & Banka)] 50150
+4 · sayfa yenilendi
+  ✓ [4 · sayfa yenilendi · sunucu (kas_hareket)] 50150
+  ✓ [4 · sayfa yenilendi · ekran (Kasa & Banka)] 50150
+  ✓ [5 · çift tık → tek fiş] 1
+5 · Kaydet'e çift tık (gelir 400)
+  ✓ [5 · Kaydet'e çift tık (gelir 400) · sunucu (kas_hareket)] 50550
+  ✓ [5 · Kaydet'e çift tık (gelir 400) · ekran (Kasa & Banka)] 50550
+    tekrar: [200,200] · {"fisNo":"GD-261107003","kalemler":[],"zatenVar":true,"bagliFisNo":null,"karsilananDuzeltme":[]}
+  ✓ [6 · aynı istek iki kez → tek fiş] 1
+6 · aynı kaydetme isteği ağda iki kez (gider 75)
+  ✓ [6 · aynı kaydetme isteği ağda iki kez (gider 75) · sunucu (kas_hareket)] 50475
+  ✓ [6 · aynı kaydetme isteği ağda iki kez (gider 75) · ekran (Kasa & Banka)] 50475
+    yanıt kaybı: tutar kutusu "" · Gelir kaydedildi — GL-261107003 Geri al
+  ✓ [7 · yanıt kaybı → tek fiş] 1
+7 · yanıt kaybı (gelir 60)
+  ✓ [7 · yanıt kaybı (gelir 60) · sunucu (kas_hareket)] 50535
+  ✓ [7 · yanıt kaybı (gelir 60) · ekran (Kasa & Banka)] 50535
+8 · sayfa yenilendi
+  ✓ [8 · sayfa yenilendi · sunucu (kas_hareket)] 50535
+  ✓ [8 · sayfa yenilendi · ekran (Kasa & Banka)] 50535
+FİŞLER (sunucu, bu koşu)
+    GL-261107001 Gelir İPTAL Giriş:1000(iptal)
+    GD-261107002 Gider geçerli Çıkış:250
+    GL-261107002 Gelir geçerli Giriş:400
+    GD-261107003 Gider geçerli Çıkış:75
+    GL-261107003 Gelir geçerli Giriş:60
+  ağ: 171 istek, hatalı 0 []
+── ekran-kasa: 22 geçti, 0 kaldı ──
+  1. Giriş · sunucu {"Siyah/40":6,"Siyah/41":4} · ekran {"Siyah/40":6,"Siyah/41":4} AYNI · bildirim: Başka cihazdan güncellendi: Stok
+  2. Çıkış · sunucu {"Siyah/40":5,"Siyah/41":4} · ekran {"Siyah/40":5,"Siyah/41":4} AYNI · bildirim: Stok çıkışı kaydedildi — fiş: MNL-261107008
+  3. Giriş · sunucu {"Siyah/40":6,"Siyah/41":4} · ekran {"Siyah/40":6,"Siyah/41":4} AYNI · bildirim: Stok girişi kaydedildi — fiş: MNL-261107009
+  4. Çıkış · sunucu {"Siyah/40":5,"Siyah/41":4} · ekran {"Siyah/40":5,"Siyah/41":4} AYNI · bildirim: Stok çıkışı kaydedildi — fiş: MNL-261107010
+  5. Giriş · sunucu {"Siyah/40":6,"Siyah/41":4} · ekran {"Siyah/40":6,"Siyah/41":4} AYNI · bildirim: Stok girişi kaydedildi — fiş: MNL-261107011
+  6. Çıkış · sunucu {"Siyah/40":5,"Siyah/41":4} · ekran {"Siyah/40":5,"Siyah/41":4} AYNI · bildirim: Stok çıkışı kaydedildi — fiş: MNL-261107012
+  7. Giriş · sunucu {"Siyah/40":6,"Siyah/41":4} · ekran {"Siyah/40":6,"Siyah/41":4} AYNI · bildirim: Stok girişi kaydedildi — fiş: MNL-261107013
+  8. Çıkış · sunucu {"Siyah/40":5,"Siyah/41":4} · ekran {"Siyah/40":5,"Siyah/41":4} AYNI · bildirim: Stok çıkışı kaydedildi — fiş: MNL-261107014
+── ekran-stok-yaris: 8 denemede ekran ≠ sunucu: 0; 10 sn sonra hâlâ farklı: 0 ──
+  hazırlık: sunucu {"Siyah/40":10,"Siyah/41":4} · ekran {"Siyah/40":10,"Siyah/41":4}
+  başka cihaz fis_kes: 200 {"fisNo":"MNL-261107016","kalemler":[],"zatenVar":false,"bagliFisNo":null,"karsi
+  yeniden okuma başladı mı: evet (1 sn)
+  +5 sn · sunucu {"Siyah/40":9,"Siyah/41":4} · ekran {"Siyah/40":9,"Siyah/41":4} AYNI
+  +10 sn · sunucu {"Siyah/40":9,"Siyah/41":4} · ekran {"Siyah/40":9,"Siyah/41":4} AYNI
+  +20 sn · sunucu {"Siyah/40":9,"Siyah/41":4} · ekran {"Siyah/40":9,"Siyah/41":4} AYNI
+  +40 sn · sunucu {"Siyah/40":9,"Siyah/41":4} · ekran {"Siyah/40":9,"Siyah/41":4} AYNI
+  bildirimler: 
+── ekran-stok-tazeleme: ekran sunucuya döndü (ilk fark yok) ──
+── kos-ekran: TEMİZ ──

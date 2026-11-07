@@ -1,0 +1,38 @@
+# t-uretim-sil.js · DÜZELTME SONRASI · test edilen commit 996f719 (kos-butunluk içinden) · 4 Kasım 2026
+  ✓ [ESKI.yarim-islem-yok (üretim yok ⇒ satır yok)] 0
+  ✓ [ESKI.tamami-yapildi] [true,"yok",0,0,"t"]
+  ✓ [ESKI.ekran-sunucuyla-ayni] ["yok",0,0]
+  ✓ [ESKI0.hicbir-kayit-degismedi (sunucu)] ["var",1,1,"f"]
+  ✓ [ESKI0.ekran-degismedi] [false,"var",1,1,0]
+  ✓ [FISSIZ.hicbir-kayit-degismedi (sunucu)] ["var",1,1,"f"]
+  ✓ [FISSIZ.ekran-degismedi] [false,"var",1,1,0]
+  ✓ [FISSIZ.kullaniciya-sebep] true
+SUNUCU FİŞİ (ÜRT fis_kes ile)
+  ✓ [SUNUCU.tamami-yapildi] [true,"yok",0,0,"t"]
+  ✓ [SUNUCU.ekran-sunucuyla-ayni] ["yok",0,0]
+S1 — doğrudan silme (eski istemci / REST) geçerli hareketi olan üretimi silemez
+  ✓ [S1.red] "KR010"
+  ✓ [S1.degismedi] {"uretim":"var","stok":1,"cari":1,"fisIptal":"f"}
+S2 — yarış: silme ∥ aynı üretime yeni fiş
+  ✓ [S2a.sonuc (fiş ∥ silme)] ["tamam","KR010"]
+  ✓ [S2a.tutarli (üretim duruyor, yeni fiş geçerli)] ["var",1]
+  ✓ [S2b.sonuc (silme ∥ fiş)] ["tamam","KR010"]
+  ✓ [S2b.silinmis-uretime-hareket-yazilmadi] ["yok",0,0]
+S3 — eski fiş başka kayıt taşıyor: hiçbiri iptal edilmez
+  ✓ [S3.red] "KR010"
+  ✓ [S3.hicbir-kayit-degismedi] {"uretim":"var","stok":2,"cari":2,"fisIptal":"ff"}
+S4 — son adımda hata: fiş iptalleri de geri alınır
+  ✓ [S4.hata] "hata"
+  ✓ [S4.hicbir-kayit-degismedi] {"uretim":"var","stok":1,"cari":1,"fisIptal":"f"}
+S5 — ekranda görünmeyen geçerli hareket (başka cihaz) sessizce iptal edilmez
+  ✓ [S5.red] "KR010"
+  ✓ [S5.hicbir-kayit-degismedi] {"uretim":"var","stok":1,"cari":1,"fisIptal":"f"}
+  ✓ [COP.eski-fisli-urun.sunucu-degismedi (kart / hareket)] {"kart":0,"hareket":0}
+  ✓ [COP.eski-fisli-urun.ekran-degismedi (kart yok, çöpte duruyor)] {"kart":0,"cop":1}
+  ✓ [COP.eski-fisli-urun.kullaniciya-sebep] true
+  ✓ [COP.fissiz-cari.sunucu-degismedi (kart / hareket)] {"kart":0,"hareket":0}
+  ✓ [COP.fissiz-cari.ekran-degismedi (kart yok, çöpte duruyor)] {"kart":0,"cop":1}
+  ✓ [COP.fissiz-cari.kullaniciya-sebep] true
+  ✓ [TUT.silinmis-uretime-bagli-gecerli-hareket (stok + cari)] 0
+  ✓ [TUT.iptal-fiste-gecerli-satir-yok] 0
+  ✓ [TUT.gecerli-fiste-iptal-satir-yok] 0

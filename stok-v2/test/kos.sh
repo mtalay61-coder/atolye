@@ -106,12 +106,26 @@ if [ -f test/erp.cjs ]; then
   editor_ver stok-v2/fis-defteri.sql
   calistir stok-v2/test/sinama-fis.sql
   calistir stok-v2/test/sinama-fis-ek.sql   # v1.742: sipariş bağ çözme, renk taşıma (kurallar açık)
+  # İKİ KORUMA KİPİ (IKI_KORUMA=1 — iki-koruma/kos-iki-koruma.sh, 4 Kasım): bundan sonraki uçtan uca testler (uygulamanın fiş yolu,
+  # gece denetimi, R1 / R1b yarışları) fiş kuralları VE sürüm kapısı birlikte AÇIKKEN koşar. Varsayılan oturum başlığı testin elle
+  # kurduğu çağrılar içindir; uygulamanın kendi istekleri gönderdiği başlıkla gider (uctan-uca-fis.js, f0/ortak.js).
+  if [ "${IKI_KORUMA:-}" = 1 ]; then
+    surum=$(sed -n 's/^const SURUM = "\(.*\)";$/\1/p' src/015-sabitler.jsx)
+    psql -X -q -d postgres -c "alter database $DB set request.headers = '{\"x-atolye-surum\":\"$surum\"}'"
+    psql -X -q -d "$DB" -c "update public.stk_ayar set fis_aktif = true, min_istemci_surum = '$surum' where id = 'tekil'"
+    echo "── İKİ KORUMA AÇIK: fiş kuralları + sürüm kapısı ($surum) — $(psql -X -q -At -d "$DB" -c "select public.fis_kural_aktif()::text || '/' || min_istemci_surum from public.stk_ayar")"
+  fi
   echo "── stok-v2/test/uctan-uca-fis.js"
   STOK_V2_DB="$DB" node stok-v2/test/uctan-uca-fis.js
   # v1.741 GECE DENETİMİ — uçtan uca fişlerin üstünde (yanlış alarm yok mu), Editor gibi; ikinci kez zararsız
   editor_ver stok-v2/fis-gece-denetimi.sql
   editor_ver stok-v2/fis-gece-denetimi.sql
+  # sinama-gece.sql alarmları sınamak için SAHTE bozuk veri enjekte eder: kuralları kapatır (fis_aktif = false), fişsiz satır
+  # ekler, sonunda rollback. Sürüm kapısı açıkken kurallar kapanmaz (fis_kural_aktif = fis_aktif VEYA kapı) — enjeksiyon
+  # reddedilir; bu kapının amacıdır. İki koruma kipinde kapı YALNIZ bu enjeksiyon sınamasının süresince kapatılıp yeniden açılır.
+  if [ "${IKI_KORUMA:-}" = 1 ]; then psql -X -q -d "$DB" -c "update public.stk_ayar set min_istemci_surum = null where id = 'tekil'"; fi
   calistir stok-v2/test/sinama-gece.sql
+  if [ "${IKI_KORUMA:-}" = 1 ]; then psql -X -q -d "$DB" -c "update public.stk_ayar set fis_aktif = true, min_istemci_surum = '$surum' where id = 'tekil'"; echo "── İKİ KORUMA yeniden açık (gece enjeksiyonundan sonra)"; fi
   # v1.742.2 R1 — aynı sipariş kalemine eşzamanlı teslim, tekrar, ağ kesintisi, geri alma, iptal (kurallar açık)
   echo "── stok-v2/test/r1-yaris.js"
   STOK_V2_DB="$DB" node stok-v2/test/r1-yaris.js

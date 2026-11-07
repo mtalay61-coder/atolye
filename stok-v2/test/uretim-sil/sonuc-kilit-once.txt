@@ -1,0 +1,8 @@
+# t-uretim-kilit.js · ESKİ kilit sırası (fis-defteri.sql commit 0649412: üretim kilidi → kalem) · 4 Kasım 2026 · beklenen KIRMIZI (kilitlenme yeniden üretildi)
+t-uretim-kilit · atolye_kilit_once · uretim_sil kilit sırası: ESKİ (üretim kilidi → kalem)
+  sonuç: ikinci teslim 40P01 · uretim_sil tamam
+  ✗ [kilitlenme-yok (40P01 yok)] "kilitlendi" · beklenen "yok"
+  ✗ [teslim-tamamlandi] "40P01" · beklenen "tamam"
+  ✗ [silme-reddedildi (araya fiş girdi)] "tamam" · beklenen "KR010"
+  ✗ [tutarli (üretim var ⇒ iki teslim geçerli)] {"uretim":0,"gecerli":0} · beklenen {"uretim":1,"gecerli":2}
+── t-uretim-kilit.js: 4 kırmızı ──
