@@ -106,6 +106,7 @@ Hiçbir şey yazmaz, silmez, iptal etmez, dönüştürmez. Satırlar: bölüm ·
 |---|---|---|
 | `t-uretim-sil.js` — gerçek PG, uygulamanın kendi `useUretimSil` / `useCopKutusu` kodu: eski fişli, eski fişli + işlem yok, fişsiz, sunucu fişli, S1–S5, çöp (eski fişli ürün, fişsiz cari), tutarlılık | 18 kırmızı (`sonuc-once.txt`) | 31/31 (`sonuc-sonra.txt`) |
 | `t-uretim-kilit.js` — kilitlenme | 4 kırmızı, 40P01 (`sonuc-kilit-once.txt`) | temiz |
+| `t-uretim-bakiye.sh` (7 Kasım) — paket 12 canlı benzeri kopyaya (12-geri-al → 12-kur → 6/6); eski fişli / yeni fişli / karma / fişsiz cari üretim: stok (stk_stok) ve cari bakiye silme öncesi/sonrası beklenenle; silinen üretime bağlı geçerli hareket / fiş başlığı; aynı kalemde eşzamanlı teslim ∥ silme (bağlı / bağsız, iki zorla sıra + 12 doğal yarış); tekrar silme (ardışık, eşzamanlı, reddedilenden sonra); kurallar kapalı VE açık; geri dönüş (durdur → geri-al → veri aynı → yeniden kur → durdurmayı kaldır) | — | 49/49 × 2 kip + 16/16 paket adımı = 114 ✓, 0 ✗ (`sonuc-bakiye.txt`) |
 | `t-uretim-paketi.sh` — paket 12, sıkılaştırılmış canlı benzeri kopya, kurallar ve kapı KAPALI: kur, 6/6, tekrar zararsız, sıkılaştırma uygunluğu, yetkiler, kilit, davranış, geri alma (neyi kaldırdığı), veri aynı, Editor | — | 21/21 (`sonuc-regresyon.txt`) |
 
 Regresyon (son hâl): `stok-v2/test/uretim-sil/sonuc-regresyon.txt`.

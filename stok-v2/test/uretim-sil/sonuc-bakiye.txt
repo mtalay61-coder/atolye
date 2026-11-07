@@ -1,0 +1,148 @@
+NOTICE:  database "atolye_uretim_bakiye" does not exist, skipping
+t-uretim-bakiye · atolye_uretim_bakiye (atolye_guvenlik kopyası)
+  ✓ [1.geri-al (canlı hâli)] 0
+  ✓ [1.islem-yok] 0
+  ✓ [2.12-kur] 0
+  ✓ [3.12-sonra-dogrula] tttttt
+4a. kurallar KAPALI (canlı gibi)
+t-uretim-bakiye · atolye_uretim_bakiye · önek f0-bakiye-kapali-mw677u7t · uretim_sil KURULU · kurallar f
+  başlangıç: {"stok":-4500.9994,"cari":238989.94}
+ESKI — eski fişli
+  ✓ [ESKI.uretim-etkisi-yazildi] {"stok":-2,"cari":-40}
+  ✓ [ESKI.sonuc] "tamam"
+  ✓ [ESKI.stok-cari-farki (silme öncesi → sonrası)] {"stok":2,"cari":40}
+  ✓ [ESKI.baslangica-gore] {"stok":0,"cari":0}
+  ✓ [ESKI.bagli-kalan (üretim / stok / cari / fiş)] {"uretim":0,"stokHareket":0,"cariHareket":0,"fisBasligi":0}
+  ✓ [ESKI.iz] 1
+  ✓ [ESKI.T1.tekrar-zatenYok] ["tamam",true]
+  ✓ [ESKI.T1.tekrar-hicbir-sey-degismedi] {"satir":3,"iptal":2,"stok":-4500.9994,"cari":238989.94}
+YENI — yeni fişli (fis_kes)
+  ✓ [YENI.uretim-etkisi-yazildi] {"stok":-3,"cari":-30}
+  ✓ [YENI.sonuc] "tamam"
+  ✓ [YENI.stok-cari-farki (silme öncesi → sonrası)] {"stok":3,"cari":30}
+  ✓ [YENI.baslangica-gore] {"stok":0,"cari":0}
+  ✓ [YENI.bagli-kalan (üretim / stok / cari / fiş)] {"uretim":0,"stokHareket":0,"cariHareket":0,"fisBasligi":0}
+  ✓ [YENI.iz] 1
+  ✓ [YENI.T1.tekrar-zatenYok] ["tamam",true]
+  ✓ [YENI.T1.tekrar-hicbir-sey-degismedi] {"satir":3,"iptal":2,"stok":-4500.9994,"cari":238989.94}
+KARMA — eski + yeni fiş aynı üretimde
+  ✓ [KARMA.uretim-etkisi-yazildi] {"stok":-5,"cari":-70}
+  ✓ [KARMA.sonuc] "tamam"
+  ✓ [KARMA.stok-cari-farki (silme öncesi → sonrası)] {"stok":5,"cari":70}
+  ✓ [KARMA.baslangica-gore] {"stok":0,"cari":0}
+  ✓ [KARMA.bagli-kalan (üretim / stok / cari / fiş)] {"uretim":0,"stokHareket":0,"cariHareket":0,"fisBasligi":0}
+  ✓ [KARMA.iz] 1
+  ✓ [KARMA.T1.tekrar-zatenYok] ["tamam",true]
+  ✓ [KARMA.T1.tekrar-hicbir-sey-degismedi] {"satir":6,"iptal":4,"stok":-4500.9994,"cari":238989.94}
+FISSIZ — eski fişli stok + fişsiz cari
+  ✓ [FISSIZ.uretim-etkisi-yazildi] {"stok":-2,"cari":-40}
+  ✓ [FISSIZ.sonuc] "KR010"
+  ✓ [FISSIZ.stok-cari-farki (silme öncesi → sonrası)] {"stok":0,"cari":0}
+  ✓ [FISSIZ.baslangica-gore] {"stok":-2,"cari":-40}
+  ✓ [FISSIZ.bagli-kalan (üretim / stok / cari / fiş)] {"uretim":1,"stokHareket":1,"cariHareket":1,"fisBasligi":1}
+  ✓ [FISSIZ.iz] 0
+E1 — teslim üretime BAĞLI, zorla sıra
+  ✓ [E1a.sonuc (teslim önce ∥ silme)] ["tamam","KR010"]
+  ✓ [E1a.tutarlilik] {"kilitlenme":"yok","tutarliKalem":"evet","teslimMiktari":5,"stokFarki":-5,"cariFarki":500,"yarim":"yok"}
+  ✓ [E1a.T3.tekrar-silme] "tamam"
+  ✓ [E1a.T3.iki-teslim-geri (stok +5, cari −500, karşılanan 0)] [5,-500,0,0]
+  ✓ [E1a.T3.bagli-kalan] {"uretim":0,"stokHareket":0,"cariHareket":0,"fisBasligi":0}
+  ✓ [E1b.sonuc (silme önce ∥ teslim)] ["tamam","KR010"]
+  ✓ [E1b.tutarlilik] {"kilitlenme":"yok","tutarliKalem":"evet","teslimMiktari":0,"stokFarki":0,"cariFarki":0,"yarim":"yok"}
+E2 — teslim üretime BAĞSIZ (aynı kalem), zorla sıra
+  ✓ [E2A.sonuc (teslim-once)] ["tamam","tamam"]
+  ✓ [E2A.tutarlilik] {"kilitlenme":"yok","tutarliKalem":"evet","teslimMiktari":3,"stokFarki":-3,"cariFarki":300,"yarim":"yok"}
+  ✓ [E2B.sonuc (silme-once)] ["tamam","tamam"]
+  ✓ [E2B.tutarlilik] {"kilitlenme":"yok","tutarliKalem":"evet","teslimMiktari":3,"stokFarki":-3,"cariFarki":300,"yarim":"yok"}
+E3 — doğal yarış × 12 (bekleme yok)
+    dağılım: {"bağlı: teslim tamam · silme KR010":6,"bağsız: teslim tamam · silme tamam":6}
+  ✓ [E3.kilitlenme (40P01)] 0
+  ✓ [E3.tutarsiz-kosu] 0
+T2 — aynı anda iki silme isteği
+  ✓ [T2.biri-silindi-oteki-zatenYok] ["silindi","zatenYok"]
+  ✓ [T2.bir-kez-geri (stok +6, cari −400+40 = −360, karşılanan 0)] [6,-360,0,0]
+  ✓ [T2.bagli-kalan] {"uretim":0,"stokHareket":0,"cariHareket":0,"fisBasligi":0}
+BÜTÜN KOŞU — bu öneke ait yarım kayıt
+  ✓ [TUT.uretimi-olmayan-gecerli-hareket] 0
+  ✓ [TUT.iptal-fiste-gecerli-satir] 0
+  ✓ [TUT.kalem-karsilanan=teslim (bütün kalemler)] 0
+  bitiş: {"stok":-4556.9994,"cari":244349.94}
+── t-uretim-bakiye.js: 49 geçti, 0 kaldı ──
+  ✓ [4a.t-uretim-bakiye (kurallar kapalı)] 0
+4b. kurallar AÇIK (fis_aktif)
+t-uretim-bakiye · atolye_uretim_bakiye · önek f0-bakiye-acik-mw678hm9 · uretim_sil KURULU · kurallar t
+  başlangıç: {"stok":-4556.9994,"cari":244349.94}
+ESKI — eski fişli
+  ✓ [ESKI.uretim-etkisi-yazildi] {"stok":-2,"cari":-40}
+  ✓ [ESKI.sonuc] "tamam"
+  ✓ [ESKI.stok-cari-farki (silme öncesi → sonrası)] {"stok":2,"cari":40}
+  ✓ [ESKI.baslangica-gore] {"stok":0,"cari":0}
+  ✓ [ESKI.bagli-kalan (üretim / stok / cari / fiş)] {"uretim":0,"stokHareket":0,"cariHareket":0,"fisBasligi":0}
+  ✓ [ESKI.iz] 1
+  ✓ [ESKI.T1.tekrar-zatenYok] ["tamam",true]
+  ✓ [ESKI.T1.tekrar-hicbir-sey-degismedi] {"satir":3,"iptal":2,"stok":-4556.9994,"cari":244349.94}
+YENI — yeni fişli (fis_kes)
+  ✓ [YENI.uretim-etkisi-yazildi] {"stok":-3,"cari":-30}
+  ✓ [YENI.sonuc] "tamam"
+  ✓ [YENI.stok-cari-farki (silme öncesi → sonrası)] {"stok":3,"cari":30}
+  ✓ [YENI.baslangica-gore] {"stok":0,"cari":0}
+  ✓ [YENI.bagli-kalan (üretim / stok / cari / fiş)] {"uretim":0,"stokHareket":0,"cariHareket":0,"fisBasligi":0}
+  ✓ [YENI.iz] 1
+  ✓ [YENI.T1.tekrar-zatenYok] ["tamam",true]
+  ✓ [YENI.T1.tekrar-hicbir-sey-degismedi] {"satir":3,"iptal":2,"stok":-4556.9994,"cari":244349.94}
+KARMA — eski + yeni fiş aynı üretimde
+  ✓ [KARMA.uretim-etkisi-yazildi] {"stok":-5,"cari":-70}
+  ✓ [KARMA.sonuc] "tamam"
+  ✓ [KARMA.stok-cari-farki (silme öncesi → sonrası)] {"stok":5,"cari":70}
+  ✓ [KARMA.baslangica-gore] {"stok":0,"cari":0}
+  ✓ [KARMA.bagli-kalan (üretim / stok / cari / fiş)] {"uretim":0,"stokHareket":0,"cariHareket":0,"fisBasligi":0}
+  ✓ [KARMA.iz] 1
+  ✓ [KARMA.T1.tekrar-zatenYok] ["tamam",true]
+  ✓ [KARMA.T1.tekrar-hicbir-sey-degismedi] {"satir":6,"iptal":4,"stok":-4556.9994,"cari":244349.94}
+FISSIZ — eski fişli stok + fişsiz cari
+  ✓ [FISSIZ.uretim-etkisi-yazildi] {"stok":-2,"cari":-40}
+  ✓ [FISSIZ.sonuc] "KR010"
+  ✓ [FISSIZ.stok-cari-farki (silme öncesi → sonrası)] {"stok":0,"cari":0}
+  ✓ [FISSIZ.baslangica-gore] {"stok":-2,"cari":-40}
+  ✓ [FISSIZ.bagli-kalan (üretim / stok / cari / fiş)] {"uretim":1,"stokHareket":1,"cariHareket":1,"fisBasligi":1}
+  ✓ [FISSIZ.iz] 0
+E1 — teslim üretime BAĞLI, zorla sıra
+  ✓ [E1a.sonuc (teslim önce ∥ silme)] ["tamam","KR010"]
+  ✓ [E1a.tutarlilik] {"kilitlenme":"yok","tutarliKalem":"evet","teslimMiktari":5,"stokFarki":-5,"cariFarki":500,"yarim":"yok"}
+  ✓ [E1a.T3.tekrar-silme] "tamam"
+  ✓ [E1a.T3.iki-teslim-geri (stok +5, cari −500, karşılanan 0)] [5,-500,0,0]
+  ✓ [E1a.T3.bagli-kalan] {"uretim":0,"stokHareket":0,"cariHareket":0,"fisBasligi":0}
+  ✓ [E1b.sonuc (silme önce ∥ teslim)] ["tamam","KR010"]
+  ✓ [E1b.tutarlilik] {"kilitlenme":"yok","tutarliKalem":"evet","teslimMiktari":0,"stokFarki":0,"cariFarki":0,"yarim":"yok"}
+E2 — teslim üretime BAĞSIZ (aynı kalem), zorla sıra
+  ✓ [E2A.sonuc (teslim-once)] ["tamam","tamam"]
+  ✓ [E2A.tutarlilik] {"kilitlenme":"yok","tutarliKalem":"evet","teslimMiktari":3,"stokFarki":-3,"cariFarki":300,"yarim":"yok"}
+  ✓ [E2B.sonuc (silme-once)] ["tamam","tamam"]
+  ✓ [E2B.tutarlilik] {"kilitlenme":"yok","tutarliKalem":"evet","teslimMiktari":3,"stokFarki":-3,"cariFarki":300,"yarim":"yok"}
+E3 — doğal yarış × 12 (bekleme yok)
+    dağılım: {"bağlı: teslim tamam · silme KR010":5,"bağsız: teslim tamam · silme tamam":6,"bağlı: teslim KR010 · silme tamam":1}
+  ✓ [E3.kilitlenme (40P01)] 0
+  ✓ [E3.tutarsiz-kosu] 0
+T2 — aynı anda iki silme isteği
+  ✓ [T2.biri-silindi-oteki-zatenYok] ["silindi","zatenYok"]
+  ✓ [T2.bir-kez-geri (stok +6, cari −400+40 = −360, karşılanan 0)] [6,-360,0,0]
+  ✓ [T2.bagli-kalan] {"uretim":0,"stokHareket":0,"cariHareket":0,"fisBasligi":0}
+BÜTÜN KOŞU — bu öneke ait yarım kayıt
+  ✓ [TUT.uretimi-olmayan-gecerli-hareket] 0
+  ✓ [TUT.iptal-fiste-gecerli-satir] 0
+  ✓ [TUT.kalem-karsilanan=teslim (bütün kalemler)] 0
+  bitiş: {"stok":-4607.9994,"cari":249209.94}
+── t-uretim-bakiye.js: 49 geçti, 0 kaldı ──
+  ✓ [4b.t-uretim-bakiye (kurallar açık)] 0
+5. GERİ DÖNÜŞ
+  ✓ [5.durdur] 0
+  ✓ [5.durdurulmus-silme (KR011, oturumlu)] KR011
+  ✓ [5.geri-al] 0
+  ✓ [5.geri-al-sonrasi-dogrula (işlem/koruma yok, iz+kilitler aynı)] fffttt
+  ✓ [5.veri-ayni (hareket/cari/fiş/üretim/iptal fiş)] 1383/433/1488/18/161
+  ✓ [5.12-yeniden-kur] 0
+  ✓ [5.yeniden-dogrula] tttttt
+  ✓ [5.durdurma-kaldir] 0
+  ✓ [5.durdurma-yok] 0
+  ✓ [5.veri-yine-ayni] 1383/433/1488/18/161
+── t-uretim-bakiye.sh: TEMİZ ──

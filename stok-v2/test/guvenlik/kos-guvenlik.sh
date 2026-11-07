@@ -160,6 +160,7 @@ ozet > "$CIK/ozet-4-yeniden.txt"; cmp -s "$CIK/ozet-1-sikilastir.txt" "$CIK/ozet
 echo "══ 8) iki koruma paketleri (9 / 10) ve üretim silme tek işlem paketi (12) — canlı benzeri kopyada"
 bash stok-v2/test/guvenlik/t-koruma-paketleri.sh > "$CIK/koruma-paketleri.txt" 2>&1 && echo "   ✓ t-koruma-paketleri $(grep -c '✓' "$CIK/koruma-paketleri.txt") yeşil" || { kirmizi "t-koruma-paketleri"; grep "✗" "$CIK/koruma-paketleri.txt" | head; }
 bash stok-v2/test/uretim-sil/t-uretim-paketi.sh > "$CIK/uretim-paketi.txt" 2>&1 && echo "   ✓ t-uretim-paketi $(grep -c '✓' "$CIK/uretim-paketi.txt") yeşil" || { kirmizi "t-uretim-paketi"; grep "✗" "$CIK/uretim-paketi.txt" | head; }
+bash stok-v2/test/uretim-sil/t-uretim-bakiye.sh > "$CIK/uretim-bakiye.txt" 2>&1 && echo "   ✓ t-uretim-bakiye $(grep -c '✓' "$CIK/uretim-bakiye.txt") yeşil" || { kirmizi "t-uretim-bakiye"; grep "✗" "$CIK/uretim-bakiye.txt" | head; }
 
 [ $HATA -eq 0 ] && echo "── GÜVENLİK SINAMASI TEMİZ ──" || echo "── GÜVENLİK SINAMASINDA SORUN ──"
 exit $HATA
