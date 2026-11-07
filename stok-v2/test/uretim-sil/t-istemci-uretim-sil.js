@@ -13,7 +13,7 @@
 //   FISSIZ — eski fişli stok −2 + fişsiz cari Alacak 40
 //   BAYAT  — yalnız yeni fişler (1.744.7'nin bugün yazabildiği tek biçim) ama ikinci ÜRT fişini başka cihaz kesti, ekran görmüyor
 // Kahin (istemciden bağımsız): sunucuda ÖNCE / SONRA fotoğraf — üretim var mı · üretimin fişleri (iptal mi) · geçerli bağlı hareket ·
-// STOK (stk_stok) · CARİ bakiye · kalem K (karşılanan, planlama) · K'nın geçerli teslimi.
+// STOK (stk_stok) · CARİ bakiye · kalem K (karşılanan, planlama) · K'nın geçerli teslimi · iş ataması · sipariş başlığı (durum, ek).
 //   İşlem TAMAMLANDIYSA: üretim yok, bütün fişleri iptal, bağlı geçerli hareket 0, STOK / CARİ üretimden öncekine döndü,
 //     karşılanan = geçerli teslim (3), ekran sunucuyla aynı.
 //   İşlem REDDEDİLDİYSE: SONRA = ÖNCE (hiçbir kayıtta kısmi değişiklik yok), ekran değişmedi.
@@ -53,6 +53,8 @@ function foto(u, kid) {
     karsilanan: sayi(`select coalesce(karsilanan, 0) from public.siparis_kalemleri where id = '${kid}'`),
     planlama: sql(`select coalesce(planlama::text, 'null') from public.siparis_kalemleri where id = '${kid}'`),
     teslim: sayi(`select coalesce(-sum(h.miktar), 0) from public.stk_hareket h join public.stk_fis f on f.id = h.fis_id where h.kalem_id = '${kid}' and not h.iptal and not f.iptal`),
+    atama: sayi(`select count(*) from public.uretim_atamalari where uretim_id = '${u}'`),
+    siparisBaslik: sql(`select coalesce((select durum || '|' || coalesce(ek::text, '') from public.siparisler where id = (select siparis_id from public.siparis_kalemleri where id = '${kid}')), '-')`),
   };
 }
 
@@ -85,9 +87,12 @@ function kur(ad) {
   assert(t.ok, JSON.stringify(t));
   // planlama teslimden SONRA (teslim yükü kalemi tam satırıyla yazar)
   sql(`update public.siparis_kalemleri set planlama = '${JSON.stringify(planlama)}'::jsonb where id = '${kid}'`);
+  // başlık: teslimi yapan cihazın yazdığı durum (ekranla aynı) — 1.744.7 her kaydetmede başlığı ekrandaki hâliyle yeniden yazar
+  sql(`update public.siparisler set durum = 'Kısmi Teslim' where id = '${sid}'`);
   const oncesi = { stok: STOK(), cari: CARI() };   // üretimden ÖNCE
   sql(`set session_replication_role = replica;
-    insert into public.uretim (id, siparis_no, urun_id, asama, ek) values ('${u}', '${u}-NO', 'u-yeni', 'Üretimde', '{}');`);
+    insert into public.uretim (id, siparis_no, urun_id, asama, ek) values ('${u}', '${u}-NO', 'u-yeni', 'Üretimde', '{}');
+    insert into public.uretim_atamalari (id, uretim_id, proses, miktar, tamamlandi_mi, ek) values ('${u}-a1', '${u}', 'Kesim', 3, true, '{}');`);
   let satirlar = [];
   if (ad === "yeni" || ad === "karma") satirlar = satirlar.concat(yeniFis(u));
   if (ad === "eski" || ad === "karma") satirlar = satirlar.concat(eskiFis(u, false));
@@ -139,6 +144,7 @@ async function ekrandanSil(u, e) {
 const ortakFetch = global.fetch;
 global.fetch = async (url, sec = {}) => {
   const yol = String(url).replace(/^.*\/rest\/v1\//, "");
+  if (process.env.ISTEK_GUNLUGU && sec.method && sec.method !== "GET") console.log(`      → ${sec.method} ${yol.split("?")[0]}${/^rpc\//.test(yol) ? " " + String(sec.body || "").slice(0, 160) : ""}`);
   const m = yol.match(/^uretim\?id=in\.\(([^)]*)\)/);
   if (sec.method === "DELETE" && m) {
     const idler = decodeURIComponent(m[1]).split(",").map((x) => x.replace(/^"|"$/g, ""));
@@ -169,7 +175,10 @@ global.fetch = async (url, sec = {}) => {
         { fisler: true, bagliGecerli: 0, stok: oncesi.stok, cari: oncesi.cari, karsilanan: sonra.teslim });
       k(`${ad}.ekran-sunucuyla-ayni`, [a.ekranUretim, a.ekranHareket], [0, 0]);
     } else if (sonuc.startsWith("REDDEDİLDİ")) {
-      k(`${ad}.ekran-degismedi`, [a.ekranUretim, a.ekranHareket], [1, satirlar.length]);
+      // ESKİ İSTEMCİ (ISTEMCI_ESKI=1): 1.744.7 hareketleri sunucuya sormadan önce EKRANDAN düşürür (yerelUygula) — yalnız o cihazın
+      // görüntüsü, sayfa yenilenince sunucudaki hâl gelir; sunucu kaydı değil. Gözlem olarak yazılır. 1.744.8'de kesin kontrol.
+      if (process.env.ISTEMCI_ESKI === "1") console.log(`  • [${ad}.ekran] (gözlem, yalnız bu cihazın görüntüsü) üretim ${a.ekranUretim} · hareket ${a.ekranHareket}/${satirlar.length}`);
+      else k(`${ad}.ekran-degismedi`, [a.ekranUretim, a.ekranHareket], [1, satirlar.length]);
     }
     ozet.push(`${ad}: ${sonuc}`);
   }

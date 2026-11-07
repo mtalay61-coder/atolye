@@ -2,8 +2,9 @@
 -- Ne yapar: uretim_sil sunucu işlemini, üretim silme korumasını (geçerli hareketi olan üretim silinemez) ve silinmiş üretime
 -- hareket yazılmasını önleyen kilidi kurar. VERİYE DOKUNMAZ: hiçbir satır silinmez, iptal edilmez, dönüştürülmez; yalnız SONRAKİ
 -- silmelerin yarım kalmamasını sağlar. Kaynağı stok-v2/fis-defteri.sql (aynı metin); tekrar çalıştırmak zararsız.
--- Etki: 1.744.7 cihazlar üretim silerken fişleri yine tek tek iptal eder, sonra üretimi REST ile siler — geçerli hareketi kalmış
--- üretimi artık SUNUCU reddeder (KR010), yani eski istemcide de "üretim yok, hareket geçerli" hâli oluşmaz (ekran yenileyince düzelir).
+-- Etki (7 Kasım): 1.744.7 cihazların üretim silme yolu İLK yazan adımında durur (KR012) — ilk fiş iptali ya da planlama bağının
+-- boşaltılması; hiçbir kayıt değişmez, ekran "Üretim SİLİNMEDİ / YARIM KALDI" der, cihaz yenilenince 1.744.8 ile silinir. Ayrıca geçerli
+-- hareketi kalmış üretimi SUNUCU silmez (KR010) — eski istemcide "üretim yok, hareket geçerli" hâli oluşmaz.
 -- 1.744.8 silmeyi tek işlemde yapar; eski hareket / görünmeyen hareket varsa hiçbir kayıt değişmeden reddeder.
 -- Sonra: 12-sonra-dogrula.sql. Geri alma: 12-geri-al.sql.
 -- ÜRETİM SİLME — HEPSİ YA DA HİÇBİRİ (4 Kasım; kural provası bulgusu, senaryo-sapma-silinen-uretim). Fiş defteri kuruluyken üretim
@@ -154,6 +155,8 @@ begin
   if v_yabanci is not null then
     raise exception 'KR010: % fişi bu üretimden başka kayıt da taşıyor — üretim silinemez; hiçbir kayıt değişmedi', v_yabanci using errcode = 'KR010';
   end if;
+  -- işlem içi işaret: uretim_eski_silme_koru bu işlemin kendi fiş iptallerini eski istemci yolundan ayırır (yalnız bu işlem)
+  perform set_config('uretim.sil_islemi', v_id, true);
   if coalesce(cardinality(v_fisler), 0) > 0 then
     v_iptal := public.fis_iptal_toplu(jsonb_build_object('fisler', to_jsonb(v_fisler), 'sebep', coalesce(nullif(p ->> 'sebep', ''), 'Üretim silindi')));
   end if;
@@ -166,6 +169,56 @@ begin
 end $$;
 revoke all on function public.uretim_sil(jsonb) from public, anon;
 grant execute on function public.uretim_sil(jsonb) to authenticated;
+
+-- ESKİ İSTEMCİNİN ÜRETİM SİLME YOLU — İLK YAZMADAN ÖNCE DUR (7 Kasım; yayın öncesi son kontrol, t-istemci-uretim-sil). 1.744.7 üretimi
+-- birkaç ayrı istekle siler: (1) üretimin sunucu fişlerini TEK TEK fis_iptal (sebep "Üretim <no> silindi"), (2) ürün / cari ana satırları,
+-- (3) sipariş başlığı + kalemin planlama bağını boşaltan alt_yaz, (4) iş atamalarını silen alt_yaz, (5) üretimi REST DELETE. 12 son adımı
+-- reddeder (uretim_silme_koru) ama önceki adımlar ayrı işlemlerde kalıcıydı: bayat ekranda / eski hareketli üretimde fiş iptal edilmiş,
+-- planlama bağı silinmiş, üretim duruyor (KISMİ). İki koruma o yolu İLK yazan adımda durdurur; hiçbir kayıt değişmez:
+--   a) uretim_eski_silme_koru (stk_fis, iptal) — fiş, DURAN bir üretime ait (stk_fis.uretim_id) ve iptal sebebi üretim silme sebebi
+--      ("Üretim … silindi") ise ve iptal uretim_sil işleminin İÇİNDEN gelmiyorsa (uretim_sil işlem içi işaret koyar) → KR012.
+--      Teslim geri alma ("Üretim teslimi geri alındı …"), hareket silme, Fişler ekranından iptal ve uretim_sil'in kendi iptali etkilenmez.
+--   b) uretim_planlama_koru (siparis_kalemleri, planlama) — kalemin "Üretim" planlama bağı, bağlı üretim HÂLÂ DURURKEN boşaltılamaz
+--      → KR012. Uygulamada bağı boşaltan öteki yollar: üretim silindikten sonra (1.744.8 uretim_sil önce siler), referansı geçersiz
+--      (kayıt silinmiş) bağın temizliği, alış siparişi iptali (Satınalma bağı) — hiçbiri duran üretimin bağını boşaltmaz.
+-- Karar istemcinin bildirdiği SÜRÜME dayanmaz (başlık / istemci alanı okunmaz): sunucu durumuna (üretim duruyor mu, işlem içi mi) ve
+-- isteğin kendisine (iptal sebebi, planlama değişikliği) bakar. Ret mesajı satır kimliği taşımaz → 1.744.7 (040) tabloyu ayırıp
+-- kalanı göndermez, adımı başarısız sayar ve sonraki adımlara geçmez. SQL Editor / bakım oturumu (jwt yok) muaf.
+create or replace function public.uretim_eski_silme_koru() returns trigger
+language plpgsql security definer set search_path = public, extensions, pg_temp as $$
+begin
+  if auth.jwt() is null then return new; end if;
+  if new.iptal and not coalesce(old.iptal, false) and new.uretim_id is not null
+     and coalesce(new.iptal_sebebi, '') like 'Üretim % silindi'
+     and coalesce(current_setting('uretim.sil_islemi', true), '') is distinct from new.uretim_id
+     and exists (select 1 from public.uretim u where u.id = new.uretim_id) then
+    raise exception 'KR012: Üretim artık tek işlemle silinir; bu cihazdaki uygulama eski — sayfayı yenileyip (1.744.8) yeniden deneyin. Hiçbir kayıt değişmedi'
+      using errcode = 'KR012';
+  end if;
+  return new;
+end $$;
+revoke all on function public.uretim_eski_silme_koru() from public, anon, authenticated;
+drop trigger if exists uretim_eski_silme_koru on public.stk_fis;
+create trigger uretim_eski_silme_koru before update of iptal on public.stk_fis for each row execute function public.uretim_eski_silme_koru();
+
+create or replace function public.uretim_planlama_koru() returns trigger
+language plpgsql security definer set search_path = public, extensions, pg_temp as $$
+declare v_no text;
+begin
+  if auth.jwt() is null then return new; end if;
+  if jsonb_typeof(old.planlama) = 'object' and old.planlama ->> 'tip' = 'Üretim' then
+    v_no := nullif(btrim(coalesce(old.planlama ->> 'referansNo', '')), '');
+    if v_no is not null and (new.planlama is null or jsonb_typeof(new.planlama) <> 'object' or nullif(btrim(coalesce(new.planlama ->> 'referansNo', '')), '') is null)
+       and exists (select 1 from public.uretim u where u.siparis_no = v_no) then
+      raise exception 'KR012: Bağlı üretim % duruyor — planlama bağı üretim silinmeden kaldırılamaz; sayfayı yenileyip (1.744.8) yeniden deneyin. Hiçbir kayıt değişmedi', v_no
+        using errcode = 'KR012';
+    end if;
+  end if;
+  return new;
+end $$;
+revoke all on function public.uretim_planlama_koru() from public, anon, authenticated;
+drop trigger if exists uretim_planlama_koru on public.siparis_kalemleri;
+create trigger uretim_planlama_koru before update of planlama on public.siparis_kalemleri for each row execute function public.uretim_planlama_koru();
 
 -- Sürüm kapısı tetikleyicisi (fis-defteri.sql'de dosya sonundaki döngü kurar; burada yalnız yeni tablo için)
 drop trigger if exists stk_istemci_koru on public.uretim_silinen;

@@ -161,6 +161,7 @@ echo "══ 8) iki koruma paketleri (9 / 10) ve üretim silme tek işlem paketi
 bash stok-v2/test/guvenlik/t-koruma-paketleri.sh > "$CIK/koruma-paketleri.txt" 2>&1 && echo "   ✓ t-koruma-paketleri $(grep -c '✓' "$CIK/koruma-paketleri.txt") yeşil" || { kirmizi "t-koruma-paketleri"; grep "✗" "$CIK/koruma-paketleri.txt" | head; }
 bash stok-v2/test/uretim-sil/t-uretim-paketi.sh > "$CIK/uretim-paketi.txt" 2>&1 && echo "   ✓ t-uretim-paketi $(grep -c '✓' "$CIK/uretim-paketi.txt") yeşil" || { kirmizi "t-uretim-paketi"; grep "✗" "$CIK/uretim-paketi.txt" | head; }
 bash stok-v2/test/uretim-sil/t-uretim-bakiye.sh > "$CIK/uretim-bakiye.txt" 2>&1 && echo "   ✓ t-uretim-bakiye $(grep -c '✓' "$CIK/uretim-bakiye.txt") yeşil" || { kirmizi "t-uretim-bakiye"; grep "✗" "$CIK/uretim-bakiye.txt" | head; }
+bash stok-v2/test/uretim-sil/t-istemci-uretim-sil.sh > "$CIK/istemci-uretim-sil.txt" 2>&1 && echo "   ✓ t-istemci-uretim-sil (1.744.7 + 1.744.8 + koruma) $(grep -c '✓' "$CIK/istemci-uretim-sil.txt") yeşil" || { kirmizi "t-istemci-uretim-sil"; grep "✗" "$CIK/istemci-uretim-sil.txt" | head; }
 
 [ $HATA -eq 0 ] && echo "── GÜVENLİK SINAMASI TEMİZ ──" || echo "── GÜVENLİK SINAMASINDA SORUN ──"
 exit $HATA

@@ -3,7 +3,7 @@
 # Veritabanı: atolye_guvenlik'in (canlı benzeri) kopyası; 12-geri-al ile canlının bugünkü hâline indirilir (uretim_sil yok), fiş kuralları ve
 # sürüm kapısı KAPALI. Kahin:
 #   ÖNCE    12-sonra-dogrula tamam DEĞİL (işlem yok).
-#   KUR     12-uretim-sil-kur.sql hatasız; 12-sonra-dogrula 6/6; ikinci kez çalıştırmak zararsız (yine 6/6).
+#   KUR     12-uretim-sil-kur.sql hatasız; 12-sonra-dogrula 8/8; ikinci kez çalıştırmak zararsız (yine 8/8).
 #   DAVRANIŞ t-uretim-sil.js bu kopyada (kurallar KAPALI, canlı gibi) temiz — 1.744.8 istemci, eski fişli / fişsiz / sunucu fişi,
 #           yarış, hata, görünmeyen hareket, çöp.
 #   GERİ    12-geri-al.sql hatasız; işlem ve tetikleyiciler yok; veri değişmedi (satır sayıları aynı); kurallar / kapı kapalı.
@@ -42,8 +42,8 @@ k "13.yarim-silme-fis-basligi-bulundu" "$(s13 | awk -F'|' -v u="$YU" '$2 ~ /fiş
 k "13.hicbir-sey-degismedi (salt-okur)" "$(sayim)" "$once13"
 k "13.yarim-kayitlar-degismedi (hareketler hâlâ geçerli)" "$(q -c "select (select count(*) from public.stk_hareket where id = '$YU-h' and not iptal) + (select count(*) from public.car_hareket where id = '$YU-c' and not iptal)")" 2
 k "KUR.hatasiz" "$(dosya $G/12-uretim-sil-kur.sql)" 0
-k "KUR.12-sonra-dogrula" "$(tamam)" "6/6"
-k "KUR.ikinci-kez-zararsiz" "$(dosya $G/12-uretim-sil-kur.sql):$(tamam)" "0:6/6"
+k "KUR.12-sonra-dogrula" "$(tamam)" "8/8"
+k "KUR.ikinci-kez-zararsiz" "$(dosya $G/12-uretim-sil-kur.sql):$(tamam)" "0:8/8"
 # GÜVENLİK SIKILAŞTIRMASINA UYGUNLUK (2-sikilastir / 2-sonra-dogrula, 4 Kasım): kopya sıkılaştırılmış (kos-guvenlik son hâli).
 #   - 2-sonra-dogrula.sql'in BÜTÜN satırları 12'den sonra da tamam (girişsiz yalnız 9 site + yonetici_mi; search_path sabit olmayan 0);
 #   - uretim_sil: security definer, search_path = public, extensions, pg_temp; authenticated ÇALIŞTIRIR; anon ve PUBLIC çalıştıramaz;
@@ -101,7 +101,7 @@ k "GERI.veri-degismedi" "$(sayim)" "$once"
 k "GERI.kalan (iz tablosu durur, veri; sürüm kapısı tetikleyicisi onunla)" "$(q -c "select (to_regclass('public.uretim_silinen') is not null)::text")" "true"
 # 12-geri-al YALNIZ üç korumayı kaldırır: uretim_sil işlemi (satır 1), üretim silme koruması (satır 2), silinmiş üretime hareket
 # kilidi (satır 3). İz tablosu, RLS'i ve sürüm kapısı tetikleyicisi KALIR (satır 4–5); kurallar / kapı zaten kapalı (satır 6).
-k "GERI.kalkan-uc-koruma (12-sonra: 1–3 değil, 4–6 tamam)" "$(psql -X -q -At -F'|' -d "$DB" -f $G/12-sonra-dogrula.sql | awk -F'|' '{ printf "%s", ($4 == "t" ? "t" : "f") }')" "fffttt"
+k "GERI.kalkan-bes-koruma (12-sonra: 1–3 ve 7–8 değil, 4–6 tamam)" "$(psql -X -q -At -F'|' -d "$DB" -f $G/12-sonra-dogrula.sql | awk -F'|' '{ printf "%s", ($4 == "t" ? "t" : "f") }')" "ffftttff"
 for f in 12-uretim-sil-kur 12-sonra-dogrula 12-geri-al 12-silme-durdur 12-silme-durdur-kaldir 13-uretim-hareket-salt-okur; do python3 stok-v2/editor-icin.py $G/$f.sql > /dev/null 2>&1; k "EDITOR.$f" "$?" 0; done
 psql -X -q -d postgres -c "drop database $DB"
 echo "── t-uretim-paketi.sh: $([ $hata = 0 ] && echo temiz || echo "$hata kırmızı") ──"; exit $([ $hata = 0 ] && echo 0 || echo 1)

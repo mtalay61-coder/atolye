@@ -965,6 +965,7 @@ begin
   if v_yabanci is not null then
     raise exception 'KR010: % fişi bu üretimden başka kayıt da taşıyor — üretim silinemez; hiçbir kayıt değişmedi', v_yabanci using errcode = 'KR010';
   end if;
+  perform set_config('uretim.sil_islemi', v_id, true);
   if coalesce(cardinality(v_fisler), 0) > 0 then
     v_iptal := public.fis_iptal_toplu(jsonb_build_object('fisler', to_jsonb(v_fisler), 'sebep', coalesce(nullif(p ->> 'sebep', ''), 'Üretim silindi')));
   end if;
@@ -977,6 +978,42 @@ begin
 end $$;
 revoke all on function public.uretim_sil(jsonb) from public, anon;
 grant execute on function public.uretim_sil(jsonb) to authenticated;
+
+create or replace function public.uretim_eski_silme_koru() returns trigger
+language plpgsql security definer set search_path = public, extensions, pg_temp as $$
+begin
+  if auth.jwt() is null then return new; end if;
+  if new.iptal and not coalesce(old.iptal, false) and new.uretim_id is not null
+     and coalesce(new.iptal_sebebi, '') like 'Üretim % silindi'
+     and coalesce(current_setting('uretim.sil_islemi', true), '') is distinct from new.uretim_id
+     and exists (select 1 from public.uretim u where u.id = new.uretim_id) then
+    raise exception 'KR012: Üretim artık tek işlemle silinir; bu cihazdaki uygulama eski — sayfayı yenileyip (1.744.8) yeniden deneyin. Hiçbir kayıt değişmedi'
+      using errcode = 'KR012';
+  end if;
+  return new;
+end $$;
+revoke all on function public.uretim_eski_silme_koru() from public, anon, authenticated;
+drop trigger if exists uretim_eski_silme_koru on public.stk_fis;
+create trigger uretim_eski_silme_koru before update of iptal on public.stk_fis for each row execute function public.uretim_eski_silme_koru();
+
+create or replace function public.uretim_planlama_koru() returns trigger
+language plpgsql security definer set search_path = public, extensions, pg_temp as $$
+declare v_no text;
+begin
+  if auth.jwt() is null then return new; end if;
+  if jsonb_typeof(old.planlama) = 'object' and old.planlama ->> 'tip' = 'Üretim' then
+    v_no := nullif(btrim(coalesce(old.planlama ->> 'referansNo', '')), '');
+    if v_no is not null and (new.planlama is null or jsonb_typeof(new.planlama) <> 'object' or nullif(btrim(coalesce(new.planlama ->> 'referansNo', '')), '') is null)
+       and exists (select 1 from public.uretim u where u.siparis_no = v_no) then
+      raise exception 'KR012: Bağlı üretim % duruyor — planlama bağı üretim silinmeden kaldırılamaz; sayfayı yenileyip (1.744.8) yeniden deneyin. Hiçbir kayıt değişmedi', v_no
+        using errcode = 'KR012';
+    end if;
+  end if;
+  return new;
+end $$;
+revoke all on function public.uretim_planlama_koru() from public, anon, authenticated;
+drop trigger if exists uretim_planlama_koru on public.siparis_kalemleri;
+create trigger uretim_planlama_koru before update of planlama on public.siparis_kalemleri for each row execute function public.uretim_planlama_koru();
 
 create or replace function public.fis_bilgi(p jsonb) returns jsonb
 language plpgsql security definer set search_path = public as $$

@@ -2,8 +2,8 @@
 # 12 PAKETİ TEST ORTAMINA → STOK / CARİ BAKİYE, EŞZAMANLI TESLİM, TEKRAR (7 Kasım). Yalnız yerel; Supabase'e bağlanmaz.
 # Veritabanı: atolye_guvenlik'in (canlı benzeri, sıkılaştırılmış) kopyası. Adımlar:
 #   1. 12-geri-al → canlının bugünkü hâli (uretim_sil yok)       2. 12-uretim-sil-kur.sql (canlıya verilecek dosyanın aynısı)
-#   3. 12-sonra-dogrula 6/6                                      4. t-uretim-bakiye.js — kurallar KAPALI (canlı gibi), sonra AÇIK
-#   5. GERİ DÖNÜŞ: 12-silme-durdur → 12-geri-al → veri aynı mı, doğrulama "fffttt" → 12 yeniden kur → 6/6 → 12-silme-durdur-kaldir
+#   3. 12-sonra-dogrula 8/8                                      4. t-uretim-bakiye.js — kurallar KAPALI (canlı gibi), sonra AÇIK
+#   5. GERİ DÖNÜŞ: 12-silme-durdur → 12-geri-al → veri aynı mı, doğrulama "ffftttff" → 12 yeniden kur → 8/8 → 12-silme-durdur-kaldir
 set -uo pipefail
 case "${PGHOST:-}" in localhost|127.0.0.1) ;; *) echo "PGHOST=localhost gerekli"; exit 2;; esac
 cd "$(dirname "$0")/../../.."
@@ -20,7 +20,7 @@ echo "t-uretim-bakiye · $DB (atolye_guvenlik kopyası)"
 k "1.geri-al (canlı hâli)" "$(dosya $G/12-geri-al.sql)" 0
 k "1.islem-yok" "$(q -c "select count(*) from pg_proc where proname = 'uretim_sil'")" 0
 k "2.12-kur" "$(dosya $G/12-uretim-sil-kur.sql)" 0
-k "3.12-sonra-dogrula" "$(dogrula)" tttttt
+k "3.12-sonra-dogrula" "$(dogrula)" tttttttt
 export STOK_V2_DB=$DB
 echo "4a. kurallar KAPALI (canlı gibi)"
 F0_ETIKET=bakiye-kapali node stok-v2/test/uretim-sil/t-uretim-bakiye.js; k "4a.t-uretim-bakiye (kurallar kapalı)" "$?" 0
@@ -34,10 +34,10 @@ k "5.durdur" "$(dosya $G/12-silme-durdur.sql)" 0
 U=$(q -c "select id from public.uretim order by id limit 1")
 k "5.durdurulmus-silme (KR011, oturumlu)" "$(psql -X -q -At -d $DB -c "\\set VERBOSITY verbose" -c "begin; select set_config('request.jwt.claims','{\"email\":\"ali@atolye.local\",\"role\":\"authenticated\"}',true); set local role authenticated; select public.uretim_sil('{\"id\":\"$U\"}'::jsonb); commit;" 2>&1 | grep -o 'KR011' | head -1)" KR011
 k "5.geri-al" "$(dosya $G/12-geri-al.sql)" 0
-k "5.geri-al-sonrasi-dogrula (işlem/koruma yok, iz+kilitler aynı)" "$(dogrula)" fffttt
+k "5.geri-al-sonrasi-dogrula (işlem/koruma yok, iz+kilitler aynı)" "$(dogrula)" ffftttff
 k "5.veri-ayni (hareket/cari/fiş/üretim/iptal fiş)" "$(sayim)" "$once"
 k "5.12-yeniden-kur" "$(dosya $G/12-uretim-sil-kur.sql)" 0
-k "5.yeniden-dogrula" "$(dogrula)" tttttt
+k "5.yeniden-dogrula" "$(dogrula)" tttttttt
 k "5.durdurma-kaldir" "$(dosya $G/12-silme-durdur-kaldir.sql)" 0
 k "5.durdurma-yok" "$(q -c "select count(*) from pg_trigger where tgname = 'a_uretim_silme_durdur'")" 0
 k "5.veri-yine-ayni" "$(sayim)" "$once"
