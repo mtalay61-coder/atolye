@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# SAHTE RCLONE (yalnız t-gece-yedek.sh): "uzak:yol" → $SAHTE_UZAK/yol. gece-yedek.sh'ın kullandığı alt komutlar: copy, check
+# --one-way, lsf --dirs-only, purge. SAHTE_BOZ=1: copy bir dosyanın son baytını değiştirir (yükleme bozulması — check yakalamalı).
+# SAHTE_COPY_HATA=1: copy hata verir.
+set -euo pipefail
+yol() { case "$1" in *:*) echo "$SAHTE_UZAK/${1#*:}";; *) echo "$1";; esac; }
+komut=$1; shift
+case "$komut" in
+  copy)
+    [ "${SAHTE_COPY_HATA:-}" = 1 ] && { echo "ERROR : sahte bağlantı hatası" >&2; exit 1; }
+    hedef=$(yol "$2"); mkdir -p "$hedef"; cp -a "$1"/. "$hedef"/
+    if [ "${SAHTE_BOZ:-}" = 1 ]; then f=$(ls "$hedef"/public.dump); printf 'X' | dd of="$f" bs=1 seek=$(( $(wc -c < "$f") - 1 )) conv=notrunc 2>/dev/null; fi ;;
+  check)
+    hedef=$(yol "$2"); hata=0
+    for f in "$1"/*; do b=$(basename "$f"); cmp -s "$f" "$hedef/$b" || { echo "ERROR : $b: sizes or hashes differ" >&2; hata=1; }; done
+    exit $hata ;;
+  lsf)
+    d=$(yol "$1"); [ -d "$d" ] && (cd "$d" && for x in */; do [ -d "$x" ] && echo "$x"; done) || true ;;
+  purge) rm -rf "$(yol "$1")" ;;
+  *) echo "sahte-rclone: $komut desteklenmiyor" >&2; exit 2 ;;
+esac

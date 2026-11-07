@@ -1,0 +1,120 @@
+# GECE YEDEĞİ → ONEDRIVE (7 Kasım). Her gece 03:17 (İstanbul) canlı Supabase'in tam dökümü alınır, BOŞ bir PostgreSQL'e geri
+# yüklenip envanteri canlıyla karşılaştırılarak SINANIR, sonra kişisel OneDrive'daki AtolyeYedek/<tarih> klasörüne yüklenip
+# dosya dosya doğrulanır. Ayrıntı: stok-v2/GECE-YEDEK-KURULUM.md, stok-v2/yedek/gece-yedek.sh.
+# DEPO HERKESE AÇIK: iş kaydına veri yazılmaz; döküm GitHub'da yapıt (artifact) olarak SAKLANMAZ; secret'lar yalnız schedule /
+# elle çalıştırmada açılır (pull_request tetikleyicisi YOK — çatallardan gelen kod secret göremez).
+name: Gece yedeği (OneDrive)
+on:
+  schedule:
+    - cron: "17 0 * * *"   # 00:17 UTC = 03:17 İstanbul
+  workflow_dispatch:
+permissions:
+  contents: read
+  issues: write            # başarısızlıkta uyarı kaydı (issue) açmak / düzelince kapatmak için
+concurrency:
+  group: gece-yedek
+  cancel-in-progress: false
+jobs:
+  yedek:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    services:
+      postgres:            # GEÇİCİ sınama veritabanı: iş bitince yok olur; canlıyla hiçbir bağı yok
+        image: postgres:17
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ayar denetimi
+        env:
+          A1: ${{ secrets.YEDEK_DB_HOST }}
+          A2: ${{ secrets.YEDEK_DB_KULLANICI }}
+          A3: ${{ secrets.YEDEK_DB_PAROLA }}
+          A4: ${{ secrets.ONEDRIVE_TOKEN }}
+          A5: ${{ secrets.ONEDRIVE_DRIVE_ID }}
+          A6: ${{ secrets.YEDEK_PAT }}
+        run: |
+          eksik=""
+          [ -n "$A1" ] || eksik="$eksik YEDEK_DB_HOST"; [ -n "$A2" ] || eksik="$eksik YEDEK_DB_KULLANICI"; [ -n "$A3" ] || eksik="$eksik YEDEK_DB_PAROLA"
+          [ -n "$A4" ] || eksik="$eksik ONEDRIVE_TOKEN"; [ -n "$A5" ] || eksik="$eksik ONEDRIVE_DRIVE_ID"; [ -n "$A6" ] || eksik="$eksik YEDEK_PAT"
+          if [ -n "$eksik" ]; then echo "::error::Kurulum tamamlanmamış, eksik secret:$eksik (stok-v2/GECE-YEDEK-KURULUM.md)"; exit 1; fi
+      - name: Araçlar (PostgreSQL 17 istemcisi, rclone)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-common > /dev/null
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y > /dev/null
+          sudo apt-get install -y -qq postgresql-client-17 rclone > /dev/null
+          echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
+          /usr/lib/postgresql/17/bin/pg_dump --version; rclone version | head -1
+      - name: OneDrive ayarı
+        env:
+          ONEDRIVE_TOKEN: ${{ secrets.ONEDRIVE_TOKEN }}
+          ONEDRIVE_DRIVE_ID: ${{ secrets.ONEDRIVE_DRIVE_ID }}
+        run: |
+          umask 077
+          printf '[onedrive]\ntype = onedrive\ntoken = %s\ndrive_id = %s\ndrive_type = personal\n' "$ONEDRIVE_TOKEN" "$ONEDRIVE_DRIVE_ID" > "$RUNNER_TEMP/rclone.conf"
+      - name: Yedek al, sına, OneDrive'a yükle
+        id: yedek
+        env:
+          KAYNAK_HOST: ${{ secrets.YEDEK_DB_HOST }}
+          KAYNAK_KULLANICI: ${{ secrets.YEDEK_DB_KULLANICI }}
+          PGPASSWORD: ${{ secrets.YEDEK_DB_PAROLA }}
+          HEDEF_HOST: localhost
+          CALISMA: ${{ runner.temp }}/yedek
+          UZAK: onedrive:AtolyeYedek
+          RCLONE_CONFIG: ${{ runner.temp }}/rclone.conf
+        run: |
+          set -o pipefail
+          stok-v2/yedek/gece-yedek.sh 2>&1 | tee "$RUNNER_TEMP/kayit.txt"
+      - name: OneDrive erişimini sakla (yenilenen jeton)
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.YEDEK_PAT }}
+          ESKI: ${{ secrets.ONEDRIVE_TOKEN }}
+          RCLONE_CONFIG: ${{ runner.temp }}/rclone.conf
+        run: |
+          # Microsoft her yenilemede yeni bir yenileme anahtarı verir; saklanmazsa ~90 gün sonra erişim düşer.
+          [ -f "$RCLONE_CONFIG" ] || exit 0
+          umask 077
+          python3 - "$RCLONE_CONFIG" "$RUNNER_TEMP/yeni-jeton.json" <<'PY'
+          import configparser, sys
+          c = configparser.RawConfigParser(); c.read(sys.argv[1]); open(sys.argv[2], "w").write(c.get("onedrive", "token", fallback=""))
+          PY
+          if [ -s "$RUNNER_TEMP/yeni-jeton.json" ] && [ "$(cat "$RUNNER_TEMP/yeni-jeton.json")" != "$ESKI" ]; then
+            gh secret set ONEDRIVE_TOKEN --repo "$GITHUB_REPOSITORY" < "$RUNNER_TEMP/yeni-jeton.json" \
+              && echo "OneDrive erişimi yenilendi ve saklandı." \
+              || { echo "::error::Yenilenen OneDrive erişimi saklanamadı (YEDEK_PAT süresi dolmuş olabilir — kurulum § 2)."; exit 1; }
+          else
+            echo "OneDrive erişimi değişmedi."
+          fi
+      - name: Uyarı kaydı (başarısız gecede aç, düzelince kapat)
+        if: always() && github.event_name == 'schedule'
+        continue-on-error: true   # depoda Issues kapalıysa başarılı geceyi kırmızıya çevirmesin
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DURUM: ${{ job.status }}
+        run: |
+          # Kayıt herkese açık: yalnız tarih ve kayıttaki adım satırları (veri / değer yok — gece-yedek.sh kayda veri yazmaz).
+          baslik="Gece yedeği başarısız"
+          acik=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "\"$baslik\" in:title" --json number --jq '.[0].number // empty')
+          # Kayıt satırları (iş kaydında GitHub secret'ları maskeler, issue'da maskelemez) aynen KOPYALANMAZ: hata metni host /
+          # kullanıcı adı taşıyabilir. Yalnız sabit cümleler; SINAMA satırı gece-yedek.sh'ın kendi metnidir (adım adı + sayı).
+          k="$RUNNER_TEMP/kayit.txt"; ozet=""
+          grep -q 'DÖKÜM ALINAMADI' "$k" 2>/dev/null && ozet="döküm alınamadı (canlıya bağlanılamadı ya da pg_dump hatası)"
+          grep -q 'SINAMA BAŞARISIZ' "$k" 2>/dev/null && ozet="$(grep -m1 -oE "SINAMA BAŞARISIZ: '[^']+' adımı( · [0-9]+ farklı envanter satırı)?" "$k")"
+          grep -q 'YÜKLEME BAŞARISIZ (kopyalama)' "$k" 2>/dev/null && ozet="${ozet:+$ozet; }OneDrive'a kopyalama başarısız"
+          grep -q 'YÜKLEME BAŞARISIZ (doğrulama' "$k" 2>/dev/null && ozet="${ozet:+$ozet; }OneDrive'daki kopya yereldekiyle aynı değil"
+          [ -f "$k" ] || ozet="kurulum eksik ya da araç kurulamadı (iş kaydına bakın)"
+          govde="$(TZ=Europe/Istanbul date '+%F %H:%M') — ${ozet:-ayrıntı iş kaydında}. İş: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          if [ "$DURUM" != success ]; then
+            if [ -n "$acik" ]; then gh issue comment "$acik" --repo "$GITHUB_REPOSITORY" --body "$govde"
+            else gh issue create --repo "$GITHUB_REPOSITORY" --title "$baslik" --body "$govde"$'\n\nOneDrive › AtolyeYedek klasöründe bu gecenin "-SINANMADI" klasörü varsa içindeki BASARISIZ.txt nedeni yazar. Kurulum: stok-v2/GECE-YEDEK-KURULUM.md'; fi
+          elif [ -n "$acik" ]; then
+            gh issue close "$acik" --repo "$GITHUB_REPOSITORY" --comment "Düzeldi: $govde"
+          fi
+      - name: Temizlik
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/yedek" "$RUNNER_TEMP/rclone.conf" "$RUNNER_TEMP/yeni-jeton.json" "$RUNNER_TEMP/kayit.txt"
