@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-**Son sürüm:** v1.744.7 CANLIDA (3 Kasım: main + surum.json 1.744.7). **v1.744.8 YALNIZ DALDA** (4 Kasım; surum.json DEĞİŞMEDİ, yayınlanmadı, main'e birleşmedi; sunucu paketi guvenlik/12 canlıya uygulanmadı)
+**Son sürüm:** v1.744.8 YAYINDA (7 Kasım: main + surum.json 1.744.8; kullanıcı onayı "Yayına al" — YEDEKSİZ, kullanıcı kararı). Sunucu paketi 12 canlıya UYGULANMADI (kullanıcı Editor'den çalıştıracak); 12 yokken 1.744.8 eski hareketli üretimi silmeyi denemez, sunucu fişli üretimi sıralı yoldan siler (canlıda üretim kaydı 0). Geri dönüş: surum.json ile olmaz (yalnız yeniye geçiş) → 1.744.7 kodu daha büyük numarayla.
 
 ---
 
