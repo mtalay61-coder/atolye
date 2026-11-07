@@ -11,6 +11,7 @@
 //   ESKI   — istek'siz eski fiş (stok −2, cari Alacak 40)
 //   KARMA  — YENI + ESKI aynı üretimde
 //   FISSIZ — eski fişli stok −2 + fişsiz cari Alacak 40
+//   BAYAT  — yalnız yeni fişler (1.744.7'nin bugün yazabildiği tek biçim) ama ikinci ÜRT fişini başka cihaz kesti, ekran görmüyor
 // Kahin (istemciden bağımsız): sunucuda ÖNCE / SONRA fotoğraf — üretim var mı · üretimin fişleri (iptal mi) · geçerli bağlı hareket ·
 // STOK (stk_stok) · CARİ bakiye · kalem K (karşılanan, planlama) · K'nın geçerli teslimi.
 //   İşlem TAMAMLANDIYSA: üretim yok, bütün fişleri iptal, bağlı geçerli hareket 0, STOK / CARİ üretimden öncekine döndü,
@@ -66,8 +67,8 @@ function eskiFis(u, fissizCari) {
       values ('${u}-c1', 'c-yeni', '2026-10-01', 'Alacak', 40, ${fissizCari ? "null" : `'${f}'`}, '${u}', '${f}');`);
   return [{ tur: "stok", id: `${u}-h1`, miktar: -2, fis: f }, { tur: "cari", id: `${u}-c1`, tutar: 40, fis: fissizCari ? null : f }];
 }
-function yeniFis(u) {
-  const istek = `${u}-i`;
+function yeniFis(u, ek = "-i") {
+  const istek = `${u}${ek}`;
   const r = T.rpc("fis_kes", { istek, fis: { aile: "stok", tur: "Üretim", onek: "ÜRT", kaynak: "Üretim", uretimId: u },
     stok: { satirlar: [{ id: `${istek}-h`, urunId: "u-yeni", renk: "Siyah", miktar: -3, kaynak: "Üretim", uretimId: u }] },
     cari: { satirlar: [{ id: `${istek}-c`, cari_id: "c-yeni", tarih: "2026-11-07", yon: "Alacak", tutar: 30, uretim_id: u, ek: { uretimId: u } }] } });
@@ -78,11 +79,12 @@ function yeniFis(u) {
 function kur(ad) {
   const u = `${ON}-${ad}`, sid = `${u}-s`, kid = `${u}-k`;
   // satış siparişi + stoktan teslim (üretime bağsız) — karşılanan 3
-  const s = T.siparisKur(T.sipObj(sid, [T.kalemObj(kid, 20, 0)]));
   const planlama = { tip: "Üretim", referansNo: `${u}-NO` };
-  sql(`update public.siparis_kalemleri set planlama = '${JSON.stringify(planlama)}'::jsonb where id = '${kid}'`);
+  const s = T.siparisKur(T.sipObj(sid, [T.kalemObj(kid, 20, 0, { planlama })]));
   const t = T.rpc("fis_kes", T.teslimYuku({ s, kalemId: kid, adet: 3, ekran: 0, istek: `${u}-tes` }));
   assert(t.ok, JSON.stringify(t));
+  // planlama teslimden SONRA (teslim yükü kalemi tam satırıyla yazar)
+  sql(`update public.siparis_kalemleri set planlama = '${JSON.stringify(planlama)}'::jsonb where id = '${kid}'`);
   const oncesi = { stok: STOK(), cari: CARI() };   // üretimden ÖNCE
   sql(`set session_replication_role = replica;
     insert into public.uretim (id, siparis_no, urun_id, asama, ek) values ('${u}', '${u}-NO', 'u-yeni', 'Üretimde', '{}');`);
@@ -90,6 +92,9 @@ function kur(ad) {
   if (ad === "yeni" || ad === "karma") satirlar = satirlar.concat(yeniFis(u));
   if (ad === "eski" || ad === "karma") satirlar = satirlar.concat(eskiFis(u, false));
   if (ad === "fissiz") satirlar = satirlar.concat(eskiFis(u, true));
+  // BAYAT EKRAN — yalnız yeni fişler (1.744.7'nin bugün yazabildiği tek biçim); ikinci ÜRT fişini başka cihaz az önce kesti,
+  // bu ekran görmüyor
+  if (ad === "bayat") { satirlar = satirlar.concat(yeniFis(u)); yeniFis(u, "-i2"); }
   const sipEkran = { ...s, durum: "Kısmi Teslim", kalemler: s.kalemler.map((x) => ({ ...x, karsilanan: 3, planlama })) };
   return { u, kid, satirlar, oncesi, sipEkran };
 }
@@ -149,7 +154,7 @@ global.fetch = async (url, sec = {}) => {
 (async () => {
   console.log(`t-istemci-uretim-sil · istemci ${ETIKET} (${path.relative(process.cwd(), ERP)}) · ${DB} · uretim_sil ${sql("select count(*) from pg_proc where proname = 'uretim_sil'") === "1" ? "KURULU" : "YOK"} · kurallar ${sql("select public.fis_kural_aktif()")}`);
   const ozet = [];
-  for (const ad of ["yeni", "eski", "karma", "fissiz"]) {
+  for (const ad of ["yeni", "eski", "karma", "fissiz", "bayat"]) {
     const { u, kid, satirlar, oncesi, sipEkran } = kur(ad);
     const once = foto(u, kid);
     const a = await ekrandanSil(u, ekran(u, satirlar, sipEkran));

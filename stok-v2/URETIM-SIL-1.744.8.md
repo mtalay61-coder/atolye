@@ -122,3 +122,39 @@ bağlantı vermiyor (surum.json → 1.744.7; index.html ve sw.js sürüm dosyas�
 - Tarayıcı senaryolarında 4 fark (ACIK-ISLER madde 9): kök nedenleri kanıtlandı (7 Kasım, `TARAYICI-4-FARK.md`) — dördü de test
   düzeneği / ortam; uygulama hatası yok, `src/` değişmedi. Testler düzeltildi; altın değişiklikleri gerekçeli.
 - Canlıya (ayrı onaylar; **12 ve yayın yedek alınmadan YOK**): 13 (salt-okur — yedekten bağımsız, istenince çalıştırılabilir) → yedek → 12 → 12-sonra-dogrula 6/6 → 1.744.8 yayını (main + surum.json).
+
+## 7. Yayın öncesi son kontrol (7 Kasım, 39eb016)
+
+### 7.1 `kos-guvenlik.sh` tamamı — TEMİZ
+İzole yerel PostgreSQL, 8 dk 23 sn, çıkış 0, 54 ✓ / 0 ✗ (`stok-v2/test/guvenlik/sonuc-kos-guvenlik.txt`). Başarısız yok; bu koşuda oynak
+test görülmedi. 12 paketiyle ilişkili olanlar: bölüm 8 `t-uretim-paketi` (35 ✓) ve `t-uretim-bakiye` (114 ✓). Diğerleri (liste,
+sıkılaştırma, kilit, batarya, vitrin, 22 regresyon testi, portal, geri alma) 12'den bağımsız; 12 kurulu kopyada çalışanlar da temiz.
+(Tarayıcı koşusundaki `firma-secimi` oynaklığı bu koşucuda yok; ACIK-ISLER 11.)
+
+### 7.2 12 kurulu sunucu × 1.744.7 / 1.744.8 istemci — `t-istemci-uretim-sil.js`
+Kurallar KAPALI, atolye_guvenlik kopyası. Silme, ekranın "Sil" düğmesinin çağırdığı işlevle (300-uretim `onRemove` → 100-app
+`onRemoveOrder={uretimSil}` → 076 `useUretimSil`); istekler gerçek veritabanına. Tarayıcıda tıklanmadı (bu ortamda PostgREST yok).
+Her durumda satış siparişi kalemi (stoktan 3 teslim, karşılanan 3, planlama → üretim) ve üretim; ölçülen: üretim, üretimin fişleri,
+bağlı geçerli hareket, stok, cari bakiye, kalem karşılanan ve planlama.
+
+| Durum | 1.744.7, 12 YOK (canlının bugünkü hâli) | 1.744.7, 12 KURULU | 1.744.8, 12 KURULU |
+|---|---|---|---|
+| YENİ (yalnız fis_kes fişi) | tamamlandı, tutarlı | tamamlandı, tutarlı | tamamlandı, tutarlı |
+| ESKİ fişli | ✗ üretim silindi, 2 hareket geçerli (yarım silme) | ✗ KISMİ: üretim + hareketler aynı, **kalem planlama bağı silindi** | tamamlandı, tutarlı |
+| KARMA (eski + yeni) | ✗ yarım silme | ✗ KISMİ: **yeni ÜRT fişi iptal**, eski geçerli, üretim duruyor, planlama silindi | tamamlandı, tutarlı |
+| FİŞSİZ cari | ✗ yarım silme | ✗ KISMİ: planlama silindi | reddedildi, hiçbir kayıt değişmedi |
+| BAYAT EKRAN (iki yeni fiş, ekran birini görüyor) | ✗ üretim silindi, ikinci fiş geçerli | ✗ KISMİ: **ilk fiş iptal**, ikinci geçerli, üretim duruyor, planlama silindi | reddedildi (görünmeyen hareket), hiçbir kayıt değişmedi |
+
+Karşılanan her koşuda 3 = geçerli teslim (silme teslim fişine dokunmuyor). Sonuçlar: `sonuc-istemci-1747-12yok.txt` (11 ✓ 4 ✗),
+`sonuc-istemci-1747.txt` (3 ✓ 4 ✗), `sonuc-istemci-1748.txt` (13 ✓ 0 ✗).
+
+**Yorum.** 12, 1.744.7'nin yarım silmesini (üretim yok, hareket geçerli) her durumda engelliyor, ama 1.744.7 sırası (önce fişleri
+tek tek iptal, sonra sipariş planlamasını yaz, en son üretimi sil) yüzünden reddedilen silmede **önceki adımlar geri alınmıyor**:
+fiş iptali ve planlama temizliği kalıcı. Ekran "YARIM KALDI" der; üretim durduğu için yeniden denenebilir, öksüz hareket oluşmaz.
+Canlıda (13 sonucu) eski fişli / fişsiz veri ve üretim kaydı YOK; 1.744.7 eski fiş / fişsiz cari yazamaz (kural provası) → canlıda
+gerçekleşebilecek tek durum **BAYAT EKRAN** (iki cihaz aynı üretimde). 12-silme-durdur bunu ÖNLEMEZ (1.744.7 fişleri DELETE'ten önce iptal
+ediyor). Tam önlem: bütün cihazlar 1.744.8 (ya da sürüm kapısı, madde 10).
+
+### 7.3 Sürüm geri dönüşü — dikkat
+`surumeOtomatikGec` yalnız DAHA YENİ sürüme geçer (`surumDahaYeniMi`). `surum.json`'u 1.744.7'ye geri yazmak 1.744.8'e geçmiş cihazları
+GERİ DÖNDÜRMEZ. Uygulama geri dönüşü = 1.744.7 kodunu daha büyük numarayla (ör. 1.744.9) yayınlamak. (Denenmedi; kod okumasıyla.)
