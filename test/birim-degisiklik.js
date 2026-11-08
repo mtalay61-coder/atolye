@@ -3,7 +3,7 @@
 // Ölçülen: sayacı artan tablo alanına düşer (kalem → siparişler); değişmeyen geçilir; bu cihazın 12 sn içindeki yazması
 // ertelenir (görüldü sayılmaz, yaşlanınca tazelenir); bekleyen yazması olan alan ertelenir; bilinmeyen tablo yok sayılır;
 // görüldü haritasında ertelenenler eski değerde kalır.
-const { degisiklikFarki, degisiklikGoruldu, alaninTablolari, degisiklikIcerikAyni, tabloIcerikAyni, TABLO_SEMA } = require("./erp.cjs");
+const { degisiklikFarki, degisiklikGoruldu, alaninTablolari, degisiklikIcerikAyni, tabloIcerikAyni, tabloIcerikFarki, TABLO_SEMA } = require("./erp.cjs");
 let hata = 0;
 const bekle = (ad, a, b) => {
   const ok = JSON.stringify(a) === JSON.stringify(b);
@@ -55,5 +55,13 @@ const baskaCihaz = bulutOku([{ ...yerelCari[0], hareketler: [...yerelCari[0].har
 bekle("başka cihazın yeni hareketi: farklı", tabloIcerikAyni("cariler", yerelCari, baskaCihaz), false);
 const tutarDegisti = bulutOku([{ ...yerelCari[0], hareketler: [{ ...yerelCari[0].hareketler[0], tutar: 600 }] }]);
 bekle("tutar değişti: farklı", tabloIcerikAyni("cariler", yerelCari, tutarDegisti), false);
+// v1.744.10 — yanlış "Başka cihazdan güncellendi: Stok": görselsiz üründe ekranda renkResimleri {} , bulutta yok / null.
+const yerelUrun = [{ id: "u1", ad: "Bot", kapakResmi: "", renkResimleri: {}, variants: [], hareketler: [] }];
+const bulutUrun = [{ id: "u1", ad: "Bot", variants: [], hareketler: [] }];
+bekle("boş renk görseli {} = bulutta yok: aynı", tabloIcerikAyni("urunler", yerelUrun, bulutUrun), true);
+bekle("boş renk görseli {} = null: aynı", tabloIcerikAyni("urunler", yerelUrun, [{ ...bulutUrun[0], renkResimleri: null }]), true);
+bekle("gerçek görsel eklendi: farklı", tabloIcerikAyni("urunler", [{ ...yerelUrun[0], renkResimleri: { Siyah: "data:x" } }], bulutUrun), false);
+bekle("ürün adı değişti: farkın adı söylenir", tabloIcerikFarki("urunler", yerelUrun, [{ ...bulutUrun[0], ad: "Çizme" }]), "urunler|u1: ad");
+bekle("aynıysa fark yok", tabloIcerikFarki("urunler", yerelUrun, bulutUrun), null);
 if (hata) { console.log("BİRİM TESTİ HATA: değişiklik sayacı"); process.exit(1); }
 console.log("── değişiklik sayacı testi temiz ──");

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.744.7</title>
+<title>Atölye ERP 1.744.10</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2319,9 +2319,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.744.7";
-const SURUM_TARIHI = "2026-11-03";
-const SURUM_NOTU = "Fişleri silinmiş sipariş silinebilir";
+const SURUM = "1.744.10";
+const SURUM_TARIHI = "2026-11-08";
+const SURUM_NOTU = "Yanlış \"Başka cihazdan güncellendi\" bildirimi giderildi; JSON yedeğinde teklifler var";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2351,6 +2351,9 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 }
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" }; // teklif: v1.723.0, Sipariş'in alt sekmesi
 const SURUM_GECMISI = [
+    { surum: "1.744.10", tarih: "08.11.2026", eklenen: ["\"Başka cihazdan güncellendi\" notu günlükte hangi kaydın hangi alanının farklı çıktığını da yazar (değer yazmaz)."], degisen: [], duzeltilen: ["Tek cihazla çalışırken kayıttan ~12 sn sonra yanlış \"Başka cihazdan güncellendi: Stok\" çıkıyordu: görseli olmayan üründe ekrandaki boş görsel listesi bulutun boş alanından farklı sayılıyordu.", "Elle indirilen JSON yedeğinde teklifler yoktu; artık var ve dosyadan geri yüklenince teklifler de gelir."] },
+    { surum: "1.744.9", tarih: "07.11.2026", eklenen: [], degisen: ["Proses silmeden önce, proses hiçbir yerde kullanılmıyorsa da onay sorulur."], duzeltilen: ["Tanımlar › Üretim › Prosesler: dar ekranda (tablet) satırın sağındaki aşağı taşı ve sil düğmeleri kesiliyordu; satır artık alt satıra kayar, düğmeler her zaman görünür."] },
+    { surum: "1.744.8", tarih: "04.11.2026", eklenen: [], degisen: ["Üretim silme sunucuda tek işlemde yapılır: fişler iptal edilir ve üretim silinir, ya da hiçbiri (sunucuda uretim_sil kuruluysa).", "Fiş kesilmeden yazılmış eski hareketi olan çöp kaydı (ürün / cari) geri yüklenmez; kayıt çöpte kalır."], duzeltilen: ["Eski (fiş kesilmeden yazılmış) hareketi olan üretim silinince üretim kaydı gidiyor, hareketleri sunucuda geçerli kalıyordu; artık ya tamamı yapılır ya hiçbir kayıt değişmez.", "Fişsiz eski cari hareketi olan üretim silinmez; sebep söylenir.", "Başka cihazın az önce yazdığı ve ekranda görünmeyen hareketi olan üretim sessizce silinmez."] },
     { surum: "1.744.7", tarih: "03.11.2026", eklenen: [], degisen: ["Sipariş silmede hata iletisi \"iptal edilemedi\" yerine \"silinemedi\" der."], duzeltilen: ["Fişleri silinmiş (iptal edilmiş) sipariş silinemiyordu (KR002); artık silinir. İptal edilmemiş fişi olan sipariş yine silinmez, iptal edilmiş olarak kalır."] },
     { surum: "1.744.6", tarih: "03.11.2026", eklenen: [], degisen: ["Cari ekstrenin sade görünümünde bedenli fişler beden matrisiyle gösterilir (fiyat ayrıntısı Detaylı görünümde).", "Stok kartı hareketlerinde çok bedenli fiş tek renkli olsa da matrisle açılır; tek renk ve tek bedenli (bedensiz) fiş tek satır kalır.", "Gün sonu Excel'inde fiş, stok ve üretim hareketleri beden matrisi."], duzeltilen: ["Stok kartı hareket matrisinde bedenler küçükten büyüğe sıralanır."] },
     { surum: "1.744.5", tarih: "03.11.2026", eklenen: [], degisen: ["Gün sonu raporunda (ekran, PDF, e-posta) alış/satış fiş kalemleri, stok hareketleri ve üretim hareketleri beden matrisiyle gösterilir: satırda ürün ve renk, sütunlarda bedenler, sonda toplam."], duzeltilen: [] },
@@ -8771,21 +8774,34 @@ function _icerikDegeri(v) {
         const t = Date.parse(v);
         return Number.isNaN(t) ? v : t;
     }
-    if (typeof v === "object")
-        return kararliJson(v, true);
+    // BOŞ LİSTE = BOŞ ALAN (v1.744.10 — yanlış "Başka cihazdan güncellendi: Stok"): görselsiz üründe ekrandaki kopya
+    // `renkResimleri: {}` taşıyor, buluttaki sütun null (ve görselsiz okumada hiç gelmiyor); ikisi de "görsel yok" ama
+    // "{}" ≠ null sayılıp her kayıttan ~12 sn sonra yanlış not çıkıyordu (ekran sınaması 7 Kasım; tanı: tabloIcerikFarki →
+    // "urunler|u-ham: renk_resimleri"). Boş nesne / boş dizi null'la aynı sayılır — içerik taşımaz.
+    if (typeof v === "object") {
+        const j = kararliJson(v, true);
+        return (j === "{}" || j === "[]") ? null : j;
+    }
     return v;
 }
-function _satirAyni(yerel, bulut) {
+// İlk farklı alanın adı (yoksa null). `ek.alan` biçiminde; fark tanısı için (tabloIcerikFarki).
+function _satirFarki(yerel, bulut) {
     if (!bulut)
-        return false;
-    return Object.keys(yerel).every((k) => {
+        return "(bulutta yok)";
+    for (const k of Object.keys(yerel)) {
         if (k === "ek" && yerel.ek && typeof yerel.ek === "object" && !Array.isArray(yerel.ek)) {
             const be = (bulut.ek && typeof bulut.ek === "object") ? bulut.ek : {};
-            return Object.keys(yerel.ek).every((a) => _icerikDegeri(yerel.ek[a]) === _icerikDegeri(be[a]));
+            for (const a of Object.keys(yerel.ek))
+                if (_icerikDegeri(yerel.ek[a]) !== _icerikDegeri(be[a]))
+                    return `ek.${a}`;
+            continue;
         }
-        return _icerikDegeri(yerel[k]) === _icerikDegeri(bulut[k]);
-    });
+        if (_icerikDegeri(yerel[k]) !== _icerikDegeri(bulut[k]))
+            return k;
+    }
+    return null;
 }
+function _satirAyni(yerel, bulut) { return _satirFarki(yerel, bulut) === null; }
 function _tabloSatirHaritasi(tablo, kayitlar) {
     const sema = TABLO_SEMA[tablo];
     const ana = new Map();
@@ -8798,26 +8814,38 @@ function _tabloSatirHaritasi(tablo, kayitlar) {
     });
     return { ana, cocuk };
 }
-function tabloIcerikAyni(tablo, yerelKayitlar, bulutKayitlar) {
+// FARKIN NEDENİ (v1.744.10): yanlış "Başka cihazdan güncellendi" bildiriminin kaynağını görebilmek için ilk farkı adıyla
+// döner (null = aynı): "sayı: yerel 3 / bulut 4", "stok_hareketleri|h1: miktar" gibi — değer YAZILMAZ (kayıt kimliği ve alan adı).
+// Uygulama bunu "Başka cihazdan güncellendi" günlük satırına ekler; bir sonraki yanlış bildirim nedenini kendisi söyler.
+function tabloIcerikFarki(tablo, yerelKayitlar, bulutKayitlar) {
     if (!TABLO_SEMA[tablo])
-        return degisiklikIcerikAyni(yerelKayitlar, bulutKayitlar);
+        return degisiklikIcerikAyni(yerelKayitlar, bulutKayitlar) ? null : "içerik";
     try {
         const y = _tabloSatirHaritasi(tablo, yerelKayitlar);
         const b = _tabloSatirHaritasi(tablo, bulutKayitlar);
-        if (y.ana.size !== b.ana.size || y.cocuk.size !== b.cocuk.size)
-            return false;
-        for (const [id, r] of y.ana)
-            if (!_satirAyni(r, b.ana.get(id)))
-                return false;
-        for (const [id, r] of y.cocuk)
-            if (!_satirAyni(r, b.cocuk.get(id)))
-                return false;
-        return true;
+        if (y.ana.size !== b.ana.size)
+            return `${tablo} sayısı: yerel ${y.ana.size} / bulut ${b.ana.size}`;
+        if (y.cocuk.size !== b.cocuk.size) {
+            const eksik = [...b.cocuk.keys()].find((k) => !y.cocuk.has(k)) || [...y.cocuk.keys()].find((k) => !b.cocuk.has(k));
+            return `alt kayıt sayısı: yerel ${y.cocuk.size} / bulut ${b.cocuk.size} (ör. ${eksik})`;
+        }
+        for (const [id, r] of y.ana) {
+            const f = _satirFarki(r, b.ana.get(id));
+            if (f)
+                return `${tablo}|${id}: ${f}`;
+        }
+        for (const [id, r] of y.cocuk) {
+            const f = _satirFarki(r, b.cocuk.get(id));
+            if (f)
+                return `${id}: ${f}`;
+        }
+        return null;
     }
     catch (e) {
-        return false;
+        return "karşılaştırma hatası";
     }
 }
+function tabloIcerikAyni(tablo, yerelKayitlar, bulutKayitlar) { return tabloIcerikFarki(tablo, yerelKayitlar, bulutKayitlar) === null; }
 // KİMİN YAPTIĞI — KAYIT KAPISINDA DAMGA (v1.645.9).
 //
 // Kullanıcı (Anasayfa › Son işlemler görüntüsüyle): "İşlemi yapan kullanıcı yazmıyor." Akışta yalnız fiş/tahsilat
@@ -12616,24 +12644,56 @@ function useUretimSil(d) {
             // silinmez. İptal edilemezse hiçbir şey değişmez (üretim yerinde kalır). İptal edilen satırlar fark tabanından çıkar; eski usul
             // satırlar, ana kayıtlar ve üretim kaydı aşağıdaki adımlarla bugünkü yoldan.
             const silinenCariKayitlari = cariler.flatMap((c) => (c.hareketler || []).filter(buUretimeAitCariHareketiMi).map((h) => ({ cari: c, hareket: h })));
-            const sunucuSatirlari = fisKesYolu() ? uretimSunucuFisSatirlari(silinenStokKayitlari, silinenCariKayitlari) : null;
-            if (sunucuSatirlari && sunucuSatirlari.fisler.length) {
-                const iptalEdilen = [];
+            // HEPSİ YA DA HİÇBİRİ (v1.744.8 — kural provası bulgusu, 4 Kasım). Fiş defteri kuruluyken fis_kes ile KESİLMEMİŞ (eski) bir
+            // hareketin iptali köprüde ağa çıkmadan durdurulur (038, KR009); 040 o satırı "inceleme"ye ayırıp kalanı gönderdiği için adım
+            // başarılı sayılıyor, üretim kaydı siliniyordu → sunucuda üretim YOK, hareketleri GEÇERLİ; ekranda ise hareketler silinmiş.
+            // Şimdi EKRANA DOKUNMADAN önce sunucu tek işlemde karar verir (078 uretimSilGonder): fişleri iptal edip üretimi siler ya da
+            // reddeder — reddedilirse hiçbir kayıt (sunucu, ekran, çöp) değişmez. Sunucuda işlem kurulu değilse (canlıda SQL ayrı onayla
+            // kurulur) eski hareket varken silme hiç denenmez; yalnız sunucu fişli (ÜRT) hareketi olan üretim bugünkü yoldan silinir.
+            if (fisKesYolu()) {
+                const sunucuSatirlari = uretimSunucuFisSatirlari(silinenStokKayitlari, silinenCariKayitlari);
+                const eskiSatirSayisi = [...silinenStokKayitlari, ...silinenCariKayitlari].filter(({ hareket: h }) => !(h && h.uretimFisAdi && h.fisNo)).length;
+                const stokIdler = silinenStokKayitlari.map(({ hareket: h }) => h && h.id).filter(Boolean);
+                const cariIdler = silinenCariKayitlari.map(({ hareket: h }) => h && h.id).filter(Boolean);
+                const hataMetni = (e) => String((e && e.message) || e).slice(0, 220);
+                let sunucuSildi = false;
                 try {
-                    for (const no of sunucuSatirlari.fisler) {
-                        await fisIptalGonder(no, `Üretim ${siparis.siparisNo} silindi`);
-                        iptalEdilen.push(no);
-                    }
+                    const r = await uretimSilGonder({ id: uretimId, sebep: `Üretim ${siparis.siparisNo} silindi`, stokIdler, cariIdler });
+                    sunucuSildi = true;
+                    gunlukYaz(`Üretim sunucuda tek işlemde silindi: ${siparis.siparisNo}${r.fisler && r.fisler.length ? ` — iptal edilen fiş: ${r.fisler.join(", ")}` : ""}`, "uretim", { uretimId, fisler: r.fisler || [] });
                 }
                 catch (e) {
-                    showToast(`⚠ Üretim SİLİNMEDİ — fiş iptal edilemedi (${String((e && e.message) || e).slice(0, 160)}).`
-                        + (iptalEdilen.length ? ` İptal edilen: ${iptalEdilen.join(", ")}; sayfayı yenileyip yeniden deneyin.` : ""));
-                    gunlukYaz(`Üretim silme: fiş iptal edilemedi (${siparis.siparisNo})`, "uretim", { iptalEdilen, hata: String((e && e.message) || e).slice(0, 200) });
-                    return { ok: false };
+                    if (!uretimSilSunucuYok(e)) {
+                        showToast(`⚠ Üretim SİLİNMEDİ — ${hataMetni(e)}. Hiçbir kayıt değişmedi.`);
+                        gunlukYaz(`Üretim silme reddedildi (${siparis.siparisNo})`, "uretim", { uretimId, hata: hataMetni(e) });
+                        return { ok: false };
+                    }
+                    if (eskiSatirSayisi > 0) {
+                        showToast(`⚠ Üretim SİLİNMEDİ — ${eskiSatirSayisi} hareketi fiş kesilmeden (eski yoldan) yazılmış; sunucuda tek işlemli üretim silme `
+                            + "(uretim_sil) kurulu olmadığı için bu silme yarım kalırdı. Hiçbir kayıt değişmedi.");
+                        gunlukYaz(`Üretim silme durduruldu: eski hareket, sunucu işlemi yok (${siparis.siparisNo})`, "uretim", { uretimId, eskiSatirSayisi });
+                        return { ok: false };
+                    }
+                    // Eski sunucu, yalnız sunucu fişli satırlar: bugünkü yol — fişler sırayla iptal, üretim kaydı aşağıdaki adımlarda.
+                    const iptalEdilen = [];
+                    try {
+                        for (const no of sunucuSatirlari.fisler) {
+                            await fisIptalGonder(no, `Üretim ${siparis.siparisNo} silindi`);
+                            iptalEdilen.push(no);
+                        }
+                    }
+                    catch (e2) {
+                        showToast(`⚠ Üretim SİLİNMEDİ — fiş iptal edilemedi (${hataMetni(e2)}).`
+                            + (iptalEdilen.length ? ` İptal edilen: ${iptalEdilen.join(", ")}; sayfayı yenileyip yeniden deneyin.` : ""));
+                        gunlukYaz(`Üretim silme: fiş iptal edilemedi (${siparis.siparisNo})`, "uretim", { iptalEdilen, hata: hataMetni(e2) });
+                        return { ok: false };
+                    }
+                    if (sunucuSatirlari.fisler.length)
+                        gunlukYaz(`Üretim fişleri iptal edildi: ${sunucuSatirlari.fisler.join(", ")} (${siparis.siparisNo} silindi)`, "uretim", { uretimId });
                 }
-                fisKesTabandanCikar("urunler", "stok_hareketleri", sunucuSatirlari.stokIdler);
-                fisKesTabandanCikar("cariler", "cari_hareketleri", sunucuSatirlari.cariIdler);
-                gunlukYaz(`Üretim fişleri iptal edildi: ${sunucuSatirlari.fisler.join(", ")} (${siparis.siparisNo} silindi)`, "uretim", { uretimId });
+                // İptal edilen satırlar fark tabanından çıkar (yeniden gönderilmesin); tek işlemde bütün eşleşen satırlar iptal edildi.
+                fisKesTabandanCikar("urunler", "stok_hareketleri", sunucuSildi ? stokIdler : sunucuSatirlari.stokIdler);
+                fisKesTabandanCikar("cariler", "cari_hareketleri", sunucuSildi ? cariIdler : sunucuSatirlari.cariIdler);
             }
             // SIRA BİLİNÇLİ: hammadde ve cari etkileri önce geri alınır, üretim kaydı EN SON silinir.
             // Yarıda kalırsa geriye "etkileri geri alınmış ama hâlâ duran" bir üretim kalır — bu
@@ -12716,8 +12776,22 @@ function useUretimSil(d) {
             return { ok: true };
         }
         // Etkisiz üretim: temizlenecek hareket yok, yine de sonuç DOĞRULANIR.
-        // bayat-muaf: ayrı dal — yukarıdaki `await`ler (sunucu iptali, adımlar) yalnız temizlik dalında; buraya beklemeden gelinir.
+        // bayat-muaf: ayrı dal — tek bekleme aşağıdaki sunucu kararı (v1.744.8); listeler (kalanUretim, nextSiparisler) ondan ÖNCE kurulur.
         const kalanUretim = uretim.filter((o) => o.id !== uretimId);
+        // Bu ekranda hareketi yok — ama başka bir cihaz az önce teslim yazmış olabilir. Fiş defteri kuruluyken sunucu tek işlemde
+        // karar verir (boş satır listesiyle: görünmeyen geçerli hareket varsa KR010, hiçbir şey değişmez). İşlem kurulu değilse bugünkü yol.
+        if (fisKesYolu()) {
+            try {
+                await uretimSilGonder({ id: uretimId, sebep: `Üretim ${siparis.siparisNo} silindi`, stokIdler: [], cariIdler: [] });
+            }
+            catch (e) {
+                if (!uretimSilSunucuYok(e)) {
+                    showToast(`⚠ Üretim SİLİNMEDİ — ${String((e && e.message) || e).slice(0, 220)}. Hiçbir kayıt değişmedi.`);
+                    gunlukYaz(`Üretim silme reddedildi (${siparis.siparisNo})`, "uretim", { uretimId, hata: String((e && e.message) || e).slice(0, 220) });
+                    return { ok: false };
+                }
+            }
+        }
         const sadeAdimlar = [];
         if (etkilendiMi) {
             sadeAdimlar.push({ ad: "bağlı satış siparişi", yerelUygula: () => setSiparisler(nextSiparisler),
@@ -13888,6 +13962,17 @@ function useCopKutusu(d) {
             showToast(`Bu ${TUR.ad} zaten listede — geri yükleme yapılmadı`);
             return;
         }
+        // HAREKETLİ ESKİ ÇÖP KAYDI (v1.744.8 — kural provası, 4 Kasım): fiş defteri kuruluyken hareket yalnız fiş kesilerek yazılır;
+        // çöpteki ürün / cari kopyasının hareketleri geri yazılmak istense köprü onları ağa çıkmadan durdurur (038, KR009), 040 satırı
+        // incelemeye ayırıp kalanı gönderir → kart geri gelir, hareketleri GELMEZ (yarım). Bugün hareketli kart silinemiyor (087), bu
+        // yalnız eski çöp kayıtlarında olur. Hiçbir şeye dokunmadan durulur: kayıt çöpte kalır, ekran ve sunucu değişmez.
+        const copHareketi = (kayit.tur === "urun" || kayit.tur === "cari") ? ((kayit.veri && kayit.veri.hareketler) || []).length : 0;
+        if (copHareketi > 0 && fisKesYolu()) {
+            gunlukYaz(`Çöpten geri yükleme durduruldu: ${kayit.baslik} (${copHareketi} hareket)`, "cop", { copId, tur: kayit.tur, hareket: copHareketi });
+            showToast(`⚠ "${kayit.baslik}" geri yüklenemez — ${copHareketi} hareketi var; fiş defterinde hareket yalnız fiş kesilerek yazılır. `
+                + "Kayıt çöpte kalıyor, hiçbir şey değişmedi. Kartı hareketsiz yeniden açıp hareketleri fişle girin.");
+            return;
+        }
         const onceki = TUR.liste;
         const n = TUR.basa ? [kayit.veri, ...onceki] : [...onceki, kayit.veri];
         TUR.set(n);
@@ -14940,6 +15025,21 @@ function uretimSunucuFisSatirlari(stokKayitlari, cariKayitlari) {
         cariIdler.push(h.id);
     } });
     return { fisler: [...fisler].sort(), stokIdler, cariIdler };
+}
+// ÜRETİM SİLME — TEK SUNUCU İŞLEMİ (v1.744.8, fis-defteri.sql `uretim_sil`). Fiş defteri kuruluyken üretim silme eskiden fişleri
+// tek tek iptal edip üretim kaydını ayrı REST isteğiyle siliyordu; fis_kes ile kesilmemiş (eski) hareketlerin iptali köprüde ağa
+// çıkmadan durdurulduğu için sunucuda "üretim yok, hareketleri geçerli" yarım hâli kalıyordu (kural provası, 4 Kasım). Şimdi
+// hepsi TEK işlemde: sunucu üretimin hareketlerini kendisi bulur (+ bu ekranın eşleştirdiği satır kimlikleri), fişsiz eski satır,
+// başka kayıt taşıyan eski fiş ya da bu ekranda görünmeyen hareket varsa reddeder (KR010) — hiçbir şey değişmez; değilse fişleri
+// iptal eder ve üretimi siler. Sunucuda işlem kurulu değilse (eski sunucu) `uretimSilSunucuYok` doğru döner; çağıran ona göre davranır.
+async function uretimSilGonder(p) {
+    const r = await supabaseIstek("rpc/uretim_sil", { method: "POST", body: JSON.stringify({ p: { ...p, istemci: fisIstemciBilgisi() } }) });
+    if (!r || (r.silindi !== true && r.zatenYok !== true))
+        throw new Error("Sunucu üretim silme sonucunu döndürmedi");
+    return r;
+}
+function uretimSilSunucuYok(e) {
+    return /PGRST202|Could not find the function|uretim_sil/i.test(String((e && e.message) || e)) && !/KR010/.test(String((e && e.message) || e));
 }
 // STOK TARAFINI UYGULA (v1.733.1 — üretim, numune ve ileride stok formları ortak): sunucu yazdıktan sonra etkilenen ürünlerin yeni
 // hâli (`doldur` yer tutucuyu numarayla değiştirir) ekrana, yerel kopyaya ve fark tabanına. Ürünün ANA satırı da değiştiyse (reçete
@@ -21836,6 +21936,9 @@ function useYedekleme(d) {
             surum: 3, gorsellerHaric: false, uygulama: `Atölye ERP ${SURUM}`,
             stok, siparisler, uretim, cariler, tanimlar, muhasebe, koliler, cekGorselleri, gorevler, mesajlar,
             faturalar: faturalar || [], stokRezervasyonlari: stokRezervasyonlari || [], onaylar: onaylar || [], fisDefteri: fisDefteri || null, modeller: modeller || [],
+            // TEKLİFLER (v1.744.10): elle indirilen JSON'da yoktu (bulut otomatik yedeğinde ve geri yüklemede vardı) — bu dosyadan
+            // geri dönülünce teklifler geri gelmiyordu.
+            teklifler: teklifler || [],
         };
         const blob = new Blob([JSON.stringify(yedek, null, 2)], { type: "application/json" });
         const url = URL.createObjectURL(blob);
@@ -23135,11 +23238,13 @@ function AtolyeUygulamasi() {
         // Çok satırlı alanlar YAZMA biçiminde karşılaştırılır (047 `tabloIcerikAyni`, v1.645.11); tek satırlılar düz.
         const ALAN_TABLOSU = { stok: "urunler", cariler: "cariler", siparisler: "siparisler", uretim: "uretim",
             stokRezervasyonlari: "stok_rezervasyonlari", onaylar: "onaylar", cop: "cop" };
+        const farklar = {};
         const ayni = (alan, yeni) => {
-            const esit = ALAN_TABLOSU[alan] ? tabloIcerikAyni(ALAN_TABLOSU[alan], g[alan], yeni) : degisiklikIcerikAyni(g[alan], yeni);
-            if (esit)
+            const fark = ALAN_TABLOSU[alan] ? tabloIcerikFarki(ALAN_TABLOSU[alan], g[alan], yeni) : (degisiklikIcerikAyni(g[alan], yeni) ? null : "içerik");
+            if (!fark)
                 return true;
             degisen.push(alan);
+            farklar[alan] = fark;
             return false;
         };
         alanlar.forEach((alan) => {
@@ -23221,6 +23326,7 @@ function AtolyeUygulamasi() {
             }
             catch (e) { /* bir sonraki turda */ }
         }
+        degisen.farklar = farklar; // tanı: günlüğe (aşağıda) — hangi kayıt / alan farklı çıktı
         return degisen;
     }, []);
     useEffect(() => {
@@ -23244,7 +23350,8 @@ function AtolyeUygulamasi() {
                     // İçeriği aynı çıkan alan (kendi geç görülen yazmamız) notta yazılmaz; hiçbiri değişmediyse not yok.
                     if (degisen.length) {
                         const adlar = degisen.map((a) => DEGISIKLIK_ALAN_ADI[a] || a).join(", ");
-                        gunlukYaz(`Başka cihazdan güncellendi: ${adlar}`, "veri", { tablolar: f.tablolar });
+                        gunlukYaz(`Başka cihazdan güncellendi: ${adlar}`, "veri", { tablolar: f.tablolar, farklar: degisen.farklar });
+                        console.info("[değişiklik] tazelendi:", adlar, JSON.stringify(degisen.farklar || {}));
                         showToast(`Başka cihazdan güncellendi: ${adlar}`);
                     }
                 }
@@ -30425,6 +30532,10 @@ function TanimlarModule({ onaylar, onYetimRezervasyonSil, onDefterFisIptal, onCa
         if ((receteSayisi > 0 || uretimSayisi > 0)
             && !window.confirm(`"${ad}" prosesi ${receteSayisi} reçete satırında ve ${uretimSayisi} açık üretimde kullanılıyor. Silinince bu kayıtlarda proses adı kalır ama tanımsız olur (sıra/ücret bilgisi kaybolur).\n\nYine de silinsin mi?`))
             return;
+        // Kullanılmayan proses de ONAYLA silinir (v1.744.9): düğme artık dokunmatik ekranda taşı düğmelerinin hemen yanında —
+        // yanlış dokunuş sessizce tanımı silmesin.
+        if (receteSayisi === 0 && uretimSayisi === 0 && !window.confirm(`"${ad}" prosesi silinsin mi?`))
+            return;
         onSave({ ...tanimlar, prosesler: (tanimlar.prosesler || []).filter((p) => p.id !== id) });
     }
     // Ara Proses: kendi başına "İşi Ver / Teslim Al" akışı işletilmeyen, sabit bir cariye (personele) bağlı
@@ -31363,8 +31474,12 @@ function TanimlarModule({ onaylar, onYetimRezervasyonSil, onDefterFisIptal, onCa
                         React.createElement("input", { value: yeniProses, onChange: (e) => setYeniProses(e.target.value), placeholder: "Yeni proses, \u00F6rn. Kesim", style: inputStyle, onKeyDown: (e) => e.key === "Enter" && addProses() }),
                         React.createElement("button", { className: "btn-primary", title: "Proses ekle", onClick: addProses },
                             React.createElement(Plus, { size: 14 }))),
-                    (tanimlar.prosesler || []).length === 0 ? (React.createElement(EmptyState, { text: "Hen\u00FCz proses tan\u0131mlanmad\u0131." })) : (React.createElement("div", { style: { border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden", background: "#fff" } }, [...tanimlar.prosesler].sort((a, b) => a.sira - b.sira).map((p, i, arr) => (React.createElement("div", { key: p.id, style: {
-                            display: "flex", alignItems: "center", gap: 8, padding: "8px 12px",
+                    (tanimlar.prosesler || []).length === 0 ? (React.createElement(EmptyState, { text: "Hen\u00FCz proses tan\u0131mlanmad\u0131." })) : (React.createElement("div", { style: { border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden", background: "#fff" } }, [...tanimlar.prosesler].sort((a, b) => a.sira - b.sira).map((p, i, arr) => (React.createElement("div", { key: p.id, 
+                        // SARILAN SATIR (v1.744.9): satır tek satıra sığmak zorundaydı, kutu taşanı kesiyordu (overflow: hidden) —
+                        // tablette sağdaki "aşağı taşı" ve "sil" düğmeleri görünmüyordu (kullanıcı: "Proses sil göremedim").
+                        // Artık dar ekranda alt satıra kayar; taşı / sil düğmeleri tek grupta, her zaman sağda kalır.
+                        style: {
+                            display: "flex", alignItems: "center", gap: 8, rowGap: 6, flexWrap: "wrap", padding: "8px 12px",
                             borderLeft: `4px solid ${prosesRengi(p.ad, i)}`,
                             background: prosesZemini(p.ad, i),
                             borderBottom: i === arr.length - 1 ? "none" : "1px solid var(--erp-line-soft)",
@@ -31385,19 +31500,20 @@ function TanimlarModule({ onaylar, onYetimRezervasyonSil, onDefterFisIptal, onCa
                             } }, Object.entries(PROSES_IKONLARI).map(([anahtar, v]) => (React.createElement("option", { key: anahtar, value: anahtar }, v.etiket)))),
                         React.createElement("span", { style: { display: "flex", alignItems: "center", color: prosesRengi(p.ad, i), flexShrink: 0 } },
                             React.createElement(ProsesIkonu, { proses: p.ad, tanimlarProsesler: tanimlar.prosesler, size: 18 })),
-                        React.createElement("span", { style: { fontSize: 14, fontWeight: 600, flex: 1, color: prosesRengi(p.ad, i) } }, p.ad),
+                        React.createElement("span", { style: { fontSize: 14, fontWeight: 600, flex: "1 1 80px", minWidth: 60, color: prosesRengi(p.ad, i) } }, p.ad),
                         React.createElement("select", { "data-proses-gider-karti": p.ad, value: (tanimlar.prosesGiderKartlari || {})[p.ad] || "", title: "Bu prosesin i\u015F\u00E7ilik fi\u015Flerinin yaz\u0131ld\u0131\u011F\u0131 gider kart\u0131", onChange: (e) => onSave({ ...tanimlar, prosesGiderKartlari: { ...(tanimlar.prosesGiderKartlari || {}), [p.ad]: e.target.value || undefined } }), style: { fontSize: 11, padding: "2px 4px", maxWidth: 160, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", background: "#fff" } },
                             React.createElement("option", { value: "" }, "Gider kart\u0131 yok"),
                             (tanimlar.giderKartlari || []).filter((k) => (k.tur || "gider") !== "gelir").map((k) => React.createElement("option", { key: k.id, value: k.id }, k.ad))),
                         React.createElement("label", { style: { display: "flex", alignItems: "center", gap: 4 }, title: "Bu proses i\u00E7in otomatik barkod kodlar\u0131 bu numaradan ba\u015Flayarak s\u0131ralan\u0131r" },
                             React.createElement("span", { style: { fontSize: 10, color: "var(--erp-text-3)" } }, "Barkod Ba\u015Flang\u0131\u00E7:"),
                             React.createElement("input", { type: "number", defaultValue: p.baslangicNo ?? 1000, onBlur: (e) => prosesBaslangicNoGuncelle(p.id, e.target.value), className: "mono", style: { width: 60, padding: "2px 5px", fontSize: 11, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" } })),
-                        React.createElement("button", { onClick: () => prosesSiraDegistir(p.id, -1), disabled: i === 0, title: "Yukar\u0131 ta\u015F\u0131", style: { border: "none", background: "none", cursor: i === 0 ? "default" : "pointer", color: i === 0 ? "var(--erp-border-2)" : "var(--erp-text-2)", display: "flex" } },
-                            React.createElement(ChevronUp, { size: 16 })),
-                        React.createElement("button", { onClick: () => prosesSiraDegistir(p.id, 1), disabled: i === arr.length - 1, title: "A\u015Fa\u011F\u0131 ta\u015F\u0131", style: { border: "none", background: "none", cursor: i === arr.length - 1 ? "default" : "pointer", color: i === arr.length - 1 ? "var(--erp-border-2)" : "var(--erp-text-2)", display: "flex" } },
-                            React.createElement(ChevronDown, { size: 16 })),
-                        React.createElement("button", { onClick: () => removeProses(p.id), style: { border: "none", background: "none", cursor: "pointer", color: "var(--erp-text-3)", display: "flex" } },
-                            React.createElement(X, { size: 14 })))))))),
+                        React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 2, marginLeft: "auto", flexShrink: 0 } },
+                            React.createElement("button", { onClick: () => prosesSiraDegistir(p.id, -1), disabled: i === 0, title: "Yukar\u0131 ta\u015F\u0131", style: { border: "none", background: "none", cursor: i === 0 ? "default" : "pointer", color: i === 0 ? "var(--erp-border-2)" : "var(--erp-text-2)", display: "flex" } },
+                                React.createElement(ChevronUp, { size: 16 })),
+                            React.createElement("button", { onClick: () => prosesSiraDegistir(p.id, 1), disabled: i === arr.length - 1, title: "A\u015Fa\u011F\u0131 ta\u015F\u0131", style: { border: "none", background: "none", cursor: i === arr.length - 1 ? "default" : "pointer", color: i === arr.length - 1 ? "var(--erp-border-2)" : "var(--erp-text-2)", display: "flex" } },
+                                React.createElement(ChevronDown, { size: 16 })),
+                            React.createElement("button", { "data-proses-sil": p.ad, onClick: () => removeProses(p.id), title: "Prosesi sil", "aria-label": `${p.ad} prosesini sil`, style: { border: "none", background: "none", cursor: "pointer", color: "var(--erp-danger)", display: "flex", padding: 4 } },
+                                React.createElement(Trash2, { size: 16 }))))))))),
                 React.createElement("div", { style: { marginTop: 28 } },
                     React.createElement(TanimBasligi, { ad: "Ara Prosesler" }),
                     React.createElement("p", { style: { fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px" } }, "Kendi ba\u015F\u0131na \"\u0130\u015Fi Ver / Teslim Al\" ad\u0131m\u0131 i\u015Fletilmeyen, k\u00FC\u00E7\u00FCk ve sabit bir cariye (personele) ba\u011Fl\u0131 i\u015F\u00E7ilik kalemleri (\u00F6rn. \"Kampre\" \u2014 saya diki\u015Fiyle birlikte otomatik yap\u0131lan bir i\u015F). Re\u00E7etede bir as\u0131l prosesin ard\u0131na eklendi\u011Finde, kendisinden sonraki as\u0131l proses i\u015Fe verildi\u011Finde otomatik olarak tamamlan\u0131r ve i\u015F\u00E7ili\u011Fi kendi cariye (personele) i\u015Flenir."),
@@ -72295,7 +72411,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.744.7)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.744.10)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),
