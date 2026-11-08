@@ -9,18 +9,21 @@
    "tanimlar",
    "muhasebe",
    "koliler",
-   "cekGorselleri"
+   "cekGorselleri",
+   "teklifler"
   ],
   "cekSayisi": 1,
   "gorselDahil": true,
   "koliSayisi": 1,
-  "surum": 3
+  "surum": 3,
+  "teklifSayisi": 1
  },
  "sonra": {
   "cari": 3,
   "cek": 1,
   "koli": 1,
   "oncesiSaklandi": true,
-  "stok": 2
+  "stok": 2,
+  "teklif": 1
  }
 }

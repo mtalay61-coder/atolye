@@ -13,6 +13,8 @@ async function calistir() {
   const t = { ...TOHUM };
   t["muhasebe:data"] = JSON.stringify({ kasalar: [{ id: "k1", ad: "Kasa", hareketler: [] }], bankalar: [], cekler: [{ id: "cek1", cekNo: "12345", durum: "Portföyde", tip: "Alınan", tutar: 1000, paraBirimi: "TRY", cariId: "c2" }] });
   t["koli:data"] = JSON.stringify([{ id: "koli1", kod: "K-1", durum: "Hazır", kalemler: [{ urunId: "u2", urunAd: "Bot", renk: "Siyah", beden: "41", adet: 3 }] }]);
+  // TEKLİFLER (v1.744.10): elle indirilen JSON'da yoktu — dosyadan geri dönülünce teklif gelmiyordu.
+  t["teklif:data"] = JSON.stringify([{ id: "tek1", no: "TKL-1", cariId: "c2", tarih: "2026-11-01", durum: "Taslak", kalemler: [] }]);
   const { tarayici, sayfa } = await uygulamaAc(t, { hataYaz: false });
   const hatalar = []; sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   sayfa.on("dialog", (d) => d.accept());
@@ -33,14 +35,15 @@ async function calistir() {
   const yedek = JSON.parse(fs.readFileSync(yol, "utf8"));
   const icerik = {
     surum: yedek.surum,
-    bolumler: ["stok", "siparisler", "uretim", "cariler", "tanimlar", "muhasebe", "koliler", "cekGorselleri"].filter((k) => k in yedek),
+    bolumler: ["stok", "siparisler", "uretim", "cariler", "tanimlar", "muhasebe", "koliler", "cekGorselleri", "teklifler"].filter((k) => k in yedek),
     cekSayisi: ((yedek.muhasebe || {}).cekler || []).length,
     koliSayisi: (yedek.koliler || []).length,
+    teklifSayisi: (yedek.teklifler || []).length,
     gorselDahil: yedek.gorsellerHaric === false,
   };
 
   // 2. Verileri boşalt (depoyu sıfırla) ve dosyadan geri yükle.
-  await sayfa.evaluate(() => { ["stok:items", "cari:data", "siparis:data", "muhasebe:data", "koli:data"].forEach((k) => { window.__depo[k] = k === "muhasebe:data" ? "{}" : "[]"; }); });
+  await sayfa.evaluate(() => { ["stok:items", "cari:data", "siparis:data", "muhasebe:data", "koli:data", "teklif:data"].forEach((k) => { window.__depo[k] = k === "muhasebe:data" ? "{}" : "[]"; }); });
   await sayfa.locator('[data-json-geri-yukle] input[type="file"]').setInputFiles(yol);
   // Geri yükleme tabloları sırayla yazar; test ortamında her bulut yazması düşer ve (v1.724.1) 3 kez yeniden denenir —
   // son tablo (koli) yerelde ancak hepsi bitince görünür. Bekleme o yüzden uzun.
@@ -50,6 +53,7 @@ async function calistir() {
     cari: ((await depoOku(sayfa, "cari:data")) || []).length,
     cek: (((await depoOku(sayfa, "muhasebe:data")) || {}).cekler || []).length,
     koli: ((await depoOku(sayfa, "koli:data")) || []).length,
+    teklif: ((await depoOku(sayfa, "teklif:data")) || []).length,
     oncesiSaklandi: !!(await depoOku(sayfa, "yedek:geri-yukleme-oncesi")),
   };
 

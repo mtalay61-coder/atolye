@@ -105,19 +105,27 @@ function degisiklikIcerikAyni(a, b) {
 function _icerikDegeri(v) {
   if (v === undefined || v === null || v === "") return null;
   if (typeof v === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(v)) { const t = Date.parse(v); return Number.isNaN(t) ? v : t; }
-  if (typeof v === "object") return kararliJson(v, true);
+  // BOŞ LİSTE = BOŞ ALAN (v1.744.10 — yanlış "Başka cihazdan güncellendi: Stok"): görselsiz üründe ekrandaki kopya
+  // `renkResimleri: {}` taşıyor, buluttaki sütun null (ve görselsiz okumada hiç gelmiyor); ikisi de "görsel yok" ama
+  // "{}" ≠ null sayılıp her kayıttan ~12 sn sonra yanlış not çıkıyordu (ekran sınaması 7 Kasım; tanı: tabloIcerikFarki →
+  // "urunler|u-ham: renk_resimleri"). Boş nesne / boş dizi null'la aynı sayılır — içerik taşımaz.
+  if (typeof v === "object") { const j = kararliJson(v, true); return (j === "{}" || j === "[]") ? null : j; }
   return v;
 }
-function _satirAyni(yerel, bulut) {
-  if (!bulut) return false;
-  return Object.keys(yerel).every((k) => {
+// İlk farklı alanın adı (yoksa null). `ek.alan` biçiminde; fark tanısı için (tabloIcerikFarki).
+function _satirFarki(yerel, bulut) {
+  if (!bulut) return "(bulutta yok)";
+  for (const k of Object.keys(yerel)) {
     if (k === "ek" && yerel.ek && typeof yerel.ek === "object" && !Array.isArray(yerel.ek)) {
       const be = (bulut.ek && typeof bulut.ek === "object") ? bulut.ek : {};
-      return Object.keys(yerel.ek).every((a) => _icerikDegeri(yerel.ek[a]) === _icerikDegeri(be[a]));
+      for (const a of Object.keys(yerel.ek)) if (_icerikDegeri(yerel.ek[a]) !== _icerikDegeri(be[a])) return `ek.${a}`;
+      continue;
     }
-    return _icerikDegeri(yerel[k]) === _icerikDegeri(bulut[k]);
-  });
+    if (_icerikDegeri(yerel[k]) !== _icerikDegeri(bulut[k])) return k;
+  }
+  return null;
 }
+function _satirAyni(yerel, bulut) { return _satirFarki(yerel, bulut) === null; }
 function _tabloSatirHaritasi(tablo, kayitlar) {
   const sema = TABLO_SEMA[tablo];
   const ana = new Map(); const cocuk = new Map();
@@ -128,13 +136,21 @@ function _tabloSatirHaritasi(tablo, kayitlar) {
   });
   return { ana, cocuk };
 }
-function tabloIcerikAyni(tablo, yerelKayitlar, bulutKayitlar) {
-  if (!TABLO_SEMA[tablo]) return degisiklikIcerikAyni(yerelKayitlar, bulutKayitlar);
+// FARKIN NEDENİ (v1.744.10): yanlış "Başka cihazdan güncellendi" bildiriminin kaynağını görebilmek için ilk farkı adıyla
+// döner (null = aynı): "sayı: yerel 3 / bulut 4", "stok_hareketleri|h1: miktar" gibi — değer YAZILMAZ (kayıt kimliği ve alan adı).
+// Uygulama bunu "Başka cihazdan güncellendi" günlük satırına ekler; bir sonraki yanlış bildirim nedenini kendisi söyler.
+function tabloIcerikFarki(tablo, yerelKayitlar, bulutKayitlar) {
+  if (!TABLO_SEMA[tablo]) return degisiklikIcerikAyni(yerelKayitlar, bulutKayitlar) ? null : "içerik";
   try {
     const y = _tabloSatirHaritasi(tablo, yerelKayitlar); const b = _tabloSatirHaritasi(tablo, bulutKayitlar);
-    if (y.ana.size !== b.ana.size || y.cocuk.size !== b.cocuk.size) return false;
-    for (const [id, r] of y.ana) if (!_satirAyni(r, b.ana.get(id))) return false;
-    for (const [id, r] of y.cocuk) if (!_satirAyni(r, b.cocuk.get(id))) return false;
-    return true;
-  } catch (e) { return false; }
+    if (y.ana.size !== b.ana.size) return `${tablo} sayısı: yerel ${y.ana.size} / bulut ${b.ana.size}`;
+    if (y.cocuk.size !== b.cocuk.size) {
+      const eksik = [...b.cocuk.keys()].find((k) => !y.cocuk.has(k)) || [...y.cocuk.keys()].find((k) => !b.cocuk.has(k));
+      return `alt kayıt sayısı: yerel ${y.cocuk.size} / bulut ${b.cocuk.size} (ör. ${eksik})`;
+    }
+    for (const [id, r] of y.ana) { const f = _satirFarki(r, b.ana.get(id)); if (f) return `${tablo}|${id}: ${f}`; }
+    for (const [id, r] of y.cocuk) { const f = _satirFarki(r, b.cocuk.get(id)); if (f) return `${id}: ${f}`; }
+    return null;
+  } catch (e) { return "karşılaştırma hatası"; }
 }
+function tabloIcerikAyni(tablo, yerelKayitlar, bulutKayitlar) { return tabloIcerikFarki(tablo, yerelKayitlar, bulutKayitlar) === null; }

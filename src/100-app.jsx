@@ -972,9 +972,10 @@ function AtolyeUygulamasi() {
     // Çok satırlı alanlar YAZMA biçiminde karşılaştırılır (047 `tabloIcerikAyni`, v1.645.11); tek satırlılar düz.
     const ALAN_TABLOSU = { stok: "urunler", cariler: "cariler", siparisler: "siparisler", uretim: "uretim",
       stokRezervasyonlari: "stok_rezervasyonlari", onaylar: "onaylar", cop: "cop" };
+    const farklar = {};
     const ayni = (alan, yeni) => {
-      const esit = ALAN_TABLOSU[alan] ? tabloIcerikAyni(ALAN_TABLOSU[alan], g[alan], yeni) : degisiklikIcerikAyni(g[alan], yeni);
-      if (esit) return true; degisen.push(alan); return false;
+      const fark = ALAN_TABLOSU[alan] ? tabloIcerikFarki(ALAN_TABLOSU[alan], g[alan], yeni) : (degisiklikIcerikAyni(g[alan], yeni) ? null : "içerik");
+      if (!fark) return true; degisen.push(alan); farklar[alan] = fark; return false;
     };
     alanlar.forEach((alan) => {
       if (alan === "stok") {
@@ -1013,6 +1014,7 @@ function AtolyeUygulamasi() {
       try { const sf = await sunucuFisleriniOku(); setFisDefteri((d) => defterSunucuFisleriyleBirlestir(d, sf)); }
       catch (e) { /* bir sonraki turda */ }
     }
+    degisen.farklar = farklar;   // tanı: günlüğe (aşağıda) — hangi kayıt / alan farklı çıktı
     return degisen;
   }, []);
   useEffect(() => {
@@ -1031,7 +1033,8 @@ function AtolyeUygulamasi() {
           // İçeriği aynı çıkan alan (kendi geç görülen yazmamız) notta yazılmaz; hiçbiri değişmediyse not yok.
           if (degisen.length) {
             const adlar = degisen.map((a) => DEGISIKLIK_ALAN_ADI[a] || a).join(", ");
-            gunlukYaz(`Başka cihazdan güncellendi: ${adlar}`, "veri", { tablolar: f.tablolar });
+            gunlukYaz(`Başka cihazdan güncellendi: ${adlar}`, "veri", { tablolar: f.tablolar, farklar: degisen.farklar });
+            console.info("[değişiklik] tazelendi:", adlar, JSON.stringify(degisen.farklar || {}));
             showToast(`Başka cihazdan güncellendi: ${adlar}`);
           }
         }

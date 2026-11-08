@@ -310,6 +310,9 @@ const verileriJsonYedekle = useCallback(() => {
     surum: 3, gorsellerHaric: false, uygulama: `Atölye ERP ${SURUM}`,
     stok, siparisler, uretim, cariler, tanimlar, muhasebe, koliler, cekGorselleri, gorevler, mesajlar,
     faturalar: faturalar || [], stokRezervasyonlari: stokRezervasyonlari || [], onaylar: onaylar || [], fisDefteri: fisDefteri || null, modeller: modeller || [],
+    // TEKLİFLER (v1.744.10): elle indirilen JSON'da yoktu (bulut otomatik yedeğinde ve geri yüklemede vardı) — bu dosyadan
+    // geri dönülünce teklifler geri gelmiyordu.
+    teklifler: teklifler || [],
   };
   const blob = new Blob([JSON.stringify(yedek, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
