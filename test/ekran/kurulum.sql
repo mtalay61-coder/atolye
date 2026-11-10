@@ -13,3 +13,5 @@ update public.tanimlar set veri = jsonb_set(veri, '{giderKartlari}',
   coalesce((select jsonb_agg(x) from jsonb_array_elements(coalesce(veri -> 'giderKartlari', '[]'::jsonb)) x where x ->> 'id' not like 'ekr-%'), '[]'::jsonb)
   || '[{"id": "ekr-gelir", "ad": "Ekran Gelir", "grup": "diger", "tur": "gelir"}, {"id": "ekr-gider", "ad": "Ekran Gider", "grup": "yonetim", "tur": "gider"}]'::jsonb)
  where id = 'tekil';
+-- cari "Ekran Müşteri" (ekr-musteri, USD) — 10 Kasım: cariye nakit tahsilat (sunucu fişi TH-…) "Son tahsilat ve ödemeler"de görünmüyordu
+insert into public.cariler (id, unvan, tip, para_birimi) values ('ekr-musteri', 'Ekran Müşteri', 'Müşteri', 'USD') on conflict (id) do nothing;
