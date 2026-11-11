@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.744.11</title>
+<title>Atölye ERP 1.744.15</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2319,9 +2319,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.744.11";
-const SURUM_TARIHI = "2026-11-10";
-const SURUM_NOTU = "Sunucu fişli tahsilat ve ödemeler \"Son tahsilat ve ödemeler\" listesinde görünür";
+const SURUM = "1.744.15";
+const SURUM_TARIHI = "2026-11-11";
+const SURUM_NOTU = "Etiket yazıcısı kaydırma ayarı (Tanımlar › Görünüm); reçetede pozisyon açıklaması";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2351,6 +2351,10 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 }
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" }; // teklif: v1.723.0, Sipariş'in alt sekmesi
 const SURUM_GECMISI = [
+    { surum: "1.744.15", tarih: "11.11.2026", eklenen: ["Tanımlar › Görünüm › Etiket yazıcısı: basılan etiket kayık çıkıyorsa sağa/sola ve aşağı/yukarı milimetre düzeltmesi (bu cihaza kaydedilir) ve çerçeveli deneme etiketi. Bütün barkod / kutu / koli / parça etiketlerine uygulanır."], degisen: [], duzeltilen: [] },
+    { surum: "1.744.14", tarih: "11.11.2026", eklenen: ["Reçete renk eşleşmesinde pozisyon satırına (1. Renk, 2. Renk…) açıklama: etiketin yanındaki \"+ açıklama\" ile yazılır, o pozisyonun bütün renklerine uygulanır; dokununca düzenlenir, × ile silinir. Pozisyon ve renk eşleşmesi değişmez."], degisen: [], duzeltilen: [] },
+    { surum: "1.744.13", tarih: "11.11.2026", eklenen: [], degisen: ["Reçete renk eşleşmesinde renk sütunu başlığın uzunluğu kadar genişler; uzun renk adları \"…\" ile kesilmez, tablo sığmazsa sağa kaydırılır."], duzeltilen: [] },
+    { surum: "1.744.12", tarih: "11.11.2026", eklenen: [], degisen: [], duzeltilen: ["Kayıttan sonra yanlış \"Başka cihazdan güncellendi: Stok\": sunucunun kendi tuttuğu oluşturma zamanı (açılışta okunur, tazelemede okunmaz) içerik değişikliği sanılıyordu. Aynı sayının sayı / yazı hâli de artık aynı sayılır."] },
     { surum: "1.744.11", tarih: "10.11.2026", eklenen: [], degisen: [], duzeltilen: ["Ödeme & Tahsilat: cariye girilen tahsilat / ödeme kasaya ve cariye işleniyor ama \"Son tahsilat ve ödemeler\" listesinde görünmüyordu (sunucunun verdiği TH- / ÖD- fiş numaraları tanınmıyordu). Ödeme raporunda ve Fişler ekranında ÖD- ödemeleri tahsilat sayılıyordu; düzeldi."] },
     { surum: "1.744.10", tarih: "08.11.2026", eklenen: ["\"Başka cihazdan güncellendi\" notu günlükte hangi kaydın hangi alanının farklı çıktığını da yazar (değer yazmaz)."], degisen: [], duzeltilen: ["Tek cihazla çalışırken kayıttan ~12 sn sonra yanlış \"Başka cihazdan güncellendi: Stok\" çıkıyordu: görseli olmayan üründe ekrandaki boş görsel listesi bulutun boş alanından farklı sayılıyordu.", "Elle indirilen JSON yedeğinde teklifler yoktu; artık var ve dosyadan geri yüklenince teklifler de gelir."] },
     { surum: "1.744.9", tarih: "07.11.2026", eklenen: [], degisen: ["Proses silmeden önce, proses hiçbir yerde kullanılmıyorsa da onay sorulur."], duzeltilen: ["Tanımlar › Üretim › Prosesler: dar ekranda (tablet) satırın sağındaki aşağı taşı ve sil düğmeleri kesiliyordu; satır artık alt satıra kayar, düğmeler her zaman görünür."] },
@@ -8783,18 +8787,33 @@ function _icerikDegeri(v) {
         const j = kararliJson(v, true);
         return (j === "{}" || j === "[]") ? null : j;
     }
+    // SAYI = AYNI SAYININ YAZISI (v1.744.11): sütun türü ile uygulamadaki tür ayrışabiliyor (ör. cari `kod`: canlıda integer,
+    // eski şemada text) — 1 ile "1" aynı içerik; ekran sınamasında "cariler|c-yeni: kod" yanlış farkı.
+    if (typeof v === "number")
+        return String(v);
     return v;
 }
+// SUNUCU KAYIT BİLGİLERİ İÇERİK DEĞİL (v1.744.11 — canlı günlük, 8 ve 10 Kasım: "urunler|stok-mw7p3274-p56w: ek.olusturma").
+// Açılış okuması `select=*` ile sunucunun kendi sütunlarını (olusturma, guncelleme…) da getirir; URUN_SUTUNLARI'nda olmadıkları
+// için yazma biçiminde `ek`e düşerler. Değişiklik yoklamasındaki görselsiz okuma yalnız uygulama sütunlarını seçer → bu alan
+// orada YOK. Sütunu dolu tek ürün her kayıttan sonra "değişmiş" görünüyor, yanlış "Başka cihazdan güncellendi: Stok" çıkıyordu.
+// Bu alanları kullanıcı girmez, sunucu yazar: karşılaştırmada (üst düzeyde de `ek` içinde de) yok sayılır.
+const SUNUCU_KAYIT_ALANLARI = new Set(["olusturma", "guncelleme", "olusturan", "guncelleyen"]);
 // İlk farklı alanın adı (yoksa null). `ek.alan` biçiminde; fark tanısı için (tabloIcerikFarki).
 function _satirFarki(yerel, bulut) {
     if (!bulut)
         return "(bulutta yok)";
     for (const k of Object.keys(yerel)) {
+        if (SUNUCU_KAYIT_ALANLARI.has(k))
+            continue;
         if (k === "ek" && yerel.ek && typeof yerel.ek === "object" && !Array.isArray(yerel.ek)) {
             const be = (bulut.ek && typeof bulut.ek === "object") ? bulut.ek : {};
-            for (const a of Object.keys(yerel.ek))
+            for (const a of Object.keys(yerel.ek)) {
+                if (SUNUCU_KAYIT_ALANLARI.has(a))
+                    continue;
                 if (_icerikDegeri(yerel.ek[a]) !== _icerikDegeri(be[a]))
                     return `ek.${a}`;
+            }
             continue;
         }
         if (_icerikDegeri(yerel[k]) !== _icerikDegeri(bulut[k]))
@@ -10334,7 +10353,7 @@ function veriBoyutu(deger) {
 const UYGULAMA_DIS_ANAHTARLARI = new Set([
     "firma:gorunum", "oturum:aktif", "bekleyen:yazma", "bekleyen:kayitlar", "tanimlar:acikBasliklar", "tanim:silinenler",
     "gorunum:boyut", "ustMenu:kademe", "mobil:duzen", "cari:ekstre-sade", "siparis:barkodPaneli", "github:token", "github:ayar",
-    "oturum:sonEtkinlik",
+    "oturum:sonEtkinlik", "etiket:kaydirma",
 ]);
 function depoKullanimi() {
     if (typeof localStorage === "undefined" || !localStorage)
@@ -11286,7 +11305,35 @@ function hazirKalemleriTekille(kalemler) {
 // Tek sayfaya alt alta dizmek, barkod yazıcısında etiketlerin kayarak yarım basılmasına yol açar.
 //
 // Kenar boşluğu 0: etiket zaten tam boyutunda kesilmiş, ayrıca boşluk bırakmak içeriği kaydırıyor.
+// ETİKET KAYDIRMA (v1.744.15 — kullanıcı etiket fotoğrafıyla: "barkod kayık çıkıyor"). İçerik 60×40 mm sayfanın tam ortasına
+// yerleşiyor, yine de basılı etikette her şey ~4 mm SOLA kaymış ve sol uç kesilmişti: yazıcı / sürücü kâğıdı kaydırarak basıyor
+// (termal etiket yazıcılarında yaygın, yazıcıdan yazıcıya değişir). Düzeltme CİHAZA ÖZEL (her bilgisayarın yazıcısı ayrı):
+// Tanımlar › Görünüm › Etiket yazıcısı. `yatay` + = sağa, `dikey` + = aşağı (mm, ±15). Bütün sabit boyutlu etiketlere uygulanır
+// (ürün / beden / asorti / kutu / koli / parça); A4 iş emrine (ustHizali) uygulanmaz.
+const ETIKET_KAYDIRMA_ANAHTARI = "etiket:kaydirma";
+function etiketKaydirmaNormalle(a) {
+    const s = (v) => { const n = Number(String(v ?? 0).replace(",", ".")); return Number.isFinite(n) ? Math.max(-15, Math.min(15, Math.round(n * 10) / 10)) : 0; };
+    return { yatay: s(a && a.yatay), dikey: s(a && a.dikey) };
+}
+function etiketKaydirmaOku() {
+    try {
+        const ham = window.localStorage.getItem(ETIKET_KAYDIRMA_ANAHTARI);
+        return etiketKaydirmaNormalle(ham ? JSON.parse(ham) : null);
+    }
+    catch (e) {
+        return { yatay: 0, dikey: 0 };
+    }
+}
+function etiketKaydirmaKaydet(a) {
+    const n = etiketKaydirmaNormalle(a);
+    try {
+        window.localStorage.setItem(ETIKET_KAYDIRMA_ANAHTARI, JSON.stringify(n));
+    }
+    catch (e) { /* özel sekme: bu oturumda kalır */ }
+    return n;
+}
 function etiketYazdir(etiketler, { genislikMM, yukseklikMM, ustHizali }) {
+    const kay = ustHizali ? { yatay: 0, dikey: 0 } : etiketKaydirmaOku();
     const sayfalar = etiketler.map((icerik, i) => (
     // Son etikette sayfa sonu YOK: yazıcıya fazladan bir boş etiket besletirdi.
     `<div class="etiket"${i < etiketler.length - 1 ? ' style="page-break-after:always"' : ""}>${icerik}</div>`)).join("");
@@ -11314,6 +11361,7 @@ function etiketYazdir(etiketler, { genislikMM, yukseklikMM, ustHizali }) {
         align-items: ${ustHizali ? "stretch" : "center"};
         justify-content: ${ustHizali ? "flex-start" : "center"};
         text-align: ${ustHizali ? "left" : "center"};
+        position: relative; left: ${kay.yatay}mm; top: ${kay.dikey}mm;
       }
       /* Barkod etikete sığmalı: taşan bir barkod kesilir ve okunmaz. */
       .etiket svg { max-width: 100%; height: auto; }
@@ -31745,6 +31793,8 @@ function TanimlarModule({ onaylar, onYetimRezervasyonSil, onDefterFisIptal, onCa
             React.createElement("div", { style: { border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 14, background: "#fff" } },
                 React.createElement(BoyutAyarlari, { showToast: showToast })),
             React.createElement("div", { style: { border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 14, background: "#fff" } },
+                React.createElement(EtiketKaydirmaAyari, { showToast: showToast })),
+            React.createElement("div", { style: { border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 14, background: "#fff" } },
                 React.createElement(EkranDuzeniTanimlari, null)),
             React.createElement("div", { style: { border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 14, background: "#fff" } },
                 React.createElement(MobilGorunumDuzenleyici, { tanimlar: tanimlar, onSave: onSave, showToast: showToast, mobilDuzenKipi: mobilDuzenKipi, onMobilDuzenKipi: onMobilDuzenKipi, mobilDuzenAktif: mobilDuzenAktif })))),
@@ -36410,6 +36460,18 @@ const RECETE_MIKTAR_STILI = { fontWeight: 700, color: "var(--erp-wait)", backgro
 // sütunlar içeriğe göre daralıp genişliyor, kartlar alt alta hizalanmıyordu.
 const RECETE_POZ_GENISLIK = 190;
 const RECETE_RENK_GENISLIK = 165;
+// RENK SÜTUNU BAŞLIĞIN BOYU KADAR (v1.744.13 — kullanıcı: "reçetede renkler tam olsun, uzun renkler sıkışıyor, kaymalı olabilir").
+// Sütun 165 px sabitti; "1001 - SİYAH SÜET/SİYAH NAPA" gibi başlıklar "…" ile kesiliyordu. Genişlik başlığın uzunluğuna göre
+// büyür (en az 165); tablo zaten YatayKaydirma kutusunda — sığmayan kısım sağa kaydırılarak görülür. "eksik" rozeti için pay.
+// Pozisyon sütunu: "1. Renk ✎" + sil + pozisyon notu ("+ açıklama" ya da yazılan not) sığsın (v1.744.14).
+function recetePozGenisligi(satirlar) {
+    const enUzun = Math.max(0, ...(satirlar || []).map((x) => Array.from(String((x && x.receteNotu) || "")).length));
+    return Math.max(RECETE_POZ_GENISLIK, 140 + (enUzun ? Math.ceil(enUzun * 7.5) + 34 : 84));
+}
+function receteRenkGenisligi(mr, eksik) {
+    const harf = Array.from(String(mr || "")).length;
+    return Math.max(RECETE_RENK_GENISLIK, Math.ceil(harf * 9) + 24 + (eksik ? 56 : 0));
+}
 const RECETE_BIRIM_STILI = { fontSize: 12, fontWeight: 700, color: "var(--erp-wait)" };
 const GECMIS_RENK_STILI = { border: "2px solid var(--erp-danger)", background: "#FDECEC", color: "var(--erp-danger)" };
 const GECMIS_RENK_IPUCU = "Bu renk geçmiş reçetelerden HATIRLANDI — kontrol edin. Doğruysa üstteki 'Eşleştirmeleri onayla', değilse başka renk seçin.";
@@ -36429,10 +36491,14 @@ const GECMIS_RENK_IPUCU = "Bu renk geçmiş reçetelerden HATIRLANDI — kontrol
 // verilirse "N. Renk" etiketi dokununca küçük bir listeye dönüşür (1. Renk … N. Renk); seçilince satırlar yeni pozisyona
 // taşınır ve hammadde rengi kombinasyondan yeniden çözülür (160 `pozisyonDegistir`). Liste yalnız düzenlerken açılır —
 // kapalıyken etiket düz metin (ekran okuma ve testler değişmedi).
-function ReceteAciklamasi({ deger, gosterim, onKaydet, stil, pozisyonSecenekleri, onPozisyonDegistir }) {
+// POZİSYON SATIRINA AÇIKLAMA (v1.744.14 — kullanıcı: "pozisyon haricine açıklama satırı da ekleyelim"). Pozisyonlu satırda
+// `aciklama` alanı "N. Renk" etiketini taşıyor (renk çözümü ona bağlı); ikinci bir yazı için ayrı alan `receteNotu`.
+// `serbest`: değer "N. Renk"e benzese de pozisyon sayılmaz (not alanı); `veri`: data- öneki (not için "recete-not").
+function ReceteAciklamasi({ deger, gosterim, onKaydet, stil, pozisyonSecenekleri, onPozisyonDegistir, serbest, veri }) {
     const [duzenle, setDuzenle] = useState(false);
     const [metin, setMetin] = useState(deger || "");
-    const pozisyon = /^\d+\. Renk$/.test(String(deger || ""));
+    const pozisyon = !serbest && /^\d+\. Renk$/.test(String(deger || ""));
+    const v = veri || "recete-aciklama";
     const temel = { fontSize: 12, fontWeight: 700, color: "var(--erp-brown)", background: "var(--erp-panel-2)", padding: "3px 8px", borderRadius: "var(--erp-r-pill)", whiteSpace: "nowrap", ...(stil || {}) };
     if (pozisyon && onPozisyonDegistir && (pozisyonSecenekleri || []).length > 1) {
         if (!duzenle) {
@@ -36448,16 +36514,16 @@ function ReceteAciklamasi({ deger, gosterim, onKaydet, stil, pozisyonSecenekleri
     const kaydet = (yeni) => { setDuzenle(false); const t = String(yeni || "").trim(); if (t !== String(deger || ""))
         onKaydet(t); };
     if (!duzenle) {
-        return deger ? (React.createElement("button", { type: "button", className: "mono", "data-recete-aciklama": deger, title: "A\u00E7\u0131klamay\u0131 d\u00FCzenle / sil", onClick: () => { setMetin(deger); setDuzenle(true); }, style: { ...temel, border: "1px dashed var(--erp-line)", cursor: "pointer" } },
+        return deger ? (React.createElement("button", { type: "button", className: "mono", [`data-${v}`]: deger, title: "A\u00E7\u0131klamay\u0131 d\u00FCzenle / sil", onClick: () => { setMetin(deger); setDuzenle(true); }, style: { ...temel, border: "1px dashed var(--erp-line)", cursor: "pointer" } },
             gosterim || deger,
-            " \u270E")) : (React.createElement("button", { type: "button", "data-recete-aciklama-ekle": "1", title: "A\u00E7\u0131klama ekle", onClick: () => { setMetin(""); setDuzenle(true); }, style: { fontSize: 11, color: "var(--erp-text-3)", background: "none", border: "1px dashed var(--erp-line-soft)", borderRadius: "var(--erp-r-pill)", padding: "1px 6px", cursor: "pointer" } }, "+ a\u00E7\u0131klama"));
+            " \u270E")) : (React.createElement("button", { type: "button", [`data-${v}-ekle`]: "1", title: serbest ? "Bu pozisyona açıklama ekle" : "Açıklama ekle", onClick: () => { setMetin(""); setDuzenle(true); }, style: { fontSize: 11, color: "var(--erp-text-3)", background: "none", border: "1px dashed var(--erp-line-soft)", borderRadius: "var(--erp-r-pill)", padding: "1px 6px", cursor: "pointer" } }, "+ a\u00E7\u0131klama"));
     }
     return (React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 3 } },
-        React.createElement("input", { autoFocus: true, value: metin, "data-recete-aciklama-kutu": "1", onChange: (e) => setMetin(e.target.value), onKeyDown: (e) => { if (e.key === "Enter")
+        React.createElement("input", { autoFocus: true, value: metin, [`data-${v}-kutu`]: "1", onChange: (e) => setMetin(e.target.value), onKeyDown: (e) => { if (e.key === "Enter")
                 kaydet(metin); if (e.key === "Escape")
                 setDuzenle(false); }, placeholder: "a\u00E7\u0131klama", style: { width: 130, fontSize: 12, padding: "2px 6px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" } }),
-        React.createElement("button", { type: "button", "data-recete-aciklama-kaydet": "1", title: "Kaydet", onClick: () => kaydet(metin), style: { border: "none", background: "none", cursor: "pointer", color: "var(--erp-ok)", fontWeight: 700 } }, "\u2713"),
-        deger ? React.createElement("button", { type: "button", "data-recete-aciklama-sil": "1", title: "A\u00E7\u0131klamay\u0131 sil", onClick: () => kaydet(""), style: { border: "none", background: "none", cursor: "pointer", color: "var(--erp-danger)", fontWeight: 700 } }, "\u00D7") : null));
+        React.createElement("button", { type: "button", [`data-${v}-kaydet`]: "1", title: "Kaydet", onClick: () => kaydet(metin), style: { border: "none", background: "none", cursor: "pointer", color: "var(--erp-ok)", fontWeight: 700 } }, "\u2713"),
+        deger ? React.createElement("button", { type: "button", [`data-${v}-sil`]: "1", title: serbest ? "Notu sil" : "Açıklamayı sil", onClick: () => kaydet(""), style: { border: "none", background: "none", cursor: "pointer", color: "var(--erp-danger)", fontWeight: 700 } }, "\u00D7") : null));
 }
 // KARŞILIKSIZ BEDEN (v1.570.0 — kullanıcı: "bilmediğini boş getir, renkli belirt"): satırı olmayan mamul bedeni
 // (şablon / kopya / sonradan açılan numara) şeritte TURUNCU "eşleştir…" kutusuyla görünür; boy seçilince o bedenin
@@ -39398,14 +39464,14 @@ function ProductMatrixCard({ tanimlarTum, onKapasiteKaydet, kurlar, kurGecmisi, 
                                         })(),
                                         React.createElement(YatayKaydirma, { veri: "recete-matris", style: { display: (pozisyonluSatirlar.length === 0 && hepsiAyniMiktarBu
                                                     && kaynakSatirlar.every((r) => !olcuGoster(r.renk) && !olcuGoster(r.beden)) && eksikMamulRenkler2.length === 0) ? "none" : undefined } },
-                                            React.createElement("table", { style: { width: RECETE_POZ_GENISLIK + sutunlar2.length * RECETE_RENK_GENISLIK, tableLayout: "fixed", borderCollapse: "collapse" } },
+                                            React.createElement("table", { style: { width: recetePozGenisligi(g.satirlar) + sutunlar2.reduce((t, mr) => t + receteRenkGenisligi(mr, eksikSet2.has(mr)), 0), tableLayout: "fixed", borderCollapse: "collapse" } },
                                                 React.createElement("colgroup", null,
-                                                    React.createElement("col", { style: { width: RECETE_POZ_GENISLIK } }),
-                                                    sutunlar2.map((mr) => React.createElement("col", { key: mr, style: { width: RECETE_RENK_GENISLIK } }))),
+                                                    React.createElement("col", { style: { width: recetePozGenisligi(g.satirlar) } }),
+                                                    sutunlar2.map((mr) => React.createElement("col", { key: mr, style: { width: receteRenkGenisligi(mr, eksikSet2.has(mr)) } }))),
                                                 React.createElement("thead", null,
                                                     React.createElement("tr", null,
                                                         React.createElement("th", { style: { fontSize: 13, textAlign: "left", padding: "4px 8px" } }, "Pozisyon"),
-                                                        sutunlar2.map((mr) => !eksikSet2.has(mr) ? (React.createElement("th", { key: mr, style: { fontSize: 13, textAlign: "center", padding: "4px 8px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, title: mr }, mr)) : (React.createElement("th", { key: `eksik-${mr}`, title: "Bu model rengi i\u00E7in e\u015Fle\u015Fme yap\u0131lmam\u0131\u015F \u2014 \u00FCretimde bu renkten hammadde d\u00FC\u015F\u00FClmez", style: { fontSize: 13, textAlign: "center", padding: "4px 8px", whiteSpace: "nowrap", color: "var(--erp-warn)" } },
+                                                        sutunlar2.map((mr) => !eksikSet2.has(mr) ? (React.createElement("th", { key: mr, "data-recete-renk-baslik": mr, style: { fontSize: 13, textAlign: "center", padding: "4px 8px", whiteSpace: "nowrap" }, title: mr }, mr)) : (React.createElement("th", { key: `eksik-${mr}`, title: "Bu model rengi i\u00E7in e\u015Fle\u015Fme yap\u0131lmam\u0131\u015F \u2014 \u00FCretimde bu renkten hammadde d\u00FC\u015F\u00FClmez", style: { fontSize: 13, textAlign: "center", padding: "4px 8px", whiteSpace: "nowrap", color: "var(--erp-warn)" } },
                                                             mr,
                                                             React.createElement("span", { className: "mono", style: { fontSize: 11, fontWeight: 700, color: "var(--erp-warn)", background: "#B85C2E18", padding: "1px 5px", borderRadius: "var(--erp-r-pill)", marginLeft: 4 } }, "eksik")))))),
                                                 React.createElement("tbody", null, pozisyonlar2.map((poz) => {
@@ -39423,6 +39489,12 @@ function ProductMatrixCard({ tanimlarTum, onKapasiteKaydet, kurlar, kurGecmisi, 
                                                     return (React.createElement("tr", { key: poz ?? "__tekli__" },
                                                         React.createElement("td", { style: { padding: "4px 8px" } },
                                                             React.createElement(ReceteAciklamasi, { deger: poz, pozisyonSecenekleri: pozisyonEtiketleri(g), onPozisyonDegistir: (yeni) => pozisyonDegistir(g, poz, yeni), onKaydet: (yeni) => { const h = g.satirlar.filter((x) => (x.aciklama || "") === (poz || "")); onReceteGrubuGuncelle(product.id, h.map((x) => x.id), h.map(({ id, ...rest }) => ({ ...rest, aciklama: yeni }))); } }),
+                                                            /^\d+\. Renk$/.test(String(poz || "")) && (() => {
+                                                                const h = g.satirlar.filter((x) => (x.aciklama || "") === poz);
+                                                                const notlar = [...new Set(h.map((x) => x.receteNotu || ""))];
+                                                                return (React.createElement("span", { style: { display: "inline-flex", marginLeft: 4, verticalAlign: "middle" } },
+                                                                    React.createElement(ReceteAciklamasi, { serbest: true, veri: "recete-not", deger: notlar.length === 1 ? notlar[0] : notlar.filter(Boolean).join(" / "), stil: { fontWeight: 600, color: "var(--erp-text-2)", background: "#fff" }, onKaydet: (yeni) => onReceteGrubuGuncelle(product.id, h.map((x) => x.id), h.map(({ id, ...rest }) => ({ ...rest, receteNotu: yeni || undefined }))) })));
+                                                            })(),
                                                             satirIdleri.length > 0 && (React.createElement("span", { style: { display: "inline-flex", marginLeft: poz != null ? 4 : 0, verticalAlign: "middle" } },
                                                                 React.createElement(SilOnayButonu, { onConfirm: () => onReceteSilToplu(product.id, satirIdleri), boyut: 13, baslikNormal: "Bu sat\u0131rdaki t\u00FCm e\u015Fle\u015Fmeleri sil", baslikOnay: `${satirIdleri.length} eşleşme silinecek — emin misiniz? Tekrar dokunun` }))),
                                                             satirSabit && pozisyonlar2.length > 1 && (React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 3, marginTop: 3 } },
@@ -71067,6 +71139,52 @@ function BoyutAyarlari({ showToast }) {
                 " Kaydet"),
             React.createElement("input", { readOnly: true, value: "123", style: { ...inputStyle, width: 80 }, tabIndex: -1 }))));
 }
+// ETİKET YAZICISI KAYDIRMA (v1.744.15, 075 `etiketKaydirmaOku`). Tanımlar › Görünüm; bu cihaza kaydedilir. Deneme etiketi:
+// 60×40 mm, kenarda 1 mm çerçeve + orta çizgiler + kenar yazıları — basılınca hangi yöne kaç mm kaydığı cetvelle ölçülür.
+function EtiketKaydirmaAyari({ showToast }) {
+    const [a, setA] = useState(() => etiketKaydirmaOku());
+    const yaz = (yeni) => setA(etiketKaydirmaKaydet(yeni));
+    const kutu = (alan, baslik, arti, eksi) => (React.createElement("div", { "data-etiket-kaydirma-satiri": alan, style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", padding: "6px 0", borderBottom: "1px solid var(--erp-line-soft)" } },
+        React.createElement("div", { style: { minWidth: 150, fontSize: 13, fontWeight: 700 } }, baslik),
+        React.createElement("button", { type: "button", className: "btn-ghost", style: { padding: "4px 10px", fontSize: 12 }, onClick: () => yaz({ ...a, [alan]: a[alan] - 0.5 }) },
+            eksi,
+            " 0,5"),
+        React.createElement("input", { type: "number", step: "0.5", "data-etiket-kaydirma": alan, value: a[alan], onChange: (e) => yaz({ ...a, [alan]: e.target.value }), style: { ...inputStyle, width: 80, textAlign: "right" } }),
+        React.createElement("span", { style: { fontSize: 12, color: "var(--erp-text-3)" } }, "mm"),
+        React.createElement("button", { type: "button", className: "btn-ghost", style: { padding: "4px 10px", fontSize: 12 }, onClick: () => yaz({ ...a, [alan]: a[alan] + 0.5 }) },
+            arti,
+            " 0,5")));
+    const deneme = () => etiketYazdir([`
+    <div style="position:absolute;inset:1mm;border:0.4mm solid #000"></div>
+    <div style="position:absolute;left:50%;top:1mm;bottom:1mm;border-left:0.2mm dashed #000"></div>
+    <div style="position:absolute;top:50%;left:1mm;right:1mm;border-top:0.2mm dashed #000"></div>
+    <div style="position:absolute;left:2mm;top:50%;transform:translateY(-50%);font-size:9px">SOL</div>
+    <div style="position:absolute;right:2mm;top:50%;transform:translateY(-50%);font-size:9px">SAĞ</div>
+    <div style="position:absolute;top:2mm;left:0;right:0;font-size:9px">ÜST</div>
+    <div style="position:absolute;bottom:2mm;left:0;right:0;font-size:9px">ALT</div>
+    <div style="font-size:11px;font-weight:700;background:#fff;padding:0 1mm">DENEME ${a.yatay} / ${a.dikey} mm</div>
+  `], { genislikMM: 60, yukseklikMM: 40 });
+    return (React.createElement("div", { "data-etiket-kaydirma-ayari": "1" },
+        React.createElement(TanimBasligi, { ad: "Etiket yaz\u0131c\u0131s\u0131" }),
+        React.createElement("p", { style: { fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 8px" } },
+            "Bas\u0131lan etiket kay\u0131k \u00E7\u0131k\u0131yorsa buradan d\u00FCzeltin; ",
+            React.createElement("b", null, "bu cihaza"),
+            " kaydedilir (her bilgisayar\u0131n yaz\u0131c\u0131s\u0131 ayr\u0131 ayarlan\u0131r). \u00D6nce ",
+            React.createElement("b", null, "deneme etiketi"),
+            " bas\u0131n: \u00E7er\u00E7eve etiketin kenarlar\u0131na e\u015Fit uzakl\u0131kta olmal\u0131. \u00C7er\u00E7eve sola kaym\u0131\u015Fsa ",
+            React.createElement("b", null, "Sa\u011Fa"),
+            "'y\u0131, yukar\u0131 kaym\u0131\u015Fsa ",
+            React.createElement("b", null, "A\u015Fa\u011F\u0131"),
+            "'y\u0131 kayma kadar art\u0131r\u0131n ve yeniden deneyin."),
+        kutu("yatay", "Sağa / sola", "Sağa +", "Sola −"),
+        kutu("dikey", "Aşağı / yukarı", "Aşağı +", "Yukarı −"),
+        React.createElement("div", { style: { display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" } },
+            React.createElement("button", { type: "button", className: "btn-primary", "data-etiket-deneme": "1", onClick: deneme },
+                React.createElement(Printer, { size: 14 }),
+                " Deneme etiketi bas (6\u00D74 cm)"),
+            React.createElement("button", { type: "button", className: "btn-ghost", "data-etiket-kaydirma-sifirla": "1", disabled: !a.yatay && !a.dikey, onClick: () => { yaz({ yatay: 0, dikey: 0 }); if (showToast)
+                    showToast("Etiket kaydırma sıfırlandı"); }, style: { padding: "5px 12px", fontSize: 12 } }, "S\u0131f\u0131rla"))));
+}
 // ================= EKRAN DÜZENİ — DÜZENLEME KİPİ (29 Eylül, v1.522.0) =================
 //
 // Kullanıcı: "Sürükle gibi butonların yerini taşıyabileceğimiz, boyutlarını değiştirebileceğimiz v.s. tüm uygulama
@@ -72436,7 +72554,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.744.11)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.744.15)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),
