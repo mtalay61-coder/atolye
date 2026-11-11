@@ -22,6 +22,11 @@ const RECETE_RENK_GENISLIK = 165;
 // RENK SÜTUNU BAŞLIĞIN BOYU KADAR (v1.744.13 — kullanıcı: "reçetede renkler tam olsun, uzun renkler sıkışıyor, kaymalı olabilir").
 // Sütun 165 px sabitti; "1001 - SİYAH SÜET/SİYAH NAPA" gibi başlıklar "…" ile kesiliyordu. Genişlik başlığın uzunluğuna göre
 // büyür (en az 165); tablo zaten YatayKaydirma kutusunda — sığmayan kısım sağa kaydırılarak görülür. "eksik" rozeti için pay.
+// Pozisyon sütunu: "1. Renk ✎" + sil + pozisyon notu ("+ açıklama" ya da yazılan not) sığsın (v1.744.14).
+function recetePozGenisligi(satirlar) {
+  const enUzun = Math.max(0, ...(satirlar || []).map((x) => Array.from(String((x && x.receteNotu) || "")).length));
+  return Math.max(RECETE_POZ_GENISLIK, 140 + (enUzun ? Math.ceil(enUzun * 7.5) + 34 : 84));
+}
 function receteRenkGenisligi(mr, eksik) {
   const harf = Array.from(String(mr || "")).length;
   return Math.max(RECETE_RENK_GENISLIK, Math.ceil(harf * 9) + 24 + (eksik ? 56 : 0));
@@ -45,10 +50,14 @@ const GECMIS_RENK_IPUCU = "Bu renk geçmiş reçetelerden HATIRLANDI — kontrol
 // verilirse "N. Renk" etiketi dokununca küçük bir listeye dönüşür (1. Renk … N. Renk); seçilince satırlar yeni pozisyona
 // taşınır ve hammadde rengi kombinasyondan yeniden çözülür (160 `pozisyonDegistir`). Liste yalnız düzenlerken açılır —
 // kapalıyken etiket düz metin (ekran okuma ve testler değişmedi).
-function ReceteAciklamasi({ deger, gosterim, onKaydet, stil, pozisyonSecenekleri, onPozisyonDegistir }) {
+// POZİSYON SATIRINA AÇIKLAMA (v1.744.14 — kullanıcı: "pozisyon haricine açıklama satırı da ekleyelim"). Pozisyonlu satırda
+// `aciklama` alanı "N. Renk" etiketini taşıyor (renk çözümü ona bağlı); ikinci bir yazı için ayrı alan `receteNotu`.
+// `serbest`: değer "N. Renk"e benzese de pozisyon sayılmaz (not alanı); `veri`: data- öneki (not için "recete-not").
+function ReceteAciklamasi({ deger, gosterim, onKaydet, stil, pozisyonSecenekleri, onPozisyonDegistir, serbest, veri }) {
   const [duzenle, setDuzenle] = useState(false);
   const [metin, setMetin] = useState(deger || "");
-  const pozisyon = /^\d+\. Renk$/.test(String(deger || ""));
+  const pozisyon = !serbest && /^\d+\. Renk$/.test(String(deger || ""));
+  const v = veri || "recete-aciklama";
   const temel = { fontSize: 12, fontWeight: 700, color: "var(--erp-brown)", background: "var(--erp-panel-2)", padding: "3px 8px", borderRadius: "var(--erp-r-pill)", whiteSpace: "nowrap", ...(stil || {}) };
   if (pozisyon && onPozisyonDegistir && (pozisyonSecenekleri || []).length > 1) {
     if (!duzenle) {
@@ -70,20 +79,20 @@ function ReceteAciklamasi({ deger, gosterim, onKaydet, stil, pozisyonSecenekleri
   const kaydet = (yeni) => { setDuzenle(false); const t = String(yeni || "").trim(); if (t !== String(deger || "")) onKaydet(t); };
   if (!duzenle) {
     return deger ? (
-      <button type="button" className="mono" data-recete-aciklama={deger} title="Açıklamayı düzenle / sil" onClick={() => { setMetin(deger); setDuzenle(true); }}
+      <button type="button" className="mono" {...{ [`data-${v}`]: deger }} title="Açıklamayı düzenle / sil" onClick={() => { setMetin(deger); setDuzenle(true); }}
         style={{ ...temel, border: "1px dashed var(--erp-line)", cursor: "pointer" }}>{gosterim || deger} ✎</button>
     ) : (
-      <button type="button" data-recete-aciklama-ekle="1" title="Açıklama ekle" onClick={() => { setMetin(""); setDuzenle(true); }}
+      <button type="button" {...{ [`data-${v}-ekle`]: "1" }} title={serbest ? "Bu pozisyona açıklama ekle" : "Açıklama ekle"} onClick={() => { setMetin(""); setDuzenle(true); }}
         style={{ fontSize: 11, color: "var(--erp-text-3)", background: "none", border: "1px dashed var(--erp-line-soft)", borderRadius: "var(--erp-r-pill)", padding: "1px 6px", cursor: "pointer" }}>+ açıklama</button>
     );
   }
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
-      <input autoFocus value={metin} data-recete-aciklama-kutu="1" onChange={(e) => setMetin(e.target.value)}
+      <input autoFocus value={metin} {...{ [`data-${v}-kutu`]: "1" }} onChange={(e) => setMetin(e.target.value)}
         onKeyDown={(e) => { if (e.key === "Enter") kaydet(metin); if (e.key === "Escape") setDuzenle(false); }}
         placeholder="açıklama" style={{ width: 130, fontSize: 12, padding: "2px 6px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }} />
-      <button type="button" data-recete-aciklama-kaydet="1" title="Kaydet" onClick={() => kaydet(metin)} style={{ border: "none", background: "none", cursor: "pointer", color: "var(--erp-ok)", fontWeight: 700 }}>✓</button>
-      {deger ? <button type="button" data-recete-aciklama-sil="1" title="Açıklamayı sil" onClick={() => kaydet("")} style={{ border: "none", background: "none", cursor: "pointer", color: "var(--erp-danger)", fontWeight: 700 }}>×</button> : null}
+      <button type="button" {...{ [`data-${v}-kaydet`]: "1" }} title="Kaydet" onClick={() => kaydet(metin)} style={{ border: "none", background: "none", cursor: "pointer", color: "var(--erp-ok)", fontWeight: 700 }}>✓</button>
+      {deger ? <button type="button" {...{ [`data-${v}-sil`]: "1" }} title={serbest ? "Notu sil" : "Açıklamayı sil"} onClick={() => kaydet("")} style={{ border: "none", background: "none", cursor: "pointer", color: "var(--erp-danger)", fontWeight: 700 }}>×</button> : null}
     </span>
   );
 }
@@ -4083,9 +4092,9 @@ function ProductMatrixCard({
                             {/* YATAY KAYDIRMA ◀ ▶ (v1.636.0 — kullanıcı: "en sağdaki renk eşleşmelerini eşleyemiyorum"). */}
                             <YatayKaydirma veri="recete-matris" style={{ display: (pozisyonluSatirlar.length === 0 && hepsiAyniMiktarBu
                                 && kaynakSatirlar.every((r) => !olcuGoster(r.renk) && !olcuGoster(r.beden)) && eksikMamulRenkler2.length === 0) ? "none" : undefined }}>
-                              <table style={{ width: RECETE_POZ_GENISLIK + sutunlar2.reduce((t, mr) => t + receteRenkGenisligi(mr, eksikSet2.has(mr)), 0), tableLayout: "fixed", borderCollapse: "collapse" }}>
+                              <table style={{ width: recetePozGenisligi(g.satirlar) + sutunlar2.reduce((t, mr) => t + receteRenkGenisligi(mr, eksikSet2.has(mr)), 0), tableLayout: "fixed", borderCollapse: "collapse" }}>
                                 <colgroup>
-                                  <col style={{ width: RECETE_POZ_GENISLIK }} />
+                                  <col style={{ width: recetePozGenisligi(g.satirlar) }} />
                                   {sutunlar2.map((mr) => <col key={mr} style={{ width: receteRenkGenisligi(mr, eksikSet2.has(mr)) }} />)}
                                 </colgroup>
                                 <thead>
@@ -4124,6 +4133,19 @@ function ProductMatrixCard({
                                     <tr key={poz ?? "__tekli__"}>
                                       <td style={{ padding: "4px 8px" }}>
                                         <ReceteAciklamasi deger={poz} pozisyonSecenekleri={pozisyonEtiketleri(g)} onPozisyonDegistir={(yeni) => pozisyonDegistir(g, poz, yeni)} onKaydet={(yeni) => { const h = g.satirlar.filter((x) => (x.aciklama || "") === (poz || "")); onReceteGrubuGuncelle(product.id, h.map((x) => x.id), h.map(({ id, ...rest }) => ({ ...rest, aciklama: yeni }))); }} />
+                                        {/* POZİSYON NOTU (v1.744.14): "1. Renk" etiketinin yanında serbest açıklama; o pozisyonun BÜTÜN satırlarına
+                                            (her mamul rengi) yazılır. Etiket ve renk çözümü değişmez. */}
+                                        {/^\d+\. Renk$/.test(String(poz || "")) && (() => {
+                                          const h = g.satirlar.filter((x) => (x.aciklama || "") === poz);
+                                          const notlar = [...new Set(h.map((x) => x.receteNotu || ""))];
+                                          return (
+                                            <span style={{ display: "inline-flex", marginLeft: 4, verticalAlign: "middle" }}>
+                                              <ReceteAciklamasi serbest veri="recete-not" deger={notlar.length === 1 ? notlar[0] : notlar.filter(Boolean).join(" / ")}
+                                                stil={{ fontWeight: 600, color: "var(--erp-text-2)", background: "#fff" }}
+                                                onKaydet={(yeni) => onReceteGrubuGuncelle(product.id, h.map((x) => x.id), h.map(({ id, ...rest }) => ({ ...rest, receteNotu: yeni || undefined })))} />
+                                            </span>
+                                          );
+                                        })()}
                                         {satirIdleri.length > 0 && (
                                           <span style={{ display: "inline-flex", marginLeft: poz != null ? 4 : 0, verticalAlign: "middle" }}>
                                             <SilOnayButonu
