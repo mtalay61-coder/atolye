@@ -197,7 +197,27 @@ function hazirKalemleriTekille(kalemler) {
 // Tek sayfaya alt alta dizmek, barkod yazıcısında etiketlerin kayarak yarım basılmasına yol açar.
 //
 // Kenar boşluğu 0: etiket zaten tam boyutunda kesilmiş, ayrıca boşluk bırakmak içeriği kaydırıyor.
+// ETİKET KAYDIRMA (v1.744.15 — kullanıcı etiket fotoğrafıyla: "barkod kayık çıkıyor"). İçerik 60×40 mm sayfanın tam ortasına
+// yerleşiyor, yine de basılı etikette her şey ~4 mm SOLA kaymış ve sol uç kesilmişti: yazıcı / sürücü kâğıdı kaydırarak basıyor
+// (termal etiket yazıcılarında yaygın, yazıcıdan yazıcıya değişir). Düzeltme CİHAZA ÖZEL (her bilgisayarın yazıcısı ayrı):
+// Tanımlar › Görünüm › Etiket yazıcısı. `yatay` + = sağa, `dikey` + = aşağı (mm, ±15). Bütün sabit boyutlu etiketlere uygulanır
+// (ürün / beden / asorti / kutu / koli / parça); A4 iş emrine (ustHizali) uygulanmaz.
+const ETIKET_KAYDIRMA_ANAHTARI = "etiket:kaydirma";
+function etiketKaydirmaNormalle(a) {
+  const s = (v) => { const n = Number(String(v ?? 0).replace(",", ".")); return Number.isFinite(n) ? Math.max(-15, Math.min(15, Math.round(n * 10) / 10)) : 0; };
+  return { yatay: s(a && a.yatay), dikey: s(a && a.dikey) };
+}
+function etiketKaydirmaOku() {
+  try { const ham = window.localStorage.getItem(ETIKET_KAYDIRMA_ANAHTARI); return etiketKaydirmaNormalle(ham ? JSON.parse(ham) : null); }
+  catch (e) { return { yatay: 0, dikey: 0 }; }
+}
+function etiketKaydirmaKaydet(a) {
+  const n = etiketKaydirmaNormalle(a);
+  try { window.localStorage.setItem(ETIKET_KAYDIRMA_ANAHTARI, JSON.stringify(n)); } catch (e) { /* özel sekme: bu oturumda kalır */ }
+  return n;
+}
 function etiketYazdir(etiketler, { genislikMM, yukseklikMM, ustHizali }) {
+  const kay = ustHizali ? { yatay: 0, dikey: 0 } : etiketKaydirmaOku();
   const sayfalar = etiketler.map((icerik, i) => (
     // Son etikette sayfa sonu YOK: yazıcıya fazladan bir boş etiket besletirdi.
     `<div class="etiket"${i < etiketler.length - 1 ? ' style="page-break-after:always"' : ""}>${icerik}</div>`
@@ -227,6 +247,7 @@ function etiketYazdir(etiketler, { genislikMM, yukseklikMM, ustHizali }) {
         align-items: ${ustHizali ? "stretch" : "center"};
         justify-content: ${ustHizali ? "flex-start" : "center"};
         text-align: ${ustHizali ? "left" : "center"};
+        position: relative; left: ${kay.yatay}mm; top: ${kay.dikey}mm;
       }
       /* Barkod etikete sığmalı: taşan bir barkod kesilir ve okunmaz. */
       .etiket svg { max-width: 100%; height: auto; }

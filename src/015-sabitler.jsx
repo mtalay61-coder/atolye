@@ -492,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.744.14";
+const SURUM = "1.744.15";
 const SURUM_TARIHI = "2026-11-11";
-const SURUM_NOTU = "Reçetede pozisyon satırına açıklama eklenebilir";
+const SURUM_NOTU = "Etiket yazıcısı kaydırma ayarı (Tanımlar › Görünüm); reçetede pozisyon açıklaması";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -525,6 +525,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" };   // teklif: v1.723.0, Sipariş'in alt sekmesi
 
 const SURUM_GECMISI = [
+  { surum: "1.744.15", tarih: "11.11.2026", eklenen: ["Tanımlar › Görünüm › Etiket yazıcısı: basılan etiket kayık çıkıyorsa sağa/sola ve aşağı/yukarı milimetre düzeltmesi (bu cihaza kaydedilir) ve çerçeveli deneme etiketi. Bütün barkod / kutu / koli / parça etiketlerine uygulanır."], degisen: [], duzeltilen: [] },
   { surum: "1.744.14", tarih: "11.11.2026", eklenen: ["Reçete renk eşleşmesinde pozisyon satırına (1. Renk, 2. Renk…) açıklama: etiketin yanındaki \"+ açıklama\" ile yazılır, o pozisyonun bütün renklerine uygulanır; dokununca düzenlenir, × ile silinir. Pozisyon ve renk eşleşmesi değişmez."], degisen: [], duzeltilen: [] },
   { surum: "1.744.13", tarih: "11.11.2026", eklenen: [], degisen: ["Reçete renk eşleşmesinde renk sütunu başlığın uzunluğu kadar genişler; uzun renk adları \"…\" ile kesilmez, tablo sığmazsa sağa kaydırılır."], duzeltilen: [] },
   { surum: "1.744.12", tarih: "11.11.2026", eklenen: [], degisen: [], duzeltilen: ["Kayıttan sonra yanlış \"Başka cihazdan güncellendi: Stok\": sunucunun kendi tuttuğu oluşturma zamanı (açılışta okunur, tazelemede okunmaz) içerik değişikliği sanılıyordu. Aynı sayının sayı / yazı hâli de artık aynı sayılır."] },

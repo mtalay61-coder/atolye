@@ -2494,6 +2494,10 @@ function TanimlarModule({ onaylar, onYetimRezervasyonSil, onDefterFisIptal, onCa
       <div style={{ border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 14, background: "#fff" }}>
         <BoyutAyarlari showToast={showToast} />
       </div>
+      {/* ETİKET YAZICISI (v1.744.15) — basılan etiket kayıksa sağa/sola, aşağı/yukarı düzeltme; bu cihaz. */}
+      <div style={{ border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 14, background: "#fff" }}>
+        <EtiketKaydirmaAyari showToast={showToast} />
+      </div>
       {/* EKRAN DÜZENİ (v1.523.0) — hangi ekranda nasıl değiştirildiği + kayıtlı düzeni sıfırlama. */}
       <div style={{ border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 14, background: "#fff" }}>
         <EkranDuzeniTanimlari />

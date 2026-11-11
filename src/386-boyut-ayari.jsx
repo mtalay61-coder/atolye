@@ -119,3 +119,47 @@ function BoyutAyarlari({ showToast }) {
     </div>
   );
 }
+
+// ETİKET YAZICISI KAYDIRMA (v1.744.15, 075 `etiketKaydirmaOku`). Tanımlar › Görünüm; bu cihaza kaydedilir. Deneme etiketi:
+// 60×40 mm, kenarda 1 mm çerçeve + orta çizgiler + kenar yazıları — basılınca hangi yöne kaç mm kaydığı cetvelle ölçülür.
+function EtiketKaydirmaAyari({ showToast }) {
+  const [a, setA] = useState(() => etiketKaydirmaOku());
+  const yaz = (yeni) => setA(etiketKaydirmaKaydet(yeni));
+  const kutu = (alan, baslik, arti, eksi) => (
+    <div data-etiket-kaydirma-satiri={alan} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", padding: "6px 0", borderBottom: "1px solid var(--erp-line-soft)" }}>
+      <div style={{ minWidth: 150, fontSize: 13, fontWeight: 700 }}>{baslik}</div>
+      <button type="button" className="btn-ghost" style={{ padding: "4px 10px", fontSize: 12 }} onClick={() => yaz({ ...a, [alan]: a[alan] - 0.5 })}>{eksi} 0,5</button>
+      <input type="number" step="0.5" data-etiket-kaydirma={alan} value={a[alan]} onChange={(e) => yaz({ ...a, [alan]: e.target.value })}
+        style={{ ...inputStyle, width: 80, textAlign: "right" }} />
+      <span style={{ fontSize: 12, color: "var(--erp-text-3)" }}>mm</span>
+      <button type="button" className="btn-ghost" style={{ padding: "4px 10px", fontSize: 12 }} onClick={() => yaz({ ...a, [alan]: a[alan] + 0.5 })}>{arti} 0,5</button>
+    </div>
+  );
+  const deneme = () => etiketYazdir([`
+    <div style="position:absolute;inset:1mm;border:0.4mm solid #000"></div>
+    <div style="position:absolute;left:50%;top:1mm;bottom:1mm;border-left:0.2mm dashed #000"></div>
+    <div style="position:absolute;top:50%;left:1mm;right:1mm;border-top:0.2mm dashed #000"></div>
+    <div style="position:absolute;left:2mm;top:50%;transform:translateY(-50%);font-size:9px">SOL</div>
+    <div style="position:absolute;right:2mm;top:50%;transform:translateY(-50%);font-size:9px">SAĞ</div>
+    <div style="position:absolute;top:2mm;left:0;right:0;font-size:9px">ÜST</div>
+    <div style="position:absolute;bottom:2mm;left:0;right:0;font-size:9px">ALT</div>
+    <div style="font-size:11px;font-weight:700;background:#fff;padding:0 1mm">DENEME ${a.yatay} / ${a.dikey} mm</div>
+  `], { genislikMM: 60, yukseklikMM: 40 });
+  return (
+    <div data-etiket-kaydirma-ayari="1">
+      <TanimBasligi ad="Etiket yazıcısı" />
+      <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 8px" }}>
+        Basılan etiket kayık çıkıyorsa buradan düzeltin; <b>bu cihaza</b> kaydedilir (her bilgisayarın yazıcısı ayrı ayarlanır).
+        Önce <b>deneme etiketi</b> basın: çerçeve etiketin kenarlarına eşit uzaklıkta olmalı. Çerçeve sola kaymışsa <b>Sağa</b>'yı,
+        yukarı kaymışsa <b>Aşağı</b>'yı kayma kadar artırın ve yeniden deneyin.
+      </p>
+      {kutu("yatay", "Sağa / sola", "Sağa +", "Sola −")}
+      {kutu("dikey", "Aşağı / yukarı", "Aşağı +", "Yukarı −")}
+      <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+        <button type="button" className="btn-primary" data-etiket-deneme="1" onClick={deneme}><Printer size={14} /> Deneme etiketi bas (6×4 cm)</button>
+        <button type="button" className="btn-ghost" data-etiket-kaydirma-sifirla="1" disabled={!a.yatay && !a.dikey}
+          onClick={() => { yaz({ yatay: 0, dikey: 0 }); if (showToast) showToast("Etiket kaydırma sıfırlandı"); }} style={{ padding: "5px 12px", fontSize: 12 }}>Sıfırla</button>
+      </div>
+    </div>
+  );
+}
