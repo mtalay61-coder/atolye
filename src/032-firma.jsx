@@ -25,6 +25,7 @@
 const FIRMA_REHBERI_ADRESLERI = ["firmalar.json", "https://mtalay61-coder.github.io/atolye/firmalar.json"];
 const FIRMAYA_OZEL_ANAHTARLAR = [
   "atolye:oturum", "oturum:aktif", "oturum:sonEtkinlik", "firma:gorunum", "tanim:silinenler", "bekleyen:yazma", "bekleyen:kayitlar",
+  "tanimlar:bekleyen-taban",   // v1.744.16 (030): bekleyen tanım kaydının tabanı — firmaya özel
 ];
 
 // Kod: küçük harf, Türkçe harfler sadeleşir, yalnız [a-z0-9-]. "Öz Deri" → "ozderi" (kullanıcı nasıl yazarsa yazsın

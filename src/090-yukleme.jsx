@@ -109,7 +109,9 @@ useEffect(() => {
             // bu arada açılmış model renkleri/renkler kayboluyordu (bekleyen yazma gidince bulutun üstüne).
             try {
               const o = await guvenliOku("tanimlar:data", null);
-              if (o.deger) bulut.tanimlar = tanimlariBirlestir(JSON.parse(o.deger), bulut.tanimlar, tanimSilinenleriOku()).tanimlar;
+              // ÜÇ YÖNLÜ (v1.744.16): bekleyen değişikliğin dayandığı taban saklıysa (030 `tanimBekleyenTabanOku`) yalnız bu
+              // cihazın GERÇEK değişikliği kazanır; başka cihazın bu arada değiştirdiği ad / kod eski kopyayla geri alınmaz.
+              if (o.deger) bulut.tanimlar = tanimlarUzlastir(JSON.parse(o.deger), bulut.tanimlar, bulut.tanimlar ? tanimBekleyenTabanOku() : undefined, tanimSilinenleriOku()).tanimlar;
             } catch (e) { /* */ }
           }
           if (Object.keys(bekleyenler).length > 0) {
@@ -117,6 +119,8 @@ useEffect(() => {
           }
 
           if (bulut.tanimlar) t = { ...t, ...bulut.tanimlar };
+          // YAZMA KAPISI (v1.744.16, 030): girişsiz çalışan firmada açılış yazmaları (göçler) "oturum kapalı" sayılmasın.
+          yazmaGirisDurumuBildir(!!t.girisAktifMi);
           setTanimlar(t);
           // Kimliği olmayan renk kayıtları burada damgalanır — bir kerelik, sessiz.
           const damga = renkKimlikleriniDamgala(bulut.stok, t.renkler || []);
@@ -131,7 +135,7 @@ useEffect(() => {
           if (kodGoc.degisti) {
             t = kodGoc.tanimlar;
             setTanimlar(t);
-            yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", t), "Tanımlar", t);
+            yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", t, { tetikleyen: "açılış göçü" }), "Tanımlar", t);
             if (kodGoc.degisenUrun > 0) {
               console.info(`${kodGoc.degisenUrun} ürünün özel kodları yeni biçime taşındı`);
               yazimiIzle(tabloYaz("stok:items", "urunler", kodGoc.stok), "Stok kartları", kodGoc.stok);
@@ -145,7 +149,7 @@ useEffect(() => {
           if (barkodKod.atanan.renk + barkodKod.atanan.beden + barkodKod.atanan.asorti > 0) {
             t = barkodKod.tanimlar;
             setTanimlar(t);
-            yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", t), "Tanımlar", t);
+            yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", t, { tetikleyen: "açılış göçü" }), "Tanımlar", t);
             console.info(`Eksik barkod kodları atandı: renk ${barkodKod.atanan.renk}, ölçü ${barkodKod.atanan.beden}, asorti ${barkodKod.atanan.asorti}`);
           }
           setStok(acilisGocuUygula(kodGoc.stok, t));
@@ -169,7 +173,7 @@ useEffect(() => {
             if (cariKod.atanan > 0) {
               t = cariKod.tanimlar;
               setTanimlar(t);
-              yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", t), "Tanımlar", t);
+              yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", t, { tetikleyen: "açılış göçü" }), "Tanımlar", t);
             }
             yazimiIzle(tabloYaz("cari:data", "cariler", cariKod.cariler), "Cari kartları", cariKod.cariler);
           }
@@ -373,9 +377,9 @@ useEffect(() => {
         if (ozelKodAlanlari) t.ozelKodAlanlari = ozelKodAlanlari;
         // İki bağımsız iş — `else` bağlıyken renk göçü olan açılışta eski kod etiketleri düşüyordu.
         if (eskiKodEtiketleri.length) t.ozelKodEtiketleri = eskiKodEtiketleri;
-        if (renkGocuOldu) yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", t), "Tanımlar", t);
+        if (renkGocuOldu) yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", t, { tetikleyen: "açılış göçü" }), "Tanımlar", t);
         try {
-          await tekilYaz("tanimlar:data", "tanimlar", t);
+          await tekilYaz("tanimlar:data", "tanimlar", t, { tetikleyen: "açılış göçü" });
         } catch (setErr) {}
       } catch (e) { okumaHatalari.push("tanimlar:data"); }
       try {
@@ -586,6 +590,7 @@ useEffect(() => {
         VERI_KILIDI.sebep = okumaHatalari.join(", ");
         setVeriKilidiSebep(okumaHatalari.join(", "));
       }
+      yazmaGirisDurumuBildir(!!t.girisAktifMi);   // yazma kapısı (030): bulut yolu ile aynı — aşağıdaki göç yazmalarından önce
       // Yerel yüklemede de kimlik damgalaması yapılır — iki yolun davranışı ayrışmamalı.
       const yerelDamga = renkKimlikleriniDamgala(s, t.renkler || []);
       // ÖZEL KOD GÖÇÜ BURADA DA ÇALIŞMALI. Yalnızca bulut yoluna konsaydı, internetsiz açılan
@@ -599,7 +604,7 @@ useEffect(() => {
       const yerelKodGoc = ozelKodGoc(t, yerelDamga.urunler, () => uid("oka"));
       if (yerelKodGoc.degisti) {
         t = yerelKodGoc.tanimlar;
-        yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", t), "Tanımlar", t);
+        yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", t, { tetikleyen: "açılış göçü" }), "Tanımlar", t);
         if (yerelKodGoc.degisenUrun > 0 && !fisKesYolu()) yazimiIzle(tabloYaz("stok:items", "urunler", yerelKodGoc.stok), "Stok kartları", yerelKodGoc.stok);
       }
       // ÇEK GÖRSELLERİ yerel yolda çek başına anahtarlardan toplanıyor.
@@ -618,7 +623,7 @@ useEffect(() => {
       if (yerelCariKod.atanan > 0 || yerelIkiz.birlesen > 0) {
         if (yerelCariKod.atanan > 0) {
           t = yerelCariKod.tanimlar;
-          yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", t), "Tanımlar", t);
+          yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", t, { tetikleyen: "açılış göçü" }), "Tanımlar", t);
         }
         yazimiIzle(tabloYaz("cari:data", "cariler", yerelCariKod.cariler), "Cari kartları", yerelCariKod.cariler);
       }

@@ -681,6 +681,10 @@ function kasaZarfiAc(cariVar) { return cariVar && kasaV2Aktif() ? yazmaZarfi(["m
 function tabloYaz(anahtar, tablo, kayitlar, yerelKayitlar, secenek) {
   if (!yerelKayitlar && tablo === "urunler" && Array.isArray(kayitlar)) yerelKayitlar = gorselleriAyir(kayitlar).stok;
   const yerel = guvenliYaz(anahtar, JSON.stringify(yerelKayitlar || kayitlar), true);
+  // EKSİK YÜKLEME (v1.744.16, 030 yazma kapısı): kilitliyken sunucuya da gitmez, bekleyen deftere de düşmez.
+  if (supabaseAcikMi() && typeof VERI_KILIDI !== "undefined" && VERI_KILIDI.aktif) {
+    return Promise.resolve(yerel).then(() => ({ ok: false, bulut: false, hata: "veriler eksik yüklendi — kaydetme kapalı" }));
+  }
   if (!supabaseAcikMi() || !TABLO_SEMA[tablo]) {
     if (!TABLO_SEMA[tablo]) tabloFarki(tablo, kayitlar); // fark belleği yine de güncellensin
     return Promise.resolve(yerel).then(() => ({ ok: true, bulut: false }));
@@ -735,6 +739,8 @@ function tabloYaz(anahtar, tablo, kayitlar, yerelKayitlar, secenek) {
           if (typeof window !== "undefined" && window.__supabaseHataBildir) window.__supabaseHataBildir(tablo, mesaj);
           return { ok: false, bulut: true, hata: mesaj, kaliciRet: true };
         }
+        // Eksik yükleme kilidi (030 yazma kapısı, v1.744.16): bekleyen değildir — eksik hâl açılışta "yerel esas" sayılmasın.
+        if (e && e.yazmaKapisi === "eksik-yukleme") return { ok: false, bulut: true, hata: mesaj };
         if (!(e && e.topluSilmeEngeli) || bekleyenYazmalariOku()[anahtar]) bekleyenYazmaEkle(anahtar, tablo, mesaj);   // yerel güncel, bulut değil: açılışta yerel kazansın
         if (typeof window !== "undefined" && window.__supabaseHataBildir) {
           window.__supabaseHataBildir(tablo, mesaj);

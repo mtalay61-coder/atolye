@@ -400,6 +400,7 @@ let _baglantiVar = true;
 function baglantiBildir(varMi, sebep) {
   if (_baglantiVar === varMi) return;
   _baglantiVar = varMi;
+  if (varMi && typeof tanimlarBayatla === "function") tanimlarBayatla("bağlantı geri geldi");
   if (typeof window !== "undefined" && window.__baglantiDegisti) window.__baglantiDegisti(varMi, sebep || "");
 }
 // Hafif yoklama: herhangi bir HTTP cevabı = internet var. Önbellek kapalı (eski cevap "var" demesin).
@@ -419,7 +420,93 @@ async function baglantiSina() {
 // denenmez. Yazmalar bu yinelemeye dayanıklı: POST merge-duplicates ve DELETE aynı sonucu verir; sürüm koşullu PATCH ilk
 // seferde yere inmişse ikinci deneme 0 satır döner, bunu 040'taki teşhis "sunucu bir fazla → sahte çakışma" olarak çözer.
 const SUPABASE_YENIDEN_DENEME_MS = [700, 1500, 3000];
+
+// ================= YAZMA KAPISI (v1.744.16) =================
+// Kullanıcı (11 Kasım, günlük: 20:19 "Bilinmeyen — Tanımlar bulutla birleştirildi: başka cihazda eklenen 81 öğe korundu"):
+// giriş ekranında sabahtan bekleyen bir cihaz, akşam bağlantı gelince sabahki tanım kopyasıyla kendiliğinden yazdı; bugün
+// açılmış 81 öğeyi yalnız birleştirme kurtardı. Kurallar (kullanıcı kararı):
+//   · OTURUM KAPALIYKEN sunucuya YAZMA YOK — otomatik yazma da, bekleyen kayıtların yeniden gönderilmesi de. Kuyrukta
+//     beklerken oturum kapanırsa gönderim de durur: kapı her isteğin GÖNDERİLDİĞİ anda sorulur, kuyruğa girdiği anda değil.
+//   · EKSİK YÜKLEME KİLİDİ (VERI_KILIDI, 060) sunucuya giden yazmayı da durdurur (eskiden yalnız yerel yazmayı durduruyordu).
+// Oturum: App bildirir (`yazmaOturumuAyarla`): giriş sistemi açıkken kullanıcı girmiş ve bulut oturumu düşmemişse "acik";
+// giriş sistemi kapalı kurulumda (girişsiz çalışma) "acik"; giriş ekranında / çıkışta / oturum düşünce "kapali". Açılış
+// yüklemesi sürerken "bilinmiyor": yalnız kayıtlı bir bulut oturumu (jeton) varsa yazılır.
+// Kapıdan MUAF: günlük kaydı (POST gunluk — engellenen işin izi de oraya düşer) ve salt-okur sunucu işlevleri.
+let _yazmaOturumu = "bilinmiyor";
+function yazmaOturumuAyarla(durum) { _yazmaOturumu = durum === "acik" || durum === "kapali" ? durum : "bilinmiyor"; }
+function yazmaOturumuDurumu() { return _yazmaOturumu; }
+// GİRİŞ DURUMU İPUCU (090 açılış): tanımlar okununca bildirilir. Girişsiz çalışan firmada (girisAktifMi=false) kimse giriş
+// yapmaz, bulut jetonu da olmaz — açılıştaki göç yazmaları (App henüz "acik" demeden) "oturum kapalı" sanılmasın.
+let _girisAktifIpucu = null;
+function yazmaGirisDurumuBildir(girisAktif) { _girisAktifIpucu = !!girisAktif; }
+function yazmaGirisIpucu() { return _girisAktifIpucu; }
+function yazmaOturumuAcikMi() {
+  return _yazmaOturumu === "acik" || (_yazmaOturumu === "bilinmiyor" && (oturumVarMi() || _girisAktifIpucu === false));
+}
+const YAZMA_KAPISI_MUAF_RPC = /^rpc\/(?:site_hesap_bilgi|site_kayit_listesi|site_raporu|kurulum_betigi)(?:\?|$)/;
+function yazmaKapisiMuafMi(yol, yontem) {
+  if (YAZMA_KAPISI_MUAF_RPC.test(String(yol))) return true;
+  return /^POST$/i.test(yontem) && /^gunluk(?:\?|$)/.test(String(yol));
+}
+// Engel yoksa null; varsa { kod, mesaj }. kod: "eksik-yukleme" | "oturum-kapali".
+function bulutYazmaEngeli() {
+  if (typeof VERI_KILIDI !== "undefined" && VERI_KILIDI.aktif) {
+    return { kod: "eksik-yukleme", mesaj: "Veriler eksik yüklendi — sunucuya yazma kapalı (sayfayı yenileyin)" };
+  }
+  if (!yazmaOturumuAcikMi()) return { kod: "oturum-kapali", mesaj: "Oturum kapalı — sunucuya yazılmadı (giriş yapınca gönderilir)" };
+  return null;
+}
+
+// ================= TANIM TAZELİĞİ (v1.744.16) =================
+// Otomatik tanım yazmadan önce (100 `otomatikTanimYaz`) bu cihazın tanımları güncel mi? Son sunucu okumasından sonra
+// bağlantı geri geldiyse ya da sekme UZUN süre arka planda kaldıysa (yoklama o sırada durur) ya da son okuma 5 dk'dan eskiyse
+// BAYAT: önce sunucudan okunur, okunamazsa yazılmaz. Okuma: açılış (045), değişiklik yoklaması (100), tanım yazmasının
+// birleştirme okuması (aşağıda), tazeleme (100 `tanimlariTazele`).
+const TANIM_TAZE_MS = 5 * 60 * 1000;
+// Sıra numarası (`sira`) zaman damgası yerine: bayatlatma ile okuma AYNI milisaniyeye düşerse (bağlantı gelir gelmez okuma) damga
+// eşitliği "bayat" sanıyordu; sıra hangisinin sonra olduğunu kesin söyler.
+const _tanimTazelik = { okuma: 0, okumaSira: 0, bayatSira: 0, sira: 0, sebep: "", gizlendi: 0 };
+function tanimlarOkundu() { _tanimTazelik.okuma = Date.now(); _tanimTazelik.okumaSira = ++_tanimTazelik.sira; }
+function tanimlarBayatla(sebep) {
+  _tanimTazelik.bayatSira = ++_tanimTazelik.sira; _tanimTazelik.sebep = sebep || "";
+  // App dinler (100 `tanimBayatDalgasi`): okuyamadığı için vazgeçmiş otomatik tanım yazmaları bağlantı gelince / uzun beklemeden
+  // dönünce yeniden denensin (önce tazeleyerek).
+  try { if (typeof window !== "undefined" && window.dispatchEvent && typeof Event === "function") window.dispatchEvent(new Event("atolye:tanim-bayat")); } catch (e) { /* */ }
+}
+function tanimlarTazeMi() {
+  const o = _tanimTazelik.okuma;
+  return o > 0 && _tanimTazelik.okumaSira > _tanimTazelik.bayatSira && Date.now() - o < TANIM_TAZE_MS;
+}
+function tanimBayatlikSebebi() {
+  if (!_tanimTazelik.okuma) return "hiç okunmadı";
+  if (_tanimTazelik.bayatSira > _tanimTazelik.okumaSira) return _tanimTazelik.sebep || "bayat";
+  return Date.now() - _tanimTazelik.okuma >= TANIM_TAZE_MS ? "son okuma 5 dakikadan eski" : "";
+}
+// Uzun bekleme eşiği (sınamalar `window.__uzunBeklemeMs` ile kısaltır).
+const UZUN_BEKLEME_MS = 60 * 1000;
+if (typeof window !== "undefined" && window.addEventListener) {
+  window.addEventListener("online", () => tanimlarBayatla("bağlantı geri geldi"));
+  if (typeof document !== "undefined") {
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) { _tanimTazelik.gizlendi = Date.now(); return; }
+      const esik = typeof window.__uzunBeklemeMs === "number" ? window.__uzunBeklemeMs : UZUN_BEKLEME_MS;
+      if (_tanimTazelik.gizlendi && Date.now() - _tanimTazelik.gizlendi >= esik) tanimlarBayatla("uzun süre arka planda kaldı");
+      _tanimTazelik.gizlendi = 0;
+    });
+  }
+}
+
 async function supabaseIstek(yol, secenekler = {}, tekrarMi = false, islemDenemesi = 0) {
+  // YAZMA KAPISI (yukarıda): gönderilecek yazma bu anda sorulur — kuyrukta beklerken oturum kapandıysa burada durur.
+  const yontem = String(secenekler.method || "GET").toUpperCase();
+  if (/^(POST|PATCH|DELETE|PUT)$/.test(yontem) && !yazmaKapisiMuafMi(yol, yontem)) {
+    const engel = bulutYazmaEngeli();
+    if (engel) {
+      const e = new Error(`${engel.mesaj} — ${yontem} ${String(yol).split("?")[0]}`);
+      e.yazmaKapisi = engel.kod;
+      throw e;
+    }
+  }
   let yanit;
   for (let deneme = 0; ; deneme++) {
     try {
@@ -621,7 +708,31 @@ function tekilTabanAyarla(tablo, veri) {
   if (veri === undefined || veri === null) { delete _tekilTaban[tablo]; return; }
   try { _tekilTaban[tablo] = JSON.parse(JSON.stringify(veri)); } catch (e) { delete _tekilTaban[tablo]; }
 }
-function tekilTabanOku(tablo) { return _tekilTaban[tablo]; }
+function tekilTabanOku(tablo) {
+  if (_tekilTaban[tablo] === undefined && tablo === "tanimlar") return tanimBekleyenTabanOku();
+  return _tekilTaban[tablo];
+}
+// BEKLEYEN TANIM KAYDININ TABANI (v1.744.16). Tanım yazması sunucuya gidemeyince (oturum kapalı, okuma düştü, ağ) değişiklik
+// bekleyen deftere düşer; sayfa yenilenince bellekteki taban (değişikliğin dayandığı sunucu hâli) kayboluyordu. Açılışta yerel
+// kopya sunucuyla İKİ yönlü birleşince aynı kimlikte bu cihaz kazanıyor → başka cihazın bu arada DEĞİŞTİRDİĞİ tanım (ad, kod)
+// eski kopyayla geri alınıyordu. Taban burada saklanır (ilk düşüşteki — sonraki düşüşler aynı tabana göre değişiklik), başarılı
+// tanım yazmasında silinir; açılışta (090) ve tabansız yeniden gönderimde üç yönlü uzlaştırmanın tabanı olur.
+// Yerel depoda (localStorage) — kullanıcı tanımları; parola / oturum anahtarı DEĞİL (kullanıcı kaydında parola tutulmaz).
+// Çok büyükse (1,5 MB) saklanmaz: yer kotası öteki kayıtları (bekleyen defter) düşürmesin; o zaman eski (iki yönlü) davranış.
+const TANIM_BEKLEYEN_TABAN = "tanimlar:bekleyen-taban";
+function tanimBekleyenTabanOku() {
+  try { const m = window.localStorage.getItem(TANIM_BEKLEYEN_TABAN); return m ? JSON.parse(m) : undefined; } catch (e) { return undefined; }
+}
+function tanimBekleyenTabanSakla(taban) {
+  if (!taban) return;
+  try {
+    if (window.localStorage.getItem(TANIM_BEKLEYEN_TABAN)) return;   // ilk düşüşteki taban kalır
+    const m = JSON.stringify(taban);
+    if (m.length > 1.5 * 1024 * 1024) return;
+    window.localStorage.setItem(TANIM_BEKLEYEN_TABAN, m);
+  } catch (e) { /* kota / erişim yok — iki yönlü birleştirmeye düşer */ }
+}
+function tanimBekleyenTabanSil() { try { window.localStorage.removeItem(TANIM_BEKLEYEN_TABAN); } catch (e) { /* */ } }
 
 function tekilYaz(anahtar, tablo, veri, secenek = {}) {
   // SUNUCU FİŞLERİ (v1.732.0, 078 fiş kes): `sunucu: true` işaretli defter kaydı fiş defteri tablosunda (stk_fis) duruyor;
@@ -629,6 +740,9 @@ function tekilYaz(anahtar, tablo, veri, secenek = {}) {
   if (tablo === "fis_defteri" && Array.isArray(veri) && veri.some((f) => f && f.sunucu)) veri = veri.filter((f) => !(f && f.sunucu));
   const yerel = guvenliYaz(anahtar, JSON.stringify(veri), true);
   if (!supabaseAcikMi()) return yerel;
+  // EKSİK YÜKLEME (v1.744.16): kilitliyken yerel yazma zaten yapılmıyor (guvenliYaz); sunucuya da gitmez ve BEKLEYEN DEFTERE
+  // DE DÜŞMEZ — eksik hâl sonraki açılışta "yerel esas" sayılıp buluttakini ezmesin. Kullanıcıyı guvenliYaz uyardı.
+  if (typeof VERI_KILIDI !== "undefined" && VERI_KILIDI.aktif) return yerel;
   bulutYazmaBasladi(tablo);
   const benimSiram = (_tekilSayac[anahtar] = (_tekilSayac[anahtar] || 0) + 1);
   // TANIMLAR BULUTLA BİRLEŞEREK YAZILIR (v1.552.0, 089). Tanımlar tek satır; bütün hâli yazılınca başka
@@ -645,18 +759,28 @@ function tekilYaz(anahtar, tablo, veri, secenek = {}) {
   const gonderilen = veri;
   // SIRALI (v1.569.0, denetim): tek satırlık tablolar kuyruğa girmiyordu; iki hızlı kayıtta önce başlayan (okuma +
   // birleştirme + yazma) SONRA bitebiliyor, bulutta eski liste kalıyordu. `tabloYaz` ile aynı tablo kuyruğu.
+  // TANIMLAR (v1.744.16): (1) sunucu OKUNAMAZSA YAZILMAZ — eskiden birleştirmesiz yazılıyordu, yani tam da korunmak istenen
+  // "eski kopyayı bütünüyle gönderme" oluyordu; hata → bekleyen defter, oturum açıkken uzlaştırılarak yeniden denenir.
+  // (2) ÜÇ YÖNLÜ (089 `tanimlarUzlastir`): bu cihazın bildiği son sunucu hâli (taban) varsa başka cihazın DEĞİŞTİRDİĞİ öğe
+  // de korunur (eskiden aynı kimlikte bu cihaz kazanıyordu); eklenen / silinen koruması (`tanimlariBirlestir`) aynen sürer.
+  const tetikleyen = secenek.tetikleyen || "kayıt";
   const isi = () => (birlestir
-    ? supabaseIstek("tanimlar?id=eq.tekil&select=veri").then((r) => {
+    ? supabaseIstek("tanimlar?id=eq.tekil&select=veri").catch((e) => {
+        const h = new Error(`Tanımlar sunucudan okunamadı — eski kopya gönderilmedi (${String((e && e.message) || e).slice(0, 120)})`);
+        if (e && e.yazmaKapisi) h.yazmaKapisi = e.yazmaKapisi;
+        throw h;
+      }).then((r) => {
         const bulut = Array.isArray(r) && r[0] ? r[0].veri : null;
-        const b = tanimlariBirlestir(veri, bulut, tanimSilinenleriOku());
-        // Ortak silinenler (`__silinenler`) her yazmada buluta taşınır; yerel/ekran yalnız öğe eklendi/çıkarıldıysa.
-        if (b.eklenen.length === 0 && b.cikarilan.length === 0) return b.tanimlar;
+        if (typeof tanimlarOkundu === "function") tanimlarOkundu();
+        const u = tanimlarUzlastir(veri, bulut, tekilTabanOku("tanimlar"), tanimSilinenleriOku());
+        // Ortak silinenler (`__silinenler`) her yazmada buluta taşınır; yerel/ekran yalnız öğe eklendi/çıkarıldı/değiştiyse.
+        if (u.toplam === 0) return u.tanimlar;
         // katman-muaf: tekilYaz'ın kendi gövdesi — birleşik hâl yerele de yazılır (arada daha yeni kayıt yoksa).
-        if (_tekilSayac[anahtar] === benimSiram) guvenliYaz(anahtar, JSON.stringify(b.tanimlar), true);
-        console.info(`Tanımlar bulutla birleştirildi: ${b.eklenen.length} öğe korundu`, b.eklenen);
-        if (typeof window !== "undefined" && window.__tanimlarBirlesti) window.__tanimlarBirlesti(bulut, b.eklenen, b.cikarilan);
-        return b.tanimlar;
-      }).catch(() => veri)
+        if (_tekilSayac[anahtar] === benimSiram) guvenliYaz(anahtar, JSON.stringify(u.tanimlar), true);
+        console.info(`Tanımlar bulutla birleştirildi (${tetikleyen}): ${u.metin}`);
+        if (typeof window !== "undefined" && window.__tanimlarBirlesti) window.__tanimlarBirlesti({ birlesik: u.tanimlar, gonderilen: veri, ozet: u, tetikleyen });
+        return u.tanimlar;
+      })
     : ucYonlu
       ? supabaseIstek(`${tablo}?id=eq.tekil&select=veri`).then((r) => {
           const bulut = Array.isArray(r) && r[0] ? r[0].veri : null;
@@ -676,7 +800,9 @@ function tekilYaz(anahtar, tablo, veri, secenek = {}) {
     }).then(() => {
       // Taban = bu cihazın ekranındaki hâl (gönderdiği), birleşik hâl değil: ekran henüz birleşiği göstermiyorsa bir sonraki
       // yazmada buluttan gelen kayıtlar "bu cihaz sildi" sayılmasın. Ekran birleşiğe geçince (yoklama) taban da güncellenir.
-      tekilTabanAyarla(tablo, gonderilen);
+      // TANIMLAR (v1.744.16): ekran birleşik hâle hemen geçer (100 `__tanimlarBirlesti`) — taban sunucuya giden birleşik hâl.
+      tekilTabanAyarla(tablo, birlestir ? v : gonderilen);
+      if (tablo === "tanimlar") tanimBekleyenTabanSil();
     }));
   // KASA & BANKA v2 (v1.729.0, 038 `kasaV2Yuku`): geçiş yapıldıysa (`stk_ayar.kasa_aktif`) belge YAZILMAZ — `muhasebe` artık
   // salt-okur görünüm. Bu cihazın tabanla yeni hâl arasındaki farkı satır olarak `kas_yaz`a gider: başka cihazın kaydına
@@ -717,6 +843,9 @@ function tekilYaz(anahtar, tablo, veri, secenek = {}) {
       console.error("Supabase yazma hatası:", tablo, e);
       // Toplu silme engeli (Kasa & Banka / liste v2, 038) bekleyen yazma DEĞİLDİR — 040 tabloYaz ile aynı kural.
       // Kalıcı ret (v1.744.0, KRnnn): tek parça belgede satır ayrılamaz — kayıt "inceleme" işaretlenir, kendiliğinden denenmez.
+      // Eksik yükleme kilidi (kapı, v1.744.16) bekleyen DEĞİLDİR: eksik hâl sonraki açılışta "yerel esas" sayılmasın.
+      if (e && e.yazmaKapisi === "eksik-yukleme") return;
+      if (tablo === "tanimlar") tanimBekleyenTabanSakla(_tekilTaban.tanimlar);
       if (!(e && e.topluSilmeEngeli) || bekleyenYazmalariOku()[anahtar]) bekleyenYazmaEkle(anahtar, tablo, e && e.message, e && e.kaliciRet ? { inceleme: true, kod: e.kod } : undefined);
       if (typeof window !== "undefined" && window.__supabaseHataBildir) {
         window.__supabaseHataBildir(tablo, String(e && e.message || e));

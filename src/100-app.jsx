@@ -475,6 +475,42 @@ function AtolyeUygulamasi() {
   // yalnız buluta yazılamıyor — tam ekran giriş yerine üstte şerit + "Yeniden giriş yap".
   const [oturumDustu, setOturumDustu] = useState(false);
   useEffect(() => { oturumDustuDinle(() => setOturumDustu(true)); return () => oturumDustuDinle(null); }, []);
+  // YAZMA OTURUMU (v1.744.16, 030 yazma kapısı — kullanıcı: "oturum kapalıyken otomatik yazma ve bekleyen kayıtları yeniden
+  // gönderme çalışmasın; kuyrukta beklerken oturum kapanırsa da gönderim durmalı"). Çizim sırasında bildirilir (efekt beklenmez):
+  // çıkışla aynı anda kuyruktan çıkan yazma kapıyı kapalı bulsun. Yükleme sürerken "bilinmiyor" (kapı: kayıtlı bulut jetonu
+  // varsa açık). Giriş sistemi kapalı kurulumda (girişsiz çalışma) açık; giriş sistemi açıkken kullanıcı girmiş ve bulut
+  // oturumu düşmemişse açık; giriş ekranında / çıkışta / oturum düşünce kapalı.
+  // GİRİŞ GEREKLİ Mİ: açılışın bildirdiği (090 → 030 `yazmaGirisIpucu`) de sayılır — tanımlar ekrana yerleşmeden önceki ara
+  // çizimde varsayılan tanımlar (girisAktifMi yok) kapıyı bir an "acik" yapıyor, giriş ekranındaki cihazın açılış göçü
+  // yazmaları (urunler, cariler) sunucuya gidiyordu (v1.744.16 sınaması, senaryo-yazma-kapisi B).
+  const girisGerekli = !!tanimlar.girisAktifMi || yazmaGirisIpucu() === true;
+  // GİRİŞ YAPILMIŞ MI: "Test Kullanıcısı" (girişsiz çalışmanın sahte oturumu, aşağıda `test-modu`) giriş SAYILMAZ — ilk çizimde
+  // tanımlar yokken (girisAktifMi yok) kuruluyor, giriş açık tanımlar gelince bir çizim sonra kalkıyor; o arada kapı açılıp
+  // giriş ekranındaki cihazın göç yazmaları sunucuya gidiyordu (sınamada paralel yük altında görüldü).
+  const girisYapildi = !!aktifKullanici && aktifKullanici.id !== "test-modu";
+  const yazmaOturumu = loading ? "bilinmiyor"
+    : ((!girisGerekli || girisYapildi) && !oturumDustu ? "acik" : "kapali");
+  yazmaOturumuAyarla(yazmaOturumu);
+  // Otomatik tanım yazma girişi (aşağıda `otomatikTanimYaz`): kendisinden ÖNCE tanımlı efektler ref'ten çağırır (TDZ).
+  const otomatikTanimYazRef = useRef(null);
+  // TANIM İŞLERİ SIRALI (v1.744.16 — sınamada görüldü): bağlantı gelince işçilik kartı tamamlama, kod onarımı ve bekleyen kaydı
+  // yeniden gönderme AYNI ANDA başlıyordu. İlki sunucuyu okuyup "Siyah Süet"i (başka cihazın değişikliği) yazıyor ve tabanı
+  // ilerletiyordu; ikincisi işe başlarken aldığı ESKİ ekran kopyasıyla ("Siyah") uzlaştırınca bu, "bu cihaz geri adlandırdı"
+  // sayılıp sunucuya gidiyordu. Her iş öncekinin YAZMASI bitince başlar ve ekran hâlini o anda (tanimRef) alır.
+  const tanimIsZinciriRef = useRef(Promise.resolve());
+  const tanimIsiSirala = (is) => {
+    const p = tanimIsZinciriRef.current.then(is, is);
+    tanimIsZinciriRef.current = p.catch(() => {});
+    return p;
+  };
+  // TANIM BAYATLIK DALGASI (v1.744.16, 030 `tanimlarBayatla`): bağlantı geri geldi / uzun süre arka planda kaldı. Otomatik tanım
+  // yazan efektler bağımlılığına alır — okuyamadığı için vazgeçmiş yazma bu anda (önce sunucudan tazeleyerek) yeniden denenir.
+  const [tanimBayatDalgasi, setTanimBayatDalgasi] = useState(0);
+  useEffect(() => {
+    const dinle = () => setTanimBayatDalgasi((n) => n + 1);
+    window.addEventListener("atolye:tanim-bayat", dinle);
+    return () => window.removeEventListener("atolye:tanim-bayat", dinle);
+  }, []);
   const [yuklemeSayaci, setYuklemeSayaci] = useState(0);
   const [bulutOnGiris, setBulutOnGiris] = useState(null);
   // Buluta yazma hatası. Sessiz kalması, hiçbir şeyin kaydedilmediğinin günlerce fark
@@ -771,7 +807,7 @@ function AtolyeUygulamasi() {
       yazimiIzle(tabloYaz("stok:items", "urunler", yeni), "Stok kartları", yeni);
       setTanimlar((onceki) => {
         const yeniT = { ...onceki, acilisGocuYapildi: true };
-        yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", yeniT), "Tanımlar", yeniT);
+        yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", yeniT, { tetikleyen: "açılış göçü (stok başlangıç)" }), "Tanımlar", yeniT);
         return yeniT;
       });
       gunlukYaz(`Açılış göçü: ${yazilan} varyantın hareketsiz başlangıç miktarı açılış fişine bağlandı`, "stok", { satirlar });
@@ -857,12 +893,20 @@ function AtolyeUygulamasi() {
     if (aktifKullanici.rol === "Yönetici") return;
     const liste = tanimlar.kullanicilar || [];
     if (liste.some((k) => k.rol === "Yönetici") || !liste.some((k) => k.id === aktifKullanici.id)) return;
-    const yeni = liste.map((k) => (k.id === aktifKullanici.id ? { ...k, rol: "Yönetici" } : k));
-    saveTanimlar({ ...tanimlar, kullanicilar: yeni });
-    setAktifKullanici({ ...aktifKullanici, rol: "Yönetici" });
-    gunlukYaz("Yöneticisiz liste: giren kullanıcı Yönetici yapıldı", "oturum", { kullanici: aktifKullanici.ad });
-    showToast(`Listede yönetici yoktu — ${aktifKullanici.ad} Yönetici yapıldı`);
-  }, [aktifKullanici, tanimlar]); // eslint-disable-line react-hooks/exhaustive-deps
+    // OTOMATİK TANIM YAZMASI (v1.744.16): ortak girişten — kapı, tazelik, güncel tanımlar üzerinde yeniden hesap.
+    const giren = aktifKullanici;
+    if (!otomatikTanimYazRef.current) return;
+    otomatikTanimYazRef.current("yöneticisiz liste düzeltmesi", (t) => {
+      const l = t.kullanicilar || [];
+      if (l.some((k) => k.rol === "Yönetici") || !l.some((k) => k.id === giren.id)) return t;
+      return { ...t, kullanicilar: l.map((k) => (k.id === giren.id ? { ...k, rol: "Yönetici" } : k)) };
+    }).then((r) => {
+      if (!r || !r.yazildi) return;
+      setAktifKullanici((a) => (a && a.id === giren.id ? { ...a, rol: "Yönetici" } : a));
+      gunlukYaz("Yöneticisiz liste: giren kullanıcı Yönetici yapıldı", "oturum", { kullanici: giren.ad, tetikleyen: "yöneticisiz liste düzeltmesi" });
+      showToast(`Listede yönetici yoktu — ${giren.ad} Yönetici yapıldı`);   // bayat-muaf: showToast kararlı (useCallback, boş bağımlılık)
+    });
+  }, [aktifKullanici, tanimlar, yazmaOturumu, tanimBayatDalgasi]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Bulut ön girişi yapan kullanıcı, veri gelince Tanımlar kaydıyla eşleniyor ve içeri alınıyor.
   // Kayıt yoksa (Tanımlar'da olmayan ama bulutta hesabı olan biri) normal giriş ekranına düşer.
@@ -884,6 +928,10 @@ function AtolyeUygulamasi() {
   // SONRA duruyor: bağımlılık listesi tanım anında değerlendirilir, önce yazmak TDZ çöküşü.)
   // Yeniden gönder: defterdeki her anahtar için state'teki GÜNCEL veriyle yazma yolu tekrar.
   const bekleyenleriYenidenGonder = useCallback(async (sessiz) => {
+    // OTURUM KAPALI / EKSİK YÜKLEME (v1.744.16, 030 yazma kapısı): yeniden gönderme hiç başlamaz. Defter durur; oturum açılınca
+    // (aşağıdaki geçiş efekti) ya da dakikalık denemede gönderilir. Elle "Yeniden dene" sebebi söyler.
+    const kapiEngeli = bulutYazmaEngeli();
+    if (kapiEngeli) { if (!sessiz) showToast(kapiEngeli.mesaj); return; }
     // Sunucu ayarı açılışta okunamadıysa önce o (v1.730.1, 045): okunmadan v2'ye geçebilecek tablolar yine bekletilirdi. Okuma
     // başlatılır, bu tur atlanır (beklenmez — bekleme sonrası ekranın eski fotoğrafı gönderilirdi); dakikalık deneme sonra gönderir.
     if (typeof v2AyarBilinmiyorMu === "function" && v2AyarBilinmiyorMu()) {
@@ -900,7 +948,23 @@ function AtolyeUygulamasi() {
     if (d["siparis:data"]) isler.push(tabloYaz("siparis:data", "siparisler", siparisler));
     if (d["uretim:siparisler"]) isler.push(tabloYaz("uretim:siparisler", "uretim", uretim));
     if (d["cari:data"]) isler.push(tabloYaz("cari:data", "cariler", cariler));
-    if (d["tanimlar:data"]) isler.push(tekilYaz("tanimlar:data", "tanimlar", tanimlar));
+    // TANIMLAR (v1.744.16): ekrandaki kopya bütünüyle gönderilmez — önce sunucu okunur ve uzlaştırılır (091, üç yönlü: bu cihazın
+    // gerçek değişikliği kalır, başka cihazınki korunur). Okunamazsa bu tur tanımlar GÖNDERİLMEZ (defterde kalır).
+    // Otomatik tanım işleriyle aynı sırada (tanimIsiSirala): ekran hâli iş başlarken alınır.
+    if (d["tanimlar:data"]) {
+      isler.push(tanimIsiSirala(async () => {   // bayat-muaf: tanimIsiSirala yalnız ref (tanimIsZinciriRef) kullanır, her çizimde aynı
+        if (bulutYazmaEngeli()) return;
+        const taze = await tanimlariSunucudanTazele(tanimRef.current || tanimlar);
+        if (!taze) return;
+        if (bulutYazmaEngeli()) return;   // okuma sürerken çıkış yapıldı / kilit indi
+        if (taze.ozet && taze.ozet.toplam > 0) {
+          tanimRef.current = taze.tanimlar; setTanimlar(taze.tanimlar);
+          gunlukYaz(`Tanımlar sunucuyla uzlaştırıldı (bekleyen kayıt yeniden gönderilirken): ${taze.ozet.metin}`, "tanimlar",
+            { tetikleyen: "bekleyen kayıt yeniden gönderme", ozet: taze.ozet.metin });
+        }
+        await tekilYaz("tanimlar:data", "tanimlar", taze.tanimlar, { tetikleyen: "bekleyen kayıt yeniden gönderme" });
+      }));
+    }
     if (d["muhasebe:data"]) isler.push(tekilYaz("muhasebe:data", "muhasebe", muhasebe));
     if (d["koli:data"]) isler.push(tekilYaz("koli:data", "koliler", koliler));
     if (d["gorev:data"]) isler.push(tekilYaz("gorev:data", "gorevler", gorevler));
@@ -933,6 +997,14 @@ function AtolyeUygulamasi() {
   // tetiklemede GÜNCEL fonksiyon çağrılıyor.
   const yenidenGonderRef = useRef(bekleyenleriYenidenGonder);
   yenidenGonderRef.current = bekleyenleriYenidenGonder;
+  // OTURUM AÇILINCA (v1.744.16): kapalı / bilinmiyorken kapıya takılıp deftere düşen kayıtlar bir kez gönderilir (uzlaştırarak).
+  // "bilinmiyor → açık" da sayılır: girişli firmada açılış göçü jeton yenilenmeden yazılamamış olabilir. Sessiz denemedir.
+  const oncekiYazmaOturumuRef = useRef(yazmaOturumu);
+  useEffect(() => {
+    const onceki = oncekiYazmaOturumuRef.current;
+    oncekiYazmaOturumuRef.current = yazmaOturumu;
+    if (yazmaOturumu === "acik" && onceki && onceki !== "acik" && Object.keys(bekleyenYazmalariOku()).length) yenidenGonderRef.current(true);
+  }, [yazmaOturumu]);
   useEffect(() => {
     if (loading || Object.keys(bekleyenYazmalar).length === 0) return;
     const z = setInterval(() => { yenidenGonderRef.current(true); }, 60000);
@@ -994,6 +1066,9 @@ function AtolyeUygulamasi() {
         if (bulut.tanimlar) {
           const mevcut = Object.fromEntries(Object.keys(bulut.tanimlar).map((k) => [k, (g.tanimlar || {})[k]]));
           if (!ayni(alan, mevcut)) setTanimlar((t) => ({ ...t, ...bulut.tanimlar }));
+          // TABAN + TAZELİK (v1.744.16): ekran sunucu hâline geçti — sonraki tanım yazması bununla üç yönlü uzlaşır.
+          tekilTabanAyarla("tanimlar", bulut.tanimlar);
+          tanimlarOkundu();
         }
       }
     });
@@ -1328,16 +1403,24 @@ function AtolyeUygulamasi() {
 
   // Katman (030 tekilYaz) buluttaki tanımlarla birleştirip eksik öğe eklediğinde ekran da güncellensin.
   useEffect(() => {
-    window.__tanimlarBirlesti = (bulut, eklenen, cikarilan = []) => {
+    window.__tanimlarBirlesti = ({ birlesik, gonderilen, ozet, tetikleyen }) => {
       // Ref de güncellenir: başka cihazda silinip buradan çıkarılan öğe, bir sonraki kayıtta "bu cihazda silindi"
       // sanılıp ikinci kez çöpe atılmasın (v1.569.0).
-      setTanimlar((prev) => { const m = tanimlariBirlestir(prev, bulut, tanimSilinenleriOku()).tanimlar; tanimRef.current = m; return m; });
-      gunlukYaz(`Tanımlar bulutla birleştirildi: başka cihazda eklenen ${eklenen.length} öğe korundu, silinen ${cikarilan.length} öğe çıkarıldı`, "tanimlar", { eklenen: eklenen.slice(0, 50), cikarilan: cikarilan.slice(0, 50) });
+      // v1.744.16: ekran sunucuya giden birleşik hâle geçer; gönderimden sonra ekranda yapılmış değişiklik (prev ≠ gönderilen)
+      // üç yönlü korunur (taban = gönderilen).
+      // Ref HEMEN (güncelleyici render'da çalışır; sıradaki otomatik tanım işi beklemeden güncel hâli görmeli).
+      const r = tanimRef.current;
+      if (r) tanimRef.current = r === gonderilen ? birlesik : ucYonluBirlestir(r, birlesik, gonderilen);
+      setTanimlar((prev) => { const m = prev === gonderilen ? birlesik : ucYonluBirlestir(prev, birlesik, gonderilen); tanimRef.current = m; return m; });
+      // OKUNUR ÖZET (v1.744.16 — kullanıcı: ham liste yerine "renkler 33, kombinasyonlar 10…"); öğe adı / değeri yazılmaz.
+      // Cihaz kimliği ve sürüm gunlukYaz'da (025) her kayda eklenir.
+      gunlukYaz(`Tanımlar bulutla birleştirildi (${tetikleyen}): ${ozet.metin}`, "tanimlar", { tetikleyen, ozet: ozet.metin });
     };
     return () => { window.__tanimlarBirlesti = null; };
   }, []);
 
-  const saveTanimlar = useCallback(async (next) => {
+  // `secenek.tetikleyen` (v1.744.16): günlükte bu yazmayı neyin başlattığı ("kayıt" = kullanıcı; otomatik yollar kendi adını verir).
+  const saveTanimlar = useCallback(async (next, secenek = {}) => {
     // YENİ TANIMA KODU ANINDA VERİLİYOR. Kod atamayı ayrı bir düğmeye bırakmak, kullanıcının rengi
     // tanımlayıp etiket basmaya kalktığında "kod atanmamış" görmesi demekti. `kodlariAta` kodu
     // OLANA dokunmuyor, o yüzden her kayıtta güvenle çağrılabilir.
@@ -1345,8 +1428,9 @@ function AtolyeUygulamasi() {
     const kodlu = kodlariAta([], next).tanimlar;
     tanimSilinenleriCopeAt(kodlu);
     setTanimlar(kodlu);
+    tanimRef.current = kodlu;   // v1.744.16: sıradaki tanım işi (otomatik / yeniden gönderme) render beklemeden bu hâli görür
     try {
-      await tekilYaz("tanimlar:data", "tanimlar", kodlu);
+      await tekilYaz("tanimlar:data", "tanimlar", kodlu, { tetikleyen: secenek.tetikleyen });
     } catch (e) {
       kaydetmeHatasiBildir(e, "Tanımlar", kodlu);
     }
@@ -1365,12 +1449,14 @@ function AtolyeUygulamasi() {
     logoKucultmeDenendiRef.current = true;
     const asil = firmaLogosu;
     logoKucult(asil).then((kucuk) => {
-      const guncel = tanimRef.current;
-      // Arada başka bir logo yüklendiyse dokunma.
-      if (!guncel || (guncel.firmaBilgileri || {}).logo !== asil || kucuk.length > asil.length * 0.8) return;
-      saveTanimlar({ ...guncel, firmaBilgileri: { ...(guncel.firmaBilgileri || {}), logo: kucuk } });
+      if (kucuk.length > asil.length * 0.8) return;
+      // OTOMATİK TANIM YAZMASI (v1.744.16): ortak girişten. Arada başka bir logo yüklendiyse (güncel tanımlarda) dokunma.
+      otomatikTanimYazRef.current("logo küçültme", (guncel) => {
+        if (!guncel || (guncel.firmaBilgileri || {}).logo !== asil) return guncel;
+        return { ...guncel, firmaBilgileri: { ...(guncel.firmaBilgileri || {}), logo: kucuk } };
+      }).then((r) => { if (r && !r.yazildi && r.sebep !== "degisiklik-yok") logoKucultmeDenendiRef.current = false; });
     });
-  }, [loading, firmaLogosu, saveTanimlar]);
+  }, [loading, firmaLogosu, saveTanimlar, yazmaOturumu, tanimBayatDalgasi]);
 
   // REÇETE ŞABLONLARI (21 Eylül): tanımlarda tutuluyor; ürün kartı ve modelhane buradan yazar.
   const receteSablonuKaydet = useCallback((sablon) => {
@@ -2897,13 +2983,55 @@ function AtolyeUygulamasi() {
   // Barkod kodunu `saveTanimlar` atıyordu (`kodlariAta`), ama stok kartından/siparişten renk, beden,
   // model rengi açan kısa yollar tanımları DOĞRUDAN yazıyordu — kod adımını atlayıp. Artık hepsi bu
   // yardımcıdan geçiyor; `kodlariAta` kodu olana dokunmuyor, her yazımda güvenle çağrılabilir.
-  const tanimlarKodluYaz = useCallback((next) => {
+  const kodluYazSonRef = useRef(null);
+  const tanimlarKodluYaz = useCallback((next, tetikleyen) => {
     const kodlu = kodlariAta([], next).tanimlar;
     tanimSilinenleriCopeAt(kodlu);
     setTanimlar(kodlu);
-    yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", kodlu), "Tanımlar", kodlu);
+    tanimRef.current = kodlu;
+    kodluYazSonRef.current = yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", kodlu, { tetikleyen }), "Tanımlar", kodlu);   // otomatik tanım işi (sıralı) bunu bekler
     return kodlu;
   }, [tanimSilinenleriCopeAt]);
+
+  // ================= OTOMATİK TANIM YAZMA GİRİŞİ (v1.744.16) =================
+  // Kullanıcı (11 Kasım): bütün otomatik tanım yazma yolları (işçilik gider kartı tamamlama, kod / stok no onarımı, logo
+  // küçültme, yöneticisiz liste) bu girişten geçer:
+  //   1. YAZMA KAPISI (030): oturum kapalı ya da eksik yükleme → hiç başlamaz (ekrana / yerele de dokunmaz);
+  //   2. TAZELİK (030 `tanimlarTazeMi`): bağlantı geri geldiyse, sekme uzun süre arka plandaysa ya da son okuma eskiyse önce
+  //      sunucu okunur ve ekranla uzlaştırılır (091); OKUMA BAŞARISIZSA YAZMA YOK;
+  //   3. değişiklik GÜNCEL tanımlar üzerinde hesaplanır (`hesapla(t)` — değişiklik yoksa aynı nesneyi döndürür) ve yazılır;
+  //      tekilYaz yine sunucuyla üç yönlü birleştirerek yazar (mevcut koruma).
+  // Döner: { yazildi, sebep, tanimlar } — sebep: "oturum-kapali" | "eksik-yukleme" | "tazeleme-basarisiz" | "degisiklik-yok".
+  // İş SIRASI GELİNCE en son çizimin işlevleriyle çalışır (ref) — sırada beklerken eskiyen kapanış kullanılmaz.
+  const otomatikTanimYazIsiRef = useRef(null);
+  const otomatikTanimYaz = (tetikleyen, hesapla, secenek = {}) => tanimIsiSirala(() => otomatikTanimYazIsiRef.current(tetikleyen, hesapla, secenek));
+  const otomatikTanimYazIsi = async (tetikleyen, hesapla, { kodlu = false } = {}) => {
+    const engel = supabaseAcikMi() ? bulutYazmaEngeli() : null;
+    if (engel) return { yazildi: false, sebep: engel.kod };
+    let guncel = tanimRef.current || tanimlar;
+    if (supabaseAcikMi() && !tanimlarTazeMi()) {
+      const bayatlik = tanimBayatlikSebebi();
+      const taze = await tanimlariSunucudanTazele(guncel);
+      if (!taze) {
+        gunlukYaz(`Otomatik tanım yazması yapılmadı (${tetikleyen}): tanımlar sunucudan okunamadı`, "tanimlar", { tetikleyen, bayatlik });
+        return { yazildi: false, sebep: "tazeleme-basarisiz" };
+      }
+      // Okuma sürerken oturum kapanmış / kilit inmiş olabilir.
+      const engel2 = bulutYazmaEngeli();
+      if (engel2) return { yazildi: false, sebep: engel2.kod };
+      if (taze.ozet && taze.ozet.toplam > 0) {
+        tanimRef.current = taze.tanimlar; setTanimlar(taze.tanimlar);
+        gunlukYaz(`Tanımlar sunucudan tazelendi (${tetikleyen}, ${bayatlik}): ${taze.ozet.metin}`, "tanimlar", { tetikleyen, bayatlik, ozet: taze.ozet.metin });
+      }
+      guncel = taze.tanimlar;
+    }
+    const next = hesapla(guncel);
+    if (!next || next === guncel) return { yazildi: false, sebep: "degisiklik-yok", tanimlar: guncel };
+    if (kodlu) { tanimlarKodluYaz(next, tetikleyen); await kodluYazSonRef.current; } else await saveTanimlar(next, { tetikleyen });
+    return { yazildi: true, tanimlar: next };
+  };
+  otomatikTanimYazIsiRef.current = otomatikTanimYazIsi;
+  otomatikTanimYazRef.current = otomatikTanimYaz;
 
   // ÜRÜNÜN BARKODUNU TAMAMLA (v1.579.0 — kullanıcı: "Stokta renk, beden, boyut vs. açıldığında barkodunu otomatik
   // oluştursun; sadece asorti barkodunu kullanıcı oluştursun"). Bağcık'ta "100 Cm" / "120 cm" Tanımlar'da yoktu → ölçü kodu "—",
@@ -3030,16 +3158,22 @@ function AtolyeUygulamasi() {
   }, [maasBekleyen, showToast]);
   // BÖLÜM GİDER KARTLARI (v1.587.0): kartı olmayan bölüme (v1.585'te açılmış Kesimhane gibi) "<Bölüm> işçiliği" kartı
   // açılır; maaş tahakkukları oraya bağlanır. Tanımlar bütün olarak, bulutla birleşerek yazılır (v1.552). Bir kez.
+  // OTOMATİK TANIM YAZMASI (v1.744.16 — 11 Kasım 20:19 kaydının olası tetikleyicisi): ortak girişten (`otomatikTanimYaz`):
+  // oturum kapalı / eksik yükleme → hiç başlamaz; tanımlar bayatsa önce sunucu okunur, okunamazsa yazılmaz; kartlar GÜNCEL
+  // tanımlar üzerinde hesaplanır. İşaret yalnız gerçekten denendiğinde (kapı açık, tazeleme başarılı) konur — kapalıyken
+  // oturum açılınca (bağımlılık `yazmaOturumu`) yeniden denenir.
   const bolumKartImzaRef = useRef(false);
   useEffect(() => {
     if (loading || baglantiYok || bolumKartImzaRef.current) return;
     // PROSES GİDER KARTLARI da (v1.693, 246): bağı olmayan prosese "<Proses> işçiliği", hammadde çıkışına kart.
-    const next = prosesGiderKartlariniTamamla(bolumKartlariniTamamla(tanimlar));
-    if (next === tanimlar) return;
+    const hesapla = (t) => prosesGiderKartlariniTamamla(bolumKartlariniTamamla(t));
+    if (hesapla(tanimlar) === tanimlar) return;
     bolumKartImzaRef.current = true;
-    saveTanimlar(next);
-    showToast("İşçilik gider kartları açılıp proseslere bağlandı (Finans › Gelir / Gider)");
-  }, [loading, baglantiYok, tanimlar, saveTanimlar, showToast]);
+    otomatikTanimYazRef.current("işçilik gider kartı tamamlama", hesapla).then((r) => {
+      if (r && r.yazildi) showToast("İşçilik gider kartları açılıp proseslere bağlandı (Finans › Gelir / Gider)");
+      else if (r && r.sebep !== "degisiklik-yok") bolumKartImzaRef.current = false;
+    });
+  }, [loading, baglantiYok, tanimlar, saveTanimlar, showToast, yazmaOturumu, tanimBayatDalgasi]);
 
   // KOD ÇAKIŞMASI KENDİLİĞİNDEN ONARILIR (v1.556.0, 089 `tanimKodlariniOnar`). Kullanıcı: "Renk kodları
   // çakışıyor, burayı düzeltmiştik daha önce!" — iki cihazın aynı anda verdiği barkod kodları tanım
@@ -3054,11 +3188,16 @@ function AtolyeUygulamasi() {
     const imza = o.degisenler.map((d) => `${d.id}:${d.alan}:${d.eski}`).join("|");
     if (kodOnarimImzaRef.current === imza) return;
     kodOnarimImzaRef.current = imza;
-    tanimlarKodluYaz(o.tanimlar);
-    const metin = o.degisenler.map((d) => `${d.ad}: ${d.alan === "kod" ? "renk kodu" : `${d.aile} barkod kodu`} ${d.eski || "yok"} → ${d.yeni}`).join(" · ");
-    gunlukYaz(`Kod çakışması onarıldı: ${metin}`, "tanimlar", { degisenler: o.degisenler });
-    showToast(`Kod çakışması onarıldı — ${metin}. Bu renklerin etiketini bastıysanız yeniden basın.`);
-  }, [loading, tanimlar, tanimlarKodluYaz, showToast]);
+    // OTOMATİK TANIM YAZMASI (v1.744.16): ortak girişten; onarım GÜNCEL tanımlar üzerinde yeniden hesaplanır (bayat kopyada
+    // görülen "çakışma" sunucuda çoktan çözülmüş olabilir). Yazılamazsa imza silinir — oturum açılınca yeniden denenir.
+    let son = null;
+    otomatikTanimYazRef.current("kod çakışması onarımı", (t) => { son = tanimKodlariniOnar(t); return son.degisenler.length ? son.tanimlar : t; }, { kodlu: true }).then((r) => {
+      if (!r || !r.yazildi) { if (r && r.sebep !== "degisiklik-yok") kodOnarimImzaRef.current = ""; return; }
+      const metin = son.degisenler.map((d) => `${d.ad}: ${d.alan === "kod" ? "renk kodu" : `${d.aile} barkod kodu`} ${d.eski || "yok"} → ${d.yeni}`).join(" · ");
+      gunlukYaz(`Kod çakışması onarıldı: ${metin}`, "tanimlar", { degisenler: son.degisenler, tetikleyen: "kod çakışması onarımı" });
+      showToast(`Kod çakışması onarıldı — ${metin}. Bu renklerin etiketini bastıysanız yeniden basın.`);
+    });
+  }, [loading, tanimlar, tanimlarKodluYaz, showToast, yazmaOturumu, tanimBayatDalgasi]);
 
   // STOK NO ÇAKIŞMASI (v1.606.0, 089 `stokNoCakismalariniOnar`): (1) yerelde aynı numaralı iki ürün → en eski korur,
   // diğeri yeni numara; stok her değişince denetlenir, aynı imza bir kez. (2) Bulut 409 `urunler_stok_no_tekil` deyince
@@ -3072,12 +3211,18 @@ function AtolyeUygulamasi() {
     const imza = o.degisenler.map((d) => `${d.id}:${d.eski}`).join("|");
     if (stokNoOnarimImzaRef.current === imza) return;
     stokNoOnarimImzaRef.current = imza;
-    saveStok(o.stok);
-    tanimlarKodluYaz(o.tanimlar);
-    const metin = o.degisenler.map((d) => `${d.ad}: ${String(d.eski).padStart(4, "0")} → ${String(d.yeni).padStart(4, "0")}`).join(" · ");
-    gunlukYaz(`Stok no çakışması onarıldı: ${metin}`, "stok", { degisenler: o.degisenler });
-    showToast(`Stok no çakışması onarıldı — ${metin}. Bu ürünün etiketini bastıysanız yeniden basın.`);
-  }, [loading, stok, tanimlar, saveStok, tanimlarKodluYaz, showToast]);
+    // OTOMATİK TANIM YAZMASI (v1.744.16): önce tanımlar (sayaç) ortak girişten — kapı kapalı / tazeleme başarısızsa stok da
+    // yazılmaz; onarım güncel sayaç üzerinde yeniden hesaplanır.
+    let son = null;
+    const stokSimdi = stok;
+    otomatikTanimYazRef.current("stok no çakışması onarımı", (t) => { son = stokNoCakismalariniOnar(stokSimdi, t); return son.degisenler.length ? son.tanimlar : t; }, { kodlu: true }).then((r) => {
+      if (!r || !r.yazildi) { if (r && r.sebep !== "degisiklik-yok") stokNoOnarimImzaRef.current = ""; return; }
+      saveStok(son.stok);
+      const metin = son.degisenler.map((d) => `${d.ad}: ${String(d.eski).padStart(4, "0")} → ${String(d.yeni).padStart(4, "0")}`).join(" · ");
+      gunlukYaz(`Stok no çakışması onarıldı: ${metin}`, "stok", { degisenler: son.degisenler, tetikleyen: "stok no çakışması onarımı" });
+      showToast(`Stok no çakışması onarıldı — ${metin}. Bu ürünün etiketini bastıysanız yeniden basın.`);
+    });
+  }, [loading, stok, tanimlar, saveStok, tanimlarKodluYaz, showToast, yazmaOturumu, tanimBayatDalgasi]);
   const bulutStokNoOnarimRef = useRef(0);
   useEffect(() => {
     if (!yazmaHatasi || !/urunler_stok_no_tekil/.test(String(yazmaHatasi.mesaj || ""))) return;
@@ -3088,8 +3233,10 @@ function AtolyeUygulamasi() {
       (Array.isArray(satirlar) ? satirlar : []).forEach((r) => { if (r && r.stok_no > 0) bulut[r.stok_no] = r.id; });
       const o = stokNoCakismalariniOnar(stok, tanimlar, bulut);
       if (o.degisenler.length === 0) { showToast("Stok no çakışması: bulutla karşılaştırıldı, bu cihazda çakışan ürün bulunamadı — sayfayı yenileyip tekrar deneyin"); return; }
+      // v1.744.16: kapı kapalıysa (oturum / eksik yükleme) onarım yazılmaz — sonraki hata bildiriminde yeniden denenir.
+      if (bulutYazmaEngeli()) { bulutStokNoOnarimRef.current = 0; return; }
       saveStok(o.stok);
-      tanimlarKodluYaz(o.tanimlar);
+      tanimlarKodluYaz(o.tanimlar, "stok no çakışması onarımı (bulut)");
       const metin = o.degisenler.map((d) => `${d.ad}: ${String(d.eski).padStart(4, "0")} → ${String(d.yeni).padStart(4, "0")}`).join(" · ");
       gunlukYaz(`Stok no çakışması bulutla onarıldı: ${metin}`, "stok", { degisenler: o.degisenler });
       showToast(`Stok no çakışması onarıldı (bulutta aynı numara başka üründe) — ${metin}. Etiket bastıysanız yeniden basın.`);
@@ -4192,6 +4339,7 @@ function AtolyeUygulamasi() {
 
   const kullaniciCikisYap = () => {
     gunlukYaz("Çıkış yaptı", "oturum", {});
+    yazmaOturumuAyarla("kapali");   // v1.744.16: çizimi beklemeden — kuyruktaki yazma bu andan sonra sunucuya gitmez
     // Bulut jetonu da düşürülür. Yalnızca ekranı kapatıp jetonu bırakmak, "çıkış yaptım"
     // sanan kullanıcının oturumunun açık kalması demekti.
     supabaseCikis();

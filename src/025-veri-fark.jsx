@@ -271,7 +271,10 @@ function gunlukYaz(eylem, kapsam, ayrinti) {
     kullanici_ad: _gunlukKullanici.ad,
     eylem: String(eylem || "").slice(0, 200),
     kapsam: kapsam || null,
-    ayrinti: ayrinti || {},
+    // CİHAZ + SÜRÜM (v1.744.16 — kullanıcı: 20:19 "Bilinmeyen" kaydının hangi cihazdan geldiği bilinmiyordu). Her kayda bu
+    // tarayıcının kimliği (091 `cihazKimligi`, rastgele), kısa tarifi ve uygulama sürümü; parola / oturum anahtarı YAZILMAZ.
+    ayrinti: { ...(ayrinti || {}), cihaz: typeof cihazKimligi === "function" ? cihazKimligi() : null,
+      cihazTarifi: typeof cihazTarifi === "function" ? cihazTarifi() : null, surum: typeof SURUM !== "undefined" ? SURUM : null },
   };
   supabaseIstek("gunluk", {
     method: "POST",

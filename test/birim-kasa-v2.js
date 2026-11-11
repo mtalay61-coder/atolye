@@ -28,6 +28,8 @@ global.fetch = async (url, sec = {}) => {
 const { kasaV2Yuku, kasaV2Parcala, kasaV2YukBosMu, kasaV2AktifAyarla, kasaZarfiAc, v2KopruGonder, bekleyenYazmalariOku,
   tekilYaz, tekilTabanAyarla, tekilTabanOku, yazmaZarfi, supabaseTabloEsitle, tabloBaslangicTam, surumleriYukle,
   cariV2AktifAyarla } = require("./erp.cjs");
+// YAZMA KAPISI (v1.744.16, 030): sunucu yazmaları oturum açıkken gider — bu sınama oturumu açık kabul eder (App'in bildirdiği gibi).
+require("./erp.cjs").yazmaOturumuAyarla("acik");
 
 let hata = 0;
 const bekle = (ad, a, b) => {

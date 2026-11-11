@@ -240,6 +240,13 @@ async function supabasedenOku(secenek = {}) {
     return { ...ekiKokeAc(kayitaCevir(o)), prosesIlerleme: ilerleme };
   });
 
+  // TANIM TABANI + TAZELİK (v1.744.16, 030): tanım okuması bu cihazın bildiği son sunucu hâlidir — tanım yazmasının üç yönlü
+  // uzlaştırması (089 `tanimlarUzlastir`) ve otomatik tanım yazmalarının "taze mi?" sorusu buna dayanır.
+  if (okunur("tanimlar")) {
+    const tv = (tanimSatir[0] && tanimSatir[0].veri) || null;
+    if (tv) tekilTabanAyarla("tanimlar", tv);
+    tanimlarOkundu();
+  }
   return {
     tanimlar: (tanimSatir[0] && tanimSatir[0].veri) || null,
     cariler, stok, siparisler, uretim,
