@@ -130,3 +130,6 @@ grant select, insert, update, delete on public.gunluk to authenticated;
 create table if not exists public.modeller (id text primary key, veri jsonb, surum integer default 1);
 create table if not exists public.gorevler (id text primary key, veri jsonb, surum integer default 1);
 grant select, insert, update, delete on public.modeller, public.gorevler to authenticated;
+-- 11 Kasım: canlıda urunler'in sunucu kayıt zamanı sütunu var (açılış okuması select=* ile getirir, görselsiz tazeleme getirmez).
+-- Dolu olduğu üründe yanlış "Başka cihazdan güncellendi: Stok" çıkıyordu (canlı günlük: ek.olusturma) — sınama ortamında da olsun.
+alter table public.urunler add column if not exists olusturma timestamptz default now();

@@ -492,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.744.11";
-const SURUM_TARIHI = "2026-11-10";
-const SURUM_NOTU = "Sunucu fişli tahsilat ve ödemeler \"Son tahsilat ve ödemeler\" listesinde görünür";
+const SURUM = "1.744.12";
+const SURUM_TARIHI = "2026-11-11";
+const SURUM_NOTU = "Tahsilat / ödemeler listede görünür; yanlış \"Başka cihazdan güncellendi\" bildirimi giderildi";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -525,6 +525,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" };   // teklif: v1.723.0, Sipariş'in alt sekmesi
 
 const SURUM_GECMISI = [
+  { surum: "1.744.12", tarih: "11.11.2026", eklenen: [], degisen: [], duzeltilen: ["Kayıttan sonra yanlış \"Başka cihazdan güncellendi: Stok\": sunucunun kendi tuttuğu oluşturma zamanı (açılışta okunur, tazelemede okunmaz) içerik değişikliği sanılıyordu. Aynı sayının sayı / yazı hâli de artık aynı sayılır."] },
   { surum: "1.744.11", tarih: "10.11.2026", eklenen: [], degisen: [], duzeltilen: ["Ödeme & Tahsilat: cariye girilen tahsilat / ödeme kasaya ve cariye işleniyor ama \"Son tahsilat ve ödemeler\" listesinde görünmüyordu (sunucunun verdiği TH- / ÖD- fiş numaraları tanınmıyordu). Ödeme raporunda ve Fişler ekranında ÖD- ödemeleri tahsilat sayılıyordu; düzeldi."] },
   { surum: "1.744.10", tarih: "08.11.2026", eklenen: ["\"Başka cihazdan güncellendi\" notu günlükte hangi kaydın hangi alanının farklı çıktığını da yazar (değer yazmaz)."], degisen: [], duzeltilen: ["Tek cihazla çalışırken kayıttan ~12 sn sonra yanlış \"Başka cihazdan güncellendi: Stok\" çıkıyordu: görseli olmayan üründe ekrandaki boş görsel listesi bulutun boş alanından farklı sayılıyordu.", "Elle indirilen JSON yedeğinde teklifler yoktu; artık var ve dosyadan geri yüklenince teklifler de gelir."] },
   { surum: "1.744.9", tarih: "07.11.2026", eklenen: [], degisen: ["Proses silmeden önce, proses hiçbir yerde kullanılmıyorsa da onay sorulur."], duzeltilen: ["Tanımlar › Üretim › Prosesler: dar ekranda (tablet) satırın sağındaki aşağı taşı ve sil düğmeleri kesiliyordu; satır artık alt satıra kayar, düğmeler her zaman görünür."] },

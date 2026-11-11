@@ -110,15 +110,28 @@ function _icerikDegeri(v) {
   // "{}" ≠ null sayılıp her kayıttan ~12 sn sonra yanlış not çıkıyordu (ekran sınaması 7 Kasım; tanı: tabloIcerikFarki →
   // "urunler|u-ham: renk_resimleri"). Boş nesne / boş dizi null'la aynı sayılır — içerik taşımaz.
   if (typeof v === "object") { const j = kararliJson(v, true); return (j === "{}" || j === "[]") ? null : j; }
+  // SAYI = AYNI SAYININ YAZISI (v1.744.11): sütun türü ile uygulamadaki tür ayrışabiliyor (ör. cari `kod`: canlıda integer,
+  // eski şemada text) — 1 ile "1" aynı içerik; ekran sınamasında "cariler|c-yeni: kod" yanlış farkı.
+  if (typeof v === "number") return String(v);
   return v;
 }
+// SUNUCU KAYIT BİLGİLERİ İÇERİK DEĞİL (v1.744.11 — canlı günlük, 8 ve 10 Kasım: "urunler|stok-mw7p3274-p56w: ek.olusturma").
+// Açılış okuması `select=*` ile sunucunun kendi sütunlarını (olusturma, guncelleme…) da getirir; URUN_SUTUNLARI'nda olmadıkları
+// için yazma biçiminde `ek`e düşerler. Değişiklik yoklamasındaki görselsiz okuma yalnız uygulama sütunlarını seçer → bu alan
+// orada YOK. Sütunu dolu tek ürün her kayıttan sonra "değişmiş" görünüyor, yanlış "Başka cihazdan güncellendi: Stok" çıkıyordu.
+// Bu alanları kullanıcı girmez, sunucu yazar: karşılaştırmada (üst düzeyde de `ek` içinde de) yok sayılır.
+const SUNUCU_KAYIT_ALANLARI = new Set(["olusturma", "guncelleme", "olusturan", "guncelleyen"]);
 // İlk farklı alanın adı (yoksa null). `ek.alan` biçiminde; fark tanısı için (tabloIcerikFarki).
 function _satirFarki(yerel, bulut) {
   if (!bulut) return "(bulutta yok)";
   for (const k of Object.keys(yerel)) {
+    if (SUNUCU_KAYIT_ALANLARI.has(k)) continue;
     if (k === "ek" && yerel.ek && typeof yerel.ek === "object" && !Array.isArray(yerel.ek)) {
       const be = (bulut.ek && typeof bulut.ek === "object") ? bulut.ek : {};
-      for (const a of Object.keys(yerel.ek)) if (_icerikDegeri(yerel.ek[a]) !== _icerikDegeri(be[a])) return `ek.${a}`;
+      for (const a of Object.keys(yerel.ek)) {
+        if (SUNUCU_KAYIT_ALANLARI.has(a)) continue;
+        if (_icerikDegeri(yerel.ek[a]) !== _icerikDegeri(be[a])) return `ek.${a}`;
+      }
       continue;
     }
     if (_icerikDegeri(yerel[k]) !== _icerikDegeri(bulut[k])) return k;

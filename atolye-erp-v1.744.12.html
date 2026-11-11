@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.744.9</title>
+<title>Atölye ERP 1.744.12</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2319,9 +2319,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.744.9";
-const SURUM_TARIHI = "2026-11-07";
-const SURUM_NOTU = "Tanımlar › Üretim: proses sil düğmesi tablette görünür";
+const SURUM = "1.744.12";
+const SURUM_TARIHI = "2026-11-11";
+const SURUM_NOTU = "Tahsilat / ödemeler listede görünür; yanlış \"Başka cihazdan güncellendi\" bildirimi giderildi";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2351,6 +2351,9 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 }
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" }; // teklif: v1.723.0, Sipariş'in alt sekmesi
 const SURUM_GECMISI = [
+    { surum: "1.744.12", tarih: "11.11.2026", eklenen: [], degisen: [], duzeltilen: ["Kayıttan sonra yanlış \"Başka cihazdan güncellendi: Stok\": sunucunun kendi tuttuğu oluşturma zamanı (açılışta okunur, tazelemede okunmaz) içerik değişikliği sanılıyordu. Aynı sayının sayı / yazı hâli de artık aynı sayılır."] },
+    { surum: "1.744.11", tarih: "10.11.2026", eklenen: [], degisen: [], duzeltilen: ["Ödeme & Tahsilat: cariye girilen tahsilat / ödeme kasaya ve cariye işleniyor ama \"Son tahsilat ve ödemeler\" listesinde görünmüyordu (sunucunun verdiği TH- / ÖD- fiş numaraları tanınmıyordu). Ödeme raporunda ve Fişler ekranında ÖD- ödemeleri tahsilat sayılıyordu; düzeldi."] },
+    { surum: "1.744.10", tarih: "08.11.2026", eklenen: ["\"Başka cihazdan güncellendi\" notu günlükte hangi kaydın hangi alanının farklı çıktığını da yazar (değer yazmaz)."], degisen: [], duzeltilen: ["Tek cihazla çalışırken kayıttan ~12 sn sonra yanlış \"Başka cihazdan güncellendi: Stok\" çıkıyordu: görseli olmayan üründe ekrandaki boş görsel listesi bulutun boş alanından farklı sayılıyordu.", "Elle indirilen JSON yedeğinde teklifler yoktu; artık var ve dosyadan geri yüklenince teklifler de gelir."] },
     { surum: "1.744.9", tarih: "07.11.2026", eklenen: [], degisen: ["Proses silmeden önce, proses hiçbir yerde kullanılmıyorsa da onay sorulur."], duzeltilen: ["Tanımlar › Üretim › Prosesler: dar ekranda (tablet) satırın sağındaki aşağı taşı ve sil düğmeleri kesiliyordu; satır artık alt satıra kayar, düğmeler her zaman görünür."] },
     { surum: "1.744.8", tarih: "04.11.2026", eklenen: [], degisen: ["Üretim silme sunucuda tek işlemde yapılır: fişler iptal edilir ve üretim silinir, ya da hiçbiri (sunucuda uretim_sil kuruluysa).", "Fiş kesilmeden yazılmış eski hareketi olan çöp kaydı (ürün / cari) geri yüklenmez; kayıt çöpte kalır."], duzeltilen: ["Eski (fiş kesilmeden yazılmış) hareketi olan üretim silinince üretim kaydı gidiyor, hareketleri sunucuda geçerli kalıyordu; artık ya tamamı yapılır ya hiçbir kayıt değişmez.", "Fişsiz eski cari hareketi olan üretim silinmez; sebep söylenir.", "Başka cihazın az önce yazdığı ve ekranda görünmeyen hareketi olan üretim sessizce silinmez."] },
     { surum: "1.744.7", tarih: "03.11.2026", eklenen: [], degisen: ["Sipariş silmede hata iletisi \"iptal edilemedi\" yerine \"silinemedi\" der."], duzeltilen: ["Fişleri silinmiş (iptal edilmiş) sipariş silinemiyordu (KR002); artık silinir. İptal edilmemiş fişi olan sipariş yine silinmez, iptal edilmiş olarak kalır."] },
@@ -8773,21 +8776,49 @@ function _icerikDegeri(v) {
         const t = Date.parse(v);
         return Number.isNaN(t) ? v : t;
     }
-    if (typeof v === "object")
-        return kararliJson(v, true);
+    // BOŞ LİSTE = BOŞ ALAN (v1.744.10 — yanlış "Başka cihazdan güncellendi: Stok"): görselsiz üründe ekrandaki kopya
+    // `renkResimleri: {}` taşıyor, buluttaki sütun null (ve görselsiz okumada hiç gelmiyor); ikisi de "görsel yok" ama
+    // "{}" ≠ null sayılıp her kayıttan ~12 sn sonra yanlış not çıkıyordu (ekran sınaması 7 Kasım; tanı: tabloIcerikFarki →
+    // "urunler|u-ham: renk_resimleri"). Boş nesne / boş dizi null'la aynı sayılır — içerik taşımaz.
+    if (typeof v === "object") {
+        const j = kararliJson(v, true);
+        return (j === "{}" || j === "[]") ? null : j;
+    }
+    // SAYI = AYNI SAYININ YAZISI (v1.744.11): sütun türü ile uygulamadaki tür ayrışabiliyor (ör. cari `kod`: canlıda integer,
+    // eski şemada text) — 1 ile "1" aynı içerik; ekran sınamasında "cariler|c-yeni: kod" yanlış farkı.
+    if (typeof v === "number")
+        return String(v);
     return v;
 }
-function _satirAyni(yerel, bulut) {
+// SUNUCU KAYIT BİLGİLERİ İÇERİK DEĞİL (v1.744.11 — canlı günlük, 8 ve 10 Kasım: "urunler|stok-mw7p3274-p56w: ek.olusturma").
+// Açılış okuması `select=*` ile sunucunun kendi sütunlarını (olusturma, guncelleme…) da getirir; URUN_SUTUNLARI'nda olmadıkları
+// için yazma biçiminde `ek`e düşerler. Değişiklik yoklamasındaki görselsiz okuma yalnız uygulama sütunlarını seçer → bu alan
+// orada YOK. Sütunu dolu tek ürün her kayıttan sonra "değişmiş" görünüyor, yanlış "Başka cihazdan güncellendi: Stok" çıkıyordu.
+// Bu alanları kullanıcı girmez, sunucu yazar: karşılaştırmada (üst düzeyde de `ek` içinde de) yok sayılır.
+const SUNUCU_KAYIT_ALANLARI = new Set(["olusturma", "guncelleme", "olusturan", "guncelleyen"]);
+// İlk farklı alanın adı (yoksa null). `ek.alan` biçiminde; fark tanısı için (tabloIcerikFarki).
+function _satirFarki(yerel, bulut) {
     if (!bulut)
-        return false;
-    return Object.keys(yerel).every((k) => {
+        return "(bulutta yok)";
+    for (const k of Object.keys(yerel)) {
+        if (SUNUCU_KAYIT_ALANLARI.has(k))
+            continue;
         if (k === "ek" && yerel.ek && typeof yerel.ek === "object" && !Array.isArray(yerel.ek)) {
             const be = (bulut.ek && typeof bulut.ek === "object") ? bulut.ek : {};
-            return Object.keys(yerel.ek).every((a) => _icerikDegeri(yerel.ek[a]) === _icerikDegeri(be[a]));
+            for (const a of Object.keys(yerel.ek)) {
+                if (SUNUCU_KAYIT_ALANLARI.has(a))
+                    continue;
+                if (_icerikDegeri(yerel.ek[a]) !== _icerikDegeri(be[a]))
+                    return `ek.${a}`;
+            }
+            continue;
         }
-        return _icerikDegeri(yerel[k]) === _icerikDegeri(bulut[k]);
-    });
+        if (_icerikDegeri(yerel[k]) !== _icerikDegeri(bulut[k]))
+            return k;
+    }
+    return null;
 }
+function _satirAyni(yerel, bulut) { return _satirFarki(yerel, bulut) === null; }
 function _tabloSatirHaritasi(tablo, kayitlar) {
     const sema = TABLO_SEMA[tablo];
     const ana = new Map();
@@ -8800,26 +8831,38 @@ function _tabloSatirHaritasi(tablo, kayitlar) {
     });
     return { ana, cocuk };
 }
-function tabloIcerikAyni(tablo, yerelKayitlar, bulutKayitlar) {
+// FARKIN NEDENİ (v1.744.10): yanlış "Başka cihazdan güncellendi" bildiriminin kaynağını görebilmek için ilk farkı adıyla
+// döner (null = aynı): "sayı: yerel 3 / bulut 4", "stok_hareketleri|h1: miktar" gibi — değer YAZILMAZ (kayıt kimliği ve alan adı).
+// Uygulama bunu "Başka cihazdan güncellendi" günlük satırına ekler; bir sonraki yanlış bildirim nedenini kendisi söyler.
+function tabloIcerikFarki(tablo, yerelKayitlar, bulutKayitlar) {
     if (!TABLO_SEMA[tablo])
-        return degisiklikIcerikAyni(yerelKayitlar, bulutKayitlar);
+        return degisiklikIcerikAyni(yerelKayitlar, bulutKayitlar) ? null : "içerik";
     try {
         const y = _tabloSatirHaritasi(tablo, yerelKayitlar);
         const b = _tabloSatirHaritasi(tablo, bulutKayitlar);
-        if (y.ana.size !== b.ana.size || y.cocuk.size !== b.cocuk.size)
-            return false;
-        for (const [id, r] of y.ana)
-            if (!_satirAyni(r, b.ana.get(id)))
-                return false;
-        for (const [id, r] of y.cocuk)
-            if (!_satirAyni(r, b.cocuk.get(id)))
-                return false;
-        return true;
+        if (y.ana.size !== b.ana.size)
+            return `${tablo} sayısı: yerel ${y.ana.size} / bulut ${b.ana.size}`;
+        if (y.cocuk.size !== b.cocuk.size) {
+            const eksik = [...b.cocuk.keys()].find((k) => !y.cocuk.has(k)) || [...y.cocuk.keys()].find((k) => !b.cocuk.has(k));
+            return `alt kayıt sayısı: yerel ${y.cocuk.size} / bulut ${b.cocuk.size} (ör. ${eksik})`;
+        }
+        for (const [id, r] of y.ana) {
+            const f = _satirFarki(r, b.ana.get(id));
+            if (f)
+                return `${tablo}|${id}: ${f}`;
+        }
+        for (const [id, r] of y.cocuk) {
+            const f = _satirFarki(r, b.cocuk.get(id));
+            if (f)
+                return `${id}: ${f}`;
+        }
+        return null;
     }
     catch (e) {
-        return false;
+        return "karşılaştırma hatası";
     }
 }
+function tabloIcerikAyni(tablo, yerelKayitlar, bulutKayitlar) { return tabloIcerikFarki(tablo, yerelKayitlar, bulutKayitlar) === null; }
 // KİMİN YAPTIĞI — KAYIT KAPISINDA DAMGA (v1.645.9).
 //
 // Kullanıcı (Anasayfa › Son işlemler görüntüsüyle): "İşlemi yapan kullanıcı yazmıyor." Akışta yalnız fiş/tahsilat
@@ -21910,6 +21953,9 @@ function useYedekleme(d) {
             surum: 3, gorsellerHaric: false, uygulama: `Atölye ERP ${SURUM}`,
             stok, siparisler, uretim, cariler, tanimlar, muhasebe, koliler, cekGorselleri, gorevler, mesajlar,
             faturalar: faturalar || [], stokRezervasyonlari: stokRezervasyonlari || [], onaylar: onaylar || [], fisDefteri: fisDefteri || null, modeller: modeller || [],
+            // TEKLİFLER (v1.744.10): elle indirilen JSON'da yoktu (bulut otomatik yedeğinde ve geri yüklemede vardı) — bu dosyadan
+            // geri dönülünce teklifler geri gelmiyordu.
+            teklifler: teklifler || [],
         };
         const blob = new Blob([JSON.stringify(yedek, null, 2)], { type: "application/json" });
         const url = URL.createObjectURL(blob);
@@ -23209,11 +23255,13 @@ function AtolyeUygulamasi() {
         // Çok satırlı alanlar YAZMA biçiminde karşılaştırılır (047 `tabloIcerikAyni`, v1.645.11); tek satırlılar düz.
         const ALAN_TABLOSU = { stok: "urunler", cariler: "cariler", siparisler: "siparisler", uretim: "uretim",
             stokRezervasyonlari: "stok_rezervasyonlari", onaylar: "onaylar", cop: "cop" };
+        const farklar = {};
         const ayni = (alan, yeni) => {
-            const esit = ALAN_TABLOSU[alan] ? tabloIcerikAyni(ALAN_TABLOSU[alan], g[alan], yeni) : degisiklikIcerikAyni(g[alan], yeni);
-            if (esit)
+            const fark = ALAN_TABLOSU[alan] ? tabloIcerikFarki(ALAN_TABLOSU[alan], g[alan], yeni) : (degisiklikIcerikAyni(g[alan], yeni) ? null : "içerik");
+            if (!fark)
                 return true;
             degisen.push(alan);
+            farklar[alan] = fark;
             return false;
         };
         alanlar.forEach((alan) => {
@@ -23295,6 +23343,7 @@ function AtolyeUygulamasi() {
             }
             catch (e) { /* bir sonraki turda */ }
         }
+        degisen.farklar = farklar; // tanı: günlüğe (aşağıda) — hangi kayıt / alan farklı çıktı
         return degisen;
     }, []);
     useEffect(() => {
@@ -23318,7 +23367,8 @@ function AtolyeUygulamasi() {
                     // İçeriği aynı çıkan alan (kendi geç görülen yazmamız) notta yazılmaz; hiçbiri değişmediyse not yok.
                     if (degisen.length) {
                         const adlar = degisen.map((a) => DEGISIKLIK_ALAN_ADI[a] || a).join(", ");
-                        gunlukYaz(`Başka cihazdan güncellendi: ${adlar}`, "veri", { tablolar: f.tablolar });
+                        gunlukYaz(`Başka cihazdan güncellendi: ${adlar}`, "veri", { tablolar: f.tablolar, farklar: degisen.farklar });
+                        console.info("[değişiklik] tazelendi:", adlar, JSON.stringify(degisen.farklar || {}));
                         showToast(`Başka cihazdan güncellendi: ${adlar}`);
                     }
                 }
@@ -28124,7 +28174,7 @@ function SonIslemlerPaneli({ cariler, stok, siparisler, muhasebe, onGoToCari, on
                 const odemeMi = islemTipi
                     ? (islemTipi === "Ödeme" || islemTipi === "Tahsilat")
                     : (/Ödeme|Tahsilat/i.test(ilk.aciklama || "") || (ilk.fisNo || "").startsWith("OTO")
-                        || /^(ODM|THS)-/.test(ilk.fisNo || ""));
+                        || !!paraFisNoTipi(ilk.fisNo)); // v1.744.11: sunucu fişi TH- / ÖD- de
                 // Toplam, kalemlerin tutarlarından. Para birimi karışıksa (nadir) ilk kalemin birimi
                 // gösteriliyor — fişin kayıt para birimi zaten tek olmalı.
                 const toplam = hareketler.reduce((t, h) => t + (h.tutar || 0), 0);
@@ -42401,16 +42451,42 @@ function hareketSadeOzet(urunGruplari, yapisizHareketler, ilk, g) {
         parcalar.push(aciklama);
     return parcalar.join(" · ") || "—";
 }
+// PARA FİŞİ NUMARASI → TÜR (v1.744.11). İki numara düzeni var: eski istemci fişi THS- / ODM-, sunucu fişi (tek fiş defteri,
+// 078 PARA_FIS_ONEKLERI) TH- / ÖD- ve çek cirosu ÇC- (eskiden ODM- alırdı). Sunucu öneklerini tanımayan dört yer vardı:
+// sunucunun kestiği tahsilat kasaya ve cariye işleniyor ama "Son tahsilat ve ödemeler"de GÖRÜNMÜYORDU (kullanıcı, 10 Kasım),
+// ödeme listede "Tahsilat" sayılıyordu. Tek yerde: herkes bunu çağırır.
+function paraFisNoTipi(fisNo) {
+    const f = String(fisNo || "");
+    if (/^(THS|TH)-/.test(f))
+        return "Tahsilat";
+    if (/^(ODM|ÖD|ÇC)-/.test(f))
+        return "Ödeme";
+    return null;
+}
+// Para hareketinin türü: alan (`islemTipi`, 207 kasaCariHareketiKur yazar) → numara → açıklamanın başı.
+function paraHareketTipi(h) {
+    if (!h)
+        return null;
+    if (h.islemTipi === "Tahsilat" || h.islemTipi === "Ödeme")
+        return h.islemTipi;
+    const t = paraFisNoTipi(h.fisNo);
+    if (t)
+        return t;
+    const yazi = String(h.aciklama || "").trim();
+    if (/^tahsilat/i.test(yazi))
+        return "Tahsilat";
+    if (/^ödeme/i.test(yazi))
+        return "Ödeme";
+    return null;
+}
 function hareketIslemTipi(h) {
     if (!h)
         return null;
     if (h.islemTipi)
         return h.islemTipi;
     const fis = String(h.fisNo || "");
-    if (fis.startsWith("THS-"))
-        return "Tahsilat";
-    if (fis.startsWith("ODM-"))
-        return "Ödeme";
+    if (paraFisNoTipi(fis))
+        return paraFisNoTipi(fis);
     if (fis.startsWith("AF-"))
         return "Alış";
     if (fis.startsWith("SF-"))
@@ -42433,7 +42509,9 @@ function hareketIslemTipi(h) {
 function paraHareketiMi(h) {
     if (!h)
         return false;
-    if (/^(THS|ODM)-/.test(String(h.fisNo || "")))
+    if (h.islemTipi === "Tahsilat" || h.islemTipi === "Ödeme")
+        return true; // v1.744.11: sunucu fişi (TH- / ÖD-)
+    if (paraFisNoTipi(h.fisNo))
         return true;
     return /^(tahsilat|ödeme)$/i.test(String(h.aciklama || "").trim());
 }
@@ -52922,7 +53000,7 @@ function CariModule({ onParaFisi, onFisIptal, tanimlar, onTanimlarKaydet, onMuha
         cariler.forEach((c) => (c.hareketler || []).forEach((h) => {
             if (!paraHareketiMi(h))
                 return;
-            const tip = /^ODM-/.test(String(h.fisNo || "")) || /^ödeme$/i.test(String(h.aciklama || "").trim()) ? "Ödeme" : "Tahsilat";
+            const tip = paraHareketTipi(h) === "Ödeme" ? "Ödeme" : "Tahsilat"; // v1.744.11: ÖD- (sunucu fişi) de ödeme
             if (odemeListeSuzgec !== "Tümü" && tip !== odemeListeSuzgec)
                 return;
             if (odemeDefterSuzgec !== "Tümü" && !defterKapsar(h.defter || "Genel", odemeDefterSuzgec))
@@ -53591,11 +53669,7 @@ function OdemeAlaniSeridi({ tab, onGit, gizli = [] }) {
 // dolan portföy çek/senetleri; (4) kayıt listesi. Kaynak YALNIZ mevcut kayıtlar: cari para hareketleri (THS-/ODM-,
 // `paraHareketiMi`), hesap hareketleri, çek defteri — ayrı bir rapor tablosu tutulmaz.
 function odemeHareketTipi(h) {
-    if (h.islemTipi === "Tahsilat" || h.islemTipi === "Ödeme")
-        return h.islemTipi;
-    if (/^ODM-/.test(String(h.fisNo || "")) || /^ödeme/i.test(String(h.aciklama || "").trim()))
-        return "Ödeme";
-    return "Tahsilat";
+    return paraHareketTipi(h) === "Ödeme" ? "Ödeme" : "Tahsilat"; // v1.744.11: ÖD- (sunucu fişi) de ödeme
 }
 function OdemeRaporu({ cariler, muhasebe, onCariAc }) {
     const bugun = bugunYerel();
@@ -57731,7 +57805,7 @@ const KILAVUZ = [
             "Cariyi yazıp seçin, tutarı ve para birimini girin. Kasa ya da banka hesabı zorunludur: para nereye girdi / nereden çıktı burada belli olur.",
             "Dövizli tutar TL kasaya giriyorsa kur ve TL karşılığı sorulur; cari dövizle, kasa TL ile hareket görür.",
             "Çekle tahsilatta çek bilgileri (banka, çek no, vade) doldurulur; çek, Çek & Senet ekranında portföye girer. Ciro, tahsile verme ve iade oradan yapılır.",
-            "Kaydedince fiş numarası (THS-/ODM-) verilir; cari ekstresinde ve kasa defterinde aynı numarayla birbirine bağlı görünür.",
+            "Kaydedince fiş numarası (TH-/ÖD-; eski kayıtlarda THS-/ODM-) verilir; cari ekstresinde ve kasa defterinde aynı numarayla birbirine bağlı görünür.",
             "Siparişe bağlı tahsilat sipariş kartındaki \"Tahsilat Gir\" ile girilir; sipariş kartı ödenen/kalanı gösterir.",
         ] },
     { b: "calisan", baslik: "Kasa & Banka, Çek & Senet", resimler: [{ d: "kasa-banka", a: "Kasa & Banka: hesaplar, bakiye ve hareket defteri" }, { d: "cek-senet", a: "Çek & Senet: portföy, durum ve vade" }], adimlar: [
@@ -72378,7 +72452,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.744.9)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.744.12)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

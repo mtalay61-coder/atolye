@@ -63,5 +63,12 @@ bekle("boş renk görseli {} = null: aynı", tabloIcerikAyni("urunler", yerelUru
 bekle("gerçek görsel eklendi: farklı", tabloIcerikAyni("urunler", [{ ...yerelUrun[0], renkResimleri: { Siyah: "data:x" } }], bulutUrun), false);
 bekle("ürün adı değişti: farkın adı söylenir", tabloIcerikFarki("urunler", yerelUrun, [{ ...bulutUrun[0], ad: "Çizme" }]), "urunler|u1: ad");
 bekle("aynıysa fark yok", tabloIcerikFarki("urunler", yerelUrun, bulutUrun), null);
+// v1.744.11 — canlı günlük: "urunler|stok-mw7p3274-p56w: ek.olusturma". Açılış okumasında sunucu sütunu `olusturma` gelir
+// (ek'e düşer), görselsiz tazeleme okumasında gelmez.
+const acilistaOkunan = [{ ...yerelUrun[0], olusturma: "2026-11-03T13:56:14.953+00:00", guncelleme: "2026-11-10T18:36:03+00:00" }];
+bekle("sunucu kayıt zamanı (olusturma / guncelleme) içerik değil: aynı", tabloIcerikAyni("urunler", acilistaOkunan, bulutUrun), true);
+bekle("sunucu alanı varken gerçek değişiklik yine farklı", tabloIcerikFarki("urunler", acilistaOkunan, [{ ...bulutUrun[0], ad: "Çizme" }]), "urunler|u1: ad");
+bekle("cari kodu sayı / yazı: aynı", tabloIcerikAyni("cariler", [{ id: "c1", unvan: "A", kod: 1, hareketler: [] }], [{ id: "c1", unvan: "A", kod: "1", hareketler: [] }]), true);
+bekle("cari kodu değişti: farklı", tabloIcerikAyni("cariler", [{ id: "c1", unvan: "A", kod: 1, hareketler: [] }], [{ id: "c1", unvan: "A", kod: 2, hareketler: [] }]), false);
 if (hata) { console.log("BİRİM TESTİ HATA: değişiklik sayacı"); process.exit(1); }
 console.log("── değişiklik sayacı testi temiz ──");
