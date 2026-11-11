@@ -149,7 +149,7 @@ const KILAVUZ = [
     "Cariyi yazıp seçin, tutarı ve para birimini girin. Kasa ya da banka hesabı zorunludur: para nereye girdi / nereden çıktı burada belli olur.",
     "Dövizli tutar TL kasaya giriyorsa kur ve TL karşılığı sorulur; cari dövizle, kasa TL ile hareket görür.",
     "Çekle tahsilatta çek bilgileri (banka, çek no, vade) doldurulur; çek, Çek & Senet ekranında portföye girer. Ciro, tahsile verme ve iade oradan yapılır.",
-    "Kaydedince fiş numarası (THS-/ODM-) verilir; cari ekstresinde ve kasa defterinde aynı numarayla birbirine bağlı görünür.",
+    "Kaydedince fiş numarası (TH-/ÖD-; eski kayıtlarda THS-/ODM-) verilir; cari ekstresinde ve kasa defterinde aynı numarayla birbirine bağlı görünür.",
     "Siparişe bağlı tahsilat sipariş kartındaki \"Tahsilat Gir\" ile girilir; sipariş kartı ödenen/kalanı gösterir.",
   ] },
 

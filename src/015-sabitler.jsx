@@ -492,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.744.10";
-const SURUM_TARIHI = "2026-11-08";
-const SURUM_NOTU = "Yanlış \"Başka cihazdan güncellendi\" bildirimi giderildi; JSON yedeğinde teklifler var";
+const SURUM = "1.744.13";
+const SURUM_TARIHI = "2026-11-11";
+const SURUM_NOTU = "Reçetede uzun renk adları tam görünür; tahsilat / ödemeler listede; yanlış \"Başka cihazdan güncellendi\" giderildi";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -525,6 +525,9 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" };   // teklif: v1.723.0, Sipariş'in alt sekmesi
 
 const SURUM_GECMISI = [
+  { surum: "1.744.13", tarih: "11.11.2026", eklenen: [], degisen: ["Reçete renk eşleşmesinde renk sütunu başlığın uzunluğu kadar genişler; uzun renk adları \"…\" ile kesilmez, tablo sığmazsa sağa kaydırılır."], duzeltilen: [] },
+  { surum: "1.744.12", tarih: "11.11.2026", eklenen: [], degisen: [], duzeltilen: ["Kayıttan sonra yanlış \"Başka cihazdan güncellendi: Stok\": sunucunun kendi tuttuğu oluşturma zamanı (açılışta okunur, tazelemede okunmaz) içerik değişikliği sanılıyordu. Aynı sayının sayı / yazı hâli de artık aynı sayılır."] },
+  { surum: "1.744.11", tarih: "10.11.2026", eklenen: [], degisen: [], duzeltilen: ["Ödeme & Tahsilat: cariye girilen tahsilat / ödeme kasaya ve cariye işleniyor ama \"Son tahsilat ve ödemeler\" listesinde görünmüyordu (sunucunun verdiği TH- / ÖD- fiş numaraları tanınmıyordu). Ödeme raporunda ve Fişler ekranında ÖD- ödemeleri tahsilat sayılıyordu; düzeldi."] },
   { surum: "1.744.10", tarih: "08.11.2026", eklenen: ["\"Başka cihazdan güncellendi\" notu günlükte hangi kaydın hangi alanının farklı çıktığını da yazar (değer yazmaz)."], degisen: [], duzeltilen: ["Tek cihazla çalışırken kayıttan ~12 sn sonra yanlış \"Başka cihazdan güncellendi: Stok\" çıkıyordu: görseli olmayan üründe ekrandaki boş görsel listesi bulutun boş alanından farklı sayılıyordu.", "Elle indirilen JSON yedeğinde teklifler yoktu; artık var ve dosyadan geri yüklenince teklifler de gelir."] },
   { surum: "1.744.9", tarih: "07.11.2026", eklenen: [], degisen: ["Proses silmeden önce, proses hiçbir yerde kullanılmıyorsa da onay sorulur."], duzeltilen: ["Tanımlar › Üretim › Prosesler: dar ekranda (tablet) satırın sağındaki aşağı taşı ve sil düğmeleri kesiliyordu; satır artık alt satıra kayar, düğmeler her zaman görünür."] },
   { surum: "1.744.8", tarih: "04.11.2026", eklenen: [], degisen: ["Üretim silme sunucuda tek işlemde yapılır: fişler iptal edilir ve üretim silinir, ya da hiçbiri (sunucuda uretim_sil kuruluysa).", "Fiş kesilmeden yazılmış eski hareketi olan çöp kaydı (ürün / cari) geri yüklenmez; kayıt çöpte kalır."], duzeltilen: ["Eski (fiş kesilmeden yazılmış) hareketi olan üretim silinince üretim kaydı gidiyor, hareketleri sunucuda geçerli kalıyordu; artık ya tamamı yapılır ya hiçbir kayıt değişmez.", "Fişsiz eski cari hareketi olan üretim silinmez; sebep söylenir.", "Başka cihazın az önce yazdığı ve ekranda görünmeyen hareketi olan üretim sessizce silinmez."] },

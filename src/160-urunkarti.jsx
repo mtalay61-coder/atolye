@@ -19,6 +19,13 @@ const RECETE_MIKTAR_STILI = { fontWeight: 700, color: "var(--erp-wait)", backgro
 // sütunlar içeriğe göre daralıp genişliyor, kartlar alt alta hizalanmıyordu.
 const RECETE_POZ_GENISLIK = 190;
 const RECETE_RENK_GENISLIK = 165;
+// RENK SÜTUNU BAŞLIĞIN BOYU KADAR (v1.744.13 — kullanıcı: "reçetede renkler tam olsun, uzun renkler sıkışıyor, kaymalı olabilir").
+// Sütun 165 px sabitti; "1001 - SİYAH SÜET/SİYAH NAPA" gibi başlıklar "…" ile kesiliyordu. Genişlik başlığın uzunluğuna göre
+// büyür (en az 165); tablo zaten YatayKaydirma kutusunda — sığmayan kısım sağa kaydırılarak görülür. "eksik" rozeti için pay.
+function receteRenkGenisligi(mr, eksik) {
+  const harf = Array.from(String(mr || "")).length;
+  return Math.max(RECETE_RENK_GENISLIK, Math.ceil(harf * 9) + 24 + (eksik ? 56 : 0));
+}
 const RECETE_BIRIM_STILI = { fontSize: 12, fontWeight: 700, color: "var(--erp-wait)" };
 const GECMIS_RENK_STILI = { border: "2px solid var(--erp-danger)", background: "#FDECEC", color: "var(--erp-danger)" };
 const GECMIS_RENK_IPUCU = "Bu renk geçmiş reçetelerden HATIRLANDI — kontrol edin. Doğruysa üstteki 'Eşleştirmeleri onayla', değilse başka renk seçin.";
@@ -4076,16 +4083,16 @@ function ProductMatrixCard({
                             {/* YATAY KAYDIRMA ◀ ▶ (v1.636.0 — kullanıcı: "en sağdaki renk eşleşmelerini eşleyemiyorum"). */}
                             <YatayKaydirma veri="recete-matris" style={{ display: (pozisyonluSatirlar.length === 0 && hepsiAyniMiktarBu
                                 && kaynakSatirlar.every((r) => !olcuGoster(r.renk) && !olcuGoster(r.beden)) && eksikMamulRenkler2.length === 0) ? "none" : undefined }}>
-                              <table style={{ width: RECETE_POZ_GENISLIK + sutunlar2.length * RECETE_RENK_GENISLIK, tableLayout: "fixed", borderCollapse: "collapse" }}>
+                              <table style={{ width: RECETE_POZ_GENISLIK + sutunlar2.reduce((t, mr) => t + receteRenkGenisligi(mr, eksikSet2.has(mr)), 0), tableLayout: "fixed", borderCollapse: "collapse" }}>
                                 <colgroup>
                                   <col style={{ width: RECETE_POZ_GENISLIK }} />
-                                  {sutunlar2.map((mr) => <col key={mr} style={{ width: RECETE_RENK_GENISLIK }} />)}
+                                  {sutunlar2.map((mr) => <col key={mr} style={{ width: receteRenkGenisligi(mr, eksikSet2.has(mr)) }} />)}
                                 </colgroup>
                                 <thead>
                                   <tr>
                                     <th style={{ fontSize: 13, textAlign: "left", padding: "4px 8px" }}>Pozisyon</th>
                                     {sutunlar2.map((mr) => !eksikSet2.has(mr) ? (
-                                      <th key={mr} style={{ fontSize: 13, textAlign: "center", padding: "4px 8px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={mr}>{mr}</th>
+                                      <th key={mr} data-recete-renk-baslik={mr} style={{ fontSize: 13, textAlign: "center", padding: "4px 8px", whiteSpace: "nowrap" }} title={mr}>{mr}</th>
                                     ) : (
                                       <th
                                         key={`eksik-${mr}`}

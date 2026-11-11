@@ -131,6 +131,31 @@ const k_ = (ad, g, b) => { const ok = JSON.stringify(g) === JSON.stringify(b); i
   await yenile(sayfa);
   await olc("8 · sayfa yenilendi");
 
+  // 9 · CARİYE NAKİT TAHSİLAT (10 Kasım — kullanıcı: kasa işlemi girdim, "Son tahsilat ve ödemeler"de görünmedi). Sunucu fişi
+  // TH-… numarası alır; liste eskiden yalnız THS- / ODM- tanıyordu. Cari USD (kullanıcının durumu: TRY kasa, USD cari, kur).
+  await odemeAc();
+  await sayfa.locator('[data-odeme-tip="Tahsilat"]:visible').first().click();
+  await sayfa.locator('[data-odeme-sekli="Nakit"]:visible').first().click(); await sayfa.waitForTimeout(250);
+  const hd = sayfa.locator("[data-odeme-hesap]:visible");
+  if (await hd.count() > 1) await sayfa.locator("[data-odeme-hesap]:visible", { hasText: "Merkez" }).first().click();
+  const ck = sayfa.locator("[data-odeme-cari]:visible").first();
+  await ck.click(); await ck.fill("Ekran Müşteri"); await sayfa.waitForTimeout(300); await ck.press("Enter"); await sayfa.waitForTimeout(600);
+  await sayfa.locator("[data-odeme-satiri-tutar]:visible").first().fill("500"); await sayfa.waitForTimeout(200);
+  // TRY kasa → USD cari: kur yoksa (sınama ortamında kur servisi yok) "Cariye" kutusuna kur yazılır
+  const kurKutusu = sayfa.locator("[data-odeme-ikili-pb] input:visible");
+  for (let i = 0; i < await kurKutusu.count(); i++) { const g = kurKutusu.nth(i); if (!(await g.inputValue())) { await g.fill("50"); break; } }
+  await sayfa.waitForTimeout(200);
+  await sayfa.locator("[data-odeme-satiri-kaydet]:visible").first().click(); await sayfa.waitForTimeout(2500);
+  const thFis = (await k.sorgu(`select coalesce(h.fis_no, f.id) as fis_id from public.car_hareket h left join public.stk_fis f on f.id = h.fis_id where h.cari_id = 'ekr-musteri' order by h.olusturma desc limit 1`).catch(() => [{}]))[0] || {};
+  beklenen += 500;
+  console.log(`    cari tahsilat: fiş ${thFis.fis_id} · ${(await toastlar(sayfa)).slice(0, 120)}`);
+  k_("9 · tahsilat fişi TH- numaralı (sunucu fişi)", /^TH-/.test(String(thFis.fis_id || "")), true);
+  k_("9 · Son tahsilat ve ödemeler'de görünüyor", await sayfa.locator(`[data-odeme-son-satir="${thFis.fis_id}"]`).count() > 0, true);
+  await olc("9 · cariye nakit tahsilat 500 ₺");
+  await yenile(sayfa); await odemeAc();
+  k_("10 · yenilemeden sonra da listede", await sayfa.locator(`[data-odeme-son-satir="${thFis.fis_id}"]`).count() > 0, true);
+  await olc("10 · sayfa yenilendi");
+
   console.log("FİŞLER (sunucu, bu koşu)"); (await fisler()).forEach((f) => console.log(`    ${f.fis_id} ${f.tur} ${f.iptal ? "İPTAL" : "geçerli"} ${f.satir}`));
   const hatali = k.gunluk.filter((x) => x.durum >= 400 && !/^(onaylar|cop|cek_gorselleri|modeller|gorevler)$/.test(x.yol));
   console.log(`  ağ: ${k.gunluk.length} istek, hatalı ${hatali.length} ${JSON.stringify(hatali.slice(0, 8))}`);

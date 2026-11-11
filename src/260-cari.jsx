@@ -324,7 +324,7 @@ function CariModule({ onParaFisi, onFisIptal, tanimlar, onTanimlarKaydet, onMuha
       .forEach((hs) => (hs.hareketler || []).forEach((x) => { if (x.muhasebeBagId) bagHesap[x.muhasebeBagId] = hs.ad; }));
     cariler.forEach((c) => (c.hareketler || []).forEach((h) => {
       if (!paraHareketiMi(h)) return;
-      const tip = /^ODM-/.test(String(h.fisNo || "")) || /^ödeme$/i.test(String(h.aciklama || "").trim()) ? "Ödeme" : "Tahsilat";
+      const tip = paraHareketTipi(h) === "Ödeme" ? "Ödeme" : "Tahsilat";   // v1.744.11: ÖD- (sunucu fişi) de ödeme
       if (odemeListeSuzgec !== "Tümü" && tip !== odemeListeSuzgec) return;
       if (odemeDefterSuzgec !== "Tümü" && !defterKapsar(h.defter || "Genel", odemeDefterSuzgec)) return;
       // Defter süzgeci Resmi ise satır Resmi tutar/açıklamasıyla (200 hareketDefterde).
@@ -1316,9 +1316,7 @@ function OdemeAlaniSeridi({ tab, onGit, gizli = [] }) {
 // dolan portföy çek/senetleri; (4) kayıt listesi. Kaynak YALNIZ mevcut kayıtlar: cari para hareketleri (THS-/ODM-,
 // `paraHareketiMi`), hesap hareketleri, çek defteri — ayrı bir rapor tablosu tutulmaz.
 function odemeHareketTipi(h) {
-  if (h.islemTipi === "Tahsilat" || h.islemTipi === "Ödeme") return h.islemTipi;
-  if (/^ODM-/.test(String(h.fisNo || "")) || /^ödeme/i.test(String(h.aciklama || "").trim())) return "Ödeme";
-  return "Tahsilat";
+  return paraHareketTipi(h) === "Ödeme" ? "Ödeme" : "Tahsilat";   // v1.744.11: ÖD- (sunucu fişi) de ödeme
 }
 function OdemeRaporu({ cariler, muhasebe, onCariAc }) {
   const bugun = bugunYerel();

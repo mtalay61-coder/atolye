@@ -1148,12 +1148,33 @@ function hareketSadeOzet(urunGruplari, yapisizHareketler, ilk, g) {
   return parcalar.join(" · ") || "—";
 }
 
+// PARA FİŞİ NUMARASI → TÜR (v1.744.11). İki numara düzeni var: eski istemci fişi THS- / ODM-, sunucu fişi (tek fiş defteri,
+// 078 PARA_FIS_ONEKLERI) TH- / ÖD- ve çek cirosu ÇC- (eskiden ODM- alırdı). Sunucu öneklerini tanımayan dört yer vardı:
+// sunucunun kestiği tahsilat kasaya ve cariye işleniyor ama "Son tahsilat ve ödemeler"de GÖRÜNMÜYORDU (kullanıcı, 10 Kasım),
+// ödeme listede "Tahsilat" sayılıyordu. Tek yerde: herkes bunu çağırır.
+function paraFisNoTipi(fisNo) {
+  const f = String(fisNo || "");
+  if (/^(THS|TH)-/.test(f)) return "Tahsilat";
+  if (/^(ODM|ÖD|ÇC)-/.test(f)) return "Ödeme";
+  return null;
+}
+// Para hareketinin türü: alan (`islemTipi`, 207 kasaCariHareketiKur yazar) → numara → açıklamanın başı.
+function paraHareketTipi(h) {
+  if (!h) return null;
+  if (h.islemTipi === "Tahsilat" || h.islemTipi === "Ödeme") return h.islemTipi;
+  const t = paraFisNoTipi(h.fisNo);
+  if (t) return t;
+  const yazi = String(h.aciklama || "").trim();
+  if (/^tahsilat/i.test(yazi)) return "Tahsilat";
+  if (/^ödeme/i.test(yazi)) return "Ödeme";
+  return null;
+}
+
 function hareketIslemTipi(h) {
   if (!h) return null;
   if (h.islemTipi) return h.islemTipi;
   const fis = String(h.fisNo || "");
-  if (fis.startsWith("THS-")) return "Tahsilat";
-  if (fis.startsWith("ODM-")) return "Ödeme";
+  if (paraFisNoTipi(fis)) return paraFisNoTipi(fis);
   if (fis.startsWith("AF-")) return "Alış";
   if (fis.startsWith("SF-")) return "Satış";
   // ESKİ İŞÇİLİK KAYITLARI (23 Eylül, v1.433.0): `islemTipi` alanı v1.433 öncesinde yazılmıyordu;
@@ -1169,7 +1190,8 @@ function hareketIslemTipi(h) {
 
 function paraHareketiMi(h) {
   if (!h) return false;
-  if (/^(THS|ODM)-/.test(String(h.fisNo || ""))) return true;
+  if (h.islemTipi === "Tahsilat" || h.islemTipi === "Ödeme") return true;   // v1.744.11: sunucu fişi (TH- / ÖD-)
+  if (paraFisNoTipi(h.fisNo)) return true;
   return /^(tahsilat|ödeme)$/i.test(String(h.aciklama || "").trim());
 }
 

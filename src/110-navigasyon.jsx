@@ -307,7 +307,7 @@ function SonIslemlerPaneli({ cariler, stok, siparisler, muhasebe, onGoToCari, on
         const odemeMi = islemTipi
           ? (islemTipi === "Ödeme" || islemTipi === "Tahsilat")
           : (/Ödeme|Tahsilat/i.test(ilk.aciklama || "") || (ilk.fisNo || "").startsWith("OTO")
-             || /^(ODM|THS)-/.test(ilk.fisNo || ""));
+             || !!paraFisNoTipi(ilk.fisNo));   // v1.744.11: sunucu fişi TH- / ÖD- de
         // Toplam, kalemlerin tutarlarından. Para birimi karışıksa (nadir) ilk kalemin birimi
         // gösteriliyor — fişin kayıt para birimi zaten tek olmalı.
         const toplam = hareketler.reduce((t, h) => t + (h.tutar || 0), 0);
