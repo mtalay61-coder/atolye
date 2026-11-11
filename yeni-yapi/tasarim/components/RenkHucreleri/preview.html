@@ -1,0 +1,19 @@
+<!-- @dsCard group="Formlar" height=230 subtitle="Renk sayısı kadar hücre, başında sıra" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="padding:16px;background:var(--erp-panel)">
+<div style="display:grid;gap:12px">
+  <div style="display:flex;gap:6px;flex-wrap:wrap" role="group" aria-label="Renk sayısı"><button class="erp-cip">1 renkli</button><button class="erp-cip">2 renkli</button><button class="erp-cip" aria-pressed="true">3 renkli</button><button class="erp-cip">4</button><button class="erp-cip">5</button><button class="erp-cip">6</button></div>
+  <div class="erp-renk-hucreler" id="h"></div>
+</div>
+<script>
+  var A = window.Atolye, h = document.getElementById("h");
+  var x = [["1. renk", "#1d1d1d", "1000", "Siyah"], ["2. renk", "#f4f1ea", "1001", "Beyaz"], ["3. renk", null]];
+  h.innerHTML = x.map(function (c) {
+    return '<div class="erp-renk-hucre' + (c[1] ? "" : " erp-renk-hucre--bos") + '"><span class="erp-renk-hucre__baslik">' + c[0] + '</span><div class="erp-renk-hucre__deger">'
+      + (c[1] ? A.renkKutusu([c[1]]) + "<b>" + c[2] + "</b> " + c[3] : '<input class="erp-input" style="width:100%" placeholder="Yaz: renk kodu ya da adı">') + "</div></div>";
+  }).join("");
+</script>
+</body>
+</html>

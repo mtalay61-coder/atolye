@@ -1,0 +1,14 @@
+<!-- @dsCard group="Kabuk" height=260 subtitle="Tanımlar › Görünüm" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="padding:16px;background:var(--erp-page)">
+<div class="erp-tema-liste" id="tl"></div>
+<p class="erp-field__yardim" style="margin-top:10px">Bir temaya dokun: bu önizlemenin renkleri değişir.</p>
+<script>window.Atolye && window.Atolye.ikonlariYerlestir();
+var A=window.Atolye, tl=document.getElementById("tl"), sec=document.documentElement.getAttribute("data-theme")||"light";
+function ciz(){tl.innerHTML=A.TEMALAR.map(function(t){return '<button type="button" class="erp-tema" data-t="'+t.id+'" aria-pressed="'+(t.id===sec)+'"><span class="erp-tema__ornek" data-theme="'+t.id+'" style="background:var(--erp-page)"><span style="background:var(--erp-shell)"></span><span style="display:grid;gap:4px;padding:6px;align-content:start"><span style="height:8px;width:60%;background:var(--erp-text);border-radius:2px"></span><span style="height:6px;width:80%;background:var(--erp-line);border-radius:2px"></span><span style="height:10px;width:30%;background:var(--erp-accent);border-radius:2px"></span></span></span><b>'+t.ad+'</b><span class="erp-field__yardim">'+t.aciklama+'</span></button>';}).join("");}
+ciz();tl.addEventListener("click",function(e){var b=e.target.closest("[data-t]");if(!b)return;sec=A.temaUygula(b.getAttribute("data-t"));ciz();});
+</script>
+</body>
+</html>
