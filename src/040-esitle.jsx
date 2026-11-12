@@ -237,6 +237,9 @@ function _yazmaHazirla(tablo, kayitlar, secenek = {}) {
   // İNCELEMEDEKİ SATIRLAR PAKETTEN AYRILIR (v1.744.0, F2): sunucunun kalıcı olarak reddettiği satır (030 incelemeOku) gönderilmez;
   // fark belleği o satır için ESKİ hâline döner (gönderilmedi sayılır, sonraki yazmada yine farktır), yerel hâli yedeklenir.
   incelemeyiAyikla(tablo, fark, cocukFarklari, bellekYedegi);
+  // OKUNUR ÖZET (v1.744.17, 025 `degisimOzeti`): eski hâl = fark belleğinin yazmadan önceki kopyası. Hata günlüğü kirletmesin.
+  let degisimler = null;
+  try { degisimler = degisimMetni(tablo, degisimOzeti(tablo, fark, bellekYedegi[tablo])); } catch (e) { degisimler = null; }
   // TOPLU SİLME KİLİDİ — ağa çıkmadan önce (yukarıdaki yorum). `secenek.topluSilmeIzni` yalnız sıfırlama,
   // çöp boşaltma ve kullanıcının silinecek sayıyı görüp onayladığı yedek geri yüklemesinden gelir.
   const engel = secenek && secenek.topluSilmeIzni ? null : topluSilmeEngeliBul(tablo, fark, cocukFarklari, bellekYedegi);
@@ -250,7 +253,7 @@ function _yazmaHazirla(tablo, kayitlar, secenek = {}) {
     e.topluSilmeEngeli = true;
     throw e;
   }
-  return { tablo, kayitlar, secenek: secenek || {}, sema, bellekYedegi, bellegiGeriAl, fark, cocukFarklari, sayim: null };
+  return { tablo, kayitlar, secenek: secenek || {}, sema, bellekYedegi, bellegiGeriAl, fark, cocukFarklari, sayim: null, degisimler };
 }
 
 // İnceleme ayıklaması (yukarıda). Satır kimliğiyle ya da üst kaydının kimliğiyle (silinen siparişin kalemleri) eşleşen kayıt
@@ -326,6 +329,7 @@ async function _anaKayitlariYaz(y) {
     }));
   }
   y.sayim = { eklenen: fark.eklenen.length, guncellenen: fark.guncellenen.length, silinen: fark.silinen.length };
+  if (y.degisimler && y.degisimler.length) Object.defineProperty(y.sayim, "degisimler", { value: y.degisimler, enumerable: false });
 
   // ÇAKIŞMA VARSA BURADA DURULUR — alt kayıtlara hiç dokunulmaz.
   //
@@ -710,7 +714,13 @@ function tabloYaz(anahtar, tablo, kayitlar, yerelKayitlar, secenek) {
           if (sayim.eklenen) parcalar.push(`${sayim.eklenen} eklendi`);
           if (sayim.guncellenen) parcalar.push(`${sayim.guncellenen} güncellendi`);
           if (sayim.silinen) parcalar.push(`${sayim.silinen} silindi`);
-          gunlukYaz(`${tablo}: ${parcalar.join(", ")}`, "veri", sayim);
+          // OKUNUR ÖZET (v1.744.17): kayıt başına ne değişti — işlem sütununda ilk kayıt, ayrıntıda hepsi.
+          const d = sayim.degisimler;
+          if (d && d.length) {
+            const ilk = d[0].length > 160 ? `${d[0].slice(0, 157)}…` : d[0];
+            gunlukYaz(d.length > 1 ? `${ilk} (+${d.length - 1} kayıt)` : ilk, "veri",
+              { eklenen: sayim.eklenen, guncellenen: sayim.guncellenen, silinen: sayim.silinen, degisiklikler: d.join("\n") });
+          } else gunlukYaz(`${tablo}: ${parcalar.join(", ")}`, "veri", sayim);
         }
         return { ok: true, bulut: true };
       },

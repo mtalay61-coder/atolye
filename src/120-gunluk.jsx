@@ -265,7 +265,7 @@ function GunlukPaneli({ showToast }) {
                   <td style={{ padding: "6px 8px", borderBottom: "1px solid var(--erp-line-soft)" }}>{k.eylem}</td>
                   <td style={{ padding: "6px 8px", borderBottom: "1px solid var(--erp-line-soft)", fontSize: 11, color: "var(--erp-text-2)" }}>
                     {ayrintilar.map(([a2, v]) => (
-                      <span key={a2} style={{ display: "inline-block", marginRight: 8 }}><b>{a2}</b>: {typeof v === "object" ? JSON.stringify(v) : String(v)}</span>
+                      <span key={a2} style={{ display: "inline-block", marginRight: 8, whiteSpace: "pre-line" }}><b>{a2}</b>: {typeof v === "object" ? JSON.stringify(v) : String(v)}</span>
                     ))}
                   </td>
                 </tr>

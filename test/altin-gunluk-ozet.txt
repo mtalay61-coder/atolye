@@ -1,0 +1,5 @@
+{
+  "eylem": "Ürün güncellendi — Bot: 1 renk eklendi: Lacivert · 1 beden eklendi: 44 · satış fiyatı: 0 → 950",
+  "degisiklikler": "Ürün güncellendi — Bot: 1 renk eklendi: Lacivert · 1 beden eklendi: 44 · satış fiyatı: 0 → 950",
+  "hatalar": []
+}

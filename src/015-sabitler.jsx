@@ -492,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.744.16";
-const SURUM_TARIHI = "2026-11-11";
-const SURUM_NOTU = "Oturum kapalıyken sunucuya yazma yok; otomatik tanım yazmaları önce sunucuyu okur, başka cihazın tanımları korunur";
+const SURUM = "1.744.17";
+const SURUM_TARIHI = "2026-11-12";
+const SURUM_NOTU = "Günlükte ne değiştiği yazılır: hangi ürüne hangi renk / beden eklendi, fiyat, görsel, stok hareketi";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -525,6 +525,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" };   // teklif: v1.723.0, Sipariş'in alt sekmesi
 
 const SURUM_GECMISI = [
+  { surum: "1.744.17", tarih: "12.11.2026", eklenen: ["Günlük: \"urunler: 1 güncellendi\" yerine kayıt başına ne değiştiği — ör. \"Ürün güncellendi — Bot (No 101): 1 renk eklendi: Lacivert · 2 beden eklendi: 42, 43 · satış fiyatı: 900 → 950 · kapak resmi eklendi\". Ürünlerde renk, beden, stok miktarı, stok hareketi, kapak / renk resmi, fiyat ve öteki alanlar; carilerde ve siparişlerde hareket / kalem ve alanlar. Görsel verisi yazılmaz."], degisen: [], duzeltilen: [] },
   { surum: "1.744.16", tarih: "11.11.2026", eklenen: ["Günlük kayıtlarında cihaz kimliği, cihaz tarifi, sürüm ve işlemi tetikleyen yol; tanım birleştirmelerinde okunur özet (\"renkler 2, ölçüler 3\")."], degisen: ["Oturum kapalıyken (giriş ekranı, çıkış, oturum düşmesi) ve veriler eksik yüklendiyse sunucuya hiçbir yazma gitmez; bekleyen kayıtlar giriş yapılınca gönderilir. Kuyrukta beklerken çıkış yapılırsa gönderim durur.", "Otomatik tanım yazmaları (işçilik gider kartı tamamlama, kod / stok no onarımı, logo küçültme, yöneticisiz liste) ve bekleyen tanım kaydı, bağlantı geri gelince / uzun süre arka planda kalınca önce sunucudan güncel tanımları okur; okunamazsa yazmaz."], duzeltilen: ["Eski tanım kopyası başka cihazın eklediği / değiştirdiği renk, ölçü, kombinasyon gibi tanımları geri alabiliyordu (tanımlar artık taban üstünden üç yönlü uzlaştırılır; sayfa yenilense de bekleyen kaydın tabanı saklanır).", "Tanımlar sunucudan okunamadığında birleştirilmemiş kopya gönderiliyordu."] },
   { surum: "1.744.15", tarih: "11.11.2026", eklenen: ["Tanımlar › Görünüm › Etiket yazıcısı: basılan etiket kayık çıkıyorsa sağa/sola ve aşağı/yukarı milimetre düzeltmesi (bu cihaza kaydedilir) ve çerçeveli deneme etiketi. Bütün barkod / kutu / koli / parça etiketlerine uygulanır."], degisen: [], duzeltilen: [] },
   { surum: "1.744.14", tarih: "11.11.2026", eklenen: ["Reçete renk eşleşmesinde pozisyon satırına (1. Renk, 2. Renk…) açıklama: etiketin yanındaki \"+ açıklama\" ile yazılır, o pozisyonun bütün renklerine uygulanır; dokununca düzenlenir, × ile silinir. Pozisyon ve renk eşleşmesi değişmez."], degisen: [], duzeltilen: [] },

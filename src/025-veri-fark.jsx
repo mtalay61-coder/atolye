@@ -48,6 +48,147 @@ function tabloFarki(tablo, kayitlar) {
   return { eklenen, guncellenen, silinen, silinenKayitlar };
 }
 
+// ================= OKUNUR DEĞİŞİKLİK ÖZETİ (v1.744.17) =================
+// Kullanıcı (12 Kasım, günlük ekran görüntüsü — "urunler: 1 güncellendi · guncellenen: 1" satırları): "Burada yapılan işlemi
+// detaylı ver: X modeline Y rengi eklendi, Z modeline 5 beden eklendi…". Günlük yalnız SAYI tutuyordu; neyin değiştiği hiçbir
+// yerde kalmıyordu. Yazma katmanı (040 `_yazmaHazirla`) kaydın ESKİ hâlini (fark belleği) ve YENİ hâlini biliyor; buradan
+// kayıt başına okunur cümleler çıkar ("Bot (No 101): renk eklendi: Lacivert · beden eklendi: 42, 43 · kapak resmi değişti").
+// Saf işlev (birim-degisim-ozeti). Görsel / büyük veri DEĞERİ yazılmaz (yalnız "eklendi / değişti"); kısa metin ve sayılar yazılır.
+const DEGISIM_TABLO_ADI = { urunler: "Ürün", cariler: "Cari", siparisler: "Sipariş", uretim: "Üretim", stok_rezervasyonlari: "Rezervasyon", onaylar: "Onay", cop: "Çöp" };
+// Alan → okunur ad. `deger: true` olanların eski → yeni değeri yazılır (kısa metin / sayı); ötekiler yalnız "değişti".
+const DEGISIM_ALAN = {
+  ad: { ad: "ad", deger: true }, unvan: { ad: "ünvan", deger: true }, kategori: { ad: "kategori", deger: true }, birim: { ad: "birim", deger: true },
+  olcuTipi: { ad: "ölçü tipi", deger: true }, malzemeTipi: { ad: "malzeme tipi", deger: true }, mamulTipi: { ad: "mamul tipi", deger: true },
+  alisFiyati: { ad: "alış fiyatı", deger: true }, alisParaBirimi: { ad: "alış para birimi", deger: true }, satisFiyati: { ad: "satış fiyatı", deger: true },
+  satisParaBirimi: { ad: "satış para birimi", deger: true }, birimFiyat: { ad: "birim fiyat", deger: true }, kdvOrani: { ad: "KDV oranı", deger: true },
+  sezon: { ad: "sezon", deger: true }, sezonYili: { ad: "sezon yılı", deger: true }, stokNo: { ad: "stok no", deger: true },
+  durum: { ad: "durum", deger: true }, asama: { ad: "aşama", deger: true }, tarih: { ad: "tarih", deger: true }, teslimTarihi: { ad: "teslim tarihi", deger: true },
+  adet: { ad: "adet", deger: true }, tip: { ad: "tip", deger: true }, paraBirimi: { ad: "para birimi", deger: true }, telefon: { ad: "telefon", deger: true },
+  varsayilanProses: { ad: "varsayılan proses", deger: true }, tedarikciId: { ad: "tedarikçi" }, paketlemeNotu: { ad: "paketleme notu" },
+  recete: { ad: "reçete" }, receteGerceklesme: { ad: "reçete gerçekleşmesi" }, fiyatKurallari: { ad: "fiyat kuralları" }, prosesUcretleri: { ad: "proses ücretleri" },
+  ozelKodlar: { ad: "özel kodlar" }, hariciBarkodlar: { ad: "harici barkodlar" }, kapasite: { ad: "kapasite" }, notlar: { ad: "notlar" }, aciklama: { ad: "açıklama" },
+  bedenMiktarlari: { ad: "beden miktarları" }, prosesIlerleme: { ad: "proses ilerlemesi" }, prosesPlani: { ad: "proses planı" }, adres: { ad: "adres" },
+  vergiNo: { ad: "vergi no", deger: true }, vergiDairesi: { ad: "vergi dairesi", deger: true }, eposta: { ad: "e-posta", deger: true },
+};
+// Okunmayan / gürültü alanlar: sürüm damgaları, zaman, görsel ayrıntısı (aşağıda ayrıca söylenir).
+const DEGISIM_ATLA = new Set(["id", "surum", "guncellendi", "guncelleme", "degistiren", "degistirmeZamani", "zaman", "sonGuncelleme", "kapakResmi", "renkResimleri", "variants", "hareketler", "kalemler"]);
+function _degisimKisa(v) {
+  if (v === undefined || v === null || v === "") return "boş";
+  if (typeof v === "boolean") return v ? "evet" : "hayır";
+  const m = typeof v === "object" ? JSON.stringify(v) : String(v);
+  return m.length > 40 ? `${m.slice(0, 37)}…` : m;
+}
+function _degisimEtiket(tablo, k) {
+  if (!k) return "?";
+  const ad = k.ad || k.unvan || k.baslik || k.siparisNo || k.fisNo || k.model || k.id;
+  const no = tablo === "urunler" && k.stokNo ? ` (No ${k.stokNo})` : (tablo === "uretim" && k.takipKodu ? ` (${k.takipKodu})` : "");
+  return `${ad}${no}`;
+}
+const _benzersiz = (l) => [...new Set(l.filter((x) => x !== undefined && x !== null && x !== ""))];
+const _liste = (l, n = 8) => (l.length > n ? `${l.slice(0, n).join(", ")} … (+${l.length - n})` : l.join(", "));
+// Kimlikli alt liste (hareketler, kalemler): eklenen / çıkarılan / değişen sayısı.
+function _altListeFarki(eski, yeni) {
+  const e = new Map((eski || []).filter((x) => x && x.id).map((x) => [x.id, JSON.stringify(x)]));
+  const y = new Map((yeni || []).filter((x) => x && x.id).map((x) => [x.id, JSON.stringify(x)]));
+  let eklenen = 0; let cikan = 0; let degisen = 0;
+  y.forEach((d, id) => { if (!e.has(id)) eklenen++; else if (e.get(id) !== d) degisen++; });
+  e.forEach((d, id) => { if (!y.has(id)) cikan++; });
+  return { eklenen, cikan, degisen };
+}
+// Tek kaydın eski → yeni değişiklik cümleleri.
+function kayitDegisiklikleri(tablo, eski, yeni) {
+  const c = [];
+  const o = eski || {}; const n = yeni || {};
+  if (tablo === "urunler") {
+    const ov = o.variants || []; const nv = n.variants || [];
+    const oRenk = _benzersiz(ov.map((v) => v.renk)); const nRenk = _benzersiz(nv.map((v) => v.renk));
+    const oBeden = _benzersiz(ov.map((v) => v.beden)); const nBeden = bedenSirala(_benzersiz(nv.map((v) => v.beden)));
+    const renkEk = nRenk.filter((r) => !oRenk.includes(r)); const renkCik = oRenk.filter((r) => !nRenk.includes(r));
+    const bedenEk = nBeden.filter((b) => !oBeden.includes(b)); const bedenCik = oBeden.filter((b) => !nBeden.includes(b));
+    if (renkEk.length) c.push(`${renkEk.length} renk eklendi: ${_liste(renkEk)}`);
+    if (renkCik.length) c.push(`${renkCik.length} renk çıkarıldı: ${_liste(renkCik)}`);
+    if (bedenEk.length) c.push(`${bedenEk.length} beden eklendi: ${_liste(bedenEk)}`);
+    if (bedenCik.length) c.push(`${bedenCik.length} beden çıkarıldı: ${_liste(bedenCik)}`);
+    // Stok miktarı (renk/beden aynı kalıp miktarı değişen varyantlar).
+    const anahtar = (v) => `${v.renk}|${v.beden}`;
+    const om = new Map(ov.map((v) => [anahtar(v), Number(v.miktar) || 0]));
+    const miktarDegisen = nv.filter((v) => om.has(anahtar(v)) && om.get(anahtar(v)) !== (Number(v.miktar) || 0));
+    if (miktarDegisen.length) {
+      const top = (l) => l.reduce((t, v) => t + (Number(v.miktar) || 0), 0);
+      c.push(`stok miktarı değişti (${miktarDegisen.length} renk/beden; toplam ${top(ov)} → ${top(nv)})`);
+    }
+    const nvMap = new Map(nv.map((v) => [anahtar(v), v]));
+    const minDegisen = ov.filter((v) => nvMap.has(anahtar(v)) && (Number(v.minStok) || 0) !== (Number(nvMap.get(anahtar(v)).minStok) || 0));
+    if (minDegisen.length) c.push(`min. stok değişti (${minDegisen.length} renk/beden)`);
+    const h = _altListeFarki(o.hareketler, n.hareketler);
+    if (h.eklenen) c.push(`${h.eklenen} stok hareketi eklendi`);
+    if (h.cikan) c.push(`${h.cikan} stok hareketi silindi`);
+    if (h.degisen) c.push(`${h.degisen} stok hareketi düzeltildi`);
+    // Görseller: değer YAZILMAZ (büyük veri) — yalnız ne olduğu.
+    if ((o.kapakResmi || "") !== (n.kapakResmi || "") && !(o.kapakResmi === undefined || n.kapakResmi === undefined)) {
+      c.push(!o.kapakResmi ? "kapak resmi eklendi" : !n.kapakResmi ? "kapak resmi kaldırıldı" : "kapak resmi değişti");
+    }
+    if (o.renkResimleri !== undefined && n.renkResimleri !== undefined) {
+      const or = o.renkResimleri || {}; const nr = n.renkResimleri || {};
+      const ekR = Object.keys(nr).filter((k) => nr[k] && !or[k]); const cikR = Object.keys(or).filter((k) => or[k] && !nr[k]);
+      const degR = Object.keys(nr).filter((k) => nr[k] && or[k] && JSON.stringify(nr[k]) !== JSON.stringify(or[k]));
+      if (ekR.length) c.push(`renk resmi eklendi: ${_liste(ekR)}`);
+      if (cikR.length) c.push(`renk resmi kaldırıldı: ${_liste(cikR)}`);
+      if (degR.length) c.push(`renk resmi değişti: ${_liste(degR)}`);
+    }
+    if (!!o.pasif !== !!n.pasif) c.push(n.pasif ? "pasife alındı" : "yeniden aktif yapıldı");
+  } else {
+    const altAd = { hareketler: "hareket", kalemler: "kalem" };
+    Object.keys(altAd).forEach((alan) => {
+      if (!Array.isArray(o[alan]) && !Array.isArray(n[alan])) return;
+      const f = _altListeFarki(o[alan], n[alan]);
+      if (f.eklenen) c.push(`${f.eklenen} ${altAd[alan]} eklendi`);
+      if (f.cikan) c.push(`${f.cikan} ${altAd[alan]} silindi`);
+      if (f.degisen) c.push(`${f.degisen} ${altAd[alan]} değişti`);
+    });
+    if (!!o.pasif !== !!n.pasif) c.push(n.pasif ? "pasife alındı" : "yeniden aktif yapıldı");
+  }
+  // Kalan alanlar: tanımlıysa okunur adla, değilse ham adla — "ad: Bot → Bot Deri", "reçete değişti".
+  const digerleri = [];
+  new Set([...Object.keys(o), ...Object.keys(n)]).forEach((alan) => {
+    if (DEGISIM_ATLA.has(alan) || alan === "pasif") return;
+    if (JSON.stringify(o[alan] === undefined ? null : o[alan]) === JSON.stringify(n[alan] === undefined ? null : n[alan])) return;
+    const t = DEGISIM_ALAN[alan];
+    if (t && t.deger) c.push(`${t.ad}: ${_degisimKisa(o[alan])} → ${_degisimKisa(n[alan])}`);
+    else if (t) c.push(`${t.ad} değişti`);
+    else digerleri.push(alan);
+  });
+  if (digerleri.length) c.push(`öteki alanlar değişti: ${_liste(digerleri, 5)}`);
+  return c;
+}
+// Bir yazmanın (040) bütün kayıtları için cümleler. `eskiHal`: fark belleğinin yazmadan önceki hâli (Map id → JSON dizesi).
+// Döner: [{ etiket, islem: "eklendi"|"güncellendi"|"silindi", ayrinti: [cümle…] }] — en çok `sinir` kayıt.
+function degisimOzeti(tablo, fark, eskiHal, sinir = 20) {
+  const sonuc = [];
+  const eskiOku = (id) => { try { const d = eskiHal && eskiHal.get(id); return d ? JSON.parse(d) : null; } catch (e) { return null; } };
+  (fark.eklenen || []).forEach((k) => {
+    const a = [];
+    if (tablo === "urunler") {
+      const v = k.variants || [];
+      const r = _benzersiz(v.map((x) => x.renk)); const b = bedenSirala(_benzersiz(v.map((x) => x.beden)));
+      if (r.length) a.push(`${r.length} renk: ${_liste(r)}`);
+      if (b.length) a.push(`${b.length} beden: ${_liste(b)}`);
+    }
+    sonuc.push({ etiket: _degisimEtiket(tablo, k), islem: "eklendi", ayrinti: a });
+  });
+  (fark.guncellenen || []).forEach((k) => {
+    const eski = eskiOku(k.id);
+    sonuc.push({ etiket: _degisimEtiket(tablo, k), islem: "güncellendi", ayrinti: eski ? kayitDegisiklikleri(tablo, eski, k) : [] });
+  });
+  (fark.silinenKayitlar || []).forEach((k) => sonuc.push({ etiket: _degisimEtiket(tablo, k), islem: "silindi", ayrinti: [] }));
+  return sonuc.slice(0, sinir);
+}
+// Günlük satırı: "Ürün güncellendi — Bot (No 101): 1 renk eklendi: Lacivert · 2 beden eklendi: 42, 43".
+function degisimMetni(tablo, ozet) {
+  const tur = DEGISIM_TABLO_ADI[tablo] || tablo;
+  return (ozet || []).map((o) => `${tur} ${o.islem} — ${o.etiket}${o.ayrinti.length ? `: ${o.ayrinti.join(" · ")}` : ""}`);
+}
+
 // Uygulama ilk açıldığında diskten okunan hâli "başlangıç" olarak işaretler.
 // Bu yapılmazsa ilk kayıtta her satır "yeni eklendi" görünür ve gereksiz yazma olur.
 // Ana kayıtla BİRLİKTE alt kayıtların da fark belleğini kurar.
