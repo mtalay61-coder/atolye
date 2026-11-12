@@ -11,7 +11,7 @@ const { chromium } = require("playwright");
 // `tarayiciArgs`: Chromium bayrakları — örn. sahte kamera (`--use-file-for-fake-video-capture`).
 // `adres`: uygulamayı file:// yerine bu http(s) adresinden aç — çağıran `onceRota` ile o adresi
 // test.html'e yönlendirir (sürüm dosyası gibi göreli okumalar yalnız http'de çalışıyor).
-async function uygulamaAc(tohum = {}, { hataYaz = true, onceRota = null, tarayiciArgs = [], adres = null, cevrimdisiKilidi = false, yuklemeyiBekle = true, tanimBasliklariKapali = false, receteOnayKapisi = false, firmaSecili = true, kurulumSihirbazi = false, stkAyar = null, stkAyarHata = false } = {}) {
+async function uygulamaAc(tohum = {}, { hataYaz = true, onceRota = null, tarayiciArgs = [], adres = null, cevrimdisiKilidi = false, yuklemeyiBekle = true, tanimBasliklariKapali = false, receteOnayKapisi = false, firmaSecili = true, kurulumSihirbazi = false, stkAyar = null, stkAyarHata = false, tanimTazelemeKapisi = false } = {}) {
   // UTF-8 YEREL AYAR (7 Kasım): bu konteynerde LANG boş; Chromium o zaman Türkçe harfli indirme adını ("SAT-1 - Müşteri B.html")
   // reddedip dosyayı "download" adıyla indiriyor — uygulama doğru adı veriyor, ortam bozuyordu (tedarik-girisleri farkı).
   const tarayici = await chromium.launch({ args: tarayiciArgs, env: { ...process.env, LANG: process.env.LANG || "C.UTF-8", LC_ALL: process.env.LC_ALL || "C.UTF-8" } });
@@ -29,6 +29,10 @@ async function uygulamaAc(tohum = {}, { hataYaz = true, onceRota = null, tarayic
   // ÇEVRİMDIŞI KİLİT (v1.556.1) testlerde kapalı: senaryolar ağsız koşuyor (bulut istekleri hep düşüyor).
   // Kilidin kendisini ölçen senaryo `cevrimdisiKilidi: true` verir.
   if (!cevrimdisiKilidi) await sayfa.addInitScript(() => { window.__cevrimdisiSerbest = true; });
+  // TANIM TAZELEME KAPISI (v1.744.16, 091): otomatik tanım yazmasından önce sunucu okunur, okunamazsa yazılmaz. Senaryolarda
+  // sunucu hiç okunamadığından otomatik tamamlamaları (işçilik kartı, logo küçültme…) ölçen senaryolar için kapı açık; kapıyı
+  // ölçen senaryo `tanimTazelemeKapisi: true` verir.
+  if (!tanimTazelemeKapisi) await sayfa.addInitScript(() => { window.__tanimTazelemeSerbest = true; });
   // Ağ hatasında yeniden deneme (v1.724.1) senaryolarda beklemesiz: davranış aynı (3 deneme), aralar 20 ms — kopuk ağ
   // senaryoları (bekleyen yazma, çevrimdışı kilit) saniyeler beklemesin. Gerçek aralar birim testinde (birim-yazma-dayaniklilik).
   await sayfa.addInitScript(() => { window.__supabaseYenidenDenemeMs = [20, 20, 20]; });

@@ -86,6 +86,49 @@ function tanimlariBirlestir(yerel, bulut, silinenler) {
   return { tanimlar: sonuc, eklenen, cikarilan };
 }
 
+// TANIMLARI UZLAŞTIR (v1.744.16 — kullanıcı, günlük 11 Kasım 20:19: sabahtan kalmış bir cihaz akşam kendiliğinden tanım yazdı).
+// `tanimlariBirlestir` aynı kimlikte bu cihazı esas alıyordu: eski kopyayla yazan cihaz, başka cihazın gün içinde DEĞİŞTİRDİĞİ
+// öğeyi (renk adı, kombinasyon…) eski hâline döndürebilirdi. Taban (bu cihazın bildiği son sunucu hâli, 030 `tekilTabanOku`)
+// varsa önce ÜÇ YÖNLÜ (`ucYonluBirlestir`): bu cihaz bir öğeyi tabandan değiştirmediyse sunucudaki alınır (başka cihazın
+// değişikliği / silmesi korunur), değiştirdiyse bu cihazınki (kullanıcının gerçek değişikliği kaybolmaz). Sonra mevcut koruma:
+// başka cihazın eklediği öğe kalır, silinenler (`__silinenler` + bu cihazın defteri) geri gelmez. Taban yoksa yalnız eski
+// birleştirme (davranış değişmez). Saf.
+// Döner: { tanimlar, eklenen: {alan: n}, cikarilan: {alan: n}, degisen: {alan: n}, toplam, metin } — `metin` okunur özet
+// ("başka cihazdan 81 öğe korundu (renkler 33, kombinasyonlar 10…)"); öğe adı / değeri İÇERMEZ (günlüğe güvenle yazılır).
+function tanimlarUzlastir(yerel, bulut, taban, silinenler) {
+  const temel = (taban !== undefined && taban !== null && bulut && typeof bulut === "object") ? ucYonluBirlestir(yerel, bulut, taban) : yerel;
+  const b = tanimlariBirlestir(temel, bulut, silinenler);
+  const sonuc = b.tanimlar;
+  const kimlikli = (d) => Array.isArray(d) && d.length > 0 && d.every((x) => x && typeof x === "object" && x.id);
+  const eklenen = {}; const cikarilan = {}; const degisen = {};
+  const say = (h, alan) => { h[alan] = (h[alan] || 0) + 1; };
+  new Set([...Object.keys(yerel || {}), ...Object.keys(sonuc || {})]).forEach((alan) => {
+    if (alan === "__silinenler") return;
+    const y = (yerel || {})[alan]; const r = (sonuc || {})[alan];
+    if (!(kimlikli(y) || kimlikli(r))) return;
+    const yH = new Map((Array.isArray(y) ? y : []).filter((x) => x && x.id).map((x) => [x.id, x]));
+    const rH = new Map((Array.isArray(r) ? r : []).filter((x) => x && x.id).map((x) => [x.id, x]));
+    rH.forEach((x, id) => { if (!yH.has(id)) say(eklenen, alan); else if (JSON.stringify(x) !== JSON.stringify(yH.get(id))) say(degisen, alan); });
+    yH.forEach((x, id) => { if (!rH.has(id)) say(cikarilan, alan); });
+  });
+  const parca = (h) => Object.entries(h).sort((a, c) => c[1] - a[1]).map(([alan, n]) => `${tanimAlanOkunurAdi(alan)} ${n}`).join(", ");
+  const top = (h) => Object.values(h).reduce((t, n) => t + n, 0);
+  const te = top(eklenen); const tc = top(cikarilan); const td = top(degisen);
+  const metin = [
+    te ? `başka cihazdan ${te} öğe korundu (${parca(eklenen)})` : "",
+    td ? `${td} öğede sunucudaki değişiklik korundu (${parca(degisen)})` : "",
+    tc ? `başka cihazda silinen ${tc} öğe çıkarıldı (${parca(cikarilan)})` : "",
+  ].filter(Boolean).join("; ") || "fark yok";
+  return { tanimlar: sonuc, eklenen, cikarilan, degisen, toplam: te + tc + td, metin };
+}
+const TANIM_ALAN_OKUNUR = {
+  renkler: "renkler", bedenler: "ölçüler", birimler: "birimler", prosesler: "prosesler", araProsesler: "ara prosesler",
+  kullanicilar: "kullanıcılar", asortiler: "asortiler", fiyatGruplari: "fiyat grupları", ozelKodAlanlari: "özel kod alanları",
+  receteSablonlari: "reçete şablonları", renkKombinasyonlari: "kombinasyonlar", giderKartlari: "gider kartları",
+  hammaddeTipleri: "hammadde tipleri", malzemeTipleri: "malzeme tipleri", mamulTipleri: "mamul tipleri",
+};
+function tanimAlanOkunurAdi(alan) { return TANIM_ALAN_OKUNUR[alan] || alan; }
+
 // KAYIP MODEL RENKLERİ. Ürünlerde kullanılan "KOD - Renk1/Renk2" etiketlerinden tanımlarda kombinasyonu
 // olmayanları bulur ve geri kurulacak kombinasyonları üretir. Renk adı "/" içerebilir ("A/B" adlı bir renk):
 // parçalar soldan, tanımlı en uzun ada göre eşlenir. Tanımda olmayan renk YENİ renk olarak önerilir

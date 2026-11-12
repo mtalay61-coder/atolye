@@ -25,6 +25,8 @@ global.fetch = async (url, sec = {}) => {
 
 const { supabaseTabloEsitle, tabloBaslangicTam, tabloBaslangicBekleyen, bekleyenKayitlariOku, yereliBulutlaBirlestir, surumleriYukle,
   kayipHammaddeler, kayipHammaddeKarti, derinBirlestir } = require("./erp.cjs");
+// YAZMA KAPISI (v1.744.16, 030): sunucu yazmaları oturum açıkken gider — bu sınama oturumu açık kabul eder (App'in bildirdiği gibi).
+require("./erp.cjs").yazmaOturumuAyarla("acik");
 
 let hata = 0;
 const bekle = (ad, a, b) => {

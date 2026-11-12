@@ -1,0 +1,84 @@
+{
+  "aAcilis": {
+    "tanimYazmasi": [],
+    "yerelIscilikKarti": 0,
+    "gunluk": [
+      {
+        "mesaj": "Otomatik tanım yazması yapılmadı (işçilik gider kartı tamamlama): tanımlar sunucudan okunamadı",
+        "cihazVar": true,
+        "surumVar": true,
+        "tetikleyen": "işçilik gider kartı tamamlama"
+      }
+    ]
+  },
+  "aBaglanti": {
+    "sira": [
+      "GET",
+      "GET"
+    ],
+    "ilkPostOncesiGet": true,
+    "gidenRenkler": [
+      "Lacivert",
+      "Siyah Süet",
+      "Taba"
+    ],
+    "gidenIscilikKarti": true,
+    "gunluk": {
+      "okunurOzet": true,
+      "adGecmiyor": true,
+      "cihazVar": true,
+      "surumVar": true,
+      "tetikleyenVar": true
+    }
+  },
+  "aUzun": {
+    "taze": false,
+    "sebep": "uzun süre arka planda kaldı"
+  },
+  "aKilit": {
+    "tabloYaz": "veriler eksik yüklendi — kaydetme kapalı",
+    "defterArtti": false,
+    "sunucuyaGiden": []
+  },
+  "bKapali": {
+    "girisEkrani": true,
+    "tanimYazmasi": [],
+    "digerYazma": [],
+    "defterde": [
+      "tanimlar:data",
+      "cari:data",
+      "stok:items",
+      "fisdefter:data"
+    ]
+  },
+  "bGiris": {
+    "sira": [
+      "GET",
+      "GET"
+    ],
+    "gidenRenkler": [
+      "Lacivert",
+      "Siyah Süet",
+      "Taba",
+      "Yerel Mor"
+    ],
+    "defterde": [
+      "fisdefter:data"
+    ],
+    "sakliTaban": false
+  },
+  "cDefter": [
+    "fisdefter:data",
+    "tanimlar:data"
+  ],
+  "cCikis": {
+    "okumaAsiliydi": true,
+    "cikistaGirisEkrani": true,
+    "postYok": true,
+    "defterde": [
+      "fisdefter:data",
+      "tanimlar:data"
+    ]
+  },
+  "hatalar": []
+}

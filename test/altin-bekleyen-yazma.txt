@@ -21,7 +21,7 @@
   },
   "tanimlar:data": {
    "deneme": "var",
-   "hata": "Failed to fetch — POST tanimlar · gövde N KB · adres 8 karakter",
+   "hata": "Tanımlar sunucudan okunamadı — eski kopya gönderilmedi (Failed to fetch — GET tanimlar · gövde N KB · adres 32 karakter)",
    "tablo": "tanimlar",
    "zaman": "<zaman>"
   }

@@ -12,6 +12,8 @@ global.fetch = async (url, sec = {}) => {
   return { ok: true, status: 200, headers: { get: () => null }, json: async () => (yontem === "PATCH" ? [{ id: "x" }] : []), text: async () => "" };
 };
 const { supabaseIstek, supabaseSilBilesik, supabasePostParcali, postParcalari } = require("./erp.cjs");
+// YAZMA KAPISI (v1.744.16, 030): sunucu yazmaları oturum açıkken gider — bu sınama oturumu açık kabul eder (App'in bildirdiği gibi).
+require("./erp.cjs").yazmaOturumuAyarla("acik");
 let hata = 0;
 const bekle = (ad, a, b) => {
   const ok = JSON.stringify(a) === JSON.stringify(b);

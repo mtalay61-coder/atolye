@@ -2,6 +2,8 @@
 const assert=require('assert/strict');
 global.window={localStorage:{getItem:()=>null,setItem:()=>{},removeItem:()=>{}}};
 const E=require('./erp.cjs');
+// YAZMA KAPISI (v1.744.16, 030): sunucu yazmaları oturum açıkken gider — bu sınama oturumu açık kabul eder.
+E.yazmaOturumuAyarla('acik');
 (async()=>{
  let istekler=[],kod='40P01',hep=false;
  global.fetch=async(url,p)=>{istekler.push(p.body);const hata=hep||istekler.length===1;const veri=hata?{code:kod,message:'Test SQL transaction reddi'}:{fisNo:'ST-TEST'};return{ok:!hata,status:hata?400:200,json:async()=>veri,text:async()=>JSON.stringify(veri)};};
