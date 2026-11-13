@@ -38,6 +38,7 @@
   "Asortiler:açık",
   "Birimler:açık",
   "Ürün Tipleri:açık",
+  "Sezonlar:açık",
   "Fire Sebepleri:açık",
   "Atölye İçi Bölümler:açık",
   "Fiyat Grupları:açık",

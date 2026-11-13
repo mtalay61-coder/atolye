@@ -3,7 +3,7 @@
 // Ölçülen: sayacı artan tablo alanına düşer (kalem → siparişler); değişmeyen geçilir; bu cihazın 12 sn içindeki yazması
 // ertelenir (görüldü sayılmaz, yaşlanınca tazelenir); bekleyen yazması olan alan ertelenir; bilinmeyen tablo yok sayılır;
 // görüldü haritasında ertelenenler eski değerde kalır.
-const { degisiklikFarki, degisiklikGoruldu, alaninTablolari, degisiklikIcerikAyni, tabloIcerikAyni, tabloIcerikFarki, TABLO_SEMA } = require("./erp.cjs");
+const { degisiklikFarki, degisiklikGoruldu, alaninTablolari, degisiklikIcerikAyni, tabloIcerikAyni, tabloIcerikFarki, TABLO_SEMA, urunDisSutunlariniKaydet } = require("./erp.cjs");
 let hata = 0;
 const bekle = (ad, a, b) => {
   const ok = JSON.stringify(a) === JSON.stringify(b);
@@ -70,5 +70,13 @@ bekle("sunucu kayıt zamanı (olusturma / guncelleme) içerik değil: aynı", ta
 bekle("sunucu alanı varken gerçek değişiklik yine farklı", tabloIcerikFarki("urunler", acilistaOkunan, [{ ...bulutUrun[0], ad: "Çizme" }]), "urunler|u1: ad");
 bekle("cari kodu sayı / yazı: aynı", tabloIcerikAyni("cariler", [{ id: "c1", unvan: "A", kod: 1, hareketler: [] }], [{ id: "c1", unvan: "A", kod: "1", hareketler: [] }]), true);
 bekle("cari kodu değişti: farklı", tabloIcerikAyni("cariler", [{ id: "c1", unvan: "A", kod: 1, hareketler: [] }], [{ id: "c1", unvan: "A", kod: 2, hareketler: [] }]), false);
+// v1.744.19 — canlı günlük 12-13 Kasım: "urunler|stok-mwc6b80t-7vno: ek.vitrindeMi" (her cihazda, her stok değişikliğinden sonra).
+// Tabloda uygulamanın tanımadığı `vitrinde_mi` sütunu: açılışta (select=*) gelir, ek'e düşer; görselsiz yoklamada gelmez.
+const vitrinli = [{ ...yerelUrun[0], vitrindeMi: true }];
+bekle("ÖNCE (açılış satırı görülmemiş): uygulama dışı sütun fark sayılıyor", tabloIcerikFarki("urunler", vitrinli, bulutUrun), "urunler|u1: ek.vitrindeMi");
+urunDisSutunlariniKaydet([{ id: "u1", ad: "Bot", kategori: "Mamul", ek: {}, surum: 2, kapak_resmi: null, renk_resimleri: null, olusturma: "2026-11-03T13:56:14Z", vitrinde_mi: true }]);
+bekle("açılışta gelen uygulama dışı sütun (vitrinde_mi) yoklamada yok: aynı", tabloIcerikAyni("urunler", vitrinli, bulutUrun), true);
+bekle("dış sütun varken gerçek değişiklik yine farklı", tabloIcerikFarki("urunler", vitrinli, [{ ...bulutUrun[0], ad: "Çizme" }]), "urunler|u1: ad");
+bekle("uygulamanın kendi ek alanı (sitedeGoster) yine karşılaştırılır", tabloIcerikFarki("urunler", [{ ...yerelUrun[0], sitedeGoster: true }], bulutUrun), "urunler|u1: ek.sitedeGoster");
 if (hata) { console.log("BİRİM TESTİ HATA: değişiklik sayacı"); process.exit(1); }
 console.log("── değişiklik sayacı testi temiz ──");

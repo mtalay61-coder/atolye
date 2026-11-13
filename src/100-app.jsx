@@ -5742,6 +5742,7 @@ function AtolyeUygulamasi() {
               firmaBilgileri={tanimlar.firmaBilgileri}
               tanimlarProsesler={tanimlar.prosesler || []}
               tanimlarAraProsesler={tanimlar.araProsesler || []}
+              tanimlarSiparisSezonlari={tanimlar.siparisSezonlari || []}
               onCopaAt={copaAt}
               onStokFisiAc={stokFisiAc}
               tanimlarFiyatGruplari={tanimlar.fiyatGruplari || []}
@@ -5966,6 +5967,7 @@ function AtolyeUygulamasi() {
               tanimlarBedenGruplari={tanimlar.bedenGruplari || []}
               tanimlarOzelKodAlanlari={tanimlar.ozelKodAlanlari || []}
                             tanimlarAraProsesler={tanimlar.araProsesler || []}
+                            tanimlarSiparisSezonlari={tanimlar.siparisSezonlari || []}
               kurlar={muhasebe.kurlar || {}}
             />
           </GizliModul>
@@ -6023,6 +6025,7 @@ function AtolyeUygulamasi() {
               tanimlarBedenGruplari={tanimlar.bedenGruplari || []}
               tanimlarOzelKodAlanlari={tanimlar.ozelKodAlanlari || []}
                             tanimlarAraProsesler={tanimlar.araProsesler || []}
+                            tanimlarSiparisSezonlari={tanimlar.siparisSezonlari || []}
               kurlar={muhasebe.kurlar || {}}
             />
           </GizliModul>
@@ -6333,6 +6336,7 @@ function AtolyeUygulamasi() {
                 tumUrunler={aktifPencere.veri.tumUrunler}
                 tanimlarProsesler={aktifPencere.veri.tanimlarProsesler}
                 tanimlarAraProsesler={aktifPencere.veri.tanimlarAraProsesler}
+                tanimlarSiparisSezonlari={tanimlar.siparisSezonlari || []}
                 firmaBilgileri={aktifPencere.veri.firmaBilgileri}
                 onClose={() => pencereKapat(aktifPencere.id)}
                 onMinimize={() => setAktifPencereId(null)}
@@ -6344,6 +6348,7 @@ function AtolyeUygulamasi() {
                 tumUrunler={stok}
                 tanimlarProsesler={tanimlar.prosesler}
                 tanimlarAraProsesler={tanimlar.araProsesler}
+                tanimlarSiparisSezonlari={tanimlar.siparisSezonlari || []}
                 kurlar={muhasebe.kurlar || {}}
                 cariler={cariler}
                 kurGecmisi={muhasebe.kurGecmisi}
@@ -6581,6 +6586,7 @@ function AtolyeUygulamasi() {
                             tanimlarOzelKodAlanlari={tanimlar.ozelKodAlanlari || []}
                             tanimlarProsesler={tanimlar.prosesler || []}
                             tanimlarAraProsesler={tanimlar.araProsesler || []}
+                            tanimlarSiparisSezonlari={tanimlar.siparisSezonlari || []}
                             kurlar={muhasebe.kurlar || {}}
                             hedefYeniAlis={p.veri.taslak}
                             onYeniAlisTuketildi={() => {}}

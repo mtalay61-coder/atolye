@@ -1,6 +1,6 @@
 // sabitTip: "Satış" | "Alış". Verildiğinde modül tek tarafa kilitlenir ve iç sekme çubuğu
 // gösterilmez — sol menüde zaten ayrı iki giriş var, ikinci bir sekme katmanı gereksiz tekrar olurdu.
-function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabitTip, siparisler, onSave, showToast, cariler, stok, stokRezervasyonlari, uretim, onGoToCari, onGoToUretim, onGerceklestir, onSatisFisiAc, onSiparisKapat, onCopaAt, onPlanlaUretim, onPlanlaSatinAlma, onPlanlamaTemizle, asortiler, hedefSiparisId, onHedefTuketildi, hedefYeniAlis, onYeniAlisTuketildi, onAsortiOlustur, firmaBilgileri, onPencereAc, aktifPencereId, onPencereKapat, onPencereKucult, acikSiparisPencereleri, onUruneGit, onModelRengiVeRecete, onYeniRenkKaydet, tanimlarRenkler, tanimlarKombinasyonlar, tanimlarBedenler, tanimlarOzelKodAlanlari, kurlar , koliler, raporlar, onRaporlarKaydet, aktifKullanici, tanimlarProsesler, tanimlarAraProsesler, onOdemeGir, muhasebe, onOdemeKaydet,
+function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabitTip, siparisler, onSave, showToast, cariler, stok, stokRezervasyonlari, uretim, onGoToCari, onGoToUretim, onGerceklestir, onSatisFisiAc, onSiparisKapat, onCopaAt, onPlanlaUretim, onPlanlaSatinAlma, onPlanlamaTemizle, asortiler, hedefSiparisId, onHedefTuketildi, hedefYeniAlis, onYeniAlisTuketildi, onAsortiOlustur, firmaBilgileri, onPencereAc, aktifPencereId, onPencereKapat, onPencereKucult, acikSiparisPencereleri, onUruneGit, onModelRengiVeRecete, onYeniRenkKaydet, tanimlarRenkler, tanimlarKombinasyonlar, tanimlarBedenler, tanimlarOzelKodAlanlari, kurlar , koliler, raporlar, onRaporlarKaydet, aktifKullanici, tanimlarProsesler, tanimlarAraProsesler, tanimlarSiparisSezonlari, onOdemeGir, muhasebe, onOdemeKaydet,
   // TEKLİF KİPİ (v1.716.0 — kullanıcı: "Teklifte ürün girişi siparişin aynısı olacak, bire bir"): modül YALNIZ FORM olarak
   // çizilir (liste, sekme, pencereler yok), kayıt `onSave` yerine `onTeklifKaydet(nesne, duzenlenenId)`e gider, kapanınca
   // `onTeklifVazgec`. `teklifDuzenle` verilirse form o kayıtla açılır (siparisler=[o kayıt] ile). 326 TeklifModule sarmalar.
@@ -1340,10 +1340,23 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
             </div>
             <div style={{ flex: "1 1 140px", minWidth: 0 }}>
             <Field label="Sezon">
-              <input value={sezon} onChange={(e) => setSezon(e.target.value)} data-siparis-sezon list="siparis-sezon-onerileri" placeholder="örn. 2026 Yaz" style={inputStyle} />
-              <datalist id="siparis-sezon-onerileri">
-                {[...new Set((siparisler || []).map((x) => x.sezon).filter(Boolean))].sort().map((z) => <option key={z} value={z} />)}
-              </datalist>
+              {/* TANIMLI SEZONDAN SEÇİM (v1.744.19, 131): Tanımlar › Ürün › Sezonlar'da sezon varsa yalnız AKTİF olanlar seçilir;
+                  düzenlenen siparişin pasif / listede olmayan sezonu kendi seçeneğiyle kalır (sessizce silinmez). Hiç sezon
+                  tanımlanmamışsa eskisi gibi serbest yazı + önceki siparişlerden öneri. */}
+              {siparisSezonlari(tanimlarSiparisSezonlari).length > 0 ? (
+                <select value={sezon} onChange={(e) => setSezon(e.target.value)} data-siparis-sezon style={inputStyle}>
+                  <option value="">— Sezon seçin —</option>
+                  {siparisSezonSecenekleri(tanimlarSiparisSezonlari, sezon).map((o) => <option key={o.deger} value={o.deger}>{o.etiket}</option>)}
+                </select>
+              ) : (
+                <>
+                  <input value={sezon} onChange={(e) => setSezon(e.target.value)} data-siparis-sezon list="siparis-sezon-onerileri" placeholder="örn. 2026 Yaz" style={inputStyle}
+                    title="Sezonları Tanımlar › Ürün › Sezonlar'da tanımlarsanız buradan seçilir" />
+                  <datalist id="siparis-sezon-onerileri">
+                    {[...new Set((siparisler || []).map((x) => x.sezon).filter(Boolean))].sort().map((z) => <option key={z} value={z} />)}
+                  </datalist>
+                </>
+              )}
             </Field>
             </div>
 

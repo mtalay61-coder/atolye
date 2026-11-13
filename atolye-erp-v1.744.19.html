@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.744.16</title>
+<title>Atölye ERP 1.744.19</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2319,9 +2319,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.744.16";
-const SURUM_TARIHI = "2026-11-11";
-const SURUM_NOTU = "Oturum kapalıyken sunucuya yazma yok; otomatik tanım yazmaları önce sunucuyu okur, başka cihazın tanımları korunur";
+const SURUM = "1.744.19";
+const SURUM_TARIHI = "2026-11-13";
+const SURUM_NOTU = "Yanlış \"Başka cihazdan güncellendi: Stok\" bildirimi giderildi; site talebi e-posta bildirimi";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2351,6 +2351,9 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 }
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" }; // teklif: v1.723.0, Sipariş'in alt sekmesi
 const SURUM_GECMISI = [
+    { surum: "1.744.19", tarih: "13.11.2026", eklenen: ["Tanımlar › Ürün › Sezonlar: sipariş sezonları tanımlanır, Aktif / Pasif yapılır. Sipariş formunda sezon bu listeden seçilir; pasif sezon yeni siparişte çıkmaz, eski siparişlerde ve listedeki süzgeçte görünmeye devam eder. Siparişlerde daha önce yazılmış sezonlar tek tıkla tanımlara eklenir."], degisen: [], duzeltilen: ["Kimse değiştirmediği hâlde her stok kaydından sonra çıkan \"Başka cihazdan güncellendi: Stok\" bildirimi: ürünler tablosunda uygulamanın tanımadığı bir sütun (web sitesinin vitrin işareti) açılışta okunup değişiklik kontrolünde okunmadığı için ürün \"değişmiş\" sayılıyordu. Bu tür sütunlar artık karşılaştırmada yok sayılır."] },
+    { surum: "1.744.18", tarih: "12.11.2026", eklenen: ["Tanımlar › Web Sitesi › E-posta bildirimi: web sitesinden yeni sipariş talebi ya da müşteri kaydı gelince belirlenen adreslere e-posta gider (sunucudan, 5 dakikada bir; uygulama kapalıyken de). E-postada müşteri, model · renk · beden çiftleri, toplam, ödeme şekli ve not; fiyat ve şifre gitmez. \"Deneme gönder\" ve son bildirimler listesi. Sunucu kurulumu: supabase-site-bildirim-fonksiyonu.ts + site-bildirim.sql."], degisen: [], duzeltilen: [] },
+    { surum: "1.744.17", tarih: "12.11.2026", eklenen: ["Günlük: \"urunler: 1 güncellendi\" yerine kayıt başına ne değiştiği — ör. \"Ürün güncellendi — Bot (No 101): 1 renk eklendi: Lacivert · 2 beden eklendi: 42, 43 · satış fiyatı: 900 → 950 · kapak resmi eklendi\". Ürünlerde renk, beden, stok miktarı, stok hareketi, kapak / renk resmi, fiyat ve öteki alanlar; carilerde ve siparişlerde hareket / kalem ve alanlar. Görsel verisi yazılmaz."], degisen: [], duzeltilen: [] },
     { surum: "1.744.16", tarih: "11.11.2026", eklenen: ["Günlük kayıtlarında cihaz kimliği, cihaz tarifi, sürüm ve işlemi tetikleyen yol; tanım birleştirmelerinde okunur özet (\"renkler 2, ölçüler 3\")."], degisen: ["Oturum kapalıyken (giriş ekranı, çıkış, oturum düşmesi) ve veriler eksik yüklendiyse sunucuya hiçbir yazma gitmez; bekleyen kayıtlar giriş yapılınca gönderilir. Kuyrukta beklerken çıkış yapılırsa gönderim durur.", "Otomatik tanım yazmaları (işçilik gider kartı tamamlama, kod / stok no onarımı, logo küçültme, yöneticisiz liste) ve bekleyen tanım kaydı, bağlantı geri gelince / uzun süre arka planda kalınca önce sunucudan güncel tanımları okur; okunamazsa yazmaz."], duzeltilen: ["Eski tanım kopyası başka cihazın eklediği / değiştirdiği renk, ölçü, kombinasyon gibi tanımları geri alabiliyordu (tanımlar artık taban üstünden üç yönlü uzlaştırılır; sayfa yenilense de bekleyen kaydın tabanı saklanır).", "Tanımlar sunucudan okunamadığında birleştirilmemiş kopya gönderiliyordu."] },
     { surum: "1.744.15", tarih: "11.11.2026", eklenen: ["Tanımlar › Görünüm › Etiket yazıcısı: basılan etiket kayık çıkıyorsa sağa/sola ve aşağı/yukarı milimetre düzeltmesi (bu cihaza kaydedilir) ve çerçeveli deneme etiketi. Bütün barkod / kutu / koli / parça etiketlerine uygulanır."], degisen: [], duzeltilen: [] },
     { surum: "1.744.14", tarih: "11.11.2026", eklenen: ["Reçete renk eşleşmesinde pozisyon satırına (1. Renk, 2. Renk…) açıklama: etiketin yanındaki \"+ açıklama\" ile yazılır, o pozisyonun bütün renklerine uygulanır; dokununca düzenlenir, × ile silinir. Pozisyon ve renk eşleşmesi değişmez."], degisen: [], duzeltilen: [] },
@@ -4612,6 +4615,196 @@ function tabloFarki(tablo, kayitlar) {
     });
     _sonHal[tablo] = yeni;
     return { eklenen, guncellenen, silinen, silinenKayitlar };
+}
+// ================= OKUNUR DEĞİŞİKLİK ÖZETİ (v1.744.17) =================
+// Kullanıcı (12 Kasım, günlük ekran görüntüsü — "urunler: 1 güncellendi · guncellenen: 1" satırları): "Burada yapılan işlemi
+// detaylı ver: X modeline Y rengi eklendi, Z modeline 5 beden eklendi…". Günlük yalnız SAYI tutuyordu; neyin değiştiği hiçbir
+// yerde kalmıyordu. Yazma katmanı (040 `_yazmaHazirla`) kaydın ESKİ hâlini (fark belleği) ve YENİ hâlini biliyor; buradan
+// kayıt başına okunur cümleler çıkar ("Bot (No 101): renk eklendi: Lacivert · beden eklendi: 42, 43 · kapak resmi değişti").
+// Saf işlev (birim-degisim-ozeti). Görsel / büyük veri DEĞERİ yazılmaz (yalnız "eklendi / değişti"); kısa metin ve sayılar yazılır.
+const DEGISIM_TABLO_ADI = { urunler: "Ürün", cariler: "Cari", siparisler: "Sipariş", uretim: "Üretim", stok_rezervasyonlari: "Rezervasyon", onaylar: "Onay", cop: "Çöp" };
+// Alan → okunur ad. `deger: true` olanların eski → yeni değeri yazılır (kısa metin / sayı); ötekiler yalnız "değişti".
+const DEGISIM_ALAN = {
+    ad: { ad: "ad", deger: true }, unvan: { ad: "ünvan", deger: true }, kategori: { ad: "kategori", deger: true }, birim: { ad: "birim", deger: true },
+    olcuTipi: { ad: "ölçü tipi", deger: true }, malzemeTipi: { ad: "malzeme tipi", deger: true }, mamulTipi: { ad: "mamul tipi", deger: true },
+    alisFiyati: { ad: "alış fiyatı", deger: true }, alisParaBirimi: { ad: "alış para birimi", deger: true }, satisFiyati: { ad: "satış fiyatı", deger: true },
+    satisParaBirimi: { ad: "satış para birimi", deger: true }, birimFiyat: { ad: "birim fiyat", deger: true }, kdvOrani: { ad: "KDV oranı", deger: true },
+    sezon: { ad: "sezon", deger: true }, sezonYili: { ad: "sezon yılı", deger: true }, stokNo: { ad: "stok no", deger: true },
+    durum: { ad: "durum", deger: true }, asama: { ad: "aşama", deger: true }, tarih: { ad: "tarih", deger: true }, teslimTarihi: { ad: "teslim tarihi", deger: true },
+    adet: { ad: "adet", deger: true }, tip: { ad: "tip", deger: true }, paraBirimi: { ad: "para birimi", deger: true }, telefon: { ad: "telefon", deger: true },
+    varsayilanProses: { ad: "varsayılan proses", deger: true }, tedarikciId: { ad: "tedarikçi" }, paketlemeNotu: { ad: "paketleme notu" },
+    recete: { ad: "reçete" }, receteGerceklesme: { ad: "reçete gerçekleşmesi" }, fiyatKurallari: { ad: "fiyat kuralları" }, prosesUcretleri: { ad: "proses ücretleri" },
+    ozelKodlar: { ad: "özel kodlar" }, hariciBarkodlar: { ad: "harici barkodlar" }, kapasite: { ad: "kapasite" }, notlar: { ad: "notlar" }, aciklama: { ad: "açıklama" },
+    bedenMiktarlari: { ad: "beden miktarları" }, prosesIlerleme: { ad: "proses ilerlemesi" }, prosesPlani: { ad: "proses planı" }, adres: { ad: "adres" },
+    vergiNo: { ad: "vergi no", deger: true }, vergiDairesi: { ad: "vergi dairesi", deger: true }, eposta: { ad: "e-posta", deger: true },
+};
+// Okunmayan / gürültü alanlar: sürüm damgaları, zaman, görsel ayrıntısı (aşağıda ayrıca söylenir).
+const DEGISIM_ATLA = new Set(["id", "surum", "guncellendi", "guncelleme", "degistiren", "degistirmeZamani", "zaman", "sonGuncelleme", "kapakResmi", "renkResimleri", "variants", "hareketler", "kalemler"]);
+function _degisimKisa(v) {
+    if (v === undefined || v === null || v === "")
+        return "boş";
+    if (typeof v === "boolean")
+        return v ? "evet" : "hayır";
+    const m = typeof v === "object" ? JSON.stringify(v) : String(v);
+    return m.length > 40 ? `${m.slice(0, 37)}…` : m;
+}
+function _degisimEtiket(tablo, k) {
+    if (!k)
+        return "?";
+    const ad = k.ad || k.unvan || k.baslik || k.siparisNo || k.fisNo || k.model || k.id;
+    const no = tablo === "urunler" && k.stokNo ? ` (No ${k.stokNo})` : (tablo === "uretim" && k.takipKodu ? ` (${k.takipKodu})` : "");
+    return `${ad}${no}`;
+}
+const _benzersiz = (l) => [...new Set(l.filter((x) => x !== undefined && x !== null && x !== ""))];
+const _liste = (l, n = 8) => (l.length > n ? `${l.slice(0, n).join(", ")} … (+${l.length - n})` : l.join(", "));
+// Kimlikli alt liste (hareketler, kalemler): eklenen / çıkarılan / değişen sayısı.
+function _altListeFarki(eski, yeni) {
+    const e = new Map((eski || []).filter((x) => x && x.id).map((x) => [x.id, JSON.stringify(x)]));
+    const y = new Map((yeni || []).filter((x) => x && x.id).map((x) => [x.id, JSON.stringify(x)]));
+    let eklenen = 0;
+    let cikan = 0;
+    let degisen = 0;
+    y.forEach((d, id) => { if (!e.has(id))
+        eklenen++;
+    else if (e.get(id) !== d)
+        degisen++; });
+    e.forEach((d, id) => { if (!y.has(id))
+        cikan++; });
+    return { eklenen, cikan, degisen };
+}
+// Tek kaydın eski → yeni değişiklik cümleleri.
+function kayitDegisiklikleri(tablo, eski, yeni) {
+    const c = [];
+    const o = eski || {};
+    const n = yeni || {};
+    if (tablo === "urunler") {
+        const ov = o.variants || [];
+        const nv = n.variants || [];
+        const oRenk = _benzersiz(ov.map((v) => v.renk));
+        const nRenk = _benzersiz(nv.map((v) => v.renk));
+        const oBeden = _benzersiz(ov.map((v) => v.beden));
+        const nBeden = bedenSirala(_benzersiz(nv.map((v) => v.beden)));
+        const renkEk = nRenk.filter((r) => !oRenk.includes(r));
+        const renkCik = oRenk.filter((r) => !nRenk.includes(r));
+        const bedenEk = nBeden.filter((b) => !oBeden.includes(b));
+        const bedenCik = oBeden.filter((b) => !nBeden.includes(b));
+        if (renkEk.length)
+            c.push(`${renkEk.length} renk eklendi: ${_liste(renkEk)}`);
+        if (renkCik.length)
+            c.push(`${renkCik.length} renk çıkarıldı: ${_liste(renkCik)}`);
+        if (bedenEk.length)
+            c.push(`${bedenEk.length} beden eklendi: ${_liste(bedenEk)}`);
+        if (bedenCik.length)
+            c.push(`${bedenCik.length} beden çıkarıldı: ${_liste(bedenCik)}`);
+        // Stok miktarı (renk/beden aynı kalıp miktarı değişen varyantlar).
+        const anahtar = (v) => `${v.renk}|${v.beden}`;
+        const om = new Map(ov.map((v) => [anahtar(v), Number(v.miktar) || 0]));
+        const miktarDegisen = nv.filter((v) => om.has(anahtar(v)) && om.get(anahtar(v)) !== (Number(v.miktar) || 0));
+        if (miktarDegisen.length) {
+            const top = (l) => l.reduce((t, v) => t + (Number(v.miktar) || 0), 0);
+            c.push(`stok miktarı değişti (${miktarDegisen.length} renk/beden; toplam ${top(ov)} → ${top(nv)})`);
+        }
+        const nvMap = new Map(nv.map((v) => [anahtar(v), v]));
+        const minDegisen = ov.filter((v) => nvMap.has(anahtar(v)) && (Number(v.minStok) || 0) !== (Number(nvMap.get(anahtar(v)).minStok) || 0));
+        if (minDegisen.length)
+            c.push(`min. stok değişti (${minDegisen.length} renk/beden)`);
+        const h = _altListeFarki(o.hareketler, n.hareketler);
+        if (h.eklenen)
+            c.push(`${h.eklenen} stok hareketi eklendi`);
+        if (h.cikan)
+            c.push(`${h.cikan} stok hareketi silindi`);
+        if (h.degisen)
+            c.push(`${h.degisen} stok hareketi düzeltildi`);
+        // Görseller: değer YAZILMAZ (büyük veri) — yalnız ne olduğu.
+        if ((o.kapakResmi || "") !== (n.kapakResmi || "") && !(o.kapakResmi === undefined || n.kapakResmi === undefined)) {
+            c.push(!o.kapakResmi ? "kapak resmi eklendi" : !n.kapakResmi ? "kapak resmi kaldırıldı" : "kapak resmi değişti");
+        }
+        if (o.renkResimleri !== undefined && n.renkResimleri !== undefined) {
+            const or = o.renkResimleri || {};
+            const nr = n.renkResimleri || {};
+            const ekR = Object.keys(nr).filter((k) => nr[k] && !or[k]);
+            const cikR = Object.keys(or).filter((k) => or[k] && !nr[k]);
+            const degR = Object.keys(nr).filter((k) => nr[k] && or[k] && JSON.stringify(nr[k]) !== JSON.stringify(or[k]));
+            if (ekR.length)
+                c.push(`renk resmi eklendi: ${_liste(ekR)}`);
+            if (cikR.length)
+                c.push(`renk resmi kaldırıldı: ${_liste(cikR)}`);
+            if (degR.length)
+                c.push(`renk resmi değişti: ${_liste(degR)}`);
+        }
+        if (!!o.pasif !== !!n.pasif)
+            c.push(n.pasif ? "pasife alındı" : "yeniden aktif yapıldı");
+    }
+    else {
+        const altAd = { hareketler: "hareket", kalemler: "kalem" };
+        Object.keys(altAd).forEach((alan) => {
+            if (!Array.isArray(o[alan]) && !Array.isArray(n[alan]))
+                return;
+            const f = _altListeFarki(o[alan], n[alan]);
+            if (f.eklenen)
+                c.push(`${f.eklenen} ${altAd[alan]} eklendi`);
+            if (f.cikan)
+                c.push(`${f.cikan} ${altAd[alan]} silindi`);
+            if (f.degisen)
+                c.push(`${f.degisen} ${altAd[alan]} değişti`);
+        });
+        if (!!o.pasif !== !!n.pasif)
+            c.push(n.pasif ? "pasife alındı" : "yeniden aktif yapıldı");
+    }
+    // Kalan alanlar: tanımlıysa okunur adla, değilse ham adla — "ad: Bot → Bot Deri", "reçete değişti".
+    const digerleri = [];
+    new Set([...Object.keys(o), ...Object.keys(n)]).forEach((alan) => {
+        if (DEGISIM_ATLA.has(alan) || alan === "pasif")
+            return;
+        if (JSON.stringify(o[alan] === undefined ? null : o[alan]) === JSON.stringify(n[alan] === undefined ? null : n[alan]))
+            return;
+        const t = DEGISIM_ALAN[alan];
+        if (t && t.deger)
+            c.push(`${t.ad}: ${_degisimKisa(o[alan])} → ${_degisimKisa(n[alan])}`);
+        else if (t)
+            c.push(`${t.ad} değişti`);
+        else
+            digerleri.push(alan);
+    });
+    if (digerleri.length)
+        c.push(`öteki alanlar değişti: ${_liste(digerleri, 5)}`);
+    return c;
+}
+// Bir yazmanın (040) bütün kayıtları için cümleler. `eskiHal`: fark belleğinin yazmadan önceki hâli (Map id → JSON dizesi).
+// Döner: [{ etiket, islem: "eklendi"|"güncellendi"|"silindi", ayrinti: [cümle…] }] — en çok `sinir` kayıt.
+function degisimOzeti(tablo, fark, eskiHal, sinir = 20) {
+    const sonuc = [];
+    const eskiOku = (id) => { try {
+        const d = eskiHal && eskiHal.get(id);
+        return d ? JSON.parse(d) : null;
+    }
+    catch (e) {
+        return null;
+    } };
+    (fark.eklenen || []).forEach((k) => {
+        const a = [];
+        if (tablo === "urunler") {
+            const v = k.variants || [];
+            const r = _benzersiz(v.map((x) => x.renk));
+            const b = bedenSirala(_benzersiz(v.map((x) => x.beden)));
+            if (r.length)
+                a.push(`${r.length} renk: ${_liste(r)}`);
+            if (b.length)
+                a.push(`${b.length} beden: ${_liste(b)}`);
+        }
+        sonuc.push({ etiket: _degisimEtiket(tablo, k), islem: "eklendi", ayrinti: a });
+    });
+    (fark.guncellenen || []).forEach((k) => {
+        const eski = eskiOku(k.id);
+        sonuc.push({ etiket: _degisimEtiket(tablo, k), islem: "güncellendi", ayrinti: eski ? kayitDegisiklikleri(tablo, eski, k) : [] });
+    });
+    (fark.silinenKayitlar || []).forEach((k) => sonuc.push({ etiket: _degisimEtiket(tablo, k), islem: "silindi", ayrinti: [] }));
+    return sonuc.slice(0, sinir);
+}
+// Günlük satırı: "Ürün güncellendi — Bot (No 101): 1 renk eklendi: Lacivert · 2 beden eklendi: 42, 43".
+function degisimMetni(tablo, ozet) {
+    const tur = DEGISIM_TABLO_ADI[tablo] || tablo;
+    return (ozet || []).map((o) => `${tur} ${o.islem} — ${o.etiket}${o.ayrinti.length ? `: ${o.ayrinti.join(" · ")}` : ""}`);
 }
 // Uygulama ilk açıldığında diskten okunan hâli "başlangıç" olarak işaretler.
 // Bu yapılmazsa ilk kayıtta her satır "yeni eklendi" görünür ve gereksiz yazma olur.
@@ -7959,6 +8152,14 @@ function _yazmaHazirla(tablo, kayitlar, secenek = {}) {
     // İNCELEMEDEKİ SATIRLAR PAKETTEN AYRILIR (v1.744.0, F2): sunucunun kalıcı olarak reddettiği satır (030 incelemeOku) gönderilmez;
     // fark belleği o satır için ESKİ hâline döner (gönderilmedi sayılır, sonraki yazmada yine farktır), yerel hâli yedeklenir.
     incelemeyiAyikla(tablo, fark, cocukFarklari, bellekYedegi);
+    // OKUNUR ÖZET (v1.744.17, 025 `degisimOzeti`): eski hâl = fark belleğinin yazmadan önceki kopyası. Hata günlüğü kirletmesin.
+    let degisimler = null;
+    try {
+        degisimler = degisimMetni(tablo, degisimOzeti(tablo, fark, bellekYedegi[tablo]));
+    }
+    catch (e) {
+        degisimler = null;
+    }
     // TOPLU SİLME KİLİDİ — ağa çıkmadan önce (yukarıdaki yorum). `secenek.topluSilmeIzni` yalnız sıfırlama,
     // çöp boşaltma ve kullanıcının silinecek sayıyı görüp onayladığı yedek geri yüklemesinden gelir.
     const engel = secenek && secenek.topluSilmeIzni ? null : topluSilmeEngeliBul(tablo, fark, cocukFarklari, bellekYedegi);
@@ -7971,7 +8172,7 @@ function _yazmaHazirla(tablo, kayitlar, secenek = {}) {
         e.topluSilmeEngeli = true;
         throw e;
     }
-    return { tablo, kayitlar, secenek: secenek || {}, sema, bellekYedegi, bellegiGeriAl, fark, cocukFarklari, sayim: null };
+    return { tablo, kayitlar, secenek: secenek || {}, sema, bellekYedegi, bellegiGeriAl, fark, cocukFarklari, sayim: null, degisimler };
 }
 // İnceleme ayıklaması (yukarıda). Satır kimliğiyle ya da üst kaydının kimliğiyle (silinen siparişin kalemleri) eşleşen kayıt
 // farktan çıkar; bellek o kayıt için yedekteki hâline döner. Saf değil (fark belleği); incelemedeki satır yoksa hiçbir şey yapmaz.
@@ -8049,6 +8250,8 @@ async function _anaKayitlariYaz(y) {
         }));
     }
     y.sayim = { eklenen: fark.eklenen.length, guncellenen: fark.guncellenen.length, silinen: fark.silinen.length };
+    if (y.degisimler && y.degisimler.length)
+        Object.defineProperty(y.sayim, "degisimler", { value: y.degisimler, enumerable: false });
     // ÇAKIŞMA VARSA BURADA DURULUR — alt kayıtlara hiç dokunulmaz.
     //
     // Kilit yalnızca ana satırın SÜTUNLARINI koruyor. Oysa bu uygulamada asıl veri alt tablolarda:
@@ -8457,7 +8660,14 @@ function tabloYaz(anahtar, tablo, kayitlar, yerelKayitlar, secenek) {
                     parcalar.push(`${sayim.guncellenen} güncellendi`);
                 if (sayim.silinen)
                     parcalar.push(`${sayim.silinen} silindi`);
-                gunlukYaz(`${tablo}: ${parcalar.join(", ")}`, "veri", sayim);
+                // OKUNUR ÖZET (v1.744.17): kayıt başına ne değişti — işlem sütununda ilk kayıt, ayrıntıda hepsi.
+                const d = sayim.degisimler;
+                if (d && d.length) {
+                    const ilk = d[0].length > 160 ? `${d[0].slice(0, 157)}…` : d[0];
+                    gunlukYaz(d.length > 1 ? `${ilk} (+${d.length - 1} kayıt)` : ilk, "veri", { eklenen: sayim.eklenen, guncellenen: sayim.guncellenen, silinen: sayim.silinen, degisiklikler: d.join("\n") });
+                }
+                else
+                    gunlukYaz(`${tablo}: ${parcalar.join(", ")}`, "veri", sayim);
             }
             return { ok: true, bulut: true };
         }, (e) => {
@@ -8626,6 +8836,19 @@ function urunResimsizSutunlari() {
         sutunlar.push("surum");
     return sutunlar;
 }
+// UYGULAMA DIŞI ÜRÜN SÜTUNLARI (v1.744.19 — canlı günlük, 12-13 Kasım: farklı cihazlarda ve günlerde hep aynı satır,
+// "Başka cihazdan güncellendi: Stok · urunler|stok-mwc6b80t-7vno: ek.vitrindeMi"; alanı değiştiren tek kayıt yok). `urunler`
+// tablosunda uygulamanın tanımadığı bir sütun var (`vitrinde_mi`, bu depoda geçmiyor — site tarafında eklenmiş). Açılış
+// okuması `select=*` ile onu da getiriyor, şema dışı olduğu için kaydın `ek`ine düşüyor; değişiklik yoklamasının görselsiz
+// okuması (`urunResimsizSutunlari`) yalnız uygulama sütunlarını seçtiği için orada YOK → o ürün her stok değişikliğinden sonra
+// "değişmiş" görünüyordu. 1.744.11'deki `ek.olusturma` ile aynı sınıf; bu kez ad listesi yerine: açılışta gelen ama yoklamanın
+// okumadığı sütunlar burada toplanır, karşılaştırma (047 `tabloIcerikFarki`) onları yok sayar. Değerleri kayıtta kalır.
+const URUN_DIS_SUTUNLAR = new Set();
+function urunDisSutunlariniKaydet(satirlar) {
+    const bilinen = new Set([...urunResimsizSutunlari(), "kapak_resmi", "renk_resimleri", "surum"]);
+    (satirlar || []).forEach((r) => Object.keys(r || {}).forEach((s) => { if (!bilinen.has(s))
+        URUN_DIS_SUTUNLAR.add(alanAdi(s)); }));
+}
 // Buluttan tüm veriyi çeker ve uygulamanın iç yapısına dönüştürür.
 // `secenek.yalniz` (v1.611.0, değişiklik sayacı): yalnız bu TABLOLAR okunur, ötekiler boş gelir ve sürüm haritaları
 // yalnız okunanlar için yenilenir — kısmi tazelemede okunmayan tablonun haritası silinirse sonraki yazması INSERT'e
@@ -8667,6 +8890,8 @@ async function supabasedenOku(secenek = {}) {
     ]);
     if (stokV2Ayari)
         await stokV2Ayari;
+    if (okunur("urunler") && !secenek.resimsiz)
+        urunDisSutunlariniKaydet(urunSatir);
     // Sürüm sayaçları uygulama kaydına DEĞİL, ayrı haritaya alınır (bkz. _surumler yorumu).
     // Ham satırlar burada elde olduğu için okuma yeri burası.
     if (okunur("urunler"))
@@ -8980,16 +9205,16 @@ function _icerikDegeri(v) {
 // Bu alanları kullanıcı girmez, sunucu yazar: karşılaştırmada (üst düzeyde de `ek` içinde de) yok sayılır.
 const SUNUCU_KAYIT_ALANLARI = new Set(["olusturma", "guncelleme", "olusturan", "guncelleyen"]);
 // İlk farklı alanın adı (yoksa null). `ek.alan` biçiminde; fark tanısı için (tabloIcerikFarki).
-function _satirFarki(yerel, bulut) {
+function _satirFarki(yerel, bulut, atla) {
     if (!bulut)
         return "(bulutta yok)";
     for (const k of Object.keys(yerel)) {
-        if (SUNUCU_KAYIT_ALANLARI.has(k))
+        if (SUNUCU_KAYIT_ALANLARI.has(k) || (atla && atla.has(k)))
             continue;
         if (k === "ek" && yerel.ek && typeof yerel.ek === "object" && !Array.isArray(yerel.ek)) {
             const be = (bulut.ek && typeof bulut.ek === "object") ? bulut.ek : {};
             for (const a of Object.keys(yerel.ek)) {
-                if (SUNUCU_KAYIT_ALANLARI.has(a))
+                if (SUNUCU_KAYIT_ALANLARI.has(a) || (atla && atla.has(a)))
                     continue;
                 if (_icerikDegeri(yerel.ek[a]) !== _icerikDegeri(be[a]))
                     return `ek.${a}`;
@@ -9029,8 +9254,10 @@ function tabloIcerikFarki(tablo, yerelKayitlar, bulutKayitlar) {
             const eksik = [...b.cocuk.keys()].find((k) => !y.cocuk.has(k)) || [...y.cocuk.keys()].find((k) => !b.cocuk.has(k));
             return `alt kayıt sayısı: yerel ${y.cocuk.size} / bulut ${b.cocuk.size} (ör. ${eksik})`;
         }
+        // Uygulama dışı ürün sütunları (045 `URUN_DIS_SUTUNLAR`: açılışta gelir, yoklamada okunmaz) içerik sayılmaz.
+        const atla = tablo === "urunler" && typeof URUN_DIS_SUTUNLAR !== "undefined" ? URUN_DIS_SUTUNLAR : null;
         for (const [id, r] of y.ana) {
-            const f = _satirFarki(r, b.ana.get(id));
+            const f = _satirFarki(r, b.ana.get(id), atla);
             if (f)
                 return `${tablo}|${id}: ${f}`;
         }
@@ -28116,7 +28343,7 @@ function AtolyeUygulamasi() {
                             // ÇEK KAYDI TEK YERE DÜŞSÜN: caride girilen çek Muhasebe > Çekler listesine de
                             // yazılıyor. Aksi halde aynı çek iki ayrı yerde ayrı ayrı tutuluyordu — bu projede
                             // "aynı bilgi iki yerde" kalıbı defalarca hataya döndü.
-                            onCekEkle: (cek) => saveMuhasebe({ ...muhasebe, cekler: [{ id: uid("cek"), durum: "Portföyde", ...cek }, ...(muhasebe.cekler || [])] }), showToast: showToast, onFisSil: yetimFisTemizle, siparisler: siparisler, stok: stok, onGoToSiparis: sipariseGit, firmaBilgileri: tanimlar.firmaBilgileri, tanimlarProsesler: tanimlar.prosesler || [], tanimlarAraProsesler: tanimlar.araProsesler || [], onCopaAt: copaAt, onStokFisiAc: stokFisiAc, tanimlarFiyatGruplari: tanimlar.fiyatGruplari || [], onPencereAc: pencereAc, odemeHedefi: cariOdemeHedefi, onOdemeHedefiTuketildi: () => setCariOdemeHedefi(null), hedefCariId: cariHedefId, onHedefCariTuketildi: () => setCariHedefId(null) })),
+                            onCekEkle: (cek) => saveMuhasebe({ ...muhasebe, cekler: [{ id: uid("cek"), durum: "Portföyde", ...cek }, ...(muhasebe.cekler || [])] }), showToast: showToast, onFisSil: yetimFisTemizle, siparisler: siparisler, stok: stok, onGoToSiparis: sipariseGit, firmaBilgileri: tanimlar.firmaBilgileri, tanimlarProsesler: tanimlar.prosesler || [], tanimlarAraProsesler: tanimlar.araProsesler || [], tanimlarSiparisSezonlari: tanimlar.siparisSezonlari || [], onCopaAt: copaAt, onStokFisiAc: stokFisiAc, tanimlarFiyatGruplari: tanimlar.fiyatGruplari || [], onPencereAc: pencereAc, odemeHedefi: cariOdemeHedefi, onOdemeHedefiTuketildi: () => setCariOdemeHedefi(null), hedefCariId: cariHedefId, onHedefCariTuketildi: () => setCariHedefId(null) })),
                     fiyatListesiAcildiRef.current && React.createElement("div", { style: { display: tab === "fiyatlistesi" ? undefined : "none" } },
                         React.createElement(FiyatListesiModule, { stok: stok, tanimlar: tanimlar, kurlar: muhasebe.kurlar || {}, kurGecmisi: muhasebe.kurGecmisi || [], cariler: cariler, onStokKaydet: saveStok, onTanimlarKaydet: saveTanimlar, showToast: showToast, aktifKullanici: aktifKullanici })),
                     React.createElement(GizliModul, { aktif: tab === "paketleme" },
@@ -28185,9 +28412,9 @@ function AtolyeUygulamasi() {
                                     tanimlarOzelKodAlanlari: tanimlar.ozelKodAlanlari || [], tanimlarProsesler: tanimlar.prosesler || [],
                                     tanimlarAraProsesler: tanimlar.araProsesler || [], kurlar: muhasebe.kurlar || {},
                                     onPencereAc: pencereAc, acikSiparisPencereleri: [], raporlar: [],
-                                } })), mobilBolumAyari: mobilBolumCoz(tanimlar.mobilGorunum, "siparis"), onFiseGitNo: fiseGit, koliler: koliler, sabitTip: "Sat\u0131\u015F", stokRezervasyonlari: stokRezervasyonlariGecerli, siparisler: siparisler, onSave: saveSiparisler, showToast: showToast, cariler: cariler, stok: stok, uretim: uretim, onGoToCari: cariyeGit, onGoToUretim: (uretimId) => { setUretimHedefId(uretimId || null); setTab("uretim"); }, onGerceklestir: siparisGerceklestir, onSatisFisiAc: satisFisiAcSiparisten, onOdemeGir: siparisOdemesineGit, muhasebe: muhasebe, onOdemeKaydet: siparisOdemesiKaydet, onSiparisKapat: siparisKapat, onCopaAt: copaAt, onPlanlaUretim: planlaUretim, onPlanlaSatinAlma: planlaSatinAlma, onPlanlamaTemizle: planlamaTemizle, asortiler: tanimlar.asortiler || [], hedefSiparisId: siparisHedefId, onHedefTuketildi: () => setSiparisHedefId(null), onAsortiOlustur: asortiOlustur, firmaBilgileri: tanimlar.firmaBilgileri, onPencereAc: pencereAc, aktifPencereId: aktifPencereId, onPencereKapat: pencereKapat, onPencereKucult: () => setAktifPencereId(null), acikSiparisPencereleri: acikSiparisPencereleri, raporlar: tanimlar.raporlar || [], onRaporlarKaydet: raporlariKaydet, aktifKullanici: aktifKullanici, tanimlarProsesler: tanimlar.prosesler || [], onUruneGit: uruneGit, onYeniRenkKaydet: yeniRenkKaydet, onModelRengiVeRecete: modelRengiVeReceteEkle, tanimlarRenkler: tanimlar.renkler || [], tanimlarKombinasyonlar: tanimlar.renkKombinasyonlari || [], tanimlarBedenler: tanimlar.bedenler || [], tanimlarBedenGruplari: tanimlar.bedenGruplari || [], tanimlarOzelKodAlanlari: tanimlar.ozelKodAlanlari || [], tanimlarAraProsesler: tanimlar.araProsesler || [], kurlar: muhasebe.kurlar || {} })),
+                                } })), mobilBolumAyari: mobilBolumCoz(tanimlar.mobilGorunum, "siparis"), onFiseGitNo: fiseGit, koliler: koliler, sabitTip: "Sat\u0131\u015F", stokRezervasyonlari: stokRezervasyonlariGecerli, siparisler: siparisler, onSave: saveSiparisler, showToast: showToast, cariler: cariler, stok: stok, uretim: uretim, onGoToCari: cariyeGit, onGoToUretim: (uretimId) => { setUretimHedefId(uretimId || null); setTab("uretim"); }, onGerceklestir: siparisGerceklestir, onSatisFisiAc: satisFisiAcSiparisten, onOdemeGir: siparisOdemesineGit, muhasebe: muhasebe, onOdemeKaydet: siparisOdemesiKaydet, onSiparisKapat: siparisKapat, onCopaAt: copaAt, onPlanlaUretim: planlaUretim, onPlanlaSatinAlma: planlaSatinAlma, onPlanlamaTemizle: planlamaTemizle, asortiler: tanimlar.asortiler || [], hedefSiparisId: siparisHedefId, onHedefTuketildi: () => setSiparisHedefId(null), onAsortiOlustur: asortiOlustur, firmaBilgileri: tanimlar.firmaBilgileri, onPencereAc: pencereAc, aktifPencereId: aktifPencereId, onPencereKapat: pencereKapat, onPencereKucult: () => setAktifPencereId(null), acikSiparisPencereleri: acikSiparisPencereleri, raporlar: tanimlar.raporlar || [], onRaporlarKaydet: raporlariKaydet, aktifKullanici: aktifKullanici, tanimlarProsesler: tanimlar.prosesler || [], onUruneGit: uruneGit, onYeniRenkKaydet: yeniRenkKaydet, onModelRengiVeRecete: modelRengiVeReceteEkle, tanimlarRenkler: tanimlar.renkler || [], tanimlarKombinasyonlar: tanimlar.renkKombinasyonlari || [], tanimlarBedenler: tanimlar.bedenler || [], tanimlarBedenGruplari: tanimlar.bedenGruplari || [], tanimlarOzelKodAlanlari: tanimlar.ozelKodAlanlari || [], tanimlarAraProsesler: tanimlar.araProsesler || [], tanimlarSiparisSezonlari: tanimlar.siparisSezonlari || [], kurlar: muhasebe.kurlar || {} })),
                     React.createElement(GizliModul, { aktif: tab === "satinalma" },
-                        React.createElement(SiparisModule, { cop: cop, aktifSekme: tab === "satinalma", onSiparisGitGlobal: sipariseGit, mobilBolumAyari: mobilBolumCoz(tanimlar.mobilGorunum, "satinalma"), onFiseGitNo: fiseGit, koliler: koliler, sabitTip: "Al\u0131\u015F", stokRezervasyonlari: stokRezervasyonlariGecerli, siparisler: siparisler, onSave: saveSiparisler, showToast: showToast, cariler: cariler, stok: stok, uretim: uretim, onGoToCari: cariyeGit, onGoToUretim: (uretimId) => { setUretimHedefId(uretimId || null); setTab("uretim"); }, onGerceklestir: siparisGerceklestir, onSatisFisiAc: satisFisiAcSiparisten, onOdemeGir: siparisOdemesineGit, muhasebe: muhasebe, onOdemeKaydet: siparisOdemesiKaydet, onSiparisKapat: siparisKapat, onCopaAt: copaAt, onPlanlaUretim: planlaUretim, onPlanlaSatinAlma: planlaSatinAlma, onPlanlamaTemizle: planlamaTemizle, asortiler: tanimlar.asortiler || [], hedefSiparisId: siparisHedefId, onHedefTuketildi: () => setSiparisHedefId(null), onAsortiOlustur: asortiOlustur, firmaBilgileri: tanimlar.firmaBilgileri, onPencereAc: pencereAc, aktifPencereId: aktifPencereId, onPencereKapat: pencereKapat, onPencereKucult: () => setAktifPencereId(null), acikSiparisPencereleri: acikSiparisPencereleri, raporlar: tanimlar.raporlar || [], onRaporlarKaydet: raporlariKaydet, aktifKullanici: aktifKullanici, tanimlarProsesler: tanimlar.prosesler || [], onUruneGit: uruneGit, onYeniRenkKaydet: yeniRenkKaydet, onModelRengiVeRecete: modelRengiVeReceteEkle, tanimlarRenkler: tanimlar.renkler || [], tanimlarKombinasyonlar: tanimlar.renkKombinasyonlari || [], tanimlarBedenler: tanimlar.bedenler || [], tanimlarBedenGruplari: tanimlar.bedenGruplari || [], tanimlarOzelKodAlanlari: tanimlar.ozelKodAlanlari || [], tanimlarAraProsesler: tanimlar.araProsesler || [], kurlar: muhasebe.kurlar || {} })),
+                        React.createElement(SiparisModule, { cop: cop, aktifSekme: tab === "satinalma", onSiparisGitGlobal: sipariseGit, mobilBolumAyari: mobilBolumCoz(tanimlar.mobilGorunum, "satinalma"), onFiseGitNo: fiseGit, koliler: koliler, sabitTip: "Al\u0131\u015F", stokRezervasyonlari: stokRezervasyonlariGecerli, siparisler: siparisler, onSave: saveSiparisler, showToast: showToast, cariler: cariler, stok: stok, uretim: uretim, onGoToCari: cariyeGit, onGoToUretim: (uretimId) => { setUretimHedefId(uretimId || null); setTab("uretim"); }, onGerceklestir: siparisGerceklestir, onSatisFisiAc: satisFisiAcSiparisten, onOdemeGir: siparisOdemesineGit, muhasebe: muhasebe, onOdemeKaydet: siparisOdemesiKaydet, onSiparisKapat: siparisKapat, onCopaAt: copaAt, onPlanlaUretim: planlaUretim, onPlanlaSatinAlma: planlaSatinAlma, onPlanlamaTemizle: planlamaTemizle, asortiler: tanimlar.asortiler || [], hedefSiparisId: siparisHedefId, onHedefTuketildi: () => setSiparisHedefId(null), onAsortiOlustur: asortiOlustur, firmaBilgileri: tanimlar.firmaBilgileri, onPencereAc: pencereAc, aktifPencereId: aktifPencereId, onPencereKapat: pencereKapat, onPencereKucult: () => setAktifPencereId(null), acikSiparisPencereleri: acikSiparisPencereleri, raporlar: tanimlar.raporlar || [], onRaporlarKaydet: raporlariKaydet, aktifKullanici: aktifKullanici, tanimlarProsesler: tanimlar.prosesler || [], onUruneGit: uruneGit, onYeniRenkKaydet: yeniRenkKaydet, onModelRengiVeRecete: modelRengiVeReceteEkle, tanimlarRenkler: tanimlar.renkler || [], tanimlarKombinasyonlar: tanimlar.renkKombinasyonlari || [], tanimlarBedenler: tanimlar.bedenler || [], tanimlarBedenGruplari: tanimlar.bedenGruplari || [], tanimlarOzelKodAlanlari: tanimlar.ozelKodAlanlari || [], tanimlarAraProsesler: tanimlar.araProsesler || [], tanimlarSiparisSezonlari: tanimlar.siparisSezonlari || [], kurlar: muhasebe.kurlar || {} })),
                     React.createElement(GizliModul, { aktif: tab === "fisler" },
                         React.createElement(FislerModule, { fisDefteri: fisDefteri, tanimlar: tanimlar, muhasebe: muhasebe, hedefFisNo: hedefFisNo, onHedefTuketildi: () => setHedefFisNo(null), cariler: cariler, stok: stok, siparisler: siparisler, uretim: uretim, onGoToCari: cariyeGit, onGoToSiparis: sipariseGit, onGoToUretim: (uretimId) => { setUretimHedefId(uretimId || null); setTab("uretim"); }, onYetimFisTemizle: yetimFisTemizle, faturalar: faturalar, onFaturaAc: (fisNo) => pencereAc("fatura", fisNo, `Fatura: ${fisNo}`, { fisNo }) })),
                     tab === "uretimrapor" && React.createElement(UretimRaporu, { uretim: uretim, cariler: cariler, tanimlar: tanimlar, onSave: saveTanimlar, onGoToUretim: (id) => { setUretimHedefId(id || null); setTab("uretim"); } }),
@@ -28323,8 +28550,8 @@ function AtolyeUygulamasi() {
                                     kurlariKaydet(usd, eur, "Elle");
                                     showToast(`Kurlar elle kaydedildi — USD: ${usd.toFixed(4)} ₺, EUR: ${eur.toFixed(4)} ₺`);
                                 } }))),
-                    aktifPencere && aktifPencere.tip === "recete" && (React.createElement(ReceteYazdir, { product: aktifPencere.veri.product, tumUrunler: aktifPencere.veri.tumUrunler, tanimlarProsesler: aktifPencere.veri.tanimlarProsesler, tanimlarAraProsesler: aktifPencere.veri.tanimlarAraProsesler, firmaBilgileri: aktifPencere.veri.firmaBilgileri, onClose: () => pencereKapat(aktifPencere.id), onMinimize: () => setAktifPencereId(null) })),
-                    aktifPencere && aktifPencere.tip === "maliyet" && (React.createElement(MaliyetYazdir, { product: aktifPencere.veri.product, tumUrunler: stok, tanimlarProsesler: tanimlar.prosesler, tanimlarAraProsesler: tanimlar.araProsesler, kurlar: muhasebe.kurlar || {}, cariler: cariler, kurGecmisi: muhasebe.kurGecmisi, aylikUretimHedefi: tanimlar.aylikUretimHedefi, genelGiderler: tanimlar.genelGiderler, fiyatGruplari: tanimlar.fiyatGruplari, firmaBilgileri: tanimlar.firmaBilgileri, onClose: () => pencereKapat(aktifPencere.id), onMinimize: () => setAktifPencereId(null) })),
+                    aktifPencere && aktifPencere.tip === "recete" && (React.createElement(ReceteYazdir, { product: aktifPencere.veri.product, tumUrunler: aktifPencere.veri.tumUrunler, tanimlarProsesler: aktifPencere.veri.tanimlarProsesler, tanimlarAraProsesler: aktifPencere.veri.tanimlarAraProsesler, tanimlarSiparisSezonlari: tanimlar.siparisSezonlari || [], firmaBilgileri: aktifPencere.veri.firmaBilgileri, onClose: () => pencereKapat(aktifPencere.id), onMinimize: () => setAktifPencereId(null) })),
+                    aktifPencere && aktifPencere.tip === "maliyet" && (React.createElement(MaliyetYazdir, { product: aktifPencere.veri.product, tumUrunler: stok, tanimlarProsesler: tanimlar.prosesler, tanimlarAraProsesler: tanimlar.araProsesler, tanimlarSiparisSezonlari: tanimlar.siparisSezonlari || [], kurlar: muhasebe.kurlar || {}, cariler: cariler, kurGecmisi: muhasebe.kurGecmisi, aylikUretimHedefi: tanimlar.aylikUretimHedefi, genelGiderler: tanimlar.genelGiderler, fiyatGruplari: tanimlar.fiyatGruplari, firmaBilgileri: tanimlar.firmaBilgileri, onClose: () => pencereKapat(aktifPencere.id), onMinimize: () => setAktifPencereId(null) })),
                     aktifPencere && aktifPencere.tip === "fis" && (React.createElement(FisYazdir, { fis: aktifPencere.veri.fis, siparis: aktifPencere.veri.siparis, cari: aktifPencere.veri.cari, stok: aktifPencere.veri.stok, firmaBilgileri: aktifPencere.veri.firmaBilgileri, onClose: () => pencereKapat(aktifPencere.id), onMinimize: () => setAktifPencereId(null) })),
                     aktifPencere && aktifPencere.tip === "fatura" && (React.createElement(FaturaPenceresi, { key: aktifPencere.id, fisNo: aktifPencere.veri.fisNo, faturalar: faturalar, cariler: cariler, stok: stok, tanimlar: tanimlar, muhasebe: muhasebe, aktifKullanici: aktifKullanici, onKaydet: faturaKaydet, showToast: showToast, onClose: () => pencereKapat(aktifPencere.id), onMinimize: () => setAktifPencereId(null) })),
                     aktifPencere && aktifPencere.tip === "cek" && (() => {
@@ -28389,7 +28616,7 @@ function AtolyeUygulamasi() {
                                         finally {
                                             fisKaydediliyorRef.current.delete(p.id);
                                         }
-                                    } })) : planlamaMi ? (React.createElement(HammaddeIhtiyacSekmesi, { siparisler: siparisler, stok: stok, uretim: uretim, cariler: cariler, onGoToSiparis: (id) => { pencereKapat(p.id); sipariseGit(id); }, onGoToUrun: (id) => { pencereKapat(p.id); uruneGit(id); }, onGoToUretim: (id) => { pencereKapat(p.id); setUretimHedefId(id || null); setTab("uretim"); }, onPlanlaHammaddeSatinAlma: planlaHammaddeSatinAlma, showToast: showToast, hedefHammadde: p.veri.hedef, onHedefTuketildi: () => { } })) : (React.createElement(SiparisModule, { cop: cop, onSiparisGitGlobal: sipariseGit, mobilBolumAyari: mobilBolumCoz(tanimlar.mobilGorunum, "satinalma"), onFiseGitNo: fiseGit, koliler: koliler, sabitTip: "Al\u0131\u015F", stokRezervasyonlari: stokRezervasyonlariGecerli, siparisler: siparisler, onSave: saveSiparisler, showToast: showToast, cariler: cariler, stok: stok, uretim: uretim, onGoToCari: (id) => { pencereKapat(p.id); cariyeGit(id); }, onGoToUretim: (id) => { pencereKapat(p.id); setUretimHedefId(id || null); setTab("uretim"); }, onGerceklestir: siparisGerceklestir, onSatisFisiAc: satisFisiAcSiparisten, onOdemeGir: siparisOdemesineGit, muhasebe: muhasebe, onOdemeKaydet: siparisOdemesiKaydet, onSiparisKapat: siparisKapat, onCopaAt: copaAt, onPlanlaUretim: planlaUretim, onPlanlaSatinAlma: planlaSatinAlma, onPlanlamaTemizle: planlamaTemizle, asortiler: tanimlar.asortiler || [], onAsortiOlustur: asortiOlustur, firmaBilgileri: tanimlar.firmaBilgileri, onUruneGit: uruneGit, onYeniRenkKaydet: yeniRenkKaydet, onModelRengiVeRecete: modelRengiVeReceteEkle, tanimlarRenkler: tanimlar.renkler || [], tanimlarKombinasyonlar: tanimlar.renkKombinasyonlari || [], tanimlarBedenler: tanimlar.bedenler || [], tanimlarBedenGruplari: tanimlar.bedenGruplari || [], tanimlarOzelKodAlanlari: tanimlar.ozelKodAlanlari || [], tanimlarProsesler: tanimlar.prosesler || [], tanimlarAraProsesler: tanimlar.araProsesler || [], kurlar: muhasebe.kurlar || {}, hedefYeniAlis: p.veri.taslak, onYeniAlisTuketildi: () => { } }))))));
+                                    } })) : planlamaMi ? (React.createElement(HammaddeIhtiyacSekmesi, { siparisler: siparisler, stok: stok, uretim: uretim, cariler: cariler, onGoToSiparis: (id) => { pencereKapat(p.id); sipariseGit(id); }, onGoToUrun: (id) => { pencereKapat(p.id); uruneGit(id); }, onGoToUretim: (id) => { pencereKapat(p.id); setUretimHedefId(id || null); setTab("uretim"); }, onPlanlaHammaddeSatinAlma: planlaHammaddeSatinAlma, showToast: showToast, hedefHammadde: p.veri.hedef, onHedefTuketildi: () => { } })) : (React.createElement(SiparisModule, { cop: cop, onSiparisGitGlobal: sipariseGit, mobilBolumAyari: mobilBolumCoz(tanimlar.mobilGorunum, "satinalma"), onFiseGitNo: fiseGit, koliler: koliler, sabitTip: "Al\u0131\u015F", stokRezervasyonlari: stokRezervasyonlariGecerli, siparisler: siparisler, onSave: saveSiparisler, showToast: showToast, cariler: cariler, stok: stok, uretim: uretim, onGoToCari: (id) => { pencereKapat(p.id); cariyeGit(id); }, onGoToUretim: (id) => { pencereKapat(p.id); setUretimHedefId(id || null); setTab("uretim"); }, onGerceklestir: siparisGerceklestir, onSatisFisiAc: satisFisiAcSiparisten, onOdemeGir: siparisOdemesineGit, muhasebe: muhasebe, onOdemeKaydet: siparisOdemesiKaydet, onSiparisKapat: siparisKapat, onCopaAt: copaAt, onPlanlaUretim: planlaUretim, onPlanlaSatinAlma: planlaSatinAlma, onPlanlamaTemizle: planlamaTemizle, asortiler: tanimlar.asortiler || [], onAsortiOlustur: asortiOlustur, firmaBilgileri: tanimlar.firmaBilgileri, onUruneGit: uruneGit, onYeniRenkKaydet: yeniRenkKaydet, onModelRengiVeRecete: modelRengiVeReceteEkle, tanimlarRenkler: tanimlar.renkler || [], tanimlarKombinasyonlar: tanimlar.renkKombinasyonlari || [], tanimlarBedenler: tanimlar.bedenler || [], tanimlarBedenGruplari: tanimlar.bedenGruplari || [], tanimlarOzelKodAlanlari: tanimlar.ozelKodAlanlari || [], tanimlarProsesler: tanimlar.prosesler || [], tanimlarAraProsesler: tanimlar.araProsesler || [], tanimlarSiparisSezonlari: tanimlar.siparisSezonlari || [], kurlar: muhasebe.kurlar || {}, hedefYeniAlis: p.veri.taslak, onYeniAlisTuketildi: () => { } }))))));
                     })));
             })(),
             sonHata && (React.createElement("div", { style: {
@@ -30124,7 +30351,7 @@ function GunlukPaneli({ showToast }) {
                         React.createElement("td", { style: { padding: "6px 8px", borderBottom: "1px solid var(--erp-line-soft)" } },
                             React.createElement("span", { style: { fontSize: 11, fontWeight: 700, color: renk, background: alfaEkle(renk, "18"), borderRadius: "var(--erp-r-pill)", padding: "2px 8px" } }, kapsamAd(k.kapsam))),
                         React.createElement("td", { style: { padding: "6px 8px", borderBottom: "1px solid var(--erp-line-soft)" } }, k.eylem),
-                        React.createElement("td", { style: { padding: "6px 8px", borderBottom: "1px solid var(--erp-line-soft)", fontSize: 11, color: "var(--erp-text-2)" } }, ayrintilar.map(([a2, v]) => (React.createElement("span", { key: a2, style: { display: "inline-block", marginRight: 8 } },
+                        React.createElement("td", { style: { padding: "6px 8px", borderBottom: "1px solid var(--erp-line-soft)", fontSize: 11, color: "var(--erp-text-2)" } }, ayrintilar.map(([a2, v]) => (React.createElement("span", { key: a2, style: { display: "inline-block", marginRight: 8, whiteSpace: "pre-line" } },
                             React.createElement("b", null, a2),
                             ": ",
                             typeof v === "object" ? JSON.stringify(v) : String(v)))))));
@@ -30704,6 +30931,7 @@ const URUN_ALT_SEKMELERI = [
     { key: "birim", ad: "Birimler" },
     { key: "tip", ad: "Ürün Tipleri" },
     { key: "fire", ad: "Fire Sebepleri" },
+    { key: "sezon", ad: "Sezonlar" },
     { key: "bolum", ad: "Atölye Bölümleri" },
     { key: "fiyat", ad: "Fiyat Grupları" },
     { key: "ozel", ad: "Özel Kodlar" },
@@ -31830,6 +32058,9 @@ function TanimlarModule({ onaylar, onYetimRezervasyonSil, onDefterFisIptal, onCa
                         React.createElement("button", { className: "btn-primary", title: "Hammadde tipi ekle", onClick: addHammaddeTipi },
                             React.createElement(Plus, { size: 14 }))),
                     React.createElement(TanimListesi, { list: hammaddeTipleriGorunen, onRemove: removeHammaddeTipi, emptyText: "Hen\u00FCz malzeme tipi tan\u0131mlanmad\u0131." })))),
+            urunAltGoster("sezon") && (React.createElement("div", { "data-urun-alt-icerik": "sezon", style: { marginBottom: 28 } },
+                React.createElement(TanimBasligi, { ad: "Sezonlar" }),
+                React.createElement(SiparisSezonlariPaneli, { tanimlar: tanimlar, onSave: onSave, showToast: showToast, siparisler: siparisler }))),
             urunAltGoster("fire") && (React.createElement("div", { "data-urun-alt-icerik": "fire", style: { marginBottom: 28 } },
                 React.createElement(TanimBasligi, { ad: "Fire Sebepleri" }),
                 React.createElement(Bolum, { baslik: "Fire Sebepleri", renk: "var(--erp-warn)" },
@@ -32650,6 +32881,87 @@ function KullaniciSifreKutusu({ etiket, kilitli, onUygula }) {
         React.createElement("button", { type: "button", className: "btn-primary", "data-sifre-uygula": "1", disabled: kilitli, style: { padding: "3px 8px", fontSize: 11 }, onClick: gonder }, "Uygula"),
         React.createElement("button", { type: "button", className: "btn-ghost", style: { padding: "3px 6px", fontSize: 11 }, onClick: () => { setAcik(false); setSifre(""); } },
             React.createElement(X, { size: 10 }))));
+}
+// ================= SİPARİŞ SEZONLARI (v1.744.19) =================
+//
+// Kullanıcı (13 Kasım, sipariş formunda serbest "Sezon: 2027" kutusuyla): "Sipariş sezonu tanımlardan tanımlanır, seçtirilecek
+// şekilde olsun; tanımlarda aktif / pasif de olabilsin. Örnek 2027 Yaz için siparişi giriyoruz, 2028 Yaz'a girince 2027 Yaz'ı
+// seçtirmeye gerek kalmaz — tanımlardan sezonu pasife alınca çıkmaz."
+//
+// Tanım: `tanimlar.siparisSezonlari = [{ id, ad, pasif }]` (Tanımlar › Ürün › Sezonlar). Sipariş sezonu ADIYLA saklanır (eskisi
+// gibi `siparis.sezon` metni): liste süzgeci, sipariş çıktısı, arama ve eski siparişler değişmeden çalışır. Bu yüzden sezonun
+// ADI sonradan değiştirilemez (eski siparişler eski adla kalırdı) — yanlış girilen sezon silinip yenisi açılır.
+// Ürün kartındaki sezon (İlkbahar/Yaz + yıl, 015 SEZONLAR) AYRI bir alan; bu liste yalnız siparişin sezonu.
+// Pasif sezon formda seçilemez; ama düzenlenen eski siparişin sezonu pasif / listede olmayan bir ad ise O DEĞER seçenek olarak
+// kalır ("(pasif)" / "(listede yok)") — yoksa <select> ilk seçeneği gösterip kayıtta sezonu sessizce silerdi (hata kalıbı 2).
+function siparisSezonlari(liste) {
+    return (Array.isArray(liste) ? liste : []).filter((s) => s && String(s.ad || "").trim());
+}
+// Formdaki seçenekler: aktif sezonlar (tanım sırasıyla) + mevcut değer aktif değilse onun etiketi. Saf (birim-siparis-sezon).
+function siparisSezonSecenekleri(liste, mevcut) {
+    const l = siparisSezonlari(liste);
+    const aktif = l.filter((s) => !s.pasif).map((s) => ({ deger: s.ad, etiket: s.ad }));
+    const m = String(mevcut || "").trim();
+    if (m && !aktif.some((x) => x.deger === m)) {
+        const tanimli = l.find((s) => s.ad === m);
+        aktif.unshift({ deger: m, etiket: `${m} ${tanimli ? "(pasif)" : "(listede yok)"}` });
+    }
+    return aktif;
+}
+function SiparisSezonlariPaneli({ tanimlar, onSave, showToast, siparisler }) {
+    const liste = siparisSezonlari(tanimlar.siparisSezonlari);
+    const [yeni, setYeni] = useState("");
+    const yaz = (l) => onSave({ ...tanimlar, siparisSezonlari: l });
+    const ekle = (ad) => {
+        const a = String(ad || "").trim();
+        if (!a)
+            return false;
+        if (liste.some((s) => s.ad.toLocaleLowerCase("tr-TR") === a.toLocaleLowerCase("tr-TR"))) {
+            showToast(`"${a}" zaten tanımlı`);
+            return false;
+        }
+        yaz([...liste, { id: uid("szn"), ad: a, pasif: false }]);
+        return true;
+    };
+    const kullanim = (ad) => (siparisler || []).filter((s) => s && s.sezon === ad).length;
+    // Önceki siparişlerde yazılmış ama tanımlarda olmayan sezonlar — bir tıkla eklenir (eski serbest metinden geçiş).
+    const tanimsiz = [...new Set((siparisler || []).map((s) => s && s.sezon).filter((z) => z && String(z).trim()))]
+        .filter((z) => !liste.some((s) => s.ad === z)).sort((a, b) => a.localeCompare(b, "tr"));
+    const satir = { display: "flex", alignItems: "center", gap: 10, padding: "6px 10px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", marginBottom: 6, background: "var(--erp-panel)" };
+    return (React.createElement("div", { "data-siparis-sezonlari": "1" },
+        React.createElement(Bolum, { baslik: "Sipari\u015F Sezonlar\u0131", renk: "var(--erp-info)" },
+            React.createElement("p", { style: { fontSize: 11, color: "var(--erp-text-3)", margin: "0 0 8px", lineHeight: 1.5 } },
+                "Sipari\u015F girerken \"Sezon\" bu listeden se\u00E7ilir. Sezonu bitince ",
+                React.createElement("b", null, "Pasif"),
+                " yap\u0131n: yeni sipari\u015Fte se\u00E7enek olarak \u00E7\u0131kmaz, eski sipari\u015Flerde ve listedeki s\u00FCzge\u00E7te yine g\u00F6r\u00FCn\u00FCr. \u00DCr\u00FCn kart\u0131ndaki sezon (\u0130lkbahar/Yaz + y\u0131l) ayr\u0131 bir aland\u0131r."),
+            React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 10 } },
+                React.createElement("input", { value: yeni, onChange: (e) => setYeni(e.target.value), "data-siparis-sezon-yeni": "1", placeholder: "\u00D6rn. 2027 Yaz", style: inputStyle, onKeyDown: (e) => { if (e.key === "Enter" && ekle(yeni))
+                        setYeni(""); } }),
+                React.createElement("button", { className: "btn-primary", title: "Sezon ekle", "data-siparis-sezon-ekle": "1", onClick: () => { if (ekle(yeni))
+                        setYeni(""); } },
+                    React.createElement(Plus, { size: 14 }))),
+            liste.length === 0 && React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-3)", marginBottom: 8 } }, "Hen\u00FCz sezon tan\u0131mlanmad\u0131 \u2014 sipari\u015F formunda sezon serbest yaz\u0131l\u0131r."),
+            liste.map((s) => (React.createElement("div", { key: s.id || s.ad, "data-siparis-sezon-satir": s.ad, style: { ...satir, opacity: s.pasif ? 0.6 : 1 } },
+                React.createElement("span", { style: { fontWeight: 600, flex: 1 } }, s.ad),
+                React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-3)" } },
+                    kullanim(s.ad),
+                    " sipari\u015F"),
+                React.createElement("button", { type: "button", "data-siparis-sezon-durum": s.ad, className: s.pasif ? "btn-secondary" : "btn-primary", style: { fontSize: 11, padding: "3px 10px" }, title: s.pasif ? "Yeniden seçilebilir yap" : "Yeni siparişte seçilmesin", onClick: () => yaz(liste.map((x) => (x === s ? { ...x, pasif: !x.pasif } : x))) }, s.pasif ? "Pasif" : "Aktif"),
+                React.createElement("button", { type: "button", title: "Sil", "data-siparis-sezon-sil": s.ad, style: { all: "unset", cursor: "pointer", color: "var(--erp-danger)" }, onClick: () => {
+                        const n = kullanim(s.ad);
+                        if (n && !window.confirm(`"${s.ad}" ${n} siparişte kullanılıyor. Silinirse o siparişlerde sezon yazısı kalır ama listeden seçilemez. Silinsin mi? (Bitti ise Pasif yapmanız önerilir.)`))
+                            return;
+                        yaz(liste.filter((x) => x !== s));
+                    } },
+                    React.createElement(Trash2, { size: 14 }))))),
+            tanimsiz.length > 0 && (React.createElement("div", { style: { marginTop: 8, fontSize: 12 } },
+                "Sipari\u015Flerde yaz\u0131l\u0131 ama tan\u0131ml\u0131 olmayan sezonlar: ",
+                React.createElement("b", null, tanimsiz.join(", ")),
+                " ",
+                React.createElement("button", { type: "button", className: "btn-secondary", "data-siparis-sezon-aktar": "1", style: { fontSize: 11, padding: "3px 10px", marginLeft: 6 }, onClick: () => yaz([...liste, ...tanimsiz.map((ad) => ({ id: uid("szn"), ad, pasif: false }))]) },
+                    "Tan\u0131mlara ekle (",
+                    tanimsiz.length,
+                    ")"))))));
 }
 // Otomatik yedeklerin durumu ve geri yükleme. Geri yükleme İKİ AŞAMALI onay ister: mevcut verinin
 // tamamını değiştiren bir işlem, tek tıkla yapılmamalı.
@@ -36014,7 +36326,7 @@ function StokModule({ onStokFisiKes, kapsam = "genel", onFiyatGrubuMarj, onRecet
                             // bileşen yeniden kurulur ve istenen sekme uygulanır. Aksi halde başlangıç değeri
                             // yalnızca ilk kurulumda okunduğu için ikinci yönlendirme etkisiz kalırdı.
                             key: `${p.id}-${hedef ? hedef.sayac : 0}`, product: p, baslangicAcik: true, baslangicSekme: hedef ? hedef.sekme : null, tanimlarRenkler: tanimlar.renkler, tanimlarKombinasyonlar: tanimlar.renkKombinasyonlari || [], tanimlarBedenler: tanimlar.bedenler, tanimlarBedenGruplari: tanimlar.bedenGruplari || [], onAddRenk: addRenkToProduct, onRenkleriTipeBagla: onRenkleriTipeBagla, onAddBeden: addBedenToProduct, onRemoveRenk: removeRenkFromProduct, onRemoveBeden: removeBedenFromProduct, onRemoveProduct: (id, cascade) => { if (removeProduct(id, cascade) && onPencereKapat)
-                                onPencereKapat(pencereId); }, onEkFiyatEkle: ekFiyatEkle, onEkFiyatSil: ekFiyatSil, tumUrunler: items, tanimlarProsesler: tanimlar.prosesler || [], tanimlarAraProsesler: tanimlar.araProsesler || [], tanimlarBirimler: tanimlar.birimler || [], tanimlarHammaddeTipleri: tanimlar.hammaddeTipleri || [], onUrunGuncelle: urunGuncelle, tanimlarCeviriler: tanimlar.ceviriler || {}, onCevirilerKaydet: onCevirilerKaydet, tanimlarSiteGruplari: tanimlar.siteGruplari || [], onSiteGruplariKaydet: onSiteGruplariKaydet, onMinStokGuncelle: minStokGuncelle, onReceteGrubuGuncelle: receteGrubuGuncelle, onProsesUcretGuncelle: prosesUcretGuncelle, tanimlarOzelKodAlanlari: ozelKodAlanlari, onReceteSilToplu: receteSatirlariSilToplu, onYeniRenkKaydet: onYeniRenkKaydet, onBarkodTamamla: onBarkodTamamla, onPasifDegistir: pasifDegistir, onDefterDuzeltmeYaz: defterDuzeltmeYaz, stokRezervasyonlari: stokRezervasyonlari, tumSiparisler: tumSiparisler, onKullanilanUrunAc: urunAc, onHizliCariEkle: onHizliCariEkle, onHizliHammaddeEkle: hizliHammaddeEkle, onYeniOlcuKaydet: onYeniOlcuKaydet, receteSablonlari: tanimlar.receteSablonlari || [], onReceteSablonuKaydet: onReceteSablonuKaydet, onYeniOzelKodAlani: onYeniOzelKodAlani, onFiyatGrubuMarj: onFiyatGrubuMarj, showToast: showToast, onKategoriChange: updateKategori, onKapakResmiChange: updateKapakResmi, onTeknikCizimEkle: teknikCizimEkle, onTeknikCizimSil: teknikCizimSil, onTeknikCizimGuncelle: teknikCizimGuncelle, onTeknikNotChange: teknikNotDegistir, tanimlarTum: tanimlar, onKapasiteKaydet: kapasiteKaydet, 
+                                onPencereKapat(pencereId); }, onEkFiyatEkle: ekFiyatEkle, onEkFiyatSil: ekFiyatSil, tumUrunler: items, tanimlarProsesler: tanimlar.prosesler || [], tanimlarAraProsesler: tanimlar.araProsesler || [], tanimlarSiparisSezonlari: tanimlar.siparisSezonlari || [], tanimlarBirimler: tanimlar.birimler || [], tanimlarHammaddeTipleri: tanimlar.hammaddeTipleri || [], onUrunGuncelle: urunGuncelle, tanimlarCeviriler: tanimlar.ceviriler || {}, onCevirilerKaydet: onCevirilerKaydet, tanimlarSiteGruplari: tanimlar.siteGruplari || [], onSiteGruplariKaydet: onSiteGruplariKaydet, onMinStokGuncelle: minStokGuncelle, onReceteGrubuGuncelle: receteGrubuGuncelle, onProsesUcretGuncelle: prosesUcretGuncelle, tanimlarOzelKodAlanlari: ozelKodAlanlari, onReceteSilToplu: receteSatirlariSilToplu, onYeniRenkKaydet: onYeniRenkKaydet, onBarkodTamamla: onBarkodTamamla, onPasifDegistir: pasifDegistir, onDefterDuzeltmeYaz: defterDuzeltmeYaz, stokRezervasyonlari: stokRezervasyonlari, tumSiparisler: tumSiparisler, onKullanilanUrunAc: urunAc, onHizliCariEkle: onHizliCariEkle, onHizliHammaddeEkle: hizliHammaddeEkle, onYeniOlcuKaydet: onYeniOlcuKaydet, receteSablonlari: tanimlar.receteSablonlari || [], onReceteSablonuKaydet: onReceteSablonuKaydet, onYeniOzelKodAlani: onYeniOzelKodAlani, onFiyatGrubuMarj: onFiyatGrubuMarj, showToast: showToast, onKategoriChange: updateKategori, onKapakResmiChange: updateKapakResmi, onTeknikCizimEkle: teknikCizimEkle, onTeknikCizimSil: teknikCizimSil, onTeknikCizimGuncelle: teknikCizimGuncelle, onTeknikNotChange: teknikNotDegistir, tanimlarTum: tanimlar, onKapasiteKaydet: kapasiteKaydet, 
                             // Büyütme, katalogdaki büyük görsel penceresinin aynısı: { url, ad } bekliyor.
                             onTeknikCizimAc: (c) => setBuyukGorsel({ url: c.gorsel, ad: c.baslik || "Teknik çizim" }), cariler: cariler, onGoToCari: onGoToCari, onRemoveHareketGlobal: onRemoveHareketGlobal, onRenkResmiChange: updateRenkResmi, onRenkResmiRemove: removeRenkResmi, siparisler: siparisler, uretim: uretim, onGoToSiparis: onGoToSiparis, onGoToUretim: onGoToUretim, firmaBilgileri: tanimlar.firmaBilgileri, tanimlarFiyatGruplari: tanimlar.fiyatGruplari || [], onPencereAc: onPencereAc, onKombinasyonOlustur: onKombinasyonOlustur, onGoToUrun: urunAc })))));
         })));
@@ -57233,6 +57545,75 @@ function useSiteBildirimleri(siparisler, showToast) {
 // ================= SİTE RAPORU (v1.659.0 — "güven ve düzen") =================
 // Tanımlar › Web Sitesi altında. Cari başına dönemdeki site talepleri (kaçı siparişe döndü / reddedildi / bekliyor),
 // girişler ve hatalı denemeler, son giriş. Veri `site_raporu(gün)` (site-portal.sql §13); fonksiyon yoksa panel söyler.
+// E-POSTA BİLDİRİMİ (v1.744.18 — kullanıcı: "Site talebi için e-posta bildirimi yapalım"). Gönderen SUNUCU (supabase-site-bildirim-
+// fonksiyonu.ts, 5 dakikalık zamanlayıcı — site-bildirim.sql): uygulama kapalıyken de çalışır. Ayar `firmaBilgileri.siteBildirim`
+// = { acik, alicilar } — `siteAyarlari`na KONMAZ: o nesnenin tamamı siteye (anon, `site_ayarlari()`) açık, alıcı adresleri sızardı.
+// "Deneme gönder" fonksiyonu kullanıcı jetonuyla çağırır (kayda yazmaz). Son bildirimler `site_bildirim_kaydi`ndan okunur.
+function SiteBildirimAyari({ tanimlar, onSave, showToast }) {
+    const firma = (tanimlar && tanimlar.firmaBilgileri) || {};
+    const ayar = firma.siteBildirim || {};
+    const yaz = (d) => onSave({ ...tanimlar, firmaBilgileri: { ...firma, siteBildirim: { ...ayar, ...d } } });
+    const [acik, setAcik] = useState(false);
+    const [son, setSon] = useState(null);
+    const [deneniyor, setDeneniyor] = useState(false);
+    const sonOku = React.useCallback(() => {
+        if (!supabaseAcikMi())
+            return;
+        supabaseIstek("site_bildirim_kaydi?select=id,tur,durum,zaman&order=zaman.desc&limit=5")
+            .then((l) => setSon(Array.isArray(l) ? l : []), () => setSon("kurulu-degil"));
+    }, []);
+    useEffect(() => { if (acik)
+        sonOku(); }, [acik, sonOku]);
+    const dene = async () => {
+        setDeneniyor(true);
+        try {
+            const y = await fetch(`${SUPABASE_URL}/functions/v1/site-bildirim`, {
+                method: "POST", headers: { ...(await yetkiBasliklari()), "Content-Type": "application/json" }, body: JSON.stringify({ deneme: true }),
+            });
+            const j = await y.json().catch(() => ({}));
+            showToast(j.tamam ? `Deneme e-postası gönderildi: ${j.mesaj || ""}` : `Sunucu: ${j.hata || `HTTP ${y.status} — site-bildirim fonksiyonu kurulu mu?`}`);
+        }
+        catch (e) {
+            showToast(`Sunucuya ulaşılamadı: ${String((e && e.message) || e)}`);
+        }
+        setDeneniyor(false);
+    };
+    const alicilar = String(ayar.alicilar || "").split(/[,;\s]+/).filter((x) => /@/.test(x));
+    return (React.createElement("div", { "data-site-bildirim-ayari": "1", style: { marginTop: 18 } },
+        React.createElement("button", { type: "button", onClick: () => setAcik(!acik), style: { all: "unset", cursor: "pointer", fontWeight: 700, fontSize: 13 } },
+            acik ? "▾" : "▸",
+            " E-posta bildirimi \u2014 yeni talep ve m\u00FC\u015Fteri kayd\u0131",
+            ayar.acik ? ` · açık (${alicilar.length} alıcı)` : " · kapalı"),
+        acik && (React.createElement("div", { style: { marginTop: 8, display: "grid", gap: 8, maxWidth: 640 } },
+            React.createElement("label", { style: { display: "flex", gap: 8, alignItems: "center", fontSize: 13 } },
+                React.createElement("input", { type: "checkbox", "data-site-bildirim-acik": "1", checked: !!ayar.acik, onChange: (e) => yaz({ acik: e.target.checked }) }),
+                "Web sitesinden sipari\u015F talebi ya da m\u00FC\u015Fteri kayd\u0131 gelince e-posta g\u00F6nder (uygulama kapal\u0131yken de)"),
+            React.createElement("label", { style: { display: "grid", gap: 4, fontSize: 12 } },
+                "Al\u0131c\u0131lar (virg\u00FClle)",
+                React.createElement("input", { "data-site-bildirim-alicilar": "1", defaultValue: ayar.alicilar || "", key: ayar.alicilar || "", placeholder: "satis@firma.com, ikinci@firma.com", onBlur: (e) => { if (e.target.value !== (ayar.alicilar || ""))
+                        yaz({ alicilar: e.target.value }); } })),
+            React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" } },
+                React.createElement("button", { type: "button", className: "btn-secondary", "data-site-bildirim-dene": "1", disabled: deneniyor || alicilar.length === 0, onClick: dene }, deneniyor ? "Gönderiliyor…" : "Deneme gönder"),
+                React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-3)" } }, "G\u00F6nderen: Tan\u0131mlar \u203A Firma \u203A E-posta ayarlar\u0131 (g\u00FCn sonu raporuyla ayn\u0131 hesap).")),
+            React.createElement("div", { style: { fontSize: 11, color: "var(--erp-text-3)", lineHeight: 1.5 } },
+                "Sunucu kurulumu bir kez: Supabase'de ",
+                React.createElement("span", { className: "mono" }, "site-bildirim"),
+                " fonksiyonu (",
+                React.createElement("span", { className: "mono" }, "supabase-site-bildirim-fonksiyonu.ts"),
+                ") ve ",
+                React.createElement("span", { className: "mono" }, "site-bildirim.sql"),
+                " (5 dakikada bir kontrol). E-postada m\u00FC\u015Fteri, modeller, renk/beden \u00E7iftleri, \u00F6deme ve not yer al\u0131r; fiyat ve \u015Fifre gitmez."),
+            son === "kurulu-degil" && React.createElement("div", { style: { fontSize: 12, color: "var(--erp-warning, #B26A00)" } }, "Bildirim kayd\u0131 okunamad\u0131 \u2014 site-bildirim.sql hen\u00FCz \u00E7al\u0131\u015Ft\u0131r\u0131lmam\u0131\u015F olabilir."),
+            Array.isArray(son) && (React.createElement("div", { "data-site-bildirim-son": "1", style: { fontSize: 12 } },
+                React.createElement("b", null, "Son bildirimler:"),
+                son.length === 0 ? " henüz yok" : "",
+                son.map((r) => (React.createElement("div", { key: r.id, style: { color: /^HATA/.test(r.durum || "") ? "var(--erp-danger)" : "var(--erp-text-2)" } },
+                    String(r.zaman || "").slice(0, 16).replace("T", " "),
+                    " \u00B7 ",
+                    r.tur === "kayit" ? "müşteri kaydı" : "sipariş talebi",
+                    " \u00B7 ",
+                    r.durum)))))))));
+}
 function SiteRaporuPaneli({ cariler }) {
     const [gun, setGun] = useState(90);
     const [veri, setVeri] = useState(null);
@@ -57623,6 +58004,7 @@ function WebSitesiAyarlari({ tanimlar, onSave, showToast, stok, cariler }) {
         metin("altYazi", "Sayfa altı yazısı (isteğe bağlı)"),
         React.createElement(SiteGruplariPaneli, { tanimlar: tanimlar, onSave: onSave, showToast: showToast, stok: stok, cariler: cariler }),
         React.createElement(KayitCevirileriPaneli, { tanimlar: tanimlar, onSave: onSave, showToast: showToast }),
+        React.createElement(SiteBildirimAyari, { tanimlar: tanimlar, onSave: onSave, showToast: showToast }),
         React.createElement(SiteRaporuPaneli, { cariler: cariler })));
 }
 // ================= KAYIT ÇEVİRİLERİ — SİTEDE GÖRÜNEN ADLAR (v1.651.0) =================
@@ -64465,7 +64847,7 @@ function siparisTermin(s) {
 }
 // sabitTip: "Satış" | "Alış". Verildiğinde modül tek tarafa kilitlenir ve iç sekme çubuğu
 // gösterilmez — sol menüde zaten ayrı iki giriş var, ikinci bir sekme katmanı gereksiz tekrar olurdu.
-function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabitTip, siparisler, onSave, showToast, cariler, stok, stokRezervasyonlari, uretim, onGoToCari, onGoToUretim, onGerceklestir, onSatisFisiAc, onSiparisKapat, onCopaAt, onPlanlaUretim, onPlanlaSatinAlma, onPlanlamaTemizle, asortiler, hedefSiparisId, onHedefTuketildi, hedefYeniAlis, onYeniAlisTuketildi, onAsortiOlustur, firmaBilgileri, onPencereAc, aktifPencereId, onPencereKapat, onPencereKucult, acikSiparisPencereleri, onUruneGit, onModelRengiVeRecete, onYeniRenkKaydet, tanimlarRenkler, tanimlarKombinasyonlar, tanimlarBedenler, tanimlarOzelKodAlanlari, kurlar, koliler, raporlar, onRaporlarKaydet, aktifKullanici, tanimlarProsesler, tanimlarAraProsesler, onOdemeGir, muhasebe, onOdemeKaydet, 
+function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabitTip, siparisler, onSave, showToast, cariler, stok, stokRezervasyonlari, uretim, onGoToCari, onGoToUretim, onGerceklestir, onSatisFisiAc, onSiparisKapat, onCopaAt, onPlanlaUretim, onPlanlaSatinAlma, onPlanlamaTemizle, asortiler, hedefSiparisId, onHedefTuketildi, hedefYeniAlis, onYeniAlisTuketildi, onAsortiOlustur, firmaBilgileri, onPencereAc, aktifPencereId, onPencereKapat, onPencereKucult, acikSiparisPencereleri, onUruneGit, onModelRengiVeRecete, onYeniRenkKaydet, tanimlarRenkler, tanimlarKombinasyonlar, tanimlarBedenler, tanimlarOzelKodAlanlari, kurlar, koliler, raporlar, onRaporlarKaydet, aktifKullanici, tanimlarProsesler, tanimlarAraProsesler, tanimlarSiparisSezonlari, onOdemeGir, muhasebe, onOdemeKaydet, 
 // TEKLİF KİPİ (v1.716.0 — kullanıcı: "Teklifte ürün girişi siparişin aynısı olacak, bire bir"): modül YALNIZ FORM olarak
 // çizilir (liste, sekme, pencereler yok), kayıt `onSave` yerine `onTeklifKaydet(nesne, duzenlenenId)`e gider, kapanınca
 // `onTeklifVazgec`. `teklifDuzenle` verilirse form o kayıtla açılır (siparisler=[o kayıt] ile). 326 TeklifModule sarmalar.
@@ -65678,9 +66060,11 @@ teklifKipi = false, teklifDuzenle = null, onTeklifKaydet, onTeklifVazgec, teklif
                                         React.createElement(Field, { label: "Belge No" },
                                             React.createElement("input", { value: belgeNo, onChange: (e) => setBelgeNo(e.target.value), "data-siparis-belge-no": true, placeholder: "opsiyonel", style: inputStyle }))),
                                     React.createElement("div", { style: { flex: "1 1 140px", minWidth: 0 } },
-                                        React.createElement(Field, { label: "Sezon" },
-                                            React.createElement("input", { value: sezon, onChange: (e) => setSezon(e.target.value), "data-siparis-sezon": true, list: "siparis-sezon-onerileri", placeholder: "\u00F6rn. 2026 Yaz", style: inputStyle }),
-                                            React.createElement("datalist", { id: "siparis-sezon-onerileri" }, [...new Set((siparisler || []).map((x) => x.sezon).filter(Boolean))].sort().map((z) => React.createElement("option", { key: z, value: z }))))),
+                                        React.createElement(Field, { label: "Sezon" }, siparisSezonlari(tanimlarSiparisSezonlari).length > 0 ? (React.createElement("select", { value: sezon, onChange: (e) => setSezon(e.target.value), "data-siparis-sezon": true, style: inputStyle },
+                                            React.createElement("option", { value: "" }, "\u2014 Sezon se\u00E7in \u2014"),
+                                            siparisSezonSecenekleri(tanimlarSiparisSezonlari, sezon).map((o) => React.createElement("option", { key: o.deger, value: o.deger }, o.etiket)))) : (React.createElement(React.Fragment, null,
+                                            React.createElement("input", { value: sezon, onChange: (e) => setSezon(e.target.value), "data-siparis-sezon": true, list: "siparis-sezon-onerileri", placeholder: "\u00F6rn. 2026 Yaz", style: inputStyle, title: "Sezonlar\u0131 Tan\u0131mlar \u203A \u00DCr\u00FCn \u203A Sezonlar'da tan\u0131mlarsan\u0131z buradan se\u00E7ilir" }),
+                                            React.createElement("datalist", { id: "siparis-sezon-onerileri" }, [...new Set((siparisler || []).map((x) => x.sezon).filter(Boolean))].sort().map((z) => React.createElement("option", { key: z, value: z }))))))),
                                     React.createElement("div", { style: { flex: "3 1 260px", minWidth: 0 } },
                                         React.createElement(Field, { label: "Not" },
                                             React.createElement("input", { value: not, onChange: (e) => setNot(e.target.value), placeholder: "Opsiyonel", style: inputStyle }))),
@@ -73065,7 +73449,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.744.16)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.744.19)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),
