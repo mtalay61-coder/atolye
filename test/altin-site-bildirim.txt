@@ -1,0 +1,18 @@
+{
+  "baslikKapali": "▸ E-posta bildirimi — yeni talep ve müşteri kaydı · kapalı",
+  "baslikAcik": "▾ E-posta bildirimi — yeni talep ve müşteri kaydı · açık (2 alıcı)",
+  "denemeKapaliBasta": true,
+  "ayar": {
+    "acik": true,
+    "alicilar": "satis@ornek.com, ikinci@ornek.com"
+  },
+  "siteAyarlarindaAdresYok": true,
+  "denemeCagrisi": [
+    {
+      "deneme": true
+    }
+  ],
+  "toast": true,
+  "son": "Son bildirimler:\n2026-11-12 10:05 · sipariş talebi · gönderildi (satis@ornek.com: tamam)",
+  "hatalar": []
+}

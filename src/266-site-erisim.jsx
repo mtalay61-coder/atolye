@@ -329,6 +329,81 @@ function useSiteBildirimleri(siparisler, showToast) {
 // ================= SİTE RAPORU (v1.659.0 — "güven ve düzen") =================
 // Tanımlar › Web Sitesi altında. Cari başına dönemdeki site talepleri (kaçı siparişe döndü / reddedildi / bekliyor),
 // girişler ve hatalı denemeler, son giriş. Veri `site_raporu(gün)` (site-portal.sql §13); fonksiyon yoksa panel söyler.
+// E-POSTA BİLDİRİMİ (v1.744.18 — kullanıcı: "Site talebi için e-posta bildirimi yapalım"). Gönderen SUNUCU (supabase-site-bildirim-
+// fonksiyonu.ts, 5 dakikalık zamanlayıcı — site-bildirim.sql): uygulama kapalıyken de çalışır. Ayar `firmaBilgileri.siteBildirim`
+// = { acik, alicilar } — `siteAyarlari`na KONMAZ: o nesnenin tamamı siteye (anon, `site_ayarlari()`) açık, alıcı adresleri sızardı.
+// "Deneme gönder" fonksiyonu kullanıcı jetonuyla çağırır (kayda yazmaz). Son bildirimler `site_bildirim_kaydi`ndan okunur.
+function SiteBildirimAyari({ tanimlar, onSave, showToast }) {
+  const firma = (tanimlar && tanimlar.firmaBilgileri) || {};
+  const ayar = firma.siteBildirim || {};
+  const yaz = (d) => onSave({ ...tanimlar, firmaBilgileri: { ...firma, siteBildirim: { ...ayar, ...d } } });
+  const [acik, setAcik] = useState(false);
+  const [son, setSon] = useState(null);
+  const [deneniyor, setDeneniyor] = useState(false);
+  const sonOku = React.useCallback(() => {
+    if (!supabaseAcikMi()) return;
+    supabaseIstek("site_bildirim_kaydi?select=id,tur,durum,zaman&order=zaman.desc&limit=5")
+      .then((l) => setSon(Array.isArray(l) ? l : []), () => setSon("kurulu-degil"));
+  }, []);
+  useEffect(() => { if (acik) sonOku(); }, [acik, sonOku]);
+  const dene = async () => {
+    setDeneniyor(true);
+    try {
+      const y = await fetch(`${SUPABASE_URL}/functions/v1/site-bildirim`, {
+        method: "POST", headers: { ...(await yetkiBasliklari()), "Content-Type": "application/json" }, body: JSON.stringify({ deneme: true }),
+      });
+      const j = await y.json().catch(() => ({}));
+      showToast(j.tamam ? `Deneme e-postası gönderildi: ${j.mesaj || ""}` : `Sunucu: ${j.hata || `HTTP ${y.status} — site-bildirim fonksiyonu kurulu mu?`}`);
+    } catch (e) {
+      showToast(`Sunucuya ulaşılamadı: ${String((e && e.message) || e)}`);
+    }
+    setDeneniyor(false);
+  };
+  const alicilar = String(ayar.alicilar || "").split(/[,;\s]+/).filter((x) => /@/.test(x));
+  return (
+    <div data-site-bildirim-ayari="1" style={{ marginTop: 18 }}>
+      <button type="button" onClick={() => setAcik(!acik)} style={{ all: "unset", cursor: "pointer", fontWeight: 700, fontSize: 13 }}>
+        {acik ? "▾" : "▸"} E-posta bildirimi — yeni talep ve müşteri kaydı{ayar.acik ? ` · açık (${alicilar.length} alıcı)` : " · kapalı"}
+      </button>
+      {acik && (
+        <div style={{ marginTop: 8, display: "grid", gap: 8, maxWidth: 640 }}>
+          <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13 }}>
+            <input type="checkbox" data-site-bildirim-acik="1" checked={!!ayar.acik} onChange={(e) => yaz({ acik: e.target.checked })} />
+            Web sitesinden sipariş talebi ya da müşteri kaydı gelince e-posta gönder (uygulama kapalıyken de)
+          </label>
+          <label style={{ display: "grid", gap: 4, fontSize: 12 }}>
+            Alıcılar (virgülle)
+            <input data-site-bildirim-alicilar="1" defaultValue={ayar.alicilar || ""} key={ayar.alicilar || ""} placeholder="satis@firma.com, ikinci@firma.com"
+              onBlur={(e) => { if (e.target.value !== (ayar.alicilar || "")) yaz({ alicilar: e.target.value }); }} />
+          </label>
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            <button type="button" className="btn-secondary" data-site-bildirim-dene="1" disabled={deneniyor || alicilar.length === 0} onClick={dene}>
+              {deneniyor ? "Gönderiliyor…" : "Deneme gönder"}
+            </button>
+            <span style={{ fontSize: 11, color: "var(--erp-text-3)" }}>Gönderen: Tanımlar › Firma › E-posta ayarları (gün sonu raporuyla aynı hesap).</span>
+          </div>
+          <div style={{ fontSize: 11, color: "var(--erp-text-3)", lineHeight: 1.5 }}>
+            Sunucu kurulumu bir kez: Supabase'de <span className="mono">site-bildirim</span> fonksiyonu
+            (<span className="mono">supabase-site-bildirim-fonksiyonu.ts</span>) ve <span className="mono">site-bildirim.sql</span> (5 dakikada bir kontrol).
+            E-postada müşteri, modeller, renk/beden çiftleri, ödeme ve not yer alır; fiyat ve şifre gitmez.
+          </div>
+          {son === "kurulu-degil" && <div style={{ fontSize: 12, color: "var(--erp-warning, #B26A00)" }}>Bildirim kaydı okunamadı — site-bildirim.sql henüz çalıştırılmamış olabilir.</div>}
+          {Array.isArray(son) && (
+            <div data-site-bildirim-son="1" style={{ fontSize: 12 }}>
+              <b>Son bildirimler:</b>{son.length === 0 ? " henüz yok" : ""}
+              {son.map((r) => (
+                <div key={r.id} style={{ color: /^HATA/.test(r.durum || "") ? "var(--erp-danger)" : "var(--erp-text-2)" }}>
+                  {String(r.zaman || "").slice(0, 16).replace("T", " ")} · {r.tur === "kayit" ? "müşteri kaydı" : "sipariş talebi"} · {r.durum}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SiteRaporuPaneli({ cariler }) {
   const [gun, setGun] = useState(90);
   const [veri, setVeri] = useState(null);

@@ -2885,6 +2885,7 @@ function StokModule({ onStokFisiKes, kapsam = "genel", onFiyatGrubuMarj, onRecet
                   tumUrunler={items}
                   tanimlarProsesler={tanimlar.prosesler || []}
                   tanimlarAraProsesler={tanimlar.araProsesler || []}
+                  tanimlarSiparisSezonlari={tanimlar.siparisSezonlari || []}
                   tanimlarBirimler={tanimlar.birimler || []}
                   tanimlarHammaddeTipleri={tanimlar.hammaddeTipleri || []}
                   onUrunGuncelle={urunGuncelle}

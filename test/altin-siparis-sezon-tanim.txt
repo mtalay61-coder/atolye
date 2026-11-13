@@ -1,0 +1,34 @@
+{
+  "yeniForm": {
+    "tur": "select",
+    "deger": "",
+    "secenekler": [
+      "— Sezon seçin —",
+      "2028 Yaz"
+    ]
+  },
+  "b1": "2028 Yaz",
+  "eskiForm": {
+    "tur": "select",
+    "deger": "2026 Kış",
+    "secenekler": [
+      "— Sezon seçin —",
+      "2026 Kış (listede yok)",
+      "2028 Yaz"
+    ]
+  },
+  "b2": "2026 Kış",
+  "panel": {
+    "satirlar": [
+      "2027 Yaz0 siparişPasif",
+      "2028 Yaz1 siparişAktif"
+    ],
+    "aktarDugmesi": "Tanımlara ekle (1)"
+  },
+  "tanimlar": [
+    "2027 Yaz:aktif",
+    "2028 Yaz:aktif",
+    "2026 Kış:aktif"
+  ],
+  "hatalar": []
+}

@@ -122,6 +122,19 @@ function urunResimsizSutunlari() {
   return sutunlar;
 }
 
+// UYGULAMA DIŞI ÜRÜN SÜTUNLARI (v1.744.19 — canlı günlük, 12-13 Kasım: farklı cihazlarda ve günlerde hep aynı satır,
+// "Başka cihazdan güncellendi: Stok · urunler|stok-mwc6b80t-7vno: ek.vitrindeMi"; alanı değiştiren tek kayıt yok). `urunler`
+// tablosunda uygulamanın tanımadığı bir sütun var (`vitrinde_mi`, bu depoda geçmiyor — site tarafında eklenmiş). Açılış
+// okuması `select=*` ile onu da getiriyor, şema dışı olduğu için kaydın `ek`ine düşüyor; değişiklik yoklamasının görselsiz
+// okuması (`urunResimsizSutunlari`) yalnız uygulama sütunlarını seçtiği için orada YOK → o ürün her stok değişikliğinden sonra
+// "değişmiş" görünüyordu. 1.744.11'deki `ek.olusturma` ile aynı sınıf; bu kez ad listesi yerine: açılışta gelen ama yoklamanın
+// okumadığı sütunlar burada toplanır, karşılaştırma (047 `tabloIcerikFarki`) onları yok sayar. Değerleri kayıtta kalır.
+const URUN_DIS_SUTUNLAR = new Set();
+function urunDisSutunlariniKaydet(satirlar) {
+  const bilinen = new Set([...urunResimsizSutunlari(), "kapak_resmi", "renk_resimleri", "surum"]);
+  (satirlar || []).forEach((r) => Object.keys(r || {}).forEach((s) => { if (!bilinen.has(s)) URUN_DIS_SUTUNLAR.add(alanAdi(s)); }));
+}
+
 // Buluttan tüm veriyi çeker ve uygulamanın iç yapısına dönüştürür.
 // `secenek.yalniz` (v1.611.0, değişiklik sayacı): yalnız bu TABLOLAR okunur, ötekiler boş gelir ve sürüm haritaları
 // yalnız okunanlar için yenilenir — kısmi tazelemede okunmayan tablonun haritası silinirse sonraki yazması INSERT'e
@@ -166,6 +179,7 @@ async function supabasedenOku(secenek = {}) {
   ]);
 
   if (stokV2Ayari) await stokV2Ayari;
+  if (okunur("urunler") && !secenek.resimsiz) urunDisSutunlariniKaydet(urunSatir);
 
   // Sürüm sayaçları uygulama kaydına DEĞİL, ayrı haritaya alınır (bkz. _surumler yorumu).
   // Ham satırlar burada elde olduğu için okuma yeri burası.

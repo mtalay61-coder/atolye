@@ -122,14 +122,14 @@ function _icerikDegeri(v) {
 // Bu alanları kullanıcı girmez, sunucu yazar: karşılaştırmada (üst düzeyde de `ek` içinde de) yok sayılır.
 const SUNUCU_KAYIT_ALANLARI = new Set(["olusturma", "guncelleme", "olusturan", "guncelleyen"]);
 // İlk farklı alanın adı (yoksa null). `ek.alan` biçiminde; fark tanısı için (tabloIcerikFarki).
-function _satirFarki(yerel, bulut) {
+function _satirFarki(yerel, bulut, atla) {
   if (!bulut) return "(bulutta yok)";
   for (const k of Object.keys(yerel)) {
-    if (SUNUCU_KAYIT_ALANLARI.has(k)) continue;
+    if (SUNUCU_KAYIT_ALANLARI.has(k) || (atla && atla.has(k))) continue;
     if (k === "ek" && yerel.ek && typeof yerel.ek === "object" && !Array.isArray(yerel.ek)) {
       const be = (bulut.ek && typeof bulut.ek === "object") ? bulut.ek : {};
       for (const a of Object.keys(yerel.ek)) {
-        if (SUNUCU_KAYIT_ALANLARI.has(a)) continue;
+        if (SUNUCU_KAYIT_ALANLARI.has(a) || (atla && atla.has(a))) continue;
         if (_icerikDegeri(yerel.ek[a]) !== _icerikDegeri(be[a])) return `ek.${a}`;
       }
       continue;
@@ -161,7 +161,9 @@ function tabloIcerikFarki(tablo, yerelKayitlar, bulutKayitlar) {
       const eksik = [...b.cocuk.keys()].find((k) => !y.cocuk.has(k)) || [...y.cocuk.keys()].find((k) => !b.cocuk.has(k));
       return `alt kayıt sayısı: yerel ${y.cocuk.size} / bulut ${b.cocuk.size} (ör. ${eksik})`;
     }
-    for (const [id, r] of y.ana) { const f = _satirFarki(r, b.ana.get(id)); if (f) return `${tablo}|${id}: ${f}`; }
+    // Uygulama dışı ürün sütunları (045 `URUN_DIS_SUTUNLAR`: açılışta gelir, yoklamada okunmaz) içerik sayılmaz.
+    const atla = tablo === "urunler" && typeof URUN_DIS_SUTUNLAR !== "undefined" ? URUN_DIS_SUTUNLAR : null;
+    for (const [id, r] of y.ana) { const f = _satirFarki(r, b.ana.get(id), atla); if (f) return `${tablo}|${id}: ${f}`; }
     for (const [id, r] of y.cocuk) { const f = _satirFarki(r, b.cocuk.get(id)); if (f) return `${id}: ${f}`; }
     return null;
   } catch (e) { return "karşılaştırma hatası"; }

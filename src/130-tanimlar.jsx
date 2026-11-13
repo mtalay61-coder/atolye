@@ -6,6 +6,7 @@ const URUN_ALT_SEKMELERI = [
   { key: "birim", ad: "Birimler" },
   { key: "tip", ad: "Ürün Tipleri" },
   { key: "fire", ad: "Fire Sebepleri" },
+  { key: "sezon", ad: "Sezonlar" },
   { key: "bolum", ad: "Atölye Bölümleri" },
   { key: "fiyat", ad: "Fiyat Grupları" },
   { key: "ozel", ad: "Özel Kodlar" },
@@ -1560,6 +1561,13 @@ function TanimlarModule({ onaylar, onYetimRezervasyonSil, onDefterFisIptal, onCa
         </div>
         <TanimListesi list={hammaddeTipleriGorunen} onRemove={removeHammaddeTipi} emptyText="Henüz malzeme tipi tanımlanmadı." />
       </Bolum>
+    </div>
+    )}
+    {urunAltGoster("sezon") && (
+    <div data-urun-alt-icerik="sezon" style={{ marginBottom: 28 }}>
+      <TanimBasligi ad="Sezonlar" />
+      {/* SİPARİŞ SEZONLARI (v1.744.19, 131): sipariş formunda seçilir; pasif sezon yeni siparişte çıkmaz. */}
+      <SiparisSezonlariPaneli tanimlar={tanimlar} onSave={onSave} showToast={showToast} siparisler={siparisler} />
     </div>
     )}
     {urunAltGoster("fire") && (
