@@ -163,9 +163,23 @@ function tabloIcerikFarki(tablo, yerelKayitlar, bulutKayitlar) {
     }
     // Uygulama dışı ürün sütunları (045 `URUN_DIS_SUTUNLAR`: açılışta gelir, yoklamada okunmaz) içerik sayılmaz.
     const atla = tablo === "urunler" && typeof URUN_DIS_SUTUNLAR !== "undefined" ? URUN_DIS_SUTUNLAR : null;
-    for (const [id, r] of y.ana) { const f = _satirFarki(r, b.ana.get(id), atla); if (f) return `${tablo}|${id}: ${f}`; }
-    for (const [id, r] of y.cocuk) { const f = _satirFarki(r, b.cocuk.get(id)); if (f) return `${id}: ${f}`; }
-    return null;
+    // VARYANT RENK KİMLİĞİ İÇERİK DEĞİL (v1.744.20 — canlı günlük 13 Kasım 23:13, vitrin düzeltmesinden hemen sonra:
+    // "varyantlar|stok-mwbuflq0-bwdl|Standart|4 MM: renk_id"; o saatte başka cihazdan kayıt yok). Stok v2'nin `varyantlar`
+    // görünümü renk kimliğini yalnız "renk" türü renklerde döndürüyor (Standart / model rengi → null); ekrandaki kopyada uygulamanın
+    // damgaladığı kimlik duruyor → her yoklamada fark. Kimlik ada bağlı bir önbellek: renk ADI (anahtarın parçası, `renk`
+    // sütunu) karşılaştırılmaya devam eder, adı değişen varyant yine fark sayılır.
+    const cocukAtla = new Set(["renk_id"]);
+    // EN FAZLA 3 FARK (v1.744.20): ilk farkta durmak bir sonraki gizli farkı ancak bir sonraki yanlış bildirimde gösteriyordu
+    // (vitrin → renk_id). Günlüğe hepsi birden düşsün; bildirim kararı değişmez (biri bile varsa farklı).
+    const farklar = [];
+    for (const [id, r] of y.ana) { const f = _satirFarki(r, b.ana.get(id), atla); if (f) { farklar.push(`${tablo}|${id}: ${f}`); if (farklar.length >= 3) break; } }
+    if (farklar.length < 3) {
+      for (const [id, r] of y.cocuk) {
+        const f = _satirFarki(r, b.cocuk.get(id), id.startsWith("varyantlar|") ? cocukAtla : null);
+        if (f) { farklar.push(`${id}: ${f}`); if (farklar.length >= 3) break; }
+      }
+    }
+    return farklar.length ? farklar.join(" · ") : null;
   } catch (e) { return "karşılaştırma hatası"; }
 }
 function tabloIcerikAyni(tablo, yerelKayitlar, bulutKayitlar) { return tabloIcerikFarki(tablo, yerelKayitlar, bulutKayitlar) === null; }

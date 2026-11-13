@@ -78,5 +78,14 @@ urunDisSutunlariniKaydet([{ id: "u1", ad: "Bot", kategori: "Mamul", ek: {}, suru
 bekle("açılışta gelen uygulama dışı sütun (vitrinde_mi) yoklamada yok: aynı", tabloIcerikAyni("urunler", vitrinli, bulutUrun), true);
 bekle("dış sütun varken gerçek değişiklik yine farklı", tabloIcerikFarki("urunler", vitrinli, [{ ...bulutUrun[0], ad: "Çizme" }]), "urunler|u1: ad");
 bekle("uygulamanın kendi ek alanı (sitedeGoster) yine karşılaştırılır", tabloIcerikFarki("urunler", [{ ...yerelUrun[0], sitedeGoster: true }], bulutUrun), "urunler|u1: ek.sitedeGoster");
+// v1.744.20 — canlı günlük 13 Kasım 23:13: "varyantlar|stok-mwbuflq0-bwdl|Standart|4 MM: renk_id" (stok v2 görünümü Standart /
+// model renginde renk_id'yi null döndürüyor; ekranda damgalı kimlik var).
+const varyantli = (renkId, renk = "Standart") => [{ id: "u9", ad: "Bağcık", variants: [{ renk, renkId, beden: "4 MM", miktar: 3 }], hareketler: [] }];
+bekle("varyant renk kimliği (bulutta null) içerik değil: aynı", tabloIcerikAyni("urunler", varyantli("r-standart"), varyantli(undefined)), true);
+bekle("varyantın renk ADI değişirse yine farklı", tabloIcerikAyni("urunler", varyantli("r1", "Siyah"), varyantli("r1", "Lacivert")), false);
+bekle("varyant miktarı değişirse yine farklı", tabloIcerikFarki("urunler", varyantli("r1"), [{ ...varyantli("r1")[0], variants: [{ renk: "Standart", renkId: "r1", beden: "4 MM", miktar: 5 }] }]), "varyantlar|u9|Standart|4 MM: miktar");
+bekle("birden çok fark: en fazla 3'ü birlikte yazılır",
+  tabloIcerikFarki("urunler", [{ ...yerelUrun[0], ad: "A" }, { id: "u2", ad: "B", variants: [], hareketler: [] }], [{ ...bulutUrun[0], ad: "A2" }, { id: "u2", ad: "B2", variants: [], hareketler: [] }]),
+  "urunler|u1: ad · urunler|u2: ad");
 if (hata) { console.log("BİRİM TESTİ HATA: değişiklik sayacı"); process.exit(1); }
 console.log("── değişiklik sayacı testi temiz ──");
