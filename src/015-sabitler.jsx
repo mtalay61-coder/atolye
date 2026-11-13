@@ -492,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.744.19";
+const SURUM = "1.744.20";
 const SURUM_TARIHI = "2026-11-13";
-const SURUM_NOTU = "Sipariş sezonu Tanımlar'dan seçilir (aktif / pasif); yanlış \"Başka cihazdan güncellendi\" bildirimi giderildi; site talebi e-posta bildirimi";
+const SURUM_NOTU = "Yanlış \"Başka cihazdan güncellendi: Stok\" bildiriminin ikinci kaynağı giderildi (varyant renk kimliği)";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -525,6 +525,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" };   // teklif: v1.723.0, Sipariş'in alt sekmesi
 
 const SURUM_GECMISI = [
+  { surum: "1.744.20", tarih: "13.11.2026", eklenen: [], degisen: [], duzeltilen: ["Vitrin düzeltmesinden sonra kalan yanlış \"Başka cihazdan güncellendi: Stok\" bildirimi: \"Standart\" ya da model renkli varyantlarda sunucu renk kimliğini boş döndürdüğü için varyant \"değişmiş\" sayılıyordu. Renk kimliği artık karşılaştırılmaz (renk adı karşılaştırılmaya devam eder). Günlükteki bildirim satırı artık en fazla 3 farkı birlikte yazar."] },
   { surum: "1.744.19", tarih: "13.11.2026", eklenen: ["Tanımlar › Ürün › Sezonlar: sipariş sezonları tanımlanır, Aktif / Pasif yapılır. Sipariş formunda sezon bu listeden seçilir; pasif sezon yeni siparişte çıkmaz, eski siparişlerde ve listedeki süzgeçte görünmeye devam eder. Siparişlerde daha önce yazılmış sezonlar tek tıkla tanımlara eklenir."], degisen: [], duzeltilen: ["Kimse değiştirmediği hâlde her stok kaydından sonra çıkan \"Başka cihazdan güncellendi: Stok\" bildirimi: ürünler tablosunda uygulamanın tanımadığı bir sütun (web sitesinin vitrin işareti) açılışta okunup değişiklik kontrolünde okunmadığı için ürün \"değişmiş\" sayılıyordu. Bu tür sütunlar artık karşılaştırmada yok sayılır."] },
   { surum: "1.744.18", tarih: "12.11.2026", eklenen: ["Tanımlar › Web Sitesi › E-posta bildirimi: web sitesinden yeni sipariş talebi ya da müşteri kaydı gelince belirlenen adreslere e-posta gider (sunucudan, 5 dakikada bir; uygulama kapalıyken de). E-postada müşteri, model · renk · beden çiftleri, toplam, ödeme şekli ve not; fiyat ve şifre gitmez. \"Deneme gönder\" ve son bildirimler listesi. Sunucu kurulumu: supabase-site-bildirim-fonksiyonu.ts + site-bildirim.sql."], degisen: [], duzeltilen: [] },
   { surum: "1.744.17", tarih: "12.11.2026", eklenen: ["Günlük: \"urunler: 1 güncellendi\" yerine kayıt başına ne değiştiği — ör. \"Ürün güncellendi — Bot (No 101): 1 renk eklendi: Lacivert · 2 beden eklendi: 42, 43 · satış fiyatı: 900 → 950 · kapak resmi eklendi\". Ürünlerde renk, beden, stok miktarı, stok hareketi, kapak / renk resmi, fiyat ve öteki alanlar; carilerde ve siparişlerde hareket / kalem ve alanlar. Görsel verisi yazılmaz."], degisen: [], duzeltilen: [] },
