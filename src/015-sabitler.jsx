@@ -494,7 +494,7 @@ const VIRMAN_SEBEPLERI = [
 ];
 const SURUM = "1.744.19";
 const SURUM_TARIHI = "2026-11-13";
-const SURUM_NOTU = "Yanlış \"Başka cihazdan güncellendi: Stok\" bildirimi giderildi; site talebi e-posta bildirimi";
+const SURUM_NOTU = "Sipariş sezonu Tanımlar'dan seçilir (aktif / pasif); yanlış \"Başka cihazdan güncellendi\" bildirimi giderildi; site talebi e-posta bildirimi";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
