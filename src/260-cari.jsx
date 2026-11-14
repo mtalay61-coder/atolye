@@ -1024,11 +1024,14 @@ function cariHareketleriGrupla(hareketler) {
 // satırlık metne sıkıştırıyordu ("102 Bayan Bot · 2 renk · 152 çift"); bedenler görünmüyordu. Burada yalnız MİKTAR matrisi: satır
 // ürün + renk, sütun beden (FisKalemMatrisi ile aynı sıra), sonda toplam ve tek fiyatlı satırda birim fiyat. Fiyat / kur / KDV
 // sütunları Detaylı görünümde. Bedensiz fişte çağrılmaz (özet metni kalır — tek sütunlu matris bilgi eklemez).
-function SadeBedenMatrisi({ urunGruplari }) {
+// YAZDIRILAN EKSTREDE DE (v1.744.21 — kullanıcı, 14 Kasım, ekstre çıktısı görüntüsüyle: "Ekstreyi de sipariş hareketi gibi matris
+// düzeninde yap"): 275 `CariEkstre` aynı bileşeni `yaziBoyu` 11 ile çağırır. Çıktı sayfasında tema değişkenleri yok (075
+// `indirYazdirilabilirHTML` yalnız içeriği kopyalar) — renkler yedek değerli `var(--x, #…)`.
+function SadeBedenMatrisi({ urunGruplari, yaziBoyu = 10 }) {
   if (!urunGruplari || urunGruplari.length === 0) return null;
   const bedenler = bedenSirala(Array.from(new Set(urunGruplari.flatMap((ug) => (ug.items || []).map((h) => h.beden)).filter((b) => b != null && b !== ""))));
   const say = (n) => Number(n || 0).toLocaleString("tr-TR", { maximumFractionDigits: 2 });
-  const hucre = { fontSize: 10, padding: "1px 6px", whiteSpace: "nowrap" };
+  const hucre = { fontSize: yaziBoyu, padding: "1px 6px", whiteSpace: "nowrap" };
   return (
     <div data-ekstre-sade-matris="1" style={{ overflowX: "auto", maxWidth: "100%" }}>
       <table className="matris-tablo" style={{ width: "auto", borderCollapse: "collapse" }}>
@@ -1036,7 +1039,7 @@ function SadeBedenMatrisi({ urunGruplari }) {
           <tr>
             <th style={{ ...hucre, textAlign: "left", color: "var(--erp-text-3)", fontWeight: 600 }}></th>
             {bedenler.map((b) => <th key={b} className="mono" style={{ ...hucre, textAlign: "center", color: "var(--erp-text-3)", fontWeight: 600 }}>{olcuGoster(b, "Miktar")}</th>)}
-            <th className="mono" style={{ ...hucre, textAlign: "right", color: "var(--erp-text-3)", fontWeight: 600, borderLeft: "1px dashed var(--erp-line)" }}>Toplam</th>
+            <th className="mono" style={{ ...hucre, textAlign: "right", color: "var(--erp-text-3)", fontWeight: 600, borderLeft: "1px dashed var(--erp-line, #D9CFC0)" }}>Toplam</th>
           </tr>
         </thead>
         <tbody>
@@ -1049,9 +1052,9 @@ function SadeBedenMatrisi({ urunGruplari }) {
                 <td style={{ ...hucre, fontWeight: 600, color: "var(--erp-text-2)" }}>{[ug.urunAd, olcuGoster(ug.renk)].filter(Boolean).join(" · ")}</td>
                 {bedenler.map((b) => {
                   const m = items.filter((h) => h.beden === b).reduce((t, h) => t + (Number(h.miktar) || 0), 0);
-                  return <td key={b} className="mono" style={{ ...hucre, textAlign: "center", color: m ? "var(--erp-text)" : "var(--erp-border)" }}>{m ? say(m) : "—"}</td>;
+                  return <td key={b} className="mono" style={{ ...hucre, textAlign: "center", color: m ? "var(--erp-text, #33281C)" : "var(--erp-border, #C8BBA8)" }}>{m ? say(m) : "—"}</td>;
                 })}
-                <td className="mono" style={{ ...hucre, textAlign: "right", fontWeight: 700, borderLeft: "1px dashed var(--erp-line)" }}>
+                <td className="mono" style={{ ...hucre, textAlign: "right", fontWeight: 700, borderLeft: "1px dashed var(--erp-line, #D9CFC0)" }}>
                   {say(toplam)} {ug.birim || (items[0] || {}).birim || ""}{fiyatlar.length === 1 && fiyatlar[0] ? ` × ${say(fiyatlar[0])}` : ""}
                 </td>
               </tr>

@@ -438,7 +438,7 @@ function CariEkstre({ cari, onClose, onMinimize, firmaBilgileri, defterFiltre })
         display: "flex", alignItems: "center", justifyContent: "center", padding: 16,
       }}
     >
-      <div style={{ background: "#fff", borderRadius: "var(--erp-r-lg)", maxWidth: 720, width: "100%", maxHeight: "90vh", overflow: "auto" }}>
+      <div style={{ background: "#fff", borderRadius: "var(--erp-r-lg)", maxWidth: 900, width: "100%", maxHeight: "90vh", overflow: "auto" }}>
         <div id="ekstre-yazdir-alani" style={{ padding: 28 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -485,7 +485,12 @@ function CariEkstre({ cari, onClose, onMinimize, firmaBilgileri, defterFiltre })
                     <td className="mono" style={{ fontSize: 12 }}>{g.fisNo || "—"}</td>
                     <td className="mono" style={{ fontSize: 12 }}>{tarihYaz(g.tarih, true)}</td>
                     <td style={{ fontSize: 12 }}>
-                      {g.urunGruplari.map((ug) => (
+                      {/* BEDEN MATRİSİ (v1.744.21 — kullanıcı: "Ekstreyi de sipariş hareketi gibi matris düzeninde yap"): bedenli fişte
+                          satır ürün · renk, sütun beden, sonda toplam × birim fiyat — ekrandaki ekstreyle (260 SadeBedenMatrisi) aynı.
+                          Bedensiz ürün eskisi gibi tek satır ("Ürün · renk — 12 kg"). */}
+                      {g.urunGruplari.some((ug) => (ug.items || []).some((h) => h.beden != null && h.beden !== "")) ? (
+                        <div data-ekstre-yazdir-matris="1"><SadeBedenMatrisi urunGruplari={g.urunGruplari} yaziBoyu={11} /></div>
+                      ) : g.urunGruplari.map((ug) => (
                         <div key={ug.key} style={{ marginBottom: 2 }}>
                           <b>{ug.urunAd}</b> {olcuGoster(ug.renk) ? ` · ${olcuGoster(ug.renk)}` : ""} — {ug.items.map((h) => (olcuGoster(h.beden) ? `${olcuGoster(h.beden)}:${h.miktar}` : `${h.miktar}`)).join(", ")} {ug.birim}
                         </div>

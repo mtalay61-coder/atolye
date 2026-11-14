@@ -1,0 +1,48 @@
+{
+  "satirlar": [
+    {
+      "fis": "AF-0910001",
+      "aciklama": "Deri · Siyah — 11 metre",
+      "matris": null,
+      "borc": "",
+      "alacak": "134,31 ₺",
+      "bakiye": "-134,31 ₺"
+    },
+    {
+      "fis": "SF-0911001",
+      "aciklama": null,
+      "matris": [
+        [
+          "",
+          "40",
+          "41",
+          "Toplam"
+        ],
+        [
+          "Bot · Siyah",
+          "2",
+          "3",
+          "5 çift × 900"
+        ],
+        [
+          "Bot · Taba",
+          "4",
+          "—",
+          "4 çift × 900"
+        ]
+      ],
+      "borc": "8.100 ₺",
+      "alacak": "",
+      "bakiye": "7.965,69 ₺"
+    },
+    {
+      "fis": "ODM-TEST",
+      "aciklama": "Ödeme",
+      "matris": null,
+      "borc": "1.000 ₺",
+      "alacak": "",
+      "bakiye": "8.965,69 ₺"
+    }
+  ],
+  "hatalar": []
+}
