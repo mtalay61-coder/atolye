@@ -3,6 +3,7 @@
 # ifadeyi AYRI bir psql bağlantısında (kendi işleminde) çalıştırır; ilk hatada durur. 16 Kasım'da canlıda 19'un "relation
 # site_19_sinama does not exist" hatası böyle oluştu. Kullanım: editor-calistir.py <host> <port> <db> <dosya.sql>
 import sys, os, subprocess, importlib.util
+sys.dont_write_bytecode = True
 kok = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
 spec = importlib.util.spec_from_file_location("editor_icin", os.path.join(kok, "editor-icin.py"))
 ei = importlib.util.module_from_spec(spec); spec.loader.exec_module(ei)

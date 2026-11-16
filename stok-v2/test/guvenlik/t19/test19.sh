@@ -11,14 +11,19 @@ YON='{"role":"authenticated","email":"yonetici@firma.test"}'
 NOR='{"role":"authenticated","email":"personel@firma.test"}'
 YAB='{"role":"authenticated","email":"listede-yok@baska.test"}'
 ANO='{"role":"anon"}'
-# api <db> <rol> <claims> <sql>  → "ok:<çıktı>" | "ret:YETKI_YOK" | "ret:izin" | "hata:<ileti>"
+# api <db> <rol> <claims> <sql>  → "ok:<çıktı>" | "ret:kapı" (42501 + YETKI_YOK: fonksiyon çalıştı, iç yönetici kontrolü reddetti)
+#   | "ret:izin-fonksiyon" (42501, EXECUTE yetkisi yok) | "ret:izin-tablo" (42501, tablo yetkisi yok) | "hata:<sqlstate ileti>"
 api() {
-  local out; out=$(psql -X -q -h $H -p $PT -U authenticator -d $1 -v ON_ERROR_STOP=1 -At \
+  local out; out=$(psql -X -q -h $H -p $PT -U authenticator -d $1 -v ON_ERROR_STOP=1 -v VERBOSITY=verbose -At \
     -c "begin" -c "set local role $2" -c "select set_config('request.jwt.claims', '$3', true) is null" -c "$4" -c "commit" 2>&1)
-  if [ $? -eq 0 ]; then echo "ok:$(echo "$out" | sed -n '2,$p' | tr '\n' ' ' | sed 's/ *$//')"
-  elif echo "$out" | grep -q "YETKI_YOK"; then echo "ret:YETKI_YOK"
-  elif echo "$out" | grep -q "permission denied"; then echo "ret:izin"
-  else echo "hata:$(echo "$out" | grep -m1 ERROR)"; fi
+  if [ $? -eq 0 ]; then echo "ok:$(echo "$out" | sed -n '2,$p' | tr '\n' ' ' | sed 's/ *$//')"; return; fi
+  local hat; hat=$(echo "$out" | grep -m1 '^ERROR:')
+  case "$hat" in
+    "ERROR:  42501: YETKI_YOK: "*)                  echo "ret:kapı" ;;
+    "ERROR:  42501: permission denied for function"*) echo "ret:izin-fonksiyon" ;;
+    "ERROR:  42501: permission denied for table"*)    echo "ret:izin-tablo" ;;
+    *) echo "hata:${hat#ERROR:  }" ;;
+  esac
 }
 q() { $PG -d $1 -Atc "$2"; }
 kur() { $T/temel.sh $1 "${2:-}" "${3:-}" >/dev/null 2>&1; $PG -d $1 -f $T/veri.sql >/dev/null;
@@ -35,6 +40,7 @@ geri() { $PG -d $1 -f $G/19-site-erisim-geri-al.sql 2>&1 && echo "SONUC:TAMAM"; 
 editor() { python3 $T/editor-calistir.py $H $PT $1 $2 2>&1 && echo "SONUC:TAMAM"; }   # Supabase SQL Editor taklidi (ifade başına ayrı bağlantı)
 durum19() { $PG -d $1 -At -F'|' -f $G/19-durum-salt-okur.sql | grep '^>>> GENEL DURUM' | cut -d'|' -f2; }
 sinama_tamam_disi() { $PG -d $1 -f $G/19-site-erisim-sinama.sql >/dev/null 2>&1 || { echo HATA; return; }; q $1 "select count(*) filter (where durum <> 'tamam') || '/' || count(*) from guvenlik.site_19_sinama"; }
+sinama_satir() { q $1 "select sonuc || ' | ' || durum from guvenlik.site_19_sinama where kontrol like '$2' order by sira limit 1"; }
 hash() { q $1 "select md5(sifre_ozeti) from site_hesaplari where cari_id = '$2'"; }
 
 echo "== 1) ÖNCE (canlıdaki açık durum: depodaki ESKİ site-portal + ESKİ rls-kimlik) — açığın kanıtı"
@@ -53,39 +59,91 @@ echo "== 2) 19 UYGULA (aynı veritabanı)"
 eski_kur t19b; once=$(goruntu t19b)
 out=$(uygula t19b); echo "$out" | grep -q "^SONUC:TAMAM" && sonuc "19 tamamlandı" COMMIT COMMIT || { sonuc "19 tamamlandı" COMMIT HATA; echo "$out" | grep ERROR; }
 sonuc "19-durum: genel durum" "KATALOG TAMAMEN UYGULANMIŞ (davranış sınaması çalışmadı)" "$(durum19 t19b)"
-sonuc "19-site-erisim-sinama: tamam dışı / toplam" "0/19" "$(sinama_tamam_disi t19b)"
+sonuc "19-site-erisim-sinama: tamam dışı / toplam" "0/58" "$(sinama_tamam_disi t19b)"
 sonuc "18: tablolarda AÇIK" "0" "$($PG -d t19b -At -F'|' -f $G/18-site-tablo-politika-salt-okur.sql | grep -c 'AÇIK$')"
 sonuc "18: FARKLI satır" "0" "$($PG -d t19b -At -F'|' -f $G/18-site-tablo-politika-salt-okur.sql | grep -c 'FARKLI$')"
 
-echo "== 3) 19 SONRASI — NORMAL KULLANICI (personel@firma.test, rol Personel)"
+sonuc "  sınama: N2 (listede, Yönetici değil) site_hesap_sil" "kapı reddetti (YETKI_YOK) | tamam" "$(sinama_satir t19b 'N2%site_hesap_sil')"
+sonuc "  sınama: Y Yönetici site_hesap_kaydet (authenticated rolünde)" "kapıdan geçti (sonra: Cari bulunamadı) | tamam" "$(sinama_satir t19b 'Y Yönetici: site_hesap_kaydet')"
+sonuc "  sınama: Y Yönetici site_kayit_onayla" "kapıdan geçti (sonra: Talep bulunamadı ya da işlenmiş) | tamam" "$(sinama_satir t19b 'Y Yönetici: site_kayit_onayla')"
+sonuc "  sınama: Y Yönetici site_hesap_sil" "kapıdan geçti (hata yok, 0 satır) | tamam" "$(sinama_satir t19b 'Y Yönetici: site_hesap_sil')"
+sonuc "  sınama: N1 site_hesap_listesi çıktısında gizli değer" "yok (6 gizli değerle karşılaştırıldı) | tamam" "$(sinama_satir t19b 'N1%site_hesap_listesi() çıktısında%')"
+sonuc "  sınama: site_raporu gövde + dönüş tipi" "yok | tamam" "$(sinama_satir t19b 'gövde + dönüş tipi: public.site_raporu%')"
+echo "== 2b) NEGATİF KONTROLLER — sınama dosyası gerçek bir açığı / farkı YAKALIYOR mu (ayrı veritabanları)"
+eski_kur t19v; uygula t19v >/dev/null
+$PG -d t19v -c "create or replace function public.site_hesap_listesi() returns table (cari_id text, kullanici text, son_giris timestamptz) language sql stable security definer set search_path = public as 'select h.cari_id, h.sifre_ozeti, h.son_giris from site_hesaplari h'" >/dev/null
+$PG -d t19v -f $G/19-site-erisim-sinama.sql >/dev/null 2>&1
+sonuc "şifre özeti döndüren site_hesap_listesi: gövde denetimi" "anahtar/özet sütunu | AÇIK" "$(sinama_satir t19v 'gövde + dönüş tipi: public.site_hesap_listesi%')"
+sonuc "  … ve çıktı denetimi (gerçek değer)" "GİZLİ DEĞER VAR | AÇIK" "$(sinama_satir t19v 'N1%site_hesap_listesi() çıktısında%')"
+eski_kur t19w; uygula t19w >/dev/null; $PG -d t19w -c "revoke execute on function public.site_hesap_sil(text) from authenticated" >/dev/null
+$PG -d t19w -f $G/19-site-erisim-sinama.sql >/dev/null 2>&1
+sonuc "EXECUTE yetkisi alınmış site_hesap_sil: normal kullanıcıda YETKI_YOK sayılmaz" "çalıştırma izni yok | FARKLI" "$(sinama_satir t19w 'N1%site_hesap_sil')"
+sonuc "  … yönetici için de" "çalıştırma izni yok | FARKLI" "$(sinama_satir t19w 'Y Yönetici: site_hesap_sil')"
+eski_kur t19x; uygula t19x >/dev/null; $PG -d t19x -c "grant select on site_oturumlari to authenticated; create policy p on site_oturumlari for select to authenticated using (true)" >/dev/null
+$PG -d t19x -f $G/19-site-erisim-sinama.sql >/dev/null 2>&1
+sonuc "yeniden açılmış site_oturumlari: sınama yakalar" "ERİŞTİ | AÇIK" "$(sinama_satir t19x 'N1%doğrudan select site_oturumlari')"
+eski_kur t19y; uygula t19y >/dev/null; $PG -d t19y -c "create or replace function public.site_hesap_sil(p_cari_id text) returns void language sql volatile security definer set search_path = public as 'delete from site_oturumlari where cari_id = p_cari_id'" >/dev/null
+$PG -d t19y -f $G/19-site-erisim-sinama.sql >/dev/null 2>&1
+sonuc "kapısı kaldırılmış site_hesap_sil: normal kullanıcı geçer → sınama yakalar" "kapıdan geçti (hata yok, 0 satır) | AÇIK" "$(sinama_satir t19y 'N2%site_hesap_sil')"
+echo "== 3) 19 SONRASI — NORMAL KULLANICI: ERP LİSTESİNDE, Yönetici DEĞİL (personel@firma.test, rol Personel)"
 for t in site_oturumlari site_hesaplari site_giris_kaydi site_kayit_talepleri; do
-  sonuc "select $t" "ret:izin" "$(api t19b authenticated "$NOR" "select count(*) from $t")"; done
-sonuc "doğrudan UPDATE site_hesaplari" "ret:izin" "$(api t19b authenticated "$NOR" "update site_hesaplari set sifre_ozeti = 'x'")"
-sonuc "doğrudan INSERT site_oturumlari" "ret:izin" "$(api t19b authenticated "$NOR" "insert into site_oturumlari values (repeat('c',64), '22222222-2222-2222-2222-222222222222', now() + interval '1 day')")"
-sonuc "doğrudan DELETE site_kayit_talepleri" "ret:izin" "$(api t19b authenticated "$NOR" "delete from site_kayit_talepleri")"
+  sonuc "select $t" "ret:izin-tablo" "$(api t19b authenticated "$NOR" "select count(*) from $t")"; done
+sonuc "doğrudan UPDATE site_hesaplari" "ret:izin-tablo" "$(api t19b authenticated "$NOR" "update site_hesaplari set sifre_ozeti = 'x'")"
+sonuc "doğrudan INSERT site_oturumlari" "ret:izin-tablo" "$(api t19b authenticated "$NOR" "insert into site_oturumlari values (repeat('c',64), '22222222-2222-2222-2222-222222222222', now() + interval '1 day')")"
+sonuc "doğrudan DELETE site_kayit_talepleri" "ret:izin-tablo" "$(api t19b authenticated "$NOR" "delete from site_kayit_talepleri")"
 h=$(hash t19b 22222222-2222-2222-2222-222222222222)
-sonuc "site_hesap_kaydet (B'nin şifresi)" "ret:YETKI_YOK" "$(api t19b authenticated "$NOR" "select site_hesap_kaydet('22222222-2222-2222-2222-222222222222', 'musterib', 'Ele-gecirdim-1')")"
+sonuc "site_hesap_kaydet (B'nin şifresi)" "ret:kapı" "$(api t19b authenticated "$NOR" "select site_hesap_kaydet('22222222-2222-2222-2222-222222222222', 'musterib', 'Ele-gecirdim-1')")"
 sonuc "  → B'nin şifre özeti değişmedi" "$h" "$(hash t19b 22222222-2222-2222-2222-222222222222)"
-sonuc "site_hesap_kaydet (yalnız kullanıcı adı)" "ret:YETKI_YOK" "$(api t19b authenticated "$NOR" "select site_hesap_kaydet('22222222-2222-2222-2222-222222222222', 'baskaad', '')")"
-sonuc "site_hesap_sil (A'nın erişimini kapat)" "ret:YETKI_YOK" "$(api t19b authenticated "$NOR" "select site_hesap_sil('11111111-1111-1111-1111-111111111111')")"
+sonuc "site_hesap_kaydet (yalnız kullanıcı adı)" "ret:kapı" "$(api t19b authenticated "$NOR" "select site_hesap_kaydet('22222222-2222-2222-2222-222222222222', 'baskaad', '')")"
+sonuc "site_hesap_sil (A'nın erişimini kapat)" "ret:kapı" "$(api t19b authenticated "$NOR" "select site_hesap_sil('11111111-1111-1111-1111-111111111111')")"
 sonuc "  → A'nın hesabı ve oturumu duruyor" "1 1" "$(q t19b "select (select count(*) from site_hesaplari where cari_id like '1111%') || ' ' || (select count(*) from site_oturumlari where cari_id like '1111%')")"
-sonuc "site_kayit_onayla (talep-1 → C)" "ret:YETKI_YOK" "$(api t19b authenticated "$NOR" "select site_kayit_onayla('talep-1', '33333333-3333-3333-3333-333333333333')")"
-sonuc "site_kayit_reddet (talep-2)" "ret:YETKI_YOK" "$(api t19b authenticated "$NOR" "select site_kayit_reddet('talep-2')")"
+sonuc "site_kayit_onayla (talep-1 → C)" "ret:kapı" "$(api t19b authenticated "$NOR" "select site_kayit_onayla('talep-1', '33333333-3333-3333-3333-333333333333')")"
+sonuc "site_kayit_reddet (talep-2)" "ret:kapı" "$(api t19b authenticated "$NOR" "select site_kayit_reddet('talep-2')")"
 sonuc "  → talepler hâlâ 'yeni', C'nin hesabı yok" "yeni,yeni 0" "$(q t19b "select (select string_agg(durum, ',' order by id) from site_kayit_talepleri) || ' ' || (select count(*) from site_hesaplari where cari_id like '3333%')")"
-sonuc "site_yonetici_kapisi() RPC olarak" "ret:izin" "$(api t19b authenticated "$NOR" "select site_yonetici_kapisi()")"
+sonuc "site_yonetici_kapisi() RPC olarak" "ret:izin-fonksiyon" "$(api t19b authenticated "$NOR" "select site_yonetici_kapisi()")"
 sonuc "okuma: site_hesap_listesi" "ok:2" "$(api t19b authenticated "$NOR" "select count(*) from site_hesap_listesi()")"
 sonuc "okuma: site_hesap_bilgi(A)" "ok:musteria" "$(api t19b authenticated "$NOR" "select site_hesap_bilgi('11111111-1111-1111-1111-111111111111') ->> 'kullanici'")"
 sonuc "okuma: site_kayit_listesi" "ok:2" "$(api t19b authenticated "$NOR" "select count(*) from site_kayit_listesi()")"
 sonuc "okuma: site_raporu" "ok:2" "$(api t19b authenticated "$NOR" "select jsonb_array_length(site_raporu(30))")"
 sonuc "ERP talepleri: select site_talepleri" "ok:1" "$(api t19b authenticated "$NOR" "select count(*) from site_talepleri")"
 
-echo "== 4) 19 SONRASI — ERP LİSTESİNDE OLMAYAN e-posta ve ANON"
-sonuc "listede yok: site_hesap_sil" "ret:YETKI_YOK" "$(api t19b authenticated "$YAB" "select site_hesap_sil('11111111-1111-1111-1111-111111111111')")"
-sonuc "listede yok: select site_oturumlari" "ret:izin" "$(api t19b authenticated "$YAB" "select count(*) from site_oturumlari")"
-sonuc "anon: site_hesap_kaydet" "ret:izin" "$(api t19b anon "$ANO" "select site_hesap_kaydet('22222222-2222-2222-2222-222222222222', 'musterib', 'Ele-gecirdim-1')")"
-sonuc "anon: select site_hesaplari" "ret:izin" "$(api t19b anon "$ANO" "select count(*) from site_hesaplari")"
+# Okuma fonksiyonlarının ÇIKTISINDA gerçek oturum anahtarı / şifre özeti var mı (normal kullanıcı; veritabanındaki bütün değerlerle)
+GIZLI=$(q t19b "select string_agg(x, E'\\n') from (select anahtar x from site_oturumlari union all select sifre_ozeti from site_hesaplari union all select sifre_ozeti from site_kayit_talepleri where sifre_ozeti is not null) z")
+sonuc "  (karşılaştırılacak gizli değer sayısı: oturum + hesap + bekleyen kayıt)" "6" "$(echo "$GIZLI" | grep -c .)"
+for c in "site_hesap_listesi|select jsonb_agg(x) from site_hesap_listesi() x" \
+         "site_hesap_bilgi (A ve B)|select jsonb_agg(site_hesap_bilgi(c)) from unnest(array['11111111-1111-1111-1111-111111111111','22222222-2222-2222-2222-222222222222']) c" \
+         "site_kayit_listesi|select jsonb_agg(x) from site_kayit_listesi() x" "site_raporu|select site_raporu(730)"; do
+  ad=${c%%|*}; cikti=$(api t19b authenticated "$NOR" "${c#*|}")
+  [ "${cikti%%:*}" = ok ] || { sonuc "okuma $ad çalıştı" ok "$cikti"; continue; }
+  sizan=$(echo "$GIZLI" | while read -r g; do [ -n "$g" ] && case "$cikti" in *"$g"*) echo x;; esac; done | grep -c x)
+  sonuc "okuma $ad çıktısında oturum anahtarı / şifre özeti" "0" "$sizan"
+  sonuc "okuma $ad çıktısında bcrypt biçimi" "0" "$(echo "$cikti" | grep -c '\$2[abxy]\$')"
+done
 
-echo "== 5) 19 SONRASI — YÖNETİCİ (yonetici@firma.test, rol Yönetici)"
+echo "== 3b) ERP LİSTESİNDE, Yönetici DEĞİL, MODÜL YETKİLERİ VAR (muhasebe@firma.test, rol Kullanıcı, cari kaydetme+silme)"
+MUH='{"role":"authenticated","email":"muhasebe@firma.test"}'
+sonuc "yonetici_mi() bu kimlikte" "ok:f" "$(api t19b authenticated "$MUH" "select public.yonetici_mi()")"
+sonuc "yetki_var_mi(cari, kaydetme) bu kimlikte (modül yetkisi gerçekten var)" "ok:t" "$(psql -X -q -h $H -p $PT -U postgres -d t19b -At -c "begin" -c "select set_config('request.jwt.claims', '$MUH', true) is null" -c "select public.yetki_var_mi(array['cari'], 'kaydetme')" -c "commit" 2>/dev/null | sed -n 2p | sed 's/^/ok:/')"
+sonuc "site_hesap_kaydet" "ret:kapı" "$(api t19b authenticated "$MUH" "select site_hesap_kaydet('22222222-2222-2222-2222-222222222222', 'musterib', 'Ele-gecirdim-1')")"
+sonuc "site_hesap_sil" "ret:kapı" "$(api t19b authenticated "$MUH" "select site_hesap_sil('11111111-1111-1111-1111-111111111111')")"
+sonuc "site_kayit_onayla" "ret:kapı" "$(api t19b authenticated "$MUH" "select site_kayit_onayla('talep-1', '33333333-3333-3333-3333-333333333333')")"
+sonuc "site_kayit_reddet" "ret:kapı" "$(api t19b authenticated "$MUH" "select site_kayit_reddet('talep-2')")"
+sonuc "select site_hesaplari" "ret:izin-tablo" "$(api t19b authenticated "$MUH" "select count(*) from site_hesaplari")"
+sonuc "  → veri değişmedi (B özeti, A hesabı + oturumu, talepler)" "$h 1 1 yeni,yeni" "$(hash t19b 22222222-2222-2222-2222-222222222222) $(q t19b "select (select count(*) from site_hesaplari where cari_id like '1111%') || ' ' || (select count(*) from site_oturumlari where cari_id like '1111%') || ' ' || (select string_agg(durum, ',' order by id) from site_kayit_talepleri)")"
+
+echo "== 4) 19 SONRASI — ERP LİSTESİNDE OLMAYAN e-posta ve ANON"
+sonuc "listede yok: site_hesap_kaydet" "ret:kapı" "$(api t19b authenticated "$YAB" "select site_hesap_kaydet('22222222-2222-2222-2222-222222222222', 'musterib', 'Ele-gecirdim-1')")"
+sonuc "listede yok: site_kayit_onayla" "ret:kapı" "$(api t19b authenticated "$YAB" "select site_kayit_onayla('talep-1', '33333333-3333-3333-3333-333333333333')")"
+sonuc "listede yok: site_kayit_reddet" "ret:kapı" "$(api t19b authenticated "$YAB" "select site_kayit_reddet('talep-2')")"
+sonuc "listede yok: site_hesap_sil" "ret:kapı" "$(api t19b authenticated "$YAB" "select site_hesap_sil('11111111-1111-1111-1111-111111111111')")"
+sonuc "listede yok: select site_oturumlari" "ret:izin-tablo" "$(api t19b authenticated "$YAB" "select count(*) from site_oturumlari")"
+for f in "site_hesap_sil('11111111-1111-1111-1111-111111111111')" "site_kayit_onayla('talep-1', '33333333-3333-3333-3333-333333333333')" "site_kayit_reddet('talep-2')" "site_hesap_listesi()" "site_raporu(30)"; do
+  sonuc "anon: ${f%%(*} (fonksiyona hiç giremez)" "ret:izin-fonksiyon" "$(api t19b anon "$ANO" "select $f")"; done
+sonuc "anon: site_hesap_kaydet" "ret:izin-fonksiyon" "$(api t19b anon "$ANO" "select site_hesap_kaydet('22222222-2222-2222-2222-222222222222', 'musterib', 'Ele-gecirdim-1')")"
+sonuc "anon: select site_hesaplari" "ret:izin-tablo" "$(api t19b anon "$ANO" "select count(*) from site_hesaplari")"
+
+echo "== 5) 19 SONRASI — YÖNETİCİ: JWT ile authenticated ROLÜNDE gerçek yönetim RPC'leri (yonetici@firma.test, rol Yönetici)"
+sonuc "yönetici oturumu authenticated rolünde (current_user)" "ok:authenticated" "$(api t19b authenticated "$YON" "select current_user")"
 h=$(hash t19b 22222222-2222-2222-2222-222222222222)
 sonuc "site_hesap_kaydet (B'ye yeni şifre)" "ok:" "$(api t19b authenticated "$YON" "select site_hesap_kaydet('22222222-2222-2222-2222-222222222222', 'musterib', 'Yeni-sifre-1')")"
 [ "$h" != "$(hash t19b 22222222-2222-2222-2222-222222222222)" ] && sonuc "  → B'nin şifre özeti değişti, oturumu kapandı" "evet 0" "evet $(q t19b "select count(*) from site_oturumlari where cari_id like '2222%'")" || sonuc "  → B'nin şifre özeti değişti" evet hayır
@@ -94,7 +152,7 @@ sonuc "  → C'nin hesabı açıldı, talep onaylandı" "1 onaylandi" "$(q t19b 
 sonuc "site_kayit_reddet (talep-2)" "ok:" "$(api t19b authenticated "$YON" "select site_kayit_reddet('talep-2')")"
 sonuc "site_hesap_sil (A)" "ok:" "$(api t19b authenticated "$YON" "select site_hesap_sil('11111111-1111-1111-1111-111111111111')")"
 sonuc "  → A'nın hesabı ve oturumu silindi" "0 0" "$(q t19b "select (select count(*) from site_hesaplari where cari_id like '1111%') || ' ' || (select count(*) from site_oturumlari where cari_id like '1111%')")"
-sonuc "yönetici de tabloyu DOĞRUDAN okuyamaz" "ret:izin" "$(api t19b authenticated "$YON" "select count(*) from site_oturumlari")"
+sonuc "yönetici de tabloyu DOĞRUDAN okuyamaz" "ret:izin-tablo" "$(api t19b authenticated "$YON" "select count(*) from site_oturumlari")"
 
 echo "== 6) 19 SONRASI — SİTE (anon) ve DİĞER YOLLAR"
 sonuc "anon portal_giris (B, yönetici verdiği şifre)" "ok:64" "$(api t19b anon "$ANO" "select length(portal_giris('musterib', 'Yeni-sifre-1'))")"
@@ -116,12 +174,12 @@ sonuc "SQL Editor (postgres, JWT yok): site_hesap_kaydet" "ok:" "$(q t19b "selec
 
 echo "== 7) rls-kimlik.sql YENİDEN ÇALIŞTIRILINCA"
 $PG -d t19b -f $A/rls-kimlik.sql >/dev/null 2>&1
-sonuc "YENİ rls-kimlik sonrası normal kullanıcı select site_oturumlari" "ret:izin" "$(api t19b authenticated "$NOR" "select count(*) from site_oturumlari")"
+sonuc "YENİ rls-kimlik sonrası normal kullanıcı select site_oturumlari" "ret:izin-tablo" "$(api t19b authenticated "$NOR" "select count(*) from site_oturumlari")"
 sonuc "YENİ rls-kimlik sonrası 18 AÇIK sayısı" "0" "$($PG -d t19b -At -F'|' -f $G/18-site-tablo-politika-salt-okur.sql | grep -c 'AÇIK$')"
 sonuc "YENİ rls-kimlik sonrası ERP site_talepleri okur (ilk talep + portaldan gelen)" "ok:2" "$(api t19b authenticated "$NOR" "select count(*) from site_talepleri")"
 kur t19c; $PG -d t19c -f $Y/eski-rls-kimlik.sql >/dev/null 2>&1   # (bilgi) ESKİ dosya yeniden çalışırsa ne olur
 sonuc "(bilgi) ESKİ rls-kimlik yeniden çalışırsa tablo yeniden açılır" "ok:2" "$(api t19c authenticated "$NOR" "select count(*) from site_oturumlari")"
-sonuc "  … ama yönetici kapısı kalır (site-portal.sql'de)" "ret:YETKI_YOK" "$(api t19c authenticated "$NOR" "select site_hesap_sil('11111111-1111-1111-1111-111111111111')")"
+sonuc "  … ama yönetici kapısı kalır (site-portal.sql'de)" "ret:kapı" "$(api t19c authenticated "$NOR" "select site_hesap_sil('11111111-1111-1111-1111-111111111111')")"
 sonuc "YENİ kurulum (site-portal + rls-kimlik depodan): 18 AÇIK / FARKLI" "0 0" "$(kur t19d; $PG -d t19d -At -F'|' -f $G/18-site-tablo-politika-salt-okur.sql | grep -c 'AÇIK$') $($PG -d t19d -At -F'|' -f $G/18-site-tablo-politika-salt-okur.sql | grep -c 'FARKLI$')"
 
 echo "== 8) GERİ ALMA"
@@ -160,15 +218,15 @@ out=$(editor t19p $Y/19-ilk-surum.sql)
 sonuc "CANLI HATANIN YENİDEN ÜRETİMİ: ilk 19 sürümü Editor'de" "42P01 site_19_sinama" "$(echo "$out" | grep -o 'relation "site_19_sinama" does not exist' | sed 's/.*/42P01 site_19_sinama/')"
 sonuc "  → hatadan önceki ifadeler kalıcı oldu (19-durum)" "KATALOG TAMAMEN UYGULANMIŞ (davranış sınaması çalışmadı)" "$(durum19 t19p)"
 sonuc "  → bu hâlde 19-site-erisim-sinama (Editor'de): çalıştı" "SONUC:TAMAM" "$(editor t19p $G/19-site-erisim-sinama.sql | tail -1)"
-sonuc "  → sınama sonucu tamam dışı / toplam" "0/19" "$(q t19p "select count(*) filter (where durum <> 'tamam') || '/' || count(*) from guvenlik.site_19_sinama")"
-sonuc "  → normal kullanıcı select site_oturumlari" "ret:izin" "$(api t19p authenticated "$NOR" "select count(*) from site_oturumlari")"
-sonuc "  → normal kullanıcı site_hesap_sil" "ret:YETKI_YOK" "$(api t19p authenticated "$NOR" "select site_hesap_sil('11111111-1111-1111-1111-111111111111')")"
+sonuc "  → sınama sonucu tamam dışı / toplam" "0/58" "$(q t19p "select count(*) filter (where durum <> 'tamam') || '/' || count(*) from guvenlik.site_19_sinama")"
+sonuc "  → normal kullanıcı select site_oturumlari" "ret:izin-tablo" "$(api t19p authenticated "$NOR" "select count(*) from site_oturumlari")"
+sonuc "  → normal kullanıcı site_hesap_sil" "ret:kapı" "$(api t19p authenticated "$NOR" "select site_hesap_sil('11111111-1111-1111-1111-111111111111')")"
 sonuc "  → yönetici site_hesap_kaydet" "ok:" "$(api t19p authenticated "$YON" "select site_hesap_kaydet('22222222-2222-2222-2222-222222222222', 'musterib', 'Yeni-sifre-1')")"
 once_p=$(goruntu t19p)
 eski_kur t19q; once=$(goruntu t19q)
 out=$(editor t19q $G/19-site-erisim-kapat.sql); echo "$out" | grep -q "^SONUC:TAMAM" && sonuc "DÜZELTİLMİŞ 19 Editor'de tamamlandı" tamam tamam || { sonuc "DÜZELTİLMİŞ 19 Editor'de" tamam HATA; echo "$out" | tail -3; }
 sonuc "  → 19-durum" "KATALOG TAMAMEN UYGULANMIŞ (davranış sınaması çalışmadı)" "$(durum19 t19q)"
-sonuc "  → 19-site-erisim-sinama (Editor'de) tamam dışı / toplam" "0/19" "$(editor t19q $G/19-site-erisim-sinama.sql >/dev/null; q t19q "select count(*) filter (where durum <> 'tamam') || '/' || count(*) from guvenlik.site_19_sinama")"
+sonuc "  → 19-site-erisim-sinama (Editor'de) tamam dışı / toplam" "0/58" "$(editor t19q $G/19-site-erisim-sinama.sql >/dev/null; q t19q "select count(*) filter (where durum <> 'tamam') || '/' || count(*) from guvenlik.site_19_sinama")"
 out=$(editor t19q $G/19-site-erisim-geri-al.sql); echo "$out" | grep -q "^SONUC:TAMAM" && sonuc "geri alma Editor'de tamamlandı" tamam tamam || { sonuc "geri alma Editor'de" tamam HATA; echo "$out" | tail -3; }
 sonra=$(goruntu t19q | grep -v '^yedek satır')
 [ "$(echo "$once" | grep -v '^yedek satır')" = "$sonra" ] && sonuc "  → katalog 19 öncesiyle birebir (Editor modunda uygula + geri al)" aynı aynı || { sonuc "  → katalog 19 öncesiyle birebir" aynı FARKLI; diff <(echo "$once") <(goruntu t19q); }

@@ -7,3 +7,5 @@ $P -d $DB -f $T/kur.sql >/dev/null
 PGOPTIONS='-c check_function_bodies=off -c client_min_messages=warning' $P -d $DB -f $SITE >/dev/null
 PGOPTIONS='-c client_min_messages=warning' $P -d $DB -f $A/rls-rol.sql >/dev/null
 PGOPTIONS='-c client_min_messages=warning' $P -d $DB -f $KIMLIK >/dev/null
+# yetki_var_mi (rls-yazma.sql): modül yetkisi olan Yönetici-olmayan kullanıcı senaryosu için (yönetici kapısı modül yetkisini SAYMAZ).
+awk '/^create or replace function public.yetki_var_mi/,/^end \$\$;/' $A/rls-yazma.sql | PGOPTIONS='-c client_min_messages=warning' $P -d $DB >/dev/null

@@ -1,8 +1,10 @@
 -- Test verisi: bir Yönetici, bir normal kullanıcı (Personel), iki müşteri carisi, hesap / oturum / kayıt talebi.
 insert into public.tanimlar values ('tekil', jsonb_build_object('girisAktifMi', true, 'kullanicilar', jsonb_build_array(
   jsonb_build_object('kullaniciAdi', 'Ayşe Yönetici', 'rol', 'Yönetici', 'eposta', 'yonetici@firma.test'),
-  jsonb_build_object('kullaniciAdi', 'Personel Ali', 'rol', 'Personel', 'eposta', 'personel@firma.test'))));
-insert into auth.users (email) values ('yonetici@firma.test'), ('personel@firma.test');
+  jsonb_build_object('kullaniciAdi', 'Personel Ali', 'rol', 'Personel', 'eposta', 'personel@firma.test'),
+  jsonb_build_object('kullaniciAdi', 'Muhasebe Ayşe', 'rol', 'Kullanıcı', 'eposta', 'muhasebe@firma.test',
+                     'yetkiler', jsonb_build_object('cari', jsonb_build_object('kaydetme', true, 'silme', true))))));
+insert into auth.users (email) values ('yonetici@firma.test'), ('personel@firma.test'), ('muhasebe@firma.test');
 insert into public.cariler (id, unvan, pasif, ek) values
   ('11111111-1111-1111-1111-111111111111', 'Müşteri A', false, '{}'), ('22222222-2222-2222-2222-222222222222', 'Müşteri B', false, '{}'),
   ('33333333-3333-3333-3333-333333333333', 'Müşteri C (yeni kayıt)', false, '{}');
