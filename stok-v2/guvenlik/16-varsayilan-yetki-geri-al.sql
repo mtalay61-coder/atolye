@@ -8,8 +8,9 @@
 --      PostgreSQL yerleşikle aynı olan kaydı kendiliğinden siler.
 --   2) Yedekte global kayıt VARDIYSA onun her satırını (alıcı, WITH GRANT OPTION dahil) yeniden kurar; yedekte PUBLIC / sahip yoksa
 --      onlardan alır. Yedekte global kayıt YOKSA (16 Kasım canlı durumu) 1. adım zaten önceki hâldir.
---   3) Şemaya özgü kayıtlar: 16 onlara dokunmadı; yedekle karşılaştırılır. Farklıysa (16 dışında biri değiştirmiş) geri alma DURUR ve
---      HATA verir — başkasının değişikliğini sessizce ezmemek için. Hiçbir şey değişmez; fark sonuçta yazılır.
+--   0) ÖNCE (hiçbir şeye dokunmadan): canlıdaki BÜTÜN kayıtlar (GLOBAL + her şema; alıcı · aktarma hakkı · kayıt sayısı) kapat
+--      dosyasının uygulama sonrası kaydettiği 'sonra' ile birebir aynı mı? Değilse (arada biri global ya da şemaya özgü bir varsayılanı
+--      değiştirmiş) geri alma DURUR ve farkı yazar — başkasının değişikliğini sessizce ezmemek için. Hiçbir şey değişmez.
 --   4) Doğrulama: postgres'in BÜTÜN fonksiyon varsayılan kayıtları (global + şema; alıcı · yetki · aktarma hakkı) yedekle BİREBİR aynı
 --      olmalı; değilse HATA ve işlem geri alınır. Ayrıca public şemasında gerçek bir deneme fonksiyonu açılıp yetkisi gösterilir, silinir.
 --   Başarılı olunca yedek satırları SİLİNİR (durum yedekteki hâle döndü; kapat yeniden çalıştırılırsa yeni yedek alır).
@@ -38,24 +39,31 @@ begin
     raise exception 'Yedek bulunamadı (guvenlik.varsayilan_yetki_yedek) — 16-varsayilan-yetki-kapat.sql çalışmamış ya da geri alma zaten yapılmış. Hiçbir şey değişmedi.';
   end if;
 
-  -- 3) Şemaya özgü kayıtlar yedekle aynı mı? (önce bakılır: farklıysa hiçbir şeye dokunmadan durulur)
+  -- 0) Canlı durum = kapat sonrası kaydedilen durum mu? (global + şema; önce bakılır: farklıysa hiçbir şeye dokunmadan durulur)
+  if not exists (select 1 from guvenlik.varsayilan_yetki_yedek where tur = 'sonra') then
+    raise exception 'Uygulama sonrası durum kaydı (sonra) yok — kapat dosyasının eski bir sürümüyle mi uygulandı? Hiçbir şey değişmedi.';
+  end if;
   select string_agg(x, '; ') into fark from (
-    (select coalesce(n.nspname::text, '?') || ' ' || e.grantee::regrole::text || ':' || e.privilege_type || ':' || e.is_grantable as x
-       from pg_default_acl d join pg_namespace n on n.oid = d.defaclnamespace, aclexplode(d.defaclacl) e
-      where d.defaclrole = rol and d.defaclobjtype = 'f' and d.defaclnamespace <> 0
+    (select coalesce(n.nspname::text, '(global)') || ' ' || e.grantee::regrole::text || ':' || e.privilege_type || ':' || e.is_grantable as x
+       from pg_default_acl d left join pg_namespace n on n.oid = d.defaclnamespace, aclexplode(d.defaclacl) e
+      where d.defaclrole = rol and d.defaclobjtype = 'f'
      except
-     select y.sema || ' ' || e.grantee::regrole::text || ':' || e.privilege_type || ':' || e.is_grantable
-       from guvenlik.varsayilan_yetki_yedek y, aclexplode(y.acl) e where y.tur = 'kayit' and y.sema is not null)
+     select coalesce(y.sema, '(global)') || ' ' || e.grantee::regrole::text || ':' || e.privilege_type || ':' || e.is_grantable
+       from guvenlik.varsayilan_yetki_yedek y, aclexplode(y.acl) e where y.tur = 'sonra')
     union all
-    (select y.sema || ' ' || e.grantee::regrole::text || ':' || e.privilege_type || ':' || e.is_grantable || ' (yedekte var, şimdi yok)'
-       from guvenlik.varsayilan_yetki_yedek y, aclexplode(y.acl) e where y.tur = 'kayit' and y.sema is not null
+    (select coalesce(y.sema, '(global)') || ' ' || e.grantee::regrole::text || ':' || e.privilege_type || ':' || e.is_grantable || ' (16 sonrası vardı, şimdi yok)'
+       from guvenlik.varsayilan_yetki_yedek y, aclexplode(y.acl) e where y.tur = 'sonra'
      except
-     select n.nspname::text || ' ' || e.grantee::regrole::text || ':' || e.privilege_type || ':' || e.is_grantable || ' (yedekte var, şimdi yok)'
-       from pg_default_acl d join pg_namespace n on n.oid = d.defaclnamespace, aclexplode(d.defaclacl) e
-      where d.defaclrole = rol and d.defaclobjtype = 'f' and d.defaclnamespace <> 0)
+     select coalesce(n.nspname::text, '(global)') || ' ' || e.grantee::regrole::text || ':' || e.privilege_type || ':' || e.is_grantable || ' (16 sonrası vardı, şimdi yok)'
+       from pg_default_acl d left join pg_namespace n on n.oid = d.defaclnamespace, aclexplode(d.defaclacl) e
+      where d.defaclrole = rol and d.defaclobjtype = 'f')
   ) z;
+  if fark is null and (select count(*) from pg_default_acl d where d.defaclrole = rol and d.defaclobjtype = 'f')
+                      <> (select count(*) from guvenlik.varsayilan_yetki_yedek where tur = 'sonra') then
+    fark := 'kayıt sayısı farklı';
+  end if;
   if fark is not null then
-    raise exception 'Şemaya özgü varsayılan yetkiler yedekten farklı (16 bunlara dokunmaz; başka bir değişiklik olmuş): %. Geri alma durdu, hiçbir şey değişmedi.', fark;
+    raise exception 'Varsayılan yetkiler 16 uygulandıktan sonra değişmiş (global ya da şema): %. Geri alma durdu, hiçbir şey değişmedi.', fark;
   end if;
 
   -- 1) Global kaydı yerleşik hâle indir.
