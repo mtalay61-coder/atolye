@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # 12 KURULU SUNUCU × 1.744.7 / 1.744.8 İSTEMCİ — ÜRETİM SİLME (7 Kasım). Yalnız yerel; Supabase'e bağlanmaz.
 #   1. atolye_guvenlik kopyası → 12-geri-al (canlının bugünkü hâli) → 12-uretim-sil-kur → 12-sonra-dogrula 8/8; kurallar KAPALI
-#   2. 1.744.7 istemcisi: origin/main (yayındaki sürüm) geçici çalışma ağacında derlenir (ESKI_ERP verilirse o kullanılır)
+#   2. 1.744.7 istemcisi: main'deki 1.744.7 yayın birleştirmesi (6914e21, ESKI_REF ile değiştirilebilir) geçici çalışma ağacında
+#      derlenir (ESKI_ERP verilirse o kullanılır)
 #   3. t-istemci-uretim-sil.js 1.744.7 ile (ISTEMCI_ESKI=1) sonra 1.744.8 (test/erp.cjs) ile — durum: yeni / eski / karma / fişsiz / bayat
 #   4. t-eski-istemci-koru.js — eski istemci korumasının normal fiş iptallerini ve planlama değişikliklerini etkilemediği
 set -uo pipefail
@@ -17,7 +18,9 @@ k "12-geri-al (canlı hâli)" "$(dosya $G/12-geri-al.sql)" 0
 k "12-kur" "$(dosya $G/12-uretim-sil-kur.sql)" 0
 k "12-sonra-dogrula" "$(dogrula)" tttttttt
 if [ -z "${ESKI_ERP:-}" ]; then
-  W=$(mktemp -d); git worktree add -q --detach "$W/w" origin/main
+  # 1.744.7 YAYINI SABİT (16 Kasım): eskiden origin/main derleniyordu — 7 Kasım'da main 1.744.7'ydi; main ilerleyince (1.744.21)
+  # "eski istemci sürümü" kontrolü düştü. Yayındaki 1.744.7 = main'deki #347 birleştirmesi. Başka sürüm: ESKI_REF=<commit>.
+  W=$(mktemp -d); git worktree add -q --detach "$W/w" "${ESKI_REF:-6914e21e1b173b2c31f520ad9facd8da8d800b52}"
   ln -sfn "$KOK/node_modules" "$W/w/node_modules"
   (cd "$W/w" && node tema-gom.js > /dev/null && node birlestir.js src atolye-erp.jsx > /dev/null)
   (cd test && node derle.js "$W/w/atolye-erp.jsx" "$W/erp-eski.cjs" > /dev/null)

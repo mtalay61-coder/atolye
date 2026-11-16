@@ -450,6 +450,25 @@ as $$ delete from site_oturumlari where anahtar = p_kod; $$;
 revoke all on function public.portal_cikis(text) from public;
 grant execute on function public.portal_cikis(text) to anon, authenticated;
 
+-- YÖNETİCİ KAPISI (16 Kasım güvenlik denetimi, 19): müşterinin site hesabını DEĞİŞTİREN işlemler (şifre / kullanıcı adı belirle,
+-- erişimi kapat, kayıt talebini onayla / reddet) yalnız Yönetici. Önceden giriş yapmış HER ERP kullanıcısı başka bir müşterinin
+-- şifresini değiştirip portalda onun yerine geçebiliyordu. İzin: (1) yonetici_mi() — JWT e-postası Tanımlar'da Yönetici;
+-- (2) servis anahtarı (JWT rolü service_role); (3) JWT'siz DOĞRUDAN bağlantı (SQL Editor / psql — PostgREST'in giriş rolü
+-- `authenticator` değilse; o bağlantı zaten tam yetkili). Okuma fonksiyonları (hesap bilgisi / listesi, kayıt listesi, rapor)
+-- kapısız kalır: ERP cari kartları "hesabı var" rozetini her kullanıcıya gösteriyor.
+-- RPC değildir: anon / authenticated çalıştıramaz; yalnız aşağıdaki SECURITY DEFINER fonksiyonların içinden (sahip olarak) çağrılır.
+create or replace function public.site_yonetici_kapisi()
+returns void language plpgsql stable set search_path = public, pg_temp
+as $$
+begin
+  if public.yonetici_mi() then return; end if;
+  if coalesce(auth.jwt() ->> 'role', '') = 'service_role' then return; end if;
+  if auth.jwt() is null and session_user::text not in ('authenticator', 'anon', 'authenticated') then return; end if;
+  raise exception 'YETKI_YOK: müşteri site hesabı işlemleri yalnız Yönetici' using errcode = '42501';
+end;
+$$;
+revoke all on function public.site_yonetici_kapisi() from public, anon, authenticated;
+
 -- ERP: hesap bilgisi (şifre özeti DÖNMEZ).
 create or replace function public.site_hesap_bilgi(p_cari_id text)
 returns jsonb language sql stable security definer set search_path = public
@@ -466,6 +485,7 @@ as $$
 declare
   ad text := lower(trim(coalesce(p_kullanici, '')));
 begin
+  perform public.site_yonetici_kapisi();
   if ad !~ '^[a-z0-9._-]{3,40}$' then raise exception 'Kullanıcı adı 3-40 karakter: harf, rakam, nokta, tire, alt çizgi'; end if;
   if not exists (select 1 from cariler where id::text = p_cari_id) then raise exception 'Cari bulunamadı'; end if;
   if exists (select 1 from site_hesaplari where kullanici = ad and cari_id <> p_cari_id) then raise exception 'Bu kullanıcı adı başka bir caride kullanılıyor'; end if;
@@ -482,10 +502,13 @@ end;
 $$;
 -- ERP: erişimi kapat (hesap ve oturumları silinir).
 create or replace function public.site_hesap_sil(p_cari_id text)
-returns void language sql volatile security definer set search_path = public
+returns void language plpgsql volatile security definer set search_path = public
 as $$
+begin
+  perform public.site_yonetici_kapisi();
   delete from site_oturumlari where cari_id = p_cari_id;
   delete from site_hesaplari where cari_id = p_cari_id;
+end;
 $$;
 -- ERP'deki hesaplar listesi (cari kartlarında "hesabı var" göstermek için) — yalnız cari_id + kullanıcı adı.
 create or replace function public.site_hesap_listesi()
@@ -581,6 +604,7 @@ returns void language plpgsql volatile security definer set search_path = public
 as $$
 declare t record;
 begin
+  perform public.site_yonetici_kapisi();
   select * into t from site_kayit_talepleri where id = p_id and durum = 'yeni' for update;
   if not found then raise exception 'Talep bulunamadı ya da işlenmiş'; end if;
   if not exists (select 1 from cariler where id::text = p_cari_id) then raise exception 'Cari bulunamadı'; end if;
@@ -592,8 +616,13 @@ end;
 $$;
 
 create or replace function public.site_kayit_reddet(p_id text)
-returns void language sql volatile security definer set search_path = public
-as $$ update site_kayit_talepleri set durum = 'reddedildi', sifre_ozeti = null where id = p_id and durum = 'yeni'; $$;
+returns void language plpgsql volatile security definer set search_path = public
+as $$
+begin
+  perform public.site_yonetici_kapisi();
+  update site_kayit_talepleri set durum = 'reddedildi', sifre_ozeti = null where id = p_id and durum = 'yeni';
+end;
+$$;
 
 revoke all on function public.site_kayit_listesi(), public.site_kayit_onayla(text, text), public.site_kayit_reddet(text) from public, anon;
 grant execute on function public.site_kayit_listesi(), public.site_kayit_onayla(text, text), public.site_kayit_reddet(text) to authenticated;

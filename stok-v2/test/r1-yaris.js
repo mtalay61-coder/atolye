@@ -17,6 +17,9 @@ const psql = (sql) => execFileSync("psql", ["-X", "-q", "-At", "-v", "ON_ERROR_S
 const jsonSorgu = (sql) => JSON.parse(psql(`select coalesce(json_agg(x), '[]'::json) from (${sql}) x;`) || "[]");
 global.window = { localStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} }, __supabaseYenidenDenemeMs: [] };
 const E = require(path.join(__dirname, "../../test/erp.cjs"));
+// 1.744.16 YAZMA KAPISI (030 bulutYazmaEngeli): oturum "acik" bildirilmeden sunucuya yazma gitmez. Uygulamada App bildirir; bu testte
+// giriş ekranı yok — ana test klasöründeki birim testler gibi açıkça "acik". Eski istemci derlemesinde (F0_ERP) fonksiyon yoksa atlanır.
+if (typeof E.yazmaOturumuAyarla === "function") E.yazmaOturumuAyarla("acik");
 
 // Ayrı bağlantı (ayrı psql süreci) — eşzamanlı istemci. `bekleSn`: fis_kes'ten sonra işlem açık tutulur (öteki istemci araya girsin).
 function rpcAyri(ad, p, { bekleSn = 0, adSoyad = "" } = {}) {
