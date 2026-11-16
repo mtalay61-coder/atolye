@@ -4,6 +4,9 @@
 --  Kaynak: `guvenlik.varsayilan_yetki_yedek` (kapat dosyası değişiklikten önce yazar). Yedek yoksa HATA — hiçbir şey değişmez.
 --
 --  Yöntem (yalnız GLOBAL kayıt; 16 yalnız onu değiştirdi):
+--   0) KORUMA: şimdiki global kayıt, yedeğe 16'nın iki komutu uygulanınca çıkacak hâlle (benzetimle birebir üretilir, iz bırakmaz) aynı
+--      olmalı. 16'dan SONRA global varsayılan başka bir işlemle değiştirildiyse geri alma DURUR ve HATA verir — hiçbir şey değişmez,
+--      beklenen / şimdiki hâl ve fark hata iletisinde yazılır. (3. adımdaki şema denetimi de bu adımdan önce yapılır.)
 --   1) Global kaydı yerleşik hâle indir: kayıtta sahip ve PUBLIC dışındaki her alıcıdan EXECUTE alınır, PUBLIC'e ve sahibe verilir →
 --      PostgreSQL yerleşikle aynı olan kaydı kendiliğinden siler.
 --   2) Yedekte global kayıt VARDIYSA onun her satırını (alıcı, WITH GRANT OPTION dahil) yeniden kurar; yedekte PUBLIC / sahip yoksa
@@ -25,6 +28,9 @@ declare
   a record;
   yedek_global aclitem[];
   yedek_global_var boolean;
+  beklenen_global aclitem[];
+  beklenen_global_var boolean;
+  simdiki_global aclitem[];
   fark text;
 begin
   if current_user <> 'postgres' then
@@ -56,6 +62,61 @@ begin
   ) z;
   if fark is not null then
     raise exception 'Şemaya özgü varsayılan yetkiler yedekten farklı (16 bunlara dokunmaz; başka bir değişiklik olmuş): %. Geri alma durdu, hiçbir şey değişmedi.', fark;
+  end if;
+
+  -- 0) KORUMA: global kayıt hâlâ 16'nın bıraktığı hâlde mi? 16 uygulandıktan sonra global varsayılan başka bir işlemle değiştirildiyse
+  --    geri alma o değişikliği sessizce ezerdi → hiçbir şeye dokunmadan DURUR. Beklenen hâl tahmin edilmez, BİREBİR üretilir: alt blokta
+  --    global kayıt yedekteki hâle kurulur, 16'nın iki komutu uygulanır, sonuç okunur ve alt blok kasıtlı hatayla geri sarılır
+  --    (değişkenler korunur, veritabanında iz kalmaz). Kapat ikinci kez çalıştırıldıysa sonuç aynıdır (iki komut da tekrarlanabilir).
+  beklenen_global_var := false;
+  begin
+    for a in
+      select e.grantee from pg_default_acl d, aclexplode(d.defaclacl) e
+      where d.defaclrole = rol and d.defaclobjtype = 'f' and d.defaclnamespace = 0 and e.grantee not in (0, rol)
+    loop
+      execute format('alter default privileges for role postgres revoke execute on functions from %I', a.grantee::regrole::text);
+    end loop;
+    execute 'alter default privileges for role postgres grant execute on functions to public';
+    execute 'alter default privileges for role postgres grant execute on functions to postgres';
+    select acl, true into yedek_global, yedek_global_var from guvenlik.varsayilan_yetki_yedek where tur = 'kayit' and sema is null;
+    if coalesce(yedek_global_var, false) then
+      for a in select e.grantee, e.is_grantable from aclexplode(yedek_global) e where e.privilege_type = 'EXECUTE' and e.grantee <> rol loop
+        execute format('alter default privileges for role postgres grant execute on functions to %s%s',
+                       case when a.grantee = 0 then 'public' else quote_ident(a.grantee::regrole::text) end,
+                       case when a.is_grantable then ' with grant option' else '' end);
+      end loop;
+      if not exists (select 1 from aclexplode(yedek_global) e where e.grantee = 0) then
+        execute 'alter default privileges for role postgres revoke execute on functions from public';
+      end if;
+      if not exists (select 1 from aclexplode(yedek_global) e where e.grantee = rol) then
+        execute 'alter default privileges for role postgres revoke execute on functions from postgres';
+      end if;
+    end if;
+    -- 16-varsayilan-yetki-kapat.sql ile AYNI iki komut (orada değişirse burada da değişmeli):
+    execute 'alter default privileges for role postgres revoke execute on functions from public';
+    execute 'alter default privileges for role postgres grant execute on functions to authenticated, service_role';
+    select d.defaclacl, true into beklenen_global, beklenen_global_var
+      from pg_default_acl d where d.defaclrole = rol and d.defaclobjtype = 'f' and d.defaclnamespace = 0;
+    raise exception using errcode = 'P0016', message = 'benzetim geri sarılıyor';
+  exception when sqlstate 'P0016' then
+    null;  -- alt bloktaki bütün değişiklikler geri alındı
+  end;
+  yedek_global := null; yedek_global_var := null;
+
+  select d.defaclacl into simdiki_global
+    from pg_default_acl d where d.defaclrole = rol and d.defaclobjtype = 'f' and d.defaclnamespace = 0;
+  select string_agg(x, '; ') into fark from (
+    (select e.grantee::regrole::text || ':' || e.privilege_type || ':' || e.is_grantable as x from aclexplode(simdiki_global) e
+     except
+     select e.grantee::regrole::text || ':' || e.privilege_type || ':' || e.is_grantable from aclexplode(beklenen_global) e)
+    union all
+    (select e.grantee::regrole::text || ':' || e.privilege_type || ':' || e.is_grantable || ' (beklenen, şimdi yok)' from aclexplode(beklenen_global) e
+     except
+     select e.grantee::regrole::text || ':' || e.privilege_type || ':' || e.is_grantable || ' (beklenen, şimdi yok)' from aclexplode(simdiki_global) e)
+  ) z;
+  if fark is not null or (simdiki_global is null) <> (not beklenen_global_var) then
+    raise exception 'Global varsayılan yetkiler 16 uygulandıktan sonra başka bir işlemle değiştirilmiş (beklenen: %, şimdi: %; fark: %). Geri alma durdu, hiçbir şey değişmedi.',
+      coalesce(beklenen_global::text, '(kayıt yok)'), coalesce(simdiki_global::text, '(kayıt yok)'), coalesce(fark, 'kayıt var/yok');
   end if;
 
   -- 1) Global kaydı yerleşik hâle indir.
