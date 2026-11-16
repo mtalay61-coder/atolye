@@ -44,7 +44,8 @@ numarası ve yayın dosyaları değişmedi. Tasarım: `21-ATOMIK-ONAY-TASARIM.md
 | `test/birim-sunucu-carisi.js` (yeni; uygulamanın gerçek işlevleri) | temiz (10 kontrol) |
 | `test/senaryo-site-yonetim-yetki.js` (güncellendi) + ilgili 20 senaryo | 21/21 AYNI |
 | `birim-degisiklik`, `birim-kullanici-damga`, `kontrol.sh`, `oludenetim.sh` | temiz |
-| `test/kosu.sh` tam takım, `kos-guvenlik.sh` | **çalıştırılmadı** (istenmedi) |
+| `stok-v2/test/guvenlik/kos-guvenlik.sh` (genel güvenlik takımı; site-portal.sql'i yeniden çalıştırır) | **55/55** — beklenti değişmedi; fark yalnız sayımlarda: 5 yeni fonksiyon (anon'a baştan kapalı). İlk deneme `PGPORT` verilmeden başlatıldı: f0 / f2 koşucuları 55432'ye bağlanamayıp sonuçsuz kaldı (ortam hatası); doğru ortamla yeniden: temiz. Kayıt: `stok-v2/test/guvenlik/sonuc-kos-guvenlik.txt` |
+| `test/kosu.sh` tam takım | **çalıştırılmadı** |
 
 t22'nin istenen beş noktası:
 1. **Eşzamanlı onay, farklı kimlikler:** iki Yönetici 0,4 sn arayla (ilki işlemi 1,5 sn açık tutar) → biri `onaylandi`, öteki kilitte

@@ -1,4 +1,6 @@
-# 16 Kasım · c646b82 + ön koşul / yazma kapısı / 1.744.7 sabitleme düzeltmeleri · kos-guvenlik.sh tamamı (701 sn, çıkış 0) — 55 yeşil, 0 kırmızı
+# 16 Kasım · 87d0f19 (22 dahil) · kos-guvenlik.sh tamamı (çıkış 0) — 55 yeşil, 0 kırmızı · PGHOST=localhost PGPORT=5432 PGUSER=postgres
+# Önceki kayıttan fark: fonksiyon 106 → 111 ve yetki özeti 107 → 112 satır = 22'nin 5 yeni fonksiyonu (anon'a baştan kapalı; kapanacak sayısı 22, değişmedi).
+# Not: ilk deneme PGPORT verilmeden başlatıldı; f0 / f2 koşucuları varsayılan 55432'ye bağlanamayıp 'YOK' döndü (ortam hatası, kayıt dışı).
 # Ön koşul: npm ci --ignore-scripts && node birlestir.js src atolye-erp.jsx && (cd test && node derle.js); yerel PostgreSQL 16.
 ══ 0) canlı benzeri veritabanı
 hazır: atolye_guvenlik
@@ -6,7 +8,7 @@ canlı benzeri: yolu sıfırlanan 21 fonksiyon
 ══ 1) liste + Bölüm 2'nin şemasız adı yakalaması
    ✓ Bölüm 2 extensions'taki şemasız gen_salt çağrısını yakaladı
    ✓ liste-uret.js Bölüm 2 satırı varken durdu
-   fonksiyon: 106 · anon'a kapanacak: 22 · yolu sabitlenecek: 21
+   fonksiyon: 111 · anon'a kapanacak: 22 · yolu sabitlenecek: 21
    /tmp/guvenlik/2-sikilastir-yerel.sql: listeler yazıldı
    ✓ depodaki TASLAK listeler bu veritabanının listeleriyle aynı
    ✓ 0-site-yetki-onar.sql (Editor gibi)
@@ -63,7 +65,7 @@ canlı benzeri: yolu sıfırlanan 21 fonksiyon
    ✓ ikinci uygulama: zaten uygulanmış
    ✓ ikinci uygulama yetkileri değiştirmedi
    ✓ geri alma uygulandı
-   ✓ yetki / ayar özeti İLK hâlle birebir aynı (107 satır)
+   ✓ yetki / ayar özeti İLK hâlle birebir aynı (112 satır)
      · anon: 0 fark
      · veli: 0 fark
      · ali: 0 fark
