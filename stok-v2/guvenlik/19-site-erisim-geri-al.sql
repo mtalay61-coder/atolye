@@ -11,7 +11,8 @@
 --  Yöntem: (1) dört fonksiyon yedekteki tanımla (pg_get_functiondef) yeniden kurulur, site_yonetici_kapisi() silinir; (2) yedekteki
 --  tablo / sütun / sıra yetkilerinin anon / authenticated / PUBLIC satırları (aktarma hakkı dahil) yeniden verilir; (3) silinen
 --  politikalar yedekteki tam tanımla kurulur; (4) DOĞRULAMA: bu üç rolün yetkileri, politikalar (ad · komut · izin türü · roller ·
---  using · check) ve fonksiyon gövdeleri yedekle BİREBİR; değilse HATA ve işlem geri alınır. Başarılı olunca yedek satırları silinir.
+--  using · check) ve fonksiyon gövdeleri yedekle BİREBİR; değilse HATA ve işlem geri alınır. Başarılı olunca yedek satırları AYNI
+--  ifadede silinir. Bütün iş TEK do bloğunda: Supabase SQL Editor ifadeleri ayrı gönderse de ya hepsi olur ya hiçbiri.
 --  site_talepleri ve service_role'e 19 dokunmadı; burada da dokunulmaz. site-portal.sql / rls-kimlik.sql dosyaları depoda korumalı
 --  kalır: geri alma sonrası onlardan biri yeniden çalıştırılırsa koruma yeniden kurulur.
 --  Çalıştırma: Supabase › SQL Editor (postgres olarak) › bu dosyanın TAMAMI › Run.
@@ -137,19 +138,21 @@ begin
   if fark is not null then
     raise exception 'Geri alma sonrası yedekle birebir değil: %. İşlem geri alındı, hiçbir şey değişmedi.', fark;
   end if;
+  -- Yedek AYNI ifadede silinir (Editor ifadeleri ayrı gönderse de geri alma ve yedeğin silinmesi birlikte olur ya da hiç olmaz).
+  delete from guvenlik.site_erisim_yedek;
 end $$;
 
-create temp table site_19_geri_sonuc on commit drop as
-select 1 as sira, 'geri kurulan: tablo / sütun / sıra yetkisi · politika · fonksiyon' as kontrol,
-       (select count(*) filter (where tur = 'tablo_acl') || ' / ' || count(*) filter (where tur = 'sutun_acl') || ' / ' || count(*) filter (where tur = 'sira_acl')
-               || ' · ' || count(*) filter (where tur = 'politika') || ' · ' || count(*) filter (where tur = 'fonksiyon') from guvenlik.site_erisim_yedek) as sonuc,
-       'bilgi' as durum
-union all
-select 2, 'doğrulama: yetkiler, politikalar, fonksiyon gövdeleri yedekle birebir; site_yonetici_kapisi() silindi', 'true', 'tamam'
-union all
-select 3, 'UYARI: 19''un kapattığı açıklar yeniden AÇIK (tablolar authenticated''a, yönetim işlemleri her ERP kullanıcısına)', '', 'bilgi';
-
-delete from guvenlik.site_erisim_yedek;
-
-select kontrol, sonuc, durum from site_19_geri_sonuc order by sira;
+-- Sonuç (geçici tablo YOK — Editor ifadeleri ayrı gönderir; 16 Kasım 42P01 dersi). Katalogdan okunur.
+select kontrol, sonuc from (
+  select 1 as sira, 'dört tabloda anon / authenticated / PUBLIC politikası (yedekteki hâl geri geldi)' as kontrol,
+         coalesce((select string_agg(tablename || '.' || policyname, ', ' order by tablename) from pg_policies
+                   where schemaname = 'public' and tablename in ('site_oturumlari', 'site_hesaplari', 'site_giris_kaydi', 'site_kayit_talepleri')
+                     and roles && array['authenticated', 'anon', 'public']::name[]), 'yok') as sonuc
+  union all
+  select 2, 'site_yonetici_kapisi()', case when to_regprocedure('public.site_yonetici_kapisi()') is null then 'silindi' else 'HÂLÂ VAR' end
+  union all
+  select 3, 'yedek (guvenlik.site_erisim_yedek) satırı', (select count(*)::text from guvenlik.site_erisim_yedek)
+  union all
+  select 4, 'UYARI', '19''un kapattığı açıklar yeniden AÇIK (tablolar authenticated''a, yönetim işlemleri her ERP kullanıcısına)'
+) x order by sira;
 commit;

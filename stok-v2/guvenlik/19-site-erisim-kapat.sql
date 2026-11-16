@@ -9,7 +9,7 @@
 --   2) site_hesap_kaydet / site_hesap_sil / site_kayit_onayla / site_kayit_reddet: rol kontrolü YOK → normal ERP kullanıcısı başka
 --      bir müşterinin şifresini değiştirebilir, erişimini kapatabilir, kayıt talebini onaylayıp hesap açabilir / reddedebilir.
 --
---  DEĞİŞİKLİK (tek işlem; sınama tutmazsa TAMAMI geri alınır, hiçbir şey değişmez):
+--  DEĞİŞİKLİK:
 --   a) Dört tabloda anon / authenticated / PUBLIC'e uyan politikalar silinir; bu üç rolün tablo, sütun ve sıra (site_giris_kaydi_id_seq)
 --      yetkileri alınır. site_talepleri'ne DOKUNULMAZ (ERP talepleri doğrudan okur / işler). service_role değişmez (site bildirimi).
 --   b) public.site_yonetici_kapisi() kurulur (RPC değil; anon / authenticated çalıştıramaz) ve yazan dört fonksiyonun başına
@@ -30,10 +30,14 @@
 --  YEDEK: değişiklikten önce tablo / sütun / sıra yetkileri, politikalar (tam tanım) ve dört fonksiyonun tanımı
 --  `guvenlik.site_erisim_yedek` tablosuna yazılır. Geri alma: 19-site-erisim-geri-al.sql (yedekten birebir; 19'dan sonra başka bir
 --  değişiklik olduysa dokunmadan durur).
---  SINAMA (işlem içinde, veri DEĞİŞMEZ): ERP listesinde olmayan uydurma e-postalı authenticated kimlikle tablolar okunamaz, yazan
---  dört fonksiyon YETKI_YOK verir (kapı her şeyden önce çalışır), okuma fonksiyonları ve site_talepleri çalışır; Tanımlar'daki bir
+--  SINAMA (veri DEĞİŞMEZ) ayrı dosyada: 19-site-erisim-sinama.sql — ERP listesinde olmayan uydurma e-postalı authenticated kimlikle
+--  tablolar okunamaz, yazan dört fonksiyon YETKI_YOK verir, okuma fonksiyonları ve site_talepleri çalışır; Tanımlar'daki bir
 --  Yönetici'nin kimliği kapıdan geçer (e-posta sonuçta gösterilmez).
---  Çalıştırma: Supabase › SQL Editor (postgres olarak) › bu dosyanın TAMAMI › Run. Beklenen: bütün satırlar "tamam".
+--  Çalıştırma: Supabase › SQL Editor (postgres olarak) › bu dosyanın TAMAMI › Run; SONRA 19-site-erisim-sinama.sql.
+--  EDITOR NOTU: Supabase SQL Editor ifadeleri ayrı isteklerle gönderebilir — begin/commit o zaman tek işlem YAPMAZ. Bu yüzden:
+--  önkoşul (değişiklik yapmaz), yedek + tablo değişikliği (TEK do bloğu), beş fonksiyon (her biri tekrar çalıştırılabilir) ve
+--  katalog doğrulaması ayrı ifadeler; geçici tablo yok. Doğrulama tutmazsa önceki ifadeler kalmış olabilir → 19-durum-salt-okur.sql,
+--  gerekirse 19-site-erisim-geri-al.sql.
 -- =====================================================================================================================
 begin;
 
@@ -102,65 +106,64 @@ begin
   end if;
 end $$;
 
--- ---------------- 1) Yedek ----------------
-create schema if not exists guvenlik;
-revoke all on schema guvenlik from public, anon, authenticated;
-create table if not exists guvenlik.site_erisim_yedek (
-  alindi timestamptz not null default now(),
-  tur    text not null,    -- isaret | tablo_acl | sutun_acl | sira_acl | politika | fonksiyon
-  nesne  text,             -- tablo / sıra / fonksiyon (regprocedure metni)
-  ad     text,             -- sütun ya da politika adı
-  acl    aclitem[],
-  tanim  text,             -- politika: create policy …; fonksiyon: pg_get_functiondef
-  ozet   text,             -- fonksiyon gövde md5'i (17 ölçümü)
-  veri   jsonb             -- politika alanları (doğrulama için)
-);
-revoke all on guvenlik.site_erisim_yedek from public, anon, authenticated;
-
-insert into guvenlik.site_erisim_yedek (tur) values ('isaret');
-insert into guvenlik.site_erisim_yedek (tur, nesne, acl)
-select 'tablo_acl', c.relname, c.relacl from pg_class c
-where c.oid in ('public.site_oturumlari'::regclass, 'public.site_hesaplari'::regclass, 'public.site_giris_kaydi'::regclass, 'public.site_kayit_talepleri'::regclass);
-insert into guvenlik.site_erisim_yedek (tur, nesne, ad, acl)
-select 'sutun_acl', c.relname, a.attname, a.attacl from pg_class c join pg_attribute a on a.attrelid = c.oid
-where c.oid in ('public.site_oturumlari'::regclass, 'public.site_hesaplari'::regclass, 'public.site_giris_kaydi'::regclass, 'public.site_kayit_talepleri'::regclass)
-  and a.attnum > 0 and not a.attisdropped and a.attacl is not null;
-insert into guvenlik.site_erisim_yedek (tur, nesne, acl)
-select 'sira_acl', s.relname, s.relacl from pg_class s join pg_depend d on d.objid = s.oid and d.classid = 'pg_class'::regclass and d.deptype in ('a', 'i')
-where s.relkind = 'S' and d.refobjid in ('public.site_oturumlari'::regclass, 'public.site_hesaplari'::regclass, 'public.site_giris_kaydi'::regclass, 'public.site_kayit_talepleri'::regclass);
-insert into guvenlik.site_erisim_yedek (tur, nesne, ad, tanim, veri)
-select 'politika', p.tablename, p.policyname,
-       format('create policy %I on public.%I as %s for %s to %s', p.policyname, p.tablename, lower(p.permissive), lower(p.cmd),
-              (select string_agg(case when r = 'public' then 'public' else quote_ident(r) end, ', ') from unnest(p.roles) r))
-         || case when p.qual is not null then ' using (' || p.qual || ')' else '' end
-         || case when p.with_check is not null then ' with check (' || p.with_check || ')' else '' end,
-       jsonb_build_object('permissive', p.permissive, 'cmd', p.cmd, 'roles', to_jsonb(p.roles), 'qual', p.qual, 'with_check', p.with_check)
-from pg_policies p
-where p.schemaname = 'public' and p.tablename in ('site_oturumlari', 'site_hesaplari', 'site_giris_kaydi', 'site_kayit_talepleri')
-  and p.roles && array['authenticated', 'anon', 'public']::name[];
-insert into guvenlik.site_erisim_yedek (tur, nesne, tanim, ozet, acl)
-select 'fonksiyon', p.oid::regprocedure::text, pg_get_functiondef(p.oid),
-       md5(btrim(regexp_replace(regexp_replace(p.prosrc, '--[^\n]*', '', 'g'), '\s+', ' ', 'g'))), p.proacl
-from pg_proc p where p.oid in ('public.site_hesap_kaydet(text, text, text)'::regprocedure, 'public.site_hesap_sil(text)'::regprocedure,
-                               'public.site_kayit_onayla(text, text)'::regprocedure, 'public.site_kayit_reddet(text)'::regprocedure);
-
--- ---------------- 2) Tablolar: politika + yetki ----------------
+-- ---------------- 1) Yedek + 2) Tablolar: politika + yetki (TEK ifade: Editor ifadeleri ayrı gönderse de ya hepsi ya hiçbiri) ----------------
 do $$
-declare p record; t text;
+declare pr record; tb text;
 begin
-  for p in select policyname, tablename from pg_policies
+  create schema if not exists guvenlik;
+  revoke all on schema guvenlik from public, anon, authenticated;
+  create table if not exists guvenlik.site_erisim_yedek (
+    alindi timestamptz not null default now(),
+    tur    text not null,    -- isaret | tablo_acl | sutun_acl | sira_acl | politika | fonksiyon
+    nesne  text,             -- tablo / sıra / fonksiyon (regprocedure metni)
+    ad     text,             -- sütun ya da politika adı
+    acl    aclitem[],
+    tanim  text,             -- politika: create policy …; fonksiyon: pg_get_functiondef
+    ozet   text,             -- fonksiyon gövde md5'i (17 ölçümü)
+    veri   jsonb             -- politika alanları (doğrulama için)
+  );
+  revoke all on guvenlik.site_erisim_yedek from public, anon, authenticated;
+
+  insert into guvenlik.site_erisim_yedek (tur) values ('isaret');
+  insert into guvenlik.site_erisim_yedek (tur, nesne, acl)
+  select 'tablo_acl', c.relname, c.relacl from pg_class c
+  where c.oid in ('public.site_oturumlari'::regclass, 'public.site_hesaplari'::regclass, 'public.site_giris_kaydi'::regclass, 'public.site_kayit_talepleri'::regclass);
+  insert into guvenlik.site_erisim_yedek (tur, nesne, ad, acl)
+  select 'sutun_acl', c.relname, a.attname, a.attacl from pg_class c join pg_attribute a on a.attrelid = c.oid
+  where c.oid in ('public.site_oturumlari'::regclass, 'public.site_hesaplari'::regclass, 'public.site_giris_kaydi'::regclass, 'public.site_kayit_talepleri'::regclass)
+    and a.attnum > 0 and not a.attisdropped and a.attacl is not null;
+  insert into guvenlik.site_erisim_yedek (tur, nesne, acl)
+  select 'sira_acl', s.relname, s.relacl from pg_class s join pg_depend d on d.objid = s.oid and d.classid = 'pg_class'::regclass and d.deptype in ('a', 'i')
+  where s.relkind = 'S' and d.refobjid in ('public.site_oturumlari'::regclass, 'public.site_hesaplari'::regclass, 'public.site_giris_kaydi'::regclass, 'public.site_kayit_talepleri'::regclass);
+  insert into guvenlik.site_erisim_yedek (tur, nesne, ad, tanim, veri)
+  select 'politika', p.tablename, p.policyname,
+         format('create policy %I on public.%I as %s for %s to %s', p.policyname, p.tablename, lower(p.permissive), lower(p.cmd),
+                (select string_agg(case when r = 'public' then 'public' else quote_ident(r) end, ', ') from unnest(p.roles) r))
+           || case when p.qual is not null then ' using (' || p.qual || ')' else '' end
+           || case when p.with_check is not null then ' with check (' || p.with_check || ')' else '' end,
+         jsonb_build_object('permissive', p.permissive, 'cmd', p.cmd, 'roles', to_jsonb(p.roles), 'qual', p.qual, 'with_check', p.with_check)
+  from pg_policies p
+  where p.schemaname = 'public' and p.tablename in ('site_oturumlari', 'site_hesaplari', 'site_giris_kaydi', 'site_kayit_talepleri')
+    and p.roles && array['authenticated', 'anon', 'public']::name[];
+  insert into guvenlik.site_erisim_yedek (tur, nesne, tanim, ozet, acl)
+  select 'fonksiyon', p.oid::regprocedure::text, pg_get_functiondef(p.oid),
+         md5(btrim(regexp_replace(regexp_replace(p.prosrc, '--[^\n]*', '', 'g'), '\s+', ' ', 'g'))), p.proacl
+  from pg_proc p where p.oid in ('public.site_hesap_kaydet(text, text, text)'::regprocedure, 'public.site_hesap_sil(text)'::regprocedure,
+                                 'public.site_kayit_onayla(text, text)'::regprocedure, 'public.site_kayit_reddet(text)'::regprocedure);
+
+  for pr in select policyname, tablename from pg_policies
            where schemaname = 'public' and tablename in ('site_oturumlari', 'site_hesaplari', 'site_giris_kaydi', 'site_kayit_talepleri')
              and roles && array['authenticated', 'anon', 'public']::name[] loop
-    execute format('drop policy %I on public.%I', p.policyname, p.tablename);
+    execute format('drop policy %I on public.%I', pr.policyname, pr.tablename);
   end loop;
-  foreach t in array array['site_oturumlari', 'site_hesaplari', 'site_giris_kaydi', 'site_kayit_talepleri'] loop
+  foreach tb in array array['site_oturumlari', 'site_hesaplari', 'site_giris_kaydi', 'site_kayit_talepleri'] loop
     -- Tablo düzeyindeki REVOKE sütun yetkilerini de alır.
-    execute format('revoke all on public.%I from public, anon, authenticated', t);
+    execute format('revoke all on public.%I from public, anon, authenticated', tb);
   end loop;
-  for t in select s.oid::regclass::text from pg_class s join pg_depend d on d.objid = s.oid and d.classid = 'pg_class'::regclass and d.deptype in ('a', 'i')
+  for tb in select s.oid::regclass::text from pg_class s join pg_depend d on d.objid = s.oid and d.classid = 'pg_class'::regclass and d.deptype in ('a', 'i')
            where s.relkind = 'S' and d.refobjid in ('public.site_oturumlari'::regclass, 'public.site_hesaplari'::regclass,
                                                     'public.site_giris_kaydi'::regclass, 'public.site_kayit_talepleri'::regclass) loop
-    execute format('revoke all on sequence %s from public, anon, authenticated', t);
+    execute format('revoke all on sequence %s from public, anon, authenticated', tb);
   end loop;
 end $$;
 
@@ -272,113 +275,18 @@ begin
   end if;
 end $$;
 
--- ---------------- 5) Sınama (davranış; veri DEĞİŞMEZ) ----------------
-create temp table site_19_sinama (sira integer, kontrol text, beklenen text, sonuc text, durum text) on commit drop;
-grant all on site_19_sinama to authenticated;
-do $$
-declare
-  normal_jwt text := '{"role":"authenticated","email":"denetim-19-normal@yok.invalid"}';
-  yonetici_eposta text;
-  durum text;
-  procedure_adi text;
-  n integer := 0;
-  r record;
-begin
-  -- (a) normal kullanıcı (ERP listesinde Yönetici değil): tablolar
-  perform set_config('request.jwt.claims', normal_jwt, true);
-  execute 'set local role authenticated';
-  for r in select unnest(array['site_oturumlari', 'site_hesaplari', 'site_giris_kaydi', 'site_kayit_talepleri']) as t loop
-    n := n + 1;
-    begin
-      execute format('select count(*) from public.%I', r.t);
-      durum := 'OKUNDU';
-    exception when insufficient_privilege then durum := 'reddedildi';
-    end;
-    insert into site_19_sinama values (10 + n, 'normal kullanıcı: select ' || r.t, 'reddedildi', durum, case when durum = 'reddedildi' then 'tamam' else 'AÇIK' end);
-  end loop;
-  -- (b) normal kullanıcı: yazan dört fonksiyon (olmayan kimliklerle — kapı her şeyden önce çalışır; geçseydi de satır değişmezdi)
-  n := 0;
-  for r in select * from (values
-      ('site_hesap_kaydet', 'select public.site_hesap_kaydet(''__denetim19_yok__'', ''denetim19'', '''')'),
-      ('site_hesap_sil',    'select public.site_hesap_sil(''__denetim19_yok__'')'),
-      ('site_kayit_onayla', 'select public.site_kayit_onayla(''__denetim19_yok__'', ''__denetim19_yok__'')'),
-      ('site_kayit_reddet', 'select public.site_kayit_reddet(''__denetim19_yok__'')')) v(ad, komut) loop
-    n := n + 1;
-    begin
-      begin
-        execute r.komut;
-        durum := 'GEÇTİ';
-      exception when insufficient_privilege then
-        durum := 'reddedildi (YETKI_YOK)';
-      when others then
-        durum := 'GEÇTİ (sonra: ' || left(sqlerrm, 60) || ')';
-      end;
-      raise exception using errcode = 'P0019', message = 'alt blok geri sarılıyor';
-    exception when sqlstate 'P0019' then null;
-    end;
-    insert into site_19_sinama values (20 + n, 'normal kullanıcı: ' || r.ad, 'reddedildi (YETKI_YOK)', durum,
-                                       case when durum like 'reddedildi%' then 'tamam' else 'AÇIK' end);
-  end loop;
-  -- (c) normal kullanıcı: okuma fonksiyonları ve site_talepleri çalışmaya devam eder
-  n := 0;
-  for r in select * from (values
-      ('site_hesap_listesi()',   'select count(*) from public.site_hesap_listesi()'),
-      ('site_hesap_bilgi(…)',    'select public.site_hesap_bilgi(''__denetim19_yok__'')'),
-      ('site_kayit_listesi()',   'select count(*) from public.site_kayit_listesi()'),
-      ('site_raporu(1)',         'select public.site_raporu(1)'),
-      ('select site_talepleri',  'select count(*) from public.site_talepleri')) v(ad, komut) loop
-    n := n + 1;
-    begin
-      execute r.komut;
-      durum := 'çalıştı';
-    exception when others then durum := 'HATA: ' || left(sqlerrm, 60);
-    end;
-    insert into site_19_sinama values (30 + n, 'normal kullanıcı: ' || r.ad, 'çalıştı', durum, case when durum = 'çalıştı' then 'tamam' else 'FARKLI' end);
-  end loop;
-  execute 'reset role';
-  -- (d) kapının kendisi (postgres olarak, JWT ile): Tanımlar'daki bir Yönetici geçer, normal kullanıcı geçemez. E-posta yazılmaz.
-  select case when coalesce(k ->> 'eposta', '') <> '' then lower(k ->> 'eposta')
-              else regexp_replace(lower(translate(coalesce(k ->> 'kullaniciAdi', ''), 'ÇĞIİÖŞÜçğıöşü', 'CGIIOSUcgiosu')), '[^a-z0-9._-]', '', 'g') || '@atolye.local' end
-    into yonetici_eposta
-  from public.tanimlar tt, jsonb_array_elements(coalesce(tt.veri -> 'kullanicilar', '[]'::jsonb)) k
-  where tt.id = 'tekil' and k ->> 'rol' = 'Yönetici' limit 1;
-  perform set_config('request.jwt.claims', jsonb_build_object('role', 'authenticated', 'email', yonetici_eposta)::text, true);
-  begin perform public.site_yonetici_kapisi(); durum := 'geçti';
-  exception when insufficient_privilege then durum := 'REDDEDİLDİ';
-  end;
-  insert into site_19_sinama values (41, 'kapı: Tanımlar''daki Yönetici kimliği', 'geçti', durum, case when durum = 'geçti' then 'tamam' else 'FARKLI' end);
-  perform set_config('request.jwt.claims', normal_jwt, true);
-  begin perform public.site_yonetici_kapisi(); durum := 'GEÇTİ';
-  exception when insufficient_privilege then durum := 'reddedildi';
-  end;
-  insert into site_19_sinama values (42, 'kapı: normal kullanıcı kimliği', 'reddedildi', durum, case when durum = 'reddedildi' then 'tamam' else 'AÇIK' end);
-  perform set_config('request.jwt.claims', '{"role":"service_role"}', true);
-  begin perform public.site_yonetici_kapisi(); durum := 'geçti';
-  exception when insufficient_privilege then durum := 'REDDEDİLDİ';
-  end;
-  insert into site_19_sinama values (43, 'kapı: servis anahtarı (service_role)', 'geçti', durum, case when durum = 'geçti' then 'tamam' else 'FARKLI' end);
-  perform set_config('request.jwt.claims', '', true);
-
-  if exists (select 1 from site_19_sinama s where s.durum <> 'tamam') then
-    raise exception 'Sınama tutmadı: %. İşlem geri alındı, hiçbir şey değişmedi.',
-      (select string_agg(s.kontrol || ' → ' || s.sonuc, '; ' order by s.sira) from site_19_sinama s where s.durum <> 'tamam');
-  end if;
-end $$;
-
--- ---------------- 6) Sonuç ----------------
-select kontrol, beklenen, sonuc, durum from (
-  select 1 as sira, 'yedek: tablo / sütun / sıra yetkisi · politika · fonksiyon' as kontrol, '' as beklenen,
+-- ---------------- 5) Sonuç (katalog) ----------------
+-- DAVRANIŞ SINAMASI AYRI DOSYADA: 19-site-erisim-sinama.sql (normal kullanıcı reddedilir, okuma ve site_talepleri çalışır, Yönetici geçer).
+-- Eskiden burada `create temp table … on commit drop` vardı: Editor ifadeleri ayrı gönderince tablo kendi işleminin sonunda
+-- silindi ve sonraki ifade 42P01 verdi (16 Kasım canlı çalıştırması). Geçici tablo kullanılmaz.
+select kontrol, sonuc from (
+  select 1 as sira, 'yedek: tablo / sütun / sıra yetkisi · politika · fonksiyon' as kontrol,
          (select count(*) filter (where tur = 'tablo_acl') || ' / ' || count(*) filter (where tur = 'sutun_acl') || ' / ' || count(*) filter (where tur = 'sira_acl')
-                 || ' · ' || count(*) filter (where tur = 'politika') || ' · ' || count(*) filter (where tur = 'fonksiyon') from guvenlik.site_erisim_yedek) as sonuc,
-         'bilgi' as durum
+                 || ' · ' || count(*) filter (where tur = 'politika') || ' · ' || count(*) filter (where tur = 'fonksiyon') from guvenlik.site_erisim_yedek) as sonuc
   union all
-  select 2, 'silinen politikalar', '', coalesce((select string_agg(nesne || '.' || ad, ', ' order by nesne) from guvenlik.site_erisim_yedek where tur = 'politika'), 'yok'), 'bilgi'
+  select 2, 'silinen politikalar', coalesce((select string_agg(nesne || '.' || ad, ', ' order by nesne) from guvenlik.site_erisim_yedek where tur = 'politika'), 'yok')
   union all
-  select 3, 'dört tabloda anon / authenticated / PUBLIC yetkisi · politikası', 'yok · yok', 'yok · yok', 'tamam'
-  union all
-  select 4, 'yazan dört fonksiyon yönetici kapılı (gövde = site-portal.sql)', 'evet', 'evet', 'tamam'
-  union all
-  select 10 + sira, kontrol, beklenen, sonuc, durum from site_19_sinama
+  select 3, 'katalog doğrulaması (4. bölüm) geçti; SIRADAKİ ADIM', '19-site-erisim-sinama.sql çalıştırın (bütün satırlar "tamam" olmalı)'
 ) x order by sira;
 
 commit;

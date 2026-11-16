@@ -32,6 +32,9 @@ goruntu() { q $1 "select string_agg(x, E'\n' order by x) from (
   union all select 'yedek satır '||(xpath('/row/c/text()', query_to_xml(case when to_regclass('guvenlik.site_erisim_yedek') is null then 'select 0 as c' else 'select count(*) as c from guvenlik.site_erisim_yedek' end, false, true, '')))[1]::text) z"; }
 uygula() { $PG -d $1 -f $G/19-site-erisim-kapat.sql 2>&1 && echo "SONUC:TAMAM"; }
 geri() { $PG -d $1 -f $G/19-site-erisim-geri-al.sql 2>&1 && echo "SONUC:TAMAM"; }
+editor() { python3 $T/editor-calistir.py $H $PT $1 $2 2>&1 && echo "SONUC:TAMAM"; }   # Supabase SQL Editor taklidi (ifade başına ayrı bağlantı)
+durum19() { $PG -d $1 -At -F'|' -f $G/19-durum-salt-okur.sql | grep '^>>> GENEL DURUM' | cut -d'|' -f2; }
+sinama_tamam_disi() { $PG -d $1 -f $G/19-site-erisim-sinama.sql >/dev/null 2>&1 || { echo HATA; return; }; q $1 "select count(*) filter (where durum <> 'tamam') || '/' || count(*) from guvenlik.site_19_sinama"; }
 hash() { q $1 "select md5(sifre_ozeti) from site_hesaplari where cari_id = '$2'"; }
 
 echo "== 1) ÖNCE (canlıdaki açık durum: depodaki ESKİ site-portal + ESKİ rls-kimlik) — açığın kanıtı"
@@ -49,7 +52,8 @@ sonuc "18: yönetim işlemleri AÇIK sayısı" "4" "$($PG -d t19a -At -F'|' -f $
 echo "== 2) 19 UYGULA (aynı veritabanı)"
 eski_kur t19b; once=$(goruntu t19b)
 out=$(uygula t19b); echo "$out" | grep -q "^SONUC:TAMAM" && sonuc "19 tamamlandı" COMMIT COMMIT || { sonuc "19 tamamlandı" COMMIT HATA; echo "$out" | grep ERROR; }
-sonuc "19 sonuç tablosunda 'tamam' dışı satır (bilgi hariç)" "0" "$(echo "$out" | grep '|' | grep -v 'kontrol\|bilgi *$' | grep -vc 'tamam *$')"
+sonuc "19-durum: genel durum" "KATALOG TAMAMEN UYGULANMIŞ (davranış sınaması çalışmadı)" "$(durum19 t19b)"
+sonuc "19-site-erisim-sinama: tamam dışı / toplam" "0/19" "$(sinama_tamam_disi t19b)"
 sonuc "18: tablolarda AÇIK" "0" "$($PG -d t19b -At -F'|' -f $G/18-site-tablo-politika-salt-okur.sql | grep -c 'AÇIK$')"
 sonuc "18: FARKLI satır" "0" "$($PG -d t19b -At -F'|' -f $G/18-site-tablo-politika-salt-okur.sql | grep -c 'FARKLI$')"
 
@@ -148,5 +152,30 @@ eski_kur t19k; koruma "uygula: canlı gövde depodan farklı" t19k "create or re
 eski_kur t19l; koruma "uygula: bu tablolara başvuran INVOKER fonksiyon" t19l "create function public.sinama_invoker() returns bigint language sql as 'select count(*) from public.site_hesaplari'" uygula "bozulur"
 eski_kur t19m; koruma "uygula: bu tablolara başvuran görünüm" t19m "create view public.sinama_gorunum as select cari_id from public.site_hesaplari" uygula "görünüm var"
 kur t19n; koruma "uygula: zaten korumalı (yeni site-portal) kurulum" t19n "" uygula "depodaki sürümden farklı"
+
+echo "== 10) SUPABASE SQL EDITOR TAKLİDİ (her ifade ayrı bağlantıda, ilk hatada durur)"
+git -C $A show 0232474:stok-v2/guvenlik/19-site-erisim-kapat.sql > $Y/19-ilk-surum.sql
+eski_kur t19p; sonuc "uygulanmamış veritabanında 19-durum" "HİÇ UYGULANMAMIŞ (19 öncesi hâl)" "$(durum19 t19p)"
+out=$(editor t19p $Y/19-ilk-surum.sql)
+sonuc "CANLI HATANIN YENİDEN ÜRETİMİ: ilk 19 sürümü Editor'de" "42P01 site_19_sinama" "$(echo "$out" | grep -o 'relation "site_19_sinama" does not exist' | sed 's/.*/42P01 site_19_sinama/')"
+sonuc "  → hatadan önceki ifadeler kalıcı oldu (19-durum)" "KATALOG TAMAMEN UYGULANMIŞ (davranış sınaması çalışmadı)" "$(durum19 t19p)"
+sonuc "  → bu hâlde 19-site-erisim-sinama (Editor'de): çalıştı" "SONUC:TAMAM" "$(editor t19p $G/19-site-erisim-sinama.sql | tail -1)"
+sonuc "  → sınama sonucu tamam dışı / toplam" "0/19" "$(q t19p "select count(*) filter (where durum <> 'tamam') || '/' || count(*) from guvenlik.site_19_sinama")"
+sonuc "  → normal kullanıcı select site_oturumlari" "ret:izin" "$(api t19p authenticated "$NOR" "select count(*) from site_oturumlari")"
+sonuc "  → normal kullanıcı site_hesap_sil" "ret:YETKI_YOK" "$(api t19p authenticated "$NOR" "select site_hesap_sil('11111111-1111-1111-1111-111111111111')")"
+sonuc "  → yönetici site_hesap_kaydet" "ok:" "$(api t19p authenticated "$YON" "select site_hesap_kaydet('22222222-2222-2222-2222-222222222222', 'musterib', 'Yeni-sifre-1')")"
+once_p=$(goruntu t19p)
+eski_kur t19q; once=$(goruntu t19q)
+out=$(editor t19q $G/19-site-erisim-kapat.sql); echo "$out" | grep -q "^SONUC:TAMAM" && sonuc "DÜZELTİLMİŞ 19 Editor'de tamamlandı" tamam tamam || { sonuc "DÜZELTİLMİŞ 19 Editor'de" tamam HATA; echo "$out" | tail -3; }
+sonuc "  → 19-durum" "KATALOG TAMAMEN UYGULANMIŞ (davranış sınaması çalışmadı)" "$(durum19 t19q)"
+sonuc "  → 19-site-erisim-sinama (Editor'de) tamam dışı / toplam" "0/19" "$(editor t19q $G/19-site-erisim-sinama.sql >/dev/null; q t19q "select count(*) filter (where durum <> 'tamam') || '/' || count(*) from guvenlik.site_19_sinama")"
+out=$(editor t19q $G/19-site-erisim-geri-al.sql); echo "$out" | grep -q "^SONUC:TAMAM" && sonuc "geri alma Editor'de tamamlandı" tamam tamam || { sonuc "geri alma Editor'de" tamam HATA; echo "$out" | tail -3; }
+sonra=$(goruntu t19q | grep -v '^yedek satır')
+[ "$(echo "$once" | grep -v '^yedek satır')" = "$sonra" ] && sonuc "  → katalog 19 öncesiyle birebir (Editor modunda uygula + geri al)" aynı aynı || { sonuc "  → katalog 19 öncesiyle birebir" aynı FARKLI; diff <(echo "$once") <(goruntu t19q); }
+sonuc "  → 19-durum geri almadan sonra" "HİÇ UYGULANMAMIŞ (19 öncesi hâl)" "$(durum19 t19q)"
+eski_kur t19r; $PG -d t19r -c "update tanimlar set veri = veri || '{\"girisAktifMi\": false}'" >/dev/null; s1=$(goruntu t19r)
+out=$(editor t19r $G/19-site-erisim-kapat.sql)
+[ "$s1" = "$(goruntu t19r)" ] && echo "$out" | grep -q "Giriş sistemi kapalı" && sonuc "Editor'de önkoşul tutmazsa: ilk ifadede durur, hiçbir şey değişmez" "durdu, değişmedi" "durdu, değişmedi" || sonuc "Editor'de önkoşul" "durdu, değişmedi" "$(echo "$out" | tail -1)"
+eski_kur t19s; sonuc "uygulanmamış veritabanında 19-site-erisim-sinama durur" "durdu" "$($PG -d t19s -f $G/19-site-erisim-sinama.sql 2>&1 | grep -q '19 uygulanmamış' && echo durdu || echo DEVAM)"
 
 echo; echo "TOPLAM: $GECTI geçti, $KALDI kaldı"
