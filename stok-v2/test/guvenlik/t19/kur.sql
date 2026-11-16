@@ -22,12 +22,12 @@ alter default privileges in schema public grant all on tables to anon, authentic
 alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
 -- ERP tablolarının en küçük hâli (site fonksiyonlarının dokunduğu sütunlar).
 create table public.tanimlar (id text primary key, veri jsonb);
-create table public.cariler (id uuid primary key default gen_random_uuid(), unvan text, pasif boolean, ek jsonb);
-create table public.siparisler (id uuid primary key default gen_random_uuid(), siparis_no text, cari_id uuid, tip text, durum text, tarih text, teslim_tarihi text, ek jsonb);
+create table public.cariler (id text primary key, unvan text, pasif boolean, ek jsonb);   -- canlıda id metin (18 karakter)
+create table public.siparisler (id uuid primary key default gen_random_uuid(), siparis_no text, cari_id text, tip text, durum text, tarih text, teslim_tarihi text, ek jsonb);
 create table public.urunler (id uuid primary key default gen_random_uuid(), ad text, mamul_tipi text, ek jsonb, pasif boolean, kategori text, renk_resimleri text, kapak_resmi text, fiyat_kurallari text, sezon_yili int, satis_para_birimi text);
 create table public.varyantlar (urun_id uuid, renk text, beden text, miktar numeric);
 create table public.siparis_kalemleri (id uuid primary key default gen_random_uuid(), siparis_id uuid, urun_id uuid, urun_ad text, renk text, beden text, miktar numeric, fiyat numeric, para_birimi text, karsilanan numeric, ek jsonb);
-create table public.cari_hareketleri (id uuid primary key default gen_random_uuid(), cari_id uuid, defter text, para_birimi text, yon text, tutar numeric, tarih text, zaman text, fis_no text, siparis_no text, aciklama text, urun_ad text, renk text, odeme_sekli text, vade text, ek jsonb);
+create table public.cari_hareketleri (id uuid primary key default gen_random_uuid(), cari_id text, defter text, para_birimi text, yon text, tutar numeric, tarih text, zaman text, fis_no text, siparis_no text, aciklama text, urun_ad text, renk text, odeme_sekli text, vade text, ek jsonb);
 create table public.uretim (id uuid primary key default gen_random_uuid(), urun_id uuid, renk text, rezervasyon_siparis_id uuid, siparis_no text, stoga_eklendi_mi boolean, asama text);
 create table public.stok_hareketleri (id uuid primary key default gen_random_uuid(), siparis_id uuid, kalem_id uuid, miktar numeric);
 create table public.muhasebe (id text primary key, veri jsonb);

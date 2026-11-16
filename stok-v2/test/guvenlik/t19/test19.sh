@@ -96,6 +96,16 @@ echo "== 6) 19 SONRASI — SİTE (anon) ve DİĞER YOLLAR"
 sonuc "anon portal_giris (B, yönetici verdiği şifre)" "ok:64" "$(api t19b anon "$ANO" "select length(portal_giris('musterib', 'Yeni-sifre-1'))")"
 sonuc "anon portal_giris (yanlış şifre → boş)" "ok:" "$(api t19b anon "$ANO" "select portal_giris('musterib', 'yanlis')")"
 sonuc "anon portal_cikis" "ok:" "$(api t19b anon "$ANO" "select portal_cikis(repeat('z', 64))")"
+KAL='[{"urunId":"aaaaaaaa-0000-0000-0000-000000000001","renk":"Siyah","beden":"41","miktar":3}]'
+ANAHTAR=$(api t19b anon "$ANO" "select portal_giris('musterib', 'Yeni-sifre-1')"); ANAHTAR=${ANAHTAR#ok:}   # site gibi: giriş ayrı istek
+sonuc "anon portal (müşteri sayfası: B'nin modeli ve fiyatı)" "ok:Bot 30" "$(api t19b anon "$ANO" "select (portal('$ANAHTAR') -> 'modeller' -> 0 ->> 'ad') || ' ' || (portal('$ANAHTAR') -> 'modeller' -> 0 ->> 'fiyat')")"
+sonuc "anon portal_hesap (hesap sayfası açılır)" "ok:Müşteri B" "$(api t19b anon "$ANO" "select portal_hesap('$ANAHTAR', null, null) ->> 'unvan'")"
+TID=$(api t19b anon "$ANO" "select portal_siparis('$ANAHTAR', '$KAL', 'test notu', null)")
+sonuc "anon portal_siparis (talep gönderir)" "ok" "${TID%%:*}"; TID=${TID#ok:}
+sonuc "  → talep site_talepleri'ne düştü (B, 3 çift, fiyat sunucuda 30)" "22222222-2222-2222-2222-222222222222 3 30" "$(q t19b "select cari_id || ' ' || toplam_cift || ' ' || (kalemler -> 0 ->> 'birimFiyat') from site_talepleri where id = '$TID'")"
+sonuc "normal kullanıcı (ERP) yeni talebi görür" "ok:1" "$(api t19b authenticated "$NOR" "select count(*) from site_talepleri where id = '$TID' and durum = 'yeni'")"
+sonuc "normal kullanıcı (ERP) site_talep_reddet" "ok:" "$(api t19b authenticated "$NOR" "select site_talep_reddet('$TID', 'stok yok')")"
+sonuc "  → talep reddedildi, sebep yazıldı" "reddedildi stok yok" "$(q t19b "select durum || ' ' || red_sebebi from site_talepleri where id = '$TID'")"
 sonuc "anon site_kayit_ol" "ok:ok" "$(api t19b anon "$ANO" "select site_kayit_ol('{\"unvan\":\"Yeni Firma\",\"telefon\":\"05551112233\"}', 'yenifirma', 'Sifre-123')")"
 sonuc "service_role JWT: site_hesap_sil (kapı geçer)" "ok:" "$(psql -X -q -h $H -p $PT -U postgres -d t19b -At -c "begin" -c "select set_config('request.jwt.claims', '{\"role\":\"service_role\"}', true) is null" -c "select site_hesap_sil('__yok__')" -c "commit" >/dev/null 2>&1 && echo ok: || echo hata)"
 sonuc "SQL Editor (postgres, JWT yok): site_hesap_kaydet" "ok:" "$(q t19b "select site_hesap_kaydet('33333333-3333-3333-3333-333333333333', 'musteric', 'Editor-sifre-1')" >/dev/null 2>&1 && echo ok: || echo hata)"
@@ -104,7 +114,7 @@ echo "== 7) rls-kimlik.sql YENİDEN ÇALIŞTIRILINCA"
 $PG -d t19b -f $A/rls-kimlik.sql >/dev/null 2>&1
 sonuc "YENİ rls-kimlik sonrası normal kullanıcı select site_oturumlari" "ret:izin" "$(api t19b authenticated "$NOR" "select count(*) from site_oturumlari")"
 sonuc "YENİ rls-kimlik sonrası 18 AÇIK sayısı" "0" "$($PG -d t19b -At -F'|' -f $G/18-site-tablo-politika-salt-okur.sql | grep -c 'AÇIK$')"
-sonuc "YENİ rls-kimlik sonrası ERP site_talepleri okur" "ok:1" "$(api t19b authenticated "$NOR" "select count(*) from site_talepleri")"
+sonuc "YENİ rls-kimlik sonrası ERP site_talepleri okur (ilk talep + portaldan gelen)" "ok:2" "$(api t19b authenticated "$NOR" "select count(*) from site_talepleri")"
 kur t19c; $PG -d t19c -f $Y/eski-rls-kimlik.sql >/dev/null 2>&1   # (bilgi) ESKİ dosya yeniden çalışırsa ne olur
 sonuc "(bilgi) ESKİ rls-kimlik yeniden çalışırsa tablo yeniden açılır" "ok:2" "$(api t19c authenticated "$NOR" "select count(*) from site_oturumlari")"
 sonuc "  … ama yönetici kapısı kalır (site-portal.sql'de)" "ret:YETKI_YOK" "$(api t19c authenticated "$NOR" "select site_hesap_sil('11111111-1111-1111-1111-111111111111')")"
