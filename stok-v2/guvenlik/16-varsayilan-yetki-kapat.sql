@@ -24,8 +24,10 @@
 --  tablosuna yazılır. Yedek zaten varsa (dosya ikinci kez çalıştırılırsa) ÜZERİNE YAZILMAZ — geri alma her zaman ilk hâle döner.
 --  Geri alma: 16-varsayilan-yetki-geri-al.sql (yedekten birebir kurar ve birebir aynı olduğunu doğrular).
 --  Çalıştırma: Supabase › SQL Editor (postgres olarak) › bu dosyanın TAMAMI › Run. Sonuç tablosu: önce / sonra / birleşik / sınama.
---  EDITOR UYUMU: iki ifade — (1) tek DO: yedek + değişiklik + sınama (tutmazsa HEPSİ geri alınır), (2) sonuç SELECT'i. Geçici tablo
---  yok; sınama sonucu guvenlik.yetki_sinama_16'da kalır (anon / authenticated erişemez). Editor ifadeleri ayrı gönderse de aynı sonuç.
+--  EDITOR UYUMU: dosyada dört ifade var — `begin;`, tek DO (yedek + değişiklik + sınama; tutmazsa DO'nun TAMAMI geri alınır), sonuç
+--  sorgusu (with … select) ve `commit;`. Bütün değişiklik tek DO içinde olduğu için Editor ifadeleri ayrı isteklerle gönderse de
+--  (o zaman begin / commit bir şeyi birlikte tutmaz) sonuç aynıdır; psql gibi tek oturumda begin / commit DO ile sorguyu birlikte tutar.
+--  Geçici tablo yok; sınama sonucu guvenlik.yetki_sinama_16'da kalır (anon / authenticated erişemez).
 --  Beklenen son satırlar: "sınama (public): yeni fonksiyon" → anon ✗ · authenticated ✓ · service_role ✓ · durum tamam.
 -- =====================================================================================================================
 begin;

@@ -16,8 +16,10 @@
 --   4) Doğrulama: postgres'in BÜTÜN fonksiyon varsayılan kayıtları (global + şema; alıcı · yetki · aktarma hakkı) yedekle BİREBİR aynı
 --      olmalı; değilse HATA ve işlem geri alınır. Ayrıca public şemasında gerçek bir deneme fonksiyonu açılıp yetkisi gösterilir, silinir.
 --   Başarılı olunca yedek satırları SİLİNİR (durum yedekteki hâle döndü; kapat yeniden çalıştırılırsa yeni yedek alır).
---  EDITOR UYUMU: iki ifade — (1) tek DO: koruma + geri kurma + doğrulama + sınama + sonuç kaydı + yedeğin silinmesi (biri tutmazsa
---  HEPSİ geri alınır), (2) sonuç SELECT'i (guvenlik.yetki_geri_sonuc_16). Geçici tablo yok.
+--  EDITOR UYUMU: dosyada dört ifade var — `begin;`, tek DO (koruma + geri kurma + doğrulama + sınama + sonuç kaydı + yedeğin
+--  silinmesi; biri tutmazsa DO'nun TAMAMI geri alınır), sonuç sorgusu (select … guvenlik.yetki_geri_sonuc_16) ve `commit;`. Bütün iş
+--  tek DO içinde olduğu için Editor ifadeleri ayrı isteklerle gönderse de (o zaman begin / commit bir şeyi birlikte tutmaz) sonuç
+--  aynıdır. Geçici tablo yok.
 --  Var olan fonksiyonların yetkisi değişmez.
 --  Çalıştırma: Supabase › SQL Editor (postgres olarak) › bu dosyanın TAMAMI › Run.
 --  Beklenen: "doğrulama: yedekle birebir aynı" → true · tamam; "sınama (public)" → anon ✓ (önceki hâl: yerleşik PUBLIC).
