@@ -83,8 +83,11 @@ sonuc "onay: cari yok (henüz buluta yazılmamış)" "hata:P0001: Cari bulunamad
 sonuc "onay: talep-1 → Müşteri C" "ok:" "$(api authenticated "$YON" "select public.site_kayit_onayla('talep-1', '33333333-3333-3333-3333-333333333333')")"
 sonuc "  hesap kuruldu, şifre özeti talepten" "musteric|true" "$(q "select h.kullanici || '|' || (h.sifre_ozeti = extensions.crypt('C-sifre-1', h.sifre_ozeti)) from public.site_hesaplari h where cari_id = '33333333-3333-3333-3333-333333333333'")"
 sonuc "  talep kapandı, şifre özeti silindi" "onaylandi|33333333-3333-3333-3333-333333333333|true" "$(q "select durum || '|' || cari_id || '|' || (sifre_ozeti is null) from public.site_kayit_talepleri where id = 'talep-1'")"
+# 22'den beri aynı cariyle tekrar (cevabı kaybolan istek) sessiz geçer; başka cariyle ikinci onay "işlenmiş" der. İkisinde de tablo değişmez.
 once=$(durum); s=$(api authenticated "$YON" "select public.site_kayit_onayla('talep-1', '33333333-3333-3333-3333-333333333333')"); sonra=$(durum)
-sonuc "onay: aynı talep ikinci kez (başka cihaz)" "hata:P0001: Talep bulunamadı ya da işlenmiş · değişmedi" "$s · $([ "$once" = "$sonra" ] && echo değişmedi || echo DEĞİŞTİ)"
+sonuc "onay: aynı talep aynı cariyle ikinci kez (cevabı kaybolan istek)" "ok: · değişmedi" "$s · $([ "$once" = "$sonra" ] && echo değişmedi || echo DEĞİŞTİ)"
+once=$(durum); s=$(api authenticated "$YON" "select public.site_kayit_onayla('talep-1', '11111111-1111-1111-1111-111111111111')"); sonra=$(durum)
+sonuc "onay: aynı talep BAŞKA cariyle (başka cihaz)" "hata:P0001: Talep bulunamadı ya da işlenmiş · değişmedi" "$s · $([ "$once" = "$sonra" ] && echo değişmedi || echo DEĞİŞTİ)"
 sonuc "ret: talep-2" "ok:" "$(api authenticated "$YON" "select public.site_kayit_reddet('talep-2')")"
 sonuc "  talep reddedildi, şifre özeti silindi" "reddedildi|true" "$(q "select durum || '|' || (sifre_ozeti is null) from public.site_kayit_talepleri where id = 'talep-2'")"
 sonuc "hesap sil: Müşteri B (Yönetici)" "ok:" "$(api authenticated "$YON" "select public.site_hesap_sil('22222222-2222-2222-2222-222222222222')")"

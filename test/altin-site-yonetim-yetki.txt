@@ -17,37 +17,61 @@
    "t2:yeni"
   ],
   "toastlar": [],
-  "yeniCari": 0
+  "yeniCari": "yerel 0 · sunucu 0"
  },
  "B": {
-  "alinmisCari": 0,
+  "alinmisCari": "yerel 0 · sunucu 0",
   "alinmisTiklandi": true,
   "c2HesapKapandi": true,
   "cagrilar": [
-   "yonetici_mi",
-   "yonetici_mi",
-   "yonetici_mi",
-   "site_kayit_onayla:TAMAM",
-   "yonetici_mi",
-   "site_kayit_onayla:HATA",
+   "site_kayit_onayla_yeni_cari:HATA",
+   "site_kayit_onayla_yeni_cari:HATA",
+   "site_kayit_onayla_yeni_cari:TAMAM",
+   "site_kayit_onayla_yeni_cari:ISLENDI-CEVAP-KAYBOLDU",
+   "site_kayit_onayla_yeni_cari:ZATEN-CEVAP-KAYBOLDU",
+   "site_kayit_onayla_yeni_cari:ZATEN-CEVAP-KAYBOLDU",
+   "site_kayit_onayla_yeni_cari:ZATEN-CEVAP-KAYBOLDU",
+   "site_kayit_onayla_yeni_cari:ZATEN",
+   "site_kayit_onayla_yeni_cari:KOPTU-ISLENMEDI",
+   "site_kayit_onayla_yeni_cari:KOPTU-ISLENMEDI",
+   "site_kayit_onayla_yeni_cari:KOPTU-ISLENMEDI",
+   "site_kayit_onayla_yeni_cari:KOPTU-ISLENMEDI",
+   "site_kayit_onayla_yeni_cari:TAMAM",
+   "site_kayit_onayla_yeni_cari:ISLENDI-CEVAP-KAYBOLDU",
+   "site_kayit_onayla_yeni_cari:ZATEN",
    "site_kayit_reddet:TAMAM",
    "site_hesap_sil:TAMAM"
   ],
   "hesapYeniCariye": true,
-  "islenmisCari": 0,
+  "islenmisCari": "yerel 0 · sunucu 0",
   "islenmisTiklandi": true,
   "kalanDugmeler": [
    "musteri.b: Onayla — cari aç + Reddet"
   ],
   "kartMusteriB": "Kullanıcı adı / şifre değiştir + Erişimi kapat",
   "kartMusteriD": "Giriş bilgisi oluştur",
+  "kayipCari": "sunucu 1 · yerel 0",
+  "kayipDugmeler": [
+   "kayip.cevap: Tamamla"
+  ],
+  "kayipTamamla": true,
+  "kayipTiklandi": true,
   "kayitDugmeleri": [
    "yeni.firma: Onayla — cari aç + Reddet",
    "red.firma: Onayla — cari aç + Reddet",
    "musteri.b: Onayla — cari aç + Reddet",
    "islenmis.firma: Onayla — cari aç + Reddet",
-   "yaris.firma: Onayla — cari aç + Reddet"
+   "kayip.cevap: Onayla — cari aç + Reddet",
+   "kopuk.bag: Onayla — cari aç + Reddet",
+   "tek.kopma: Onayla — cari aç + Reddet"
   ],
+  "kopukArada": "sunucu 0 · talep yeni",
+  "kopukCari": "sunucu 1 · yerel 0",
+  "kopukDugmeler": [
+   "kopuk.bag: Tamamla"
+  ],
+  "kopukTamamla": true,
+  "kopukTiklandi": true,
   "onaylaTiklandi": true,
   "reddetTiklandi": true,
   "sunucuTalepleri": [
@@ -55,23 +79,51 @@
    "t2:reddedildi",
    "t3:yeni",
    "t4:onaylandi",
-   "t5:onaylandi"
+   "t5:onaylandi",
+   "t6:onaylandi",
+   "t7:onaylandi"
   ],
+  "tamamlaKimligi": {
+   "kayip": "5 çağrı, 1 kimlik",
+   "kopuk": "5 çağrı, 1 kimlik",
+   "tekKopma": "2 çağrı, 1 kimlik"
+  },
+  "tazelemeIstendi": true,
+  "tekKopmaCari": "sunucu 1 · yerel 0",
+  "tekKopmaTiklandi": true,
   "toastlar": [
-   "\"musteri.b\" kullanıcı adı başka bir caride kullanılıyor — talep onaylanamaz, cari açılmadı",
-   "Talep artık bekleyenlerde değil (başka bir cihazda onaylanmış ya da reddedilmiş) — cari açılmadı",
-   "Site hesabı açıldı: yeni.firma — müşteri kendi şifresiyle girebilir",
-   "Site hesabı açılamadı: Talep bulunamadı ya da işlenmiş — \"Yaris Ltd\" carisi açıldı ama talep bu arada başka bir cihazda işlendi; cari gereksizse silinebilir.",
+   "Onaylanamadı: Bu kullanıcı adı artık kullanılıyor — hiçbir kayıt açılmadı",
+   "Onaylanamadı: Talep bulunamadı ya da işlenmiş — hiçbir kayıt açılmadı",
+   "Site hesabı açıldı: yeni.firma — \"Yeni Firma Ltd\" carisi sunucuda açıldı",
+   "Sunucudan cevap alınamadı: Failed to fetch — POST rpc/site_kayit_onayla_yeni_cari · gövde 0 KB · adres 31 karakter — onay tamamlanmış olabilir. \"Tamamla\" aynı kayıtla yeniden sorar; ikinci cari açılmaz.",
+   "Onay daha önce tamamlanmıştı: kayip.cevap — cari ve site hesabı açık",
+   "Site hesabı açıldı: kopuk.bag — \"Kopuk Baglanti Ltd\" carisi sunucuda açıldı",
+   "Onay daha önce tamamlanmıştı: tek.kopma — cari ve site hesabı açık",
    "Kayıt talebi reddedildi",
    "Web sitesi erişimi kapatıldı"
   ],
-  "yarisCari": 1,
-  "yarisTiklandi": true,
-  "yeniCari": 1
+  "yeniCari": "yerel 0 · sunucu 1 · ERP'nin cari yazması 0",
+  "yeniCariCagrilari": [
+   "site_kayit_onayla_yeni_cari:HATA",
+   "site_kayit_onayla_yeni_cari:HATA",
+   "site_kayit_onayla_yeni_cari:TAMAM",
+   "site_kayit_onayla_yeni_cari:ISLENDI-CEVAP-KAYBOLDU",
+   "site_kayit_onayla_yeni_cari:ZATEN-CEVAP-KAYBOLDU",
+   "site_kayit_onayla_yeni_cari:ZATEN-CEVAP-KAYBOLDU",
+   "site_kayit_onayla_yeni_cari:ZATEN-CEVAP-KAYBOLDU",
+   "site_kayit_onayla_yeni_cari:ZATEN",
+   "site_kayit_onayla_yeni_cari:KOPTU-ISLENMEDI",
+   "site_kayit_onayla_yeni_cari:KOPTU-ISLENMEDI",
+   "site_kayit_onayla_yeni_cari:KOPTU-ISLENMEDI",
+   "site_kayit_onayla_yeni_cari:KOPTU-ISLENMEDI",
+   "site_kayit_onayla_yeni_cari:TAMAM",
+   "site_kayit_onayla_yeni_cari:ISLENDI-CEVAP-KAYBOLDU",
+   "site_kayit_onayla_yeni_cari:ZATEN"
+  ]
  },
  "C": {
   "cagrilar": [
-   "yonetici_mi"
+   "site_kayit_onayla_yeni_cari:RET"
   ],
   "kayitDugmeleri": [
    "yeni.firma: Onayla — cari aç + Reddet"
@@ -81,9 +133,9 @@
    "t1:yeni"
   ],
   "toastlar": [
-   "Müşteri site hesabı işlemlerini yalnız Yönetici yapabilir — sunucu bu hesabı Yönetici olarak tanımıyor; hiçbir şey kaydedilmedi"
+   "Onaylanamadı: YETKI_YOK: müşteri site hesabı işlemleri yalnız Yönetici — hiçbir kayıt açılmadı"
   ],
-  "yeniCari": 0
+  "yeniCari": "yerel 0 · sunucu 0 · ERP'nin cari yazması 0"
  },
  "hatalar": []
 }

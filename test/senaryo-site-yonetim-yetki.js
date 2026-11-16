@@ -5,11 +5,14 @@
 // (Yönetici değilse 403 / 42501 "YETKI_YOK", hiçbir şey yazmaz). Üç ayrı oturum (ayrı tarayıcı = ayrı bilgisayar):
 //   A) Ali — Tanımlar'da "Kullanıcı" (cari modülünde tam yetkili), sunucuda Yönetici DEĞİL.
 //      Ölçülen: yönetim düğmeleri görünüyor mu; görünürse "Onayla" yeni cari açıyor mu (boşta cari).
-//   B) Mahmut — Yönetici (istemcide ve sunucuda). Ölçülen: onay (yeni cari + hesap), ret, erişimi kapat çalışıyor; onay
-//      ÖN KONTROLDE düşerse (kullanıcı adı alınmış / talep başka cihazda işlenmiş) cari AÇILMIYOR.
-//   C) Veli — istemcideki listede Yönetici ama sunucu tanımıyor (rolü sunucuda düşürülmüş / eski tanımlar). Ölçülen: düğme
-//      görünse de "Onayla" önce sunucuya sorar; cari AÇILMAZ, onay çağrısı gitmez.
-// Senaryo düzeltmeden ÖNCEKİ pakette de çalışır (TEST_HTML ile): o zaman A ve C'de boşta cari kalması ölçülür.
+//   B) Mahmut — Yönetici (istemcide ve sunucuda). Ölçülen (güvenlik 22): yeni cariyle onay TEK sunucu çağrısıdır
+//      (`site_kayit_onayla_yeni_cari`) — cariyi SUNUCU açar, ERP cariyi ne yerelde açar ne buluta yazar, yalnız buluttan tazelemeyi
+//      ister; sunucu reddederse (kullanıcı adı alınmış / talep başka cihazda işlenmiş) hiçbir yerde cari yok. CEVAP KAYBOLURSA
+//      (sunucu işledi ya da işleyemeden bağlantı koptu) "Tamamla" AYNI cari kimliğiyle sorar → tek cari. Ret, erişimi kapat çalışır.
+//   C) Veli — istemcideki listede Yönetici ama sunucu tanımıyor (rolü sunucuda düşürülmüş / eski tanımlar). Ölçülen: sunucu
+//      kapıda reddeder; cari hiçbir yerde açılmaz.
+// Taklit sunucu 22'nin kurallarını uygular (talep başına tek sonuç, aynı kimlikle tekrar "zaten"). Gerçek PostgreSQL'deki eşzamanlılık,
+// ret yarışı ve eski ERP engeli stok-v2/test/guvenlik/t22'de; bu senaryo ERP'nin davranışını ölçer.
 const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
@@ -34,8 +37,16 @@ function tohum() {
 
 // Taklit sunucu: her oturum kendi durumuyla başlar. `yonetici`: sunucunun bu oturumu Yönetici sayıp saymadığı.
 function sunucu(yonetici, talepler) {
-  const s = { yonetici, talepler: talepler.map((x) => ({ ...x, durum: "yeni" })), hesaplar: { c2: "musteri.b" }, cagrilar: [], listedenDus: new Set() };
+  const s = { yonetici, talepler: talepler.map((x) => ({ ...x, durum: "yeni" })), hesaplar: { c2: "musteri.b" }, cagrilar: [], listedenDus: new Set(),
+    sunucuCariler: {}, istemciCariYazmasi: [], cariOkuma: 0, cevapKaybet: null, kimlikler: {} };
   s.rota = async (sayfa) => {
+    // ERP'nin cari tablosuna kendi yazdığı (eski yol) ve buluttan cari okuması (tazeleme) sayılır; okuma düşer (ekran yerel kalır).
+    await sayfa.route("**/rest/v1/cariler*", (r) => {
+      const q = r.request();
+      if (q.method() === "GET") { s.cariOkuma++; return r.abort(); }
+      JSON.parse(q.postData() || "[]").forEach((x) => { if (x && /Firma|Ltd|AŞ/.test(x.unvan || "")) s.istemciCariYazmasi.push(x.unvan); });
+      r.fulfill({ status: 201, body: "" });
+    });
     await sayfa.route("**/rest/v1/site_talepleri*", (r) => r.fulfill({ contentType: "application/json", body: "[]" }));
     await sayfa.route("**/rest/v1/rpc/**", (r) => {
       const ad = r.request().url().split("/rpc/")[1].split("?")[0];
@@ -59,6 +70,23 @@ function sunucu(yonetici, talepler) {
         if (Object.values(s.hesaplar).includes(t.kullanici)) return kural("Bu kullanıcı adı artık kullanılıyor");
         s.hesaplar[g.p_cari_id] = t.kullanici; t.durum = "onaylandi"; t.cari = g.p_cari_id;
         s.cagrilar.push(`${ad}:TAMAM`); return r.fulfill({ status: 204, body: "" });
+      }
+      if (ad === "site_kayit_onayla_yeni_cari") {
+        (s.kimlikler[g.p_id] = s.kimlikler[g.p_id] || []).push(g.p_cari_id);
+        if (!s.yonetici) return kapi();
+        const t = s.talepler.find((x) => x.id === g.p_id);
+        // CEVAP KAYBI: `kez` istek boyunca bağlantı kopar (uygulamanın kendi ağ yeniden denemesi dahil: 1 + 3). `uygula`: ilk istekte
+        // sunucu işi yapmış mı (cevap yolda kayboldu) yoksa hiç işleyemeden mi koptu.
+        const kayip = s.cevapKaybet && s.cevapKaybet.id === g.p_id && s.cevapKaybet.kez > 0 ? s.cevapKaybet : null;
+        if (kayip) kayip.kez--;
+        if (kayip && !kayip.uygula) { s.cagrilar.push(`${ad}:KOPTU-ISLENMEDI`); return r.abort("connectionreset"); }
+        if (kayip && t && t.durum === "onaylandi" && t.cari === g.p_cari_id) { s.cagrilar.push(`${ad}:ZATEN-CEVAP-KAYBOLDU`); return r.abort("connectionreset"); }
+        if (t && t.durum === "onaylandi" && t.cari === g.p_cari_id) { s.cagrilar.push(`${ad}:ZATEN`); return json({ durum: "zaten", cari_id: g.p_cari_id }); }
+        if (!t || t.durum !== "yeni") return kural("Talep bulunamadı ya da işlenmiş");
+        if (Object.values(s.hesaplar).includes(t.kullanici)) return kural("Bu kullanıcı adı artık kullanılıyor");
+        s.sunucuCariler[g.p_cari_id] = t.bilgiler.unvan; s.hesaplar[g.p_cari_id] = t.kullanici; t.durum = "onaylandi"; t.cari = g.p_cari_id;
+        if (kayip) { s.cagrilar.push(`${ad}:ISLENDI-CEVAP-KAYBOLDU`); return r.abort("connectionreset"); }
+        s.cagrilar.push(`${ad}:TAMAM`); return json({ durum: "onaylandi", cari_id: g.p_cari_id });
       }
       if (ad === "site_kayit_reddet") {
         if (!s.yonetici) return kapi();
@@ -87,7 +115,7 @@ async function oturum(kullaniciAdi, s, hatalar) {
   await modulAc(sayfa, "Cari");
   await sayfa.waitForTimeout(1200);
   // Bildirimler birkaç saniye görünür: her işlemden hemen sonra okunur (sabit açıklama yazıları kalıba girmez).
-  const KALIP = /(Site hesabı[^\n]*|Müşteri site hesabı işlemlerini[^\n]*|[^\n]*cari açılmadı[^\n]*|Reddedilemedi[^\n]*|Kayıt talebi reddedildi|Web sitesi erişimi kapatıldı)/g;
+  const KALIP = /(Site hesabı[^\n]*|Müşteri site hesabı işlemlerini[^\n]*|Onaylanamadı[^\n]*|Sunucudan cevap alınamadı[^\n]*|Onay daha önce tamamlanmıştı[^\n]*|Reddedilemedi[^\n]*|Kayıt talebi reddedildi|Web sitesi erişimi kapatıldı)/g;
   const toastOku = async () => { const m = await sayfa.evaluate(() => document.body.innerText); for (const x of (m.match(KALIP) || [])) if (!toastlar.includes(x)) toastlar.push(x); };
   return { tarayici, sayfa, toastlar, toastOku };
 }
@@ -95,6 +123,8 @@ async function oturum(kullaniciAdi, s, hatalar) {
 const cariSayisi = async (sayfa, unvan) => ((await depoOku(sayfa, "cari:data")) || []).filter((c) => c.unvan === unvan).length;
 const kayitDugmeleri = (sayfa) => sayfa.evaluate(() => [...document.querySelectorAll("[data-site-kayit]")].map((e) => `${e.getAttribute("data-site-kayit")}: ${[...e.querySelectorAll("button")].map((b) => b.textContent.trim()).join(" + ") || "düğme yok"}`));
 const onaylaTikla = (sayfa, kullanici) => sayfa.evaluate((k) => { const b = [...document.querySelectorAll(`[data-site-kayit="${k}"] button`)].find((x) => /Onayla/.test(x.textContent)); if (b) b.click(); return !!b; }, kullanici);
+const tamamlaTikla = (sayfa, kullanici) => sayfa.evaluate((k) => { const b = document.querySelector(`[data-site-kayit="${k}"] [data-site-kayit-tamamla]`); if (b) b.click(); return !!b; }, kullanici);
+const sunucuCarisi = (s, unvan) => Object.entries(s.sunucuCariler).filter(([, u]) => u === unvan).map(([id]) => id);
 const reddetTikla = (sayfa, kullanici) => sayfa.evaluate((k) => { const b = [...document.querySelectorAll(`[data-site-kayit="${k}"] button`)].find((x) => /Reddet/.test(x.textContent)); if (b) b.click(); return !!b; }, kullanici);
 async function kartPaneli(sayfa, unvan) {
   await sayfa.locator(`button:has-text("${unvan}"):visible`).last().click();
@@ -111,7 +141,9 @@ async function calistir() {
   const T2 = talep("t2", "Reddedilecek AŞ", "red.firma", "09:05");
   const T3 = talep("t3", "Alinmis Ad Ltd", "musteri.b", "09:10");     // kullanıcı adı başka caride (c2) kullanılıyor
   const T4 = talep("t4", "Islenmis Ltd", "islenmis.firma", "09:15");  // ekranda görünüyor, sunucuda başka cihaz işledi
-  const T5 = talep("t5", "Yaris Ltd", "yaris.firma", "09:20");         // ön kontrolden SONRA başka cihaz işler (kalan açık)
+  const T5 = talep("t5", "Kayip Cevap Ltd", "kayip.cevap", "09:20");  // sunucu işler, cevap kaybolur → Tamamla
+  const T6 = talep("t6", "Kopuk Baglanti Ltd", "kopuk.bag", "09:25"); // bağlantı sunucu işlemeden kopar → Tamamla
+  const T7 = talep("t7", "Tek Kopma Ltd", "tek.kopma", "09:30");      // yalnız ilk istek kopar → uygulamanın ağ yeniden denemesi
 
   // ---- A) Ali: Yönetici değil (istemci + sunucu) ----
   const sA = sunucu(false, [T1, T2]);
@@ -123,7 +155,7 @@ async function calistir() {
   A.reddetTiklandi = await reddetTikla(o.sayfa, "red.firma");
   await o.sayfa.waitForTimeout(1200);
   await o.toastOku();
-  A.yeniCari = await cariSayisi(o.sayfa, "Yeni Firma Ltd");
+  A.yeniCari = `yerel ${await cariSayisi(o.sayfa, "Yeni Firma Ltd")} · sunucu ${sunucuCarisi(sA, "Yeni Firma Ltd").length}`;
   A.sunucuTalepleri = sA.talepler.map((x) => `${x.id}:${x.durum}`);
   A.sunucuHesaplari = sA.hesaplar;
   A.kartMusteriB = await kartPaneli(o.sayfa, "Müşteri B");
@@ -133,33 +165,62 @@ async function calistir() {
   await o.tarayici.close();
 
   // ---- B) Mahmut: Yönetici ----
-  const sB = sunucu(true, [T1, T2, T3, T4, T5]);
+  const sB = sunucu(true, [T1, T2, T3, T4, T5, T6, T7]);
   o = await oturum("mahmut", sB, hatalar);
   const B = { kayitDugmeleri: await kayitDugmeleri(o.sayfa) };
   // B1: alınmış kullanıcı adı → ön kontrolde düşmeli (düzeltmeden önce: cari açılır, onay sunucuda düşer)
   B.alinmisTiklandi = await onaylaTikla(o.sayfa, "musteri.b");
   await o.sayfa.waitForTimeout(2500);
   await o.toastOku();
-  B.alinmisCari = await cariSayisi(o.sayfa, "Alinmis Ad Ltd");
+  B.alinmisCari = `yerel ${await cariSayisi(o.sayfa, "Alinmis Ad Ltd")} · sunucu ${sunucuCarisi(sB, "Alinmis Ad Ltd").length}`;
   // B2: başka cihazda işlenmiş talep (ekranda hâlâ var)
   sB.talepler.find((x) => x.id === "t4").durum = "onaylandi";
   B.islenmisTiklandi = await onaylaTikla(o.sayfa, "islenmis.firma");
   await o.sayfa.waitForTimeout(2500);
   await o.toastOku();
-  B.islenmisCari = await cariSayisi(o.sayfa, "Islenmis Ltd");
-  // B3: normal onay — yeni cari + hesap
+  B.islenmisCari = `yerel ${await cariSayisi(o.sayfa, "Islenmis Ltd")} · sunucu ${sunucuCarisi(sB, "Islenmis Ltd").length}`;
+  // B3: normal onay — yeni cari + hesap. Önce bu cihazın açılış yazmalarından (kod ataması) 12 sn geçsin: kendi yazmasından hemen
+  // sonra tazeleme bilerek atlanır (100 carileriBuluttanTazele; sayaç sonra getirir) — burada tazeleme isteğinin gittiği ölçülür.
+  await o.sayfa.waitForTimeout(9000);
+  const okumaOnce = sB.cariOkuma;
   B.onaylaTiklandi = await onaylaTikla(o.sayfa, "yeni.firma");
   await o.sayfa.waitForTimeout(2500);
   await o.toastOku();
-  const yeni = ((await depoOku(o.sayfa, "cari:data")) || []).filter((c) => c.unvan === "Yeni Firma Ltd");
-  B.yeniCari = yeni.length;
-  B.hesapYeniCariye = !!yeni[0] && sB.hesaplar[yeni[0].id] === "yeni.firma";
-  // B6: yarış — ön kontrol geçer, onay sunucuda düşer: cari açılmış olur, bildirim bunu söylemeli (kalan, bilinen açık)
-  sB.yaris = "t5";
-  B.yarisTiklandi = await onaylaTikla(o.sayfa, "yaris.firma");
+  const yeniId = sunucuCarisi(sB, "Yeni Firma Ltd");
+  B.yeniCari = `yerel ${await cariSayisi(o.sayfa, "Yeni Firma Ltd")} · sunucu ${yeniId.length} · ERP'nin cari yazması ${sB.istemciCariYazmasi.length}`;
+  B.hesapYeniCariye = yeniId.length === 1 && sB.hesaplar[yeniId[0]] === "yeni.firma";
+  B.tazelemeIstendi = sB.cariOkuma > okumaOnce;
+  // B6: sunucu işledi, cevap kayboldu (otomatik yeniden denemeler dahil) → "Tamamla" görünür; aynı kimlikle sorar → "zaten"; tek cari
+  sB.cevapKaybet = { id: "t5", uygula: true, kez: 4 };
+  B.kayipTiklandi = await onaylaTikla(o.sayfa, "kayip.cevap");
   await o.sayfa.waitForTimeout(2500);
   await o.toastOku();
-  B.yarisCari = await cariSayisi(o.sayfa, "Yaris Ltd");
+  B.kayipDugmeler = (await kayitDugmeleri(o.sayfa)).filter((x) => x.startsWith("kayip.cevap"));
+  B.kayipTamamla = await tamamlaTikla(o.sayfa, "kayip.cevap");
+  await o.sayfa.waitForTimeout(2000);
+  await o.toastOku();
+  B.kayipCari = `sunucu ${sunucuCarisi(sB, "Kayip Cevap Ltd").length} · yerel ${await cariSayisi(o.sayfa, "Kayip Cevap Ltd")}`;
+  // B7: bağlantı sunucu işleyemeden koptu → Tamamla aynı kimlikle şimdi işler; tek cari
+  sB.cevapKaybet = { id: "t6", uygula: false, kez: 4 };
+  B.kopukTiklandi = await onaylaTikla(o.sayfa, "kopuk.bag");
+  await o.sayfa.waitForTimeout(2500);
+  await o.toastOku();
+  B.kopukArada = `sunucu ${sunucuCarisi(sB, "Kopuk Baglanti Ltd").length} · talep ${sB.talepler.find((x) => x.id === "t6").durum}`;
+  B.kopukDugmeler = (await kayitDugmeleri(o.sayfa)).filter((x) => x.startsWith("kopuk.bag"));
+  B.kopukTamamla = await tamamlaTikla(o.sayfa, "kopuk.bag");
+  await o.sayfa.waitForTimeout(2000);
+  await o.toastOku();
+  B.kopukCari = `sunucu ${sunucuCarisi(sB, "Kopuk Baglanti Ltd").length} · yerel ${await cariSayisi(o.sayfa, "Kopuk Baglanti Ltd")}`;
+  // B8: yalnız ilk istek sunucu işledikten sonra koptu → uygulamanın kendi ağ yeniden denemesi AYNI gövdeyle (aynı kimlik) sorar → "zaten"
+  sB.cevapKaybet = { id: "t7", uygula: true, kez: 1 };
+  B.tekKopmaTiklandi = await onaylaTikla(o.sayfa, "tek.kopma");
+  await o.sayfa.waitForTimeout(2500);
+  await o.toastOku();
+  B.tekKopmaCari = `sunucu ${sunucuCarisi(sB, "Tek Kopma Ltd").length} · yerel ${await cariSayisi(o.sayfa, "Tek Kopma Ltd")}`;
+  const tamamlaKimlikleri = sB.cagrilar.filter((x) => /site_kayit_onayla_yeni_cari/.test(x));
+  B.yeniCariCagrilari = tamamlaKimlikleri;
+  const ayniKimlik = (id) => { const l = sB.kimlikler[id] || []; return `${l.length} çağrı, ${new Set(l).size} kimlik`; };
+  B.tamamlaKimligi = { kayip: ayniKimlik("t5"), kopuk: ayniKimlik("t6"), tekKopma: ayniKimlik("t7") };
   // B4: ret
   B.reddetTiklandi = await reddetTikla(o.sayfa, "red.firma");
   await o.sayfa.waitForTimeout(1200);
@@ -186,7 +247,7 @@ async function calistir() {
   await o.sayfa.waitForTimeout(2500);
   await o.toastOku();
   await o.toastOku();
-  C.yeniCari = await cariSayisi(o.sayfa, "Yeni Firma Ltd");
+  C.yeniCari = `yerel ${await cariSayisi(o.sayfa, "Yeni Firma Ltd")} · sunucu ${sunucuCarisi(sC, "Yeni Firma Ltd").length} · ERP'nin cari yazması ${sC.istemciCariYazmasi.length}`;
   C.sunucuTalepleri = sC.talepler.map((x) => `${x.id}:${x.durum}`);
   C.cagrilar = sC.cagrilar.filter((x) => !/^site_(hesap_bilgi|hesap_listesi|kayit_listesi)/.test(x));
   C.toastlar = o.toastlar;

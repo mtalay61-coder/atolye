@@ -317,411 +317,411 @@
   {
     "dosya": "100-app.jsx",
     "bas": 22153,
-    "son": 28924
+    "son": 28935
   },
   {
     "dosya": "110-navigasyon.jsx",
-    "bas": 28925,
-    "son": 29854
+    "bas": 28936,
+    "son": 29865
   },
   {
     "dosya": "115-tanim-ogeleri.jsx",
-    "bas": 29855,
-    "son": 30579
+    "bas": 29866,
+    "son": 30590
   },
   {
     "dosya": "118-gorsel-eslestirme.jsx",
-    "bas": 30580,
-    "son": 30850
+    "bas": 30591,
+    "son": 30861
   },
   {
     "dosya": "120-gunluk.jsx",
-    "bas": 30851,
-    "son": 31152
+    "bas": 30862,
+    "son": 31163
   },
   {
     "dosya": "125-veridenetimi.jsx",
-    "bas": 31153,
-    "son": 31837
+    "bas": 31164,
+    "son": 31848
   },
   {
     "dosya": "130-tanimlar.jsx",
-    "bas": 31838,
-    "son": 34826
+    "bas": 31849,
+    "son": 34837
   },
   {
     "dosya": "131-siparis-sezon.jsx",
-    "bas": 34827,
-    "son": 34913
+    "bas": 34838,
+    "son": 34924
   },
   {
     "dosya": "135-tanim-bolumler.jsx",
-    "bas": 34914,
-    "son": 35649
+    "bas": 34925,
+    "son": 35660
   },
   {
     "dosya": "137-surum-gecmisi.jsx",
-    "bas": 35650,
-    "son": 35698
+    "bas": 35661,
+    "son": 35709
   },
   {
     "dosya": "140-asorti.jsx",
-    "bas": 35699,
-    "son": 36164
+    "bas": 35710,
+    "son": 36175
   },
   {
     "dosya": "145-recete-grupla.jsx",
-    "bas": 36165,
-    "son": 36589
+    "bas": 36176,
+    "son": 36600
   },
   {
     "dosya": "150-stok-giris.jsx",
-    "bas": 36590,
-    "son": 36729
+    "bas": 36601,
+    "son": 36740
   },
   {
     "dosya": "152-stok.jsx",
-    "bas": 36730,
-    "son": 39678
+    "bas": 36741,
+    "son": 39689
   },
   {
     "dosya": "155-stok-hucre.jsx",
-    "bas": 39679,
-    "son": 39944
+    "bas": 39690,
+    "son": 39955
   },
   {
     "dosya": "156-maliyet-hesap.jsx",
-    "bas": 39945,
-    "son": 40071
+    "bas": 39956,
+    "son": 40082
   },
   {
     "dosya": "157-fiyat-listesi.jsx",
-    "bas": 40072,
-    "son": 40788
+    "bas": 40083,
+    "son": 40799
   },
   {
     "dosya": "160-urunkarti.jsx",
-    "bas": 40789,
-    "son": 47957
+    "bas": 40800,
+    "son": 47968
   },
   {
     "dosya": "200-cari-sabit.jsx",
-    "bas": 47958,
-    "son": 49281
+    "bas": 47969,
+    "son": 49292
   },
   {
     "dosya": "205-muhasebe.jsx",
-    "bas": 49282,
-    "son": 49873
+    "bas": 49293,
+    "son": 49884
   },
   {
     "dosya": "207-kasa-cari-ortak.jsx",
-    "bas": 49874,
-    "son": 50032
+    "bas": 49885,
+    "son": 50043
   },
   {
     "dosya": "210-hesaplar.jsx",
-    "bas": 50033,
-    "son": 51966
+    "bas": 50044,
+    "son": 51977
   },
   {
     "dosya": "211-kasa-hareketleri.jsx",
-    "bas": 51967,
-    "son": 52121
+    "bas": 51978,
+    "son": 52132
   },
   {
     "dosya": "220-hammadde-alis.jsx",
-    "bas": 52122,
-    "son": 52359
+    "bas": 52133,
+    "son": 52370
   },
   {
     "dosya": "225-kur.jsx",
-    "bas": 52360,
-    "son": 52597
+    "bas": 52371,
+    "son": 52608
   },
   {
     "dosya": "230-mrp.jsx",
-    "bas": 52598,
-    "son": 53128
+    "bas": 52609,
+    "son": 53139
   },
   {
     "dosya": "233-mamul-depo.jsx",
-    "bas": 53129,
-    "son": 53408
+    "bas": 53140,
+    "son": 53419
   },
   {
     "dosya": "234-kamera-okuyucu.jsx",
-    "bas": 53409,
-    "son": 53602
+    "bas": 53420,
+    "son": 53613
   },
   {
     "dosya": "235-hammaddeihtiyac.jsx",
-    "bas": 53603,
-    "son": 54693
+    "bas": 53614,
+    "son": 54704
   },
   {
     "dosya": "236-depo-okut.jsx",
-    "bas": 54694,
-    "son": 54919
+    "bas": 54705,
+    "son": 54930
   },
   {
     "dosya": "237-koli-fis.jsx",
-    "bas": 54920,
-    "son": 55011
+    "bas": 54931,
+    "son": 55022
   },
   {
     "dosya": "238-sevkiyat.jsx",
-    "bas": 55012,
-    "son": 55199
+    "bas": 55023,
+    "son": 55210
   },
   {
     "dosya": "239-sevkiyat-merkezi.jsx",
-    "bas": 55200,
-    "son": 55661
+    "bas": 55211,
+    "son": 55672
   },
   {
     "dosya": "240-planlama-sekme.jsx",
-    "bas": 55662,
-    "son": 56167
+    "bas": 55673,
+    "son": 56178
   },
   {
     "dosya": "245-rapor.jsx",
-    "bas": 56168,
-    "son": 57240
+    "bas": 56179,
+    "son": 57251
   },
   {
     "dosya": "246-uretim-gider-bag.jsx",
-    "bas": 57241,
-    "son": 57561
+    "bas": 57252,
+    "son": 57572
   },
   {
     "dosya": "247-karzarar.jsx",
-    "bas": 57562,
-    "son": 58044
+    "bas": 57573,
+    "son": 58055
   },
   {
     "dosya": "248-finans-rapor.jsx",
-    "bas": 58045,
-    "son": 59364
+    "bas": 58056,
+    "son": 59375
   },
   {
     "dosya": "250-fisler.jsx",
-    "bas": 59365,
-    "son": 59888
+    "bas": 59376,
+    "son": 59899
   },
   {
     "dosya": "255-stokfisi.jsx",
-    "bas": 59889,
-    "son": 61691
+    "bas": 59900,
+    "son": 61702
   },
   {
     "dosya": "260-cari.jsx",
-    "bas": 61692,
-    "son": 63218
+    "bas": 61703,
+    "son": 63229
   },
   {
     "dosya": "262-cari-rapor.jsx",
-    "bas": 63219,
-    "son": 63542
+    "bas": 63230,
+    "son": 63553
   },
   {
     "dosya": "263-mutabakat.jsx",
-    "bas": 63543,
-    "son": 63734
+    "bas": 63554,
+    "son": 63745
   },
   {
     "dosya": "264-gun-sonu.jsx",
-    "bas": 63735,
-    "son": 64252
+    "bas": 63746,
+    "son": 64263
   },
   {
     "dosya": "265-carikart.jsx",
-    "bas": 64253,
-    "son": 66537
+    "bas": 64264,
+    "son": 66548
   },
   {
     "dosya": "266-site-erisim.jsx",
-    "bas": 66538,
-    "son": 67064
+    "bas": 66549,
+    "son": 67095
   },
   {
     "dosya": "267-site-ayarlari.jsx",
-    "bas": 67065,
-    "son": 67406
+    "bas": 67096,
+    "son": 67437
   },
   {
     "dosya": "268-kayit-ceviri.jsx",
-    "bas": 67407,
-    "son": 67724
+    "bas": 67438,
+    "son": 67755
   },
   {
     "dosya": "269-site-bloklar.jsx",
-    "bas": 67725,
-    "son": 67937
+    "bas": 67756,
+    "son": 67968
   },
   {
     "dosya": "270-miktar.jsx",
-    "bas": 67938,
-    "son": 68063
+    "bas": 67969,
+    "son": 68094
   },
   {
     "dosya": "271-kilavuz.jsx",
-    "bas": 68064,
-    "son": 68502
+    "bas": 68095,
+    "son": 68533
   },
   {
     "dosya": "272-personel.jsx",
-    "bas": 68503,
-    "son": 68615
+    "bas": 68534,
+    "son": 68646
   },
   {
     "dosya": "273-kapasite.jsx",
-    "bas": 68616,
-    "son": 69151
+    "bas": 68647,
+    "son": 69182
   },
   {
     "dosya": "274-proses-planlama.jsx",
-    "bas": 69152,
-    "son": 69357
+    "bas": 69183,
+    "son": 69388
   },
   {
     "dosya": "275-yazdir.jsx",
-    "bas": 69358,
-    "son": 70313
+    "bas": 69389,
+    "son": 70344
   },
   {
     "dosya": "276-uretim-raporu.jsx",
-    "bas": 70314,
-    "son": 70566
+    "bas": 70345,
+    "son": 70597
   },
   {
     "dosya": "277-adim-denetimi.jsx",
-    "bas": 70567,
-    "son": 70625
+    "bas": 70598,
+    "son": 70656
   },
   {
     "dosya": "277-fatura.jsx",
-    "bas": 70626,
-    "son": 70866
+    "bas": 70657,
+    "son": 70897
   },
   {
     "dosya": "280-atolye.jsx",
-    "bas": 70867,
-    "son": 71606
+    "bas": 70898,
+    "son": 71637
   },
   {
     "dosya": "285-barkod-atolye.jsx",
-    "bas": 71607,
-    "son": 72129
+    "bas": 71638,
+    "son": 72160
   },
   {
     "dosya": "300-uretim.jsx",
-    "bas": 72130,
-    "son": 72751
+    "bas": 72161,
+    "son": 72782
   },
   {
     "dosya": "305-teslimalma.jsx",
-    "bas": 72752,
-    "son": 73232
+    "bas": 72783,
+    "son": 73263
   },
   {
     "dosya": "310-uretimkarti.jsx",
-    "bas": 73233,
-    "son": 74567
+    "bas": 73264,
+    "son": 74598
   },
   {
     "dosya": "315-paketleme.jsx",
-    "bas": 74568,
-    "son": 75653
+    "bas": 74599,
+    "son": 75684
   },
   {
     "dosya": "320-siparis-sabit.jsx",
-    "bas": 75654,
-    "son": 75829
+    "bas": 75685,
+    "son": 75860
   },
   {
     "dosya": "325-siparis.jsx",
-    "bas": 75830,
-    "son": 78573
+    "bas": 75861,
+    "son": 78604
   },
   {
     "dosya": "326-teklif.jsx",
-    "bas": 78574,
-    "son": 78920
+    "bas": 78605,
+    "son": 78951
   },
   {
     "dosya": "330-siparis-ozet.jsx",
-    "bas": 78921,
-    "son": 79479
+    "bas": 78952,
+    "son": 79510
   },
   {
     "dosya": "335-planlama-bolum.jsx",
-    "bas": 79480,
-    "son": 80099
+    "bas": 79511,
+    "son": 80130
   },
   {
     "dosya": "338-siparis-odeme.jsx",
-    "bas": 80100,
-    "son": 80380
+    "bas": 80131,
+    "son": 80411
   },
   {
     "dosya": "339-banka-excel.jsx",
-    "bas": 80381,
-    "son": 80849
+    "bas": 80412,
+    "son": 80880
   },
   {
     "dosya": "340-sipariskarti.jsx",
-    "bas": 80850,
-    "son": 83617
+    "bas": 80881,
+    "son": 83648
   },
   {
     "dosya": "350-ortak-ui.jsx",
-    "bas": 83618,
-    "son": 83885
+    "bas": 83649,
+    "son": 83916
   },
   {
     "dosya": "352-eylem-cubugu.jsx",
-    "bas": 83886,
-    "son": 84022
+    "bas": 83917,
+    "son": 84053
   },
   {
     "dosya": "370-gorevler.jsx",
-    "bas": 84023,
-    "son": 84375
+    "bas": 84054,
+    "son": 84406
   },
   {
     "dosya": "372-sohbet.jsx",
-    "bas": 84376,
-    "son": 84618
+    "bas": 84407,
+    "son": 84649
   },
   {
     "dosya": "385-mobil-gorunum.jsx",
-    "bas": 84619,
-    "son": 84928
+    "bas": 84650,
+    "son": 84959
   },
   {
     "dosya": "386-boyut-ayari.jsx",
-    "bas": 84929,
-    "son": 85093
+    "bas": 84960,
+    "son": 85124
   },
   {
     "dosya": "387-ekran-duzeni.jsx",
-    "bas": 85094,
-    "son": 85569
+    "bas": 85125,
+    "son": 85600
   },
   {
     "dosya": "390-modelhane.jsx",
-    "bas": 85570,
-    "son": 86301
+    "bas": 85601,
+    "son": 86332
   },
   {
     "dosya": "396-gelirgider.jsx",
-    "bas": 86302,
-    "son": 86648
+    "bas": 86333,
+    "son": 86679
   },
   {
     "dosya": "397-genel-gider.jsx",
-    "bas": 86649,
-    "son": 86955
+    "bas": 86680,
+    "son": 86986
   }
 ]

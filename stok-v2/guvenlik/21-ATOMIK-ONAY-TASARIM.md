@@ -1,6 +1,6 @@
-# 21 — Kayıt onayında boşta cari: atomik çözüm TASARIMI (sürüm 2, 16 Kasım; uygulanmadı, onay bekler)
+# 21 — Kayıt onayında boşta cari: atomik çözüm TASARIMI (sürüm 2, 16 Kasım; B seçeneği 22 ile geliştirme dalında uygulandı)
 
-Durum: **yalnız tasarım.** SQL, uygulama kodu ve test yazılmadı; canlıya hiçbir şey uygulanmadı. Bağlam: `21-SITE-YONETIM-YETKI.md`
+Durum: **B onaylandı ve geliştirme dalında uygulandı (22, `22-SITE-ONAY-ATOMIK.md`); canlıya uygulanmadı.** §3 uygulamada değişti (aşağıdaki not). Bağlam: `21-SITE-YONETIM-YETKI.md`
 (PR #360, `7c6ec2e`). Bu sürüm iki şartı ekler: (1) **eski istemci dahil** her onay / ret yolu aynı sunucu kuralına uyar, korumayı
 aşan geçiş yolu kalmaz; (2) cihaz kapanır ya da cari buluta yazılamazsa işlem **başka bir Yönetici tarafından güvenle tamamlanır,
 ikinci cari oluşmaz.** Ayrıca B seçeneği için "sunucunun açtığı cari bugünkü senkronizasyonda korunur mu" sorusu kodda incelendi.
@@ -79,32 +79,26 @@ B'de **ara durum yoktur**: talep ya 'yeni'dir (hiçbir şey yazılmamış — i�
 
 ## 3) 1. şart: eski istemci korumayı aşabilir mi?
 
-Eski ERP (1.744.21 ve 7c6ec2e) yeni cariyi **önce kendisi yazar** (`tabloYaz` → `cariler` POST), sonra `site_kayit_onayla` çağırır.
-Sunucu RPC'yi reddetse de cari çoktan yazılmıştır — boşta cari eski istemciden yine doğar. Bu yüzden eski istemciyi **RPC'de değil,
-cari yazmasında** durdurmak gerekir. İki sunucu kuralı, ikisi de aynı en düşük sürüm değerini okur (`site_onay_min_surum`, yeni
-`stk_ayar` sütunu ya da `tanimlar` dışı küçük ayar satırı; uygulama yazamaz):
+> **Uygulamada değişti (22, 16 Kasım):** aşağıdaki ilk taslak (not alanı + sürüm başlığı) UYGULANMADI. Sebep: `siteOdemeSor` her yeni
+> müşteri carisine konuyor (`src/260-cari.jsx:152`, `src/100-app.jsx:2944`), not serbest metin, sürüm başlığı istemcinin gönderdiği bir
+> değer. Uygulanan kural sunucudaki TALEP VERİSİNE dayanır; ayrıntı ve testler `22-SITE-ONAY-ATOMIK.md`.
 
-a) **`cariler` BEFORE INSERT tetikleyicisi (dar):** eklenen satır site kaydı carisiyse (`ek->>'notlar'` "Web sitesinden kayıt" ile
-   biter VE `ek->>'siteOdemeSor'` = true — bugün yalnız `siteKayitCarisi` böyle cari üretir) ve istek **uygulamadan** geliyorsa
-   (JWT var, service_role değil) ve RPC içinde değilse (`site_kayit_onayla_yeni_cari` kendi `set_config` işaretini koyar) →
-   `KR0xx: Site kaydı onayı için uygulamayı yenileyin` ile reddeder. 1.744.0+ istemci KRnnn'yi kalıcı ret sayar (030 `kuralReddiOku`,
-   040 inceleme): satır "inceleme gerekiyor"a düşer, bulut yazması yeniden denenmez, buluta hiçbir şey yazılmaz. Eski istemcinin
-   sonraki `site_kayit_onayla` çağrısı ya 'Cari bulunamadı' (8 deneme) ya da (b) ile düşer → **bulutta boşta cari oluşmaz**; eski
-   cihazın yerel kopyasında kalan satır "inceleme" olarak görünür (kullanıcı ERP'yi yenileyince o cihazın yerel kopyası bulutla açılır).
-   Elle açılan sıradan cariler etkilenmez (işaret yok). Neden genel sürüm kapısı (`min_istemci_surum`) değil: canlıda kapalı ve
-   açılması fiş kurallarını da açıyor (`IKI-KORUMA-ACMA.md`, `fis_kural_aktif()` = fis_aktif VEYA min_istemci_surum) — bu işin
-   kapsamını aşar.
-b) **Site RPC'lerinde sürüm kontrolü** (`site_istemci_surumu_yeterli()`, kapıdan hemen sonra): `site_kayit_onayla`,
-   `site_kayit_onayla_yeni_cari`, `site_kayit_reddet` (ve tutarlılık için `site_hesap_kaydet` / `site_hesap_sil`) istekteki
-   `x-atolye-surum` < en düşük sürüm ya da yoksa "uygulamayı yenileyin" der, **hiçbir şey yazmaz**. Böylece eski istemci onay, bağlama
-   ve ret yapamaz; tek yol yeni fonksiyonlar ve onların tek işlemli kuralıdır. SQL Editor / service_role (JWT'siz ya da sunucu)
-   bugünkü kapı kuralıyla geçer.
+Eski ERP (1.744.21 ve 7c6ec2e) yeni cariyi **önce kendisi yazar** (`tabloYaz` → `cariler` POST, `merge-duplicates`), sonra
+`site_kayit_onayla` çağırır. Sunucu onayı reddetse de cari çoktan yazılmıştır. Bu yüzden eski istemci **cari yazmasında** durdurulur:
 
-Sınır (açıkça): başlık istemcinin gönderdiği bir değerdir; bu kural **uyumluluk** korumasıdır, güvenlik sınırı değil. Güvenlik sınırı
-bugünkü gibi Yönetici kapısıdır (yalnız Yönetici çağırabilir). Kasıtla sahte başlık gönderen bir Yönetici (b)'yi geçebilir ama (a)
-yine eski yolun cari yazmasını yakalar; yeni fonksiyon da tek işlemdir — sahte başlıkla bile boşta cari üretecek yol kalmaz. Bugün
-`site_kayit_talepleri` tablosu authenticated'a kapalı (19): talebin durumu yalnız bu fonksiyonlardan değişir, doğrudan tablo yazma yolu
-yoktur (t19 ölçüyor).
+- **`cariler` BEFORE INSERT tetikleyicisi `site_cari_ekleme_koru`:** uygulamadan (JWT var, service_role değil) gelen ve tabloda henüz
+  OLMAYAN bir kimliğin eklenmesinde, **bekleyen ya da son 1 günde onaylanmış / reddedilmiş bir kayıt talebiyle aynı ünvan + telefonu**
+  taşıyan cari `KR013` ile reddedilir (1.744.0+ ERP bunu kalıcı ret sayar; bulut yazması tekrarlanmaz). İstisna: bir talep
+  `onaylandi` ve `cari_id` = bu kimlik ise geçer — `site_kayit_onayla_yeni_cari` cariyi eklemeden ÖNCE talebi böyle işaretler.
+  Bu istisna istemcinin taklit edebileceği bir işaret değildir: `site_kayit_talepleri`ne authenticated yazamaz (19); talep durumu
+  yalnız kapılı fonksiyonlarla değişir. Not alanına, `siteOdemeSor`'a ve sürüm başlığına bakılmaz.
+- Eşleşme anahtarı: ünvan (baş / son boşluk atılır, iç boşluklar teke iner, `İ I ı` → `i`, küçük harf) + telefonun yalnız rakamları.
+- Var olan kimliğin upsert'i (düzenleme), JWT'siz (SQL Editor) ve service_role yazmaları kontrol edilmez.
+- Site RPC'lerinde sürüm başlığı kontrolü EKLENMEDİ: eski istemcinin onay / bağlama / ret çağrıları da artık tek işlemlidir (kilit +
+  durum kontrolü); boşta cariyi yalnız eski cari yazması üretebiliyordu ve o tetikleyiciyle kapandı.
+
+Bilinen yan etki: bekleyen (ya da son 1 günde işlenmiş) bir talebin ünvanı + telefonuyla ERP'de **elle** yeni cari açılmak istenirse o
+da KR013 alır ("Siteden gelen kayıt talepleri"nden onaylayın). 1 günden eski işlenmiş talep engellemez.
 
 ## 4) B — sunucunun açtığı cari bugünkü senkronizasyonda korunur mu? (kod incelemesi)
 

@@ -1,6 +1,9 @@
 # 21 — Site hesabı yönetimi yalnız Yönetici: ERP ekranı ve onay sırası (16 Kasım 2026)
 
 Durum: **geliştirme dalında hazır (`claude/site-yonetim-yetki`), canlıya alınmadı.** Sürüm numarası değiştirilmedi, yayın paketi
+
+> **22 (16 Kasım, aynı dal):** kayıt onayındaki ayrı ön kontrol (`siteKayitOnKontrol`) kaldırıldı; yeni cariyle onay artık tek sunucu
+> işlemidir (`site_kayit_onayla_yeni_cari`) ve aşağıdaki "yarış" açığı orada kapanır. Ayrıntı ve testler: `22-SITE-ONAY-ATOMIK.md`.
 üretilmedi, veritabanı değişikliği YOK (canlı SQL gerekmez). Yayın için ayrıca sürüm artırma + `yap.sh` + onay gerekir.
 
 ## Kapsam

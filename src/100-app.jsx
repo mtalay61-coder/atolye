@@ -1092,6 +1092,17 @@ function AtolyeUygulamasi() {
     degisen.farklar = farklar;   // tanı: günlüğe (aşağıda) — hangi kayıt / alan farklı çıktı
     return degisen;
   }, []);
+  // SUNUCUNUN AÇTIĞI CARİ (güvenlik 22, 266): site kayıt onayı cariyi SUNUCUDA açar; ekran onu buluttan alır (state + fark tabanı +
+  // sürüm birlikte — yerelde açılsaydı aynı kimlik bulut yazmasıyla tekrar giderdi). Değişiklik sayacının kuralları aynen: bekleyen cari
+  // yazması varsa ya da bu cihaz son 12 sn'de carilere yazdıysa (ya da yazma yoldaysa) tazelenmez — yerel değişiklik ezilmesin; sayaç
+  // birkaç saniye sonra yine getirir.
+  const carileriBuluttanTazele = useCallback(() => {
+    if (!supabaseAcikMi()) return;
+    if (bekleyenYazmalariOku()["cari:data"]) return;
+    const sonYazma = Math.max(0, ...alaninTablolari("cariler").map((t) => Number(bulutSonYazma(t)) || 0));
+    if (Date.now() - sonYazma < DEGISIKLIK_KENDI_YAZMA_MS) return;
+    bulutDegisikligiUygula(["cariler"]).catch((e) => console.warn("Cariler buluttan tazelenemedi:", e && e.message));
+  }, [bulutDegisikligiUygula]);
   useEffect(() => {
     if (loading || !supabaseAcikMi()) return undefined;
     const yokla = async () => {
@@ -5727,7 +5738,7 @@ function AtolyeUygulamasi() {
               onMuhasebeHareketi={muhasebeyePesinIsle}
               onParaFisi={paraFisiKesBildir}
               onFisIptal={sunucuFisiIptal}
-              onMuhasebeKaydet={saveMuhasebe} kullaniciYetkisiVar={kullaniciYetkisiVar} siteYonetici={siteYonetimiYetkisi(tanimlar, aktifKullanici)} onayIste={onayIste} onayAcik={onaySistemiAcikMi(tanimlar)}
+              onMuhasebeKaydet={saveMuhasebe} kullaniciYetkisiVar={kullaniciYetkisiVar} siteYonetici={siteYonetimiYetkisi(tanimlar, aktifKullanici)} onCarilerTazele={carileriBuluttanTazele} onayIste={onayIste} onayAcik={onaySistemiAcikMi(tanimlar)}
               cariler={cariler}
               onSave={saveCariler}
               // ÇEK KAYDI TEK YERE DÜŞSÜN: caride girilen çek Muhasebe > Çekler listesine de
@@ -6093,7 +6104,7 @@ function AtolyeUygulamasi() {
                 cariler={cariler}
                 uretim={uretim}
                 showToast={showToast}
-                onMuhasebeKaydet={saveMuhasebe} kullaniciYetkisiVar={kullaniciYetkisiVar} siteYonetici={siteYonetimiYetkisi(tanimlar, aktifKullanici)} onayIste={onayIste} onayAcik={onaySistemiAcikMi(tanimlar)} onCopaAt={copaAt}
+                onMuhasebeKaydet={saveMuhasebe} kullaniciYetkisiVar={kullaniciYetkisiVar} siteYonetici={siteYonetimiYetkisi(tanimlar, aktifKullanici)} onCarilerTazele={carileriBuluttanTazele} onayIste={onayIste} onayAcik={onaySistemiAcikMi(tanimlar)} onCopaAt={copaAt}
               />
             )
           )}

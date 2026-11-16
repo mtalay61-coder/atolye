@@ -1,0 +1,133 @@
+{
+ "paket": "eski-ad02222.html",
+ "talep": {
+  "id": "t22-eski",
+  "olusturma": "2026-11-16T09:00:00+00:00",
+  "kullanici": "eski.firma",
+  "bilgiler": {
+   "unvan": "Eski İstemci Deri Ltd",
+   "yetkili": "Ayşe Kaya",
+   "telefon": "0532 111 22 33",
+   "eposta": "ayse@eski.test",
+   "vergiDairesi": "Kadıköy",
+   "vergiNo": "0010013108",
+   "ulke": "Türkiye",
+   "il": "İstanbul",
+   "ilce": "Kadıköy",
+   "adres": "Moda Cad. 1",
+   "not": "Acil"
+  }
+ },
+ "tiklandi": true,
+ "hatalar": [],
+ "cariIstekleri": [
+  {
+   "yontem": "POST",
+   "adres": "cariler",
+   "basliklar": {
+    "x-atolye-surum": "1.744.21",
+    "prefer": "resolution=merge-duplicates,return=minimal"
+   },
+   "govde": [
+    {
+     "id": "c1",
+     "unvan": "Tedarikçi A",
+     "tip": "Tedarikçi",
+     "telefon": null,
+     "vergi_no": null,
+     "adres": null,
+     "para_birimi": "TRY",
+     "resim": null,
+     "barkod_kodu": null,
+     "kod": 1,
+     "bagli_prosesler": [],
+     "fiyat_grubu": null,
+     "pasif": false,
+     "ek": {
+      "notlar": ""
+     }
+    },
+    {
+     "id": "c2",
+     "unvan": "Müşteri B",
+     "tip": "Müşteri",
+     "telefon": null,
+     "vergi_no": null,
+     "adres": null,
+     "para_birimi": "TRY",
+     "resim": null,
+     "barkod_kodu": null,
+     "kod": 2,
+     "bagli_prosesler": [],
+     "fiyat_grubu": null,
+     "pasif": false,
+     "ek": {
+      "notlar": ""
+     }
+    },
+    {
+     "id": "c3",
+     "unvan": "Personel C",
+     "tip": "Personel",
+     "telefon": null,
+     "vergi_no": null,
+     "adres": null,
+     "para_birimi": "TRY",
+     "resim": null,
+     "barkod_kodu": null,
+     "kod": 3,
+     "bagli_prosesler": [],
+     "fiyat_grubu": null,
+     "pasif": false,
+     "ek": {
+      "notlar": ""
+     }
+    }
+   ]
+  },
+  {
+   "yontem": "POST",
+   "adres": "cariler",
+   "basliklar": {
+    "x-atolye-surum": "1.744.21",
+    "prefer": "resolution=merge-duplicates,return=minimal"
+   },
+   "govde": [
+    {
+     "id": "cari-mwjktr48-7436",
+     "unvan": "Eski İstemci Deri Ltd",
+     "tip": "Müşteri",
+     "telefon": "0532 111 22 33",
+     "vergi_no": "0010013108",
+     "adres": "Moda Cad. 1",
+     "para_birimi": "TRY",
+     "resim": null,
+     "barkod_kodu": null,
+     "kod": 4,
+     "bagli_prosesler": [],
+     "fiyat_grubu": null,
+     "pasif": false,
+     "ek": {
+      "notlar": "Yetkili: Ayşe Kaya · Site notu: Acil · Web sitesinden kayıt",
+      "siteOdemeSor": true,
+      "eposta": "ayse@eski.test",
+      "vergiDairesi": "Kadıköy",
+      "ulke": "Türkiye",
+      "il": "İstanbul",
+      "ilce": "Kadıköy"
+     }
+    }
+   ]
+  }
+ ],
+ "onayCagrilari": [
+  {
+   "p_id": "t22-eski",
+   "p_cari_id": "cari-mwjktr48-7436"
+  },
+  {
+   "p_id": "t22-eski",
+   "p_cari_id": "cari-mwjktr48-7436"
+  }
+ ]
+}

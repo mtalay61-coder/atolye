@@ -598,34 +598,160 @@ returns table (id text, olusturma timestamptz, bilgiler jsonb, kullanici text)
 language sql stable security definer set search_path = public
 as $$ select t.id, t.olusturma, t.bilgiler, t.kullanici from site_kayit_talepleri t where t.durum = 'yeni' order by t.olusturma desc limit 100; $$;
 
--- ERP cariyi AÇTIKTAN sonra çağırır (cari buluta yazılmış olmalı — yoksa 'Cari bulunamadı', ERP biraz bekleyip yeniden dener).
+-- ONAY / RET — TEK İŞLEM (güvenlik 22, 16 Kasım; stok-v2/guvenlik/22-site-onay-atomik.sql ile canlıya uygulanır).
+-- Sorun (21): ERP yeni cariyi kendisi açıp SONRA site_kayit_onayla çağırıyordu; arada başka cihaz talebi işlerse, cihaz kapanırsa ya
+-- da cari buluta ulaşamazsa cari BOŞTA kalıyordu. Şimdi:
+--   site_kayit_onayla_yeni_cari(talep, cari kimliği): talebi kilitler (FOR UPDATE), cariyi TALEPTEKİ bilgilerden SUNUCUDA açar,
+--     hesabı kurar, talebi kapatır — tek işlem; ya hepsi olur ya hiçbiri. Aynı kimlikle tekrar (cevabı kaybolan istek) 'zaten' döner
+--     ve hiçbir şey yazmaz; başka kimlikle ikinci onay 'işlenmiş' der, cari yazmaz.
+--   site_kayit_onayla(talep, cari): MEVCUT cariye bağlama — cari açmaz; aynı cariyle tekrar sessiz geçer.
+--   site_kayit_reddet: onaylanmış talep reddedilemez (onay–ret yarışında tek sonuç); bulunamayan / zaten reddedilmiş talep sessiz.
+--   site_cari_ekleme_koru (cariler BEFORE INSERT): ESKİ ERP yeni cariyi kendisi yazmaya çalışır; bekleyen ya da son 1 günde işlenmiş bir
+--     kayıt talebiyle aynı ünvan + telefonu taşıyan YENİ cari, uygulamadan (JWT) gelirse reddedilir (KR013, kalıcı ret) — bir talebin
+--     onayıyla BU kimliğe bağlanmış cari hariç (aynı firmanın ikinci bekleyen talebi onayı engellemesin). Fonksiyonun kendi eklemesi bir işarete değil VERİYE dayanır: cari eklenmeden önce talep
+--     'onaylandi, cari_id = bu kimlik' yapılır; talep tablosuna istemci yazamaz (19). Var olan kimliğin üstüne yazma (upsert) ve
+--     JWT'siz / service_role yazmalar kontrol edilmez. Not alanına ya da istemcinin gönderdiği bir değere bakılmaz.
+-- Gövdelerde yorum ve dolar işareti yoktur: 22-uret.py bu bölümü SQL Editor'e dayanıklı tek DO bloğuna çevirir (tek tırnaklı gövde).
+-- >>> 22 BAŞLANGIÇ
+alter table public.site_kayit_talepleri add column if not exists islenme timestamptz;
+
+create or replace function public.site_eslesme_anahtari(p_unvan text, p_telefon text)
+returns text language sql immutable set search_path = public, pg_temp
+as $$
+  select lower(translate(regexp_replace(btrim(coalesce(p_unvan, '')), '\s+', ' ', 'g'), 'İIı', 'iii')) || '|' || regexp_replace(coalesce(p_telefon, ''), '[^0-9]', '', 'g');
+$$;
+
+create or replace function public.site_vergi_no_kaydedilecek(p text)
+returns text language plpgsql immutable set search_path = public, pg_temp
+as $$
+declare
+  ham text := btrim(coalesce(p, ''), ' ' || chr(9) || chr(10) || chr(11) || chr(12) || chr(13));
+  n text := regexp_replace(coalesce(p, ''), '[[:space:].-]', '', 'g');
+  toplam int := 0;
+  tmp int;
+  v int;
+  tek int;
+  cift int;
+  i int;
+begin
+  if n = '' or n !~ '\A[0-9]+\Z' then return ham; end if;
+  if length(n) = 10 then
+    for i in 0..8 loop
+      tmp := (substr(n, i + 1, 1)::int + 9 - i) % 10;
+      v := (tmp * (2 ^ (9 - i))::int) % 9;
+      if tmp <> 0 and v = 0 then v := 9; end if;
+      toplam := toplam + v;
+    end loop;
+    if (10 - (toplam % 10)) % 10 = substr(n, 10, 1)::int then return n; end if;
+    return ham;
+  end if;
+  if length(n) = 11 and n ~ '\A[1-9]' then
+    tek := substr(n, 1, 1)::int + substr(n, 3, 1)::int + substr(n, 5, 1)::int + substr(n, 7, 1)::int + substr(n, 9, 1)::int;
+    cift := substr(n, 2, 1)::int + substr(n, 4, 1)::int + substr(n, 6, 1)::int + substr(n, 8, 1)::int;
+    if (((tek * 7 - cift) % 10) + 10) % 10 <> substr(n, 10, 1)::int then return ham; end if;
+    toplam := 0;
+    for i in 1..10 loop toplam := toplam + substr(n, i, 1)::int; end loop;
+    if toplam % 10 = substr(n, 11, 1)::int then return n; end if;
+  end if;
+  return ham;
+end;
+$$;
+
+create or replace function public.site_kayit_onayla_yeni_cari(p_id text, p_cari_id text)
+returns jsonb language plpgsql volatile security definer set search_path = public, pg_temp
+as $$
+declare
+  t record;
+  b jsonb;
+  satir jsonb;
+  sutunlar text;
+begin
+  perform public.site_yonetici_kapisi();
+  if coalesce(p_cari_id, '') !~ '\Acari-[a-z0-9]{1,16}-[a-z0-9]{1,8}\Z' then
+    raise exception 'Cari kimliği geçersiz';
+  end if;
+  select * into t from site_kayit_talepleri where id = p_id for update;
+  if not found then raise exception 'Talep bulunamadı ya da işlenmiş'; end if;
+  if t.durum = 'onaylandi' and t.cari_id = p_cari_id then
+    return jsonb_build_object('durum', 'zaten', 'cari_id', p_cari_id);
+  end if;
+  if t.durum <> 'yeni' then raise exception 'Talep bulunamadı ya da işlenmiş'; end if;
+  if exists (select 1 from site_hesaplari where kullanici = t.kullanici) then raise exception 'Bu kullanıcı adı artık kullanılıyor'; end if;
+  if exists (select 1 from cariler where id::text = p_cari_id) then raise exception 'Cari kimliği kullanılıyor'; end if;
+  b := coalesce(t.bilgiler, '{}'::jsonb);
+  update site_kayit_talepleri set durum = 'onaylandi', cari_id = p_cari_id, islenme = now(), sifre_ozeti = null where id = p_id;
+  satir := jsonb_strip_nulls(jsonb_build_object(
+    'id', p_cari_id, 'unvan', btrim(coalesce(b ->> 'unvan', '')), 'tip', 'Müşteri',
+    'telefon', nullif(b ->> 'telefon', ''), 'vergi_no', nullif(public.site_vergi_no_kaydedilecek(b ->> 'vergiNo'), ''),
+    'adres', nullif(b ->> 'adres', ''), 'para_birimi', 'TRY', 'bagli_prosesler', '[]'::jsonb, 'pasif', false, 'surum', 1,
+    'ek', jsonb_strip_nulls(jsonb_build_object(
+      'notlar', concat_ws(' · ', 'Yetkili: ' || nullif(b ->> 'yetkili', ''), 'Site notu: ' || nullif(b ->> 'not', ''), 'Web sitesinden kayıt'),
+      'siteOdemeSor', true, 'eposta', nullif(b ->> 'eposta', ''), 'vergiDairesi', nullif(b ->> 'vergiDairesi', ''),
+      'ulke', nullif(b ->> 'ulke', ''), 'il', nullif(b ->> 'il', ''), 'ilce', nullif(b ->> 'ilce', '')))));
+  select string_agg(quote_ident(k), ', ') into sutunlar from jsonb_object_keys(satir) k
+   where exists (select 1 from pg_attribute a where a.attrelid = 'public.cariler'::regclass and a.attname = k and a.attnum > 0 and not a.attisdropped);
+  execute format('insert into public.cariler (%s) select %s from jsonb_populate_record(null::public.cariler, %L::jsonb)', sutunlar, sutunlar, satir::text);
+  insert into site_hesaplari (cari_id, kullanici, sifre_ozeti) values (p_cari_id, t.kullanici, t.sifre_ozeti);
+  return jsonb_build_object('durum', 'onaylandi', 'cari_id', p_cari_id);
+end;
+$$;
+
 create or replace function public.site_kayit_onayla(p_id text, p_cari_id text)
 returns void language plpgsql volatile security definer set search_path = public
 as $$
 declare t record;
 begin
   perform public.site_yonetici_kapisi();
-  select * into t from site_kayit_talepleri where id = p_id and durum = 'yeni' for update;
+  select * into t from site_kayit_talepleri where id = p_id for update;
   if not found then raise exception 'Talep bulunamadı ya da işlenmiş'; end if;
+  if t.durum = 'onaylandi' and t.cari_id = p_cari_id then return; end if;
+  if t.durum <> 'yeni' then raise exception 'Talep bulunamadı ya da işlenmiş'; end if;
   if not exists (select 1 from cariler where id::text = p_cari_id) then raise exception 'Cari bulunamadı'; end if;
   if exists (select 1 from site_hesaplari where kullanici = t.kullanici) then raise exception 'Bu kullanıcı adı artık kullanılıyor'; end if;
   insert into site_hesaplari (cari_id, kullanici, sifre_ozeti) values (p_cari_id, t.kullanici, t.sifre_ozeti)
   on conflict (cari_id) do update set kullanici = excluded.kullanici, sifre_ozeti = excluded.sifre_ozeti, hatali_deneme = 0, kilit_bitis = null;
-  update site_kayit_talepleri set durum = 'onaylandi', cari_id = p_cari_id, sifre_ozeti = null where id = p_id;
+  update site_kayit_talepleri set durum = 'onaylandi', cari_id = p_cari_id, islenme = now(), sifre_ozeti = null where id = p_id;
 end;
 $$;
 
 create or replace function public.site_kayit_reddet(p_id text)
 returns void language plpgsql volatile security definer set search_path = public
 as $$
+declare d text;
 begin
   perform public.site_yonetici_kapisi();
-  update site_kayit_talepleri set durum = 'reddedildi', sifre_ozeti = null where id = p_id and durum = 'yeni';
+  select durum into d from site_kayit_talepleri where id = p_id for update;
+  if not found or d = 'reddedildi' then return; end if;
+  if d <> 'yeni' then raise exception 'Talep onaylanmış; reddedilemez'; end if;
+  update site_kayit_talepleri set durum = 'reddedildi', islenme = now(), sifre_ozeti = null where id = p_id;
 end;
 $$;
 
-revoke all on function public.site_kayit_listesi(), public.site_kayit_onayla(text, text), public.site_kayit_reddet(text) from public, anon;
-grant execute on function public.site_kayit_listesi(), public.site_kayit_onayla(text, text), public.site_kayit_reddet(text) to authenticated;
+create or replace function public.site_cari_ekleme_koru()
+returns trigger language plpgsql security definer set search_path = public, pg_temp
+as $$
+declare anahtar text;
+begin
+  if auth.jwt() is null or coalesce(auth.jwt() ->> 'role', '') = 'service_role' then return new; end if;
+  if exists (select 1 from cariler c where c.id = new.id) then return new; end if;
+  if exists (select 1 from site_kayit_talepleri t where t.durum = 'onaylandi' and t.cari_id = new.id::text) then return new; end if;
+  anahtar := public.site_eslesme_anahtari(to_jsonb(new) ->> 'unvan', to_jsonb(new) ->> 'telefon');
+  if exists (select 1 from site_kayit_talepleri t
+              where (t.durum = 'yeni' or t.islenme > now() - interval '1 day')
+                and public.site_eslesme_anahtari(t.bilgiler ->> 'unvan', t.bilgiler ->> 'telefon') = anahtar) then
+    raise exception 'KR013: Bu ünvan ve telefonla siteden gelen bir kayıt talebi var; bu cari yalnız Siteden gelen kayıt talepleri ekranından onayla açılır (uygulama eskiyse yenileyin)'
+      using errcode = 'KR013';
+  end if;
+  return new;
+end;
+$$;
+drop trigger if exists site_cari_ekleme_koru on public.cariler;
+create trigger site_cari_ekleme_koru before insert on public.cariler for each row execute function public.site_cari_ekleme_koru();
+
+revoke all on function public.site_eslesme_anahtari(text, text), public.site_vergi_no_kaydedilecek(text), public.site_cari_ekleme_koru() from public, anon, authenticated;
+revoke all on function public.site_kayit_listesi(), public.site_kayit_onayla(text, text), public.site_kayit_reddet(text), public.site_kayit_onayla_yeni_cari(text, text) from public, anon;
+grant execute on function public.site_kayit_listesi(), public.site_kayit_onayla(text, text), public.site_kayit_reddet(text), public.site_kayit_onayla_yeni_cari(text, text) to authenticated;
+-- <<< 22 BİTİŞ
 
 -- ---------- 13) Site raporu (v1.659.0 — "güven ve düzen") ----------
 -- Cari başına: dönemdeki talep sayısı / çift / siparişe dönen / reddedilen / bekleyen, son talep; giriş sayısı, hatalı deneme,

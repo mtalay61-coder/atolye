@@ -218,101 +218,120 @@ function SiteTalepleriPaneli({ siparisler, cariler, onSipariseCevir, showToast }
 // ================= SİTEDEN KAYIT TALEPLERİ (v1.657.0) =================
 // Kullanıcı: "Kaydı olmayan için kayıt ol butonu da olsun, cari bilgileri, adresi vs. ekleyip kayıt olsun. Sisteme
 // düşsün, onaylayıp kayıt ekleyelim." Site `site_kayit_ol()` ile bekleyen talep yazar (kullanıcı adı + şifre özeti
-// dahil). Burada Onayla: (1) aynı unvan / vergi no'lu cari varsa ona bağlamak sorulur, yoksa yeni MÜŞTERİ carisi
-// açılır; (2) `site_kayit_onayla` site hesabını talepteki şifreyle kurar. Cari buluta yazılmadan (2) "Cari
-// bulunamadı" der — birkaç saniye arayla yeniden denenir. Okuma `site_kayit_listesi()` (şifre özeti gelmez).
-function siteKayitCarisi(b) {
-  const notlar = [b.yetkili ? `Yetkili: ${b.yetkili}` : "", b.not ? `Site notu: ${b.not}` : "", "Web sitesinden kayıt"].filter(Boolean).join(" · ");
-  return {
-    id: uid("cari"), unvan: String(b.unvan || "").trim(), tip: "Müşteri",
-    telefon: b.telefon || "", vergiNo: vergiNoKaydedilecek(b.vergiNo || ""), adres: b.adres || "", notlar,
-    paraBirimi: "TRY", hareketler: [], siteOdemeSor: true,
-    ...(b.eposta ? { eposta: b.eposta } : {}), ...(b.vergiDairesi ? { vergiDairesi: b.vergiDairesi } : {}),
-    ...(b.ulke ? { ulke: b.ulke } : {}), ...(b.il ? { il: b.il } : {}), ...(b.ilce ? { ilce: b.ilce } : {}),
-  };
+// dahil). Okuma `site_kayit_listesi()` (şifre özeti gelmez).
+//
+// ONAY TEK SUNUCU İŞLEMİ (güvenlik 22, 16 Kasım; tasarım stok-v2/guvenlik/21-ATOMIK-ONAY-TASARIM.md). Eskiden ERP yeni cariyi KENDİSİ
+// açıyor (yerel + bulut yazması), SONRA `site_kayit_onayla` hesabı kuruyordu. Arada başka cihaz talebi işlerse, cihaz kapanırsa ya da
+// cari buluta ulaşamazsa cari BOŞTA kalıyordu (senaryo-site-yonetim-yetki, 21). Şimdi:
+//   - Yeni cari: `site_kayit_onayla_yeni_cari(talep, cariId)` cariyi TALEPTEKİ bilgilerden SUNUCUDA açar, hesabı kurar, talebi kapatır —
+//     tek işlem, ya hepsi ya hiçbiri. ERP cariyi YEREL OLARAK AÇMAZ (`onSave` yok): aynı kimlik bulut yazmasıyla bir daha giderdi; cari
+//     ekrana buluttan tazelemeyle gelir (`onCarilerTazele` → 100 `carileriBuluttanTazele`, değişiklik sayacının kullandığı yol: state,
+//     fark tabanı ve sürüm birlikte kurulur; sunucunun açtığı cari başka hiçbir yazmada silinmez — 21-ATOMIK-ONAY-TASARIM §4).
+//   - cariId isteğe çıkmadan ÖNCE cihazda saklanır (`site:yarim-onay`). Cevap gelmezse (ağ koptu, sekme kapandı) "Tamamla" AYNI kimlikle
+//     yeniden sorar: sunucu işlemi yapmışsa "zaten" döner, yapmamışsa şimdi yapar — ikinci cari olmaz. Başka Yönetici bu arada onayladıysa
+//     "işlenmiş" der, bu cihaz hiçbir şey yazmaz.
+//   - Mevcut cariye bağlama `site_kayit_onayla` ile (cari açılmaz; tek işlem).
+// Yetki, talebin hâlâ beklemesi ve kullanıcı adının boş olması SUNUCUDA, işlemin içinde sorulur (21'deki ayrı ön kontrol kaldırıldı:
+// pencereyi kapatmıyordu).
+const SITE_YARIM_ONAY_ANAHTARI = "site:yarim-onay";
+function siteYarimOnaylar() {
+  try { const d = JSON.parse(window.localStorage.getItem(SITE_YARIM_ONAY_ANAHTARI) || "{}"); return d && typeof d === "object" ? d : {}; }
+  catch (e) { return {}; }
 }
-
-// ONAY ÖN KONTROLÜ (güvenlik denetimi, 16 Kasım — 1. madde). Onay iki adımdır: (1) ERP cariyi açar (yerel + bulut yazması),
-// (2) `site_kayit_onayla` hesabı kurar — cari buluta yazılmadan (2) çalışamaz ("Cari bulunamadı"), bu yüzden sıra değişemez.
-// Eskiden (1) hiçbir şey sorulmadan yapılıyordu: Yönetici olmayan, rolü sunucuda tanınmayan ya da işlenmiş / kullanıcı adı alınmış
-// talebi onaylayan kişi için cari açılıyor, (2) sunucuda reddediliyor ve cari BOŞTA kalıyordu (senaryo-site-yonetim-yetki).
-// Şimdi (1)'den ÖNCE sunucuya sorulur — yetki (`yonetici_mi`, sunucu kapısının kullandığı kuralın aynısı), talep hâlâ bekliyor mu,
-// kullanıcı adı boş mu. Biri olmazsa hiçbir şey yazılmaz. Yalnız ÖN KONTROL: kontrol ile (2) arasında başka bir cihaz aynı talebi
-// işlerse (2) yine düşebilir; o zaman açılan cari bildirimde adıyla söylenir (senaryodaki "yarış" adımı — bilinen, kalan açık).
-// Sunucu cevap vermezse onay yapılmaz (kapalı kalır).
-async function siteKayitOnKontrol(t) {
-  let yonetici;
-  try { yonetici = await supabaseIstek("rpc/yonetici_mi", { method: "POST", body: "{}" }); }
-  catch (e) { return `Yetki sunucuda doğrulanamadı — onay yapılmadı (${siteHataMetni(e)})`; }
-  if (yonetici !== true) return `${SITE_YALNIZ_YONETICI} — sunucu bu hesabı Yönetici olarak tanımıyor; hiçbir şey kaydedilmedi`;
-  let liste; let hesaplar;
-  try {
-    [liste, hesaplar] = await Promise.all([
-      supabaseIstek("rpc/site_kayit_listesi", { method: "POST", body: "{}" }),
-      supabaseIstek("rpc/site_hesap_listesi", { method: "POST", body: "{}" }),
-    ]);
-  } catch (e) { return `Talep durumu okunamadı — onay yapılmadı (${siteHataMetni(e)})`; }
-  if (!(Array.isArray(liste) && liste.some((x) => x.id === t.id))) return "Talep artık bekleyenlerde değil (başka bir cihazda onaylanmış ya da reddedilmiş) — cari açılmadı";
-  if ((Array.isArray(hesaplar) ? hesaplar : []).some((h) => h.kullanici === t.kullanici)) return `"${t.kullanici}" kullanıcı adı başka bir caride kullanılıyor — talep onaylanamaz, cari açılmadı`;
-  return null;
+function siteYarimOnayYaz(talepId, cariId) {
+  const d = siteYarimOnaylar();
+  if (cariId) d[talepId] = cariId; else delete d[talepId];
+  try { window.localStorage.setItem(SITE_YARIM_ONAY_ANAHTARI, JSON.stringify(d)); } catch (e) { /* depo yoksa "Tamamla" bu oturumla sınırlı */ }
 }
+// Sunucunun KESİN cevabı mı (iş kuralı / yetki — işlem olmadı ya da başkası yaptı), yoksa sonucu bilinmeyen bir hata mı (ağ, 5xx)?
+// Kesin cevapta yarım kayıt silinir; bilinmeyende saklanır ve "Tamamla" aynı kimlikle yeniden sorar.
+const siteKesinRet = (m) => /Talep bulunamad|Talep onaylanm|kullanıcı adı|Cari kimliği|YETKI_YOK|yalnız Yönetici|Supabase 4\d\d|KR\d{3}/.test(m);
 
-function SiteKayitTalepleriPaneli({ cariler, onSave, showToast, yonetici = false }) {
+function SiteKayitTalepleriPaneli({ cariler, showToast, yonetici = false, onCarilerTazele }) {
   const [talepler, setTalepler] = useState(null);
   const [acik, setAcik] = useState(true);
   const [isleniyor, setIsleniyor] = useState({});
+  const [yarim, setYarim] = useState(() => siteYarimOnaylar());
   const yenile = useCallback(() => {
     if (!supabaseAcikMi()) return;
-    supabaseIstek("rpc/site_kayit_listesi", { method: "POST", body: "{}" }).then((l) => setTalepler(Array.isArray(l) ? l : []), () => setTalepler(null));
-  }, []);
+    supabaseIstek("rpc/site_kayit_listesi", { method: "POST", body: "{}" }).then((l) => {
+      const liste = Array.isArray(l) ? l : [];
+      setTalepler(liste);
+      // Artık bekleyenlerde olmayan talebin yarım kaydı: onay ya bu cihazın kaybolan cevabıyla ya başka Yöneticiyle bitti — cari
+      // sunucuda; yalnız kayıt temizlenir ve cariler tazelenir.
+      const bekleyen = new Set(liste.map((x) => x.id));
+      const eski = Object.keys(siteYarimOnaylar()).filter((id) => !bekleyen.has(id));
+      if (eski.length) { eski.forEach((id) => siteYarimOnayYaz(id, null)); setYarim(siteYarimOnaylar()); if (onCarilerTazele) onCarilerTazele(); }
+    }, () => setTalepler(null));
+  }, [onCarilerTazele]);
   useEffect(() => { yenile(); const t = setInterval(yenile, 120000); return () => clearInterval(t); }, [yenile]);
   const liste = (talepler || []).filter((t) => !isleniyor[t.id] || isleniyor[t.id] === "hata");
   if (!liste.length) return null;
   const dus = (t) => setTalepler((l) => (l || []).filter((x) => x.id !== t.id));
-  const hesabiKur = (t, cariId, yeniCariAdi, deneme = 0) => supabaseIstek("rpc/site_kayit_onayla", { method: "POST", body: JSON.stringify({ p_id: t.id, p_cari_id: cariId }) })
-    .then(() => { dus(t); showToast(`Site hesabı açıldı: ${t.kullanici} — müşteri kendi şifresiyle girebilir`); },
+  const yarimYaz = (talepId, cariId) => { siteYarimOnayYaz(talepId, cariId); setYarim(siteYarimOnaylar()); };
+  const bitti = (t, mesaj) => {
+    yarimYaz(t.id, null);
+    dus(t);
+    showToast(mesaj);
+    if (onCarilerTazele) onCarilerTazele();
+  };
+  // MEVCUT CARİYE BAĞLA — cari açılmaz. Cari yalnız bu cihazda (henüz buluta yazılmamış) ise sunucu "Cari bulunamadı" der; kısa aralıkla
+  // yeniden denenir (eski davranış).
+  const mevcutaBagla = (t, cariId, deneme = 0) => supabaseIstek("rpc/site_kayit_onayla", { method: "POST", body: JSON.stringify({ p_id: t.id, p_cari_id: cariId }) })
+    .then(() => bitti(t, `Site hesabı açıldı: ${t.kullanici} — müşteri kendi şifresiyle girebilir`),
       (e) => {
         const m = String((e && e.message) || e);
-        if (/Cari bulunamad/.test(m) && deneme < 8) return new Promise((r) => setTimeout(r, 3000)).then(() => hesabiKur(t, cariId, yeniCariAdi, deneme + 1));
+        if (/Cari bulunamad/.test(m) && deneme < 8) return new Promise((r) => setTimeout(r, 3000)).then(() => mevcutaBagla(t, cariId, deneme + 1));
         setIsleniyor((x) => ({ ...x, [t.id]: "hata" }));
-        const islenmis = /Talep bulunamad/.test(m);
-        showToast("Site hesabı açılamadı: " + siteHataMetni(e) + (!yeniCariAdi ? "" : islenmis
-          ? ` — "${yeniCariAdi}" carisi açıldı ama talep bu arada başka bir cihazda işlendi; cari gereksizse silinebilir.`
-          : ` — "${yeniCariAdi}" carisi açıldı ama site hesabı kurulmadı; talep listede kaldı (yeniden Onayla bu cariye bağlamayı önerir).`));
+        showToast("Site hesabı açılamadı: " + siteHataMetni(e));
         yenile();
       });
-  const onayla = async (t) => {
+  // YENİ CARİ — tek sunucu işlemi. `cariId` çağrıdan ÖNCE saklanmış olmalı (onayla / Tamamla).
+  const yeniCariyleOnayla = (t, cariId) => {
+    setIsleniyor((x) => ({ ...x, [t.id]: "suruyor" }));
+    return supabaseIstek("rpc/site_kayit_onayla_yeni_cari", { method: "POST", body: JSON.stringify({ p_id: t.id, p_cari_id: cariId }) })
+      .then((r) => bitti(t, (r && r.durum === "zaten")
+        ? `Onay daha önce tamamlanmıştı: ${t.kullanici} — cari ve site hesabı açık`
+        : `Site hesabı açıldı: ${t.kullanici} — "${(t.bilgiler || {}).unvan || ""}" carisi sunucuda açıldı`),
+      (e) => {
+        const m = String((e && e.message) || e);
+        if (siteKesinRet(m)) {
+          yarimYaz(t.id, null);
+          setIsleniyor((x) => { const y = { ...x }; delete y[t.id]; return y; });
+          showToast("Onaylanamadı: " + siteHataMetni(e) + " — hiçbir kayıt açılmadı");
+          yenile();
+          return;
+        }
+        setIsleniyor((x) => ({ ...x, [t.id]: "hata" }));
+        showToast("Sunucudan cevap alınamadı: " + siteHataMetni(e) + " — onay tamamlanmış olabilir. \"Tamamla\" aynı kayıtla yeniden sorar; ikinci cari açılmaz.");
+      });
+  };
+  const onayla = (t) => {
     if (!yonetici) { showToast(SITE_YALNIZ_YONETICI); return; }
     const b = t.bilgiler || {};
     const nrm = (s) => String(s || "").toLocaleLowerCase("tr-TR").trim();
     const vn = String(b.vergiNo || "").replace(/\D/g, "");
     const mevcut = (cariler || []).find((c) => (nrm(c.unvan) && nrm(c.unvan) === nrm(b.unvan)) || (vn.length >= 10 && String(c.vergiNo || "").replace(/\D/g, "") === vn));
-    const mevcuduBagla = !!mevcut && window.confirm(`"${mevcut.unvan}" zaten kayıtlı. Site hesabı bu cariye bağlansın mı?\n\nTamam = mevcut cariye bağla · İptal = yeni cari aç`);
-    if (!mevcuduBagla && !window.confirm(`"${b.unvan}" yeni müşteri carisi olarak açılsın ve siteye "${t.kullanici}" ile girebilsin mi?`)) return;
-    setIsleniyor((x) => ({ ...x, [t.id]: "suruyor" }));
-    // İLK YAZMADAN ÖNCE (cari açılmadan) sunucuya sor.
-    const engel = await siteKayitOnKontrol(t);
-    if (engel) {
-      setIsleniyor((x) => { const y = { ...x }; delete y[t.id]; return y; });
-      showToast(engel);
-      yenile();
+    if (mevcut && window.confirm(`"${mevcut.unvan}" zaten kayıtlı. Site hesabı bu cariye bağlansın mı?\n\nTamam = mevcut cariye bağla · İptal = yeni cari aç`)) {
+      setIsleniyor((x) => ({ ...x, [t.id]: "suruyor" }));
+      mevcutaBagla(t, mevcut.id);
       return;
     }
-    let cariId; let yeniCariAdi = "";
-    if (mevcuduBagla) {
-      cariId = mevcut.id;
-    } else {
-      const cari = siteKayitCarisi(b);
-      onSave([cari, ...(cariler || [])]);
-      cariId = cari.id; yeniCariAdi = cari.unvan;
-    }
-    hesabiKur(t, cariId, yeniCariAdi);
+    if (!window.confirm(`"${b.unvan}" yeni müşteri carisi olarak açılsın ve siteye "${t.kullanici}" ile girebilsin mi?`)) return;
+    const cariId = uid("cari");
+    yarimYaz(t.id, cariId);   // isteğe çıkmadan önce: cevap kaybolursa "Tamamla" bununla sorar
+    yeniCariyleOnayla(t, cariId);
+  };
+  const tamamla = (t) => {
+    if (!yonetici) { showToast(SITE_YALNIZ_YONETICI); return; }
+    const cariId = siteYarimOnaylar()[t.id];
+    if (cariId) yeniCariyleOnayla(t, cariId);
   };
   const reddet = (t) => {
     if (!yonetici) { showToast(SITE_YALNIZ_YONETICI); return; }
     if (!window.confirm(`${(t.bilgiler || {}).unvan || t.kullanici} kayıt talebi reddedilsin mi?`)) return;
     supabaseIstek("rpc/site_kayit_reddet", { method: "POST", body: JSON.stringify({ p_id: t.id }) })
-      .then(() => { dus(t); showToast("Kayıt talebi reddedildi"); }, (e) => showToast("Reddedilemedi: " + ((e && e.message) || e)));
+      .then(() => { dus(t); showToast("Kayıt talebi reddedildi"); }, (e) => { showToast("Reddedilemedi: " + siteHataMetni(e)); yenile(); });
   };
   return (
     <div data-site-kayitlari="1" style={{ margin: "0 0 12px", border: "1px solid #BFD3BB", background: "#F3F8F1", borderRadius: "var(--erp-r-md)", padding: "8px 10px" }}>
@@ -335,8 +354,9 @@ function SiteKayitTalepleriPaneli({ cariler, onSave, showToast, yonetici = false
                 {(b.vergiNo || b.vergiDairesi) && <span style={{ color: "var(--erp-text-2)" }}>VN: {[b.vergiDairesi, b.vergiNo].filter(Boolean).join(" · ")}</span>}
                 <span style={{ color: "var(--erp-text-2)", flex: "1 1 200px", minWidth: 0 }}>{[b.adres, yer].filter(Boolean).join(" — ")}{b.not ? ` — “${b.not}”` : ""}</span>
                 <span className="mono" title="Müşterinin seçtiği kullanıcı adı" style={{ fontWeight: 700, color: "var(--erp-info)" }}>👤 {t.kullanici}</span>
-                {yonetici && <button type="button" className="btn-primary" style={{ fontSize: 11, padding: "3px 10px" }} disabled={isleniyor[t.id] === "suruyor"} onClick={() => onayla(t)} data-site-kayit-onayla="1">Onayla — cari aç</button>}
-                {yonetici && <button type="button" className="btn-secondary" style={{ fontSize: 11, padding: "3px 8px" }} onClick={() => reddet(t)} data-site-kayit-reddet="1">Reddet</button>}
+                {yonetici && yarim[t.id] && <button type="button" className="btn-primary" style={{ fontSize: 11, padding: "3px 10px" }} disabled={isleniyor[t.id] === "suruyor"} onClick={() => tamamla(t)} data-site-kayit-tamamla="1" title="Önceki onayın cevabı alınamadı; aynı kayıtla yeniden sorar (ikinci cari açılmaz)">Tamamla</button>}
+                {yonetici && !yarim[t.id] && <button type="button" className="btn-primary" style={{ fontSize: 11, padding: "3px 10px" }} disabled={isleniyor[t.id] === "suruyor"} onClick={() => onayla(t)} data-site-kayit-onayla="1">Onayla — cari aç</button>}
+                {yonetici && !yarim[t.id] && <button type="button" className="btn-secondary" style={{ fontSize: 11, padding: "3px 8px" }} onClick={() => reddet(t)} data-site-kayit-reddet="1">Reddet</button>}
               </div>
             );
           })}
