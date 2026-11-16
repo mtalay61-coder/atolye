@@ -12,8 +12,9 @@
 #   4) Eski ERP: 1.744.21 (ad02222) ve 7c6ec2e paketlerinin YAKALANMIŞ cari isteği PostgREST gibi oynatılır → KR013, satır yok;
 #      ardından eski onay "Cari bulunamadı", tablolar değişmez. Talep başka cihazda onaylanmış / reddedilmiş olsa da aynı. Not ve
 #      siteOdemeSor alanları silinse, ünvan / telefon biçimi değişse, sürüm başlığı sahte olsa da aynı. İlgisiz cari, var olan
-#      kimliğin upsert'i, JWT'siz ve service_role yazması geçer; 1 günden eski işlenmiş talep engellemez. İstemci istisnayı taklit
-#      edemez: talep tablosuna yazamaz.
+#      kimliğin upsert'i, JWT'siz ve service_role yazması geçer. İstemci istisnayı taklit edemez: talep tablosuna yazamaz.
+#   4b) GECİKMİŞ eski yazma (bekleyen defterden günler sonra): talep 2 gün önce onaylanmış / reddedilmiş ya da 4 gündür bekliyor ya da
+#      22'den önce işlenmiş — eski cihazın 3 gün önce üretilmiş kimlikle bugün gelen yazması KR013; bugün üretilmiş kimlik serbest.
 #   5) Sunucunun açtığı cari = eski ERP'nin aynı talep için yazdığı satır (kimlik, kod, sürüm hariç); vergi no kuralı = uygulamanınki.
 #   6) Kapı: Yönetici olmayan → YETKI_YOK, tablolar değişmez; anon çalıştıramaz.
 #   7) Geri alma: 19 hâline döner; açılmış cari ve hesaplar kalır; yeniden uygulanabilir. Editor taklidiyle uygula / geri al.
@@ -76,6 +77,8 @@ b = json.dumps(t["bilgiler"], ensure_ascii=False).replace("'", "''")
 print(f"insert into public.site_kayit_talepleri (id, bilgiler, kullanici, sifre_ozeti) values ('{t['id']}', '{b}'::jsonb, '{t['kullanici']}', extensions.crypt('E-sifre-1', extensions.gen_salt('bf', 4)));")
 PY
   $PG -d $1 -f $Y/eski-talep.sql >/dev/null
+  # 22'den ÖNCE işlenmiş talep (islenme sütunu henüz yok): 4b ölçer
+  $PG -d $1 -c "insert into public.site_kayit_talepleri (id, bilgiler, kullanici, durum) values ('onceki-red', '{\"unvan\":\"Önceden Reddedilen Ltd\",\"telefon\":\"05327770004\"}', 'onceki.red', 'reddedildi')" >/dev/null
 }
 uygula22() { $PG -d $1 -f $G/22-site-onay-atomik.sql >/dev/null 2>$Y/uygula.err; }
 onkosul() { $PG -d $1 -At -F'|' -f $G/22-onkosul-salt-okur.sql | grep '>>> GENEL' | cut -d'|' -f3; }
@@ -196,6 +199,36 @@ api $DB authenticated "$YON" "select public.site_kayit_reddet('rd-1')" >/dev/nul
 sonuc "reddedilmiş talebin bilgileriyle cari (son 1 gün)" "hata:KR013" "$(api $DB authenticated "$YON" "$(python3 $T/oynat.py $F --unvan 'Reddedilen Deri Ltd' --telefon '05329998877' --id cari-rd-0001)" "$BAS" | cut -d: -f1-2)"
 $PG -d $DB -c "update public.site_kayit_talepleri set islenme = now() - interval '2 days' where id = 'rd-1'" >/dev/null
 sonuc "  1 günden eski ret: elle açılış serbest" "ok:" "$(api $DB authenticated "$YON" "$(python3 $T/oynat.py $F --unvan 'Reddedilen Deri Ltd' --telefon '05329998877' --id cari-rd-0001)" "$BAS")"
+
+echo "== 4b) GECİKMİŞ ESKİ YAZMA: eski cihazın bekleyen cari yazması 1 günden uzun süre sonra gelir"
+# Eski ERP (1.744.0+) gönderemediği yazmayı bekleyen defterde tutar ve AYNI kayıtla (aynı kimlik) yeniden gönderir (025 bekleyen kayıt
+# defteri). Kimlik uygulamanın uid("cari") biçimidir: cari-<oluşturma anı, ms, 36 tabanında>-<rastgele>. Burada kimlik 3 gün önce
+# üretilmiş (onay o gün tıklandı), talep 2 gün önce başka yoldan işlenmiş, yazma BUGÜN geliyor.
+kimlik() { python3 -B -c "
+import sys, time
+ms = int((time.time() + float(sys.argv[1])) * 1000); d = '0123456789abcdefghijklmnopqrstuvwxyz'; s = ''
+while ms: ms, r = divmod(ms, 36); s = d[r] + s
+print('cari-' + s + '-' + sys.argv[2])" "$1" "$2"; }
+UC_GUN=$(kimlik -259200 gc01); UC_GUN2=$(kimlik -259200 gc02); UC_GUN3=$(kimlik -259200 gc03); UC_GUN4=$(kimlik -259200 gc04); SIMDI=$(kimlik 0 gc05)
+talep $DB gc-1 "Gecikmiş Onay Ltd" "05327770001" gc.bir
+api $DB authenticated "$YON2" "select public.site_kayit_onayla_yeni_cari('gc-1', 'cari-gc1-yeni')" >/dev/null
+$PG -d $DB -c "update public.site_kayit_talepleri set islenme = now() - interval '2 days' where id = 'gc-1'" >/dev/null
+sonuc "talep başka Yöneticiyle onaylandı (2 gün önce); eski cihazın 3 günlük yazması bugün gelir" "hata:KR013" "$(api $DB authenticated "$YON" "$(python3 $T/oynat.py $F --unvan 'Gecikmiş Onay Ltd' --telefon '0532 777 00 01' --id $UC_GUN)" "$BAS" | cut -d: -f1-2)"
+sonuc "  cari tek (sunucunun açtığı)" "1" "$(q $DB "select count(*) from cariler where unvan = 'Gecikmiş Onay Ltd'")"
+talep $DB gc-2 "Gecikmiş Ret Ltd" "05327770002" gc.iki
+api $DB authenticated "$YON2" "select public.site_kayit_reddet('gc-2')" >/dev/null
+$PG -d $DB -c "update public.site_kayit_talepleri set islenme = now() - interval '2 days' where id = 'gc-2'" >/dev/null
+sonuc "talep reddedildi (2 gün önce); eski cihazın 3 günlük yazması bugün gelir" "hata:KR013" "$(api $DB authenticated "$YON" "$(python3 $T/oynat.py $F --unvan 'Gecikmiş Ret Ltd' --telefon '0532 777 00 02' --id $UC_GUN2)" "$BAS" | cut -d: -f1-2)"
+sonuc "  cari yok" "0" "$(q $DB "select count(*) from cariler where unvan = 'Gecikmiş Ret Ltd'")"
+talep $DB gc-3 "Hâlâ Bekleyen Ltd" "05327770003" gc.uc
+$PG -d $DB -c "update public.site_kayit_talepleri set olusturma = now() - interval '4 days' where id = 'gc-3'" >/dev/null
+sonuc "talep 4 gündür bekliyor; eski cihazın 3 günlük yazması" "hata:KR013" "$(api $DB authenticated "$YON" "$(python3 $T/oynat.py $F --unvan 'Hâlâ Bekleyen Ltd' --telefon '0532 777 00 03' --id $UC_GUN3)" "$BAS" | cut -d: -f1-2)"
+sonuc "22'den ÖNCE reddedilmiş talep (işlenme zamanı yoktu): eski cihazın 3 günlük yazması" "hata:KR013" "$(api $DB authenticated "$YON" "$(python3 $T/oynat.py $F --unvan 'Önceden Reddedilen Ltd' --telefon '0532 777 00 04' --id $UC_GUN4)" "$BAS" | cut -d: -f1-2)"
+sonuc "elle açılış: kimlik BUGÜN üretildi, talep 2 gün önce reddedilmiş" "ok:" "$(api $DB authenticated "$YON" "$(python3 $T/oynat.py $F --unvan 'Gecikmiş Ret Ltd' --telefon '0532 777 00 02' --id $SIMDI)" "$BAS")"
+sonuc "biçimsiz kimlik: varış anı esas (talep 2 gün önce işlenmiş → serbest)" "ok:" "$(api $DB authenticated "$YON" "$(python3 $T/oynat.py $F --unvan 'Gecikmiş Onay Ltd' --telefon '0532 777 00 01' --id elle-0001)" "$BAS")"
+$PG -d $DB -c "delete from public.cariler where id in ('$SIMDI', 'elle-0001')" >/dev/null
+sonuc "kimlikten oluşturma anı: bugünkü uid ±5 sn · 3 gün önceki ±5 sn · biçimsiz / eski kimlik boş" "evet · evet · boş/boş" "$(q $DB "select (case when abs(extract(epoch from public.site_kimlik_zamani('$SIMDI') - now())) < 5 then 'evet' else 'hayır' end) || ' · ' || (case when abs(extract(epoch from public.site_kimlik_zamani('$UC_GUN') - (now() - interval '3 days'))) < 5 then 'evet' else 'hayır' end) || ' · ' || coalesce(public.site_kimlik_zamani('c1')::text, 'boş') || '/' || coalesce(public.site_kimlik_zamani('11111111-1111-1111-1111-111111111111')::text, 'boş')")"
+sonuc "22'den önce işlenmiş talebin işlenme zamanı uygulama anıyla dolduruldu" "dolu" "$(q $DB "select case when islenme is not null then 'dolu' else 'boş' end from site_kayit_talepleri where id = 'onceki-red'")"
 
 echo "== 5) Biçim: sunucunun açtığı cari = eski ERP'nin yazdığı satır"
 $PG -d $DB -c "delete from public.site_hesaplari where kullanici = 'eski.firma'" -c "delete from public.cariler where unvan = 'Eski İstemci Deri Ltd'" \

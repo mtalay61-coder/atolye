@@ -87,8 +87,9 @@ Eski ERP (1.744.21 ve 7c6ec2e) yeni cariyi **önce kendisi yazar** (`tabloYaz` �
 `site_kayit_onayla` çağırır. Sunucu onayı reddetse de cari çoktan yazılmıştır. Bu yüzden eski istemci **cari yazmasında** durdurulur:
 
 - **`cariler` BEFORE INSERT tetikleyicisi `site_cari_ekleme_koru`:** uygulamadan (JWT var, service_role değil) gelen ve tabloda henüz
-  OLMAYAN bir kimliğin eklenmesinde, **bekleyen ya da son 1 günde onaylanmış / reddedilmiş bir kayıt talebiyle aynı ünvan + telefonu**
-  taşıyan cari `KR013` ile reddedilir (1.744.0+ ERP bunu kalıcı ret sayar; bulut yazması tekrarlanmaz). İstisna: bir talep
+  OLMAYAN bir kimliğin eklenmesinde, **bir kayıt talebiyle aynı ünvan + telefonu** taşıyan cari, talep bekliyorsa ya da cari talebin
+  işlenmesinden en geç 1 gün sonra OLUŞTURULMUŞSA (an cari kimliğinden okunur — bekleyen defterden günler sonra gelen eski yazma da
+  yakalanır; ayrıntı `22-SITE-ONAY-ATOMIK.md`) `KR013` ile reddedilir (1.744.0+ ERP bunu kalıcı ret sayar; bulut yazması tekrarlanmaz). İstisna: bir talep
   `onaylandi` ve `cari_id` = bu kimlik ise geçer — `site_kayit_onayla_yeni_cari` cariyi eklemeden ÖNCE talebi böyle işaretler.
   Bu istisna istemcinin taklit edebileceği bir işaret değildir: `site_kayit_talepleri`ne authenticated yazamaz (19); talep durumu
   yalnız kapılı fonksiyonlarla değişir. Not alanına, `siteOdemeSor`'a ve sürüm başlığına bakılmaz.
@@ -97,8 +98,8 @@ Eski ERP (1.744.21 ve 7c6ec2e) yeni cariyi **önce kendisi yazar** (`tabloYaz` �
 - Site RPC'lerinde sürüm başlığı kontrolü EKLENMEDİ: eski istemcinin onay / bağlama / ret çağrıları da artık tek işlemlidir (kilit +
   durum kontrolü); boşta cariyi yalnız eski cari yazması üretebiliyordu ve o tetikleyiciyle kapandı.
 
-Bilinen yan etki: bekleyen (ya da son 1 günde işlenmiş) bir talebin ünvanı + telefonuyla ERP'de **elle** yeni cari açılmak istenirse o
-da KR013 alır ("Siteden gelen kayıt talepleri"nden onaylayın). 1 günden eski işlenmiş talep engellemez.
+Bilinen yan etki: bekleyen bir talebin (ya da işlenmesinin üzerinden 1 gün geçmemiş talebin) ünvanı + telefonuyla ERP'de **elle** yeni
+cari açılmak istenirse o da KR013 alır ("Siteden gelen kayıt talepleri"nden onaylayın).
 
 ## 4) B — sunucunun açtığı cari bugünkü senkronizasyonda korunur mu? (kod incelemesi)
 

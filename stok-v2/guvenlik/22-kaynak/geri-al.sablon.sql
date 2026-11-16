@@ -2,8 +2,8 @@
 --  22-site-onay-atomik-geri-al.sql — 22'yi GERİ AL  (AYRI ONAYLA)
 --  ÜRETİLMİŞ DOSYA — elle düzenlenmez (python3 stok-v2/guvenlik/22-uret.py).
 -- =====================================================================================================================
---  Ne yapar: site_cari_ekleme_koru tetikleyicisi ve fonksiyonu, site_kayit_onayla_yeni_cari, site_eslesme_anahtari ve
---  site_vergi_no_kaydedilecek kaldırılır; site_kayit_onayla / site_kayit_reddet guvenlik.site_onay_22_yedek'teki 19 hâline
+--  Ne yapar: site_cari_ekleme_koru tetikleyicisi ve fonksiyonu, site_kayit_onayla_yeni_cari, site_eslesme_anahtari,
+--  site_vergi_no_kaydedilecek ve site_kimlik_zamani kaldırılır; site_kayit_onayla / site_kayit_reddet guvenlik.site_onay_22_yedek'teki 19 hâline
 --  döner; site_kayit_talepleri.islenme sütunu kaldırılır; yedek silinir.
 --  Ne yapmaz: 22 ile açılmış carilere, site hesaplarına ve talep durumlarına DOKUNMAZ (veri kaybı yok; yalnız işlenme zamanları gider).
 --  Dikkat: geri alındıktan sonra yeni ERP'nin "yeni cariyle onay"ı çalışmaz (fonksiyon yok, hiçbir şey yazılmaz); eski yol (önce
@@ -47,6 +47,7 @@ begin
     execute v22_tanim;
   end loop;
   drop function public.site_vergi_no_kaydedilecek(text);
+  drop function public.site_kimlik_zamani(text);
   drop function public.site_eslesme_anahtari(text, text);
   alter table public.site_kayit_talepleri drop column if exists islenme;
 
@@ -64,6 +65,7 @@ begin
       + (case when to_regprocedure('public.site_cari_ekleme_koru()') is null then 0 else 1 end)
       + (case when to_regprocedure('public.site_eslesme_anahtari(text, text)') is null then 0 else 1 end)
       + (case when to_regprocedure('public.site_vergi_no_kaydedilecek(text)') is null then 0 else 1 end)
+      + (case when to_regprocedure('public.site_kimlik_zamani(text)') is null then 0 else 1 end)
       + (select count(*)::int from pg_trigger where tgname = 'site_cari_ekleme_koru' and not tgisinternal)
       + (select count(*)::int from pg_attribute where attrelid = 'public.site_kayit_talepleri'::regclass and attname = 'islenme' and not attisdropped))::text, null);
   update guvenlik.site_onay_22_geri_sonuc set durum = case when sonuc = beklenen then 'tamam' else 'FARKLI' end;

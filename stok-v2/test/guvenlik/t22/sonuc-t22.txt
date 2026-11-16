@@ -5,7 +5,7 @@
   [GEÇTİ] Editor denetimi: 22-onkosul-salt-okur.sql → temiz
   [GEÇTİ] önkoşul (19 sonrası, 22 öncesi) → HAZIR — 22 uygulanabilir
   [GEÇTİ] 22 uygulandı (psql -f) → 0
-  [GEÇTİ]   veri değişmedi (yalnız şema / fonksiyon) → 0b51405b23f5a94ffac80df85ef524b8
+  [GEÇTİ]   veri değişmedi (yalnız şema / fonksiyon) → b7bd909f5cf23bab1e491cdd4701c410
   [GEÇTİ] önkoşul (sonra) → UYGULANMIŞ
   [GEÇTİ] ikinci kez uygulama → 22 zaten uygulanmış
   [GEÇTİ] site-portal.sql (depo) ile kurulan veritabanı: gövdeler 22 ile aynı → UYGULANMIŞ (yedeksiz: site-portal.sql ile kurulmuş; geri alma dosyası çalışmaz)
@@ -30,11 +30,11 @@
 == 3) Cevabı kaybolan istek ve işlem bitmeden kopan bağlantı
   [GEÇTİ] ilk çağrı → ok:{"durum": "onaylandi", "cari_id": "cari-ck1-aaaa"}
   [GEÇTİ] aynı kimlikle tekrar (cevap kaybolmuştu) → ok:{"durum": "zaten", "cari_id": "cari-ck1-aaaa"}
-  [GEÇTİ]   hiçbir tablo değişmedi → 8aaba7a88f50917965396931a8af0a41
+  [GEÇTİ]   hiçbir tablo değişmedi → 861ef9e61d0ed4861396999dedf01ca6
   [GEÇTİ]   cari / hesap → 1/1
   [GEÇTİ] mevcut cariye bağlamada aynı tekrar → ok:
   [GEÇTİ]   ikinci kez (cevap kaybolmuştu) → ok:
-  [GEÇTİ]   hiçbir tablo değişmedi → 63000fc9e868c3b363c360f36d1f8509
+  [GEÇTİ]   hiçbir tablo değişmedi → ed7960f87978c2b47ada66e9c078b7fd
   [GEÇTİ] cihaz işlem bitmeden koptu (bağlantı sonlandırıldı) → hata
   [GEÇTİ]   hiçbir şey yazılmadı: talep · cari / hesap → yeni · 0/0
   [GEÇTİ]   ikinci Yönetici onaylar → ok:{"durum": "onaylandi", "cari_id": "cari-ck2-bbbb"}
@@ -46,10 +46,10 @@
 == 4) Eski ERP paketleri (yakalanmış gerçek istek, PostgREST gibi oynatılır)
   [GEÇTİ] ad02222 (1.744.21): bekleyen talep için cari yazması → hata:KR013
   [GEÇTİ]   ardından eski onay çağrısı → hata:P0001: Cari bulunamadı
-  [GEÇTİ]   hiçbir tablo değişmedi (cari yok, hesap yok, talep bekliyor) → 4fd88a3ea6692cb24e6041b764a12fdb
+  [GEÇTİ]   hiçbir tablo değişmedi (cari yok, hesap yok, talep bekliyor) → e53c9a6f10e852914eccd8892ecef931
   [GEÇTİ] 7c6ec2e (1.744.21): bekleyen talep için cari yazması → hata:KR013
   [GEÇTİ]   ardından eski onay çağrısı → hata:P0001: Cari bulunamadı
-  [GEÇTİ]   hiçbir tablo değişmedi (cari yok, hesap yok, talep bekliyor) → 4fd88a3ea6692cb24e6041b764a12fdb
+  [GEÇTİ]   hiçbir tablo değişmedi (cari yok, hesap yok, talep bekliyor) → e53c9a6f10e852914eccd8892ecef931
   [GEÇTİ] not / siteOdemeSor alanları silinmiş → hata:KR013
   [GEÇTİ] ünvan büyük harf + fazla boşluk, telefon biçimi farklı → hata:KR013
   [GEÇTİ] sahte sürüm başlığı (9.9.9) → hata:KR013
@@ -67,6 +67,17 @@
   [GEÇTİ]   bu talebin carisinin geri yüklenmesi (aynı kimlik, çöpten) → ok:
   [GEÇTİ] reddedilmiş talebin bilgileriyle cari (son 1 gün) → hata:KR013
   [GEÇTİ]   1 günden eski ret: elle açılış serbest → ok:
+== 4b) GECİKMİŞ ESKİ YAZMA: eski cihazın bekleyen cari yazması 1 günden uzun süre sonra gelir
+  [GEÇTİ] talep başka Yöneticiyle onaylandı (2 gün önce); eski cihazın 3 günlük yazması bugün gelir → hata:KR013
+  [GEÇTİ]   cari tek (sunucunun açtığı) → 1
+  [GEÇTİ] talep reddedildi (2 gün önce); eski cihazın 3 günlük yazması bugün gelir → hata:KR013
+  [GEÇTİ]   cari yok → 0
+  [GEÇTİ] talep 4 gündür bekliyor; eski cihazın 3 günlük yazması → hata:KR013
+  [GEÇTİ] 22'den ÖNCE reddedilmiş talep (işlenme zamanı yoktu): eski cihazın 3 günlük yazması → hata:KR013
+  [GEÇTİ] elle açılış: kimlik BUGÜN üretildi, talep 2 gün önce reddedilmiş → ok:
+  [GEÇTİ] biçimsiz kimlik: varış anı esas (talep 2 gün önce işlenmiş → serbest) → ok:
+  [GEÇTİ] kimlikten oluşturma anı: bugünkü uid ±5 sn · 3 gün önceki ±5 sn · biçimsiz / eski kimlik boş → evet · evet · boş/boş
+  [GEÇTİ] 22'den önce işlenmiş talebin işlenme zamanı uygulama anıyla dolduruldu → dolu
 == 5) Biçim: sunucunun açtığı cari = eski ERP'nin yazdığı satır
   [GEÇTİ] eski ERP talebi yeni yolla onaylanır → ok:{"durum": "onaylandi", "cari_id": "cari-bicim-0001"}
   [GEÇTİ] satır (kimlik, kod, sürüm hariç; boş = yok) → aynı
@@ -74,13 +85,13 @@
   [GEÇTİ] vergi no kuralı = uygulamanın vergiNoKaydedilecek (10 girdi) → ["0010013108","001 001 3108","0010013109","10000000146","10000000147","1234567890","abc","","12","01000000146"]
 == 6) Kapı
   [GEÇTİ] Personel: yeni cariyle onay → ret:kapı
-  [GEÇTİ]   tablolar değişmedi → 6de6a05b8e94b1d1d8899102ac25ffe6
+  [GEÇTİ]   tablolar değişmedi → b7b9239d444acaa98cbd26106fc62e2d
   [GEÇTİ] anon: yeni cariyle onay → ret:izin-fonksiyon
   [GEÇTİ] authenticated: yardımcı fonksiyon (tetikleyici) → ret:izin-fonksiyon
 == 7) Geri alma ve Editor taklidi
   [GEÇTİ] geri alma (psql -f) → 0
   [GEÇTİ]   önkoşul → HAZIR — 22 uygulanabilir
-  [GEÇTİ]   açılmış cari / hesap sayısı korundu → 12/10
+  [GEÇTİ]   açılmış cari / hesap sayısı korundu → 13/11
   [GEÇTİ]   yeniden uygulama → 0
   [GEÇTİ] Editor taklidi: uygula → EDITOR: 2 ifade ayrı ayrı çalıştı
   [GEÇTİ]   önkoşul → UYGULANMIŞ
@@ -89,4 +100,4 @@
   [GEÇTİ] önkoşul tutmazsa (reddet farklı) uygulama durur → 19 hâlinden farklı
   [GEÇTİ]   hiçbir şey değişmedi → 0
 
-SONUÇ: 82 geçti, 0 kaldı
+SONUÇ: 92 geçti, 0 kaldı

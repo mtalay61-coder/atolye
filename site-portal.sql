@@ -606,14 +606,37 @@ as $$ select t.id, t.olusturma, t.bilgiler, t.kullanici from site_kayit_talepler
 --     ve hiçbir şey yazmaz; başka kimlikle ikinci onay 'işlenmiş' der, cari yazmaz.
 --   site_kayit_onayla(talep, cari): MEVCUT cariye bağlama — cari açmaz; aynı cariyle tekrar sessiz geçer.
 --   site_kayit_reddet: onaylanmış talep reddedilemez (onay–ret yarışında tek sonuç); bulunamayan / zaten reddedilmiş talep sessiz.
---   site_cari_ekleme_koru (cariler BEFORE INSERT): ESKİ ERP yeni cariyi kendisi yazmaya çalışır; bekleyen ya da son 1 günde işlenmiş bir
---     kayıt talebiyle aynı ünvan + telefonu taşıyan YENİ cari, uygulamadan (JWT) gelirse reddedilir (KR013, kalıcı ret) — bir talebin
+--   site_cari_ekleme_koru (cariler BEFORE INSERT): ESKİ ERP yeni cariyi kendisi yazmaya çalışır; bir kayıt talebiyle aynı ünvan + telefonu
+--     taşıyan YENİ cari, uygulamadan (JWT) gelirse ve talep bekliyorsa YA DA cari talebin işlenmesinden en geç 1 gün sonra OLUŞTURULMUŞSA
+--     reddedilir (KR013, kalıcı ret). Oluşturma anı cari kimliğinden okunur (uygulamanın uid'i: cari-<ms, 36 tabanı>-<rastgele>):
+--     eski cihazın bekleyen defterden günler sonra yeniden gönderdiği yazma AYNI kimliği taşır, varış zamanı belirleyici değildir.
+--     Kimlik bu biçimde değilse varış anı esas alınır. 22'den önce işlenmiş taleplerin işlenme zamanı uygulama anıyla doldurulur (o
+--     andan önce üretilmiş bütün bekleyen eski yazmalar kapsanır). Kimliği taklit etmek yalnız engeli AŞMAYA yarar, istisna vermez;
+--     eski ERP kimliği değiştirmez. İstisna — bir talebin
 --     onayıyla BU kimliğe bağlanmış cari hariç (aynı firmanın ikinci bekleyen talebi onayı engellemesin). Fonksiyonun kendi eklemesi bir işarete değil VERİYE dayanır: cari eklenmeden önce talep
 --     'onaylandi, cari_id = bu kimlik' yapılır; talep tablosuna istemci yazamaz (19). Var olan kimliğin üstüne yazma (upsert) ve
 --     JWT'siz / service_role yazmalar kontrol edilmez. Not alanına ya da istemcinin gönderdiği bir değere bakılmaz.
 -- Gövdelerde yorum ve dolar işareti yoktur: 22-uret.py bu bölümü SQL Editor'e dayanıklı tek DO bloğuna çevirir (tek tırnaklı gövde).
 -- >>> 22 BAŞLANGIÇ
 alter table public.site_kayit_talepleri add column if not exists islenme timestamptz;
+update public.site_kayit_talepleri set islenme = now() where durum <> 'yeni' and islenme is null;
+
+create or replace function public.site_kimlik_zamani(p_id text)
+returns timestamptz language plpgsql immutable set search_path = public, pg_temp
+as $$
+declare
+  parca text := substring(coalesce(p_id, '') from '\Acari-([0-9a-z]{1,11})-[0-9a-z]{1,8}\Z');
+  v bigint := 0;
+  i int;
+begin
+  if parca is null then return null; end if;
+  for i in 1..length(parca) loop
+    v := v * 36 + position(substr(parca, i, 1) in '0123456789abcdefghijklmnopqrstuvwxyz') - 1;
+  end loop;
+  if v < 1577836800000 or v > 4102444800000 then return null; end if;
+  return to_timestamp(v / 1000.0);
+end;
+$$;
 
 create or replace function public.site_eslesme_anahtari(p_unvan text, p_telefon text)
 returns text language sql immutable set search_path = public, pg_temp
@@ -730,14 +753,17 @@ $$;
 create or replace function public.site_cari_ekleme_koru()
 returns trigger language plpgsql security definer set search_path = public, pg_temp
 as $$
-declare anahtar text;
+declare
+  anahtar text;
+  dogum timestamptz;
 begin
   if auth.jwt() is null or coalesce(auth.jwt() ->> 'role', '') = 'service_role' then return new; end if;
   if exists (select 1 from cariler c where c.id = new.id) then return new; end if;
   if exists (select 1 from site_kayit_talepleri t where t.durum = 'onaylandi' and t.cari_id = new.id::text) then return new; end if;
   anahtar := public.site_eslesme_anahtari(to_jsonb(new) ->> 'unvan', to_jsonb(new) ->> 'telefon');
+  dogum := coalesce(public.site_kimlik_zamani(new.id::text), now());
   if exists (select 1 from site_kayit_talepleri t
-              where (t.durum = 'yeni' or t.islenme > now() - interval '1 day')
+              where (t.durum = 'yeni' or dogum <= coalesce(t.islenme, now()) + interval '1 day')
                 and public.site_eslesme_anahtari(t.bilgiler ->> 'unvan', t.bilgiler ->> 'telefon') = anahtar) then
     raise exception 'KR013: Bu ünvan ve telefonla siteden gelen bir kayıt talebi var; bu cari yalnız Siteden gelen kayıt talepleri ekranından onayla açılır (uygulama eskiyse yenileyin)'
       using errcode = 'KR013';
@@ -748,7 +774,7 @@ $$;
 drop trigger if exists site_cari_ekleme_koru on public.cariler;
 create trigger site_cari_ekleme_koru before insert on public.cariler for each row execute function public.site_cari_ekleme_koru();
 
-revoke all on function public.site_eslesme_anahtari(text, text), public.site_vergi_no_kaydedilecek(text), public.site_cari_ekleme_koru() from public, anon, authenticated;
+revoke all on function public.site_eslesme_anahtari(text, text), public.site_vergi_no_kaydedilecek(text), public.site_kimlik_zamani(text), public.site_cari_ekleme_koru() from public, anon, authenticated;
 revoke all on function public.site_kayit_listesi(), public.site_kayit_onayla(text, text), public.site_kayit_reddet(text), public.site_kayit_onayla_yeni_cari(text, text) from public, anon;
 grant execute on function public.site_kayit_listesi(), public.site_kayit_onayla(text, text), public.site_kayit_reddet(text), public.site_kayit_onayla_yeni_cari(text, text) to authenticated;
 -- <<< 22 BİTİŞ

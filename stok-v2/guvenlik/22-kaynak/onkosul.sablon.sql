@@ -43,7 +43,7 @@ satirlar as (
     case when f.canli is null then 'yok' when f.canli = f.v19 then '19 hâli' when f.canli = f.v22 then '22 hâli' else 'FARKLI (' || f.canli || ')' end,
     case when f.canli = f.v19 or f.canli = f.v22 then 'tamam' else 'DUR' end from fn f
   union all select 6, '22 nesneleri (yeni fonksiyonlar / tetikleyici / islenme sütunu / yedek işareti)',
-    d.yeni_var || '/4 fonksiyon (' || d.yeni22 || ' tanesi 22 hâlinde) · tetikleyici ' || (case when d.tetik then 'var' else 'yok' end)
+    d.yeni_var || '/5 fonksiyon (' || d.yeni22 || ' tanesi 22 hâlinde) · tetikleyici ' || (case when d.tetik then 'var' else 'yok' end)
       || ' · islenme ' || (case when d.islenme then 'var' else 'yok' end) || ' · işaret ' || d.isaret, 'bilgi' from durum d
   union all select 7, 'cariler: zorunlu sütunlar (id, unvan, ek)',
     coalesce((select string_agg(s, ', ') from unnest(array['id', 'unvan', 'ek']) s
@@ -77,13 +77,13 @@ select sira, kontrol, sonuc, durum from satirlar
 union all
 select 99, '>>> GENEL',
   case when exists (select 1 from satirlar where durum = 'DUR') then 'DUR — 22 uygulanmaz (DUR satırlarına bakın)'
-       when d.isaret > 0 and d.fn22 = 2 and d.yeni22 = 4 and d.tetik and d.islenme then 'UYGULANMIŞ'
+       when d.isaret > 0 and d.fn22 = 2 and d.yeni22 = 5 and d.tetik and d.islenme then 'UYGULANMIŞ'
        when d.isaret = 0 and d.fn19 = 2 and d.yeni_var = 0 and not d.tetik and not d.islenme then 'HAZIR — 22 uygulanabilir'
-       when d.isaret = 0 and d.fn22 = 2 and d.yeni22 = 4 and d.tetik and d.islenme then 'UYGULANMIŞ (yedeksiz: site-portal.sql ile kurulmuş; geri alma dosyası çalışmaz)'
+       when d.isaret = 0 and d.fn22 = 2 and d.yeni22 = 5 and d.tetik and d.islenme then 'UYGULANMIŞ (yedeksiz: site-portal.sql ile kurulmuş; geri alma dosyası çalışmaz)'
        else 'KISMİ / BEKLENMEYEN — uygulamayın, sonucu paylaşın' end,
   case when exists (select 1 from satirlar where durum = 'DUR') then 'DUR'
-       when d.isaret > 0 and d.fn22 = 2 and d.yeni22 = 4 and d.tetik and d.islenme then 'tamam'
+       when d.isaret > 0 and d.fn22 = 2 and d.yeni22 = 5 and d.tetik and d.islenme then 'tamam'
        when d.isaret = 0 and d.fn19 = 2 and d.yeni_var = 0 and not d.tetik and not d.islenme then 'tamam'
-       when d.isaret = 0 and d.fn22 = 2 and d.yeni22 = 4 and d.tetik and d.islenme then 'bilgi' else 'DUR' end
+       when d.isaret = 0 and d.fn22 = 2 and d.yeni22 = 5 and d.tetik and d.islenme then 'bilgi' else 'DUR' end
   from durum d
 order by 1;

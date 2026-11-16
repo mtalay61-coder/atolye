@@ -11,10 +11,13 @@
 --     talep kapanır — tek işlem. Aynı kimlikle tekrar 'zaten' (yazmaz); başka kimlikle ikinci onay "işlenmiş" (cari yazmaz).
 --   - site_kayit_onayla (mevcut cariye bağlama): aynı cariyle tekrar sessiz; işlenme zamanı yazılır.
 --   - site_kayit_reddet: onaylanmış talep reddedilemez; işlenme zamanı yazılır.
---   - cariler BEFORE INSERT tetikleyicisi site_cari_ekleme_koru: uygulamadan (JWT) gelen YENİ cari, bekleyen ya da son 1 günde
---     işlenmiş bir talebin ünvan + telefonunu taşıyorsa KR013 ile reddedilir (eski ERP'nin "önce cari, sonra onay" yolu) — bir talebin
---     onayıyla bu kimliğe bağlanmış cari hariç. İstemcinin taklit edebileceği bir işarete değil sunucudaki talep verisine dayanır.
---   - Yardımcılar: site_eslesme_anahtari, site_vergi_no_kaydedilecek (ERP'nin vergiNoKaydedilecek kuralı).
+--   - cariler BEFORE INSERT tetikleyicisi site_cari_ekleme_koru: uygulamadan (JWT) gelen YENİ cari bir talebin ünvan + telefonunu
+--     taşıyor ve talep bekliyorsa ya da cari talebin işlenmesinden en geç 1 gün sonra OLUŞTURULMUŞSA (an kimlikten okunur; bekleyen
+--     defterden günler sonra gelen eski yazma da yakalanır) KR013 ile reddedilir — bir talebin onayıyla bu kimliğe bağlanmış cari hariç.
+--     İstisna istemcinin taklit edebileceği bir işarete değil sunucudaki talep verisine dayanır. 22'den önce işlenmiş taleplerin
+--     işlenme zamanı uygulama anıyla doldurulur (tek veri değişikliği).
+--   - Yardımcılar: site_eslesme_anahtari, site_vergi_no_kaydedilecek (ERP'nin vergiNoKaydedilecek kuralı), site_kimlik_zamani
+--     (uygulamanın cari kimliğindeki oluşturma anı).
 --  ETKİ: eski ERP (1.744.21 ve öncesi, 7c6ec2e) yeni cariyle onay yapamaz — cari yazması KR013 ile reddedilir, ardından onay "Cari
 --  bulunamadı" ile düşer; bulutta cari oluşmaz. Mevcut cariye bağlama ve ret eski ERP'de de çalışır (tek işlem). Yeni ERP sürümü
 --  yayınlanana kadar yeni cariyle onay beklemeli.

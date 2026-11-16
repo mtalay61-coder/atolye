@@ -2,8 +2,8 @@
 --  22-site-onay-atomik-geri-al.sql — 22'yi GERİ AL  (AYRI ONAYLA)
 --  ÜRETİLMİŞ DOSYA — elle düzenlenmez (python3 stok-v2/guvenlik/22-uret.py).
 -- =====================================================================================================================
---  Ne yapar: site_cari_ekleme_koru tetikleyicisi ve fonksiyonu, site_kayit_onayla_yeni_cari, site_eslesme_anahtari ve
---  site_vergi_no_kaydedilecek kaldırılır; site_kayit_onayla / site_kayit_reddet guvenlik.site_onay_22_yedek'teki 19 hâline
+--  Ne yapar: site_cari_ekleme_koru tetikleyicisi ve fonksiyonu, site_kayit_onayla_yeni_cari, site_eslesme_anahtari,
+--  site_vergi_no_kaydedilecek ve site_kimlik_zamani kaldırılır; site_kayit_onayla / site_kayit_reddet guvenlik.site_onay_22_yedek'teki 19 hâline
 --  döner; site_kayit_talepleri.islenme sütunu kaldırılır; yedek silinir.
 --  Ne yapmaz: 22 ile açılmış carilere, site hesaplarına ve talep durumlarına DOKUNMAZ (veri kaybı yok; yalnız işlenme zamanları gider).
 --  Dikkat: geri alındıktan sonra yeni ERP'nin "yeni cariyle onay"ı çalışmaz (fonksiyon yok, hiçbir şey yazılmaz); eski yol (önce
@@ -29,7 +29,7 @@ begin
   if to_regclass('guvenlik.site_onay_22_yedek') is null or not exists (select 1 from guvenlik.site_onay_22_yedek where tur = 'isaret') then
     raise exception '22 uygulanmamış (yedek işareti yok). Hiçbir şey değişmedi.';
   end if;
-  for v22_ad, v22_beklenen in select x.ad, x.beklenen from (values (1, 'public.site_eslesme_anahtari(text, text)', '69585b19b83b568603d2b71f27080389'), (2, 'public.site_vergi_no_kaydedilecek(text)', '75620b7d843d458d1303978be7ec8bdb'), (3, 'public.site_kayit_onayla_yeni_cari(text, text)', 'e63acb4dfb28ccffde5191311097cdda'), (4, 'public.site_kayit_onayla(text, text)', '55aaa9ed6a8300ba9ee2847c44f7ea98'), (5, 'public.site_kayit_reddet(text)', 'b02d38f099990a98b992f63b178d2060'), (6, 'public.site_cari_ekleme_koru()', 'b50b6ef5da3c770e9758efcbce5b8349')) x(sira, ad, beklenen) loop
+  for v22_ad, v22_beklenen in select x.ad, x.beklenen from (values (1, 'public.site_kimlik_zamani(text)', '785adfb4ada8114405287a3e5a8dc64a'), (2, 'public.site_eslesme_anahtari(text, text)', '69585b19b83b568603d2b71f27080389'), (3, 'public.site_vergi_no_kaydedilecek(text)', '75620b7d843d458d1303978be7ec8bdb'), (4, 'public.site_kayit_onayla_yeni_cari(text, text)', 'e63acb4dfb28ccffde5191311097cdda'), (5, 'public.site_kayit_onayla(text, text)', '55aaa9ed6a8300ba9ee2847c44f7ea98'), (6, 'public.site_kayit_reddet(text)', 'b02d38f099990a98b992f63b178d2060'), (7, 'public.site_cari_ekleme_koru()', '68e61c5d9ecf07ee2888b6ce39ff0aa1')) x(sira, ad, beklenen) loop
     select md5(btrim(regexp_replace(regexp_replace(prosrc, '--[^\n]*', '', 'g'), '\s+', ' ', 'g'))) into v22_canli
       from pg_proc where oid = to_regprocedure(v22_ad);
     if v22_canli is distinct from v22_beklenen then
@@ -47,6 +47,7 @@ begin
     execute v22_tanim;
   end loop;
   drop function public.site_vergi_no_kaydedilecek(text);
+  drop function public.site_kimlik_zamani(text);
   drop function public.site_eslesme_anahtari(text, text);
   alter table public.site_kayit_talepleri drop column if exists islenme;
 
@@ -64,6 +65,7 @@ begin
       + (case when to_regprocedure('public.site_cari_ekleme_koru()') is null then 0 else 1 end)
       + (case when to_regprocedure('public.site_eslesme_anahtari(text, text)') is null then 0 else 1 end)
       + (case when to_regprocedure('public.site_vergi_no_kaydedilecek(text)') is null then 0 else 1 end)
+      + (case when to_regprocedure('public.site_kimlik_zamani(text)') is null then 0 else 1 end)
       + (select count(*)::int from pg_trigger where tgname = 'site_cari_ekleme_koru' and not tgisinternal)
       + (select count(*)::int from pg_attribute where attrelid = 'public.site_kayit_talepleri'::regclass and attname = 'islenme' and not attisdropped))::text, null);
   update guvenlik.site_onay_22_geri_sonuc set durum = case when sonuc = beklenen then 'tamam' else 'FARKLI' end;

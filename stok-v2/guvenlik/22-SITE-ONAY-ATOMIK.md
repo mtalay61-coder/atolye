@@ -25,8 +25,12 @@ numarası ve yayın dosyaları değişmedi. Tasarım: `21-ATOMIK-ONAY-TASARIM.md
   "Tamamla" olur ve AYNI kimlikle sorar. Talep listeden düşmüşse (başkası ya da kaybolan cevap bitirdi) yarım kayıt temizlenir.
 - **Mevcut cariye bağlama** — `site_kayit_onayla`: tek işlem; aynı cariyle tekrar sessiz; başka cariyle "işlenmiş".
 - **Ret** — `site_kayit_reddet`: onaylanmış talep "onaylanmış; reddedilemez"; bulunamayan / zaten reddedilmiş sessiz (19 sınaması aynı).
-- **Eski ERP engeli** — `site_cari_ekleme_koru` (cariler BEFORE INSERT): uygulamadan gelen, tabloda olmayan kimlikle, bekleyen ya da son
-  1 günde işlenmiş bir talebin ünvan + telefonunu taşıyan cari → `KR013`. İstisna yalnız bir talebin `onaylandi, cari_id = bu kimlik`
+- **Eski ERP engeli** — `site_cari_ekleme_koru` (cariler BEFORE INSERT): uygulamadan gelen, tabloda olmayan kimlikli, bir talebin ünvan +
+  telefonunu taşıyan cari, talep **bekliyorsa** ya da cari talebin işlenmesinden **en geç 1 gün sonra OLUŞTURULMUŞSA** → `KR013`.
+  Oluşturma anı cari kimliğinden okunur (`site_kimlik_zamani`; uygulamanın uid'i `cari-<ms, 36 tabanı>-<rastgele>`): eski cihazın
+  bekleyen defterden günler sonra AYNI kimlikle yeniden gönderdiği yazma da yakalanır — varış zamanı belirleyici değil. Kimlik bu
+  biçimde değilse varış anı esas. 22'den önce işlenmiş taleplerin işlenme zamanı uygulama anıyla doldurulur (22'nin tek veri
+  değişikliği): o andan önce üretilmiş bütün eski bekleyen yazmalar kapsanır. İstisna yalnız bir talebin `onaylandi, cari_id = bu kimlik`
   olması (fonksiyon cariyi eklemeden önce yapar; talep tablosuna istemci yazamaz). Not alanına, `siteOdemeSor`'a (her yeni müşteri
   carisinde var), sürüm başlığına bakılmaz. Var olan kimliğin upsert'i, JWT'siz ve service_role yazması serbest.
 
@@ -34,7 +38,7 @@ numarası ve yayın dosyaları değişmedi. Tasarım: `21-ATOMIK-ONAY-TASARIM.md
 
 | Test | Sonuç |
 |---|---|
-| `stok-v2/test/guvenlik/t22/test22.sh` — PostgreSQL 16, 19 sonrası canlı (ad02222) + 22 | **82/82** |
+| `stok-v2/test/guvenlik/t22/test22.sh` — PostgreSQL 16, 19 sonrası canlı (ad02222) + 22 | **92/92** |
 | `stok-v2/test/guvenlik/t19/test19.sh` (19'un "yeni kurulum" kontrolü 19 kaynağıyla; güncel depoda 18'in FARKLI'sı yalnız onayla / reddet) | **139/139** |
 | `stok-v2/test/guvenlik/t21/test21.sh` (aynı cariyle ikinci onay artık "zaten", başka cariyle "işlenmiş") | **39/39** |
 | `test/birim-sunucu-carisi.js` (yeni; uygulamanın gerçek işlevleri) | temiz (10 kontrol) |
@@ -60,8 +64,11 @@ t22'nin istenen beş noktası:
    PostgreSQL'de PostgREST gibi oynatıldı → **KR013, satır yok**; ardından eski onay "Cari bulunamadı"; tablolar aynı. Not ve
    siteOdemeSor silinse, ünvan büyük harf / fazla boşluk, telefon biçimi farklı olsa, sürüm başlığı sahte (9.9.9) olsa, Yönetici olmasa
    da KR013. Talep başka Yöneticiyle yeni yoldan onaylanmışken eski paketin yazması (yarış) → KR013, sunucu carisi tek. İstisna
-   taklit edilemez (talep tablosuna güncelleme / ekleme → izin yok). İlgisiz cari, upsert, service_role, JWT'siz yazma geçer; 1 günden
-   eski ret engellemez.
+   taklit edilemez (talep tablosuna güncelleme / ekleme → izin yok). İlgisiz cari, upsert, service_role, JWT'siz yazma geçer.
+   **Gecikmiş yazma (4b):** ilk sürümde kural "son 1 günde işlenmiş talep" (VARIŞ anı) idi; test bunun AŞILDIĞINI gösterdi — talep 2 gün
+   önce başka Yöneticiyle onaylanmış / reddedilmişken eski cihazın 3 gün önce üretilmiş kimlikle bugün gelen yazması geçti (onaylanan
+   talepte 2. cari, reddedilende 1 cari) ve 22'den önce işlenmiş talepte de engel yoktu. Kural OLUŞTURMA anına çevrildi; şimdi üçü de
+   KR013, cari sayıları 1 / 0. Kimliği BUGÜN üretilmiş elle açılış (talep 2 gün önce işlenmiş) ve biçimsiz kimlik (varış anı) serbest.
 
 Ayrıca: biçim — sunucunun açtığı cari, eski ERP'nin aynı talep için yazdığı satırla aynı (kimlik, kod, sürüm hariç); vergi no kuralı
 uygulamanın `vergiNoKaydedilecek`'iyle 10 girdide aynı. Kapı: Personel → YETKI_YOK, tablolar aynı; anon ve yardımcılar → izin yok.
@@ -75,7 +82,13 @@ Geri alma 19 hâline döner (özetler), açılmış cari / hesap sayısı korunu
   yalnız ünvan + telefona baktığı için talepten cari kuran daha eski sürümleri de yakalar.
 - **Eski ERP'nin kendi cihazında yerel kopya:** KR013'ten sonra o cihazın ekranında cari yerel olarak görünür ve "inceleme gerekiyor"a
   düşer (1.744.0+ kalıcı ret davranışı); buluta yazılmaz. Uygulama yenilenince kaybolur.
-- **Elle açılış:** bekleyen ya da son 1 günde işlenmiş talebin ünvan + telefonuyla elle yeni cari KR013 alır (talepten onaylanmalı).
+- **Elle açılış:** bekleyen talebin ya da işlenmesinin üzerinden 1 gün geçmemiş talebin ünvan + telefonuyla elle yeni cari KR013 alır
+  (talepten onaylanmalı). 22 uygulandığında önceden işlenmiş bütün talepler için bu 1 gün uygulama anından başlar.
+- **Eski ERP için kalan koşul:** engel, eski cihazın onayı tıkladığı anın (kimlikteki an) talebin işlenmesinden en geç 1 gün sonra
+  olmasına dayanır. Eski ERP yalnız BEKLEYEN talebi listeler (2 dakikada bir tazeler; internetsizken çevrimdışı kilit tıklatmaz), yani
+  tıklama anı normalde işlenmeden önce ya da birkaç dakika sonradır. Kalan durum: eski cihazın SAATİ 1 günden fazla ileri ayarlıysa
+  kimlikteki an da ileri olur ve gecikmiş yazma geçebilir. Bu yüzden "bütün eski istemciler engellendi" denemez; doğru ifade: **saati
+  1 günden fazla kaymamış her eski ERP'nin bu yolu engellendi** (1.744.21 ve 7c6ec2e paketleriyle ölçüldü).
 - **Türkçe harf:** eşleşme `lower()` kullanır; canlı veritabanı yerel ayarı C ise ASCII dışı harflerde büyük / küçük ayrımı katlanmaz
   (aynen gelen ünvan yine eşleşir — eski ERP talepteki ünvanı aynen yazar). 22-onkosul bunu ölçmez.
 - **Sunucunun açtığı cari diğer cihazlara** değişiklik sayacıyla (8 sn) gelir; canlıda `cariler`de `degisiklik_izle` olmalı —

@@ -20,7 +20,7 @@ CIKTILAR = {
 # 19 sonrası (canlıda bugün olması gereken) gövde özetleri — 19-durum-salt-okur.sql'deki "yeni" değerler.
 MD5_ONAYLA_19 = "86debf97b2f8ae9c1845f85900e65492"
 MD5_REDDET_19 = "071e82fa3ad4c6eb0d2be0c2e6047cbe"
-YENI = ["site_eslesme_anahtari", "site_vergi_no_kaydedilecek", "site_kayit_onayla_yeni_cari", "site_cari_ekleme_koru"]
+YENI = ["site_eslesme_anahtari", "site_vergi_no_kaydedilecek", "site_kimlik_zamani", "site_kayit_onayla_yeni_cari", "site_cari_ekleme_koru"]
 
 
 def ozet(govde):
@@ -80,7 +80,7 @@ def uret():
         donusmus.append(re.sub(r"\$\$(.*?)\$\$", lambda g: "'" + g.group(1).replace("'", "''") + "'", ifade, flags=re.S))
     adlar = list(ozetler)
     yeni = [a for a in adlar if a.split("(")[0].split(".")[1] in YENI]
-    if len(yeni) != 4 or "public.site_kayit_onayla(text, text)" not in ozetler or "public.site_kayit_reddet(text)" not in ozetler:
+    if len(yeni) != len(YENI) or "public.site_kayit_onayla(text, text)" not in ozetler or "public.site_kayit_reddet(text)" not in ozetler:
         sys.exit(f"22 bölümündeki fonksiyonlar beklenenden farklı: {adlar}")
     sira = lambda liste: ", ".join(f"({i}, '{a}', '{ozetler[a]}')" for i, a in enumerate(liste, 1))
     yerine = {

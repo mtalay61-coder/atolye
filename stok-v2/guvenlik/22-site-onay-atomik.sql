@@ -11,10 +11,13 @@
 --     talep kapanır — tek işlem. Aynı kimlikle tekrar 'zaten' (yazmaz); başka kimlikle ikinci onay "işlenmiş" (cari yazmaz).
 --   - site_kayit_onayla (mevcut cariye bağlama): aynı cariyle tekrar sessiz; işlenme zamanı yazılır.
 --   - site_kayit_reddet: onaylanmış talep reddedilemez; işlenme zamanı yazılır.
---   - cariler BEFORE INSERT tetikleyicisi site_cari_ekleme_koru: uygulamadan (JWT) gelen YENİ cari, bekleyen ya da son 1 günde
---     işlenmiş bir talebin ünvan + telefonunu taşıyorsa KR013 ile reddedilir (eski ERP'nin "önce cari, sonra onay" yolu) — bir talebin
---     onayıyla bu kimliğe bağlanmış cari hariç. İstemcinin taklit edebileceği bir işarete değil sunucudaki talep verisine dayanır.
---   - Yardımcılar: site_eslesme_anahtari, site_vergi_no_kaydedilecek (ERP'nin vergiNoKaydedilecek kuralı).
+--   - cariler BEFORE INSERT tetikleyicisi site_cari_ekleme_koru: uygulamadan (JWT) gelen YENİ cari bir talebin ünvan + telefonunu
+--     taşıyor ve talep bekliyorsa ya da cari talebin işlenmesinden en geç 1 gün sonra OLUŞTURULMUŞSA (an kimlikten okunur; bekleyen
+--     defterden günler sonra gelen eski yazma da yakalanır) KR013 ile reddedilir — bir talebin onayıyla bu kimliğe bağlanmış cari hariç.
+--     İstisna istemcinin taklit edebileceği bir işarete değil sunucudaki talep verisine dayanır. 22'den önce işlenmiş taleplerin
+--     işlenme zamanı uygulama anıyla doldurulur (tek veri değişikliği).
+--   - Yardımcılar: site_eslesme_anahtari, site_vergi_no_kaydedilecek (ERP'nin vergiNoKaydedilecek kuralı), site_kimlik_zamani
+--     (uygulamanın cari kimliğindeki oluşturma anı).
 --  ETKİ: eski ERP (1.744.21 ve öncesi, 7c6ec2e) yeni cariyle onay yapamaz — cari yazması KR013 ile reddedilir, ardından onay "Cari
 --  bulunamadı" ile düşer; bulutta cari oluşmaz. Mevcut cariye bağlama ve ret eski ERP'de de çalışır (tek işlem). Yeni ERP sürümü
 --  yayınlanana kadar yeni cariyle onay beklemeli.
@@ -81,6 +84,25 @@ begin
     ('fonksiyon', 'public.site_kayit_reddet(text)', pg_get_functiondef(to_regprocedure('public.site_kayit_reddet(text)')), v22_reddet);
 
 alter table public.site_kayit_talepleri add column if not exists islenme timestamptz;
+
+update public.site_kayit_talepleri set islenme = now() where durum <> 'yeni' and islenme is null;
+
+create or replace function public.site_kimlik_zamani(p_id text)
+returns timestamptz language plpgsql immutable set search_path = public, pg_temp
+as '
+declare
+  parca text := substring(coalesce(p_id, '''') from ''\Acari-([0-9a-z]{1,11})-[0-9a-z]{1,8}\Z'');
+  v bigint := 0;
+  i int;
+begin
+  if parca is null then return null; end if;
+  for i in 1..length(parca) loop
+    v := v * 36 + position(substr(parca, i, 1) in ''0123456789abcdefghijklmnopqrstuvwxyz'') - 1;
+  end loop;
+  if v < 1577836800000 or v > 4102444800000 then return null; end if;
+  return to_timestamp(v / 1000.0);
+end;
+';
 
 create or replace function public.site_eslesme_anahtari(p_unvan text, p_telefon text)
 returns text language sql immutable set search_path = public, pg_temp
@@ -197,14 +219,17 @@ end;
 create or replace function public.site_cari_ekleme_koru()
 returns trigger language plpgsql security definer set search_path = public, pg_temp
 as '
-declare anahtar text;
+declare
+  anahtar text;
+  dogum timestamptz;
 begin
   if auth.jwt() is null or coalesce(auth.jwt() ->> ''role'', '''') = ''service_role'' then return new; end if;
   if exists (select 1 from cariler c where c.id = new.id) then return new; end if;
   if exists (select 1 from site_kayit_talepleri t where t.durum = ''onaylandi'' and t.cari_id = new.id::text) then return new; end if;
   anahtar := public.site_eslesme_anahtari(to_jsonb(new) ->> ''unvan'', to_jsonb(new) ->> ''telefon'');
+  dogum := coalesce(public.site_kimlik_zamani(new.id::text), now());
   if exists (select 1 from site_kayit_talepleri t
-              where (t.durum = ''yeni'' or t.islenme > now() - interval ''1 day'')
+              where (t.durum = ''yeni'' or dogum <= coalesce(t.islenme, now()) + interval ''1 day'')
                 and public.site_eslesme_anahtari(t.bilgiler ->> ''unvan'', t.bilgiler ->> ''telefon'') = anahtar) then
     raise exception ''KR013: Bu ünvan ve telefonla siteden gelen bir kayıt talebi var; bu cari yalnız Siteden gelen kayıt talepleri ekranından onayla açılır (uygulama eskiyse yenileyin)''
       using errcode = ''KR013'';
@@ -217,7 +242,7 @@ drop trigger if exists site_cari_ekleme_koru on public.cariler;
 
 create trigger site_cari_ekleme_koru before insert on public.cariler for each row execute function public.site_cari_ekleme_koru();
 
-revoke all on function public.site_eslesme_anahtari(text, text), public.site_vergi_no_kaydedilecek(text), public.site_cari_ekleme_koru() from public, anon, authenticated;
+revoke all on function public.site_eslesme_anahtari(text, text), public.site_vergi_no_kaydedilecek(text), public.site_kimlik_zamani(text), public.site_cari_ekleme_koru() from public, anon, authenticated;
 
 revoke all on function public.site_kayit_listesi(), public.site_kayit_onayla(text, text), public.site_kayit_reddet(text), public.site_kayit_onayla_yeni_cari(text, text) from public, anon;
 
@@ -232,7 +257,7 @@ grant execute on function public.site_kayit_listesi(), public.site_kayit_onayla(
     from (select x.sira, x.ad, x.beklenen,
                  (select md5(btrim(regexp_replace(regexp_replace(p.prosrc, '--[^\n]*', '', 'g'), '\s+', ' ', 'g')))
                     from pg_proc p where p.oid = to_regprocedure(x.ad)) as canli
-            from (values (1, 'public.site_eslesme_anahtari(text, text)', '69585b19b83b568603d2b71f27080389'), (2, 'public.site_vergi_no_kaydedilecek(text)', '75620b7d843d458d1303978be7ec8bdb'), (3, 'public.site_kayit_onayla_yeni_cari(text, text)', 'e63acb4dfb28ccffde5191311097cdda'), (4, 'public.site_kayit_onayla(text, text)', '55aaa9ed6a8300ba9ee2847c44f7ea98'), (5, 'public.site_kayit_reddet(text)', 'b02d38f099990a98b992f63b178d2060'), (6, 'public.site_cari_ekleme_koru()', 'b50b6ef5da3c770e9758efcbce5b8349')) x(sira, ad, beklenen)) f;
+            from (values (1, 'public.site_kimlik_zamani(text)', '785adfb4ada8114405287a3e5a8dc64a'), (2, 'public.site_eslesme_anahtari(text, text)', '69585b19b83b568603d2b71f27080389'), (3, 'public.site_vergi_no_kaydedilecek(text)', '75620b7d843d458d1303978be7ec8bdb'), (4, 'public.site_kayit_onayla_yeni_cari(text, text)', 'e63acb4dfb28ccffde5191311097cdda'), (5, 'public.site_kayit_onayla(text, text)', '55aaa9ed6a8300ba9ee2847c44f7ea98'), (6, 'public.site_kayit_reddet(text)', 'b02d38f099990a98b992f63b178d2060'), (7, 'public.site_cari_ekleme_koru()', '68e61c5d9ecf07ee2888b6ce39ff0aa1')) x(sira, ad, beklenen)) f;
   insert into guvenlik.site_onay_22_sonuc values
     (90, 'cariler tetikleyicisi site_cari_ekleme_koru', 'BEFORE INSERT, satır başına',
      coalesce((select case when tgtype & 2 = 2 and tgtype & 4 = 4 and tgtype & 1 = 1 then 'BEFORE INSERT, satır başına' else tgtype::text end
