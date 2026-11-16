@@ -48,6 +48,9 @@ begin
   for t in
     select tablename from pg_tables where schemaname = 'public'
       and tablename not in ('fis_sayac','fis_karsilanan_iz','fis_cek_iz')
+      -- Müşteri portalının özel tabloları (oturum anahtarı, şifre özeti, giriş kaydı, kayıt talebi): ERP bunlara yalnız SECURITY
+      -- DEFINER fonksiyonlarla erişir (site-portal.sql). Politika kurulmaz; aşağıdaki "özel kalır" bölümü yetkiyi de alır (19).
+      and tablename not in ('site_oturumlari','site_hesaplari','site_giris_kaydi','site_kayit_talepleri')
       and tablename <> 'silinen_arsiv'   -- yalnız okunur arşiv; kendi politikası silinen-arsiv.sql'de
       and tablename not like 'stk\_%' and tablename not like 'car\_%' and tablename not like 'kas\_%' and tablename not like 'lst\_%'   -- v2: yalnız okunur, yazma sunucu işlemleriyle (v1.726.0+)
   loop
@@ -110,10 +113,14 @@ begin
   end if;
 end $$;
 -- Fiş sayaç/audit kayıtları özel kalır: genel grant veya eski politikanın tekrar çalışması açamaz.
+-- Site portalının özel tabloları da (19 — 16 Kasım denetimi): yukarıdaki "grant all" onlara da tam yetki veriyordu; giriş yapmış
+-- her ERP kullanıcısı müşteri oturum anahtarlarını okuyup portalda müşterinin yerine geçebiliyordu. ERP bu tablolara yalnız
+-- SECURITY DEFINER fonksiyonlarla erişir; site_talepleri (ERP talepleri doğrudan okur / işler) bu listede DEĞİL.
 do $$
 declare t text; p record;
 begin
- foreach t in array array['fis_sayac','fis_karsilanan_iz','fis_cek_iz','stk_istemci_iz'] loop
+ foreach t in array array['fis_sayac','fis_karsilanan_iz','fis_cek_iz','stk_istemci_iz',
+                          'site_oturumlari','site_hesaplari','site_giris_kaydi','site_kayit_talepleri'] loop
   if to_regclass('public.'||t) is not null then
    execute format('revoke all on public.%I from public,anon,authenticated',t);
    for p in select policyname from pg_policies where schemaname='public' and tablename=t loop
@@ -121,7 +128,7 @@ begin
    end loop;
   end if;
  end loop;
- foreach t in array array['fis_karsilanan_iz_id_seq','stk_istemci_iz_id_seq'] loop
+ foreach t in array array['fis_karsilanan_iz_id_seq','stk_istemci_iz_id_seq','site_giris_kaydi_id_seq'] loop
   if to_regclass('public.'||t) is not null then execute format('revoke all on sequence public.%I from public,anon,authenticated',t); end if;
  end loop;
 end $$;
