@@ -41,6 +41,9 @@ global.fetch = async (url, sec = {}) => {
 };
 const { supabaseTabloEsitle, tabloBaslangicTam, surumleriYukle, stokV2AktifAyarla, stokV2TanimlarAyarla, cariV2AktifAyarla, altV2AktifAyarla, yazmaZarfi,
   kasaV2AktifAyarla, kasaZarfiAc, tekilYaz, tekilTabanAyarla, tekilTabanOku, bekleyenYazmalariOku, listeV2TablolariAyarla } = require(path.join(__dirname, "../../test/erp.cjs"));
+// 1.744.16 YAZMA KAPISI (030 bulutYazmaEngeli): oturum "acik" bildirilmeden sunucuya yazma gitmez. Uygulamada App bildirir; bu testte
+// giriş ekranı yok — ana test klasöründeki birim testler gibi açıkça "acik". Eski istemci derlemesinde (F0_ERP) fonksiyon yoksa atlanır.
+{ const _E = require(path.join(__dirname, "../../test/erp.cjs")); if (typeof _E.yazmaOturumuAyarla === "function") _E.yazmaOturumuAyarla("acik"); }
 
 let hata = 0;
 const bekle = (ad, a, b) => {

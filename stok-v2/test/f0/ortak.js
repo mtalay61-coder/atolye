@@ -83,6 +83,9 @@ global.fetch = async (url, sec = {}) => {
 };
 // F0_ERP: başka bir istemci derlemesi (ör. eski-istemci.sh → .eski-istemci/erp.cjs, 1.742.1). Verilmezse bugünkü test/erp.cjs.
 const E = require(process.env.F0_ERP || path.join(__dirname, "../../../test/erp.cjs"));
+// 1.744.16 YAZMA KAPISI (030 bulutYazmaEngeli): oturum "acik" bildirilmeden sunucuya yazma gitmez. Uygulamada App bildirir; bu testte
+// giriş ekranı yok — ana test klasöründeki birim testler gibi açıkça "acik". Eski istemci derlemesinde (F0_ERP) fonksiyon yoksa atlanır.
+if (typeof E.yazmaOturumuAyarla === "function") E.yazmaOturumuAyarla("acik");
 E.stokV2AktifAyarla(true); E.cariV2AktifAyarla(true); E.altV2AktifAyarla(true); E.kasaV2AktifAyarla(true); E.fisDefteriKuruluAyarla(true);
 E.stokV2TanimlarAyarla(JSON.parse(psql("select veri from public.tanimlar where id = 'tekil';")));
 

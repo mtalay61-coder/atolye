@@ -1,12 +1,13 @@
-# 7 Kasım · 1b414f4 · kos-guvenlik.sh tamamı (8 dk 47 sn, çıkış 0)
+# 16 Kasım · c646b82 + ön koşul / yazma kapısı / 1.744.7 sabitleme düzeltmeleri · kos-guvenlik.sh tamamı (701 sn, çıkış 0) — 55 yeşil, 0 kırmızı
+# Ön koşul: npm ci --ignore-scripts && node birlestir.js src atolye-erp.jsx && (cd test && node derle.js); yerel PostgreSQL 16.
 ══ 0) canlı benzeri veritabanı
 hazır: atolye_guvenlik
 canlı benzeri: yolu sıfırlanan 21 fonksiyon
 ══ 1) liste + Bölüm 2'nin şemasız adı yakalaması
    ✓ Bölüm 2 extensions'taki şemasız gen_salt çağrısını yakaladı
    ✓ liste-uret.js Bölüm 2 satırı varken durdu
-   fonksiyon: 105 · anon'a kapanacak: 22 · yolu sabitlenecek: 21
-   <scratchpad>/guvenlik-cikti2/2-sikilastir-yerel.sql: listeler yazıldı
+   fonksiyon: 106 · anon'a kapanacak: 22 · yolu sabitlenecek: 21
+   /tmp/guvenlik/2-sikilastir-yerel.sql: listeler yazıldı
    ✓ depodaki TASLAK listeler bu veritabanının listeleriyle aynı
    ✓ 0-site-yetki-onar.sql (Editor gibi)
    ✓ 0b-portal-hesap-duzelt.sql (Editor gibi)
@@ -62,7 +63,7 @@ canlı benzeri: yolu sıfırlanan 21 fonksiyon
    ✓ ikinci uygulama: zaten uygulanmış
    ✓ ikinci uygulama yetkileri değiştirmedi
    ✓ geri alma uygulandı
-   ✓ yetki / ayar özeti İLK hâlle birebir aynı (106 satır)
+   ✓ yetki / ayar özeti İLK hâlle birebir aynı (107 satır)
      · anon: 0 fark
      · veli: 0 fark
      · ali: 0 fark

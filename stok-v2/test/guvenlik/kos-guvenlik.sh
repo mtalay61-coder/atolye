@@ -14,6 +14,14 @@ set -u
 cd "$(dirname "$0")/../../.."
 KOK="$(pwd)"
 case "${PGHOST:-}" in localhost|127.0.0.1|::1) ;; *) echo 'PGHOST=localhost gerekli (finans testleri yalnız TCP kabul eder)'; exit 2;; esac
+# ÖN KOŞUL (16 Kasım): stok-v2/test/kos.sh fiş defterini (fis-defteri.sql) ve uçtan uca testleri YALNIZ test/erp.cjs varken kurar;
+# o dosya git'te yok (üretilir). Yokken hazirla.sh, 2-sikilastir'in yol listesindeki fis_* fonksiyonlarını bulamayıp
+# "function public.fis_alt_artissiz(jsonb) does not exist" ile düşüyordu — sebebi belli değildi. Artık baştan söylenir.
+if [ ! -f test/erp.cjs ] || [ ! -d node_modules/typescript ]; then
+  echo 'ÖN KOŞUL: test/erp.cjs yok (ya da node_modules kurulu değil). Önce:'
+  echo '  npm ci --ignore-scripts && node birlestir.js src atolye-erp.jsx && (cd test && node derle.js)'
+  exit 2
+fi
 DB=${GUVENLIK_DB:-atolye_guvenlik}; export STOK_V2_DB="$DB"
 CIK=${GUVENLIK_CIKTI:-/tmp/guvenlik}; rm -rf "$CIK"; mkdir -p "$CIK"
 G=stok-v2/guvenlik; T=stok-v2/test/guvenlik
