@@ -20,24 +20,34 @@
 --  fonksiyonları (site-portal.sql) anon'a İZNİ AÇIKÇA veriyor — etkilenmez. Tetikleyici fonksiyonlarında EXECUTE denetlenmez.
 --  supabase_admin'e DOKUNULMAZ: Supabase platform rolü (eklenti / sistem nesneleri); postgres onun varsayılanını değiştiremez.
 --
+--  KAPSAM — YALNIZ public DEĞİL: global kayıt şema ayırt etmez. postgres'in bundan sonra HERHANGİ BİR şemada (public, guvenlik,
+--  extensions, stok-v2 yardımcı şemaları …) oluşturacağı her fonksiyon PUBLIC / anon'a kapalı, authenticated + service_role'e açık
+--  doğar (o şemaya özgü kayıt ayrıca bir şey eklemiyorsa). Başka bir rolün (supabase_admin, eklenti sahipleri) oluşturduğu fonksiyonlar
+--  etkilenmez. Sonuç tablosunun "kapsam" satırları postgres'in bugün fonksiyonu olan şemaları ve şemaya özgü kaydı olmayan her şemadaki
+--  birleşik sonucu ayrıca gösterir. Not: anon'un başka şemadaki bir fonksiyonu çağırması için o şemada USAGE hakkı da gerekir; bu
+--  değişiklik o hakka dokunmaz.
+--
 --  YEDEK: değişiklikten ÖNCE postgres'in bütün fonksiyon varsayılan kayıtları (global + her şema) `guvenlik.varsayilan_yetki_yedek`
---  tablosuna yazılır. Yedek zaten varsa (dosya ikinci kez çalıştırılırsa) ÜZERİNE YAZILMAZ — geri alma her zaman ilk hâle döner.
+--  tablosuna yazılır ('kayit' satırları). Değişiklik ve sınamadan SONRAKİ bütün kayıtlar (global + şema) da aynı tabloya yazılır ('sonra'
+--  satırları): geri alma, dokunmadan önce canlı durumun bu 'sonra' ile BİREBİR aynı olduğunu doğrular; arada başka biri global ya da
+--  şemaya özgü bir varsayılanı değiştirmişse hiçbir şeyi ezmeden durur.
+--  Yedek zaten varsa (dosya ikinci kez çalıştırılırsa) ÜZERİNE YAZILMAZ; ikinci çalıştırma canlı durum kayıtlı 'sonra' ile aynıysa
+--  hiçbir şey değiştirmez, farklıysa (arada değişiklik olmuş) DURUR.
 --  Geri alma: 16-varsayilan-yetki-geri-al.sql (yedekten birebir kurar ve birebir aynı olduğunu doğrular).
 --  Çalıştırma: Supabase › SQL Editor (postgres olarak) › bu dosyanın TAMAMI › Run. Sonuç tablosu: önce / sonra / birleşik / sınama.
---  EDITOR UYUMU: dosyada dört ifade var — `begin;`, tek DO (yedek + değişiklik + sınama; tutmazsa DO'nun TAMAMI geri alınır), sonuç
---  sorgusu (with … select) ve `commit;`. Bütün değişiklik tek DO içinde olduğu için Editor ifadeleri ayrı isteklerle gönderse de
---  (o zaman begin / commit bir şeyi birlikte tutmaz) sonuç aynıdır; psql gibi tek oturumda begin / commit DO ile sorguyu birlikte tutar.
---  Geçici tablo yok; sınama sonucu guvenlik.yetki_sinama_16'da kalır (anon / authenticated erişemez).
+--  EDITOR UYUMU: dosyada dört ifade var — `begin;`, tek DO (önkoşul + ikinci çalıştırma denetimi + yedek + değişiklik + sınama + 'sonra'
+--  kaydı + sonuç kaydı; biri tutmazsa DO'nun TAMAMI geri alınır), sonuç sorgusu (with … select) ve `commit;`. Bütün değişiklik tek DO
+--  içinde olduğu için Supabase SQL Editor ifadeleri ayrı isteklerle gönderse de (o zaman begin / commit bir şeyi birlikte tutmaz) sonuç
+--  aynıdır. Geçici tablo yok: sınama sonucu guvenlik.yetki_sinama_16'da kalır (anon / authenticated erişemez).
 --  Beklenen son satırlar: "sınama (public): yeni fonksiyon" → anon ✗ · authenticated ✓ · service_role ✓ · durum tamam.
 -- =====================================================================================================================
 begin;
 
--- TEK İFADE (Supabase SQL Editor ifadeleri ayrı isteklerle gönderebilir; begin/commit o zaman tek işlem yapmaz — 16 Kasım'da 19'da
--- görüldü: geçici tablo kendi işleminin sonunda silindi, önceki ifadeler kalıcı oldu). Yedek + değişiklik + gerçek deneme fonksiyonuyla
--- sınama burada BİRLİKTE: sınama tutmazsa HATA ve hepsi geri alınır. Sınama sonucu kalıcı guvenlik.yetki_sinama_16'ya yazılır
--- (anon / authenticated erişemez); aşağıdaki sonuç SELECT'i onu okur. Geçici tablo YOK.
+-- TEK İFADE (Supabase SQL Editor ifadeleri ayrı isteklerle gönderebilir; 16 Kasım'da 19'da görüldü: geçici tablo kendi işleminin
+-- sonunda silindi, önceki ifadeler kalıcı oldu). Bütün adımlar burada BİRLİKTE; herhangi biri tutmazsa HEPSİ geri alınır.
 do $$
 declare
+  fark text;
   v_anon boolean;
   v_auth boolean;
   v_servis boolean;
@@ -50,12 +60,43 @@ begin
   create schema if not exists guvenlik;
   create table if not exists guvenlik.varsayilan_yetki_yedek (
     alindi timestamptz not null default now(),
-    tur    text not null,          -- 'isaret' (yedek alındı; kayıt olmasa da) | 'kayit'
+    tur    text not null,          -- 'isaret' (yedek alındı; kayıt olmasa da) | 'kayit' (önceki hâl) | 'sonra' (16 uygulandıktan sonraki hâl)
     sema   text,                   -- null = global kayıt
     acl    aclitem[]
   );
   revoke all on guvenlik.varsayilan_yetki_yedek from public, anon, authenticated;
 
+  -- İkinci çalıştırma: 16 daha önce uygulanmışsa canlı durum o günkü 'sonra' ile aynı olmalı (global + şema; alıcı · yetki · aktarma
+  -- hakkı · kayıt sayısı); değilse arada değişiklik var → dur. Aynıysa aşağıdaki iki komut bir şey değiştirmez, yedeğin üzerine yazılmaz.
+  if exists (select 1 from guvenlik.varsayilan_yetki_yedek where tur = 'isaret') then
+    if not exists (select 1 from guvenlik.varsayilan_yetki_yedek where tur = 'sonra') then
+      raise exception '16 daha önce uygulanmış ama uygulama sonrası kaydı (sonra) yok — kapat dosyasının eski bir sürümüyle mi uygulandı? Durdu, hiçbir şey değişmedi.';
+    end if;
+    select string_agg(x, '; ') into fark from (
+      (select coalesce(n.nspname::text, '(global)') || ' ' || e.grantee::regrole::text || ':' || e.privilege_type || ':' || e.is_grantable as x
+         from pg_default_acl d left join pg_namespace n on n.oid = d.defaclnamespace, aclexplode(d.defaclacl) e
+        where d.defaclrole = 'postgres'::regrole and d.defaclobjtype = 'f'
+       except
+       select coalesce(y.sema, '(global)') || ' ' || e.grantee::regrole::text || ':' || e.privilege_type || ':' || e.is_grantable
+         from guvenlik.varsayilan_yetki_yedek y, aclexplode(y.acl) e where y.tur = 'sonra')
+      union all
+      (select coalesce(y.sema, '(global)') || ' ' || e.grantee::regrole::text || ':' || e.privilege_type || ':' || e.is_grantable || ' (kayıtlıydı, şimdi yok)'
+         from guvenlik.varsayilan_yetki_yedek y, aclexplode(y.acl) e where y.tur = 'sonra'
+       except
+       select coalesce(n.nspname::text, '(global)') || ' ' || e.grantee::regrole::text || ':' || e.privilege_type || ':' || e.is_grantable || ' (kayıtlıydı, şimdi yok)'
+         from pg_default_acl d left join pg_namespace n on n.oid = d.defaclnamespace, aclexplode(d.defaclacl) e
+        where d.defaclrole = 'postgres'::regrole and d.defaclobjtype = 'f')
+    ) z;
+    if fark is null and (select count(*) from pg_default_acl d where d.defaclrole = 'postgres'::regrole and d.defaclobjtype = 'f')
+                        <> (select count(*) from guvenlik.varsayilan_yetki_yedek where tur = 'sonra') then
+      fark := 'kayıt sayısı farklı';
+    end if;
+    if fark is not null then
+      raise exception '16 daha önce uygulanmış ve varsayılan yetkiler o günden beri değişmiş: %. Durdu, hiçbir şey değişmedi.', fark;
+    end if;
+  end if;
+
+  -- Yedek (önceki hâl): yalnız ilk çalıştırmada.
   insert into guvenlik.varsayilan_yetki_yedek (tur, sema, acl)
   select 'isaret', null, null
   where not exists (select 1 from guvenlik.varsayilan_yetki_yedek where tur = 'isaret')
@@ -81,6 +122,14 @@ begin
     raise exception 'Sınama tutmadı (anon %, authenticated %, service_role %) — işlem geri alındı, hiçbir şey değişmedi.', v_anon, v_auth, v_servis;
   end if;
 
+  -- Uygulama SONRASI durum (global + şema): geri alma ve ikinci çalıştırma bunu "kimse dokunmamış mı" denetimi için kullanır.
+  delete from guvenlik.varsayilan_yetki_yedek where tur = 'sonra';
+  insert into guvenlik.varsayilan_yetki_yedek (tur, sema, acl)
+  select 'sonra', case when d.defaclnamespace = 0 then null else n.nspname::text end, d.defaclacl
+  from pg_default_acl d left join pg_namespace n on n.oid = d.defaclnamespace
+  where d.defaclrole = 'postgres'::regrole and d.defaclobjtype = 'f';
+
+  -- Sınama sonucu (aşağıdaki sonuç sorgusu okur).
   create table if not exists guvenlik.yetki_sinama_16 (anon_x boolean, auth_x boolean, servis_x boolean, anon_sayisi integer,
                                                        zaman timestamptz not null default now());
   revoke all on guvenlik.yetki_sinama_16 from public, anon, authenticated;
@@ -98,7 +147,9 @@ kayit_sonra as (
   where d.defaclrole = r.rol and d.defaclobjtype = 'f'
 ),
 -- birleşik: yeni fonksiyonun alacağı yetki = global (yoksa yerleşik acldefault) ∪ şemaya özgü
-semalar as (select 'public'::text as sema union select yer from kayit_sonra where yer <> '(global)' union select yer from kayit_once where yer <> '(global)'),
+semalar as (select 'public'::text as sema union select yer from kayit_sonra where yer <> '(global)' union select yer from kayit_once where yer <> '(global)'
+            -- kendi kaydı olmayan bir şema adı (yer tutucu): orada yalnız global kayıt geçerli — guvenlik, extensions vb. hepsi
+            union select '(şemaya özgü kaydı olmayan her şema)'),
 birlesik as (
   select s.sema, k.zaman,
          coalesce(k.global_acl, acldefault('f', (select rol from r))) || coalesce(k.sema_acl, '{}'::aclitem[]) as acl
@@ -132,6 +183,12 @@ satirlar(sira, adim, kayit, deger, durum) as (
          ' · service_role ' || case when servis_x then '✓' else '✗' end,
          case when zaman = 'önce' then 'bilgi' when not anon_x and auth_x and servis_x then 'tamam' else 'FARKLI' end
   from yetkili
+  union all
+  select 35, 'kapsam', 'postgres''in fonksiyonu olan şemalar (fonksiyon sayısı) — global değişiklik hepsindeki YENİ fonksiyonları etkiler',
+         (select string_agg(n.nspname || ' (' || c || ')', ', ' order by n.nspname)
+            from (select pronamespace, count(*) c from pg_proc where proowner = (select rol from r) group by 1) x
+            join pg_namespace n on n.oid = x.pronamespace where n.nspname not in ('pg_catalog', 'information_schema')),
+         'bilgi'
   union all
   select 40, 'sınama (public)', 'yeni fonksiyon (gerçek deneme, silindi)',
          'anon ' || case when anon_x then '✓' else '✗' end || ' · authenticated ' || case when auth_x then '✓' else '✗' end ||

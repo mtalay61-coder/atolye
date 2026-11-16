@@ -14,6 +14,9 @@ for i, p in enumerate(parcalar, 1):
                        input=p, capture_output=True, text=True)
     sys.stdout.write(r.stdout)
     if r.returncode != 0:
-        sys.stdout.write(f"EDITOR: {i}/{len(parcalar)}. ifadede durdu: {r.stderr.strip().splitlines()[0] if r.stderr.strip() else r.returncode}\n")
+        satirlar = r.stderr.strip().splitlines()
+        # İlk ERROR satırı (önündeki NOTICE satırları — ör. "schema … already exists, skipping" — iletiyi gizlemesin).
+        hata = next((x for x in satirlar if "ERROR:" in x), satirlar[0] if satirlar else str(r.returncode))
+        sys.stdout.write(f"EDITOR: {i}/{len(parcalar)}. ifadede durdu: {hata}\n")
         sys.exit(1)
 sys.stdout.write(f"EDITOR: {len(parcalar)} ifade ayrı ayrı çalıştı\n")

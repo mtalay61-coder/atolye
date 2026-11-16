@@ -4,6 +4,8 @@
 --  SALT OKUNUR: tamamı `begin transaction read only … rollback` içinde; hiçbir fonksiyon ÇAĞRILMAZ (yalnız katalog okunur), müşteri
 --  tablolarından yalnız SAYI alınır (ad, kullanıcı adı, anahtar, şifre özeti okunmaz / gösterilmez). Gizli değer görünümündeki uzun
 --  dizgeler (anahtar, JWT, 40+ karakterlik belirteç) gövde gösteriminde "‹gizlendi›" olarak maskelenir.
+--  PAYLAŞMADAN ÖNCE: "9 tanım" satırlarını (fonksiyon gövdeleri) gözle kontrol et. Maskeleme yalnız bilinen kalıpları (JWT, sb_secret,
+--  sk_, 40+ karakterlik belirteç) yakalar; kısa bir şifre, e-posta ya da başka biçimde bir gizli değer maskelenmeden kalabilir.
 --  Çalıştırma: Supabase › SQL Editor › New query › bu dosyanın TAMAMI › Run. Tek sonuç tablosu: bolum · kontrol · beklenen · sonuc · durum.
 --  durum: tamam | FARKLI (beklenenden ayrı — kendiliğinden AÇIK demek değil, satırın açıklamasıyla birlikte değerlendirilir) | bilgi.
 --

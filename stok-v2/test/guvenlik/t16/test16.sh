@@ -43,15 +43,15 @@ GLB="alter default privileges for role postgres"
 for mod in psql editor; do
   echo "== $mod modu"
   senaryo $mod A_yalin "" "" ok
-  senaryo $mod B_anon_eklendi "" "$GLB grant execute on functions to anon" dur "başka bir işlemle değiştirilmiş"
-  senaryo $mod C_servis_alindi "" "$GLB revoke execute on functions from service_role" dur "başka bir işlemle değiştirilmiş"
-  senaryo $mod D_publice_geri "" "$GLB grant execute on functions to public" dur "başka bir işlemle değiştirilmiş"
-  senaryo $mod E_aktarma_hakki "" "$GLB grant execute on functions to authenticated with grant option" dur "başka bir işlemle değiştirilmiş"
+  senaryo $mod B_anon_eklendi "" "$GLB grant execute on functions to anon" dur "16 uygulandıktan sonra değişmiş"
+  senaryo $mod C_servis_alindi "" "$GLB revoke execute on functions from service_role" dur "16 uygulandıktan sonra değişmiş"
+  senaryo $mod D_publice_geri "" "$GLB grant execute on functions to public" dur "16 uygulandıktan sonra değişmiş"
+  senaryo $mod E_aktarma_hakki "" "$GLB grant execute on functions to authenticated with grant option" dur "16 uygulandıktan sonra değişmiş"
   senaryo $mod F_degisip_geri "" "$GLB grant execute on functions to anon; $GLB revoke execute on functions from anon" ok
   senaryo $mod G_ozel_global "$GLB grant execute on functions to raporcu with grant option" "" ok
-  senaryo $mod I_sema_degisti "" "$GLB in schema public grant execute on functions to anon" dur "Şemaya özgü"
-  senaryo $mod J_ozel_sonra_degisti "$GLB grant execute on functions to raporcu with grant option" "$GLB revoke execute on functions from raporcu" dur "başka bir işlemle değiştirilmiş"
-  senaryo $mod K_global_silindi "" "$GLB revoke execute on functions from authenticated, service_role; $GLB grant execute on functions to public" dur "başka bir işlemle değiştirilmiş"
+  senaryo $mod I_sema_degisti "" "$GLB in schema public grant execute on functions to anon" dur "16 uygulandıktan sonra değişmiş"
+  senaryo $mod J_ozel_sonra_degisti "$GLB grant execute on functions to raporcu with grant option" "$GLB revoke execute on functions from raporcu" dur "16 uygulandıktan sonra değişmiş"
+  senaryo $mod K_global_silindi "" "$GLB revoke execute on functions from authenticated, service_role; $GLB grant execute on functions to public" dur "16 uygulandıktan sonra değişmiş"
   # uygula iki kez → yedek ilk hâli korur, geri alma ilk hâle döner
   db=t16_${mod:0:1}_iki_kez; kur $db; ilk=$(durum $db); calistir $mod $db $G/16-varsayilan-yetki-kapat.sql >/dev/null
   r=$(calistir $mod $db $G/16-varsayilan-yetki-kapat.sql); r2=$(calistir $mod $db $G/16-varsayilan-yetki-geri-al.sql)
@@ -60,6 +60,22 @@ for mod in psql editor; do
   db=t16_${mod:0:1}_sinama_tutmaz; kur $db "$GLB grant execute on functions to anon"; ilk=$(durum $db)
   r=$(calistir $mod $db $G/16-varsayilan-yetki-kapat.sql)
   sonuc "$mod · sınama tutmazsa uygula durur ve hiçbir şey değişmez" "durdu | $ilk" "$(echo "$r" | grep -q 'Sınama tutmadı' && echo durdu || echo "$r") | $(durum $db)"
+  # ikinci uygulama: arada global ya da şemaya özgü değişiklik olduysa DURUR ve hiçbir şey değişmez ('sonra' denetimi, b5be401'den)
+  for degisiklik in "$GLB grant execute on functions to anon" "$GLB in schema public grant execute on functions to anon"; do
+    db=t16_${mod:0:1}_ikinci_degismis; kur $db; calistir $mod $db $G/16-varsayilan-yetki-kapat.sql >/dev/null
+    $P -d $db -c "$degisiklik" >/dev/null; once=$(durum $db); r=$(calistir $mod $db $G/16-varsayilan-yetki-kapat.sql)
+    sonuc "$mod · ikinci uygulama, arada değişiklik ($(echo "$degisiklik" | grep -q 'in schema' && echo şema || echo global)): durur, değişmez" \
+      "durdu | $once" "$(echo "$r" | grep -q "o günden beri değişmiş" && echo durdu || echo "$r") | $(durum $db)"
+  done
+  # 'sonra' kaydı yoksa (eski sürümle uygulanmış) geri alma DURUR ve hiçbir şey değişmez
+  db=t16_${mod:0:1}_sonra_yok; kur $db; calistir $mod $db $G/16-varsayilan-yetki-kapat.sql >/dev/null
+  $P -d $db -c "delete from guvenlik.varsayilan_yetki_yedek where tur = 'sonra'" >/dev/null; once=$(durum $db)
+  r=$(calistir $mod $db $G/16-varsayilan-yetki-geri-al.sql)
+  sonuc "$mod · 'sonra' kaydı yoksa geri alma durur, değişmez" "durdu | $once" "$(echo "$r" | grep -q "(sonra) yok" && echo durdu || echo "$r") | $(durum $db)"
+  # 'sonra' kaydı yazıldı (global + şema) ve kapsam satırı sonuçta
+  db=t16_${mod:0:1}_a_yalin
+  sonuc "$mod · 'sonra' kaydı: kayıt sayısı (uygulama sonrası global + public)" "2" "$(kur t16_${mod:0:1}_sonra_say; calistir $mod t16_${mod:0:1}_sonra_say $G/16-varsayilan-yetki-kapat.sql >/dev/null; $P -d t16_${mod:0:1}_sonra_say -Atc "select count(*) from guvenlik.varsayilan_yetki_yedek where tur = 'sonra'")"
+  sonuc "$mod · kapsam satırı sonuç sorgusunda" "var" "$( (if [ $mod = editor ]; then python3 $T/../t19/editor-calistir.py $H $PT t16_${mod:0:1}_sonra_say $G/16-varsayilan-yetki-kapat.sql; else $P -d t16_${mod:0:1}_sonra_say -f $G/16-varsayilan-yetki-kapat.sql; fi) 2>&1 | grep -q 'kapsam' && echo var || echo yok)"
   # sonuç tabloları ve görünürlük
   db=t16_${mod:0:1}_a_yalin
   sonuc "$mod · geri alma sonucu tablosu (sınama satırı)" "anon ✓ · authenticated ✓ · service_role ✓" "$($P -d $db -Atc "select deger from guvenlik.yetki_geri_sonuc_16 where sira = 40")"
@@ -71,8 +87,15 @@ $P -d $db -c "create function public.yeni_deneme() returns int language sql as '
 sonuc "yeni fonksiyon: anon · authenticated · service_role" "false true true" "$($P -d $db -Atc "select has_function_privilege('anon','public.yeni_deneme()','execute') || ' ' || has_function_privilege('authenticated','public.yeni_deneme()','execute') || ' ' || has_function_privilege('service_role','public.yeni_deneme()','execute')")"
 sonuc "uygula sonuç tablosu: sınama satırı tamam" "tamam" "$($P -d $db -Atc "select case when not anon_x and auth_x and servis_x then 'tamam' else 'FARKLI' end from guvenlik.yetki_sinama_16")"
 echo "== KARŞILAŞTIRMA: ESKİ 16 (git 89e8796) Editor'de — sorun buydu"
-git -C $A show 89e8796:stok-v2/guvenlik/16-varsayilan-yetki-kapat.sql > $Y/16-eski.sql
+git -C $A show 89e8796:stok-v2/guvenlik/16-varsayilan-yetki-kapat.sql 2>/dev/null > $Y/16-eski.sql
 db=t16_eski_editor; kur $db "$GLB grant execute on functions to anon"; ilk=$(durum $db); r=$(calistir editor $db $Y/16-eski.sql)
 sonuc "eski 16, sınama tutmayacak durumda, Editor'de: hata" "relation yetki_sinama_16 yok" "$(echo "$r" | grep -q 'relation "yetki_sinama_16" does not exist' && echo 'relation yetki_sinama_16 yok' || echo "$r")"
 sonuc "  → global varsayılan YİNE DE değişti (yeni sürümde değişmiyor)" "değişti" "$( [ "$ilk" != "$(durum $db)" ] && echo değişti || echo değişmedi)"
+echo "== KARŞILAŞTIRMA: taban daldaki b5be401 sürümü Editor'de (uzlaştırmadan önce; geçici tablo kullanıyordu)"
+if git -C $A cat-file -e b5be401:stok-v2/guvenlik/16-varsayilan-yetki-kapat.sql 2>/dev/null; then
+  git -C $A show b5be401:stok-v2/guvenlik/16-varsayilan-yetki-kapat.sql > $Y/16-b5be401.sql
+  db=t16_b5_editor; kur $db "$GLB grant execute on functions to anon"; ilk=$(durum $db); r=$(calistir editor $db $Y/16-b5be401.sql)
+  sonuc "b5be401, sınama tutmayacak durumda, Editor'de: hata" "relation yetki_sinama_16 yok" "$(echo "$r" | grep -q 'relation "yetki_sinama_16" does not exist' && echo 'relation yetki_sinama_16 yok' || echo "$r")"
+  sonuc "  → global varsayılan YİNE DE değişti (uzlaştırılmış sürümde değişmiyor)" "değişti" "$( [ "$ilk" != "$(durum $db)" ] && echo değişti || echo değişmedi)"
+else echo "  (b5be401 bu klonda yok — karşılaştırma atlandı)"; fi
 echo; echo "TOPLAM: $GECTI geçti, $KALDI kaldı"
