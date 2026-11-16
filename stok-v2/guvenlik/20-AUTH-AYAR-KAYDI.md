@@ -1,6 +1,7 @@
 # 20 — Supabase Authentication: yeni kayıt ve anonim giriş ayarları (16 Kasım 2026)
 
-Durum: **ayarlar kapatıldı ve panelde doğrulandı.** Açık kaldığı süredeki iz incelemesi (20-auth-iz-salt-okur.sql) bekliyor.
+Durum: **TAMAMLANDI (16 Kasım 2026).** Ayarlar kapatıldı ve panelde doğrulandı; mevcut hesaplarda açıklıktan kalma iz yok
+(20-auth-iz-salt-okur.sql, aşağıda — sınırıyla birlikte).
 
 ## Bulgu
 
@@ -33,9 +34,26 @@ Doğrulanmayan: sunucunun uyguladığı ayar `https://<proje>.supabase.co/auth/v
 `"external" › "anonymous_users": false`) okunmadı — Claude'un ortamından Supabase'e ağ erişimi yok (403); kullanıcı panel görüntüsüyle
 doğruladı. Daha kesin kanıt istenirse bu adres tarayıcıda açılabilir.
 
-## Açık kalan
+## Açıklık süresinin izi — 20-auth-iz-salt-okur.sql (canlı, 16 Kasım 2026, ayar kapatıldıktan sonra; kullanıcı SQL Editor'de çalıştırdı)
 
-- **Açıklık süresinin izi:** `stok-v2/guvenlik/20-auth-iz-salt-okur.sql` (salt okunur, yalnız sayı) çalıştırılmadı. ERP listesinde
-  olmayan / son günlerde açılmış / doğrulanmamış / anonim hesap çıkarsa SİLİNMEDEN araştırılacak (ne zaman açıldı, son giriş, hangi
-  sağlayıcı, ERP verisine erişim izi). Bu sorgunun temiz çıkması ayarın kapalı olduğunun kanıtı SAYILMAZ; yalnız iz yokluğunu gösterir.
-- Önceki ölçüm (18, 16 Kasım, ayar açıkken): auth.users 3 · ERP listesinde olmayan 0 · son 30 günde açılan 0.
+| kontrol | beklenen | sonuç | durum |
+|---|---|---|---|
+| auth.users: toplam hesap | | 3 | bilgi |
+| anonim hesap (is_anonymous) | 0 | 0 | tamam |
+| e-postasız hesap | 0 | 0 | tamam |
+| ERP kullanıcı listesinde OLMAYAN hesap | 0 | 0 | tamam |
+| son 30 gün / son 7 günde açılan hesap | — / — | 0 / 0 | bilgi |
+| e-postası doğrulanmamış hesap | 0 | 0 | tamam |
+| kimlik sağlayıcıları | email | email ×3 | tamam |
+
+Önceki ölçüm (18, 16 Kasım, ayar açıkken): auth.users 3 · ERP listesinde olmayan 0 · son 30 günde açılan 0 — aynı.
+
+**Ne gösterir, ne göstermez:**
+- Gösterir: BUGÜN var olan hesaplar arasında ERP listesi dışında, anonim, e-postasız ya da doğrulanmamış hesap yok; üç hesabın üçü
+  de ERP listesinde ve e-posta sağlayıcısıyla.
+- Göstermez: ayar açıkken açılıp sonradan SİLİNMİŞ hesapları ve geçmiş erişimleri (auth.users yalnız bugünkü hesapları tutar).
+  Bunlar için Supabase'in Auth / API günlükleri gerekir; bu inceleme günlüklere bakmadı.
+- 5. satır ("son 30 / 7 günde açılan") her zaman "bilgi"dir; yeni hesap olması tek başına şüpheli değildir.
+- Bu sorgunun temiz çıkması ayarın kapalı olduğunun kanıtı DEĞİLDİR; ayarın kanıtı yukarıdaki panel doğrulamasıdır.
+
+Tanınmayan hesap çıkmadığı için silme ya da ayrıca araştırma gerekmedi.
