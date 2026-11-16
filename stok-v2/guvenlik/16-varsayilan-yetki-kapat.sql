@@ -24,55 +24,66 @@
 --  tablosuna yazılır. Yedek zaten varsa (dosya ikinci kez çalıştırılırsa) ÜZERİNE YAZILMAZ — geri alma her zaman ilk hâle döner.
 --  Geri alma: 16-varsayilan-yetki-geri-al.sql (yedekten birebir kurar ve birebir aynı olduğunu doğrular).
 --  Çalıştırma: Supabase › SQL Editor (postgres olarak) › bu dosyanın TAMAMI › Run. Sonuç tablosu: önce / sonra / birleşik / sınama.
+--  EDITOR UYUMU: iki ifade — (1) tek DO: yedek + değişiklik + sınama (tutmazsa HEPSİ geri alınır), (2) sonuç SELECT'i. Geçici tablo
+--  yok; sınama sonucu guvenlik.yetki_sinama_16'da kalır (anon / authenticated erişemez). Editor ifadeleri ayrı gönderse de aynı sonuç.
 --  Beklenen son satırlar: "sınama (public): yeni fonksiyon" → anon ✗ · authenticated ✓ · service_role ✓ · durum tamam.
 -- =====================================================================================================================
 begin;
 
+-- TEK İFADE (Supabase SQL Editor ifadeleri ayrı isteklerle gönderebilir; begin/commit o zaman tek işlem yapmaz — 16 Kasım'da 19'da
+-- görüldü: geçici tablo kendi işleminin sonunda silindi, önceki ifadeler kalıcı oldu). Yedek + değişiklik + gerçek deneme fonksiyonuyla
+-- sınama burada BİRLİKTE: sınama tutmazsa HATA ve hepsi geri alınır. Sınama sonucu kalıcı guvenlik.yetki_sinama_16'ya yazılır
+-- (anon / authenticated erişemez); aşağıdaki sonuç SELECT'i onu okur. Geçici tablo YOK.
 do $$
+declare
+  v_anon boolean;
+  v_auth boolean;
+  v_servis boolean;
+  v_anon_sayisi integer;
 begin
   if current_user <> 'postgres' then
     raise exception 'Bu dosya postgres rolüyle çalıştırılmalı (şu an: %). Hiçbir şey değişmedi.', current_user;
   end if;
-end $$;
 
-create schema if not exists guvenlik;
-create table if not exists guvenlik.varsayilan_yetki_yedek (
-  alindi timestamptz not null default now(),
-  tur    text not null,          -- 'isaret' (yedek alındı; kayıt olmasa da) | 'kayit'
-  sema   text,                   -- null = global kayıt
-  acl    aclitem[]
-);
-revoke all on guvenlik.varsayilan_yetki_yedek from public, anon, authenticated;
+  create schema if not exists guvenlik;
+  create table if not exists guvenlik.varsayilan_yetki_yedek (
+    alindi timestamptz not null default now(),
+    tur    text not null,          -- 'isaret' (yedek alındı; kayıt olmasa da) | 'kayit'
+    sema   text,                   -- null = global kayıt
+    acl    aclitem[]
+  );
+  revoke all on guvenlik.varsayilan_yetki_yedek from public, anon, authenticated;
 
-insert into guvenlik.varsayilan_yetki_yedek (tur, sema, acl)
-select 'isaret', null, null
-where not exists (select 1 from guvenlik.varsayilan_yetki_yedek where tur = 'isaret')
-union all
-select 'kayit', case when d.defaclnamespace = 0 then null else n.nspname::text end, d.defaclacl
-from pg_default_acl d left join pg_namespace n on n.oid = d.defaclnamespace
-where d.defaclrole = 'postgres'::regrole and d.defaclobjtype = 'f'
-  and not exists (select 1 from guvenlik.varsayilan_yetki_yedek where tur = 'isaret');
+  insert into guvenlik.varsayilan_yetki_yedek (tur, sema, acl)
+  select 'isaret', null, null
+  where not exists (select 1 from guvenlik.varsayilan_yetki_yedek where tur = 'isaret')
+  union all
+  select 'kayit', case when d.defaclnamespace = 0 then null else n.nspname::text end, d.defaclacl
+  from pg_default_acl d left join pg_namespace n on n.oid = d.defaclnamespace
+  where d.defaclrole = 'postgres'::regrole and d.defaclobjtype = 'f'
+    and not exists (select 1 from guvenlik.varsayilan_yetki_yedek where tur = 'isaret');
 
-alter default privileges for role postgres revoke execute on functions from public;
-alter default privileges for role postgres grant execute on functions to authenticated, service_role;
+  alter default privileges for role postgres revoke execute on functions from public;
+  alter default privileges for role postgres grant execute on functions to authenticated, service_role;
 
--- Sınama: public şemasında postgres'in açtığı GERÇEK yeni fonksiyon (global + şemaya özgü kayıt birlikte uygulanır).
-create function public.yetki_sinama_16() returns integer language sql as 'select 1';
-create temp table yetki_sinama_16 on commit drop as
-select has_function_privilege('anon', 'public.yetki_sinama_16()', 'execute') as anon_x,
-       has_function_privilege('authenticated', 'public.yetki_sinama_16()', 'execute') as auth_x,
-       has_function_privilege('service_role', 'public.yetki_sinama_16()', 'execute') as servis_x,
-       (select count(*) from pg_proc p where p.pronamespace = 'public'::regnamespace and p.proname <> 'yetki_sinama_16'
-          and has_function_privilege('anon', p.oid, 'execute')) as anon_sayisi;
-drop function public.yetki_sinama_16();
+  -- Sınama: public şemasında postgres'in açtığı GERÇEK yeni fonksiyon (global + şemaya özgü kayıt birlikte uygulanır).
+  execute 'create function public.yetki_sinama_16() returns integer language sql as ''select 1''';
+  v_anon   := has_function_privilege('anon', 'public.yetki_sinama_16()', 'execute');
+  v_auth   := has_function_privilege('authenticated', 'public.yetki_sinama_16()', 'execute');
+  v_servis := has_function_privilege('service_role', 'public.yetki_sinama_16()', 'execute');
+  select count(*) into v_anon_sayisi from pg_proc p where p.pronamespace = 'public'::regnamespace and p.proname <> 'yetki_sinama_16'
+     and has_function_privilege('anon', p.oid, 'execute');
+  execute 'drop function public.yetki_sinama_16()';
 
-do $$
-declare s record;
-begin
-  select * into s from yetki_sinama_16;
-  if s.anon_x or not s.auth_x or not s.servis_x then
-    raise exception 'Sınama tutmadı (anon %, authenticated %, service_role %) — işlem geri alındı, hiçbir şey değişmedi.', s.anon_x, s.auth_x, s.servis_x;
+  if v_anon or not v_auth or not v_servis then
+    raise exception 'Sınama tutmadı (anon %, authenticated %, service_role %) — işlem geri alındı, hiçbir şey değişmedi.', v_anon, v_auth, v_servis;
   end if;
+
+  create table if not exists guvenlik.yetki_sinama_16 (anon_x boolean, auth_x boolean, servis_x boolean, anon_sayisi integer,
+                                                       zaman timestamptz not null default now());
+  revoke all on guvenlik.yetki_sinama_16 from public, anon, authenticated;
+  delete from guvenlik.yetki_sinama_16;
+  insert into guvenlik.yetki_sinama_16 (anon_x, auth_x, servis_x, anon_sayisi) values (v_anon, v_auth, v_servis, v_anon_sayisi);
 end $$;
 
 -- ---------------- Sonuç: önce (yedek) / sonra / birleşik / sınama ----------------
@@ -124,11 +135,11 @@ satirlar(sira, adim, kayit, deger, durum) as (
          'anon ' || case when anon_x then '✓' else '✗' end || ' · authenticated ' || case when auth_x then '✓' else '✗' end ||
          ' · service_role ' || case when servis_x then '✓' else '✗' end,
          case when not anon_x and auth_x and servis_x then 'tamam' else 'FARKLI' end
-  from yetki_sinama_16
+  from guvenlik.yetki_sinama_16
   union all
   select 41, 'sınama (public)', 'anon''un çalıştırabildiği VAR OLAN fonksiyon sayısı (değişmemeli: 9)', anon_sayisi::text,
          case when anon_sayisi = 9 then 'tamam' else 'bilgi' end
-  from yetki_sinama_16
+  from guvenlik.yetki_sinama_16
 )
 select adim, kayit, deger, durum from satirlar order by sira, kayit;
 
