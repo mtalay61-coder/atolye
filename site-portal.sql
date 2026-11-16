@@ -597,6 +597,9 @@ create or replace function public.site_kayit_listesi()
 returns table (id text, olusturma timestamptz, bilgiler jsonb, kullanici text)
 language sql stable security definer set search_path = public
 as $$ select t.id, t.olusturma, t.bilgiler, t.kullanici from site_kayit_talepleri t where t.durum = 'yeni' order by t.olusturma desc limit 100; $$;
+-- Yetkisi 22 bölümünün DIŞINDA: 22 bu fonksiyona dokunmaz (canlıdaki yetkisi uygulamada da geri almada da aynı kalır).
+revoke all on function public.site_kayit_listesi() from public, anon;
+grant execute on function public.site_kayit_listesi() to authenticated;
 
 -- ONAY / RET — TEK İŞLEM (güvenlik 22, 16 Kasım; stok-v2/guvenlik/22-site-onay-atomik.sql ile canlıya uygulanır).
 -- Sorun (21): ERP yeni cariyi kendisi açıp SONRA site_kayit_onayla çağırıyordu; arada başka cihaz talebi işlerse, cihaz kapanırsa ya
@@ -775,8 +778,8 @@ drop trigger if exists site_cari_ekleme_koru on public.cariler;
 create trigger site_cari_ekleme_koru before insert on public.cariler for each row execute function public.site_cari_ekleme_koru();
 
 revoke all on function public.site_eslesme_anahtari(text, text), public.site_vergi_no_kaydedilecek(text), public.site_kimlik_zamani(text), public.site_cari_ekleme_koru() from public, anon, authenticated;
-revoke all on function public.site_kayit_listesi(), public.site_kayit_onayla(text, text), public.site_kayit_reddet(text), public.site_kayit_onayla_yeni_cari(text, text) from public, anon;
-grant execute on function public.site_kayit_listesi(), public.site_kayit_onayla(text, text), public.site_kayit_reddet(text), public.site_kayit_onayla_yeni_cari(text, text) to authenticated;
+revoke all on function public.site_kayit_onayla(text, text), public.site_kayit_reddet(text), public.site_kayit_onayla_yeni_cari(text, text) from public, anon;
+grant execute on function public.site_kayit_onayla(text, text), public.site_kayit_reddet(text), public.site_kayit_onayla_yeni_cari(text, text) to authenticated;
 -- <<< 22 BİTİŞ
 
 -- ---------- 13) Site raporu (v1.659.0 — "güven ve düzen") ----------

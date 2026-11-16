@@ -286,13 +286,41 @@ DURMSJ="DUR — 22 uygulanmaz (DUR satırlarına bakın)"
 $PG -d t22k -c "alter table public.cariler disable trigger degisiklik_izle" >/dev/null
 k=$(katalog t22k); o=$(durum t22k)
 sonuc "değişiklik sayacı DEVRE DIŞI: önkoşul satırı · GENEL" "DEVRE DIŞI|DUR · $DURMSJ" "$(onk t22k 10) · $(onkosul t22k)"
-sonuc "  uygulama durur" "değişiklik sayacı (degisiklik_izle) yok ya da devre dışı" "$($PG -d t22k -f $G/22-site-onay-atomik.sql 2>&1 | grep -o 'değişiklik sayacı (degisiklik_izle) yok ya da devre dışı' | head -1)"
+SAYAC_DUR="değişiklik sayacı (degisiklik_izle) yok ya da normal yazmada çalışmıyor"
+sonuc "  uygulama durur" "$SAYAC_DUR" "$($PG -d t22k -f $G/22-site-onay-atomik.sql 2>&1 | grep -o "$SAYAC_DUR" | head -1)"
 sonuc "  katalog ve veri değişmedi" "$k · $o" "$(katalog t22k) · $(durum t22k)"
 $PG -d t22k -c "drop trigger degisiklik_izle on public.cariler" >/dev/null
 sonuc "değişiklik sayacı YOK: önkoşul satırı · GENEL" "YOK|DUR · $DURMSJ" "$(onk t22k 10) · $(onkosul t22k)"
 sonuc "  uygulama durur, katalog değişmedi" "durdu · 0/0/0" "$($PG -d t22k -f $G/22-site-onay-atomik.sql >/dev/null 2>&1 && echo uygulandı || echo durdu) · $(nesne22 t22k)"
 q t22k "select public.degisiklik_izle_kur('cariler')" >/dev/null
-sonuc "sayaç yeniden kuruldu" "var, etkin|tamam · HAZIR — 22 uygulanabilir" "$(onk t22k 10) · $(onkosul t22k)"
+SAYAC_TAMAM="var, etkin (O), degisiklik_bump()|tamam"
+sonuc "sayaç yeniden kuruldu" "$SAYAC_TAMAM · HAZIR — 22 uygulanabilir" "$(onk t22k 10) · $(onkosul t22k)"
+# YALNIZ REPLİKA (tgenabled R): normal oturumdaki yazmada çalışmaz — sayaç artmaz.
+$PG -d t22k -c "alter table public.cariler enable replica trigger degisiklik_izle" >/dev/null
+k=$(katalog t22k); o=$(durum t22k)
+sayac() { q t22k "select coalesce(sayaclar ->> 'cariler', '0') from public.degisiklik where id = 'tekil'"; }
+s1=$(sayac); $PG -d t22k -c "insert into public.cariler (id, unvan) values ('sayac-deneme', 'Sayaç Deneme'); delete from public.cariler where id = 'sayac-deneme'" >/dev/null; s2=$(sayac)
+sonuc "sayaç YALNIZ REPLİKA (R): normal yazmada sayaç artmaz" "artmadı" "$([ "$s1" = "$s2" ] && echo artmadı || echo "arttı ($s1 → $s2)")"
+sonuc "  önkoşul satırı · GENEL" "YALNIZ REPLİKA (R) — normal yazmada çalışmaz|DUR · $DURMSJ" "$(onk t22k 10) · $(onkosul t22k)"
+sonuc "  uygulama durur" "$SAYAC_DUR" "$($PG -d t22k -f $G/22-site-onay-atomik.sql 2>&1 | grep -o "$SAYAC_DUR" | head -1)"
+sonuc "  katalog değişmedi" "$k" "$(katalog t22k)"
+# HER ZAMAN (tgenabled A): normal yazmada da çalışır — kabul.
+$PG -d t22k -c "alter table public.cariler enable always trigger degisiklik_izle" >/dev/null
+s1=$(sayac); $PG -d t22k -c "insert into public.cariler (id, unvan) values ('sayac-deneme', 'Sayaç Deneme'); delete from public.cariler where id = 'sayac-deneme'" >/dev/null; s2=$(sayac)
+sonuc "sayaç HER ZAMAN (A): normal yazmada sayaç artar; önkoşul" "arttı · var, etkin (A), degisiklik_bump()|tamam" "$([ "$s1" != "$s2" ] && echo arttı || echo artmadı) · $(onk t22k 10)"
+# YANLIŞ FONKSİYON: aynı adlı tetikleyici başka fonksiyona bağlı (sayaç artmaz).
+$PG -d t22k -c "drop trigger degisiklik_izle on public.cariler" \
+  -c "create function public.sahte_sayac() returns trigger language plpgsql as 'begin return null; end'" \
+  -c "create trigger degisiklik_izle after insert or update or delete on public.cariler for each statement execute function public.sahte_sayac()" >/dev/null
+k=$(katalog t22k)
+s1=$(sayac); $PG -d t22k -c "insert into public.cariler (id, unvan) values ('sayac-deneme', 'Sayaç Deneme'); delete from public.cariler where id = 'sayac-deneme'" >/dev/null; s2=$(sayac)
+sonuc "sayaç YANLIŞ FONKSİYONA bağlı: sayaç artmaz" "artmadı" "$([ "$s1" = "$s2" ] && echo artmadı || echo arttı)"
+sonuc "  önkoşul satırı · GENEL" "YANLIŞ FONKSİYON (sahte_sayac())|DUR · $DURMSJ" "$(onk t22k 10) · $(onkosul t22k)"
+sonuc "  uygulama durur" "$SAYAC_DUR" "$($PG -d t22k -f $G/22-site-onay-atomik.sql 2>&1 | grep -o "$SAYAC_DUR" | head -1)"
+sonuc "  katalog değişmedi" "$k" "$(katalog t22k)"
+$PG -d t22k -c "drop trigger degisiklik_izle on public.cariler" -c "drop function public.sahte_sayac()" >/dev/null
+q t22k "select public.degisiklik_izle_kur('cariler')" >/dev/null
+sonuc "sayaç doğru kuruldu" "$SAYAC_TAMAM · HAZIR — 22 uygulanabilir" "$(onk t22k 10) · $(onkosul t22k)"
 $PG -d t22k -c "alter table public.site_kayit_talepleri add column islenme timestamptz" -c "update public.site_kayit_talepleri set islenme = '2026-01-02 03:04:05+00' where id = 'talep-1'" >/dev/null
 k=$(katalog t22k); iv=$(q t22k "select md5(string_agg(id || coalesce(islenme::text, '-'), ',' order by id)) from site_kayit_talepleri")
 sonuc "islenme sütunu ÖNCEDEN var: GENEL" "KISMİ / BEKLENMEYEN — uygulamayın, sonucu paylaşın" "$(onkosul t22k)"
@@ -308,8 +336,13 @@ $PG -d t22k -c "drop function public.site_kimlik_zamani(text)" >/dev/null
 $PG -d t22k -c "grant execute on function public.site_kayit_reddet(text) to anon" >/dev/null
 once_red=$(q t22k "select proacl::text from pg_proc where oid = 'public.site_kayit_reddet(text)'::regprocedure")
 once_ony=$(q t22k "select proacl::text from pg_proc where oid = 'public.site_kayit_onayla(text, text)'::regprocedure")
+# site_kayit_listesi: 22 DOKUNMAZ — özel bir yetki verilir; uygulama ve geri alma sonrası aynı kalmalı.
+$PG -d t22k -c "grant execute on function public.site_kayit_listesi() to service_role" >/dev/null
+lst() { q t22k "select proacl::text from pg_proc where oid = 'public.site_kayit_listesi()'::regprocedure"; }
+once_lst=$(lst)
 sonuc "temizlendi: önkoşul" "HAZIR — 22 uygulanabilir" "$(onkosul t22k)"
 uygula22 t22k; sonuc "22 uygulandı" "0 · UYGULANMIŞ · 5/1/1" "$? · $(onkosul t22k) · $(nesne22 t22k)"
+sonuc "  site_kayit_listesi yetkisi dokunulmadı (service_role dahil)" "$once_lst" "$(lst)"
 sonuc "  reddet'ten anon kaldırıldı (22)" "hayır" "$(q t22k "select case when has_function_privilege('anon', 'public.site_kayit_reddet(text)', 'execute') then 'evet' else 'hayır' end")"
 sonuc "  önkoşul: geri alma hazır" "0 nesne değişmiş|tamam" "$(onk t22k 16)"
 geri_dur() {   # $1 açıklama, $2 beklenen ileti parçası; geri alma DURMALI ve katalog / veri değişmemeli
@@ -341,6 +374,8 @@ $PG -d t22k -f $G/22-site-onay-atomik-geri-al.sql >/dev/null 2>$Y/geri-k.err; so
 sonuc "  22 nesneleri kalmadı" "0/0/0" "$(nesne22 t22k)"
 sonuc "  reddet / onayla yetkileri 22 ÖNCESİYLE birebir (reddet'te anon geri geldi)" "$once_red · $once_ony" "$(q t22k "select proacl::text from pg_proc where oid = 'public.site_kayit_reddet(text)'::regprocedure") · $(q t22k "select proacl::text from pg_proc where oid = 'public.site_kayit_onayla(text, text)'::regprocedure")"
 sonuc "  önkoşul" "HAZIR — 22 uygulanabilir" "$(onkosul t22k)"
+sonuc "  site_kayit_listesi yetkisi geri almadan sonra da aynı" "$once_lst" "$(lst)"
+sonuc "22 dosyalarında site_kayit_listesi geçmiyor (uygula / geri al)" "0 0" "$(grep -c site_kayit_listesi $G/22-site-onay-atomik.sql) $(grep -c site_kayit_listesi $G/22-site-onay-atomik-geri-al.sql)"
 $PG -d t22k -c "revoke execute on function public.site_kayit_reddet(text) from anon" >/dev/null
 
 echo

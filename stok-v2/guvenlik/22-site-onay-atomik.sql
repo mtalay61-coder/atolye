@@ -25,7 +25,8 @@
 --  22-onkosul-salt-okur.sql.
 --  ÖNKOŞULLAR (biri tutmazsa HATA, hiçbir şey değişmez): postgres rolü; tablolar ve 19'un kapısı var; 22 uygulanmamış; 22'nin
 --  OLUŞTURACAĞI nesnelerden (5 fonksiyon, tetikleyici, islenme sütunu) HİÇBİRİ önceden yok — varsa sessizce değiştirilmez, durur;
---  cariler'de değişiklik sayacı (degisiklik_izle) var ve ETKİN; onayla / reddet gövdeleri 19'daki hâlle aynı (md5); cariler'de id /
+--  cariler'de değişiklik sayacı (degisiklik_izle) var, NORMAL yazmada çalışıyor (tgenabled O ya da A; R = yalnız replika, D = kapalı
+--  geçmez), public.degisiklik_bump()'a bağlı ve eklemede tetikleniyor; onayla / reddet gövdeleri 19'daki hâlle aynı (md5); cariler'de id /
 --  unvan / ek sütunları var.
 --  YEDEK (guvenlik.site_onay_22_yedek): onayla / reddet'in tanımı ve yetkileri (önce), 22'nin oluşturduğu nesneler listesi, uygulama
 --  SONRASI tetikleyici tanımı + etkinliği ve altı fonksiyonun yetki / sahip / güvenlik ayarı. Geri alma: 22-site-onay-atomik-geri-al.sql
@@ -64,8 +65,8 @@ begin
   if v22_eksik is not null then
     raise exception '22''nin oluşturacağı nesneler zaten var (%): sessizce değiştirilmez. Kaynağını inceleyin (site-portal.sql ile kurulmuş olabilir). Hiçbir şey değişmedi.', v22_eksik;
   end if;
-  if not exists (select 1 from pg_trigger where tgrelid = 'public.cariler'::regclass and tgname = 'degisiklik_izle' and not tgisinternal and tgenabled <> 'D') then
-    raise exception 'cariler değişiklik sayacı (degisiklik_izle) yok ya da devre dışı: sunucunun açtığı cari diğer cihazlara ulaşmaz. Önce degisiklik-sayaci.sql. Hiçbir şey değişmedi.';
+  if not exists (select 1 from pg_trigger where tgrelid = 'public.cariler'::regclass and tgname = 'degisiklik_izle' and not tgisinternal and tgenabled in ('O', 'A') and tgfoid = to_regprocedure('public.degisiklik_bump()') and tgtype & 4 = 4) then
+    raise exception 'cariler değişiklik sayacı (degisiklik_izle) yok ya da normal yazmada çalışmıyor (devre dışı / yalnız replika / degisiklik_bump dışında fonksiyon / eklemede çalışmaz): sunucunun açtığı cari diğer cihazlara ulaşmaz. Önce degisiklik-sayaci.sql. Hiçbir şey değişmedi.';
   end if;
   select md5(btrim(regexp_replace(regexp_replace(prosrc, '--[^\n]*', '', 'g'), '\s+', ' ', 'g'))) into v22_onayla
     from pg_proc where oid = to_regprocedure('public.site_kayit_onayla(text, text)');
@@ -261,9 +262,9 @@ create trigger site_cari_ekleme_koru before insert on public.cariler for each ro
 
 revoke all on function public.site_eslesme_anahtari(text, text), public.site_vergi_no_kaydedilecek(text), public.site_kimlik_zamani(text), public.site_cari_ekleme_koru() from public, anon, authenticated;
 
-revoke all on function public.site_kayit_listesi(), public.site_kayit_onayla(text, text), public.site_kayit_reddet(text), public.site_kayit_onayla_yeni_cari(text, text) from public, anon;
+revoke all on function public.site_kayit_onayla(text, text), public.site_kayit_reddet(text), public.site_kayit_onayla_yeni_cari(text, text) from public, anon;
 
-grant execute on function public.site_kayit_listesi(), public.site_kayit_onayla(text, text), public.site_kayit_reddet(text), public.site_kayit_onayla_yeni_cari(text, text) to authenticated;
+grant execute on function public.site_kayit_onayla(text, text), public.site_kayit_reddet(text), public.site_kayit_onayla_yeni_cari(text, text) to authenticated;
 
   insert into guvenlik.site_onay_22_yedek (tur, nesne)
   select 'olusturdu', x from unnest(array['public.site_kimlik_zamani(text)', 'public.site_eslesme_anahtari(text, text)', 'public.site_vergi_no_kaydedilecek(text)', 'public.site_kayit_onayla_yeni_cari(text, text)', 'public.site_cari_ekleme_koru()', 'tetikleyici:public.cariler.site_cari_ekleme_koru', 'sutun:public.site_kayit_talepleri.islenme']) x;

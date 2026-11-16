@@ -36,8 +36,10 @@ numarası ve yayın dosyaları değişmedi. Tasarım: `21-ATOMIK-ONAY-TASARIM.md
 
 ## Uygulama / geri alma korumaları
 
-- **Önkoşul / uygulama:** `cariler`de değişiklik sayacı (`degisiklik_izle`) YOK ya da DEVRE DIŞI ise önkoşul satırı 10 `DUR`, GENEL
-  `DUR`; uygulama dosyası da durur (sunucunun açtığı cari diğer cihazlara ulaşmazdı). 22'nin OLUŞTURACAĞI nesnelerden biri (5 fonksiyon,
+- **Önkoşul / uygulama:** `cariler`de değişiklik sayacı (`degisiklik_izle`) ancak NORMAL yazmada çalışıyorsa kabul edilir: `tgenabled`
+  `O` (normal) ya da `A` (her zaman), `public.degisiklik_bump()`'a bağlı ve eklemede tetikleniyor. YOK, DEVRE DIŞI (`D`), YALNIZ
+  REPLİKA (`R` — normal oturumda çalışmaz), YANLIŞ FONKSİYON ya da eklemede çalışmıyorsa önkoşul satırı 10 `DUR`, GENEL `DUR`;
+  uygulama dosyası da durur (sunucunun açtığı cari diğer cihazlara ulaşmazdı). 22'nin OLUŞTURACAĞI nesnelerden biri (5 fonksiyon,
   tetikleyici, `islenme` sütunu) önceden varsa uygulama hangisi olduğunu söyleyip durur — sessizce değiştirilmez / üzerine yazılmaz.
   `site_kayit_onayla` / `site_kayit_reddet` yetkileri açıkça tanımlı değilse (varsayılan) durur (önkoşul satırı 15).
 - **Yedek:** onayla / reddet'in tanımı ve 22 ÖNCESİ yetkileri; 22'nin oluşturduğu nesnelerin listesi; uygulama SONRASI tetikleyici
@@ -46,11 +48,15 @@ numarası ve yayın dosyaları değişmedi. Tasarım: `21-ATOMIK-ONAY-TASARIM.md
   değiştiğini söyleyip DURUR, hiçbir şeyi ezmez (önkoşul satırı 16 bunu önceden `UYARI` olarak gösterir). Yalnız listedeki (22'nin
   oluşturduğu) nesneleri kaldırır; onayla / reddet'in gövdesini ve yetkilerini 22 öncesiyle BİREBİR kurar.
 
+- **`site_kayit_listesi()`:** 22 bu fonksiyona dokunmaz. Yetki komutları site-portal.sql'de 22 bölümünün DIŞINA, fonksiyonun yanına
+  taşındı (site-portal.sql ile sıfırdan kurulumda yetkisi aynı); 22 uygulama / geri alma dosyalarında geçmez, yedeğe ve geri alma
+  korumasına bu yüzden girmez.
+
 ## Testler (16 Kasım, yerel / yalıtılmış; canlıya dokunulmadı)
 
 | Test | Sonuç |
 |---|---|
-| `stok-v2/test/guvenlik/t22/test22.sh` — PostgreSQL 16, 19 sonrası canlı (ad02222) + değişiklik sayacı + 22 | **125/125** |
+| `stok-v2/test/guvenlik/t22/test22.sh` — PostgreSQL 16, 19 sonrası canlı (ad02222) + değişiklik sayacı + 22 | **138/138** |
 | `stok-v2/test/guvenlik/t19/test19.sh` (19'un "yeni kurulum" kontrolü 19 kaynağıyla; güncel depoda 18'in FARKLI'sı yalnız onayla / reddet) | **139/139** |
 | `stok-v2/test/guvenlik/t21/test21.sh` (aynı cariyle ikinci onay artık "zaten", başka cariyle "işlenmiş") | **39/39** |
 | `test/birim-sunucu-carisi.js` (yeni; uygulamanın gerçek işlevleri) | temiz (10 kontrol) |
@@ -87,7 +93,10 @@ Ayrıca: biçim — sunucunun açtığı cari, eski ERP'nin aynı talep için ya
 uygulamanın `vergiNoKaydedilecek`'iyle 10 girdide aynı. Kapı: Personel → YETKI_YOK, tablolar aynı; anon ve yardımcılar → izin yok.
 Geri alma 19 hâline döner (özetler), açılmış cari / hesap sayısı korunur, yeniden uygulanır; Editor taklidiyle uygula / geri al;
 önkoşul tutmazsa hiçbir şey değişmez; ikinci uygulama reddedilir.
-Korumalar (8. bölüm): sayaç devre dışı / yok → önkoşul DUR, uygulama durur, katalog ve veri aynı; `islenme` ya da `site_kimlik_zamani`
+Korumalar (8. bölüm): sayaç devre dışı / yok → önkoşul DUR, uygulama durur, katalog ve veri aynı; sayaç YALNIZ REPLİKA (`R`: normal
+yazmada sayaç artmadığı ölçüldü) ya da YANLIŞ FONKSİYONA bağlı (sayaç artmıyor) → önkoşul DUR, uygulama durur, katalog aynı; sayaç
+HER ZAMAN (`A`: sayaç artıyor) → kabul; `site_kayit_listesi()`'ne önceden verilmiş özel yetki uygulama ve geri almadan sonra aynı,
+22 dosyalarında bu fonksiyon geçmiyor; `islenme` ya da `site_kimlik_zamani`
 önceden var → uygulama durur, sütun değerleri / fonksiyon gövdesi ve katalog aynı; uygulamadan sonra tetikleyici kapatıldı, yeniden
 tanımlandı (insert or update), yeni fonksiyona anon yetkisi verildi, onayla'dan authenticated alındı, yardımcının search_path'i
 değişti → her birinde geri alma durur, değişiklik yerinde kalır, katalog ve veri aynı; değişiklikler geri çekilince geri alma çalışır

@@ -57,9 +57,14 @@ satirlar as (
   union all select 9, 'cariler: tetikleyiciler',
     coalesce((select string_agg(tgname, ', ' order by tgname) from pg_trigger where tgrelid = to_regclass('public.cariler') and not tgisinternal), 'yok'), 'bilgi'
   union all select 10, 'cariler: değişiklik sayacı (degisiklik_izle — diğer cihazlar sunucunun açtığı cariyi görsün)',
-    coalesce((select case when tgenabled = 'D' then 'DEVRE DIŞI' else 'var, etkin' end from pg_trigger
-               where tgrelid = to_regclass('public.cariler') and tgname = 'degisiklik_izle' and not tgisinternal), 'YOK'),
-    case when exists (select 1 from pg_trigger where tgrelid = to_regclass('public.cariler') and tgname = 'degisiklik_izle' and not tgisinternal and tgenabled <> 'D')
+    coalesce((select case when tgfoid is distinct from to_regprocedure('public.degisiklik_bump()') then 'YANLIŞ FONKSİYON (' || tgfoid::regprocedure::text || ')'
+                          when tgenabled = 'D' then 'DEVRE DIŞI'
+                          when tgenabled = 'R' then 'YALNIZ REPLİKA (R) — normal yazmada çalışmaz'
+                          when tgenabled not in ('O', 'A') then 'BEKLENMEYEN DURUM (' || tgenabled::text || ')'
+                          when tgtype & 4 = 0 then 'EKLEMEDE ÇALIŞMAZ'
+                          else 'var, etkin (' || tgenabled::text || '), degisiklik_bump()' end
+                from pg_trigger where tgrelid = to_regclass('public.cariler') and tgname = 'degisiklik_izle' and not tgisinternal), 'YOK'),
+    case when to_regclass('public.cariler') is not null and exists (select 1 from pg_trigger where tgrelid = 'public.cariler'::regclass and tgname = 'degisiklik_izle' and not tgisinternal and tgenabled in ('O', 'A') and tgfoid = to_regprocedure('public.degisiklik_bump()') and tgtype & 4 = 4)
          then 'tamam' else 'DUR' end
   union all select 11, 'cariler: en düşük istemci sürümü (stk_ayar.min_istemci_surum; 22 bunu kullanmaz)',
     case when to_regclass('public.stk_ayar') is null then 'stk_ayar yok'
