@@ -1,0 +1,89 @@
+{
+ "A": {
+  "cagrilar": [],
+  "kartMusteriB": "düğme yok",
+  "kartMusteriD": "düğme yok",
+  "kayitDugmeleri": [
+   "yeni.firma: düğme yok",
+   "red.firma: düğme yok"
+  ],
+  "onaylaTiklandi": false,
+  "reddetTiklandi": false,
+  "sunucuHesaplari": {
+   "c2": "musteri.b"
+  },
+  "sunucuTalepleri": [
+   "t1:yeni",
+   "t2:yeni"
+  ],
+  "toastlar": [],
+  "yeniCari": 0
+ },
+ "B": {
+  "alinmisCari": 0,
+  "alinmisTiklandi": true,
+  "c2HesapKapandi": true,
+  "cagrilar": [
+   "yonetici_mi",
+   "yonetici_mi",
+   "yonetici_mi",
+   "site_kayit_onayla:TAMAM",
+   "yonetici_mi",
+   "site_kayit_onayla:HATA",
+   "site_kayit_reddet:TAMAM",
+   "site_hesap_sil:TAMAM"
+  ],
+  "hesapYeniCariye": true,
+  "islenmisCari": 0,
+  "islenmisTiklandi": true,
+  "kalanDugmeler": [
+   "musteri.b: Onayla — cari aç + Reddet"
+  ],
+  "kartMusteriB": "Kullanıcı adı / şifre değiştir + Erişimi kapat",
+  "kartMusteriD": "Giriş bilgisi oluştur",
+  "kayitDugmeleri": [
+   "yeni.firma: Onayla — cari aç + Reddet",
+   "red.firma: Onayla — cari aç + Reddet",
+   "musteri.b: Onayla — cari aç + Reddet",
+   "islenmis.firma: Onayla — cari aç + Reddet",
+   "yaris.firma: Onayla — cari aç + Reddet"
+  ],
+  "onaylaTiklandi": true,
+  "reddetTiklandi": true,
+  "sunucuTalepleri": [
+   "t1:onaylandi",
+   "t2:reddedildi",
+   "t3:yeni",
+   "t4:onaylandi",
+   "t5:onaylandi"
+  ],
+  "toastlar": [
+   "\"musteri.b\" kullanıcı adı başka bir caride kullanılıyor — talep onaylanamaz, cari açılmadı",
+   "Talep artık bekleyenlerde değil (başka bir cihazda onaylanmış ya da reddedilmiş) — cari açılmadı",
+   "Site hesabı açıldı: yeni.firma — müşteri kendi şifresiyle girebilir",
+   "Site hesabı açılamadı: Talep bulunamadı ya da işlenmiş — \"Yaris Ltd\" carisi açıldı ama talep bu arada başka bir cihazda işlendi; cari gereksizse silinebilir.",
+   "Kayıt talebi reddedildi",
+   "Web sitesi erişimi kapatıldı"
+  ],
+  "yarisCari": 1,
+  "yarisTiklandi": true,
+  "yeniCari": 1
+ },
+ "C": {
+  "cagrilar": [
+   "yonetici_mi"
+  ],
+  "kayitDugmeleri": [
+   "yeni.firma: Onayla — cari aç + Reddet"
+  ],
+  "onaylaTiklandi": true,
+  "sunucuTalepleri": [
+   "t1:yeni"
+  ],
+  "toastlar": [
+   "Müşteri site hesabı işlemlerini yalnız Yönetici yapabilir — sunucu bu hesabı Yönetici olarak tanımıyor; hiçbir şey kaydedilmedi"
+  ],
+  "yeniCari": 0
+ },
+ "hatalar": []
+}

@@ -13,7 +13,7 @@ function sonrakiPersonelBarkodu(cariler, prosesler, prosesAdi, haricId) {
   return kodlar.length > 0 ? Math.max(...kodlar) + 1 : baslangic;
 }
 
-function CariModule({ onParaFisi, onFisIptal, tanimlar, onTanimlarKaydet, onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, onayAcik, giderKartlari, kapsam = "cari", onOdemeAlaniGit, onOdemeKaydet, onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler, onSave, showToast, onFisSil, siparisler, onGoToSiparis, stok, firmaBilgileri, tanimlarProsesler, tanimlarAraProsesler, onCopaAt, onStokFisiAc, tanimlarFiyatGruplari, onPencereAc, onCekEkle, odemeHedefi, onOdemeHedefiTuketildi, hedefCariId, onHedefCariTuketildi }) {
+function CariModule({ onParaFisi, onFisIptal, tanimlar, onTanimlarKaydet, onMuhasebeKaydet, kullaniciYetkisiVar, siteYonetici = false, onayIste, onayAcik, giderKartlari, kapsam = "cari", onOdemeAlaniGit, onOdemeKaydet, onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler, onSave, showToast, onFisSil, siparisler, onGoToSiparis, stok, firmaBilgileri, tanimlarProsesler, tanimlarAraProsesler, onCopaAt, onStokFisiAc, tanimlarFiyatGruplari, onPencereAc, onCekEkle, odemeHedefi, onOdemeHedefiTuketildi, hedefCariId, onHedefCariTuketildi }) {
   const [showForm, setShowForm] = useState(false);
   const [query, setQuery] = useState("");
   const [cariTipSekme, setCariTipSekme] = useState("Tümü");
@@ -491,7 +491,7 @@ function CariModule({ onParaFisi, onFisIptal, tanimlar, onTanimlarKaydet, onMuha
               }} />
           </div>
         ) : odemeCari ? (
-          <CariCard tanimlar={tanimlar} onTanimlarKaydet={onTanimlarKaydet}
+          <CariCard tanimlar={tanimlar} onTanimlarKaydet={onTanimlarKaydet} siteYonetici={siteYonetici}
             onFiseGitNo={onFiseGitNo} muhasebe={muhasebe} kurlar={kurlar} onMuhasebeHareketi={onMuhasebeHareketi} onParaFisi={onParaFisi} showToast={showToast}
             key={odemeCari.id} cari={odemeCari} acik onAcKapa={() => odemeFormunuAc("", odemeTip, odemeSekliSecim)}
             onCekEkle={onCekEkle} bakiye={cariBakiyeleri(odemeCari)} listeBakiye={cariBakiyeleri(odemeCari, listeDefter)}
@@ -741,7 +741,7 @@ function CariModule({ onParaFisi, onFisIptal, tanimlar, onTanimlarKaydet, onMuha
       </div>
 
       {/* Siteden gelen müşteri kayıtları (v1.657.0, 266): onaylanınca cari + site hesabı açılır. */}
-      {kapsam === "cari" && <SiteKayitTalepleriPaneli cariler={cariler} onSave={onSave} showToast={showToast} />}
+      {kapsam === "cari" && <SiteKayitTalepleriPaneli cariler={cariler} onSave={onSave} showToast={showToast} yonetici={siteYonetici} />}
       {showForm && (
         <div style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 16, marginBottom: 20 }}>
           {/* MOR KAYIT ŞERİDİ (v1.625.0): Kaydet · Vazgeç formun üstünde (önce dipteydi). */}
@@ -913,7 +913,7 @@ function CariModule({ onParaFisi, onFisIptal, tanimlar, onTanimlarKaydet, onMuha
       ) : (
         <div style={{ display: "grid", gap: 12 }}>
           {filtered.map((c) => (
-            <CariCard tanimlar={tanimlar} onTanimlarKaydet={onTanimlarKaydet}
+            <CariCard tanimlar={tanimlar} onTanimlarKaydet={onTanimlarKaydet} siteYonetici={siteYonetici}
               onFiseGitNo={onFiseGitNo}
               muhasebe={muhasebe}
               kurlar={kurlar}

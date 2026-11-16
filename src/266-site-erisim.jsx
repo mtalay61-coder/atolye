@@ -28,7 +28,13 @@ function siteKullaniciOner(unvan) {
     .replace(/[^a-z0-9]+/g, " ").trim().split(" ").filter((k) => !["ltd", "sti", "as", "ve", "tic", "san"].includes(k)).slice(0, 2).join(".") || "musteri";
 }
 
-function SiteErisimPaneli({ cari, firmaBilgileri, onFieldChange, showToast, fiyatGrubuAdi }) {
+// YALNIZ YÖNETİCİ (güvenlik denetimi, 16 Kasım — 1. madde). Sunucu (site-portal.sql `site_yonetici_kapisi`) Yönetici olmayanın
+// hesap / kayıt işlemini zaten reddediyor; ekran da düğmeleri yalnız Yöneticiye gösterir (`siteYonetimiYetkisi`, 094) ve işlem
+// fonksiyonları hiçbir şey yazmadan önce bakar. Okuma (hesap var mı, son giriş, bekleyen talepler) herkese açık kalır.
+const SITE_YALNIZ_YONETICI = "Müşteri site hesabı işlemlerini yalnız Yönetici yapabilir";
+const siteHataMetni = (e) => { const m = String((e && e.message) || e); return (m.match(/"message"\s*:\s*"([^"]+)"/) || [])[1] || m; };
+
+function SiteErisimPaneli({ cari, firmaBilgileri, onFieldChange, showToast, fiyatGrubuAdi, yonetici = false }) {
   const [bilgi, setBilgi] = useState(undefined);      // undefined = okunuyor, null = hesap yok, {kullanici, sonGiris…}
   const [hata, setHata] = useState("");
   const [duzen, setDuzen] = useState(false);
@@ -45,6 +51,7 @@ function SiteErisimPaneli({ cari, firmaBilgileri, onFieldChange, showToast, fiya
   useEffect(() => { oku(); }, [oku]);
   const ac = () => { setAd((bilgi && bilgi.kullanici) || siteKullaniciOner(cari.unvan)); setSifre(bilgi ? "" : siteSifresiUret()); setDuzen(true); setYeniGiris(null); };
   const kaydet = () => {
+    if (!yonetici) { if (showToast) showToast(SITE_YALNIZ_YONETICI); return; }
     setMesgul(true);
     supabaseIstek("rpc/site_hesap_kaydet", { method: "POST", body: JSON.stringify({ p_cari_id: cari.id, p_kullanici: ad, p_sifre: sifre }) })
       .then(() => {
@@ -54,6 +61,7 @@ function SiteErisimPaneli({ cari, firmaBilgileri, onFieldChange, showToast, fiya
       }, (e) => { setMesgul(false); const m = String((e && e.message) || e); if (showToast) showToast((m.match(/"message"\s*:\s*"([^"]+)"/) || [])[1] || m); });
   };
   const kapat = () => {
+    if (!yonetici) { if (showToast) showToast(SITE_YALNIZ_YONETICI); return; }
     if (!window.confirm(`${cari.unvan}: web sitesi girişi kapatılsın mı? Müşteri siteye giremez (açık oturumu da kapanır).`)) return;
     supabaseIstek("rpc/site_hesap_sil", { method: "POST", body: JSON.stringify({ p_cari_id: cari.id }) })
       .then(() => { setYeniGiris(null); oku(); if (showToast) showToast("Web sitesi erişimi kapatıldı"); }, (e) => showToast && showToast(String((e && e.message) || e)));
@@ -74,12 +82,16 @@ function SiteErisimPaneli({ cari, firmaBilgileri, onFieldChange, showToast, fiya
           <>
             <span className="mono" data-site-kullanici="1" style={{ fontSize: 13, fontWeight: 800, padding: "2px 8px", background: "#fff", border: "1px solid #BFD3BB", borderRadius: 6 }}>{bilgi.kullanici}</span>
             <span style={{ fontSize: 10, color: "var(--erp-text-2)" }}>{bilgi.sonGiris ? `son giriş ${String(bilgi.sonGiris).slice(0, 16).replace("T", " ")}` : "henüz giriş yapmadı"}{bilgi.kilitli ? " · çok hatalı deneme, 15 dk kilitli" : ""}</span>
-            <button type="button" className="btn-secondary" style={kucukDugme} onClick={ac} data-site-hesap-duzenle="1">Kullanıcı adı / şifre değiştir</button>
-            <button type="button" className="btn-secondary" style={{ ...kucukDugme, color: "var(--erp-danger)" }} onClick={kapat}>Erişimi kapat</button>
+            {yonetici && <button type="button" className="btn-secondary" style={kucukDugme} onClick={ac} data-site-hesap-duzenle="1">Kullanıcı adı / şifre değiştir</button>}
+            {yonetici && <button type="button" className="btn-secondary" style={{ ...kucukDugme, color: "var(--erp-danger)" }} onClick={kapat} data-site-hesap-kapat="1">Erişimi kapat</button>}
           </>
         )}
-        {bilgi === null && !duzen && (
+        {bilgi === null && !duzen && yonetici && (
           <button type="button" className="btn-primary" style={{ fontSize: 11, padding: "4px 10px" }} onClick={ac} disabled={!!hata} data-site-hesap-ac="1">Giriş bilgisi oluştur</button>
+        )}
+        {bilgi === null && !yonetici && <span style={{ fontSize: 11, color: "var(--erp-text-2)" }}>yok</span>}
+        {bilgi !== undefined && !yonetici && (
+          <span data-site-yalniz-yonetici="1" style={{ fontSize: 10, color: "var(--erp-text-3)" }}>Giriş bilgisini yalnız Yönetici oluşturur, değiştirir ya da kapatır.</span>
         )}
         {bilgi && !duzen && (
           // ÖDEME ŞEKLİ (v1.652.0): yalnız işaretli müşteriden sitede sipariş verirken ödeme şekli istenir; yeni müşteride açık.
@@ -220,7 +232,32 @@ function siteKayitCarisi(b) {
   };
 }
 
-function SiteKayitTalepleriPaneli({ cariler, onSave, showToast }) {
+// ONAY ÖN KONTROLÜ (güvenlik denetimi, 16 Kasım — 1. madde). Onay iki adımdır: (1) ERP cariyi açar (yerel + bulut yazması),
+// (2) `site_kayit_onayla` hesabı kurar — cari buluta yazılmadan (2) çalışamaz ("Cari bulunamadı"), bu yüzden sıra değişemez.
+// Eskiden (1) hiçbir şey sorulmadan yapılıyordu: Yönetici olmayan, rolü sunucuda tanınmayan ya da işlenmiş / kullanıcı adı alınmış
+// talebi onaylayan kişi için cari açılıyor, (2) sunucuda reddediliyor ve cari BOŞTA kalıyordu (senaryo-site-yonetim-yetki).
+// Şimdi (1)'den ÖNCE sunucuya sorulur — yetki (`yonetici_mi`, sunucu kapısının kullandığı kuralın aynısı), talep hâlâ bekliyor mu,
+// kullanıcı adı boş mu. Biri olmazsa hiçbir şey yazılmaz. Yalnız ÖN KONTROL: kontrol ile (2) arasında başka bir cihaz aynı talebi
+// işlerse (2) yine düşebilir; o zaman açılan cari bildirimde adıyla söylenir (senaryodaki "yarış" adımı — bilinen, kalan açık).
+// Sunucu cevap vermezse onay yapılmaz (kapalı kalır).
+async function siteKayitOnKontrol(t) {
+  let yonetici;
+  try { yonetici = await supabaseIstek("rpc/yonetici_mi", { method: "POST", body: "{}" }); }
+  catch (e) { return `Yetki sunucuda doğrulanamadı — onay yapılmadı (${siteHataMetni(e)})`; }
+  if (yonetici !== true) return `${SITE_YALNIZ_YONETICI} — sunucu bu hesabı Yönetici olarak tanımıyor; hiçbir şey kaydedilmedi`;
+  let liste; let hesaplar;
+  try {
+    [liste, hesaplar] = await Promise.all([
+      supabaseIstek("rpc/site_kayit_listesi", { method: "POST", body: "{}" }),
+      supabaseIstek("rpc/site_hesap_listesi", { method: "POST", body: "{}" }),
+    ]);
+  } catch (e) { return `Talep durumu okunamadı — onay yapılmadı (${siteHataMetni(e)})`; }
+  if (!(Array.isArray(liste) && liste.some((x) => x.id === t.id))) return "Talep artık bekleyenlerde değil (başka bir cihazda onaylanmış ya da reddedilmiş) — cari açılmadı";
+  if ((Array.isArray(hesaplar) ? hesaplar : []).some((h) => h.kullanici === t.kullanici)) return `"${t.kullanici}" kullanıcı adı başka bir caride kullanılıyor — talep onaylanamaz, cari açılmadı`;
+  return null;
+}
+
+function SiteKayitTalepleriPaneli({ cariler, onSave, showToast, yonetici = false }) {
   const [talepler, setTalepler] = useState(null);
   const [acik, setAcik] = useState(true);
   const [isleniyor, setIsleniyor] = useState({});
@@ -232,32 +269,47 @@ function SiteKayitTalepleriPaneli({ cariler, onSave, showToast }) {
   const liste = (talepler || []).filter((t) => !isleniyor[t.id] || isleniyor[t.id] === "hata");
   if (!liste.length) return null;
   const dus = (t) => setTalepler((l) => (l || []).filter((x) => x.id !== t.id));
-  const hesabiKur = (t, cariId, deneme = 0) => supabaseIstek("rpc/site_kayit_onayla", { method: "POST", body: JSON.stringify({ p_id: t.id, p_cari_id: cariId }) })
+  const hesabiKur = (t, cariId, yeniCariAdi, deneme = 0) => supabaseIstek("rpc/site_kayit_onayla", { method: "POST", body: JSON.stringify({ p_id: t.id, p_cari_id: cariId }) })
     .then(() => { dus(t); showToast(`Site hesabı açıldı: ${t.kullanici} — müşteri kendi şifresiyle girebilir`); },
       (e) => {
         const m = String((e && e.message) || e);
-        if (/Cari bulunamad/.test(m) && deneme < 8) return new Promise((r) => setTimeout(r, 3000)).then(() => hesabiKur(t, cariId, deneme + 1));
+        if (/Cari bulunamad/.test(m) && deneme < 8) return new Promise((r) => setTimeout(r, 3000)).then(() => hesabiKur(t, cariId, yeniCariAdi, deneme + 1));
         setIsleniyor((x) => ({ ...x, [t.id]: "hata" }));
-        showToast("Site hesabı açılamadı: " + m);
+        const islenmis = /Talep bulunamad/.test(m);
+        showToast("Site hesabı açılamadı: " + siteHataMetni(e) + (!yeniCariAdi ? "" : islenmis
+          ? ` — "${yeniCariAdi}" carisi açıldı ama talep bu arada başka bir cihazda işlendi; cari gereksizse silinebilir.`
+          : ` — "${yeniCariAdi}" carisi açıldı ama site hesabı kurulmadı; talep listede kaldı (yeniden Onayla bu cariye bağlamayı önerir).`));
+        yenile();
       });
-  const onayla = (t) => {
+  const onayla = async (t) => {
+    if (!yonetici) { showToast(SITE_YALNIZ_YONETICI); return; }
     const b = t.bilgiler || {};
     const nrm = (s) => String(s || "").toLocaleLowerCase("tr-TR").trim();
     const vn = String(b.vergiNo || "").replace(/\D/g, "");
     const mevcut = (cariler || []).find((c) => (nrm(c.unvan) && nrm(c.unvan) === nrm(b.unvan)) || (vn.length >= 10 && String(c.vergiNo || "").replace(/\D/g, "") === vn));
-    let cariId;
-    if (mevcut && window.confirm(`"${mevcut.unvan}" zaten kayıtlı. Site hesabı bu cariye bağlansın mı?\n\nTamam = mevcut cariye bağla · İptal = yeni cari aç`)) {
+    const mevcuduBagla = !!mevcut && window.confirm(`"${mevcut.unvan}" zaten kayıtlı. Site hesabı bu cariye bağlansın mı?\n\nTamam = mevcut cariye bağla · İptal = yeni cari aç`);
+    if (!mevcuduBagla && !window.confirm(`"${b.unvan}" yeni müşteri carisi olarak açılsın ve siteye "${t.kullanici}" ile girebilsin mi?`)) return;
+    setIsleniyor((x) => ({ ...x, [t.id]: "suruyor" }));
+    // İLK YAZMADAN ÖNCE (cari açılmadan) sunucuya sor.
+    const engel = await siteKayitOnKontrol(t);
+    if (engel) {
+      setIsleniyor((x) => { const y = { ...x }; delete y[t.id]; return y; });
+      showToast(engel);
+      yenile();
+      return;
+    }
+    let cariId; let yeniCariAdi = "";
+    if (mevcuduBagla) {
       cariId = mevcut.id;
     } else {
-      if (!window.confirm(`"${b.unvan}" yeni müşteri carisi olarak açılsın ve siteye "${t.kullanici}" ile girebilsin mi?`)) return;
       const cari = siteKayitCarisi(b);
       onSave([cari, ...(cariler || [])]);
-      cariId = cari.id;
+      cariId = cari.id; yeniCariAdi = cari.unvan;
     }
-    setIsleniyor((x) => ({ ...x, [t.id]: "suruyor" }));
-    hesabiKur(t, cariId);
+    hesabiKur(t, cariId, yeniCariAdi);
   };
   const reddet = (t) => {
+    if (!yonetici) { showToast(SITE_YALNIZ_YONETICI); return; }
     if (!window.confirm(`${(t.bilgiler || {}).unvan || t.kullanici} kayıt talebi reddedilsin mi?`)) return;
     supabaseIstek("rpc/site_kayit_reddet", { method: "POST", body: JSON.stringify({ p_id: t.id }) })
       .then(() => { dus(t); showToast("Kayıt talebi reddedildi"); }, (e) => showToast("Reddedilemedi: " + ((e && e.message) || e)));
@@ -267,6 +319,7 @@ function SiteKayitTalepleriPaneli({ cariler, onSave, showToast }) {
       <button type="button" onClick={() => setAcik(!acik)} style={{ all: "unset", cursor: "pointer", fontWeight: 700, color: "#2F6B3A", fontSize: 13 }}>
         {acik ? "▾" : "▸"} Siteden gelen kayıt talepleri ({liste.length})
       </button>
+      {acik && !yonetici && <div data-site-yalniz-yonetici="1" style={{ fontSize: 11, color: "var(--erp-text-3)", marginTop: 4 }}>Talepleri yalnız Yönetici onaylar ya da reddeder.</div>}
       {acik && (
         <div style={{ display: "grid", gap: 6, marginTop: 8 }}>
           {liste.map((t) => {
@@ -282,8 +335,8 @@ function SiteKayitTalepleriPaneli({ cariler, onSave, showToast }) {
                 {(b.vergiNo || b.vergiDairesi) && <span style={{ color: "var(--erp-text-2)" }}>VN: {[b.vergiDairesi, b.vergiNo].filter(Boolean).join(" · ")}</span>}
                 <span style={{ color: "var(--erp-text-2)", flex: "1 1 200px", minWidth: 0 }}>{[b.adres, yer].filter(Boolean).join(" — ")}{b.not ? ` — “${b.not}”` : ""}</span>
                 <span className="mono" title="Müşterinin seçtiği kullanıcı adı" style={{ fontWeight: 700, color: "var(--erp-info)" }}>👤 {t.kullanici}</span>
-                <button type="button" className="btn-primary" style={{ fontSize: 11, padding: "3px 10px" }} disabled={isleniyor[t.id] === "suruyor"} onClick={() => onayla(t)}>Onayla — cari aç</button>
-                <button type="button" className="btn-secondary" style={{ fontSize: 11, padding: "3px 8px" }} onClick={() => reddet(t)}>Reddet</button>
+                {yonetici && <button type="button" className="btn-primary" style={{ fontSize: 11, padding: "3px 10px" }} disabled={isleniyor[t.id] === "suruyor"} onClick={() => onayla(t)} data-site-kayit-onayla="1">Onayla — cari aç</button>}
+                {yonetici && <button type="button" className="btn-secondary" style={{ fontSize: 11, padding: "3px 8px" }} onClick={() => reddet(t)} data-site-kayit-reddet="1">Reddet</button>}
               </div>
             );
           })}

@@ -5727,7 +5727,7 @@ function AtolyeUygulamasi() {
               onMuhasebeHareketi={muhasebeyePesinIsle}
               onParaFisi={paraFisiKesBildir}
               onFisIptal={sunucuFisiIptal}
-              onMuhasebeKaydet={saveMuhasebe} kullaniciYetkisiVar={kullaniciYetkisiVar} onayIste={onayIste} onayAcik={onaySistemiAcikMi(tanimlar)}
+              onMuhasebeKaydet={saveMuhasebe} kullaniciYetkisiVar={kullaniciYetkisiVar} siteYonetici={siteYonetimiYetkisi(tanimlar, aktifKullanici)} onayIste={onayIste} onayAcik={onaySistemiAcikMi(tanimlar)}
               cariler={cariler}
               onSave={saveCariler}
               // ÇEK KAYDI TEK YERE DÜŞSÜN: caride girilen çek Muhasebe > Çekler listesine de
@@ -6093,7 +6093,7 @@ function AtolyeUygulamasi() {
                 cariler={cariler}
                 uretim={uretim}
                 showToast={showToast}
-                onMuhasebeKaydet={saveMuhasebe} kullaniciYetkisiVar={kullaniciYetkisiVar} onayIste={onayIste} onayAcik={onaySistemiAcikMi(tanimlar)} onCopaAt={copaAt}
+                onMuhasebeKaydet={saveMuhasebe} kullaniciYetkisiVar={kullaniciYetkisiVar} siteYonetici={siteYonetimiYetkisi(tanimlar, aktifKullanici)} onayIste={onayIste} onayAcik={onaySistemiAcikMi(tanimlar)} onCopaAt={copaAt}
               />
             )
           )}
