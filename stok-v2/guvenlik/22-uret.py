@@ -87,6 +87,7 @@ def uret():
         "--@@TANIMLAR@@": "\n\n".join(donusmus),
         "@@MD5_22_SATIRLARI@@": sira(adlar),
         "@@MD5_22_YENI@@": sira(yeni),
+        "@@YENI_IMZALAR@@": ", ".join(f"'{a}'" for a in yeni),
         "@@MD5_ONAYLA_19@@": MD5_ONAYLA_19,
         "@@MD5_REDDET_19@@": MD5_REDDET_19,
         "@@MD5_ONAYLA_22@@": ozetler["public.site_kayit_onayla(text, text)"],

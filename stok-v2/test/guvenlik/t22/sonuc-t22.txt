@@ -5,7 +5,7 @@
   [GEÇTİ] Editor denetimi: 22-onkosul-salt-okur.sql → temiz
   [GEÇTİ] önkoşul (19 sonrası, 22 öncesi) → HAZIR — 22 uygulanabilir
   [GEÇTİ] 22 uygulandı (psql -f) → 0
-  [GEÇTİ]   veri değişmedi (yalnız şema / fonksiyon) → b7bd909f5cf23bab1e491cdd4701c410
+  [GEÇTİ]   veri değişmedi (yalnız şema / fonksiyon) → 4900a6cbdc6f1994e369427107e8087e
   [GEÇTİ] önkoşul (sonra) → UYGULANMIŞ
   [GEÇTİ] ikinci kez uygulama → 22 zaten uygulanmış
   [GEÇTİ] site-portal.sql (depo) ile kurulan veritabanı: gövdeler 22 ile aynı → UYGULANMIŞ (yedeksiz: site-portal.sql ile kurulmuş; geri alma dosyası çalışmaz)
@@ -30,11 +30,11 @@
 == 3) Cevabı kaybolan istek ve işlem bitmeden kopan bağlantı
   [GEÇTİ] ilk çağrı → ok:{"durum": "onaylandi", "cari_id": "cari-ck1-aaaa"}
   [GEÇTİ] aynı kimlikle tekrar (cevap kaybolmuştu) → ok:{"durum": "zaten", "cari_id": "cari-ck1-aaaa"}
-  [GEÇTİ]   hiçbir tablo değişmedi → 861ef9e61d0ed4861396999dedf01ca6
+  [GEÇTİ]   hiçbir tablo değişmedi → 34025b4770fd773f646ea4ccd950226e
   [GEÇTİ]   cari / hesap → 1/1
   [GEÇTİ] mevcut cariye bağlamada aynı tekrar → ok:
   [GEÇTİ]   ikinci kez (cevap kaybolmuştu) → ok:
-  [GEÇTİ]   hiçbir tablo değişmedi → ed7960f87978c2b47ada66e9c078b7fd
+  [GEÇTİ]   hiçbir tablo değişmedi → abf73c5be37d3f2e1c575aa638e54e33
   [GEÇTİ] cihaz işlem bitmeden koptu (bağlantı sonlandırıldı) → hata
   [GEÇTİ]   hiçbir şey yazılmadı: talep · cari / hesap → yeni · 0/0
   [GEÇTİ]   ikinci Yönetici onaylar → ok:{"durum": "onaylandi", "cari_id": "cari-ck2-bbbb"}
@@ -46,10 +46,10 @@
 == 4) Eski ERP paketleri (yakalanmış gerçek istek, PostgREST gibi oynatılır)
   [GEÇTİ] ad02222 (1.744.21): bekleyen talep için cari yazması → hata:KR013
   [GEÇTİ]   ardından eski onay çağrısı → hata:P0001: Cari bulunamadı
-  [GEÇTİ]   hiçbir tablo değişmedi (cari yok, hesap yok, talep bekliyor) → e53c9a6f10e852914eccd8892ecef931
+  [GEÇTİ]   hiçbir tablo değişmedi (cari yok, hesap yok, talep bekliyor) → 2a7d29f6e5af66e807e12c39a6e9d656
   [GEÇTİ] 7c6ec2e (1.744.21): bekleyen talep için cari yazması → hata:KR013
   [GEÇTİ]   ardından eski onay çağrısı → hata:P0001: Cari bulunamadı
-  [GEÇTİ]   hiçbir tablo değişmedi (cari yok, hesap yok, talep bekliyor) → e53c9a6f10e852914eccd8892ecef931
+  [GEÇTİ]   hiçbir tablo değişmedi (cari yok, hesap yok, talep bekliyor) → 2a7d29f6e5af66e807e12c39a6e9d656
   [GEÇTİ] not / siteOdemeSor alanları silinmiş → hata:KR013
   [GEÇTİ] ünvan büyük harf + fazla boşluk, telefon biçimi farklı → hata:KR013
   [GEÇTİ] sahte sürüm başlığı (9.9.9) → hata:KR013
@@ -85,7 +85,7 @@
   [GEÇTİ] vergi no kuralı = uygulamanın vergiNoKaydedilecek (10 girdi) → ["0010013108","001 001 3108","0010013109","10000000146","10000000147","1234567890","abc","","12","01000000146"]
 == 6) Kapı
   [GEÇTİ] Personel: yeni cariyle onay → ret:kapı
-  [GEÇTİ]   tablolar değişmedi → b7b9239d444acaa98cbd26106fc62e2d
+  [GEÇTİ]   tablolar değişmedi → c93e7529f03e21ce6f1df8108c461bb5
   [GEÇTİ] anon: yeni cariyle onay → ret:izin-fonksiyon
   [GEÇTİ] authenticated: yardımcı fonksiyon (tetikleyici) → ret:izin-fonksiyon
 == 7) Geri alma ve Editor taklidi
@@ -99,5 +99,40 @@
   [GEÇTİ]   önkoşul → HAZIR — 22 uygulanabilir
   [GEÇTİ] önkoşul tutmazsa (reddet farklı) uygulama durur → 19 hâlinden farklı
   [GEÇTİ]   hiçbir şey değişmedi → 0
+== 8) Uygulama / geri alma korumaları
+  [GEÇTİ] değişiklik sayacı DEVRE DIŞI: önkoşul satırı · GENEL → DEVRE DIŞI|DUR · DUR — 22 uygulanmaz (DUR satırlarına bakın)
+  [GEÇTİ]   uygulama durur → değişiklik sayacı (degisiklik_izle) yok ya da devre dışı
+  [GEÇTİ]   katalog ve veri değişmedi → c4a7ef378859cfe841ca50e209f5e737 · 906e7598c07ad2e030fa830b9d51a4e6
+  [GEÇTİ] değişiklik sayacı YOK: önkoşul satırı · GENEL → YOK|DUR · DUR — 22 uygulanmaz (DUR satırlarına bakın)
+  [GEÇTİ]   uygulama durur, katalog değişmedi → durdu · 0/0/0
+NOTICE:  trigger "degisiklik_izle" for relation "public.cariler" does not exist, skipping
+  [GEÇTİ] sayaç yeniden kuruldu → var, etkin|tamam · HAZIR — 22 uygulanabilir
+  [GEÇTİ] islenme sütunu ÖNCEDEN var: GENEL → KISMİ / BEKLENMEYEN — uygulamayın, sonucu paylaşın
+  [GEÇTİ]   uygulama durur ve söyler → sütun site_kayit_talepleri.islenme
+  [GEÇTİ]   sütun ve değerleri değişmedi; katalog aynı → f79ec1b5101c92d91e140b92f18a6160 · bf2a9d54c6393f051a62bafb930b2c7d
+  [GEÇTİ] yardımcı fonksiyon ÖNCEDEN var (site_kimlik_zamani): uygulama durur ve söyler → public.site_kimlik_zamani(text)
+  [GEÇTİ]   fonksiyon gövdesi aynı; katalog aynı → 8bbe4b7ec24d961a442478b2cb30586b · 441be610419878ecd3389c8cd19f267b
+  [GEÇTİ] temizlendi: önkoşul → HAZIR — 22 uygulanabilir
+  [GEÇTİ] 22 uygulandı → 0 · UYGULANMIŞ · 5/1/1
+  [GEÇTİ]   reddet'ten anon kaldırıldı (22) → hayır
+  [GEÇTİ]   önkoşul: geri alma hazır → 0 nesne değişmiş|tamam
+  [GEÇTİ] tetikleyici sonradan KAPATILDI: önkoşul → 1 nesne değişmiş|UYARI
+  [GEÇTİ]   tetikleyici kapalı: geri alma durur → site_cari_ekleme_koru tetikleyicisi uygulandıktan sonra değişmiş
+  [GEÇTİ]   değişiklik ezilmedi; katalog ve veri aynı; 22 nesneleri yerinde → 0221cde528f0c4f45240191cfb1e1340 · 906e7598c07ad2e030fa830b9d51a4e6 · 5/1/1
+  [GEÇTİ]   tetikleyici hâlâ kapalı → D
+  [GEÇTİ] tetikleyici sonradan YENİDEN TANIMLANDI (insert or update): geri alma durur → site_cari_ekleme_koru tetikleyicisi uygulandıktan sonra değişmiş
+  [GEÇTİ]   değişiklik ezilmedi; katalog ve veri aynı; 22 nesneleri yerinde → f5b49868ffe0cf0b4728a9ea1b9198d5 · 906e7598c07ad2e030fa830b9d51a4e6 · 5/1/1
+  [GEÇTİ] yeni fonksiyona sonradan anon yetkisi VERİLDİ: geri alma durur → public.site_kayit_onayla_yeni_cari(text, text) yetkisi / sahibi / ayarı uygulandıktan sonra değişmiş
+  [GEÇTİ]   değişiklik ezilmedi; katalog ve veri aynı; 22 nesneleri yerinde → d1381918e2a0a970ad84cd36a42116f0 · 906e7598c07ad2e030fa830b9d51a4e6 · 5/1/1
+  [GEÇTİ]   anon yetkisi duruyor (ezilmedi) → evet
+  [GEÇTİ] onayla'dan sonradan authenticated yetkisi ALINDI: geri alma durur → public.site_kayit_onayla(text, text) yetkisi / sahibi / ayarı uygulandıktan sonra değişmiş
+  [GEÇTİ]   değişiklik ezilmedi; katalog ve veri aynı; 22 nesneleri yerinde → 56c3f384f8b7d293973665e23abdf844 · 906e7598c07ad2e030fa830b9d51a4e6 · 5/1/1
+  [GEÇTİ] yardımcının ayarı sonradan DEĞİŞTİ (search_path): geri alma durur → public.site_eslesme_anahtari(text, text) yetkisi / sahibi / ayarı uygulandıktan sonra değişmiş
+  [GEÇTİ]   değişiklik ezilmedi; katalog ve veri aynı; 22 nesneleri yerinde → 9b6e07ea47feac0d3dfa82b52e5eb2c5 · 906e7598c07ad2e030fa830b9d51a4e6 · 5/1/1
+  [GEÇTİ] değişiklikler geri çekildi: önkoşul → 0 nesne değişmiş|tamam
+  [GEÇTİ] geri alma çalışır → 0
+  [GEÇTİ]   22 nesneleri kalmadı → 0/0/0
+  [GEÇTİ]   reddet / onayla yetkileri 22 ÖNCESİYLE birebir (reddet'te anon geri geldi) → {postgres=X/postgres,authenticated=X/postgres,anon=X/postgres} · {postgres=X/postgres,authenticated=X/postgres}
+  [GEÇTİ]   önkoşul → HAZIR — 22 uygulanabilir
 
-SONUÇ: 92 geçti, 0 kaldı
+SONUÇ: 125 geçti, 0 kaldı

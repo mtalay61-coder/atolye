@@ -23,9 +23,13 @@
 --  yayınlanana kadar yeni cariyle onay beklemeli.
 --  Sonra 19-durum-salt-okur.sql onayla / reddet satırlarında "FARKLI" der (bu dosya onları bilerek değiştirir); durum için
 --  22-onkosul-salt-okur.sql.
---  ÖNKOŞULLAR (biri tutmazsa HATA, hiçbir şey değişmez): postgres rolü; tablolar ve 19'un kapısı var; 22 uygulanmamış; onayla / reddet
---  gövdeleri 19'daki hâlle aynı (md5); cariler'de id / unvan / ek sütunları var.
---  YEDEK: onayla / reddet'in tanımı guvenlik.site_onay_22_yedek'e yazılır. Geri alma: 22-site-onay-atomik-geri-al.sql.
+--  ÖNKOŞULLAR (biri tutmazsa HATA, hiçbir şey değişmez): postgres rolü; tablolar ve 19'un kapısı var; 22 uygulanmamış; 22'nin
+--  OLUŞTURACAĞI nesnelerden (5 fonksiyon, tetikleyici, islenme sütunu) HİÇBİRİ önceden yok — varsa sessizce değiştirilmez, durur;
+--  cariler'de değişiklik sayacı (degisiklik_izle) var ve ETKİN; onayla / reddet gövdeleri 19'daki hâlle aynı (md5); cariler'de id /
+--  unvan / ek sütunları var.
+--  YEDEK (guvenlik.site_onay_22_yedek): onayla / reddet'in tanımı ve yetkileri (önce), 22'nin oluşturduğu nesneler listesi, uygulama
+--  SONRASI tetikleyici tanımı + etkinliği ve altı fonksiyonun yetki / sahip / güvenlik ayarı. Geri alma: 22-site-onay-atomik-geri-al.sql
+--  (bunlardan biri sonradan değiştiyse dokunmadan durur; yalnız 22'nin oluşturduklarını kaldırır).
 --  Çalıştırma: Supabase › SQL Editor (postgres) › dosyanın TAMAMI › Run. Bütün değişiklik TEK do bloğunda: Editor ifadeleri ayrı
 --  gönderse de ya hepsi uygulanır ya hiçbiri. Sonuç guvenlik.site_onay_22_sonuc'ta kalır (son select gösterir).
 -- =====================================================================================================================
@@ -52,9 +56,16 @@ begin
       raise exception '22 zaten uygulanmış (guvenlik.site_onay_22_yedek dolu). Geri almak için 22-site-onay-atomik-geri-al.sql. Hiçbir şey değişmedi.';
     end if;
   end if;
-  if to_regprocedure('public.site_kayit_onayla_yeni_cari(text, text)') is not null
-     or exists (select 1 from pg_trigger where tgname = 'site_cari_ekleme_koru' and not tgisinternal) then
-    raise exception '22 yedeksiz uygulanmış görünüyor (yeni fonksiyon ya da tetikleyici var). Hiçbir şey değişmedi.';
+  select string_agg(n, ', ') into v22_eksik from (
+    select x as n from unnest(array[@@YENI_IMZALAR@@]) x where to_regprocedure(x) is not null
+    union all select 'tetikleyici site_cari_ekleme_koru' where exists (select 1 from pg_trigger where tgname = 'site_cari_ekleme_koru' and not tgisinternal)
+    union all select 'sütun site_kayit_talepleri.islenme'
+     where exists (select 1 from pg_attribute where attrelid = 'public.site_kayit_talepleri'::regclass and attname = 'islenme' and not attisdropped)) z;
+  if v22_eksik is not null then
+    raise exception '22''nin oluşturacağı nesneler zaten var (%): sessizce değiştirilmez. Kaynağını inceleyin (site-portal.sql ile kurulmuş olabilir). Hiçbir şey değişmedi.', v22_eksik;
+  end if;
+  if not exists (select 1 from pg_trigger where tgrelid = 'public.cariler'::regclass and tgname = 'degisiklik_izle' and not tgisinternal and tgenabled <> 'D') then
+    raise exception 'cariler değişiklik sayacı (degisiklik_izle) yok ya da devre dışı: sunucunun açtığı cari diğer cihazlara ulaşmaz. Önce degisiklik-sayaci.sql. Hiçbir şey değişmedi.';
   end if;
   select md5(btrim(regexp_replace(regexp_replace(prosrc, '--[^\n]*', '', 'g'), '\s+', ' ', 'g'))) into v22_onayla
     from pg_proc where oid = to_regprocedure('public.site_kayit_onayla(text, text)');
@@ -63,6 +74,9 @@ begin
   if v22_onayla is distinct from '@@MD5_ONAYLA_19@@' or v22_reddet is distinct from '@@MD5_REDDET_19@@' then
     raise exception 'site_kayit_onayla / site_kayit_reddet canlıda 19 hâlinden farklı (onayla %, reddet %). Hiçbir şey değişmedi.',
       coalesce(v22_onayla, 'yok'), coalesce(v22_reddet, 'yok');
+  end if;
+  if exists (select 1 from pg_proc where oid in (to_regprocedure('public.site_kayit_onayla(text, text)'), to_regprocedure('public.site_kayit_reddet(text)')) and proacl is null) then
+    raise exception 'site_kayit_onayla / site_kayit_reddet yetkileri varsayılan (açık tanım yok; 19 tanımlamış olmalıydı) — geri alma birebir kuramaz. Hiçbir şey değişmedi.';
   end if;
   select string_agg(s, ', ') into v22_eksik from unnest(array['id', 'unvan', 'ek']) s
    where not exists (select 1 from pg_attribute a where a.attrelid = 'public.cariler'::regclass and a.attname = s and a.attnum > 0 and not a.attisdropped);
@@ -82,8 +96,21 @@ begin
   insert into guvenlik.site_onay_22_yedek (tur, nesne, tanim, ozet) values
     ('fonksiyon', 'public.site_kayit_onayla(text, text)', pg_get_functiondef(to_regprocedure('public.site_kayit_onayla(text, text)')), v22_onayla),
     ('fonksiyon', 'public.site_kayit_reddet(text)', pg_get_functiondef(to_regprocedure('public.site_kayit_reddet(text)')), v22_reddet);
+  insert into guvenlik.site_onay_22_yedek (tur, nesne, tanim)
+  select 'once_yetki', x, (select coalesce(p.proacl::text, '') from pg_proc p where p.oid = to_regprocedure(x))
+    from unnest(array['public.site_kayit_onayla(text, text)', 'public.site_kayit_reddet(text)']) x;
 
 --@@TANIMLAR@@
+
+  insert into guvenlik.site_onay_22_yedek (tur, nesne)
+  select 'olusturdu', x from unnest(array[@@YENI_IMZALAR@@, 'tetikleyici:public.cariler.site_cari_ekleme_koru', 'sutun:public.site_kayit_talepleri.islenme']) x;
+  insert into guvenlik.site_onay_22_yedek (tur, nesne, tanim)
+  select 'sonra', 'tetikleyici:public.cariler.site_cari_ekleme_koru', pg_get_triggerdef(t.oid) || ' | ' || t.tgenabled::text
+    from pg_trigger t where t.tgrelid = 'public.cariler'::regclass and t.tgname = 'site_cari_ekleme_koru';
+  insert into guvenlik.site_onay_22_yedek (tur, nesne, tanim)
+  select 'sonra', x.ad, (select coalesce(p.proacl::text, '') || ' | ' || p.prosecdef || ' | ' || coalesce(array_to_string(p.proconfig, ','), '')
+                                 || ' | ' || pg_get_userbyid(p.proowner) from pg_proc p where p.oid = to_regprocedure(x.ad))
+    from (values @@MD5_22_SATIRLARI@@) x(sira, ad, beklenen);
 
   create table if not exists guvenlik.site_onay_22_sonuc (sira int, kontrol text, beklenen text, sonuc text, durum text);
   revoke all on guvenlik.site_onay_22_sonuc from public, anon, authenticated;

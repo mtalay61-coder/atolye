@@ -56,9 +56,11 @@ satirlar as (
                  and a.attname in ('id', 'unvan', 'tip', 'telefon', 'vergi_no', 'adres', 'para_birimi', 'bagli_prosesler', 'pasif', 'surum', 'ek')), 'yok'), 'bilgi'
   union all select 9, 'cariler: tetikleyiciler',
     coalesce((select string_agg(tgname, ', ' order by tgname) from pg_trigger where tgrelid = to_regclass('public.cariler') and not tgisinternal), 'yok'), 'bilgi'
-  union all select 10, 'cariler: değişiklik sayacı (degisiklik_izle — diğer cihazlar yeni cariyi görsün)',
-    case when exists (select 1 from pg_trigger where tgrelid = to_regclass('public.cariler') and tgname = 'degisiklik_izle') then 'var' else 'YOK' end,
-    case when exists (select 1 from pg_trigger where tgrelid = to_regclass('public.cariler') and tgname = 'degisiklik_izle') then 'tamam' else 'UYARI' end
+  union all select 10, 'cariler: değişiklik sayacı (degisiklik_izle — diğer cihazlar sunucunun açtığı cariyi görsün)',
+    coalesce((select case when tgenabled = 'D' then 'DEVRE DIŞI' else 'var, etkin' end from pg_trigger
+               where tgrelid = to_regclass('public.cariler') and tgname = 'degisiklik_izle' and not tgisinternal), 'YOK'),
+    case when exists (select 1 from pg_trigger where tgrelid = to_regclass('public.cariler') and tgname = 'degisiklik_izle' and not tgisinternal and tgenabled <> 'D')
+         then 'tamam' else 'DUR' end
   union all select 11, 'cariler: en düşük istemci sürümü (stk_ayar.min_istemci_surum; 22 bunu kullanmaz)',
     case when to_regclass('public.stk_ayar') is null then 'stk_ayar yok'
          else coalesce(nullif((xpath('/row/s/text()', query_to_xml('select min_istemci_surum as s from public.stk_ayar where id = ''tekil''', false, true, '')))[1]::text, ''), 'boş (kapı kapalı)') end, 'bilgi'
@@ -72,6 +74,18 @@ satirlar as (
     case when to_regclass('public.site_kayit_talepleri') is null then 'tablo yok'
          when has_table_privilege('authenticated', 'public.site_kayit_talepleri', 'INSERT,UPDATE,DELETE') then 'EVET' else 'hayır' end,
     case when to_regclass('public.site_kayit_talepleri') is not null and has_table_privilege('authenticated', 'public.site_kayit_talepleri', 'INSERT,UPDATE,DELETE') then 'DUR' else 'tamam' end
+  union all select 15, 'onayla / reddet yetkileri açıkça tanımlı (19; geri alma bunları birebir kurar)',
+    case when exists (select 1 from pg_proc where oid in (to_regprocedure('public.site_kayit_onayla(text, text)'), to_regprocedure('public.site_kayit_reddet(text)')) and proacl is null)
+         then 'VARSAYILAN' else 'tanımlı' end,
+    case when exists (select 1 from pg_proc where oid in (to_regprocedure('public.site_kayit_onayla(text, text)'), to_regprocedure('public.site_kayit_reddet(text)')) and proacl is null)
+         then 'DUR' else 'tamam' end
+  union all select 16, 'geri alma: tetikleyici ve fonksiyon yetki / sahip / ayarı uygulandığı hâlde mi (22 uygulanmışsa)',
+    case when d.isaret = 0 then '22 uygulanmamış'
+         else (xpath('/row/n/text()', query_to_xml('select count(*) as n from guvenlik.site_onay_22_yedek y where y.tur = ''sonra'' and y.tanim is distinct from (case when y.nesne like ''tetikleyici:%'' then (select pg_get_triggerdef(t.oid) || '' | '' || t.tgenabled::text from pg_trigger t where t.tgrelid = ''public.cariler''::regclass and t.tgname = ''site_cari_ekleme_koru'') else (select coalesce(p.proacl::text, '''') || '' | '' || p.prosecdef || '' | '' || coalesce(array_to_string(p.proconfig, '',''), '''') || '' | '' || pg_get_userbyid(p.proowner) from pg_proc p where p.oid = to_regprocedure(y.nesne)) end)', false, true, '')))[1]::text || ' nesne değişmiş' end,
+    case when d.isaret = 0 then 'bilgi'
+         when (xpath('/row/n/text()', query_to_xml('select count(*) as n from guvenlik.site_onay_22_yedek y where y.tur = ''sonra'' and y.tanim is distinct from (case when y.nesne like ''tetikleyici:%'' then (select pg_get_triggerdef(t.oid) || '' | '' || t.tgenabled::text from pg_trigger t where t.tgrelid = ''public.cariler''::regclass and t.tgname = ''site_cari_ekleme_koru'') else (select coalesce(p.proacl::text, '''') || '' | '' || p.prosecdef || '' | '' || coalesce(array_to_string(p.proconfig, '',''), '''') || '' | '' || pg_get_userbyid(p.proowner) from pg_proc p where p.oid = to_regprocedure(y.nesne)) end)', false, true, '')))[1]::text = '0' then 'tamam'
+         else 'UYARI' end
+    from durum d
 )
 select sira, kontrol, sonuc, durum from satirlar
 union all

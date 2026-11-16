@@ -68,6 +68,8 @@ git -C $A show ad02222:site-portal.sql > $Y/site-19.sql
 kur() {   # 19 sonrası canlı + test verisi + ikinci Yönetici + eski ERP'nin talebi
   $T19/temel.sh $1 "" $Y/site-19.sql >/dev/null 2>&1 || { echo "kurulum başarısız: $1"; exit 2; }
   $PG -d $1 -f $T19/veri.sql >/dev/null && PGOPTIONS='-c client_min_messages=warning' $PG -d $1 -f $T/cari-sutunlari.sql >/dev/null || { echo "veri başarısız: $1"; exit 2; }
+  # Değişiklik sayacı (canlıda kurulu; 22 önkoşulu ister): yalnız var olan tablolara tetikleyici kurar.
+  PGOPTIONS='-c client_min_messages=warning' $PG -d $1 -f $A/degisiklik-sayaci.sql >/dev/null || { echo "sayaç başarısız: $1"; exit 2; }
   $PG -d $1 -c "update public.tanimlar set veri = jsonb_set(veri, '{kullanicilar}', (veri -> 'kullanicilar') || '[{\"kullaniciAdi\":\"İkinci Yönetici\",\"rol\":\"Yönetici\",\"eposta\":\"yonetici2@firma.test\"}]'::jsonb) where id = 'tekil'" \
     -c "insert into auth.users (email) values ('yonetici2@firma.test')" >/dev/null
   python3 - "$T/eski-ad02222.json" > $Y/eski-talep.sql <<'PY'
@@ -82,6 +84,11 @@ PY
 }
 uygula22() { $PG -d $1 -f $G/22-site-onay-atomik.sql >/dev/null 2>$Y/uygula.err; }
 onkosul() { $PG -d $1 -At -F'|' -f $G/22-onkosul-salt-okur.sql | grep '>>> GENEL' | cut -d'|' -f3; }
+onk() { $PG -d $1 -At -F'|' -f $G/22-onkosul-salt-okur.sql | awk -F'|' -v s=$2 '$1 == s { print $3 "|" $4 }'; }   # önkoşul satırı: sonuç|durum
+nesne22() { q $1 "select (select count(*) from pg_proc where proname in ('site_kayit_onayla_yeni_cari', 'site_cari_ekleme_koru', 'site_eslesme_anahtari', 'site_vergi_no_kaydedilecek', 'site_kimlik_zamani')) || '/' || (select count(*) from pg_trigger where tgname = 'site_cari_ekleme_koru') || '/' || (select count(*) from pg_attribute where attrelid = 'public.site_kayit_talepleri'::regclass and attname = 'islenme' and not attisdropped)"; }
+katalog() { q $1 "select md5(string_agg(x, '|' order by x)) from (select p.oid::regprocedure::text || md5(p.prosrc) || coalesce(p.proacl::text, '') x from pg_proc p where p.pronamespace = 'public'::regnamespace and p.proname like 'site\_%'
+  union all select tgname || pg_get_triggerdef(oid) || tgenabled::text from pg_trigger where tgrelid = 'public.cariler'::regclass and not tgisinternal
+  union all select attname || format_type(atttypid, atttypmod) from pg_attribute where attrelid = 'public.site_kayit_talepleri'::regclass and attnum > 0 and not attisdropped) z"; }
 
 echo "== 0) Üretim, Editor uyumu, önkoşul"
 sonuc "22 dosyaları site-portal.sql'den yeniden üretilince" "22 üretimi: AYNI" "$(python3 $G/22-uret.py --denetle)"
@@ -98,7 +105,7 @@ uygula22 $DB; sonuc "22 uygulandı (psql -f)" "0" "$?"
 sonuc "  veri değişmedi (yalnız şema / fonksiyon)" "$o1" "$(durum $DB)"
 sonuc "önkoşul (sonra)" "UYGULANMIŞ" "$(onkosul $DB)"
 sonuc "ikinci kez uygulama" "22 zaten uygulanmış" "$($PG -d $DB -f $G/22-site-onay-atomik.sql 2>&1 | grep -o '22 zaten uygulanmış' | head -1)"
-$T19/temel.sh t22p >/dev/null 2>&1; PGOPTIONS='-c client_min_messages=warning' $PG -d t22p -f $T/cari-sutunlari.sql >/dev/null
+$T19/temel.sh t22p >/dev/null 2>&1; PGOPTIONS='-c client_min_messages=warning' $PG -d t22p -f $T/cari-sutunlari.sql >/dev/null; PGOPTIONS='-c client_min_messages=warning' $PG -d t22p -f $A/degisiklik-sayaci.sql >/dev/null
 sonuc "site-portal.sql (depo) ile kurulan veritabanı: gövdeler 22 ile aynı" "UYGULANMIŞ (yedeksiz: site-portal.sql ile kurulmuş; geri alma dosyası çalışmaz)" "$(onkosul t22p)"
 
 echo "== 1) Aynı talebe farklı cari kimlikleriyle eşzamanlı onay"
@@ -273,8 +280,71 @@ $PG -d t22e -c "create or replace function public.site_kayit_reddet(p_id text) r
 sonuc "önkoşul tutmazsa (reddet farklı) uygulama durur" "19 hâlinden farklı" "$($PG -d t22e -f $G/22-site-onay-atomik.sql 2>&1 | grep -o '19 hâlinden farklı' | head -1)"
 sonuc "  hiçbir şey değişmedi" "0" "$(q t22e "select count(*) from pg_proc where proname in ('site_kayit_onayla_yeni_cari', 'site_cari_ekleme_koru')")"
 
+echo "== 8) Uygulama / geri alma korumaları"
+kur t22k
+DURMSJ="DUR — 22 uygulanmaz (DUR satırlarına bakın)"
+$PG -d t22k -c "alter table public.cariler disable trigger degisiklik_izle" >/dev/null
+k=$(katalog t22k); o=$(durum t22k)
+sonuc "değişiklik sayacı DEVRE DIŞI: önkoşul satırı · GENEL" "DEVRE DIŞI|DUR · $DURMSJ" "$(onk t22k 10) · $(onkosul t22k)"
+sonuc "  uygulama durur" "değişiklik sayacı (degisiklik_izle) yok ya da devre dışı" "$($PG -d t22k -f $G/22-site-onay-atomik.sql 2>&1 | grep -o 'değişiklik sayacı (degisiklik_izle) yok ya da devre dışı' | head -1)"
+sonuc "  katalog ve veri değişmedi" "$k · $o" "$(katalog t22k) · $(durum t22k)"
+$PG -d t22k -c "drop trigger degisiklik_izle on public.cariler" >/dev/null
+sonuc "değişiklik sayacı YOK: önkoşul satırı · GENEL" "YOK|DUR · $DURMSJ" "$(onk t22k 10) · $(onkosul t22k)"
+sonuc "  uygulama durur, katalog değişmedi" "durdu · 0/0/0" "$($PG -d t22k -f $G/22-site-onay-atomik.sql >/dev/null 2>&1 && echo uygulandı || echo durdu) · $(nesne22 t22k)"
+q t22k "select public.degisiklik_izle_kur('cariler')" >/dev/null
+sonuc "sayaç yeniden kuruldu" "var, etkin|tamam · HAZIR — 22 uygulanabilir" "$(onk t22k 10) · $(onkosul t22k)"
+$PG -d t22k -c "alter table public.site_kayit_talepleri add column islenme timestamptz" -c "update public.site_kayit_talepleri set islenme = '2026-01-02 03:04:05+00' where id = 'talep-1'" >/dev/null
+k=$(katalog t22k); iv=$(q t22k "select md5(string_agg(id || coalesce(islenme::text, '-'), ',' order by id)) from site_kayit_talepleri")
+sonuc "islenme sütunu ÖNCEDEN var: GENEL" "KISMİ / BEKLENMEYEN — uygulamayın, sonucu paylaşın" "$(onkosul t22k)"
+sonuc "  uygulama durur ve söyler" "sütun site_kayit_talepleri.islenme" "$($PG -d t22k -f $G/22-site-onay-atomik.sql 2>&1 | grep -o 'sütun site_kayit_talepleri.islenme' | head -1)"
+sonuc "  sütun ve değerleri değişmedi; katalog aynı" "$iv · $k" "$(q t22k "select md5(string_agg(id || coalesce(islenme::text, '-'), ',' order by id)) from site_kayit_talepleri") · $(katalog t22k)"
+$PG -d t22k -c "alter table public.site_kayit_talepleri drop column islenme" >/dev/null
+$PG -d t22k -c "create function public.site_kimlik_zamani(p text) returns timestamptz language sql immutable as 'select null::timestamptz'" >/dev/null
+k=$(katalog t22k); fm=$(q t22k "select md5(prosrc) from pg_proc where proname = 'site_kimlik_zamani'")
+sonuc "yardımcı fonksiyon ÖNCEDEN var (site_kimlik_zamani): uygulama durur ve söyler" "public.site_kimlik_zamani(text)" "$($PG -d t22k -f $G/22-site-onay-atomik.sql 2>&1 | grep -o 'public.site_kimlik_zamani(text)' | head -1)"
+sonuc "  fonksiyon gövdesi aynı; katalog aynı" "$fm · $k" "$(q t22k "select md5(prosrc) from pg_proc where proname = 'site_kimlik_zamani'") · $(katalog t22k)"
+$PG -d t22k -c "drop function public.site_kimlik_zamani(text)" >/dev/null
+# Önceki (19 hâli) yetkiyi değiştir: reddet'e anon EXECUTE (22 bunu kaldırır) — geri alma 22 öncesini BİREBİR kurmalı.
+$PG -d t22k -c "grant execute on function public.site_kayit_reddet(text) to anon" >/dev/null
+once_red=$(q t22k "select proacl::text from pg_proc where oid = 'public.site_kayit_reddet(text)'::regprocedure")
+once_ony=$(q t22k "select proacl::text from pg_proc where oid = 'public.site_kayit_onayla(text, text)'::regprocedure")
+sonuc "temizlendi: önkoşul" "HAZIR — 22 uygulanabilir" "$(onkosul t22k)"
+uygula22 t22k; sonuc "22 uygulandı" "0 · UYGULANMIŞ · 5/1/1" "$? · $(onkosul t22k) · $(nesne22 t22k)"
+sonuc "  reddet'ten anon kaldırıldı (22)" "hayır" "$(q t22k "select case when has_function_privilege('anon', 'public.site_kayit_reddet(text)', 'execute') then 'evet' else 'hayır' end")"
+sonuc "  önkoşul: geri alma hazır" "0 nesne değişmiş|tamam" "$(onk t22k 16)"
+geri_dur() {   # $1 açıklama, $2 beklenen ileti parçası; geri alma DURMALI ve katalog / veri değişmemeli
+  local k o m; k=$(katalog t22k); o=$(durum t22k)
+  m=$($PG -d t22k -f $G/22-site-onay-atomik-geri-al.sql 2>&1 | grep -o "$2" | head -1)
+  sonuc "$1: geri alma durur" "$2" "$m"
+  sonuc "  değişiklik ezilmedi; katalog ve veri aynı; 22 nesneleri yerinde" "$k · $o · 5/1/1" "$(katalog t22k) · $(durum t22k) · $(nesne22 t22k)"
+}
+$PG -d t22k -c "alter table public.cariler disable trigger site_cari_ekleme_koru" >/dev/null
+sonuc "tetikleyici sonradan KAPATILDI: önkoşul" "1 nesne değişmiş|UYARI" "$(onk t22k 16)"
+geri_dur "  tetikleyici kapalı" "site_cari_ekleme_koru tetikleyicisi uygulandıktan sonra değişmiş"
+sonuc "  tetikleyici hâlâ kapalı" "D" "$(q t22k "select tgenabled from pg_trigger where tgname = 'site_cari_ekleme_koru'")"
+$PG -d t22k -c "alter table public.cariler enable trigger site_cari_ekleme_koru" >/dev/null
+$PG -d t22k -c "drop trigger site_cari_ekleme_koru on public.cariler" -c "create trigger site_cari_ekleme_koru before insert or update on public.cariler for each row execute function public.site_cari_ekleme_koru()" >/dev/null
+geri_dur "tetikleyici sonradan YENİDEN TANIMLANDI (insert or update)" "site_cari_ekleme_koru tetikleyicisi uygulandıktan sonra değişmiş"
+$PG -d t22k -c "drop trigger site_cari_ekleme_koru on public.cariler" -c "create trigger site_cari_ekleme_koru before insert on public.cariler for each row execute function public.site_cari_ekleme_koru()" >/dev/null
+$PG -d t22k -c "grant execute on function public.site_kayit_onayla_yeni_cari(text, text) to anon" >/dev/null
+geri_dur "yeni fonksiyona sonradan anon yetkisi VERİLDİ" "public.site_kayit_onayla_yeni_cari(text, text) yetkisi / sahibi / ayarı uygulandıktan sonra değişmiş"
+sonuc "  anon yetkisi duruyor (ezilmedi)" "evet" "$(q t22k "select case when has_function_privilege('anon', 'public.site_kayit_onayla_yeni_cari(text, text)', 'execute') then 'evet' else 'hayır' end")"
+$PG -d t22k -c "revoke execute on function public.site_kayit_onayla_yeni_cari(text, text) from anon" >/dev/null
+$PG -d t22k -c "revoke execute on function public.site_kayit_onayla(text, text) from authenticated" >/dev/null
+geri_dur "onayla'dan sonradan authenticated yetkisi ALINDI" "public.site_kayit_onayla(text, text) yetkisi / sahibi / ayarı uygulandıktan sonra değişmiş"
+$PG -d t22k -c "grant execute on function public.site_kayit_onayla(text, text) to authenticated" >/dev/null
+$PG -d t22k -c "alter function public.site_eslesme_anahtari(text, text) set search_path = public" >/dev/null
+geri_dur "yardımcının ayarı sonradan DEĞİŞTİ (search_path)" "public.site_eslesme_anahtari(text, text) yetkisi / sahibi / ayarı uygulandıktan sonra değişmiş"
+$PG -d t22k -c "alter function public.site_eslesme_anahtari(text, text) set search_path = public, pg_temp" >/dev/null
+sonuc "değişiklikler geri çekildi: önkoşul" "0 nesne değişmiş|tamam" "$(onk t22k 16)"
+$PG -d t22k -f $G/22-site-onay-atomik-geri-al.sql >/dev/null 2>$Y/geri-k.err; sonuc "geri alma çalışır" "0" "$?"
+sonuc "  22 nesneleri kalmadı" "0/0/0" "$(nesne22 t22k)"
+sonuc "  reddet / onayla yetkileri 22 ÖNCESİYLE birebir (reddet'te anon geri geldi)" "$once_red · $once_ony" "$(q t22k "select proacl::text from pg_proc where oid = 'public.site_kayit_reddet(text)'::regprocedure") · $(q t22k "select proacl::text from pg_proc where oid = 'public.site_kayit_onayla(text, text)'::regprocedure")"
+sonuc "  önkoşul" "HAZIR — 22 uygulanabilir" "$(onkosul t22k)"
+$PG -d t22k -c "revoke execute on function public.site_kayit_reddet(text) from anon" >/dev/null
+
 echo
 echo "SONUÇ: $GECTI geçti, $KALDI kaldı"
-for d in $DB t22p t22e; do $PG -d postgres -c "drop database if exists $d" >/dev/null 2>&1; done
+for d in $DB t22p t22e t22k; do $PG -d postgres -c "drop database if exists $d" >/dev/null 2>&1; done
 rm -rf $Y
 [ $KALDI -eq 0 ]

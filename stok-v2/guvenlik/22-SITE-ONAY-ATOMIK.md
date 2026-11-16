@@ -34,11 +34,23 @@ numarası ve yayın dosyaları değişmedi. Tasarım: `21-ATOMIK-ONAY-TASARIM.md
   olması (fonksiyon cariyi eklemeden önce yapar; talep tablosuna istemci yazamaz). Not alanına, `siteOdemeSor`'a (her yeni müşteri
   carisinde var), sürüm başlığına bakılmaz. Var olan kimliğin upsert'i, JWT'siz ve service_role yazması serbest.
 
+## Uygulama / geri alma korumaları
+
+- **Önkoşul / uygulama:** `cariler`de değişiklik sayacı (`degisiklik_izle`) YOK ya da DEVRE DIŞI ise önkoşul satırı 10 `DUR`, GENEL
+  `DUR`; uygulama dosyası da durur (sunucunun açtığı cari diğer cihazlara ulaşmazdı). 22'nin OLUŞTURACAĞI nesnelerden biri (5 fonksiyon,
+  tetikleyici, `islenme` sütunu) önceden varsa uygulama hangisi olduğunu söyleyip durur — sessizce değiştirilmez / üzerine yazılmaz.
+  `site_kayit_onayla` / `site_kayit_reddet` yetkileri açıkça tanımlı değilse (varsayılan) durur (önkoşul satırı 15).
+- **Yedek:** onayla / reddet'in tanımı ve 22 ÖNCESİ yetkileri; 22'nin oluşturduğu nesnelerin listesi; uygulama SONRASI tetikleyici
+  tanımı + etkinliği ve yedi fonksiyonun yetki / sahip / SECURITY DEFINER / ayar (search_path) bilgisi.
+- **Geri alma:** gövde (md5), tetikleyici tanımı / etkinliği ya da fonksiyon yetki / sahip / ayarı uygulamadan sonra DEĞİŞTİYSE neyin
+  değiştiğini söyleyip DURUR, hiçbir şeyi ezmez (önkoşul satırı 16 bunu önceden `UYARI` olarak gösterir). Yalnız listedeki (22'nin
+  oluşturduğu) nesneleri kaldırır; onayla / reddet'in gövdesini ve yetkilerini 22 öncesiyle BİREBİR kurar.
+
 ## Testler (16 Kasım, yerel / yalıtılmış; canlıya dokunulmadı)
 
 | Test | Sonuç |
 |---|---|
-| `stok-v2/test/guvenlik/t22/test22.sh` — PostgreSQL 16, 19 sonrası canlı (ad02222) + 22 | **92/92** |
+| `stok-v2/test/guvenlik/t22/test22.sh` — PostgreSQL 16, 19 sonrası canlı (ad02222) + değişiklik sayacı + 22 | **125/125** |
 | `stok-v2/test/guvenlik/t19/test19.sh` (19'un "yeni kurulum" kontrolü 19 kaynağıyla; güncel depoda 18'in FARKLI'sı yalnız onayla / reddet) | **139/139** |
 | `stok-v2/test/guvenlik/t21/test21.sh` (aynı cariyle ikinci onay artık "zaten", başka cariyle "işlenmiş") | **39/39** |
 | `test/birim-sunucu-carisi.js` (yeni; uygulamanın gerçek işlevleri) | temiz (10 kontrol) |
@@ -75,6 +87,11 @@ Ayrıca: biçim — sunucunun açtığı cari, eski ERP'nin aynı talep için ya
 uygulamanın `vergiNoKaydedilecek`'iyle 10 girdide aynı. Kapı: Personel → YETKI_YOK, tablolar aynı; anon ve yardımcılar → izin yok.
 Geri alma 19 hâline döner (özetler), açılmış cari / hesap sayısı korunur, yeniden uygulanır; Editor taklidiyle uygula / geri al;
 önkoşul tutmazsa hiçbir şey değişmez; ikinci uygulama reddedilir.
+Korumalar (8. bölüm): sayaç devre dışı / yok → önkoşul DUR, uygulama durur, katalog ve veri aynı; `islenme` ya da `site_kimlik_zamani`
+önceden var → uygulama durur, sütun değerleri / fonksiyon gövdesi ve katalog aynı; uygulamadan sonra tetikleyici kapatıldı, yeniden
+tanımlandı (insert or update), yeni fonksiyona anon yetkisi verildi, onayla'dan authenticated alındı, yardımcının search_path'i
+değişti → her birinde geri alma durur, değişiklik yerinde kalır, katalog ve veri aynı; değişiklikler geri çekilince geri alma çalışır
+ve reddet'in 22 ÖNCESİ yetkisini (anon dahil) birebir geri kurar.
 
 ## Sınırlar ve kalanlar
 
