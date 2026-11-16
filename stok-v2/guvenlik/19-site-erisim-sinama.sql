@@ -11,7 +11,9 @@
 --  RET SEBEBİ AYRILIR (42501 tek başına kanıt sayılmaz): "kapı reddetti (YETKI_YOK)" = fonksiyon ÇALIŞTI ve içindeki yönetici kontrolü
 --   reddetti · "çalıştırma izni yok" = fonksiyona EXECUTE yetkisi yok · "tablo izni yok" = tabloya doğrudan erişim yetkisi yok.
 --  YAZMA DENEMELERİ OLMAYAN kimliklerle (__denetim19_yok__) ve her biri geri sarılan bir alt blokta: kapı geçse bile satır değişmez.
---   Yönetici için beklenen "kapıdan geçti": ya hatasız (0 satır) ya kapıdan SONRAKİ iş kuralı hatası (Cari / Talep bulunamadı).
+--   Yönetici için her fonksiyonda TEK beklenen sonuç kabul edilir (başka her hata FARKLI): site_hesap_kaydet → P0001 "Cari bulunamadı",
+--   site_kayit_onayla → P0001 "Talep bulunamadı ya da işlenmiş" (ikisi de kapıdan SONRAKİ iş kuralı), site_hesap_sil ve
+--   site_kayit_reddet → hatasız "çağrı tamamlandı" (değişen satır sayısı ÖLÇÜLMEZ; alt blok zaten geri sarılır).
 --  OKUMA FONKSİYONLARI (normal kullanıcıya açık): (i) gövdeleri ve dönüş tipleri oturum anahtarı / şifre özeti / oturum tablosu /
 --   tüm satır (select *, x.*, to_jsonb(x), row_to_json) İÇERMEMELİ; (ii) N1 kimliğiyle çağrılan çıktılarda canlıdaki hiçbir oturum
 --   anahtarı ve şifre özeti (hesap + bekleyen kayıt) GEÇMEMELİ. Gizli değerler yalnız işlem içinde karşılaştırılır, yazılmaz.
@@ -100,35 +102,40 @@ begin
                                                     case when durum = 'tablo izni yok' then 'tamam' when durum = 'ERİŞTİ' then 'AÇIK' else 'FARKLI' end));
     end loop;
 
-    -- (b) yazan dört yönetim fonksiyonu (olmayan kimliklerle; geri sarılır)
+    -- (b) yazan dört yönetim fonksiyonu (olmayan kimliklerle; geri sarılır). yonetici_beklenen: Yönetici için TEK kabul edilen sonuç.
     for r in select * from (values
-        ('site_hesap_kaydet', 'select public.site_hesap_kaydet(''__denetim19_yok__'', ''denetim19'', ''Denetim-19x'')'),
-        ('site_hesap_sil',    'select public.site_hesap_sil(''__denetim19_yok__'')'),
-        ('site_kayit_onayla', 'select public.site_kayit_onayla(''__denetim19_yok__'', ''__denetim19_yok__'')'),
-        ('site_kayit_reddet', 'select public.site_kayit_reddet(''__denetim19_yok__'')')) v(ad, komut) loop
+        ('site_hesap_kaydet', 'select public.site_hesap_kaydet(''__denetim19_yok__'', ''denetim19'', ''Denetim-19x'')',
+                              'iş kuralı hatası P0001: Cari bulunamadı'),
+        ('site_hesap_sil',    'select public.site_hesap_sil(''__denetim19_yok__'')', 'çağrı tamamlandı'),
+        ('site_kayit_onayla', 'select public.site_kayit_onayla(''__denetim19_yok__'', ''__denetim19_yok__'')',
+                              'iş kuralı hatası P0001: Talep bulunamadı ya da işlenmiş'),
+        ('site_kayit_reddet', 'select public.site_kayit_reddet(''__denetim19_yok__'')', 'çağrı tamamlandı')) v(ad, komut, yonetici_beklenen) loop
       begin
         begin
           execute r.komut;
-          durum := 'kapıdan geçti (hata yok, 0 satır)';
+          durum := 'çağrı tamamlandı';
         exception when others then
           get stacked diagnostics st = returned_sqlstate, msg = message_text;
           durum := case when st = '42501' and msg like 'YETKI_YOK:%' then 'kapı reddetti (YETKI_YOK)'
                         when st = '42501' and msg like 'permission denied for function%' then 'çalıştırma izni yok'
                         when st = '42501' and msg like 'permission denied for table%' then 'tablo izni yok (fonksiyon içinde)'
                         when st = '42501' then 'başka izin hatası: ' || left(msg, 60)
-                        else 'kapıdan geçti (sonra: ' || left(msg, 40) || ')' end;
+                        when st = 'P0001' then 'iş kuralı hatası P0001: ' || left(msg, 60)
+                        else 'HATA ' || st || ': ' || left(msg, 60) end;
         end;
         raise exception using errcode = 'P0019', message = 'alt blok geri sarılıyor';
       exception when sqlstate 'P0019' then null;
       end;
       sira := sira + 1;
       if kimlik.yonetici then
-        s := s || jsonb_build_array(jsonb_build_array(sira, kimlik.ad || ': ' || r.ad, 'kapıdan geçti', durum,
-                                                      case when durum like 'kapıdan geçti%' then 'tamam' else 'FARKLI' end));
+        s := s || jsonb_build_array(jsonb_build_array(sira, kimlik.ad || ': ' || r.ad, r.yonetici_beklenen, durum,
+                                                      case when durum = r.yonetici_beklenen then 'tamam' else 'FARKLI' end));
       else
+        -- Normal kimlik kapıyı geçtiyse (çağrı tamamlandı ya da kapı SONRASI iş kuralı hatası) açık; başka her şey FARKLI.
         s := s || jsonb_build_array(jsonb_build_array(sira, kimlik.ad || ': ' || r.ad, 'kapı reddetti (YETKI_YOK)', durum,
                                                       case when durum = 'kapı reddetti (YETKI_YOK)' then 'tamam'
-                                                           when durum like 'kapıdan geçti%' then 'AÇIK' else 'FARKLI' end));
+                                                           when durum = 'çağrı tamamlandı' or durum like 'iş kuralı hatası%' then 'AÇIK'
+                                                           else 'FARKLI' end));
       end if;
     end loop;
 

@@ -64,9 +64,9 @@ sonuc "18: tablolarda AÇIK" "0" "$($PG -d t19b -At -F'|' -f $G/18-site-tablo-po
 sonuc "18: FARKLI satır" "0" "$($PG -d t19b -At -F'|' -f $G/18-site-tablo-politika-salt-okur.sql | grep -c 'FARKLI$')"
 
 sonuc "  sınama: N2 (listede, Yönetici değil) site_hesap_sil" "kapı reddetti (YETKI_YOK) | tamam" "$(sinama_satir t19b 'N2%site_hesap_sil')"
-sonuc "  sınama: Y Yönetici site_hesap_kaydet (authenticated rolünde)" "kapıdan geçti (sonra: Cari bulunamadı) | tamam" "$(sinama_satir t19b 'Y Yönetici: site_hesap_kaydet')"
-sonuc "  sınama: Y Yönetici site_kayit_onayla" "kapıdan geçti (sonra: Talep bulunamadı ya da işlenmiş) | tamam" "$(sinama_satir t19b 'Y Yönetici: site_kayit_onayla')"
-sonuc "  sınama: Y Yönetici site_hesap_sil" "kapıdan geçti (hata yok, 0 satır) | tamam" "$(sinama_satir t19b 'Y Yönetici: site_hesap_sil')"
+sonuc "  sınama: Y Yönetici site_hesap_kaydet (authenticated rolünde)" "iş kuralı hatası P0001: Cari bulunamadı | tamam" "$(sinama_satir t19b 'Y Yönetici: site_hesap_kaydet')"
+sonuc "  sınama: Y Yönetici site_kayit_onayla" "iş kuralı hatası P0001: Talep bulunamadı ya da işlenmiş | tamam" "$(sinama_satir t19b 'Y Yönetici: site_kayit_onayla')"
+sonuc "  sınama: Y Yönetici site_hesap_sil" "çağrı tamamlandı | tamam" "$(sinama_satir t19b 'Y Yönetici: site_hesap_sil')"
 sonuc "  sınama: N1 site_hesap_listesi çıktısında gizli değer" "yok (6 gizli değerle karşılaştırıldı) | tamam" "$(sinama_satir t19b 'N1%site_hesap_listesi() çıktısında%')"
 sonuc "  sınama: site_raporu gövde + dönüş tipi" "yok | tamam" "$(sinama_satir t19b 'gövde + dönüş tipi: public.site_raporu%')"
 echo "== 2b) NEGATİF KONTROLLER — sınama dosyası gerçek bir açığı / farkı YAKALIYOR mu (ayrı veritabanları)"
@@ -84,7 +84,20 @@ $PG -d t19x -f $G/19-site-erisim-sinama.sql >/dev/null 2>&1
 sonuc "yeniden açılmış site_oturumlari: sınama yakalar" "ERİŞTİ | AÇIK" "$(sinama_satir t19x 'N1%doğrudan select site_oturumlari')"
 eski_kur t19y; uygula t19y >/dev/null; $PG -d t19y -c "create or replace function public.site_hesap_sil(p_cari_id text) returns void language sql volatile security definer set search_path = public as 'delete from site_oturumlari where cari_id = p_cari_id'" >/dev/null
 $PG -d t19y -f $G/19-site-erisim-sinama.sql >/dev/null 2>&1
-sonuc "kapısı kaldırılmış site_hesap_sil: normal kullanıcı geçer → sınama yakalar" "kapıdan geçti (hata yok, 0 satır) | AÇIK" "$(sinama_satir t19y 'N2%site_hesap_sil')"
+sonuc "kapısı kaldırılmış site_hesap_sil: normal kullanıcı geçer → sınama yakalar" "çağrı tamamlandı | AÇIK" "$(sinama_satir t19y 'N2%site_hesap_sil')"
+sonuc "  sınama: Y Yönetici site_kayit_reddet" "çağrı tamamlandı | tamam" "$(sinama_satir t19b 'Y Yönetici: site_kayit_reddet')"
+echo "== 2c) NEGATİF KONTROLLER — yönetici için YALNIZ beklenen sonuç kabul ediliyor mu"
+KAPI_BAS="language plpgsql volatile security definer set search_path = public as 'begin perform public.site_yonetici_kapisi();"
+eski_kur t19z1; uygula t19z1 >/dev/null; $PG -d t19z1 -c "create or replace function public.site_kayit_reddet(p_id text) returns void $KAPI_BAS perform 1 / 0; end'" >/dev/null
+$PG -d t19z1 -f $G/19-site-erisim-sinama.sql >/dev/null 2>&1
+sonuc "kapıdan sonra beklenmeyen hata (sıfıra bölme) → yönetici satırı FARKLI" "HATA 22012: division by zero | FARKLI" "$(sinama_satir t19z1 'Y Yönetici: site_kayit_reddet')"
+sonuc "  … normal kullanıcı yine kapıda reddedilir" "kapı reddetti (YETKI_YOK) | tamam" "$(sinama_satir t19z1 'N1%site_kayit_reddet')"
+eski_kur t19z2; uygula t19z2 >/dev/null; $PG -d t19z2 -c "create or replace function public.site_hesap_kaydet(p_cari_id text, p_kullanici text, p_sifre text) returns void $KAPI_BAS raise exception ''Beklenmeyen kural''; end'" >/dev/null
+$PG -d t19z2 -f $G/19-site-erisim-sinama.sql >/dev/null 2>&1
+sonuc "beklenmeyen iş kuralı iletisi (P0001) → FARKLI" "iş kuralı hatası P0001: Beklenmeyen kural | FARKLI" "$(sinama_satir t19z2 'Y Yönetici: site_hesap_kaydet')"
+eski_kur t19z3; uygula t19z3 >/dev/null; $PG -d t19z3 -c "create or replace function public.site_hesap_sil(p_cari_id text) returns void $KAPI_BAS raise exception ''Cari bulunamadı''; end'" >/dev/null
+$PG -d t19z3 -f $G/19-site-erisim-sinama.sql >/dev/null 2>&1
+sonuc "başka fonksiyonun beklenen iletisi (site_hesap_sil'de 'Cari bulunamadı') → FARKLI" "iş kuralı hatası P0001: Cari bulunamadı | FARKLI" "$(sinama_satir t19z3 'Y Yönetici: site_hesap_sil')"
 echo "== 3) 19 SONRASI — NORMAL KULLANICI: ERP LİSTESİNDE, Yönetici DEĞİL (personel@firma.test, rol Personel)"
 for t in site_oturumlari site_hesaplari site_giris_kaydi site_kayit_talepleri; do
   sonuc "select $t" "ret:izin-tablo" "$(api t19b authenticated "$NOR" "select count(*) from $t")"; done
