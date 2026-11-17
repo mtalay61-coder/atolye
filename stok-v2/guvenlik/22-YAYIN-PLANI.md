@@ -21,6 +21,12 @@ cariye bağlama ve ret çalışır. Bu yüzden sıra **SQL → ERP** ve arası k
 
 ## Aşama 0 — Yayın paketi (geliştirme dalında; ayrı onay: "sürüm hazırla")
 
+> **Durum (16–17 Kasım, kullanıcı onayıyla yapıldı):** sürüm sabitleri 1.744.22; `yap.sh` temiz (`atolye-erp-v1.744.22.html`,
+> 1.744.19 kaldırıldı); `surum.json` 1.744.22 ve `DEVAM-NOTU.md` dalda. `test/kosu.sh` tam takım: birim testleri temiz, 266
+> senaryodan 265 AYNI, 1 FARKLI (`tedarik-girisleri`). O fark incelendi: 1.744.21 paketinde de vardı; senaryo WhatsApp penceresinin
+> adresini gezinme bitmeden okuyordu (uygulama doğru adresi açıyor). Senaryo düzeltildi, altın çıktı değişmedi; tek başına 1.744.22 ve
+> 1.744.21 AYNI, 3 paralel koşu AYNI. Kayıt: `test/sonuc-kosu-1.744.22.txt`. Yayınlanmadı; PR #360 taslak.
+
 1. Dal `claude/site-yonetim-yetki` (`b33ac92`, `main`'i içeriyor). `src/015-sabitler.jsx`: `SURUM = "1.744.22"`, `SURUM_TARIHI`,
    `SURUM_NOTU` (öneri: "Web sitesi kayıt onayı tek adımda — yönetim düğmeleri yalnız Yönetici"), `SURUM_GECMISI` başına kayıt.
 2. `./yap.sh` → denetimler temiz, `atolye-erp-v1.744.22.html` üretilir; 1.744.19 kaldırılır.
@@ -34,7 +40,11 @@ Pencere: kimse siteden gelen kayıt talebini onaylamıyorken (birkaç dakika). A
 
 1. `22-onkosul-salt-okur.sql` (b33ac92) — aynı gün, hemen önce: GENEL **HAZIR**; 10. satır "var, etkin (O|A), degisiklik_bump() | tamam".
    Değilse dur.
-2. `22-site-onay-atomik.sql` (b33ac92) dosyanın **tamamı** → Run. Tek do bloğu: hata verirse HİÇBİR şey değişmemiştir (iletiyi paylaş).
+2. `22-site-onay-atomik.sql` (b33ac92) dosyanın **tamamı** → Run. Dosya iki ifadedir: değişikliklerin hepsini yapan **do bloğu** ve
+   ardından sonuç tablosunu okuyan **select**. Hata **do bloğunda** oluşursa o bloğun bütün değişiklikleri geri alınır. Hata yalnız
+   sonuç **select**'inde görünürse bu, uygulamanın geri alındığını KANITLAMAZ — do bloğu tamamlanmış olabilir. Her hata durumunda:
+   iletiyi paylaş ve hiçbir şey yeniden çalıştırmadan `22-onkosul-salt-okur.sql` ile durumu oku (HAZIR = uygulanmamış, UYGULANMIŞ =
+   uygulanmış, başka = olduğu gibi bırak, incele).
    Son tablo: yedi gövde satırı + 90 (tetikleyici "BEFORE INSERT, satır başına"), 91 ("evet / hayır"), 92 ("var") → hepsi **tamam**.
 3. `22-onkosul-salt-okur.sql` tekrar → GENEL **UYGULANMIŞ**; 4–5. satır "22 hâli"; 16. satır "0 nesne değişmiş | tamam".
 4. Beklenen yan görünüm: `19-durum-salt-okur.sql` ve `18-…-salt-okur.sql` onayla / reddet'te "FARKLI" der (22 bilerek değiştirdi).
@@ -46,8 +56,9 @@ yazması KR013 alır, o cihazda cari "inceleme gerekiyor"a düşer, bulutta cari
 
 1. PR #360 incelemeye hazır → `main`'e birleştir (uçlar doğrulanarak). GitHub Pages "pages build and deployment" başarılı.
 2. `https://erp.newdiamond.com.tr/surum.json` → `"surum": "1.744.22"`. Uygulama açılışta / 10 dk arka plandan dönünce kendiliğinden geçer;
-   açık oturumlarda şerit çıkar. Her Yönetici cihazında profil menüsü **v1.744.22** olmalı (eski sürümde kalan cihaz = Aşama 1 sonrası
-   sınırlamalar sürer).
+   açık oturumlarda şerit çıkar. Açık Yönetici cihazlarında profil menüsü **v1.744.22** olmalı. Bu, yalnız GÖRÜLEN cihazların
+   güncellendiğini gösterir: o an kapalı / çevrimdışı ve bekleyen yazması olan eski bir cihazın kalmadığını KANITLAMAZ (öyle bir cihaz
+   sonradan açıldığında eski kodla bekleyen yazmasını gönderebilir — 22'nin eski istemci engeli ve saat sınırı bu yüzden geçerli kalır).
 
 ## Aşama 3 — Canlı doğrulama (yayından sonra)
 
@@ -63,7 +74,7 @@ yazması KR013 alır, o cihazda cari "inceleme gerekiyor"a düşer, bulutta cari
 |---|---|
 | Yalnız ERP sorunu (SQL sağlam) | `surum.json`'u 1.744.21'e döndür (`main`'de geri alma commit'i; 1.744.21 HTML'i yerinde) → cihazlar 1.744.21'e geçer. 22 SQL **kalır**: veri güvenli; 1.744.21 yeni cariyle onay yapamaz (Aşama 1 notu), bağlama / ret çalışır. |
 | SQL geri alınacak | **Önce ERP** 1.744.21'e (yukarıdaki satır), **sonra** `22-site-onay-atomik-geri-al.sql` (b33ac92) tamamı → son tablo hepsi **tamam**, ardından önkoşul **HAZIR**. Geri alma; gövde, tetikleyici (tanım / etkinlik) ya da fonksiyon yetki / sahip / ayarı sonradan değiştiyse neyi bulduğunu söyleyip **durur, ezmez** → değişikliği bilinçli geri çek ya da olduğu gibi bırak, sonra tekrar. 22 ile açılmış cariler ve hesaplar KALIR; yalnız işlenme zamanları gider. Geri alındıktan sonra eski yolun boşta cari riski geri gelir. |
-| Aşama 1'de hata | Tek do bloğu — hiçbir şey değişmemiştir; ileti paylaşılır, ERP yayınlanmaz. |
+| Aşama 1'de hata | ERP yayınlanmaz; hiçbir dosya yeniden çalıştırılmaz. Hata do bloğundaysa değişiklikler geri alınmıştır; yalnız sonuç select'indeyse geri alındığı kanıtlanmış DEĞİLDİR. Durum `22-onkosul-salt-okur.sql` ile okunur: HAZIR → uygulanmamış; UYGULANMIŞ → uygulanmış (gerekirse geri alma satırı); başka → dokunmadan incelenir. |
 
 ERP önce dönmezse de güvenlidir (1.744.22 fonksiyonu bulamayınca "hiçbir kayıt açılmadı" der, cari açmaz) ama Yöneticiler için
 anlaşılır olan sıra yukarıdakidir. 1.744.22'nin cihazlarda bıraktığı "yarım onay" kayıtlarını (`site:yarim-onay`) 1.744.21 okumaz; zararsız.
@@ -71,8 +82,9 @@ anlaşılır olan sıra yukarıdakidir. 1.744.22'nin cihazlarda bıraktığı "y
 ## Açık sınırlar (yayından sonra da geçerli)
 
 - **Saat sınırı:** eski istemci engeli, eski cihazın saati 1 günden fazla ileri ayarlı DEĞİLSE geçerli; doğru ifade "saati 1 günden
-  fazla kaymamış her eski ERP'nin bu yolu engellendi" (`22-SITE-ONAY-ATOMIK.md`, "Sınırlar ve kalanlar"). Yayından sonra eski
-  sürümde cihaz kalmaması bu sınırı da fiilen kapatır.
+  fazla kaymamış her eski ERP'nin bu yolu engellendi" (`22-SITE-ONAY-ATOMIK.md`, "Sınırlar ve kalanlar"). Yayından sonra açık
+  cihazlarda yeni sürümün görülmesi bu sınırı KAPATMAZ: kapalı / çevrimdışı kalmış ve bekleyen yazması olan eski bir cihaz sonradan
+  bağlanabilir. Sınır belgede kalır.
 - Türkçe büyük / küçük harf katlaması canlı veritabanının yerel ayarına bağlı (aynen gelen ünvan her durumda eşleşir); önkoşul ölçmez.
 - `kos-guvenlik.sh` 55/55 `8940e05`'te; `c4b2471` / `b33ac92` yalnız 22 dosyalarını ve site-portal.sql'de bir yetki satırının yerini
   değiştirdi — o koşudan sonra `t22` 138/138, `t21` 39/39.

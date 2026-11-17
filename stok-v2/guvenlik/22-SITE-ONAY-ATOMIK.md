@@ -8,7 +8,7 @@ numarası ve yayın dosyaları değişmedi. Tasarım: `21-ATOMIK-ONAY-TASARIM.md
 | Dosya | Ne |
 |---|---|
 | `site-portal.sql` — "22 BAŞLANGIÇ / BİTİŞ" bölümü | TEK KAYNAK: `islenme` sütunu, `site_kayit_onayla_yeni_cari`, değişen `site_kayit_onayla` / `site_kayit_reddet`, `site_cari_ekleme_koru` tetikleyicisi, iki yardımcı |
-| `22-site-onay-atomik.sql` | Canlıya uygulama — ÜRETİLMİŞ; önkoşul + yedek + değişiklik + doğrulama TEK do bloğunda (SQL Editor ifadeleri ayrı gönderse de ya hepsi ya hiçbiri) |
+| `22-site-onay-atomik.sql` | Canlıya uygulama — ÜRETİLMİŞ; önkoşul + yedek + değişiklik + doğrulama TEK do bloğunda (SQL Editor ifadeleri ayrı gönderse de do bloğundaki hata bloğun bütün değişikliklerini geri alır); ardından sonuç tablosunu okuyan ayrı bir select — o select'teki hata uygulamanın geri alındığını kanıtlamaz, durum önkoşul dosyasıyla okunur |
 | `22-site-onay-atomik-geri-al.sql` | Geri alma — ÜRETİLMİŞ; tek do bloğu; açılmış cari / hesaplara dokunmaz |
 | `22-onkosul-salt-okur.sql` | Canlı önkoşul / durum — ÜRETİLMİŞ; **tek select, hiçbir şey yazmaz**; GENEL satırı HAZIR / UYGULANMIŞ / DUR |
 | `22-uret.py`, `22-kaynak/*.sablon.sql` | Üretici: bölümün gövdelerini tek tırnaklı dizgeye çevirir (Editor iç içe dolar tırnağını bozuyor), gövde özetlerini gömer; `--denetle` |
