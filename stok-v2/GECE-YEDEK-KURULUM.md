@@ -75,7 +75,7 @@ müşteri verisi içermez.
 |---|---|
 | `public.dump` | uygulamanın bütün tabloları, satırları, fonksiyonları, yetkileri (pg_dump, sıkıştırılmış) |
 | `auth-storage.sql` | kullanıcı hesapları ve dosya kayıtlarının satırları (yeni bir Supabase projesine yüklemek için) |
-| `auth-storage-sema.sql` | aynı şemaların yapısı (düz bir PostgreSQL'e yüklemek için) |
+| `auth-storage-sema.sql` | aynı şemaların yapısı (düz bir PostgreSQL'e yüklemek için). Auth / storage nesneleri public'e atıf yapar (storage politikası → `public.yonetici_mi()`): elle yüklerken **tabloları ve birincil / benzersiz kısıtları public'ten önce, politika / tetikleyici / dizin / yabancı anahtarı public'ten sonra** kurun — sınama bunu kendisi yapar |
 | `kaynak-nesneler.txt` | uzantılar, yayınlar (realtime) ve yayına üye tablolar — geri dönüşte elle kurulacak liste |
 | `envanter-kaynak.csv`, `envanter-sinama.csv`, `karsilastirma.txt` | canlı ve geri yüklenen veritabanının envanteri, karşılaştırma |
 | `ozet.txt`, `TAMAM.txt` / `BASARISIZ.txt` | tarih, süre, boyut, özetler, sonuç |
@@ -99,7 +99,11 @@ Geri dönüş (felakette): `stok-v2/YEDEK-DONUS-PROVASI.md` § 4 — yeni boş S
 
 ## Sınamalar (yerel; Supabase'e ve OneDrive'a bağlanmaz)
 
-- `stok-v2/test/guvenlik/t-gece-yedek.sh` — 39/39 (`sonuc-gece-yedek.txt`): mutlu yol; **döküm sürerken canlıya sürekli yazma →
+- `stok-v2/test/guvenlik/t-gece-yedek.sh` — 55/55 (`sonuc-gece-yedek.txt`; düzeltmeden önceki betiklerle 28 kırmızı:
+  `sonuc-gece-yedek-once.txt`): **auth / storage → public bağımlılığı** (canlıdaki gibi storage politikası → `public.yonetici_mi()`,
+  auth.users tetikleyicisi → public fonksiyonu) ve geri yüklenen veritabanında verinin yanında **politikaların, RLS'in, dizinin,
+  kısıtların ve tetikleyicinin** tek tek kurulduğu; sınamada bir politika ya da dizin düşürülürse envanterin "yapı" satırı yakalar →
+  BAŞARISIZ (satır sayıları aynı olsa da); mutlu yol; **döküm sürerken canlıya sürekli yazma →
   yine AYNI** (anlık görüntü olmadan aynı yarış sağlam yedeği FARKLI gösteriyordu: canlı 44, yedek 46 satır); anlık görüntüsüz eski yol;
   sınama veritabanında tek satır eksik → BAŞARISIZ + `-SINANMADI`; dolu hedef; kopyalama hatası; OneDrive'da bozuk kopya; saklama
   (eski silinir, en yeni 7 kalır, az klasörde hiçbiri silinmez, başka klasöre dokunulmaz); localhost dışı hedef reddi; kayıtta parola /
@@ -109,5 +113,13 @@ Geri dönüş (felakette): `stok-v2/YEDEK-DONUS-PROVASI.md` § 4 — yeni boş S
   değişkeni silinir, jeton / kod / kimlik kayda yazılmaz (yalnız maske satırı), yanlış state / eksik adres / iş hesabı reddedilir.
 - `stok-v2/test/guvenlik/t-yedek-betikleri.sh` — 34/34 (anlık görüntü değişikliğinden sonra da).
 
-**Sınanmayan (ilk gerçek çalıştırmada görülecek):** gerçek Supabase'in auth / storage şemasının düz PostgreSQL 17'ye geri yüklenmesi
-ve gerçek OneDrive. İlk koşu "auth/storage şeması" ya da "public şeması" adımında durursa BASARISIZ.txt nedeni yazar; düzeltilir.
+**İlk gerçek koşu (17 Kasım 18:27, elle):** döküm 80 sn · `public.dump` 1370 KB · 44 tablo; OneDrive'a yükleme ve doğrulama tamam
+(`AtolyeYedek/2026-11-17-1827-SINANMADI`, 10 dosya). Sınama "auth/storage şeması" adımında durdu: `function public.yonetici_mi() does
+not exist` — storage.objects'teki `gorsel_yonetici_yazar` politikası, henüz kurulmamış public fonksiyonuna atıf yapıyordu. Düzeltme:
+auth / storage şeması artık iki parçada kurulur (tablolar + birincil / benzersiz kısıtlar public'ten önce; politika, RLS, tetikleyici,
+dizin, yabancı anahtar public'ten sonra) ve envantere public / auth / storage'ın politika, dizin, kısıt, tetikleyici adlarının özeti
+("yapı" satırları) eklendi. O klasör olduğu gibi duruyor; saklama kuralıyla (30 günden eski ve en yeni 7'nin dışında) silinir.
+
+**Sınanmayan (düzeltmeden sonraki ilk gerçek koşuda görülecek):** canlı auth / storage şemasının BAŞKA bir nesnesinin düz PostgreSQL
+17'de kurulamaması (ör. Supabase'e özgü bir uzantıya bağlı dizin / fonksiyon) ya da canlıyla sınama arasında "yapı" satırı farkı.
+Öyle olursa sınama yine BAŞARISIZ der ve BASARISIZ.txt nedeni yazar — hata atlanmaz, ayrıca açıklanır.

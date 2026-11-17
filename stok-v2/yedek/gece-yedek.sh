@@ -5,7 +5,8 @@
 #                 (boş bir PostgreSQL'e geri yüklenebilsin diye) + kaynağın uzantı / yayın listesi.
 #   2. SINAMA     Döküm, aynı makinedeki BOŞ, geçici bir PostgreSQL'e (iş akışının "postgres" hizmeti) geri yüklenir; geri yüklenen
 #                 veritabanının envanteri canlının envanteriyle karşılaştırılır (tablo başına TAM satır sayısı, fonksiyon /
-#                 tetikleyici tanım özeti, auth.users sayısı, kova başına dosya sayısı). Tek fark = yedek BAŞARISIZ.
+#                 tetikleyici tanım özeti, auth.users sayısı, kova başına dosya sayısı; public / auth / storage'ın politika, RLS,
+#                 dizin, kısıt ve tetikleyici adları). Tek fark = yedek BAŞARISIZ.
 #                 Bilinen ve açıklanmış iki satır karşılaştırılmaz, ayrıca yazılır: "uzantılar" (Supabase'e özgü uzantılar düz
 #                 PostgreSQL'de yok) ve cron işleri (bilerek dökülmez — dokum-al.sh).
 #   3. ONEDRIVE   (UZAK verilmişse) klasör rclone ile UZAK/<tarih>'e yüklenir, sonra "rclone check" ile dosya dosya (boyut + özet)
@@ -52,8 +53,25 @@ fi
 umask 077
 # auth + storage ŞEMASI (yalnız yapı): düz PostgreSQL'e geri yükleme için gerekli (dokum-al yalnız satırları alır — o dosya yeni
 # bir Supabase projesine yükleme içindir). Sahip ve yetki satırları alınmaz (Supabase'in iç rolleri).
-pg_dump "${KBAG[@]}" --schema-only --no-owner --no-privileges --schema=auth --schema=storage --file="$KLASOR/auth-storage-sema.sql" 2> "$KLASOR/hata-sema.txt" \
+# Arşiv biçiminde (-Fc) alınır, çünkü sınama onu İKİ PARÇADA kurmak zorunda (17 Kasım, ilk gerçek koşu): auth / storage nesneleri
+# public'e atıf yapar (canlıda storage.objects politikası "gorsel_yonetici_yazar" → public.yonetici_mi(); Supabase'te yaygın
+# başka örnek: auth.users tetikleyicisi → public fonksiyonu), public de auth'a (gy_profil → auth.users yabancı anahtarı). Tek
+# dosya hâlinde hangi sırayla kurulsa biri eksik kalır. Çözüm: tablolar + birincil / benzersiz kısıtlar public'ten ÖNCE (public'in
+# yabancı anahtarı auth.users'ın benzersiz kısıtını ister), politika / RLS / tetikleyici / dizin / yabancı anahtar SONRA.
+# OneDrive'a giden auth-storage-sema.sql eskisiyle aynı içerikte kalır (arşivden düz SQL'e çevrilir; tam şema, tek dosya).
+pg_dump "${KBAG[@]}" --schema-only --schema=auth --schema=storage --format=custom --file="$CALISMA/auth-storage-sema.dump" 2> "$KLASOR/hata-sema.txt" \
   || { log "DÖKÜM ALINAMADI (auth/storage şeması)."; exit 2; }
+pg_restore --no-owner --no-privileges --file="$KLASOR/auth-storage-sema.sql" "$CALISMA/auth-storage-sema.dump" 2>> "$KLASOR/hata-sema.txt" \
+  || { log "DÖKÜM ALINAMADI (auth/storage şeması → düz SQL)."; exit 2; }
+# parça listeleri (pg_restore -L: yalnız listedeki öğeler, listedeki sırayla). post-data'dan yalnız "CONSTRAINT" (birincil anahtar,
+# benzersiz, dışlama) öne alınır; "FK CONSTRAINT", INDEX, TRIGGER, POLICY, ROW SECURITY, RULE… sonraya kalır.
+pg_restore -l --section=pre-data "$CALISMA/auth-storage-sema.dump" > "$CALISMA/as-once.lst"
+pg_restore -l --section=post-data "$CALISMA/auth-storage-sema.dump" > "$CALISMA/as-post.lst"
+grep -E '^[0-9]+; [0-9]+ [0-9]+ CONSTRAINT ' "$CALISMA/as-post.lst" >> "$CALISMA/as-once.lst" || true
+grep -vE '^[0-9]+; [0-9]+ [0-9]+ CONSTRAINT ' "$CALISMA/as-post.lst" > "$CALISMA/as-son.lst" || true
+# bölme hiçbir öğeyi düşürmemeli: (ön + son) = tam liste
+[ "$(cat "$CALISMA/as-once.lst" "$CALISMA/as-son.lst" | grep -cE '^[0-9]+;')" = "$(pg_restore -l "$CALISMA/auth-storage-sema.dump" | grep -cE '^[0-9]+;')" ] \
+  || { log "DÖKÜM ALINAMADI (auth/storage şeması: parça listeleri tam listeyle aynı sayıda değil)."; exit 2; }
 # Kaynağın uzantıları (hangi şemada), yayınları ve yayına üye public tabloları (realtime): -n public dökümü bunları içermez ama public nesneleri onlara bağlı
 # olabilir; sınama hedefinde AYNI ad ve şemayla kurulur (kurulamayanlar yazılır).
 psql -X -q -At -F '|' -v ON_ERROR_STOP=1 "${KBAG[@]}" -c "set default_transaction_read_only = on" \
@@ -89,12 +107,17 @@ sinama() {
       hpsql -c "do \$\$ begin if not exists (select 1 from pg_publication where pubname = '$ad') then create publication \"$ad\"; end if; end \$\$" >> "$dosya" 2>&1 || true
     fi
   done < "$KLASOR/kaynak-nesneler.txt"
-  # c) auth + storage yapısı, d) auth + storage satırları (public'ten ÖNCE: public'in auth.users'a yabancı anahtarı olabilir;
-  #    kısıt, pg_restore'da veriden SONRA kurulur ve o an auth.users dolu olmalı), e) public (CREATE SCHEMA public hariç her şey)
-  adim "auth/storage şeması" hpsql --single-transaction -f "$KLASOR/auth-storage-sema.sql" || return 1
+  # c) auth + storage tabloları ve birincil / benzersiz kısıtları, d) auth + storage satırları (public'ten ÖNCE: public'in auth.users'a
+  #    yabancı anahtarı olabilir; kısıt, pg_restore'da veriden SONRA kurulur ve o an auth.users dolu olmalı), e) public (CREATE SCHEMA
+  #    public hariç her şey), f) auth + storage politika / RLS / tetikleyici / dizin / yabancı anahtar (public fonksiyonları artık var).
+  #    Her adım tek işlem ve ilk hatada durur: atlanan nesne yok; kurulamayan her şey sınamayı BAŞARISIZ yapar.
+  adim "auth/storage şeması (tablolar, kısıtlar)" env -u PGPASSWORD pg_restore --no-owner --no-privileges --exit-on-error --single-transaction \
+    -L "$CALISMA/as-once.lst" "${HBAG[@]}" "$CALISMA/auth-storage-sema.dump" || return 1
   adim "auth/storage satırları" hpsql --single-transaction -c "set local session_replication_role = replica" -f "$KLASOR/auth-storage.sql" || return 1
   pg_restore -l "$KLASOR/public.dump" | grep -vE '^[0-9]+; [0-9]+ [0-9]+ SCHEMA - public ' > "$CALISMA/liste.txt" || true
   adim "public şeması" env -u PGPASSWORD pg_restore --no-owner --exit-on-error --single-transaction -L "$CALISMA/liste.txt" "${HBAG[@]}" "$KLASOR/public.dump" || return 1
+  adim "auth/storage şeması (politika, tetikleyici, dizin)" env -u PGPASSWORD pg_restore --no-owner --no-privileges --exit-on-error --single-transaction \
+    -L "$CALISMA/as-son.lst" "${HBAG[@]}" "$CALISMA/auth-storage-sema.dump" || return 1
   # yayın üyelikleri (-n public dökümünde yok; geri dönüşte elle kurulacak listenin sınaması)
   while IFS='|' read -r tur ad tablo; do
     [ "$tur" = yayin_tablo ] || continue

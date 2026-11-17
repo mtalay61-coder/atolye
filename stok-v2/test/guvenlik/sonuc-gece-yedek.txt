@@ -1,5 +1,5 @@
-t-gece-yedek.sh · 2026-11-07 · yerel PG 16.15 · OneDrive yerine sahte-rclone
-t-gece-yedek · kaynak gece_kaynak (atolye_guvenlik + auth/storage + FK/uzantı/yayın) · hedef gece_hedef (boş)
+t-gece-yedek.sh · 2026-11-17 · yerel PG 16.15 · OneDrive yerine sahte-rclone
+t-gece-yedek · kaynak gece_kaynak (atolye_guvenlik + auth/storage + FK/uzantı/yayın + auth/storage → public bağımlılığı) · hedef gece_hedef (boş)
   ✓ [MUTLU.cikis] 0
   ✓ [MUTLU.TAMAM] 1:0
   ✓ [MUTLU.sonuc-satiri] 1
@@ -8,6 +8,15 @@ t-gece-yedek · kaynak gece_kaynak (atolye_guvenlik + auth/storage + FK/uzantı/
   ✓ [MUTLU.hedefte-musteri-satiri] 1
   ✓ [MUTLU.FK-auth-users] 1
   ✓ [MUTLU.yayin] 1
+  ✓ [MUTLU.auth-storage-satirlari] 2/1
+  ✓ [MUTLU.politikalar] gorsel_herkes_okur,gorsel_yonetici_yazar
+  ✓ [MUTLU.politika-public-fonksiyonu] 1
+  ✓ [MUTLU.RLS-acik] t
+  ✓ [MUTLU.dizin] t
+  ✓ [MUTLU.kisitlar] auth.schema_migrations:p,auth.users:p,auth.users:u,storage.buckets:p,storage.migrations:p,storage.objects:f,storage.objects:p
+  ✓ [MUTLU.tetikleyici] gy_yeni_kullanici:O
+  ✓ [MUTLU.envanter-yapi-satirlari] 11
+  ✓ [MUTLU.envanter-storage-politika] 1
   ✓ [MUTLU.kayit-sinama-tamam] 1
   ✓ [MUTLU.kayit-yuklendi-dogrulandi] 1
   ✓ [YARIS.cikis] 0
@@ -21,6 +30,13 @@ t-gece-yedek · kaynak gece_kaynak (atolye_guvenlik + auth/storage + FK/uzantı/
   ✓ [FARK.uzakta-SINANMADI] var
   ✓ [FARK.kayitta-sayi] 1
   ✓ [FARK.kayitta-tablo-adi-yok] 0
+  ✓ [YAPI-POLITIKA.cikis] 1
+  ✓ [YAPI-POLITIKA.BASARISIZ] 1
+  ✓ [YAPI-POLITIKA.karsilastirma] 2
+  ✓ [YAPI-POLITIKA.yalniz-o-satir] 2
+  ✓ [YAPI-DIZIN.cikis] 1
+  ✓ [YAPI-DIZIN.karsilastirma] 2
+  ✓ [YAPI-DIZIN.yalniz-o-satir] 2
   ✓ [DOLU.cikis] 1
   ✓ [DOLU.adim] 1
   ✓ [DOLU.hedefe-yuklenmedi] 1

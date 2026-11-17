@@ -8,6 +8,10 @@
 #   YARIŞ      döküm sürerken canlıya sürekli satır yazılıyor → yine AYNI (envanter ve döküm aynı anı görür). Anlık görüntü
 #              olmadan aynı yarış sağlam yedeği FARKLI gösteriyordu (elle denendi: canlı 44 satır, yedek 46).
 #   ANLIKSIZ   anlık görüntü desteklenmezse eski yol çökmeden çalışır.
+#   YAPI       auth / storage nesneleri public'e atıf yapar (canlıdaki gibi: storage politikası → public.yonetici_mi(); auth.users
+#              tetikleyicisi → public fonksiyonu). Geri yükleme bunları public'ten SONRA kurar; MUTLU, hedefte verinin yanında
+#              politikaların, RLS'in, dizinin, kısıtların ve tetikleyicinin kurulduğunu tek tek doğrular. Kanca bir politikayı ya da
+#              dizini düşürürse envanterin "yapı" satırı farkı yakalar → BASARISIZ (satır sayıları aynı olsa da).
 #   FARK       sınama veritabanında bir satır eksikse (kanca) → çıkış 1, BASARISIZ.txt, uzakta "-SINANMADI" klasörü, kayıtta fark sayısı.
 #   DOLU       hedefte tablo varsa → çıkış 1, hedefe hiçbir şey yüklenmez.
 #   YÜKLEME    kopyalama hatası → çıkış 1; OneDrive'daki kopya bozuksa (check) → çıkış 1.
@@ -38,6 +42,18 @@ p -d gece_kaynak -c "create schema if not exists auth; create table auth.users (
   create index gy_profil_ad on public.gy_profil using gin (ad public.gin_trgm_ops);
   create table public.gy_yazi (id bigserial primary key, t timestamptz default now());
   create publication supabase_realtime; alter publication supabase_realtime add table public.gy_profil;"
+# CANLIDAKİ SIRA BAĞIMLILIĞI (17 Kasım, ilk gerçek koşu "auth/storage şeması" adımında durdu): auth / storage nesneleri PUBLIC
+# fonksiyonlarına atıf yapar — canlıda storage.objects'teki "gorsel_yonetici_yazar" politikası public.yonetici_mi()'yi çağırıyor
+# (atolye_guvenlik'te aynı fonksiyon var). Supabase'te yaygın öbür biçim: auth.users'ta public fonksiyonu çağıran tetikleyici.
+# Ayrıca auth / storage'ın kendi dizin, benzersizlik ve yabancı anahtar kısıtları — geri yüklemenin bunları da kurduğu doğrulanır.
+p -d gece_kaynak -c "alter table storage.objects enable row level security;
+  create policy gorsel_yonetici_yazar on storage.objects to authenticated
+    using (bucket_id = 'gorseller' and public.yonetici_mi()) with check (bucket_id = 'gorseller' and public.yonetici_mi());
+  create policy gorsel_herkes_okur on storage.objects for select using (bucket_id = 'gorseller');
+  create unique index gy_nesne_kova_ad on storage.objects (bucket_id, name);
+  alter table auth.users add constraint gy_eposta_tekil unique (email);
+  create function public.gy_yeni_kullanici() returns trigger language plpgsql as \$f\$ begin return new; end \$f\$;
+  create trigger gy_kullanici_eklendi after insert on auth.users for each row execute function public.gy_yeni_kullanici();"
 yeni_hedef() { p -d postgres -c "drop database if exists gece_hedef" -c "create database gece_hedef template template0"; }
 ORT=(PATH="$IS/bin:$PATH" PGPASSWORD="$PAROLA" KAYNAK_HOST=localhost KAYNAK_PORT="${PGPORT:-5432}" KAYNAK_KULLANICI=postgres KAYNAK_DB=gece_kaynak
      HEDEF_HOST=localhost HEDEF_PORT="${PGPORT:-5432}" HEDEF_DB=gece_hedef SAHTE_UZAK="$IS/uzak" UZAK="onedrive:AtolyeYedek")
@@ -49,6 +65,9 @@ echo "t-gece-yedek · kaynak gece_kaynak (atolye_guvenlik + auth/storage + FK/uz
 yeni_hedef
 k "MUTLU.cikis" "$(calis mutlu)" 0
 K=$(son_klasor mutlu); AD=$(basename "$K")
+# kırmızıysa nedeni göster (yerel test verisi; gizli değer yok): kayıttaki adım satırı + sınamanın ilk ERROR satırı
+grep -q 'SINAMA TAMAM' "$IS/log-mutlu.txt" || { echo "    · $(grep -m1 -E 'SINAMA BAŞARISIZ|DÖKÜM ALINAMADI' "$IS/log-mutlu.txt")"
+  echo "    · $(grep -m1 -E '^(psql|pg_restore).*ERROR|^ERROR' "$K/sinama-ayrinti.txt" 2>/dev/null)"; }
 k "MUTLU.TAMAM" "$(ls "$K" | grep -cx 'TAMAM.txt'):$(ls "$K" | grep -c BASARISIZ)" "1:0"
 k "MUTLU.sonuc-satiri" "$(grep -c '^SONUÇ: TAMAM' "$K/TAMAM.txt")" 1
 k "MUTLU.anlik-goruntu" "$(grep -c '^anlık görüntü: var' "$K/ozet.txt")" 1
@@ -56,6 +75,16 @@ k "MUTLU.uzakta-ayni" "$(diff -r "$K" "$IS/uzak/AtolyeYedek/$AD" > /dev/null && 
 k "MUTLU.hedefte-musteri-satiri" "$(p -d gece_hedef -c "select count(*) from public.gy_profil where ad = '$MUSTERI'")" 1
 k "MUTLU.FK-auth-users" "$(p -d gece_hedef -c "select count(*) from pg_constraint where conrelid = 'public.gy_profil'::regclass and contype = 'f'")" 1
 k "MUTLU.yayin" "$(p -d gece_hedef -c "select count(*) from pg_publication_tables where pubname = 'supabase_realtime'")" 1
+# auth / storage yapısı hedefte KURULDU mu (veri kadar politika, dizin, kısıt, tetikleyici) — adlarıyla, tek tek
+k "MUTLU.auth-storage-satirlari" "$(p -d gece_hedef -c "select (select count(*) from auth.users) || '/' || (select count(*) from storage.objects)")" "2/1"
+k "MUTLU.politikalar" "$(p -d gece_hedef -c "select string_agg(policyname, ',' order by policyname) from pg_policies where schemaname = 'storage' and tablename = 'objects'")" "gorsel_herkes_okur,gorsel_yonetici_yazar"
+k "MUTLU.politika-public-fonksiyonu" "$(p -d gece_hedef -c "select count(*) from pg_policies where policyname = 'gorsel_yonetici_yazar' and qual like '%yonetici_mi()%' and with_check like '%yonetici_mi()%' and roles = '{authenticated}'")" 1
+k "MUTLU.RLS-acik" "$(p -d gece_hedef -c "select relrowsecurity from pg_class where oid = 'storage.objects'::regclass")" t
+k "MUTLU.dizin" "$(p -d gece_hedef -c "select indexdef like 'CREATE UNIQUE INDEX gy_nesne_kova_ad ON storage.objects USING btree (bucket_id, name)' from pg_indexes where indexname = 'gy_nesne_kova_ad'")" t
+k "MUTLU.kisitlar" "$(p -d gece_hedef -c "select string_agg(conrelid::regclass::text || ':' || contype::text, ',' order by conrelid::regclass::text, contype) from pg_constraint where connamespace in ('auth'::regnamespace, 'storage'::regnamespace) and contype in ('p','u','f')")" "auth.schema_migrations:p,auth.users:p,auth.users:u,storage.buckets:p,storage.migrations:p,storage.objects:f,storage.objects:p"
+k "MUTLU.tetikleyici" "$(p -d gece_hedef -c "select tgfoid::regproc::text || ':' || tgenabled::text from pg_trigger where tgname = 'gy_kullanici_eklendi' and tgrelid = 'auth.users'::regclass")" "gy_yeni_kullanici:O"
+k "MUTLU.envanter-yapi-satirlari" "$(grep -c '^yapı,' "$K/envanter-sinama.csv")" 11
+k "MUTLU.envanter-storage-politika" "$(grep -c '^yapı,storage politika (sayı · ad md5),3 · ' "$K/envanter-sinama.csv")" 1
 k "MUTLU.kayit-sinama-tamam" "$(grep -c 'SINAMA TAMAM' "$IS/log-mutlu.txt")" 1
 k "MUTLU.kayit-yuklendi-dogrulandi" "$(grep -c 'yüklendi ve doğrulandı' "$IS/log-mutlu.txt")" 1
 
@@ -83,6 +112,19 @@ k "FARK.karsilastirma-satiri" "$(grep -c '^[<>] tablo | gy_yazi' "$K/karsilastir
 k "FARK.uzakta-SINANMADI" "$([ -f "$IS/uzak/AtolyeYedek/$AD-SINANMADI/BASARISIZ.txt" ] && echo var)" var
 k "FARK.kayitta-sayi" "$(grep -c 'SINAMA BAŞARISIZ.*2 farklı envanter satırı' "$IS/log-fark.txt")" 1
 k "FARK.kayitta-tablo-adi-yok" "$(grep -c 'gy_yazi' "$IS/log-fark.txt")" 0
+
+# YAPI — veri tam ama politika ya da dizin eksik kurulmuşsa sınama bunu yakalamalı (satır sayıları aynı olsa da)
+yeni_hedef
+k "YAPI-POLITIKA.cikis" "$(calis ypol SINAMA_KANCASI="drop policy gorsel_yonetici_yazar on storage.objects")" 1
+K=$(son_klasor ypol)
+k "YAPI-POLITIKA.BASARISIZ" "$(ls "$K" | grep -cx 'BASARISIZ.txt')" 1
+k "YAPI-POLITIKA.karsilastirma" "$(grep -c '^[<>] yapı | storage politika' "$K/karsilastirma.txt")" 2
+k "YAPI-POLITIKA.yalniz-o-satir" "$(grep -c '^[<>]' "$K/karsilastirma.txt")" 2
+yeni_hedef
+k "YAPI-DIZIN.cikis" "$(calis ydiz SINAMA_KANCASI="drop index storage.gy_nesne_kova_ad")" 1
+K=$(son_klasor ydiz)
+k "YAPI-DIZIN.karsilastirma" "$(grep -c '^[<>] yapı | storage dizin' "$K/karsilastirma.txt")" 2
+k "YAPI-DIZIN.yalniz-o-satir" "$(grep -c '^[<>]' "$K/karsilastirma.txt")" 2
 
 # DOLU hedef
 yeni_hedef; p -d gece_hedef -c "create table public.baska (x int)"
@@ -120,7 +162,7 @@ k "KORUMA.mesaj" "$(grep -c 'yalnız localhost' "$IS/log-koruma.txt")" 1
 # KAYIT — iş kaydında gizli / müşteri / envanter içeriği yok
 k "KAYIT.parola-yok" "$(cat "$IS"/log-*.txt | grep -cF "$PAROLA")" 0
 k "KAYIT.musteri-degeri-yok" "$(cat "$IS"/log-*.txt | grep -cF "$MUSTERI")" 0
-k "KAYIT.envanter-satiri-yok" "$(cat "$IS"/log-*.txt | grep -cE '^(tablo|fonksiyon|auth|storage),')" 0
+k "KAYIT.envanter-satiri-yok" "$(cat "$IS"/log-*.txt | grep -cE '^(tablo|fonksiyon|auth|storage|yapı),')" 0
 
 p -d postgres -c "drop database gece_kaynak" -c "drop database gece_hedef"
 echo "── t-gece-yedek.sh: $([ $hata = 0 ] && echo temiz || echo "$hata kırmızı") ──"; exit $([ $hata = 0 ] && echo 0 || echo 1)

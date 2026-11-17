@@ -98,6 +98,15 @@ kanıtlar; Supabase'e özgü farklar (yönetilen şemalar, roller, uzantılar) a
 Beklenen ve açıklanabilir farklar: yeni projede `uzantılar` satırı (projede fazladan açık uzantılar); `cron` satırları (bilerek
 taşınmadı). Bunların dışındaki her fark (satır sayısı, fonksiyon/tetikleyici md5, auth.users) provanın BAŞARISIZ olduğu yerdir.
 
+"yapı" satırları (17 Kasım'da envantere eklendi: public / auth / storage'ın politika, dizin, kısıt, tetikleyici ADLARI):
+- `public …` satırları yeni projede de AYNI olmalı (public.dump hepsini taşır); fark = prova BAŞARISIZ.
+- `auth …` ve storage'ın dizin / kısıt / tetikleyici satırları yeni projede farklı çıkabilir: o şemaları Supabase kurar ve sürümüne
+  göre iç dizin / kısıt adları değişir — açıklanabilir.
+- `storage politika` farkı açıklanabilir DEĞİL, yapılacak iştir: `auth-storage.sql` yalnız satırları taşır; bizim kova politikamız
+  (`gorsel_yonetici_yazar`, canlıda elle kurulmuş — depoda kurulum SQL'i YOK; canlı tanımı `guvenlik/canli/bolum3.csv` satır 2'de,
+  ayrıca her gece `auth-storage-sema.sql`'de) yeni projede yoktur ve elle yeniden kurulmalıdır. Kurulduktan sonra satır yeniden
+  karşılaştırılır.
+
 ## 5. Ne zaman "tamam" sayılır
 
 1. Panel kontrolü (§ 1) bildirildi: plan, son yedek tarihi, PITR durumu, kovalar, gizli değer adları.

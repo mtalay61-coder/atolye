@@ -1,0 +1,63 @@
+t-gece-yedek.sh (17 Kasım hâli: canlıdaki auth/storage → public bağımlılığı + yapı doğrulaması) DÜZELTİLMEMİŞ betiklerle
+(origin/main c7d2596: stok-v2/yedek/gece-yedek.sh + 8-yedek-envanter-salt-okur.sql). Canlıdaki 17 Kasım koşusuyla aynı adımda durur.
+Ek: yalnız storage politikası (public.yonetici_mi()) olan ayrı bir kaynakla aynı geri yükleme → canlıdaki hatanın birebiri:
+  ERROR:  function public.yonetici_mi() does not exist
+Kırmızıların çoğu MUTLU / YARIS / ANLIKSIZ / SAKLAMA'nın sınamayı geçememesinin sonucu (hepsi aynı adımda durur).
+  ✗ [MUTLU.cikis] 1 · beklenen 0
+    · [15:57:33]     SINAMA BAŞARISIZ: 'auth/storage şeması' adımı. Ayrıntı yalnız OneDrive'daki BASARISIZ.txt'de (kayda yazılmaz).
+    · psql:/tmp/gece-sinama.KjqE1R/c-mutlu/2026-11-17-1857/auth-storage-sema.sql:169: ERROR:  function public.gy_yeni_kullanici() does not exist
+  ✗ [MUTLU.TAMAM] 0:1 · beklenen 1:0
+  ✗ [MUTLU.sonuc-satiri]  · beklenen 1
+  ✓ [MUTLU.anlik-goruntu] 1
+  ✗ [MUTLU.uzakta-ayni]  · beklenen ayni
+  ✗ [MUTLU.hedefte-musteri-satiri]  · beklenen 1
+  ✗ [MUTLU.FK-auth-users]  · beklenen 1
+  ✗ [MUTLU.yayin] 0 · beklenen 1
+  ✗ [MUTLU.auth-storage-satirlari]  · beklenen 2/1
+  ✗ [MUTLU.politikalar]  · beklenen gorsel_herkes_okur,gorsel_yonetici_yazar
+  ✗ [MUTLU.politika-public-fonksiyonu] 0 · beklenen 1
+  ✗ [MUTLU.RLS-acik]  · beklenen t
+  ✗ [MUTLU.dizin]  · beklenen t
+  ✗ [MUTLU.kisitlar]  · beklenen auth.schema_migrations:p,auth.users:p,auth.users:u,storage.buckets:p,storage.migrations:p,storage.objects:f,storage.objects:p
+  ✗ [MUTLU.tetikleyici]  · beklenen gy_yeni_kullanici:O
+  ✗ [MUTLU.envanter-yapi-satirlari]  · beklenen 11
+  ✗ [MUTLU.envanter-storage-politika]  · beklenen 1
+  ✗ [MUTLU.kayit-sinama-tamam] 0 · beklenen 1
+  ✓ [MUTLU.kayit-yuklendi-dogrulandi] 1
+  ✗ [YARIS.cikis] 1 · beklenen 0
+  ✓ [YARIS.kaynak-yazildi] evet
+  ✗ [YARIS.envanter-AYNI]  · beklenen 1
+  ✗ [ANLIKSIZ.cikis] 1 · beklenen 0
+  ✓ [ANLIKSIZ.ozet] 1
+  ✓ [FARK.cikis] 1
+  ✓ [FARK.BASARISIZ] 1:0
+  ✗ [FARK.karsilastirma-satiri]  · beklenen 2
+  ✓ [FARK.uzakta-SINANMADI] var
+  ✗ [FARK.kayitta-sayi] 0 · beklenen 1
+  ✓ [FARK.kayitta-tablo-adi-yok] 0
+  ✓ [YAPI-POLITIKA.cikis] 1
+  ✓ [YAPI-POLITIKA.BASARISIZ] 1
+  ✗ [YAPI-POLITIKA.karsilastirma]  · beklenen 2
+  ✗ [YAPI-POLITIKA.yalniz-o-satir]  · beklenen 2
+  ✓ [YAPI-DIZIN.cikis] 1
+  ✗ [YAPI-DIZIN.karsilastirma]  · beklenen 2
+  ✗ [YAPI-DIZIN.yalniz-o-satir]  · beklenen 2
+  ✓ [DOLU.cikis] 1
+  ✓ [DOLU.adim] 1
+  ✓ [DOLU.hedefe-yuklenmedi] 1
+  ✓ [YUKLEME.kopya-hatasi-cikis] 1
+  ✓ [YUKLEME.kopya-hatasi-kayit] 1
+  ✓ [YUKLEME.bozuk-kopya-cikis] 1
+  ✓ [YUKLEME.bozuk-kopya-kayit] 1
+  ✗ [SAKLAMA.cikis] 1 · beklenen 0
+  ✓ [SAKLAMA.eskiler-silindi] 0
+  ✓ [SAKLAMA.yeniler-kaldi] 10
+  ✓ [SAKLAMA.baska-klasore-dokunmaz] var
+  ✗ [SAKLAMA.az-klasor-cikis] 1 · beklenen 0
+  ✓ [SAKLAMA.az-klasorde-silinmez (5 eski + 1 yeni ≤ 7)] 6
+  ✓ [KORUMA.uzak-hedef] 2
+  ✓ [KORUMA.mesaj] 1
+  ✓ [KAYIT.parola-yok] 0
+  ✓ [KAYIT.musteri-degeri-yok] 0
+  ✓ [KAYIT.envanter-satiri-yok] 0
+── t-gece-yedek.sh: 28 kırmızı ──
