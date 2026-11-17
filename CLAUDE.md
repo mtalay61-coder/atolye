@@ -27,7 +27,9 @@ kalıpları" bölümlerini, ayrıca dokunacağın konunun bölümünü oku (`gre
 - `index.html` — başlatıcı: `surum.json`'u okuyup yayındaki sürüme yönlendirir. `manifest.json`,
   `sw.js`, `ikon-*.png` — kurulabilir uygulama (PWA).
 - `atolye-erp-vX.Y.Z.html` — yayınlanmış sürümler (ÜRETİLEN dosyalar). `yap.sh` her derlemede yalnız
-  en yeni 3 tanesini bırakır, eskileri `git rm` ile siler (depo şişmesin; geçmişte dururlar).
+  en yeni 3 tanesini bırakır, eskileri `git rm` ile siler (depo şişmesin; geçmişte dururlar). DİKKAT: yayınlanmamış
+  sürümler birikirse YAYINDAKİ dosyayı da (surum.json'un gösterdiği) siler — her derlemeden sonra `git status`'ta onu geri al
+  (`git restore --staged <dosya> && git checkout -- <dosya>`; 17 Kasım'da 1.744.22 böyle silinip geri alındı).
 
 ## Komutlar
 
@@ -43,8 +45,10 @@ Playwright'ın kendi tarayıcısı kurulu değilse (konteyner imajı güncelleni
 verin (test/ortak.js). Yeni firma kurulumu kabul testleri: `KOPRU_PG=<pg modülü> stok-v2/test/guvenlik/t24/kos-t24.sh`.
 
 Bilinen test boşlukları: paralel koşuda birkaç senaryo oynak — FARKLI çıkanı tek başına yeniden koş. (`tedarik-girisleri`
-eskiden hep FARKLI'ydı: senaryo WhatsApp penceresinin adresini gezinme bitmeden okuyordu; 17 Kasım'da düzeltildi.) (`firma-secimi` oynak — main'de de: kurulum indirmesi + Değiştir tıklamasından ~110 ms sonra sayfa kendiliğinden yeniden yükleniyor,
-seçim nds kalıyor; 17 Kasım ölçümü main 16/23, 1.744.23 12/23 AYNI; kök neden bulunamadı — test/sonuc-kosu-1.744.23.txt.) (Taşımada kaybolan 15 senaryo 27 Eylül'de
+eskiden hep FARKLI'ydı: senaryo WhatsApp penceresinin adresini gezinme bitmeden okuyordu; 17 Kasım'da düzeltildi.) (`firma-secimi` eskiden oynaktı — kök neden test ortamı: file:// altında, belge başında init script yerel depoya
+yazınca Chromium taze tarayıcının İLK belgesinin bütün localStorage yazmalarını gezinmede bazen düşürüyor (uygulamasız
+yeniden üretim 55'te 9; https'te 110'da 0). Yeniden yükleme içeren senaryolar `adres: TEST_KOK + "test.html"` ile https'ten
+açılır (test/ortak.js); 17 Kasım yük ölçümü dal 18/18, main 18/18.) (Taşımada kaybolan 15 senaryo 27 Eylül'de
 yeniden yazıldı; bkz. DEVAM-NOTU v1.505.0.)
 `src/137`, `236`, `237` derlenmiş (React.createElement) hâlde; dokunulursa JSX'e çevir.
 

@@ -1,7 +1,7 @@
 # Yeni firma kurulumu (v1.642.0; v2 kurulum dosyası 1.744.23)
 
-> **DURUM (17 Kasım 2026): kurulum yolu v2 için yeniden yazıldı** (dal `claude/yeni-firma-kurulum-v2`, ERP 1.744.23 — henüz
-> canlıda ve yayında DEĞİL). Kullanmadan önce: yeni `kurulum-betigi.sql` ana projede çalıştırılmış ve 1.744.23 yayında olmalı.
+> **DURUM (17 Kasım 2026): kurulum yolu v2 için yeniden yazıldı** (dal `claude/yeni-firma-kurulum-v2`, ERP 1.744.23, son derleme 1.744.25 — henüz
+> canlıda ve yayında DEĞİL). Kullanmadan önce: yeni `kurulum-betigi.sql` ana projede çalıştırılmış ve 1.744.23 ya da sonrası (bu dalda 1.744.25) yayında olmalı.
 > Kabul testleri: `stok-v2/test/guvenlik/t24/` (kurulum, giriş, stok, kasa, iki firma arasında veri ayrımı — ekrandan dahil).
 
 Her müşteri firmanın **ayrı bir Supabase projesi** olur. Uygulama aynıdır. Firma kodu **her cihazda bir kez** sorulur
