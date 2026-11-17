@@ -95,9 +95,45 @@ belgesinden doğrulanır. Panelde: barındırma "bizim organizasyon", olaylara "
    sessizce gizli). Senaryo testleri + tam `test/kosu.sh`.
 4. Yayın: ayrı onay. SQL önce, ERP sonra (sürüm, SQL olmadan da güvenle açılır: bölüm görünmez).
 
-## 9. Açık sorular (kullanıcı)
+## 9. Cevaplanan sorular (kullanıcı, 17 Kasım)
 
-1. Platform yöneticisi yalnız siz mi (hangi kullanıcı)?
-2. Ücret para birimi: TL mi, USD mi, ikisi de mi?
-3. Firma kartında başka alan (adres, sektör, cihaz / kullanıcı sayısı) gerekli mi?
-4. Aşama 1 yalnız **takip** (önerilen) — lisans bitince firmanın ERP'sinde bir şey olmasın; doğru mu?
+1. Platform yöneticisi şimdilik **yalnız kullanıcı** (kendi ERP hesabı; SQL Editor'de e-postasıyla eklenir).
+2. Ücret **TL ve USD** — her sözleşme / ödeme kendi para biriminde; toplamlar para birimi başına, kur çevrimi yok.
+3. **Ek alanlar olabilir** → firma kartında adres, il, sektör, kullanıcı sayısı, web adresi + serbest `ek` alanı
+   (sonradan istenen alan için tablo değişikliği gerekmesin).
+4. Aşama 1 **yalnız takip** — lisans bitince firmanın ERP'sinde hiçbir şey olmaz.
+
+## 10. Uygulama ayrıntıları (Aşama 1, SQL)
+
+- Dosyalar: `stok-v2/guvenlik/23-platform-yonetim.sql` (uygula), `23-platform-yonetim-geri-al.sql`,
+  `23-onkosul-salt-okur.sql`; test `stok-v2/test/guvenlik/t23/test23.sh`.
+- Tablolar `public`'te: gece yedeği yalnız `public`i döker ve sınar — ayrı şema yedeğin DIŞINDA kalırdı.
+- `kurulum_betigi()` public'teki her tabloyu yeni firma kurulum dosyasına koyar: yeni firmalarda bu tablolar **boş** doğar
+  ve `platform_yoneticileri` boş olduğu için kimse göremez. Zararsız; istenirse ayrı bir değişiklikle hariç tutulur.
+- Olay günlüğünü uygulama yazmaz; tetikleyiciler yazar (firma açıldı, durum / barındırma değişti, sözleşme eklendi /
+  değişti, ödeme). Uygulama günlüğe yalnız bakar.
+- Silme yok: hiçbir rolün DELETE yetkisi yok. Ödeme değiştirilmez; düzeltme, eksi tutarlı ve düzelttiği ödemeyi gösteren
+  yeni bir ödemeyle yapılır.
+- Uygula dosyası tek işlem (do bloğu); nesnelerden biri bile varsa dokunmadan durur. Geri alma, firma / sözleşme / ödeme
+  kaydı varsa durur (veri silmez).
+
+## 11. Aşama 1 / SQL — hazır, canlıya UYGULANMADI
+
+| Dosya | Satır | sha256 |
+|---|---|---|
+| `stok-v2/guvenlik/23-platform-yonetim.sql` | 228 | `b4718ce03ee1290c8ca658f63abb1b65301ae3459d3e9e93f42ffddb8fd87139` |
+| `stok-v2/guvenlik/23-platform-yonetim-geri-al.sql` | 34 | `878f782ee7ad1855c167464ca7b1d206baa1e8d75f909f4b3d69790c0934fafa` |
+| `stok-v2/guvenlik/23-onkosul-salt-okur.sql` | 51 | `4a3b091a94c6bde2981d3a494e8282b6bc918670e6d9763373821e8cef5b8245` |
+
+Test: `stok-v2/test/guvenlik/t23/test23.sh` — **83/83** (`t23/sonuc-t23.txt`; yerel PostgreSQL 16, Supabase taklidi, dosyalar
+Supabase SQL Editor gibi ifade başına ayrı istekle — `editor-icin.py`). Kapsam: Editor uyumu (3 dosya 2'şer ifade); önkoşul HAZIR →
+uygula 8/8 → UYGULANMIŞ; ikinci uygulama durur, hiçbir şey değişmez; Supabase'in açık varsayılan yetkisine rağmen anon kapalı;
+ERP Yönetici rolü / Personel / anon kendini platform yöneticisi yapamaz; platform yöneticisi ekler, okur, değiştirir, olay günlüğü
+tetikleyicilerle dolar, SİLEMEZ, ödemeyi değiştiremez, günlüğe yazamaz; 12 iş kuralı; yönetici olmayanlar 0 satır görür, yazamaz,
+tabloların tam içeriği değişmez; geri alma kayıt varken durur, boşken her şeyi kaldırır, ardından yeniden uygulama çalışır.
+Bozma denemeleri: okuma kuralını herkese açmak, ödemeye UPDATE / DELETE vermek → test kırmızı (8 ve 2 satır); uygulama dosyasının
+kendi sonuç tablosu DELETE'i "FARKLI", önkoşul "KARIŞIK" gösterdi. Dosya ilk hâlinde Editor uyumsuzdu (adlı / iç içe dolar
+tırnağı) — `editor-icin.py` yakaladı; 22 gibi tek `do $$` + tek tırnaklı gövdelere çevrildi.
+
+Sıradaki (ayrı onay): canlıda salt-okur önkoşul → uygula → önkoşul → kendi hesabını ekleme (kullanıcı, SQL Editor). Sonra ERP
+"Yönetim" bölümü (Aşama 1 / uygulama).

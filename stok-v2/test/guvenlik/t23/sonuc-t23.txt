@@ -1,0 +1,93 @@
+# test23.sh · 2026-11-17 · yerel PostgreSQL 16.15 · Supabase taklidi (t19/kur.sql) · dosyalar Editor gibi (editor-icin.py, ifade başına ayrı istek)
+== Kurulum: t19/kur.sql (Supabase taklidi, açık varsayılan yetkiler) · 23 dosyaları 5fcb477 + çalışma ağacı
+== 0) Supabase SQL Editor uyumu (editor-icin.py: yalnız düz çift-dolar gövde; parça sayısı)
+  [GEÇTİ] 23-platform-yonetim.sql Editor'de 2 ifadeye bölünür → 2
+  [GEÇTİ] 23-platform-yonetim-geri-al.sql Editor'de 2 ifadeye bölünür → 2
+  [GEÇTİ] 23-onkosul-salt-okur.sql Editor'de 2 ifadeye bölünür → 2
+== 1) Önkoşul → uygula → önkoşul; ikinci uygulama (her dosya Editor gibi: ifade başına ayrı istek)
+  [GEÇTİ] önkoşul (uygulamadan önce) → HAZIR
+  [GEÇTİ] uygula: hata yok, sonuç tablosu 8 satır, hepsi tamam → 8/8 tamam
+  [GEÇTİ] önkoşul (uygulamadan sonra) → UYGULANMIŞ
+  [GEÇTİ] ikinci uygulama durur → DUR: platform_ nesneleri zaten var
+  [GEÇTİ] ikinci uygulamadan sonra tablolar aynı → 336d5ebc5436534e61d16e63ddfca327
+  [GEÇTİ] Supabase varsayılanına rağmen anon platform_firmalar okuyamaz → f
+== 2) Kendini platform yöneticisi yapma denemesi (henüz yönetici yok)
+  [GEÇTİ] ERPY: platform_yoneticileri'ne kendini ekler → ret:izin
+  [GEÇTİ] ERPY: platform_yoneticileri okur → ret:izin
+  [GEÇTİ] PER: platform_yoneticileri'ne kendini ekler → ret:izin
+  [GEÇTİ] PER: platform_yoneticileri okur → ret:izin
+  [GEÇTİ] anon: platform_yonetici_mi çağırır → ret:izin
+  [GEÇTİ] anon: platform_yoneticileri'ne ekler → ret:izin
+  [GEÇTİ] SQL Editor yolu (postgres) ile platform yöneticisi eklendi → 1
+  [GEÇTİ] platform_yonetici_mi — platform yöneticisi → ok:t
+  [GEÇTİ] platform_yonetici_mi — ERP Yönetici rolü (platform yöneticisi değil) → ok:f
+  [GEÇTİ] platform_yonetici_mi — Personel → ok:f
+  [GEÇTİ] platform_yonetici_mi — JWT'siz authenticated → ok:f
+  [GEÇTİ] platform yöneticisi bile yönetici listesini okuyamaz (yalnız SQL Editor) → ret:izin
+== 3) Platform yöneticisi: ekler, okur, değiştirir; silemez
+  [GEÇTİ] firma ekle (deneme, firmanın hesabı) → ok:
+  [GEÇTİ] ikinci firma ekle → ok:
+  [GEÇTİ] sözleşme ekle (TRY) → ok:
+  [GEÇTİ] sözleşme ekle (USD, ikinci firma) → ok:
+  [GEÇTİ] ödeme ekle (sözleşmeye bağlı, TRY) → ok:
+  [GEÇTİ] ödeme düzeltmesi (eksi, düzelttiği ödemeyi gösterir) → ok:
+  [GEÇTİ] firma durumunu değiştir (deneme → aktif, barındırma → bizim_org) → ok:
+  [GEÇTİ] platform yöneticisi okur: firma sayısı / ödenen net TRY → ok:2 10000.00
+  [GEÇTİ] olay günlüğü tetikleyicilerle doldu (firma 2 + sözleşme 2 + ödeme 2 + değişiklik 1) → ok:7
+  [GEÇTİ] durum değişikliği olayı → ok:durum: deneme → aktif; barındırma: firma_hesabi → bizim_org
+  [GEÇTİ] olayda 'kim' = platform yöneticisi → ok:00000000-0000-0000-0000-0000000000a1
+  [GEÇTİ] SİLEMEZ: platform_firmalar → ret:izin
+  [GEÇTİ] SİLEMEZ: platform_sozlesmeler → ret:izin
+  [GEÇTİ] SİLEMEZ: platform_odemeler → ret:izin
+  [GEÇTİ] SİLEMEZ: platform_olaylar → ret:izin
+  [GEÇTİ] ödemeyi DEĞİŞTİREMEZ → ret:izin
+  [GEÇTİ] günlüğe YAZAMAZ → ret:izin
+  [GEÇTİ] günlüğü DEĞİŞTİREMEZ → ret:izin
+  [GEÇTİ] tetikleyici fonksiyonunu doğrudan çağıramaz → ret:izin
+== 4) Kurallar (platform yöneticisi bile)
+  [GEÇTİ] ödeme başka firmanın sözleşmesine bağlanamaz → ret:kural
+  [GEÇTİ] ödeme para birimi sözleşmeninkiyle aynı olmalı → ret:kural
+  [GEÇTİ] eksi tutar düzeltme olmadan olmaz → ret:kural
+  [GEÇTİ] sıfır tutar olmaz → ret:kural
+  [GEÇTİ] düzeltme başka firmanın ödemesini gösteremez → ret:kural
+  [GEÇTİ] geçersiz para birimi (EUR) → ret:kural
+  [GEÇTİ] bitiş başlangıçtan önce olamaz → ret:kural
+  [GEÇTİ] kod biçimi (büyük harf / boşluk) → ret:kural
+  [GEÇTİ] aynı kod ikinci kez → ret:kural
+  [GEÇTİ] geçersiz durum → ret:kural
+  [GEÇTİ] proje adresi yalnız https://<ref>.supabase.co → ret:kural
+  [GEÇTİ] sözleşme ödemesi varken başka firmaya taşınamaz → ret:kural
+== 5) Platform yöneticisi OLMAYANLAR: hiçbir şey görmez, yazamaz; tablolar değişmez
+  [GEÇTİ] ERPY okur: platform_firmalar → ok:0
+  [GEÇTİ] ERPY okur: platform_sozlesmeler → ok:0
+  [GEÇTİ] ERPY okur: platform_odemeler → ok:0
+  [GEÇTİ] ERPY okur: platform_olaylar → ok:0
+  [GEÇTİ] ERPY firma ekler → ret:rls
+  [GEÇTİ] ERPY ödeme ekler → ret:rls
+  [GEÇTİ] ERPY firma değiştirir (0 satır) → ok:0
+  [GEÇTİ] ERPY sözleşme değiştirir (0 satır) → ok:0
+  [GEÇTİ] ERPY siler → ret:izin
+  [GEÇTİ] PER okur: platform_firmalar → ok:0
+  [GEÇTİ] PER okur: platform_sozlesmeler → ok:0
+  [GEÇTİ] PER okur: platform_odemeler → ok:0
+  [GEÇTİ] PER okur: platform_olaylar → ok:0
+  [GEÇTİ] PER firma ekler → ret:rls
+  [GEÇTİ] PER ödeme ekler → ret:rls
+  [GEÇTİ] PER firma değiştirir (0 satır) → ok:0
+  [GEÇTİ] PER sözleşme değiştirir (0 satır) → ok:0
+  [GEÇTİ] PER siler → ret:izin
+  [GEÇTİ] anon okur: platform_firmalar → ret:izin
+  [GEÇTİ] anon okur: platform_sozlesmeler → ret:izin
+  [GEÇTİ] anon okur: platform_odemeler → ret:izin
+  [GEÇTİ] anon okur: platform_olaylar → ret:izin
+  [GEÇTİ] anon okur: platform_yoneticileri → ret:izin
+  [GEÇTİ] anon firma ekler → ret:izin
+  [GEÇTİ] reddedilen denemelerden sonra beş tablonun tam içeriği aynı → 034b1e562ba49b5f4bfe32178bbb7dfb
+== 6) Geri alma
+  [GEÇTİ] kayıt varken geri alma durur → DUR: platform tablolarında 6 kayıt var
+  [GEÇTİ] durduktan sonra hiçbir şey silinmedi → 034b1e562ba49b5f4bfe32178bbb7dfb
+  [GEÇTİ] önkoşul hâlâ UYGULANMIŞ → UYGULANMIŞ
+  [GEÇTİ] kayıtlar yokken geri alma → tamam — platform_ nesnesi kalmadı
+  [GEÇTİ] önkoşul (geri almadan sonra) → HAZIR
+  [GEÇTİ] yeniden uygulama (geri alınmış hâlden) → 8/8 tamam
+── test23: 83 geçti, 0 kaldı ──
