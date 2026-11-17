@@ -10,6 +10,8 @@
 --    - tetikleyiciler: tablo, ad, fonksiyon, tür (önce / sonra, ekleme / değiştirme), etkin
 --    - RLS: beş tablonun hepsinde açık
 --  Fonksiyon ve politika adları şema öneki olmadan karşılaştırılır (sonuç oturumun search_path'ine bağlı kalmasın).
+--  EKSİK TABLO: tablolardan biri ya da birkaçı yoksa hata vermez; eksik tablo, yetki / politika / tetikleyici farkı olarak adıyla
+--  görünür ve GENEL KARIŞIK olur (her tablo ayrı ayrı to_regclass ile denetlenir).
 -- =====================================================================================================================
 with
 b_politika(tablo, ad, izin, komut, roller, kosul, denetim) as (values
@@ -97,9 +99,11 @@ satir as (
   union all select 9, 'platform yöneticisi sayısı',
          case when to_regclass('public.platform_yoneticileri') is null then '-' else
            (xpath('/row/n/text()', query_to_xml('select count(*) as n from public.platform_yoneticileri', false, true, '')))[1]::text end
-  union all select 10, 'kayıtlar (firma / sözleşme / ödeme)',
-         case when to_regclass('public.platform_firmalar') is null then '-' else
-           (xpath('/row/n/text()', query_to_xml('select (select count(*) from public.platform_firmalar) || '' / '' || (select count(*) from public.platform_sozlesmeler) || '' / '' || (select count(*) from public.platform_odemeler) as n', false, true, '')))[1]::text end
+  union all select 10, 'kayıtlar (firma / sözleşme / ödeme; tablo yoksa "yok")',
+         (select string_agg(case when to_regclass(t) is null then 'yok'
+                                 else (xpath('/row/n/text()', query_to_xml('select count(*) as n from ' || t, false, true, '')))[1]::text end,
+                            ' / ' order by s)
+            from unnest(array['public.platform_firmalar', 'public.platform_sozlesmeler', 'public.platform_odemeler']) with ordinality as x(t, s))
 )
 select sira, kontrol, sonuc from satir
 union all

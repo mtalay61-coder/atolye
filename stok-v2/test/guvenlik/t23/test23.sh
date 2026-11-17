@@ -12,6 +12,8 @@
 #      düzeltme aynı firma + para birimi; bitiş ≥ başlangıç; kod biçimi; geçersiz para birimi / durum.
 #   5) (17 Kasım inceleme) ödemesi olan sözleşmenin para birimi değişmez; düzeltme aynı sözleşmede; önkoşul içeriği birebir
 #      karşılaştırır (10 bozma denemesi → KARIŞIK, satır adıyla); para birimi değişikliği ile ödeme aynı anda → biri bekler, reddeder.
+#   7) Eksik tablo senaryoları (17 Kasım): önkoşul hata vermeden KARIŞIK der, eksik tabloyu adıyla gösterir; geri alma yarım hâli
+#      tamamlar (kayıt varsa yine durur).
 #   6) Geri alma: kayıt varken DURUR (hiçbir şey silinmez); kayıtlar yokken her şeyi kaldırır → önkoşul HAZIR.
 # Kullanım: ./test23.sh   (T23_HOST / T23_PORT; postgres + authenticator şifresiz bağlanabilmeli)
 T=$(cd "$(dirname "$0")" && pwd); A=$(cd "$T/../../../.." && pwd); G=$A/stok-v2/guvenlik
@@ -44,7 +46,7 @@ import subprocess, sys
 for p in [x for x in sys.stdin.buffer.read().split(b"\0") if x.strip()]:
     r = subprocess.run(sys.argv[1:] + ["-c", p.decode()], capture_output=True, text=True)
     sys.stdout.write(r.stdout); sys.stderr.write(r.stderr)
-    if r.returncode: sys.exit(1)' psql -X -q -h $H -p $PT -U postgres -d $DB -v ON_ERROR_STOP=1 -At -F '|'; }
+    if r.returncode: sys.exit(1)' psql -X -q -h $H -p $PT -U postgres -d ${HEDEF_DB:-$DB} -v ON_ERROR_STOP=1 -At -F '|'; }
 durum() { q "select md5(coalesce(string_agg(x, '|' order by x), '-')) from (
   select 'y:'||t::text x from public.platform_yoneticileri t union all select 'f:'||t::text from public.platform_firmalar t
   union all select 's:'||t::text from public.platform_sozlesmeler t union all select 'o:'||t::text from public.platform_odemeler t
@@ -212,6 +214,32 @@ q "truncate public.platform_olaylar, public.platform_odemeler, public.platform_s
 sonuc "kayıtlar yokken geri alma" "tamam — platform_ nesnesi kalmadı" "$(editor $G/23-platform-yonetim-geri-al.sql 2>&1 | tail -1)"
 sonuc "önkoşul (geri almadan sonra)" "HAZIR" "$(genel)"
 sonuc "yeniden uygulama (geri alınmış hâlden)" "8/8 tamam" "$(editor $G/23-platform-yonetim.sql 2>&1 | grep -c '|tamam$')/8 tamam"
+
+echo "== 9) Eksik tablo senaryoları (yarım kalmış / elle bozulmuş kurulum): önkoşul HATA vermez, KARIŞIK der; geri alma tamamlar"
+# Her senaryo temiz uygulanmış hâlin (bu noktada kayıtsız) KOPYASINDA: tablo(lar) düşürülür → önkoşul → geri alma → önkoşul.
+eksik() { # $1 ad · $2 düşürülecek tablolar (boşlukla)
+  $PG -d postgres -c "drop database if exists ${DB}e" -c "create database ${DB}e template $DB" >/dev/null 2>&1
+  for t in $2; do $PG -d ${DB}e -c "drop table public.$t cascade" >/dev/null 2>&1; done
+  local c; c=$(HEDEF_DB=${DB}e editor $G/23-onkosul-salt-okur.sql 2>&1)
+  sonuc "$1: önkoşul hata vermez" "0" "$(echo "$c" | grep -c 'ERROR')"
+  sonuc "$1: GENEL" "KARIŞIK" "$(echo "$c" | grep '^99|' | cut -d'|' -f3)"
+  sonuc "$1: eksik tablo yetki farkında adıyla görünür" "evet" "$(for t in $2; do echo "$c" | grep '^5|' | grep -q "$t" || echo hayır; done | grep -q hayır && echo hayır || echo evet)"
+  sonuc "$1: geri alma tamamlar" "tamam — platform_ nesnesi kalmadı" "$(HEDEF_DB=${DB}e editor $G/23-platform-yonetim-geri-al.sql 2>&1 | tail -1)"
+  sonuc "$1: sonra önkoşul" "HAZIR" "$(HEDEF_DB=${DB}e editor $G/23-onkosul-salt-okur.sql | grep '^99|' | cut -d'|' -f3)"
+  $PG -d postgres -c "drop database ${DB}e" >/dev/null 2>&1; }
+eksik "yalnız sözleşmeler yok" "platform_sozlesmeler"
+eksik "yalnız ödemeler yok" "platform_odemeler"
+eksik "yalnız firmalar yok (bağlı tablolar kalır)" "platform_firmalar"
+eksik "yalnız günlük yok" "platform_olaylar"
+eksik "yalnız yöneticiler yok" "platform_yoneticileri"
+eksik "sözleşmeler + ödemeler yok" "platform_sozlesmeler platform_odemeler"
+eksik "yöneticiler dışında hepsi yok" "platform_firmalar platform_sozlesmeler platform_odemeler platform_olaylar"
+# kayıtlı tablolarla yarım hâl: geri alma kayıt varken yine DURUR (eksik tablo bunu atlatmaz)
+$PG -d postgres -c "drop database if exists ${DB}e" -c "create database ${DB}e template $DB" >/dev/null 2>&1
+$PG -d ${DB}e -c "insert into public.platform_firmalar (kod, unvan) values ('kalan', 'Kalan'); drop table public.platform_sozlesmeler cascade" >/dev/null 2>&1
+sonuc "yarım hâlde kayıt varken geri alma durur" "DUR: platform tablolarında 1 kayıt var" "$(HEDEF_DB=${DB}e editor $G/23-platform-yonetim-geri-al.sql 2>&1 | grep -m1 -oE 'DUR: platform tablolarında [0-9]+ kayıt var')"
+sonuc "yarım hâlde önkoşul kayıt satırı" "10|1 / yok / 0" "$(HEDEF_DB=${DB}e editor $G/23-onkosul-salt-okur.sql | grep '^10|' | cut -d'|' -f1,3)"
+$PG -d postgres -c "drop database ${DB}e" >/dev/null 2>&1
 
 $PG -d postgres -c "drop database $DB" >/dev/null
 echo "── test23: $GECTI geçti, $KALDI kaldı ──"; [ $KALDI = 0 ]

@@ -122,8 +122,8 @@ belgesinden doğrulanır. Panelde: barındırma "bizim organizasyon", olaylara "
 | Dosya | Satır | sha256 |
 |---|---|---|
 | `stok-v2/guvenlik/23-platform-yonetim.sql` | 250 | `ca0509fc7fff45605613ecf60080f901ccb1062c4931e6838847695956dad9f8` |
-| `stok-v2/guvenlik/23-platform-yonetim-geri-al.sql` | 35 | `56920c7f4ed1eeaab3babb6d580532f6e52c0b1f06db9896d5b539b5f9b5f528` |
-| `stok-v2/guvenlik/23-onkosul-salt-okur.sql` | 111 | `c81acb8ef1d8b2c73d666d8294ae38db3e15d18c71145f54db64f09ea9347285` |
+| `stok-v2/guvenlik/23-platform-yonetim-geri-al.sql` | 38 | `1e8e4877d144d649cd326c4e7e92d53fd34d82ea2a2052768e8e3279a54fa1e4` |
+| `stok-v2/guvenlik/23-onkosul-salt-okur.sql` | 115 | `d352c5e1f22c5045ad2a24852cf526a90047f24bddde543a1010173622244f08` |
 
 ### İnceleme bulguları (17 Kasım, 0a15166 üzerine) ve düzeltmeler — dördü de yerelde yeniden üretildi
 
@@ -137,7 +137,11 @@ belgesinden doğrulanır. Panelde: barındırma "bizim organizasyon", olaylara "
 
 ### Testler
 
-- `t23/test23.sh` — **126/126** (`sonuc-t23.txt`). Yeni: bulgu 1 ve 2 (5 denetim); önkoşul bozma denemeleri 10 × (GENEL KARIŞIK +
+- `t23/test23.sh` — **163/163** (`sonuc-t23.txt`). Eksik tablo senaryoları (17 Kasım, ikinci tur): 7 senaryo (tek tek her tablo,
+  sözleşme + ödeme, yöneticiler dışında hepsi) × önkoşul hata vermez / KARIŞIK / eksik tablo adıyla / geri alma tamamlar / sonra HAZIR;
+  yarım hâlde kayıt varken geri alma yine DURUR. Önceki önkoşul / geri alma (da0e268) ile 17 kırmızı — `relation does not exist`
+  hatası (`sonuc-t23-eksik-tablo-once-da0e268.txt`).
+  İlk tur: Yeni: bulgu 1 ve 2 (5 denetim); önkoşul bozma denemeleri 10 × (GENEL KARIŞIK +
   farkın adı + onarınca UYGULANMIŞ): okuma kuralı `true`, okuma kuralı anon'a, ödemeye tablo UPDATE, ödemeye **sütun** UPDATE,
   PUBLIC'e DELETE, günlüğe TRUNCATE, kapı fonksiyonu `select true`, kapı fonksiyonu anon'a, ödeme denetimi tetikleyicisi kapalı,
   RLS kapalı; eşzamanlılık iki sıra (ödeme önce / para birimi önce: ikinci işlem ≥ 1,5 sn bekler, reddeder, son hâl tutarlı).

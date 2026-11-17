@@ -5,18 +5,21 @@
 --  VERİ SİLMEZ: platform_firmalar / platform_sozlesmeler / platform_odemeler'de tek satır bile varsa hiçbir şeye dokunmadan DURUR.
 --  (Olay günlüğü ve yönetici listesi yalnız bu üçüne bağlı ya da yeniden kurulabilir bilgidir; üçü boşsa birlikte kalkar.)
 --  Kayıt varken geri almak gerekiyorsa önce kayıtları bilinçli olarak dışarı alın; bu dosya o kararı sizin yerinize vermez.
+--  Eksik tablolar (yarım kalmış kurulum) hata vermez: her tablo ayrı denetlenir, olanlar kaldırılır.
 --  Sonra 23-onkosul-salt-okur.sql → GENEL "HAZIR" (23 uygulanmamış hâl).
 -- =====================================================================================================================
 
 do $$
 declare
   n bigint;
+  k bigint;
 begin
-  if to_regclass('public.platform_firmalar') is not null then
-    execute 'select (select count(*) from public.platform_firmalar) + (select count(*) from public.platform_sozlesmeler) + (select count(*) from public.platform_odemeler)' into n;
-    if n > 0 then
-      raise exception 'DUR: platform tablolarında % kayıt var (firma / sözleşme / ödeme). Hiçbir şey silinmedi.', n;
-    end if;
+  n := 0;
+  if to_regclass('public.platform_firmalar') is not null then execute 'select count(*) from public.platform_firmalar' into k; n := n + k; end if;
+  if to_regclass('public.platform_sozlesmeler') is not null then execute 'select count(*) from public.platform_sozlesmeler' into k; n := n + k; end if;
+  if to_regclass('public.platform_odemeler') is not null then execute 'select count(*) from public.platform_odemeler' into k; n := n + k; end if;
+  if n > 0 then
+    raise exception 'DUR: platform tablolarında % kayıt var (firma / sözleşme / ödeme). Hiçbir şey silinmedi.', n;
   end if;
   drop table if exists public.platform_olaylar;
   drop table if exists public.platform_odemeler;

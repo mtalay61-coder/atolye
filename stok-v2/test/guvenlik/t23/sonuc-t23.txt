@@ -1,5 +1,5 @@
 # test23.sh · 2026-11-17 · yerel PostgreSQL 16.15 · Supabase taklidi (t19/kur.sql) · dosyalar Editor gibi (editor-icin.py, ifade başına ayrı istek)
-== Kurulum: t19/kur.sql (Supabase taklidi, açık varsayılan yetkiler) · 23 dosyaları 0a15166 + çalışma ağacı
+== Kurulum: t19/kur.sql (Supabase taklidi, açık varsayılan yetkiler) · 23 dosyaları da0e268 + çalışma ağacı
 == 0) Supabase SQL Editor uyumu (editor-icin.py: yalnız düz çift-dolar gövde; parça sayısı)
   [GEÇTİ] 23-platform-yonetim.sql Editor'de 2 ifadeye bölünür → 2
   [GEÇTİ] 23-platform-yonetim-geri-al.sql Editor'de 2 ifadeye bölünür → 2
@@ -87,7 +87,7 @@
   [GEÇTİ] anon okur: platform_olaylar → ret:izin
   [GEÇTİ] anon okur: platform_yoneticileri → ret:izin
   [GEÇTİ] anon firma ekler → ret:izin
-  [GEÇTİ] reddedilen denemelerden sonra beş tablonun tam içeriği aynı → 3af75d215879ac21c59d5a03e1a83473
+  [GEÇTİ] reddedilen denemelerden sonra beş tablonun tam içeriği aynı → 8dfe802ff2400f78174506e11b999fbe
 == 6) Önkoşul 'UYGULANMIŞ' demeden önce içeriği birebir karşılaştırır (bozma → KARIŞIK, satır adıyla; geri al → UYGULANMIŞ)
   [GEÇTİ] okuma kuralı herkese açık (using true) → GENEL → KARIŞIK
   [GEÇTİ] okuma kuralı herkese açık (using true) → farkın adı → 4|platform_firmalar.platform_firmalar_oku
@@ -130,9 +130,47 @@
   [GEÇTİ] b) son hâl: sözleşme USD, ödeme yok → USD 0
 == 8) Geri alma
   [GEÇTİ] kayıt varken geri alma durur → DUR: platform tablolarında 10 kayıt var
-  [GEÇTİ] durduktan sonra hiçbir şey silinmedi → 1e1778891ff5e6e5299d215cba222601
+  [GEÇTİ] durduktan sonra hiçbir şey silinmedi → 6ae00ff7a8e5a9086c0a48a95a49fbad
   [GEÇTİ] önkoşul hâlâ UYGULANMIŞ → UYGULANMIŞ
   [GEÇTİ] kayıtlar yokken geri alma → tamam — platform_ nesnesi kalmadı
   [GEÇTİ] önkoşul (geri almadan sonra) → HAZIR
   [GEÇTİ] yeniden uygulama (geri alınmış hâlden) → 8/8 tamam
-── test23: 126 geçti, 0 kaldı ──
+== 9) Eksik tablo senaryoları (yarım kalmış / elle bozulmuş kurulum): önkoşul HATA vermez, KARIŞIK der; geri alma tamamlar
+  [GEÇTİ] yalnız sözleşmeler yok: önkoşul hata vermez → 0
+  [GEÇTİ] yalnız sözleşmeler yok: GENEL → KARIŞIK
+  [GEÇTİ] yalnız sözleşmeler yok: eksik tablo yetki farkında adıyla görünür → evet
+  [GEÇTİ] yalnız sözleşmeler yok: geri alma tamamlar → tamam — platform_ nesnesi kalmadı
+  [GEÇTİ] yalnız sözleşmeler yok: sonra önkoşul → HAZIR
+  [GEÇTİ] yalnız ödemeler yok: önkoşul hata vermez → 0
+  [GEÇTİ] yalnız ödemeler yok: GENEL → KARIŞIK
+  [GEÇTİ] yalnız ödemeler yok: eksik tablo yetki farkında adıyla görünür → evet
+  [GEÇTİ] yalnız ödemeler yok: geri alma tamamlar → tamam — platform_ nesnesi kalmadı
+  [GEÇTİ] yalnız ödemeler yok: sonra önkoşul → HAZIR
+  [GEÇTİ] yalnız firmalar yok (bağlı tablolar kalır): önkoşul hata vermez → 0
+  [GEÇTİ] yalnız firmalar yok (bağlı tablolar kalır): GENEL → KARIŞIK
+  [GEÇTİ] yalnız firmalar yok (bağlı tablolar kalır): eksik tablo yetki farkında adıyla görünür → evet
+  [GEÇTİ] yalnız firmalar yok (bağlı tablolar kalır): geri alma tamamlar → tamam — platform_ nesnesi kalmadı
+  [GEÇTİ] yalnız firmalar yok (bağlı tablolar kalır): sonra önkoşul → HAZIR
+  [GEÇTİ] yalnız günlük yok: önkoşul hata vermez → 0
+  [GEÇTİ] yalnız günlük yok: GENEL → KARIŞIK
+  [GEÇTİ] yalnız günlük yok: eksik tablo yetki farkında adıyla görünür → evet
+  [GEÇTİ] yalnız günlük yok: geri alma tamamlar → tamam — platform_ nesnesi kalmadı
+  [GEÇTİ] yalnız günlük yok: sonra önkoşul → HAZIR
+  [GEÇTİ] yalnız yöneticiler yok: önkoşul hata vermez → 0
+  [GEÇTİ] yalnız yöneticiler yok: GENEL → KARIŞIK
+  [GEÇTİ] yalnız yöneticiler yok: eksik tablo yetki farkında adıyla görünür → evet
+  [GEÇTİ] yalnız yöneticiler yok: geri alma tamamlar → tamam — platform_ nesnesi kalmadı
+  [GEÇTİ] yalnız yöneticiler yok: sonra önkoşul → HAZIR
+  [GEÇTİ] sözleşmeler + ödemeler yok: önkoşul hata vermez → 0
+  [GEÇTİ] sözleşmeler + ödemeler yok: GENEL → KARIŞIK
+  [GEÇTİ] sözleşmeler + ödemeler yok: eksik tablo yetki farkında adıyla görünür → evet
+  [GEÇTİ] sözleşmeler + ödemeler yok: geri alma tamamlar → tamam — platform_ nesnesi kalmadı
+  [GEÇTİ] sözleşmeler + ödemeler yok: sonra önkoşul → HAZIR
+  [GEÇTİ] yöneticiler dışında hepsi yok: önkoşul hata vermez → 0
+  [GEÇTİ] yöneticiler dışında hepsi yok: GENEL → KARIŞIK
+  [GEÇTİ] yöneticiler dışında hepsi yok: eksik tablo yetki farkında adıyla görünür → evet
+  [GEÇTİ] yöneticiler dışında hepsi yok: geri alma tamamlar → tamam — platform_ nesnesi kalmadı
+  [GEÇTİ] yöneticiler dışında hepsi yok: sonra önkoşul → HAZIR
+  [GEÇTİ] yarım hâlde kayıt varken geri alma durur → DUR: platform tablolarında 1 kayıt var
+  [GEÇTİ] yarım hâlde önkoşul kayıt satırı → 10|1 / yok / 0
+── test23: 163 geçti, 0 kaldı ──
