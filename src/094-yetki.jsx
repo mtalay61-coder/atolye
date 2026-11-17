@@ -41,6 +41,17 @@ function gorebilirMi(tanimlar, aktifKullanici, alan) {
   if (guncel.rol === "Yönetici") return true;
   return !!((guncel.gorunurluk || {})[alan]);
 }
+// SİTE HESABI YÖNETİMİ (güvenlik denetimi, 16 Kasım — 1. madde): müşterinin site girişini oluştur / değiştir / kapat ve siteden
+// gelen kayıt talebini onayla / reddet yalnız Yönetici. Sunucu aynı kuralı uygular (site-portal.sql `site_yonetici_kapisi`,
+// fonksiyonların ilk satırı); bu yalnız düğmeleri gizler. Modül yetkisi SAYILMAZ (cari kaydetme yetkisi olan Kullanıcı da
+// göremez) — sunucu da saymıyor. Sıra yetkiVarMi ile aynı: giriş kapalıysa kısıtlama yok (karar sunucuda); GÜNCEL kayıt
+// tanımlardan okunur (rolü düşürülen kullanıcıda düğmeler hemen kaybolsun).
+function siteYonetimiYetkisi(tanimlar, aktifKullanici) {
+  if (!tanimlar || !tanimlar.girisAktifMi) return true;
+  if (!aktifKullanici) return false;
+  const guncel = ((tanimlar.kullanicilar || []).find((k) => k.id === aktifKullanici.id)) || aktifKullanici;
+  return guncel.rol === "Yönetici";
+}
 // Finans raporu sayılan sekmeler — menüde gizlenir, adresle/bağlantıyla açılmaya kalkılırsa Anasayfa'ya dönülür.
 const FINANS_RAPOR_SEKMELERI = ["finansrapor", "gelirgider", "odemerapor"];
 

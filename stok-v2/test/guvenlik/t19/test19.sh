@@ -193,7 +193,11 @@ sonuc "YENİ rls-kimlik sonrası ERP site_talepleri okur (ilk talep + portaldan 
 kur t19c; $PG -d t19c -f $Y/eski-rls-kimlik.sql >/dev/null 2>&1   # (bilgi) ESKİ dosya yeniden çalışırsa ne olur
 sonuc "(bilgi) ESKİ rls-kimlik yeniden çalışırsa tablo yeniden açılır" "ok:2" "$(api t19c authenticated "$NOR" "select count(*) from site_oturumlari")"
 sonuc "  … ama yönetici kapısı kalır (site-portal.sql'de)" "ret:kapı" "$(api t19c authenticated "$NOR" "select site_hesap_sil('11111111-1111-1111-1111-111111111111')")"
-sonuc "YENİ kurulum (site-portal + rls-kimlik depodan): 18 AÇIK / FARKLI" "0 0" "$(kur t19d; $PG -d t19d -At -F'|' -f $G/18-site-tablo-politika-salt-okur.sql | grep -c 'AÇIK$') $($PG -d t19d -At -F'|' -f $G/18-site-tablo-politika-salt-okur.sql | grep -c 'FARKLI$')"
+# 22 (16 Kasım) site_kayit_onayla / site_kayit_reddet'i bilerek değiştirdi; 18 bu iki gövdeyi 19 hâliyle karşılaştırır. 19'un "yeni
+# kurulum" ölçüsü bu yüzden 19'un kendi kaynağıyla (ad02222) yapılır; güncel depo ayrıca: fark yalnız o iki fonksiyonda (22'nin sınaması t22).
+git -C $A show ad02222:site-portal.sql > $Y/site-19-kaynak.sql
+sonuc "YENİ kurulum (19 kaynağı ad02222: site-portal + rls-kimlik): 18 AÇIK / FARKLI" "0 0" "$(kur t19d "" $Y/site-19-kaynak.sql; $PG -d t19d -At -F'|' -f $G/18-site-tablo-politika-salt-okur.sql | grep -c 'AÇIK$') $($PG -d t19d -At -F'|' -f $G/18-site-tablo-politika-salt-okur.sql | grep -c 'FARKLI$')"
+sonuc "GÜNCEL depo (22 dahil): 18 AÇIK · FARKLI satırlar" "0 · site_kayit_onayla,site_kayit_reddet" "$(kur t19d2; $PG -d t19d2 -At -F'|' -f $G/18-site-tablo-politika-salt-okur.sql | grep -c 'AÇIK$') · $($PG -d t19d2 -At -F'|' -f $G/18-site-tablo-politika-salt-okur.sql | grep 'FARKLI$' | grep -o 'site_kayit_[a-z]*' | sort -u | paste -sd,)"
 
 echo "== 8) GERİ ALMA"
 eski_kur t19e; once=$(goruntu t19e); uygula t19e >/dev/null

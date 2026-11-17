@@ -159,6 +159,10 @@ async function calistir() {
     sayfa.waitForEvent("popup", { timeout: 15000 }).catch(() => null),
     sayfa.evaluate(() => document.querySelector("[data-siparis-islem-menusu] [data-paylas-whatsapp]").click()),
   ]);
+  // ADRES GEZİNME BİTİNCE OKUNUR (17 Kasım): "popup" olayı pencere açılır açılmaz gelir; gezinme henüz tamamlanmadığından popup.url()
+  // boş ("") dönüyordu — uygulama doğru adresi açtığı hâlde (istek wa.me/905321234567, taklit rotası karşılıyor) senaryo FARKLI çıkıyordu.
+  // Bu yüzden önce wa.me adresine geçilmesi beklenir; ölçülen (açılan numara) ve altın çıktı değişmedi.
+  if (popup) await popup.waitForURL(/wa\.me/, { timeout: 5000 }).catch(() => {});
   const whatsappAcildi = popup ? decodeURIComponent(popup.url()).split("?")[0] : null;
   if (popup) await popup.close();
   // PDF düğmesi: kütüphane yüklenemeyince yazdırılabilir HTML indiriyor (yedek yol).

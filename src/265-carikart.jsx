@@ -1,4 +1,4 @@
-function CariCard({ onParaFisi, tanimlar, onTanimlarKaydet, onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast, cari, acik, onAcKapa, bakiye, listeBakiye, genelBakiye, resmiBakiye, onAddHareket, onFisSil, onRemove, onFieldChange, onFieldsChange, siparisler, onGoToSiparis, stok, firmaBilgileri, tanimlarProsesler, tanimlarAraProsesler, onBagliProsesToggle, onBarkodOtomatikAta, tumCariler, onStokFisiAc, tanimlarFiyatGruplari, onPencereAc, onCekEkle, odemeHedefi, onOdemeHedefiTuketildi }) {
+function CariCard({ onParaFisi, siteYonetici = false, tanimlar, onTanimlarKaydet, onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast, cari, acik, onAcKapa, bakiye, listeBakiye, genelBakiye, resmiBakiye, onAddHareket, onFisSil, onRemove, onFieldChange, onFieldsChange, siparisler, onGoToSiparis, stok, firmaBilgileri, tanimlarProsesler, tanimlarAraProsesler, onBagliProsesToggle, onBarkodOtomatikAta, tumCariler, onStokFisiAc, tanimlarFiyatGruplari, onPencereAc, onCekEkle, odemeHedefi, onOdemeHedefiTuketildi }) {
   // Pasife al / aktife al — başlıktaki ikon ve kart altındaki yazılı düğme aynı yoldan.
   // Bildirim: liste Aktif/Pasifler diye ayrı olduğundan kart listeden "kayboluyor"; nereye
   // gittiği söylenmezse silindi sanılıyor.
@@ -1010,7 +1010,7 @@ function CariCard({ onParaFisi, tanimlar, onTanimlarKaydet, onFiseGitNo, muhaseb
           )}
 
           {cardTab === "bilgiler" && (cari.tip === "Müşteri" || cari.tip === "Her İkisi") && (
-            <SiteErisimPaneli cari={cari} firmaBilgileri={firmaBilgileri} onFieldChange={onFieldChange} showToast={showToast}
+            <SiteErisimPaneli cari={cari} firmaBilgileri={firmaBilgileri} onFieldChange={onFieldChange} showToast={showToast} yonetici={siteYonetici}
               fiyatGrubuAdi={((tanimlarFiyatGruplari || []).find((g) => g.id === cari.fiyatGrubuId) || {}).ad || ""} />
           )}
 

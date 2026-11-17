@@ -1,0 +1,15 @@
+create table if not exists public.cariler (id text primary key);
+alter table public.cariler add column if not exists unvan text;
+alter table public.cariler add column if not exists tip text;
+alter table public.cariler add column if not exists telefon text;
+alter table public.cariler add column if not exists vergi_no text;
+alter table public.cariler add column if not exists adres text;
+alter table public.cariler add column if not exists para_birimi text;
+alter table public.cariler add column if not exists resim text;
+alter table public.cariler add column if not exists barkod_kodu text;
+alter table public.cariler add column if not exists kod text;
+alter table public.cariler add column if not exists bagli_prosesler jsonb;
+alter table public.cariler add column if not exists fiyat_grubu text;
+alter table public.cariler add column if not exists pasif boolean;
+alter table public.cariler add column if not exists ek jsonb;
+alter table public.cariler add column if not exists surum integer default 1;
