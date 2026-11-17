@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.744.21</title>
+<title>Atölye ERP 1.744.24</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2319,9 +2319,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.744.21";
-const SURUM_TARIHI = "2026-11-14";
-const SURUM_NOTU = "Yazdırılan cari ekstresinde bedenler matris düzeninde (satır ürün · renk, sütun beden)";
+const SURUM = "1.744.24";
+const SURUM_TARIHI = "2026-11-17";
+const SURUM_NOTU = "Yeni firma kurulum dosyası yeniden indirilebiliyor (v2 yapısıyla); firma değiştirme güvenilir";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2351,6 +2351,9 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 }
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" }; // teklif: v1.723.0, Sipariş'in alt sekmesi
 const SURUM_GECMISI = [
+    { surum: "1.744.24", tarih: "17.11.2026", eklenen: [], degisen: [], duzeltilen: ["Firma değiştirirken \"Bağlan\"dan sonra uygulama bazen ESKİ firmayla açılıyordu (tarayıcı yeni seçimi yeniden açılıştan önce kaydedemiyordu) — artık geçiş doğrulanmadan uygulama açılmaz: \"Firma değiştiriliyor…\" görünür, kayıt yerine oturunca yeni firma açılır; olmazsa açıkça söylenir.", "Oturumsuz açılışta (yeni cihaz ya da firma değiştirdikten sonra) giriş yapınca, sayfa yenilendiğinde kullanıcı adı ve şifre yeniden isteniyordu — oturum artık bu girişte de 12 saat saklanır."] },
+    { surum: "1.744.23", tarih: "17.11.2026", eklenen: [], degisen: ["Tanımlar › Yedek & Bulut › \"Yeni firma kurulum dosyasını indir\" yeniden çalışıyor: dosya bugünkü (v2) yapıyı eksiksiz kurar — tablolar, görünümler, sunucu işlemleri, kurallar ve yetkiler birebir; ana firmanın hiçbir verisi dosyaya girmez. Yeni ve boş Supabase projesinde SQL Editor'de tek seferde çalışır; bir adım ya da sondaki doğrulama tutmazsa hiçbir şey kurulmuş olmaz. Sunucudaki kurulum betiği eskiyse dosya indirilmez, ne yapılacağı söylenir."], duzeltilen: [] },
+    { surum: "1.744.22", tarih: "16.11.2026", eklenen: [], degisen: ["Siteden gelen kayıt talebini \"Onayla — cari aç\" ile onaylamak artık tek adım: cari, site hesabı ve talebin kapanışı sunucuda birlikte yapılır — başka bir cihaz aynı talebi işlerse, bağlantı koparsa ya da uygulama kapanırsa boşta cari kalmaz. Cevap alınamazsa düğme \"Tamamla\" olur ve aynı kayıtla yeniden sorar (ikinci cari açılmaz).", "Müşterinin web sitesi girişini oluşturma / değiştirme / kapatma ve siteden gelen kayıt talebini onaylama / reddetme düğmeleri yalnız Yöneticiye görünür (sunucu zaten yalnız Yöneticiye izin veriyordu)."], duzeltilen: [] },
     { surum: "1.744.21", tarih: "14.11.2026", eklenen: [], degisen: ["Cari ekstresi çıktısı (Yazdır / PDF / WhatsApp / e-posta): bedenli fişler açıklamada \"36:1, 37:2…\" yazısı yerine ekrandaki ekstre gibi beden matrisiyle — satır ürün · renk, sütun beden, sonda toplam × birim fiyat. Bedensiz ürünler ve para hareketleri eskisi gibi tek satır; pencere genişledi."], duzeltilen: [] },
     { surum: "1.744.20", tarih: "13.11.2026", eklenen: [], degisen: [], duzeltilen: ["Vitrin düzeltmesinden sonra kalan yanlış \"Başka cihazdan güncellendi: Stok\" bildirimi: \"Standart\" ya da model renkli varyantlarda sunucu renk kimliğini boş döndürdüğü için varyant \"değişmiş\" sayılıyordu. Renk kimliği artık karşılaştırılmaz (renk adı karşılaştırılmaya devam eder). Günlükteki bildirim satırı artık en fazla 3 farkı birlikte yazar."] },
     { surum: "1.744.19", tarih: "13.11.2026", eklenen: ["Tanımlar › Ürün › Sezonlar: sipariş sezonları tanımlanır, Aktif / Pasif yapılır. Sipariş formunda sezon bu listeden seçilir; pasif sezon yeni siparişte çıkmaz, eski siparişlerde ve listedeki süzgeçte görünmeye devam eder. Siparişlerde daha önce yazılmış sezonlar tek tıkla tanımlara eklenir."], degisen: [], duzeltilen: ["Kimse değiştirmediği hâlde her stok kaydından sonra çıkan \"Başka cihazdan güncellendi: Stok\" bildirimi: ürünler tablosunda uygulamanın tanımadığı bir sütun (web sitesinin vitrin işareti) açılışta okunup değişiklik kontrolünde okunmadığı için ürün \"değişmiş\" sayılıyordu. Bu tür sütunlar artık karşılaştırmada yok sayılır."] },
@@ -5224,6 +5227,51 @@ function firmaSecimiOku() {
         return null;
     }
 }
+// FİRMA GEÇİŞİ DOĞRULAMASI (v1.744.23). "Bağlan" seçimi localStorage'a yazıp HEMEN yeniden yüklüyordu; tarayıcı yazmayı yeni
+// belgenin okumasından önce saklama katmanına ulaştıramazsa yeni belge ESKİ seçimi okuyor, o sayfa boyunca da onu kullanıyordu —
+// geçiş sessizce olmuyor, kullanıcı eski firmada kalıyordu (17 Kasım: senaryo-firma-secimi'nin oynaklığı; CDP kaydında yeniden
+// yüklemeyi firmaDegistirVeYenile ← uygula başlatıyor, yeni belge açılışta firma:secim'i eski değerle okuyordu).
+// Şimdi: seçimden SONRA aynı depoya tek kullanımlık geçiş kimliği (`firma:gecis`) yazılır ve sayfa `?firma_gecis=<kimlik>` ile
+// açılır. Aynı depoya sırayla yazıldığı için kimlik görünüyorsa seçim de görünür. Burada, uygulama hiçbir şey okumadan önce:
+// kimlik tutuyorsa geçiş tamam (adres temizlenir); tutmuyorsa (bayat okuma) uygulama BAŞLAMAZ ("Firma değiştiriliyor…",
+// AtolyeERP) ve sayfa artan aralıklarla yeniden açılır (en çok 8 deneme); yine olmazsa açıkça "değiştirilemedi" denir — sessizce
+// eski firmayla açılmaz. Adresteki kimlik TEK BAŞINA hiçbir firmayı seçtirmez (yalnız depodakiyle karşılaştırılır): bağlantıyla
+// başka sunucuya yönlendirme imkânı açmaz; bilinmeyen kimlik en kötü 8 denemeden sonra "değiştirilemedi" ekranı verir.
+const FIRMA_GECIS_ANAHTARI = "firma:gecis";
+const FIRMA_GECIS = (function () {
+    try {
+        if (typeof location === "undefined" || typeof localStorage === "undefined" || !localStorage)
+            return null;
+        const u = new URL(location.href);
+        const n = u.searchParams.get("firma_gecis");
+        if (!n)
+            return null;
+        const deneme = Math.max(1, Number(u.searchParams.get("firma_deneme")) || 1);
+        const temizle = () => {
+            u.searchParams.delete("firma_gecis");
+            u.searchParams.delete("firma_deneme");
+            try {
+                history.replaceState(null, "", u.toString());
+            }
+            catch (e) { /* file:// kısıtı: parametre kalır, zararsız */ }
+        };
+        if (localStorage.getItem(FIRMA_GECIS_ANAHTARI) === n) {
+            localStorage.removeItem(FIRMA_GECIS_ANAHTARI);
+            temizle();
+            return { durum: "tamam", deneme };
+        }
+        if (deneme >= 8) {
+            temizle();
+            return { durum: "olmadi", deneme };
+        }
+        u.searchParams.set("firma_deneme", String(deneme + 1));
+        setTimeout(() => location.replace(u.toString()), 200 * deneme);
+        return { durum: "bekle", deneme };
+    }
+    catch (e) {
+        return null;
+    }
+})();
 const AKTIF_FIRMA = firmaSecimiOku() || VARSAYILAN_FIRMA;
 const SUPABASE_URL = AKTIF_FIRMA.url;
 const SUPABASE_ANAHTAR = AKTIF_FIRMA.anahtar;
@@ -6281,19 +6329,36 @@ function firmaSeciminiDegistir(yeni, depo = localStorage, mevcut = firmaSecimiOk
     depo.setItem(FIRMA_SECIM_ANAHTARI, kayit);
     return true;
 }
-// Değiştir + adres çubuğundaki ?firma= parametresini sil + yeniden yükle.
+// Değiştir + adres çubuğundaki ?firma= parametresini sil + DOĞRULANAN yeniden açılış (030 FIRMA_GECIS): seçimden sonra aynı
+// depoya tek kullanımlık geçiş kimliği yazılır, sayfa ?firma_gecis=<kimlik> ile açılır; yeni belge kimliği görmeden uygulamayı
+// başlatmaz. Önce: düz location.reload() — yeni belge bazen eski seçimi okuyordu (bkz. 030).
 function firmaDegistirVeYenile(yeni) {
     const degisti = firmaSeciminiDegistir(yeni);
+    let u = null;
     try {
-        const u = new URL(location.href);
-        if (u.searchParams.has("firma")) {
-            u.searchParams.delete("firma");
+        u = new URL(location.href);
+        u.searchParams.delete("firma");
+        u.searchParams.delete("firma_deneme");
+    }
+    catch (e) {
+        u = null;
+    }
+    if (degisti) {
+        const kimlik = Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
+        localStorage.setItem(FIRMA_GECIS_ANAHTARI, kimlik);
+        if (u) {
+            u.searchParams.set("firma_gecis", kimlik);
+            location.replace(u.toString());
+        }
+        else
+            location.reload();
+    }
+    else if (u) {
+        try {
             history.replaceState(null, "", u.toString());
         }
+        catch (e) { /* file:// ya da eski tarayıcı: parametre kalır */ }
     }
-    catch (e) { /* file:// ya da eski tarayıcı: parametre kalır, kod aynı olduğu için pencere yeniden açılmaz */ }
-    if (degisti)
-        location.reload();
     return degisti;
 }
 // Ekranda görünen ad: girilen kod; elle (Gelişmiş) bağlanıldıysa proje kimliği.
@@ -6304,6 +6369,20 @@ function firmaGorunenAdi() {
 // Seçimsiz cihazın açılış ekranı (100 AtolyeERP kapısı). ?firma=KOD varsa kod dolu gelir.
 function FirmaGirisEkrani() {
     return React.createElement(FirmaPenceresi, { tamEkran: true, kodBaslangic: adresFirmaParametresi(), onKapat: () => { } });
+}
+// Geçiş doğrulanana kadar (030 FIRMA_GECIS) uygulamanın yerine: hiçbir veri okunmaz, hiçbir istek gitmez.
+function FirmaGecisEkrani({ durum }) {
+    const kutu = { minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24,
+        fontFamily: "system-ui, sans-serif", background: "var(--erp-panel-2, #f4f1ec)", color: "var(--erp-text, #1f1f1f)" };
+    if (durum.durum === "olmadi") {
+        return (React.createElement("div", { "data-firma-gecis": "olmadi", style: kutu },
+            React.createElement("div", { style: { maxWidth: 420, textAlign: "center" } },
+                React.createElement("div", { style: { fontSize: 16, fontWeight: 700, marginBottom: 8 } }, "Firma de\u011Fi\u015Ftirilemedi"),
+                React.createElement("div", { style: { fontSize: 13, marginBottom: 14 } }, "Taray\u0131c\u0131 yeni firma se\u00E7imini kaydedemedi. Sayfay\u0131 yenileyip firmay\u0131 yeniden se\u00E7in."),
+                React.createElement("button", { type: "button", className: "btn-primary", onClick: () => location.replace(location.pathname + location.hash) }, "Sayfay\u0131 yenile"))));
+    }
+    return React.createElement("div", { "data-firma-gecis": "bekle", style: kutu },
+        React.createElement("div", { style: { fontSize: 14 } }, "Firma de\u011Fi\u015Ftiriliyor\u2026"));
 }
 function adresFirmaParametresi() {
     try {
@@ -6423,18 +6502,18 @@ function FirmaSatiri({ kucuk = false }) {
 function KurulumDosyasiDugmesi() {
     const [durum, setDurum] = useState(null); // null | "bekliyor" | { hata } | { tamam }
     async function indir() {
-        // v2'DEN SONRA DESTEKLENMİYOR (v1.730.1 denetim): betik canlı şemayı döker; geçişten sonra eski adlar görünüm, `stk_ayar`
-        // satırı yok, görünümlere grant satırı betiği bütünüyle düşürüyor. Yeni firma için doğru yol (notlarda): v2 öncesi şema +
-        // stok-v2/editor adımları. Bozuk dosya indirmek yerine söylenir.
-        if (stokV2Aktif() || cariV2Aktif() || kasaV2Aktif()) {
-            setDurum({ hata: "Veriler yeni yapıya (v2) geçtiği için kurulum dosyası şu an doğru üretilemiyor. Yeni firma gerekirse bildirin — kurulumu birlikte yapalım." });
-            return;
-        }
+        // v2 (v1.744.23): v1.730.1'de v2 için kapatılmıştı (betik görünümleri, stk_ayar satırını ve görünüm yetkilerini kuramıyor,
+        // fonksiyonları bağımlılık sırası gözetmeden yazıyordu). kurulum-betigi.sql v2 için yeniden yazıldı: tek işlem, Supabase SQL
+        // Editor uyumlu, bağımlılık sırası doğru, yetkiler birebir, ana firmanın verisi YOK, sonda parmak izi doğrulaması (tutmazsa
+        // kurulum geri alınır). Sunucuda yeni betik kurulu değilse eski betiğin bozuk dosyasını indirmemek için yanıt denetlenir:
+        // yeni dosya "kurulum_parmak_izi" doğrulamasını taşır.
         setDurum("bekliyor");
         try {
             const metin = await supabaseIstek("rpc/kurulum_betigi", { method: "POST", body: "{}" });
             if (typeof metin !== "string" || !/create table/i.test(metin))
                 throw new Error("Sunucudan boş yanıt geldi");
+            if (!/kurulum_parmak_izi/.test(metin))
+                throw new Error("Sunucudaki kurulum betiği eski (v2 öncesi) — önce kurulum-betigi.sql'in güncel hâli ana projede çalıştırılmalı");
             const blob = new Blob([metin], { type: "text/plain;charset=utf-8" });
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
@@ -22675,6 +22754,19 @@ function gorebilirMi(tanimlar, aktifKullanici, alan) {
         return true;
     return !!((guncel.gorunurluk || {})[alan]);
 }
+// SİTE HESABI YÖNETİMİ (güvenlik denetimi, 16 Kasım — 1. madde): müşterinin site girişini oluştur / değiştir / kapat ve siteden
+// gelen kayıt talebini onayla / reddet yalnız Yönetici. Sunucu aynı kuralı uygular (site-portal.sql `site_yonetici_kapisi`,
+// fonksiyonların ilk satırı); bu yalnız düğmeleri gizler. Modül yetkisi SAYILMAZ (cari kaydetme yetkisi olan Kullanıcı da
+// göremez) — sunucu da saymıyor. Sıra yetkiVarMi ile aynı: giriş kapalıysa kısıtlama yok (karar sunucuda); GÜNCEL kayıt
+// tanımlardan okunur (rolü düşürülen kullanıcıda düğmeler hemen kaybolsun).
+function siteYonetimiYetkisi(tanimlar, aktifKullanici) {
+    if (!tanimlar || !tanimlar.girisAktifMi)
+        return true;
+    if (!aktifKullanici)
+        return false;
+    const guncel = ((tanimlar.kullanicilar || []).find((k) => k.id === aktifKullanici.id)) || aktifKullanici;
+    return guncel.rol === "Yönetici";
+}
 // Finans raporu sayılan sekmeler — menüde gizlenir, adresle/bağlantıyla açılmaya kalkılırsa Anasayfa'ya dönülür.
 const FINANS_RAPOR_SEKMELERI = ["finansrapor", "gelirgider", "odemerapor"];
 // ONAY SİSTEMİ KAPALI (v1.689.0 — kullanıcı: "onay sistemini deaktif etmemiz lazım"): yetkisi olmayan işlem artık
@@ -22830,6 +22922,9 @@ function pencereIkonu(p) {
 // cihazda firma seçimi yoksa uygulamanın HİÇBİR parçası çalışmaz — yalnız firma kodu ekranı. Kapı uygulama bileşeninin
 // DIŞINDA: içeride erken dönüş olsaydı yükleme efektleri yine çalışır, varsayılan projeye bağlanıp yerel veri açardı.
 function AtolyeERP() {
+    // Firma geçişi doğrulanmadıysa (030 FIRMA_GECIS — sayfa boyunca sabit) uygulama başlamaz: eski seçimle veri okunmasın.
+    if (FIRMA_GECIS && FIRMA_GECIS.durum !== "tamam")
+        return React.createElement(FirmaGecisEkrani, { durum: FIRMA_GECIS });
     const secim = firmaSecimiOku();
     if (!secim)
         return React.createElement(FirmaGirisEkrani, null);
@@ -23795,6 +23890,10 @@ function AtolyeUygulamasi() {
         }
         setAktifKullanici(k);
         setBulutKimligi(true);
+        // OTURUM BU YOLDA DA SAKLANIR (v1.744.24). Oturumsuz açılışta (yeni cihaz, firma değişimi sonrası) giriş bu ön
+        // giriş yolundan geçiyor; `oturumSakla` yalnız GirisEkrani/IlkKurulum yolundaydı. Sonuç: girişten hemen sonraki
+        // sıradan yenilemede kullanıcıdan şifre yeniden isteniyordu (ekran-firma-ayrimi 1b ölçtü: `oturum:aktif` hiç yazılmamış).
+        oturumSakla(k, true);
         gunlukKullaniciAyarla(k);
         gunlukYaz("Giriş yaptı", "oturum", { rol: k.rol, kimlik: "bulut", onGiris: true });
     }, [bulutOnGiris, loading, aktifKullanici, tanimlar]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -24038,6 +24137,20 @@ function AtolyeUygulamasi() {
         degisen.farklar = farklar; // tanı: günlüğe (aşağıda) — hangi kayıt / alan farklı çıktı
         return degisen;
     }, []);
+    // SUNUCUNUN AÇTIĞI CARİ (güvenlik 22, 266): site kayıt onayı cariyi SUNUCUDA açar; ekran onu buluttan alır (state + fark tabanı +
+    // sürüm birlikte — yerelde açılsaydı aynı kimlik bulut yazmasıyla tekrar giderdi). Değişiklik sayacının kuralları aynen: bekleyen cari
+    // yazması varsa ya da bu cihaz son 12 sn'de carilere yazdıysa (ya da yazma yoldaysa) tazelenmez — yerel değişiklik ezilmesin; sayaç
+    // birkaç saniye sonra yine getirir.
+    const carileriBuluttanTazele = useCallback(() => {
+        if (!supabaseAcikMi())
+            return;
+        if (bekleyenYazmalariOku()["cari:data"])
+            return;
+        const sonYazma = Math.max(0, ...alaninTablolari("cariler").map((t) => Number(bulutSonYazma(t)) || 0));
+        if (Date.now() - sonYazma < DEGISIKLIK_KENDI_YAZMA_MS)
+            return;
+        bulutDegisikligiUygula(["cariler"]).catch((e) => console.warn("Cariler buluttan tazelenemedi:", e && e.message));
+    }, [bulutDegisikligiUygula]);
     useEffect(() => {
         if (loading || !supabaseAcikMi())
             return undefined;
@@ -28358,7 +28471,7 @@ function AtolyeUygulamasi() {
                     React.createElement(GizliModul, { aktif: tab === "bankaexcel" },
                         React.createElement(BankaExcelEkrani, { muhasebe: muhasebe, cariler: cariler, giderKartlari: tanimlar.giderKartlari || [], showToast: showToast, onParaFisiKes: paraFisiKes, onCariliKaydet: (k) => siparisOdemesiKaydet(k, { eskiYol: true }), onBankaHareketi: muhasebeyePesinIsle })),
                     React.createElement(GizliModul, { aktif: tab === "cari" || tab === "odemetahsilat" || tab === "odemerapor" },
-                        React.createElement(CariModule, { tanimlar: tanimlar, onTanimlarKaydet: saveTanimlar, giderKartlari: tanimlar.giderKartlari || [], kapsam: cariKapsamRef.current, onOdemeAlaniGit: (t) => setTab(t, true), onOdemeKaydet: siparisOdemesiKaydet, onFiseGitNo: fiseGit, muhasebe: muhasebe, kurlar: muhasebe.kurlar, onMuhasebeHareketi: muhasebeyePesinIsle, onParaFisi: paraFisiKesBildir, onFisIptal: sunucuFisiIptal, onMuhasebeKaydet: saveMuhasebe, kullaniciYetkisiVar: kullaniciYetkisiVar, onayIste: onayIste, onayAcik: onaySistemiAcikMi(tanimlar), cariler: cariler, onSave: saveCariler, 
+                        React.createElement(CariModule, { tanimlar: tanimlar, onTanimlarKaydet: saveTanimlar, giderKartlari: tanimlar.giderKartlari || [], kapsam: cariKapsamRef.current, onOdemeAlaniGit: (t) => setTab(t, true), onOdemeKaydet: siparisOdemesiKaydet, onFiseGitNo: fiseGit, muhasebe: muhasebe, kurlar: muhasebe.kurlar, onMuhasebeHareketi: muhasebeyePesinIsle, onParaFisi: paraFisiKesBildir, onFisIptal: sunucuFisiIptal, onMuhasebeKaydet: saveMuhasebe, kullaniciYetkisiVar: kullaniciYetkisiVar, siteYonetici: siteYonetimiYetkisi(tanimlar, aktifKullanici), onCarilerTazele: carileriBuluttanTazele, onayIste: onayIste, onayAcik: onaySistemiAcikMi(tanimlar), cariler: cariler, onSave: saveCariler, 
                             // ÇEK KAYDI TEK YERE DÜŞSÜN: caride girilen çek Muhasebe > Çekler listesine de
                             // yazılıyor. Aksi halde aynı çek iki ayrı yerde ayrı ayrı tutuluyordu — bu projede
                             // "aynı bilgi iki yerde" kalıbı defalarca hataya döndü.
@@ -28440,7 +28553,7 @@ function AtolyeUygulamasi() {
                     tab === "kilavuz" && React.createElement(KilavuzEkrani, { aktifKullanici: aktifKullanici, tanimlar: tanimlar, showToast: showToast }),
                     tab === "gunluk" && aktifKullanici && aktifKullanici.rol === "Yönetici" && (React.createElement(GunlukPaneli, { showToast: showToast })),
                     tab === "finansrapor" && (!kullaniciYetkisiVar("muhasebe", "goruntuleme") ? (React.createElement(EmptyState, { text: "Finans raporunu g\u00F6r\u00FCnt\u00FCleme yetkiniz yok." })) : (React.createElement(FinansRaporu, { cariler: cariler, muhasebe: muhasebe, stok: stok, uretim: uretim, araProsesler: tanimlar.araProsesler || [], raporlar: tanimlar.raporlar || [], onRaporlarKaydet: raporlariKaydet, aktifKullanici: aktifKullanici, showToast: showToast, firmaBilgileri: tanimlar.firmaBilgileri, tanimlar: tanimlar, saveTanimlar: saveTanimlar }))),
-                    tab === "gelirgider" && (!kullaniciYetkisiVar("muhasebe", "goruntuleme") ? (React.createElement(EmptyState, { text: "Gelir / Gider ekran\u0131n\u0131 g\u00F6r\u00FCnt\u00FCleme yetkiniz yok." })) : (React.createElement(GelirGiderEkrani, { onFisIptal: sunucuFisiIptal, stok: stok, tanimlar: tanimlar, onSave: saveTanimlar, muhasebe: muhasebe, cariler: cariler, uretim: uretim, showToast: showToast, onMuhasebeKaydet: saveMuhasebe, kullaniciYetkisiVar: kullaniciYetkisiVar, onayIste: onayIste, onayAcik: onaySistemiAcikMi(tanimlar), onCopaAt: copaAt }))),
+                    tab === "gelirgider" && (!kullaniciYetkisiVar("muhasebe", "goruntuleme") ? (React.createElement(EmptyState, { text: "Gelir / Gider ekran\u0131n\u0131 g\u00F6r\u00FCnt\u00FCleme yetkiniz yok." })) : (React.createElement(GelirGiderEkrani, { onFisIptal: sunucuFisiIptal, stok: stok, tanimlar: tanimlar, onSave: saveTanimlar, muhasebe: muhasebe, cariler: cariler, uretim: uretim, showToast: showToast, onMuhasebeKaydet: saveMuhasebe, kullaniciYetkisiVar: kullaniciYetkisiVar, siteYonetici: siteYonetimiYetkisi(tanimlar, aktifKullanici), onCarilerTazele: carileriBuluttanTazele, onayIste: onayIste, onayAcik: onaySistemiAcikMi(tanimlar), onCopaAt: copaAt }))),
                     React.createElement(GizliModul, { aktif: tab === "muhasebe" || tab === "cekler" }, !kullaniciYetkisiVar("muhasebe", "goruntuleme") ? (React.createElement(EmptyState, { text: "Kasa & Banka ekran\u0131n\u0131 g\u00F6r\u00FCnt\u00FCleme yetkiniz yok. Eri\u015Fim i\u00E7in y\u00F6neticinize ba\u015Fvurun." })) : (React.createElement(MuhasebeModule, { onParaFisiKes: paraFisiKes, onFisIptal: sunucuFisiIptal, sunucuFisiMi: sunucuFisiMi, kapsam: muhasebeKapsamRef.current, tanimlar: tanimlar, stok: stok, uretim: uretim, giderKartlari: tanimlar.giderKartlari || [], onCekIslem: cekIslemYap, onCekEkleIsle: cekEkleVeIsle, onCekHareketiyleSil: cekHareketiyleSil, 
                         // SON İŞLEMİ GERİ AL (v1.459.0): ciro/iade fişini fiş silme kapısından siler; çek
                         // `cekIslemGeriAl` ile bir önceki durumuna döner. Hareket bulunamazsa false.
@@ -53593,7 +53706,7 @@ function sonrakiPersonelBarkodu(cariler, prosesler, prosesAdi, haricId) {
         .filter((kod) => kod >= baslangic && kod <= bandSonu);
     return kodlar.length > 0 ? Math.max(...kodlar) + 1 : baslangic;
 }
-function CariModule({ onParaFisi, onFisIptal, tanimlar, onTanimlarKaydet, onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, onayAcik, giderKartlari, kapsam = "cari", onOdemeAlaniGit, onOdemeKaydet, onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler, onSave, showToast, onFisSil, siparisler, onGoToSiparis, stok, firmaBilgileri, tanimlarProsesler, tanimlarAraProsesler, onCopaAt, onStokFisiAc, tanimlarFiyatGruplari, onPencereAc, onCekEkle, odemeHedefi, onOdemeHedefiTuketildi, hedefCariId, onHedefCariTuketildi }) {
+function CariModule({ onParaFisi, onFisIptal, tanimlar, onTanimlarKaydet, onMuhasebeKaydet, kullaniciYetkisiVar, siteYonetici = false, onCarilerTazele, onayIste, onayAcik, giderKartlari, kapsam = "cari", onOdemeAlaniGit, onOdemeKaydet, onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler, onSave, showToast, onFisSil, siparisler, onGoToSiparis, stok, firmaBilgileri, tanimlarProsesler, tanimlarAraProsesler, onCopaAt, onStokFisiAc, tanimlarFiyatGruplari, onPencereAc, onCekEkle, odemeHedefi, onOdemeHedefiTuketildi, hedefCariId, onHedefCariTuketildi }) {
     const [showForm, setShowForm] = useState(false);
     const [query, setQuery] = useState("");
     const [cariTipSekme, setCariTipSekme] = useState("Tümü");
@@ -54037,7 +54150,7 @@ function CariModule({ onParaFisi, onFisIptal, tanimlar, onTanimlarKaydet, onMuha
                         if (!r)
                             showToast(eskiYolMesaji);
                         return true;
-                    } }))) : odemeCari ? (React.createElement(CariCard, { tanimlar: tanimlar, onTanimlarKaydet: onTanimlarKaydet, onFiseGitNo: onFiseGitNo, muhasebe: muhasebe, kurlar: kurlar, onMuhasebeHareketi: onMuhasebeHareketi, onParaFisi: onParaFisi, showToast: showToast, key: odemeCari.id, cari: odemeCari, acik: true, onAcKapa: () => odemeFormunuAc("", odemeTip, odemeSekliSecim), onCekEkle: onCekEkle, bakiye: cariBakiyeleri(odemeCari), listeBakiye: cariBakiyeleri(odemeCari, listeDefter), genelBakiye: cariBakiyeleri(odemeCari, "Genel"), resmiBakiye: cariBakiyeleri(odemeCari, "Resmi"), onAddHareket: addHareket, onFisSil: onFisSil, onRemove: removeCari, onFieldChange: updateCariField, onFieldsChange: updateCariFields, siparisler: siparisler, onGoToSiparis: onGoToSiparis, stok: stok, firmaBilgileri: firmaBilgileri, tanimlarProsesler: tanimlarProsesler, tanimlarAraProsesler: tanimlarAraProsesler, onBagliProsesToggle: bagliProsesToggle, onBarkodOtomatikAta: barkodOtomatikAta, tumCariler: cariler, onStokFisiAc: onStokFisiAc, tanimlarFiyatGruplari: tanimlarFiyatGruplari, onPencereAc: onPencereAc, odemeHedefi: odemeYerelHedef, onOdemeHedefiTuketildi: () => setOdemeYerelHedef(null) })) : (React.createElement(EmptyState, { text: `${odemeTip} girmek için yukarıdan cariyi seçin — kasa, banka, çek ve senet aynı formda.` })),
+                    } }))) : odemeCari ? (React.createElement(CariCard, { tanimlar: tanimlar, onTanimlarKaydet: onTanimlarKaydet, siteYonetici: siteYonetici, onFiseGitNo: onFiseGitNo, muhasebe: muhasebe, kurlar: kurlar, onMuhasebeHareketi: onMuhasebeHareketi, onParaFisi: onParaFisi, showToast: showToast, key: odemeCari.id, cari: odemeCari, acik: true, onAcKapa: () => odemeFormunuAc("", odemeTip, odemeSekliSecim), onCekEkle: onCekEkle, bakiye: cariBakiyeleri(odemeCari), listeBakiye: cariBakiyeleri(odemeCari, listeDefter), genelBakiye: cariBakiyeleri(odemeCari, "Genel"), resmiBakiye: cariBakiyeleri(odemeCari, "Resmi"), onAddHareket: addHareket, onFisSil: onFisSil, onRemove: removeCari, onFieldChange: updateCariField, onFieldsChange: updateCariFields, siparisler: siparisler, onGoToSiparis: onGoToSiparis, stok: stok, firmaBilgileri: firmaBilgileri, tanimlarProsesler: tanimlarProsesler, tanimlarAraProsesler: tanimlarAraProsesler, onBagliProsesToggle: bagliProsesToggle, onBarkodOtomatikAta: barkodOtomatikAta, tumCariler: cariler, onStokFisiAc: onStokFisiAc, tanimlarFiyatGruplari: tanimlarFiyatGruplari, onPencereAc: onPencereAc, odemeHedefi: odemeYerelHedef, onOdemeHedefiTuketildi: () => setOdemeYerelHedef(null) })) : (React.createElement(EmptyState, { text: `${odemeTip} girmek için yukarıdan cariyi seçin — kasa, banka, çek ve senet aynı formda.` })),
             React.createElement("div", { style: { marginTop: 16 } },
                 React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 6, flexWrap: "wrap" } },
                     React.createElement("b", { style: { fontSize: 13 } }, "Son tahsilat ve \u00F6demeler"),
@@ -54174,7 +54287,7 @@ function CariModule({ onParaFisi, onFisIptal, tanimlar, onTanimlarKaydet, onMuha
             React.createElement("button", { className: "btn-primary", style: { marginLeft: "auto" }, onClick: () => setShowForm((s) => !s) },
                 React.createElement(Plus, { size: 15 }),
                 " Cari Ekle")),
-        kapsam === "cari" && React.createElement(SiteKayitTalepleriPaneli, { cariler: cariler, onSave: onSave, showToast: showToast }),
+        kapsam === "cari" && React.createElement(SiteKayitTalepleriPaneli, { cariler: cariler, showToast: showToast, yonetici: siteYonetici, onCarilerTazele: onCarilerTazele }),
         showForm && (React.createElement("div", { style: { background: "var(--erp-panel)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 16, marginBottom: 20 } },
             React.createElement(KayitSeridi, { baslik: "Yeni Cari", ikon: React.createElement(Users, { size: 15, color: "#5B3F75" }), veri: "data-cari-form-seridi" },
                 React.createElement("button", { className: "btn-primary btn-save", onClick: addCari },
@@ -54270,7 +54383,7 @@ function CariModule({ onParaFisi, onFisIptal, tanimlar, onTanimlarKaydet, onMuha
                         } }, p.ad));
                 })))))),
         filtered.length === 0 ? (React.createElement(EmptyState, { text: cariler.length === 0 ? "Henüz cari kaydı yok. İlk cariyi ekleyerek başlayın." : "Aramanızla eşleşen cari yok." })) : (React.createElement("div", { style: { display: "grid", gap: 12 } },
-            filtered.map((c) => (React.createElement(CariCard, { tanimlar: tanimlar, onTanimlarKaydet: onTanimlarKaydet, onFiseGitNo: onFiseGitNo, muhasebe: muhasebe, kurlar: kurlar, onMuhasebeHareketi: onMuhasebeHareketi, onParaFisi: onParaFisi, showToast: showToast, key: c.id, cari: c, acik: acikCariId === c.id, onAcKapa: () => setAcikCariId((onceki) => (onceki === c.id ? null : c.id)), onCekEkle: onCekEkle, bakiye: cariBakiyeleri(c), listeBakiye: cariBakiyeleri(c, listeDefter), genelBakiye: cariBakiyeleri(c, "Genel"), resmiBakiye: cariBakiyeleri(c, "Resmi"), onAddHareket: addHareket, onFisSil: onFisSil, onRemove: removeCari, onFieldChange: updateCariField, onFieldsChange: updateCariFields, siparisler: siparisler, onGoToSiparis: onGoToSiparis, stok: stok, firmaBilgileri: firmaBilgileri, tanimlarProsesler: tanimlarProsesler, tanimlarAraProsesler: tanimlarAraProsesler, onBagliProsesToggle: bagliProsesToggle, onBarkodOtomatikAta: barkodOtomatikAta, tumCariler: cariler, onStokFisiAc: onStokFisiAc, tanimlarFiyatGruplari: tanimlarFiyatGruplari, onPencereAc: onPencereAc, odemeHedefi: odemeHedefi && odemeHedefi.cariId === c.id ? odemeHedefi : null, onOdemeHedefiTuketildi: onOdemeHedefiTuketildi }))),
+            filtered.map((c) => (React.createElement(CariCard, { tanimlar: tanimlar, onTanimlarKaydet: onTanimlarKaydet, siteYonetici: siteYonetici, onFiseGitNo: onFiseGitNo, muhasebe: muhasebe, kurlar: kurlar, onMuhasebeHareketi: onMuhasebeHareketi, onParaFisi: onParaFisi, showToast: showToast, key: c.id, cari: c, acik: acikCariId === c.id, onAcKapa: () => setAcikCariId((onceki) => (onceki === c.id ? null : c.id)), onCekEkle: onCekEkle, bakiye: cariBakiyeleri(c), listeBakiye: cariBakiyeleri(c, listeDefter), genelBakiye: cariBakiyeleri(c, "Genel"), resmiBakiye: cariBakiyeleri(c, "Resmi"), onAddHareket: addHareket, onFisSil: onFisSil, onRemove: removeCari, onFieldChange: updateCariField, onFieldsChange: updateCariFields, siparisler: siparisler, onGoToSiparis: onGoToSiparis, stok: stok, firmaBilgileri: firmaBilgileri, tanimlarProsesler: tanimlarProsesler, tanimlarAraProsesler: tanimlarAraProsesler, onBagliProsesToggle: bagliProsesToggle, onBarkodOtomatikAta: barkodOtomatikAta, tumCariler: cariler, onStokFisiAc: onStokFisiAc, tanimlarFiyatGruplari: tanimlarFiyatGruplari, onPencereAc: onPencereAc, odemeHedefi: odemeHedefi && odemeHedefi.cariId === c.id ? odemeHedefi : null, onOdemeHedefiTuketildi: onOdemeHedefiTuketildi }))),
             (() => {
                 const ayrik = filtered.map((c) => bakiyeAyir(cariBakiyeleri(c, listeDefter)));
                 const alacakT = bakiyeleriTopla(ayrik.map((x) => x.alacak));
@@ -55828,7 +55941,7 @@ function GunSonuRaporu({ cariler, muhasebe, stok, uretim, tanimlar, saveTanimlar
             React.createElement("div", { dangerouslySetInnerHTML: { __html: ustHtml } }),
             gunSonuBolumleri(veri).map((b) => React.createElement(GunSonuListe, { key: b.baslik, ...b })))));
 }
-function CariCard({ onParaFisi, tanimlar, onTanimlarKaydet, onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast, cari, acik, onAcKapa, bakiye, listeBakiye, genelBakiye, resmiBakiye, onAddHareket, onFisSil, onRemove, onFieldChange, onFieldsChange, siparisler, onGoToSiparis, stok, firmaBilgileri, tanimlarProsesler, tanimlarAraProsesler, onBagliProsesToggle, onBarkodOtomatikAta, tumCariler, onStokFisiAc, tanimlarFiyatGruplari, onPencereAc, onCekEkle, odemeHedefi, onOdemeHedefiTuketildi }) {
+function CariCard({ onParaFisi, siteYonetici = false, tanimlar, onTanimlarKaydet, onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast, cari, acik, onAcKapa, bakiye, listeBakiye, genelBakiye, resmiBakiye, onAddHareket, onFisSil, onRemove, onFieldChange, onFieldsChange, siparisler, onGoToSiparis, stok, firmaBilgileri, tanimlarProsesler, tanimlarAraProsesler, onBagliProsesToggle, onBarkodOtomatikAta, tumCariler, onStokFisiAc, tanimlarFiyatGruplari, onPencereAc, onCekEkle, odemeHedefi, onOdemeHedefiTuketildi }) {
     // Pasife al / aktife al — başlıktaki ikon ve kart altındaki yazılı düğme aynı yoldan.
     // Bildirim: liste Aktif/Pasifler diye ayrı olduğundan kart listeden "kayboluyor"; nereye
     // gittiği söylenmezse silindi sanılıyor.
@@ -56562,7 +56675,7 @@ function CariCard({ onParaFisi, tanimlar, onTanimlarKaydet, onFiseGitNo, muhaseb
                                 g.tip,
                                 ")"))),
                         React.createElement("span", { style: { fontSize: 10, color: "var(--erp-text-2)" } }, "Bu gruba \u00F6zel fiyat tan\u0131mlanm\u0131\u015F \u00FCr\u00FCnlerde, bu cariye otomatik o fiyat uygulan\u0131r.")))),
-                cardTab === "bilgiler" && (cari.tip === "Müşteri" || cari.tip === "Her İkisi") && (React.createElement(SiteErisimPaneli, { cari: cari, firmaBilgileri: firmaBilgileri, onFieldChange: onFieldChange, showToast: showToast, fiyatGrubuAdi: ((tanimlarFiyatGruplari || []).find((g) => g.id === cari.fiyatGrubuId) || {}).ad || "" })),
+                cardTab === "bilgiler" && (cari.tip === "Müşteri" || cari.tip === "Her İkisi") && (React.createElement(SiteErisimPaneli, { cari: cari, firmaBilgileri: firmaBilgileri, onFieldChange: onFieldChange, showToast: showToast, yonetici: siteYonetici, fiyatGrubuAdi: ((tanimlarFiyatGruplari || []).find((g) => g.id === cari.fiyatGrubuId) || {}).ad || "" })),
                 cardTab === "bilgiler" && cari.tip === "Personel" && (React.createElement("div", { style: { display: "grid", gap: 10, marginBottom: 14, padding: "8px 10px", background: "#F2E7F5", borderRadius: "var(--erp-r-md)" } },
                     React.createElement("div", { style: { display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end" } },
                         React.createElement("label", { style: { display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--erp-purple)", fontWeight: 600 } },
@@ -57277,7 +57390,12 @@ function siteKullaniciOner(unvan) {
     return String(unvan || "").toLocaleLowerCase("tr-TR").replace(/[çğıöşü]/g, (h) => tr[h])
         .replace(/[^a-z0-9]+/g, " ").trim().split(" ").filter((k) => !["ltd", "sti", "as", "ve", "tic", "san"].includes(k)).slice(0, 2).join(".") || "musteri";
 }
-function SiteErisimPaneli({ cari, firmaBilgileri, onFieldChange, showToast, fiyatGrubuAdi }) {
+// YALNIZ YÖNETİCİ (güvenlik denetimi, 16 Kasım — 1. madde). Sunucu (site-portal.sql `site_yonetici_kapisi`) Yönetici olmayanın
+// hesap / kayıt işlemini zaten reddediyor; ekran da düğmeleri yalnız Yöneticiye gösterir (`siteYonetimiYetkisi`, 094) ve işlem
+// fonksiyonları hiçbir şey yazmadan önce bakar. Okuma (hesap var mı, son giriş, bekleyen talepler) herkese açık kalır.
+const SITE_YALNIZ_YONETICI = "Müşteri site hesabı işlemlerini yalnız Yönetici yapabilir";
+const siteHataMetni = (e) => { const m = String((e && e.message) || e); return (m.match(/"message"\s*:\s*"([^"]+)"/) || [])[1] || m; };
+function SiteErisimPaneli({ cari, firmaBilgileri, onFieldChange, showToast, fiyatGrubuAdi, yonetici = false }) {
     const [bilgi, setBilgi] = useState(undefined); // undefined = okunuyor, null = hesap yok, {kullanici, sonGiris…}
     const [hata, setHata] = useState("");
     const [duzen, setDuzen] = useState(false);
@@ -57296,6 +57414,11 @@ function SiteErisimPaneli({ cari, firmaBilgileri, onFieldChange, showToast, fiya
     useEffect(() => { oku(); }, [oku]);
     const ac = () => { setAd((bilgi && bilgi.kullanici) || siteKullaniciOner(cari.unvan)); setSifre(bilgi ? "" : siteSifresiUret()); setDuzen(true); setYeniGiris(null); };
     const kaydet = () => {
+        if (!yonetici) {
+            if (showToast)
+                showToast(SITE_YALNIZ_YONETICI);
+            return;
+        }
         setMesgul(true);
         supabaseIstek("rpc/site_hesap_kaydet", { method: "POST", body: JSON.stringify({ p_cari_id: cari.id, p_kullanici: ad, p_sifre: sifre }) })
             .then(() => {
@@ -57310,6 +57433,11 @@ function SiteErisimPaneli({ cari, firmaBilgileri, onFieldChange, showToast, fiya
             showToast((m.match(/"message"\s*:\s*"([^"]+)"/) || [])[1] || m); });
     };
     const kapat = () => {
+        if (!yonetici) {
+            if (showToast)
+                showToast(SITE_YALNIZ_YONETICI);
+            return;
+        }
         if (!window.confirm(`${cari.unvan}: web sitesi girişi kapatılsın mı? Müşteri siteye giremez (açık oturumu da kapanır).`))
             return;
         supabaseIstek("rpc/site_hesap_sil", { method: "POST", body: JSON.stringify({ p_cari_id: cari.id }) })
@@ -57332,9 +57460,11 @@ function SiteErisimPaneli({ cari, firmaBilgileri, onFieldChange, showToast, fiya
                 React.createElement("span", { style: { fontSize: 10, color: "var(--erp-text-2)" } },
                     bilgi.sonGiris ? `son giriş ${String(bilgi.sonGiris).slice(0, 16).replace("T", " ")}` : "henüz giriş yapmadı",
                     bilgi.kilitli ? " · çok hatalı deneme, 15 dk kilitli" : ""),
-                React.createElement("button", { type: "button", className: "btn-secondary", style: kucukDugme, onClick: ac, "data-site-hesap-duzenle": "1" }, "Kullan\u0131c\u0131 ad\u0131 / \u015Fifre de\u011Fi\u015Ftir"),
-                React.createElement("button", { type: "button", className: "btn-secondary", style: { ...kucukDugme, color: "var(--erp-danger)" }, onClick: kapat }, "Eri\u015Fimi kapat"))),
-            bilgi === null && !duzen && (React.createElement("button", { type: "button", className: "btn-primary", style: { fontSize: 11, padding: "4px 10px" }, onClick: ac, disabled: !!hata, "data-site-hesap-ac": "1" }, "Giri\u015F bilgisi olu\u015Ftur")),
+                yonetici && React.createElement("button", { type: "button", className: "btn-secondary", style: kucukDugme, onClick: ac, "data-site-hesap-duzenle": "1" }, "Kullan\u0131c\u0131 ad\u0131 / \u015Fifre de\u011Fi\u015Ftir"),
+                yonetici && React.createElement("button", { type: "button", className: "btn-secondary", style: { ...kucukDugme, color: "var(--erp-danger)" }, onClick: kapat, "data-site-hesap-kapat": "1" }, "Eri\u015Fimi kapat"))),
+            bilgi === null && !duzen && yonetici && (React.createElement("button", { type: "button", className: "btn-primary", style: { fontSize: 11, padding: "4px 10px" }, onClick: ac, disabled: !!hata, "data-site-hesap-ac": "1" }, "Giri\u015F bilgisi olu\u015Ftur")),
+            bilgi === null && !yonetici && React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-2)" } }, "yok"),
+            bilgi !== undefined && !yonetici && (React.createElement("span", { "data-site-yalniz-yonetici": "1", style: { fontSize: 10, color: "var(--erp-text-3)" } }, "Giri\u015F bilgisini yaln\u0131z Y\u00F6netici olu\u015Fturur, de\u011Fi\u015Ftirir ya da kapat\u0131r.")),
             bilgi && !duzen && (React.createElement("label", { style: { display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, color: "#2F6B3A", fontWeight: 600 }, title: "Sepette nakit / havale / kart / \u00E7ek / senet / a\u00E7\u0131k hesap se\u00E7tirilir; talepte g\u00F6r\u00FCrs\u00FCn\u00FCz" },
                 React.createElement("input", { type: "checkbox", "data-site-odeme-sor": "1", checked: !!cari.siteOdemeSor, onChange: (e) => onFieldChange(cari.id, "siteOdemeSor", e.target.checked ? true : undefined) }),
                 "Sipari\u015Fte \u00F6deme \u015Feklini sorsun")),
@@ -57442,65 +57572,149 @@ function SiteTalepleriPaneli({ siparisler, cariler, onSipariseCevir, showToast }
 // ================= SİTEDEN KAYIT TALEPLERİ (v1.657.0) =================
 // Kullanıcı: "Kaydı olmayan için kayıt ol butonu da olsun, cari bilgileri, adresi vs. ekleyip kayıt olsun. Sisteme
 // düşsün, onaylayıp kayıt ekleyelim." Site `site_kayit_ol()` ile bekleyen talep yazar (kullanıcı adı + şifre özeti
-// dahil). Burada Onayla: (1) aynı unvan / vergi no'lu cari varsa ona bağlamak sorulur, yoksa yeni MÜŞTERİ carisi
-// açılır; (2) `site_kayit_onayla` site hesabını talepteki şifreyle kurar. Cari buluta yazılmadan (2) "Cari
-// bulunamadı" der — birkaç saniye arayla yeniden denenir. Okuma `site_kayit_listesi()` (şifre özeti gelmez).
-function siteKayitCarisi(b) {
-    const notlar = [b.yetkili ? `Yetkili: ${b.yetkili}` : "", b.not ? `Site notu: ${b.not}` : "", "Web sitesinden kayıt"].filter(Boolean).join(" · ");
-    return {
-        id: uid("cari"), unvan: String(b.unvan || "").trim(), tip: "Müşteri",
-        telefon: b.telefon || "", vergiNo: vergiNoKaydedilecek(b.vergiNo || ""), adres: b.adres || "", notlar,
-        paraBirimi: "TRY", hareketler: [], siteOdemeSor: true,
-        ...(b.eposta ? { eposta: b.eposta } : {}), ...(b.vergiDairesi ? { vergiDairesi: b.vergiDairesi } : {}),
-        ...(b.ulke ? { ulke: b.ulke } : {}), ...(b.il ? { il: b.il } : {}), ...(b.ilce ? { ilce: b.ilce } : {}),
-    };
+// dahil). Okuma `site_kayit_listesi()` (şifre özeti gelmez).
+//
+// ONAY TEK SUNUCU İŞLEMİ (güvenlik 22, 16 Kasım; tasarım stok-v2/guvenlik/21-ATOMIK-ONAY-TASARIM.md). Eskiden ERP yeni cariyi KENDİSİ
+// açıyor (yerel + bulut yazması), SONRA `site_kayit_onayla` hesabı kuruyordu. Arada başka cihaz talebi işlerse, cihaz kapanırsa ya da
+// cari buluta ulaşamazsa cari BOŞTA kalıyordu (senaryo-site-yonetim-yetki, 21). Şimdi:
+//   - Yeni cari: `site_kayit_onayla_yeni_cari(talep, cariId)` cariyi TALEPTEKİ bilgilerden SUNUCUDA açar, hesabı kurar, talebi kapatır —
+//     tek işlem, ya hepsi ya hiçbiri. ERP cariyi YEREL OLARAK AÇMAZ (`onSave` yok): aynı kimlik bulut yazmasıyla bir daha giderdi; cari
+//     ekrana buluttan tazelemeyle gelir (`onCarilerTazele` → 100 `carileriBuluttanTazele`, değişiklik sayacının kullandığı yol: state,
+//     fark tabanı ve sürüm birlikte kurulur; sunucunun açtığı cari başka hiçbir yazmada silinmez — 21-ATOMIK-ONAY-TASARIM §4).
+//   - cariId isteğe çıkmadan ÖNCE cihazda saklanır (`site:yarim-onay`). Cevap gelmezse (ağ koptu, sekme kapandı) "Tamamla" AYNI kimlikle
+//     yeniden sorar: sunucu işlemi yapmışsa "zaten" döner, yapmamışsa şimdi yapar — ikinci cari olmaz. Başka Yönetici bu arada onayladıysa
+//     "işlenmiş" der, bu cihaz hiçbir şey yazmaz.
+//   - Mevcut cariye bağlama `site_kayit_onayla` ile (cari açılmaz; tek işlem).
+// Yetki, talebin hâlâ beklemesi ve kullanıcı adının boş olması SUNUCUDA, işlemin içinde sorulur (21'deki ayrı ön kontrol kaldırıldı:
+// pencereyi kapatmıyordu).
+const SITE_YARIM_ONAY_ANAHTARI = "site:yarim-onay";
+function siteYarimOnaylar() {
+    try {
+        const d = JSON.parse(window.localStorage.getItem(SITE_YARIM_ONAY_ANAHTARI) || "{}");
+        return d && typeof d === "object" ? d : {};
+    }
+    catch (e) {
+        return {};
+    }
 }
-function SiteKayitTalepleriPaneli({ cariler, onSave, showToast }) {
+function siteYarimOnayYaz(talepId, cariId) {
+    const d = siteYarimOnaylar();
+    if (cariId)
+        d[talepId] = cariId;
+    else
+        delete d[talepId];
+    try {
+        window.localStorage.setItem(SITE_YARIM_ONAY_ANAHTARI, JSON.stringify(d));
+    }
+    catch (e) { /* depo yoksa "Tamamla" bu oturumla sınırlı */ }
+}
+// Sunucunun KESİN cevabı mı (iş kuralı / yetki — işlem olmadı ya da başkası yaptı), yoksa sonucu bilinmeyen bir hata mı (ağ, 5xx)?
+// Kesin cevapta yarım kayıt silinir; bilinmeyende saklanır ve "Tamamla" aynı kimlikle yeniden sorar.
+const siteKesinRet = (m) => /Talep bulunamad|Talep onaylanm|kullanıcı adı|Cari kimliği|YETKI_YOK|yalnız Yönetici|Supabase 4\d\d|KR\d{3}/.test(m);
+function SiteKayitTalepleriPaneli({ cariler, showToast, yonetici = false, onCarilerTazele }) {
     const [talepler, setTalepler] = useState(null);
     const [acik, setAcik] = useState(true);
     const [isleniyor, setIsleniyor] = useState({});
+    const [yarim, setYarim] = useState(() => siteYarimOnaylar());
     const yenile = useCallback(() => {
         if (!supabaseAcikMi())
             return;
-        supabaseIstek("rpc/site_kayit_listesi", { method: "POST", body: "{}" }).then((l) => setTalepler(Array.isArray(l) ? l : []), () => setTalepler(null));
-    }, []);
+        supabaseIstek("rpc/site_kayit_listesi", { method: "POST", body: "{}" }).then((l) => {
+            const liste = Array.isArray(l) ? l : [];
+            setTalepler(liste);
+            // Artık bekleyenlerde olmayan talebin yarım kaydı: onay ya bu cihazın kaybolan cevabıyla ya başka Yöneticiyle bitti — cari
+            // sunucuda; yalnız kayıt temizlenir ve cariler tazelenir.
+            const bekleyen = new Set(liste.map((x) => x.id));
+            const eski = Object.keys(siteYarimOnaylar()).filter((id) => !bekleyen.has(id));
+            if (eski.length) {
+                eski.forEach((id) => siteYarimOnayYaz(id, null));
+                setYarim(siteYarimOnaylar());
+                if (onCarilerTazele)
+                    onCarilerTazele();
+            }
+        }, () => setTalepler(null));
+    }, [onCarilerTazele]);
     useEffect(() => { yenile(); const t = setInterval(yenile, 120000); return () => clearInterval(t); }, [yenile]);
     const liste = (talepler || []).filter((t) => !isleniyor[t.id] || isleniyor[t.id] === "hata");
     if (!liste.length)
         return null;
     const dus = (t) => setTalepler((l) => (l || []).filter((x) => x.id !== t.id));
-    const hesabiKur = (t, cariId, deneme = 0) => supabaseIstek("rpc/site_kayit_onayla", { method: "POST", body: JSON.stringify({ p_id: t.id, p_cari_id: cariId }) })
-        .then(() => { dus(t); showToast(`Site hesabı açıldı: ${t.kullanici} — müşteri kendi şifresiyle girebilir`); }, (e) => {
+    const yarimYaz = (talepId, cariId) => { siteYarimOnayYaz(talepId, cariId); setYarim(siteYarimOnaylar()); };
+    const bitti = (t, mesaj) => {
+        yarimYaz(t.id, null);
+        dus(t);
+        showToast(mesaj);
+        if (onCarilerTazele)
+            onCarilerTazele();
+    };
+    // MEVCUT CARİYE BAĞLA — cari açılmaz. Cari yalnız bu cihazda (henüz buluta yazılmamış) ise sunucu "Cari bulunamadı" der; kısa aralıkla
+    // yeniden denenir (eski davranış).
+    const mevcutaBagla = (t, cariId, deneme = 0) => supabaseIstek("rpc/site_kayit_onayla", { method: "POST", body: JSON.stringify({ p_id: t.id, p_cari_id: cariId }) })
+        .then(() => bitti(t, `Site hesabı açıldı: ${t.kullanici} — müşteri kendi şifresiyle girebilir`), (e) => {
         const m = String((e && e.message) || e);
         if (/Cari bulunamad/.test(m) && deneme < 8)
-            return new Promise((r) => setTimeout(r, 3000)).then(() => hesabiKur(t, cariId, deneme + 1));
+            return new Promise((r) => setTimeout(r, 3000)).then(() => mevcutaBagla(t, cariId, deneme + 1));
         setIsleniyor((x) => ({ ...x, [t.id]: "hata" }));
-        showToast("Site hesabı açılamadı: " + m);
+        showToast("Site hesabı açılamadı: " + siteHataMetni(e));
+        yenile();
     });
+    // YENİ CARİ — tek sunucu işlemi. `cariId` çağrıdan ÖNCE saklanmış olmalı (onayla / Tamamla).
+    const yeniCariyleOnayla = (t, cariId) => {
+        setIsleniyor((x) => ({ ...x, [t.id]: "suruyor" }));
+        return supabaseIstek("rpc/site_kayit_onayla_yeni_cari", { method: "POST", body: JSON.stringify({ p_id: t.id, p_cari_id: cariId }) })
+            .then((r) => bitti(t, (r && r.durum === "zaten")
+            ? `Onay daha önce tamamlanmıştı: ${t.kullanici} — cari ve site hesabı açık`
+            : `Site hesabı açıldı: ${t.kullanici} — "${(t.bilgiler || {}).unvan || ""}" carisi sunucuda açıldı`), (e) => {
+            const m = String((e && e.message) || e);
+            if (siteKesinRet(m)) {
+                yarimYaz(t.id, null);
+                setIsleniyor((x) => { const y = { ...x }; delete y[t.id]; return y; });
+                showToast("Onaylanamadı: " + siteHataMetni(e) + " — hiçbir kayıt açılmadı");
+                yenile();
+                return;
+            }
+            setIsleniyor((x) => ({ ...x, [t.id]: "hata" }));
+            showToast("Sunucudan cevap alınamadı: " + siteHataMetni(e) + " — onay tamamlanmış olabilir. \"Tamamla\" aynı kayıtla yeniden sorar; ikinci cari açılmaz.");
+        });
+    };
     const onayla = (t) => {
+        if (!yonetici) {
+            showToast(SITE_YALNIZ_YONETICI);
+            return;
+        }
         const b = t.bilgiler || {};
         const nrm = (s) => String(s || "").toLocaleLowerCase("tr-TR").trim();
         const vn = String(b.vergiNo || "").replace(/\D/g, "");
         const mevcut = (cariler || []).find((c) => (nrm(c.unvan) && nrm(c.unvan) === nrm(b.unvan)) || (vn.length >= 10 && String(c.vergiNo || "").replace(/\D/g, "") === vn));
-        let cariId;
         if (mevcut && window.confirm(`"${mevcut.unvan}" zaten kayıtlı. Site hesabı bu cariye bağlansın mı?\n\nTamam = mevcut cariye bağla · İptal = yeni cari aç`)) {
-            cariId = mevcut.id;
+            setIsleniyor((x) => ({ ...x, [t.id]: "suruyor" }));
+            mevcutaBagla(t, mevcut.id);
+            return;
         }
-        else {
-            if (!window.confirm(`"${b.unvan}" yeni müşteri carisi olarak açılsın ve siteye "${t.kullanici}" ile girebilsin mi?`))
-                return;
-            const cari = siteKayitCarisi(b);
-            onSave([cari, ...(cariler || [])]);
-            cariId = cari.id;
+        if (!window.confirm(`"${b.unvan}" yeni müşteri carisi olarak açılsın ve siteye "${t.kullanici}" ile girebilsin mi?`))
+            return;
+        const cariId = uid("cari");
+        yarimYaz(t.id, cariId); // isteğe çıkmadan önce: cevap kaybolursa "Tamamla" bununla sorar
+        yeniCariyleOnayla(t, cariId);
+    };
+    const tamamla = (t) => {
+        if (!yonetici) {
+            showToast(SITE_YALNIZ_YONETICI);
+            return;
         }
-        setIsleniyor((x) => ({ ...x, [t.id]: "suruyor" }));
-        hesabiKur(t, cariId);
+        const cariId = siteYarimOnaylar()[t.id];
+        if (cariId)
+            yeniCariyleOnayla(t, cariId);
     };
     const reddet = (t) => {
+        if (!yonetici) {
+            showToast(SITE_YALNIZ_YONETICI);
+            return;
+        }
         if (!window.confirm(`${(t.bilgiler || {}).unvan || t.kullanici} kayıt talebi reddedilsin mi?`))
             return;
         supabaseIstek("rpc/site_kayit_reddet", { method: "POST", body: JSON.stringify({ p_id: t.id }) })
-            .then(() => { dus(t); showToast("Kayıt talebi reddedildi"); }, (e) => showToast("Reddedilemedi: " + ((e && e.message) || e)));
+            .then(() => { dus(t); showToast("Kayıt talebi reddedildi"); }, (e) => { showToast("Reddedilemedi: " + siteHataMetni(e)); yenile(); });
     };
     return (React.createElement("div", { "data-site-kayitlari": "1", style: { margin: "0 0 12px", border: "1px solid #BFD3BB", background: "#F3F8F1", borderRadius: "var(--erp-r-md)", padding: "8px 10px" } },
         React.createElement("button", { type: "button", onClick: () => setAcik(!acik), style: { all: "unset", cursor: "pointer", fontWeight: 700, color: "#2F6B3A", fontSize: 13 } },
@@ -57508,6 +57722,7 @@ function SiteKayitTalepleriPaneli({ cariler, onSave, showToast }) {
             " Siteden gelen kay\u0131t talepleri (",
             liste.length,
             ")"),
+        acik && !yonetici && React.createElement("div", { "data-site-yalniz-yonetici": "1", style: { fontSize: 11, color: "var(--erp-text-3)", marginTop: 4 } }, "Talepleri yaln\u0131z Y\u00F6netici onaylar ya da reddeder."),
         acik && (React.createElement("div", { style: { display: "grid", gap: 6, marginTop: 8 } }, liste.map((t) => {
             const b = t.bilgiler || {};
             const yer = [b.ilce, b.il, b.ulke].filter(Boolean).join(" / ");
@@ -57526,8 +57741,9 @@ function SiteKayitTalepleriPaneli({ cariler, onSave, showToast }) {
                 React.createElement("span", { className: "mono", title: "M\u00FC\u015Fterinin se\u00E7ti\u011Fi kullan\u0131c\u0131 ad\u0131", style: { fontWeight: 700, color: "var(--erp-info)" } },
                     "\uD83D\uDC64 ",
                     t.kullanici),
-                React.createElement("button", { type: "button", className: "btn-primary", style: { fontSize: 11, padding: "3px 10px" }, disabled: isleniyor[t.id] === "suruyor", onClick: () => onayla(t) }, "Onayla \u2014 cari a\u00E7"),
-                React.createElement("button", { type: "button", className: "btn-secondary", style: { fontSize: 11, padding: "3px 8px" }, onClick: () => reddet(t) }, "Reddet")));
+                yonetici && yarim[t.id] && React.createElement("button", { type: "button", className: "btn-primary", style: { fontSize: 11, padding: "3px 10px" }, disabled: isleniyor[t.id] === "suruyor", onClick: () => tamamla(t), "data-site-kayit-tamamla": "1", title: "\u00D6nceki onay\u0131n cevab\u0131 al\u0131namad\u0131; ayn\u0131 kay\u0131tla yeniden sorar (ikinci cari a\u00E7\u0131lmaz)" }, "Tamamla"),
+                yonetici && !yarim[t.id] && React.createElement("button", { type: "button", className: "btn-primary", style: { fontSize: 11, padding: "3px 10px" }, disabled: isleniyor[t.id] === "suruyor", onClick: () => onayla(t), "data-site-kayit-onayla": "1" }, "Onayla \u2014 cari a\u00E7"),
+                yonetici && !yarim[t.id] && React.createElement("button", { type: "button", className: "btn-secondary", style: { fontSize: 11, padding: "3px 8px" }, onClick: () => reddet(t), "data-site-kayit-reddet": "1" }, "Reddet")));
         })))));
 }
 // ================= SİTE BİLDİRİMİ (v1.658.0) =================
@@ -73472,7 +73688,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.744.21)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.744.24)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

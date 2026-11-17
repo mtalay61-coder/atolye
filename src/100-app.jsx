@@ -23,6 +23,8 @@ function pencereIkonu(p) {
 // cihazda firma seçimi yoksa uygulamanın HİÇBİR parçası çalışmaz — yalnız firma kodu ekranı. Kapı uygulama bileşeninin
 // DIŞINDA: içeride erken dönüş olsaydı yükleme efektleri yine çalışır, varsayılan projeye bağlanıp yerel veri açardı.
 export default function AtolyeERP() {
+  // Firma geçişi doğrulanmadıysa (030 FIRMA_GECIS — sayfa boyunca sabit) uygulama başlamaz: eski seçimle veri okunmasın.
+  if (FIRMA_GECIS && FIRMA_GECIS.durum !== "tamam") return <FirmaGecisEkrani durum={FIRMA_GECIS} />;
   const secim = firmaSecimiOku();
   if (!secim) return <FirmaGirisEkrani />;
   // DEMO (v1.645.0, 034): örnek veri demo deposuna yazılmadan uygulama açılmaz (yükleme boş depoyu okumasın).
@@ -920,6 +922,10 @@ function AtolyeUygulamasi() {
     if (!k) { showToast("Bulut hesabı var ama Tanımlar'da bu kullanıcı yok — yöneticiye başvurun"); return; }
     setAktifKullanici(k);
     setBulutKimligi(true);
+    // OTURUM BU YOLDA DA SAKLANIR (v1.744.24). Oturumsuz açılışta (yeni cihaz, firma değişimi sonrası) giriş bu ön
+    // giriş yolundan geçiyor; `oturumSakla` yalnız GirisEkrani/IlkKurulum yolundaydı. Sonuç: girişten hemen sonraki
+    // sıradan yenilemede kullanıcıdan şifre yeniden isteniyordu (ekran-firma-ayrimi 1b ölçtü: `oturum:aktif` hiç yazılmamış).
+    oturumSakla(k, true);
     gunlukKullaniciAyarla(k);
     gunlukYaz("Giriş yaptı", "oturum", { rol: k.rol, kimlik: "bulut", onGiris: true });
   }, [bulutOnGiris, loading, aktifKullanici, tanimlar]); // eslint-disable-line react-hooks/exhaustive-deps

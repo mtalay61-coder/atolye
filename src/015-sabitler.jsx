@@ -492,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.744.23";
+const SURUM = "1.744.24";
 const SURUM_TARIHI = "2026-11-17";
-const SURUM_NOTU = "Yeni firma kurulum dosyası yeniden indirilebiliyor (v2 yapısıyla)";
+const SURUM_NOTU = "Yeni firma kurulum dosyası yeniden indirilebiliyor (v2 yapısıyla); firma değiştirme güvenilir";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -525,6 +525,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" };   // teklif: v1.723.0, Sipariş'in alt sekmesi
 
 const SURUM_GECMISI = [
+  { surum: "1.744.24", tarih: "17.11.2026", eklenen: [], degisen: [], duzeltilen: ["Firma değiştirirken \"Bağlan\"dan sonra uygulama bazen ESKİ firmayla açılıyordu (tarayıcı yeni seçimi yeniden açılıştan önce kaydedemiyordu) — artık geçiş doğrulanmadan uygulama açılmaz: \"Firma değiştiriliyor…\" görünür, kayıt yerine oturunca yeni firma açılır; olmazsa açıkça söylenir.", "Oturumsuz açılışta (yeni cihaz ya da firma değiştirdikten sonra) giriş yapınca, sayfa yenilendiğinde kullanıcı adı ve şifre yeniden isteniyordu — oturum artık bu girişte de 12 saat saklanır."] },
   { surum: "1.744.23", tarih: "17.11.2026", eklenen: [], degisen: ["Tanımlar › Yedek & Bulut › \"Yeni firma kurulum dosyasını indir\" yeniden çalışıyor: dosya bugünkü (v2) yapıyı eksiksiz kurar — tablolar, görünümler, sunucu işlemleri, kurallar ve yetkiler birebir; ana firmanın hiçbir verisi dosyaya girmez. Yeni ve boş Supabase projesinde SQL Editor'de tek seferde çalışır; bir adım ya da sondaki doğrulama tutmazsa hiçbir şey kurulmuş olmaz. Sunucudaki kurulum betiği eskiyse dosya indirilmez, ne yapılacağı söylenir."], duzeltilen: [] },
   { surum: "1.744.22", tarih: "16.11.2026", eklenen: [], degisen: ["Siteden gelen kayıt talebini \"Onayla — cari aç\" ile onaylamak artık tek adım: cari, site hesabı ve talebin kapanışı sunucuda birlikte yapılır — başka bir cihaz aynı talebi işlerse, bağlantı koparsa ya da uygulama kapanırsa boşta cari kalmaz. Cevap alınamazsa düğme \"Tamamla\" olur ve aynı kayıtla yeniden sorar (ikinci cari açılmaz).", "Müşterinin web sitesi girişini oluşturma / değiştirme / kapatma ve siteden gelen kayıt talebini onaylama / reddetme düğmeleri yalnız Yöneticiye görünür (sunucu zaten yalnız Yöneticiye izin veriyordu)."], duzeltilen: [] },
   { surum: "1.744.21", tarih: "14.11.2026", eklenen: [], degisen: ["Cari ekstresi çıktısı (Yazdır / PDF / WhatsApp / e-posta): bedenli fişler açıklamada \"36:1, 37:2…\" yazısı yerine ekrandaki ekstre gibi beden matrisiyle — satır ürün · renk, sütun beden, sonda toplam × birim fiyat. Bedensiz ürünler ve para hareketleri eskisi gibi tek satır; pencere genişledi."], duzeltilen: [] },
