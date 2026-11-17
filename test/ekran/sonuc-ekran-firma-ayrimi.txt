@@ -1,28 +1,51 @@
-# ekran-firma-ayrimi.js · 2026-11-17 · iki gerçek veritabanı (t24_a, t24_b; kurulum dosyasıyla kurulmuş) · istemci çalışma ağacı (1.744.23)
+# ekran-firma-ayrimi — 1.744.25, 17 Kasım 2026 (https düzeneği; aynı yükte 5/5 bu sonuç). Komut: KOPRU_PG=<pg> PW_CHROMIUM=/opt/pw-browsers/chromium node test/ekran/ekran-firma-ayrimi.js
 ekran-firma-ayrimi · A=t24_a B=t24_b · istemci ERP test
+1) normal açılış: firma A, oturum yok
   ✓ [açılış firması] "firmaa"
-1) firma A: ekrandan stok girişi + kasa tahsilatı
+  ✓ [A · oturum yokken giriş istenir] true
+  ✓ [A · girişten önce A'ya veri yazması yok] []
+  ✓ [A · giriş sonrası uygulama açık (giriş ekranı yok)] false
+  ✓ [A · oturum A'nın jetonuyla] true
   ✓ [A · mevcut (başlangıç)] 0
   ✓ [A · sunucu A stok] 3
   ✓ [A · sunucu B stok (dokunulmadı)] 0
   ✓ [A · ekran mevcut] 3
   ✓ [A · sunucu A kasa +150] 150
   ✓ [A · sunucu B kasa (dokunulmadı)] 0
-  ✓ [A · ekranda A'nın ürünü var, B'ninki yok] [true,false]
-2) firma B'ye geçiş
-  ✓ [geçiş · seçim] "firmab"
+  ✓ [A · ürünlerde A'nınki var, B'ninki yok] [true,false]
+  ✓ [A · B'nin adresine hiç istek gitmedi (açılıştan beri)] 0
+1b) A'da sıradan sayfa yenileme: oturum sürer
+  ✓ [A · yenilemeden sonra giriş istenmez] false
+  ✓ [A · yenilemeden sonra ekran mevcut] 3
+2) firma B'ye geçiş (tek tık)
+    geçiş A→B: yeni belge 1 · başlatan ["script firmaDegistirVeYenile←uygula"] · eski belgeden eski firmaya okuma 0 · yeni belgeden yeni firmaya 20 istek
+  ✓ [A→B · tek tıkla geçti] true
+  ✓ [A→B · seçim] "firmab"
+  ✓ [A→B · yeniden açılışı başlatan firmaDegistirVeYenile ← uygula] true
+  ✓ [A→B · eski belgeden yeni firmaya yalnız bağlantı denemesi] ["GET /auth/v1/settings"]
+  ✓ [A→B · eski belgeden eski firmaya yazma yok] []
+  ✓ [A→B · yeni belgelerden eski firmaya istek yok] []
+  ✓ [A→B · belgesi belirsiz istek yok] 0
+  ✓ [B · oturum yok: giriş istenir (A'nın oturumu B'ye taşınmadı)] true
+  ✓ [B · giriş sonrası uygulama açık] false
   ✓ [B · ekran mevcut (A'nın 3'ü görünmez)] 0
-  ✓ [B · ekranda B'nin ürünü var, A'nınki yok] [true,false]
+  ✓ [B · ürünlerde B'ninki var, A'nınki yok] [true,false]
   ✓ [B · sunucu B stok] 9
   ✓ [B · sunucu A stok (hâlâ 3)] 3
   ✓ [B · ekran mevcut] 9
-  ✓ [B'deyken A'nın adresine istek (adet)] 0
-  ✓ [B'deyken B'nin adresine istek var] true
-3) firma A'ya geri
-  ✓ [geri dönüş · seçim] "firmaa"
+  ✓ [B oturumu boyunca (giriş + stok girişi dahil) A'nın adresine istek yok] 0
+3) firma A'ya dönüş (tek tık)
+    geçiş B→A: yeni belge 1 · başlatan ["script firmaDegistirVeYenile←uygula"] · eski belgeden eski firmaya okuma 0 · yeni belgeden yeni firmaya 32 istek
+  ✓ [B→A · tek tıkla geçti] true
+  ✓ [B→A · seçim] "firmaa"
+  ✓ [B→A · eski belgeden yeni firmaya yalnız bağlantı denemesi] ["GET /auth/v1/settings"]
+  ✓ [B→A · eski belgeden eski firmaya yazma yok] []
+  ✓ [B→A · yeni belgelerden eski firmaya istek yok] []
+  ✓ [B→A · belgesi belirsiz istek yok] 0
+  ✓ [A · saklanan oturum geri geldi: giriş istenmez] false
   ✓ [A · ekran mevcut (B'nin 9'u görünmez)] 3
-  ✓ [A · ekranda A'nın ürünü var, B'ninki yok] [true,false]
-  ✓ [A'dayken B'nin adresine istek (adet)] 0
+  ✓ [A · ürünlerde A'nınki var, B'ninki yok] [true,false]
+  ✓ [A oturumu (dönüşten sonra) boyunca B'nin adresine istek yok] 0
   ✓ [son hâl · sunucu A / B stok] [3,9]
   ✓ [sayfa hatası yok] []
-── ekran-firma-ayrimi: 22 geçti, 0 kaldı ──
+── ekran-firma-ayrimi: 42 geçti, 0 kaldı ──
