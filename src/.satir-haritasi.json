@@ -37,26 +37,26 @@
   {
     "dosya": "015-sabitler.jsx",
     "bas": 1996,
-    "son": 4305
+    "son": 4306
   },
   {
     "dosya": "020-rezervasyon.jsx",
-    "bas": 4306,
-    "son": 4691
+    "bas": 4307,
+    "son": 4692
   },
   {
     "dosya": "025-veri-fark.jsx",
-    "bas": 4692,
-    "son": 5206
+    "bas": 4693,
+    "son": 5207
   },
   {
     "dosya": "030-supabase.jsx",
-    "bas": 5207,
-    "son": 6062
+    "bas": 5208,
+    "son": 6063
   },
   {
     "dosya": "032-firma.jsx",
-    "bas": 6063,
+    "bas": 6064,
     "son": 6385
   },
   {

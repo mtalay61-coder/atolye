@@ -39,6 +39,8 @@ npm install          # bir kez: typescript, react, playwright (yalnız araçlar 
 ```
 
 Tek senaryo: `cd test && node derle.js && node paket-test.js && node senaryo-<ad>.js`.
+Playwright'ın kendi tarayıcısı kurulu değilse (konteyner imajı güncellenince "Executable doesn't exist") `PW_CHROMIUM=/opt/pw-browsers/chromium`
+verin (test/ortak.js). Yeni firma kurulumu kabul testleri: `KOPRU_PG=<pg modülü> stok-v2/test/guvenlik/t24/kos-t24.sh`.
 
 Bilinen test boşlukları: paralel koşuda birkaç senaryo oynak — FARKLI çıkanı tek başına yeniden koş. (`tedarik-girisleri`
 eskiden hep FARKLI'ydı: senaryo WhatsApp penceresinin adresini gezinme bitmeden okuyordu; 17 Kasım'da düzeltildi.) (Taşımada kaybolan 15 senaryo 27 Eylül'de

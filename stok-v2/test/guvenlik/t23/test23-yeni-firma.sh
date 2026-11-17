@@ -12,9 +12,8 @@
 #      (Bir firmanın oturum jetonunun ötekinde geçersiz olması Supabase'in proje başına JWT anahtarıdır — yerelde sınanamaz.)
 # TANI KİPİ T23_KURULUM=pgdump (17 Kasım): C geçti, D'de platform tablolarına anon / authenticated FAZLA yetki kaldı (boş projenin
 # "yeni tablo herkese açık" varsayılanı; pg_dump kaynağa göre fark yazar) — 23 önkoşulu adıyla yakaladı, yazmayı RLS durdurdu.
-# BİLİNEN DURUM (17 Kasım): kurulum betiği v2 geçişinden sonra bozuk — uygulamada düğmesi kapalı (src/032-firma.jsx, "v2'DEN SONRA
-# DESTEKLENMİYOR"; DEVAM-NOTU: "kurulum betiği v2 için yeniden yazılmalı"). Bu test o işin KABUL TESTİDİR: bugün B ve C kırmızı,
-# C düşünce D ve E ATLANIR (sahte yeşil yok). 23'ün bu akışa kattığı tek şey A ve (C düzelince) D'dir.
+# DURUM: 17 Kasım ilk turda kurulum betiği v2 yüzünden bozuktu (B ve C kırmızı, D / E atlanıyordu). kurulum-betigi.sql v2 için
+# yeniden yazıldı (dal claude/yeni-firma-kurulum-v2): bu test artık atlamasız geçer. Kapsamlı kabul testi t24/test24.sh.
 # Kullanım: ./test23-yeni-firma.sh   (T23_HOST / T23_PORT; postgres + authenticator şifresiz; atolye_guvenlik hazır — hazirla.sh)
 T=$(cd "$(dirname "$0")" && pwd); A=$(cd "$T/../../../.." && pwd); G=$A/stok-v2/guvenlik
 H=${T23_HOST:-localhost}; PT=${T23_PORT:-5432}; KAYNAK=${GUVENLIK_DB:-atolye_guvenlik}
@@ -69,7 +68,7 @@ for x in "$GIZLI_FIRMA" "$GIZLI_KOD" "gizliref1234" "98765.43" "12345.67" "$U_PL
   sonuc "dosyada '$x' geçmez" "0" "$(grep -cF "$x" $IS/kurulum.sql)"
 done
 sonuc "dosyada üst düzey insert / copy ifadesi yok (fonksiyon gövdeleri girintili, sayılmaz)" "0" "$(grep -ciE '^(insert into|copy )' $IS/kurulum.sql)"
-sonuc "dosya platform_ YAPISINI taşır (5 tablo)" "5" "$(grep -cE '^create table if not exists public\.platform_' $IS/kurulum.sql)"
+sonuc "dosya platform_ YAPISINI taşır (5 tablo)" "5" "$(grep -cE "aciklama := 'tablo platform_" $IS/kurulum.sql)"
 
 echo "== B) Supabase SQL Editor uyumu (rehber: SQL Editor › Run)"
 sonuc "editor-icin.py denetimi" "uygun" "$(python3 $A/stok-v2/editor-icin.py --bol $IS/kurulum.sql >/dev/null 2>$IS/uyum.txt && echo uygun || sed 's/^.*: //' $IS/uyum.txt | head -1)"

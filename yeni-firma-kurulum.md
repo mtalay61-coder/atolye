@@ -1,16 +1,16 @@
-# Yeni firma kurulumu (v1.642.0)
+# Yeni firma kurulumu (v1.642.0; v2 kurulum dosyası 1.744.23)
 
-> **DURUM (17 Kasım 2026): bu yol şu an ÇALIŞMIYOR.** Veriler v2'ye geçtikten sonra kurulum dosyası doğru üretilemiyor; uygulamadaki
-> "Yeni firma kurulum dosyasını indir" düğmesi bu yüzden bilerek kapalı (`src/032-firma.jsx`). Yerel ölçüm: üretilen dosya boş
-> projede `function public.stk_dizi(jsonb) does not exist` ile düşüyor ve Supabase SQL Editor uyumlu değil
-> (`stok-v2/test/guvenlik/t23/test23-yeni-firma.sh`). Kurulum yolu yeniden yazılana kadar yeni firma açmayın.
+> **DURUM (17 Kasım 2026): kurulum yolu v2 için yeniden yazıldı** (dal `claude/yeni-firma-kurulum-v2`, ERP 1.744.23 — henüz
+> canlıda ve yayında DEĞİL). Kullanmadan önce: yeni `kurulum-betigi.sql` ana projede çalıştırılmış ve 1.744.23 yayında olmalı.
+> Kabul testleri: `stok-v2/test/guvenlik/t24/` (kurulum, giriş, stok, kasa, iki firma arasında veri ayrımı — ekrandan dahil).
 
 Her müşteri firmanın **ayrı bir Supabase projesi** olur. Uygulama aynıdır. Firma kodu **her cihazda bir kez** sorulur
 (ana firma dahil — ana firmanın kodu `nds`); seçilmeden uygulama açılmaz. `?firma=KOD` bağlantısı kodu doldurur.
 Bir firmanın verisi ötekine hiçbir yoldan karışmaz.
 
-Bir kerelik hazırlık (yalnız ilk müşteride): **ana projede** `kurulum-betigi.sql` dosyasını Supabase › SQL Editor'da
-bir kez çalıştırın. Bu, kurulum dosyasını üreten fonksiyonu kurar.
+Bir kerelik hazırlık (ilk müşteriden önce ve `kurulum-betigi.sql` her değiştiğinde): **ana projede** `kurulum-betigi.sql`
+dosyasının tamamını Supabase › SQL Editor'da çalıştırın. Kurulum dosyasını üreten üç fonksiyonu kurar (`kurulum_betigi`,
+`kurulum_parmak_izi`, `kurulum_metni`). Tekrar çalıştırmak zararsızdır.
 
 ## 1. Supabase projesini açın
 
@@ -23,12 +23,20 @@ bir kez çalıştırın. Bu, kurulum dosyasını üreten fonksiyonu kurar.
 3. **Authentication › Sign In / Providers › Email**: "Allow new users to sign up" **KAPALI** olmalı.
    Kullanıcıları yalnız yönetici açar.
 
-## 2. Tabloları ve kuralları kurun
+## 2. Tabloları, kuralları ve yetkileri kurun
 
-1. Ana firmada uygulamayı açın: **Tanımlar › Yedek & Bulut › "Yeni firma kurulum dosyasını indir (.sql)"**.
-   Yalnız Yönetici indirebilir. Dosya veri içermez, yalnız tablo, kural, tetikleyici ve yetkileri taşır.
-2. **Yeni projede** SQL Editor › New query › dosyanın tamamını yapıştırın › **Run**.
-   "Success" görmelisiniz. Hata çıkarsa hiçbir şey değişmez (tek işlem), ekran görüntüsünü gönderin.
+1. Ana firmada uygulamayı açın: **Tanımlar › Yedek & Bulut › "Yeni firma kurulum dosyasını indir (.sql)"** (yalnız Yönetici).
+   Sunucudaki betik eskiyse dosya inmez, ne yapılacağı yazar.
+2. **Yeni projede** SQL Editor › New query › dosyanın **tamamını** yapıştırın › **Run**.
+3. En altta 18 satırlık bir tablo çıkar; **hepsi "tamam"** olmalı (sütunlar, görünümler, fonksiyonlar, tetikleyiciler, kurallar,
+   yetkiler… ana projeyle birebir; "ayar dışı tablolarda satır: yok").
+   - Bir adım düşerse ileti hangi adımda ve neden durduğunu yazar ("KURULUM DURDU — 412. adım (…)"); doğrulama tutmazsa
+     "KURULUM DOĞRULAMASI TUTMADI (…)". İki durumda da **hiçbir şey kurulmamış olur** (tek işlem) — iletiyi paylaşın.
+   - Dosya yalnız BOŞ projede çalışır; dolu projeye yanlışlıkla yapıştırılırsa hiçbir şeye dokunmadan durur.
+
+Dosya **veri taşımaz**: ana firmanın carisi, ürünü, fişi, kasası, tanımları, e-posta ayarı… hiçbiri dosyaya girmez. Yalnız üç ayar
+satırı yazılır: `stk_ayar` (v2 bayrakları — ana projeyle aynı), `degisiklik` ve `kas_ayar` (boş). Numara sayaçları sıfırdan başlar.
+Ana projede 23 (yönetim paneli) uygulanmışsa `platform_…` tabloları da BOŞ kurulur; firmanın kendi Yönetici'si onları göremez.
 
 ## 3. İlk yöneticiyi açın
 
@@ -56,7 +64,12 @@ Yeni projede **Edge Functions › Create function**, her biri için dosyanın ta
 | `kur` | `supabase-kur-fonksiyonu.ts` | Döviz kurları |
 | `kullanici` | `supabase-kullanici-fonksiyonu.ts` | Uygulamadan kullanıcı açma |
 
-Her dosyanın başındaki KURULUM notunu (ör. "Verify JWT" ayarı) uygulayın. `eposta` fonksiyonu isteğe bağlıdır.
+Her dosyanın başındaki KURULUM notunu (ör. "Verify JWT" ayarı) uygulayın. İsteğe bağlı: `eposta` (+ `SMTP_SIFRE` sırrı),
+gün sonu raporu (`gun-sonu` fonksiyonu + `GUN_SONU_ANAHTAR` sırrı + `gun-sonu.sql`), web sitesi bildirimi.
+
+**Kurulum dosyasının KAPSAMI DIŞINDA kalanlar** (projede elle): Edge Functions ve gizli değerleri, Auth ayarları (kayıt kapalı),
+Storage kovaları ve kuralları (ör. `gorseller` kovası ve `gorsel_yonetici_yazar`), zamanlanmış işler (gün sonu),
+`supabase_admin` rolünün varsayılan yetkileri, gece yedeği (firma başına ayrı karar — KVKK).
 
 ## 5. Firma kodunu verin
 

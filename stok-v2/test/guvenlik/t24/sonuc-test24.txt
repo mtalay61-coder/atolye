@@ -1,0 +1,76 @@
+# test24.sh · 2026-11-17 · yerel PostgreSQL 16.15 · ana: atolye_guvenlik + sema-tamamla + 23 + kurulum-betigi + zorla.sql · kurulum Editor gibi (ifade başına ayrı oturum)
+== Ana: atolye_guvenlik + sema-tamamla + 23 + kurulum-betigi + zorla.sql · 7331ed5 + çalışma ağacı
+== 1) Üretici erişimi
+  [GEÇTİ] listede olmayan hesap üretemez → ret:yetki
+  [GEÇTİ] anon üretemez → ret:izin
+  [GEÇTİ] ERP Yönetici'si üretir → ok:t
+   kurulum dosyası: 6180 satır · 855 adım
+== 2) Dosya: Editor uyumu, veri yok
+  [GEÇTİ] editor-icin.py: uygun, 2 ifade → 2
+  [GEÇTİ] dosyada çift-dolar dışında dolar yok → 0
+  [GEÇTİ] ana firmanın işaretli verisi dosyada yok (SIZINTI-7Q) → 0
+  [GEÇTİ] satır yazan adımlar yalnız ayar tabloları (stk_ayar, zamanları, degisiklik, kas_ayar) → 4
+  [GEÇTİ] başka insert / update adımı yok → 0
+== 3) İki boş projede kurulum (Editor gibi)
+  [GEÇTİ] proje a: hata yok → 
+  [GEÇTİ] proje a: dosyanın doğrulaması (18 satır) → 18/18 tamam
+  [GEÇTİ] proje a: ana ↔ firma parmak izi (bağımsız sorgu) → 454eaa21c960e801cc8b306961e4658a
+  [GEÇTİ] proje a: pg_dump şeması anayla aynı (sırasız; takma ad listesi satırı hariç) → 0
+  [GEÇTİ] proje a: tüm fark yalnız o satır (bir eksik, bir fazla) → 1 1
+  [GEÇTİ] proje a: 23 önkoşulu → UYGULANMIŞ
+  [GEÇTİ] proje a: yayın üyelikleri → supabase_realtime:cariler,kz_tablo
+  [GEÇTİ] proje a: zorlayıcı nesneler davranıyor (a→z çağrısı, gövde metni, kimlik başlangıcı, hesaplanan sütun) → 41|tek ' tırnak | $ ve $$ ve $1 ve \n ters bölü|100|6
+  [GEÇTİ] proje a: ana verisi yok (SIZINTI-7Q her tabloda 0) → 0
+  [GEÇTİ] proje b: hata yok → 
+  [GEÇTİ] proje b: dosyanın doğrulaması (18 satır) → 18/18 tamam
+  [GEÇTİ] proje b: ana ↔ firma parmak izi (bağımsız sorgu) → 454eaa21c960e801cc8b306961e4658a
+  [GEÇTİ] proje b: pg_dump şeması anayla aynı (sırasız; takma ad listesi satırı hariç) → 0
+  [GEÇTİ] proje b: tüm fark yalnız o satır (bir eksik, bir fazla) → 1 1
+  [GEÇTİ] proje b: 23 önkoşulu → UYGULANMIŞ
+  [GEÇTİ] proje b: yayın üyelikleri → supabase_realtime:cariler,kz_tablo
+  [GEÇTİ] proje b: zorlayıcı nesneler davranıyor (a→z çağrısı, gövde metni, kimlik başlangıcı, hesaplanan sütun) → 41|tek ' tırnak | $ ve $$ ve $1 ve \n ters bölü|100|6
+  [GEÇTİ] proje b: ana verisi yok (SIZINTI-7Q her tabloda 0) → 0
+== 4) Güvenlik ağı
+  [GEÇTİ] dolu projeye ikinci uygulama durur → public şeması boş değil
+  [GEÇTİ] durduktan sonra parmak izi aynı → 3d8e189af795fe88ea09bc96e1d0c0b2
+  [GEÇTİ] bozuk adım → hangi adımda durduğunu söyler → KURULUM DURDU
+  [GEÇTİ] bozuk adımdan sonra public boş (hiçbir şey kalmadı) → 0
+  [GEÇTİ] doğrulama tutmazsa → geri alınır → KURULUM DOĞRULAMASI TUTMADI (fonksiyonlar)
+  [GEÇTİ] doğrulama tutmayınca public boş → 0
+== 5) Giriş (rehber adım 3: ilk yönetici) ve 6) stok + kasa, 7) veri ayrımı
+  [GEÇTİ] a: Yönetici yonetici_mi → ok:t
+  [GEÇTİ] a: Yönetici tanımları okur (kullanıcı sayısı) → ok:1
+  [GEÇTİ] a: listede olmayan hesap yonetici_mi → ok:f
+  [GEÇTİ] a: anon cari okuyamaz → ret:izin
+  [GEÇTİ] a: firma Yönetici'si platform yöneticisi değil → ok:f
+  [GEÇTİ] a: ürün + cari (uygulama gibi REST ekleme) → ok:
+  [GEÇTİ] a: kasa hesabı (kas_yaz) → ok:t
+  [GEÇTİ] a: alış faturası + bağlı ödeme (fis_kes) — numara sayacı sıfırdan → ok:AF-261117001
+  [GEÇTİ] a: stok (stk_stok, Yönetici görür) → ok:Siyah:5
+  [GEÇTİ] a: kasa bakiyesi (kas_hareket) → -200
+  [GEÇTİ] a: makbuz numarası da sıfırdan → ÖD-261117001
+  [GEÇTİ] a: listede olmayan hesap fiş kesemez (yetki reddi, 42501) → ret:yetki
+  [GEÇTİ] a: reddedilen denemeden sonra fiş sayısı değişmedi → 2
+  [GEÇTİ] b: Yönetici yonetici_mi → ok:t
+  [GEÇTİ] b: Yönetici tanımları okur (kullanıcı sayısı) → ok:1
+  [GEÇTİ] b: listede olmayan hesap yonetici_mi → ok:f
+  [GEÇTİ] b: anon cari okuyamaz → ret:izin
+  [GEÇTİ] b: firma Yönetici'si platform yöneticisi değil → ok:f
+  [GEÇTİ] b: ürün + cari (uygulama gibi REST ekleme) → ok:
+  [GEÇTİ] b: kasa hesabı (kas_yaz) → ok:t
+  [GEÇTİ] b: alış faturası + bağlı ödeme (fis_kes) — numara sayacı sıfırdan → ok:AF-261117001
+  [GEÇTİ] b: stok (stk_stok, Yönetici görür) → ok:Siyah:7
+  [GEÇTİ] b: kasa bakiyesi (kas_hareket) → -120
+  [GEÇTİ] b: makbuz numarası da sıfırdan → ÖD-261117001
+  [GEÇTİ] b: listede olmayan hesap fiş kesemez (yetki reddi, 42501) → ret:yetki
+  [GEÇTİ] b: reddedilen denemeden sonra fiş sayısı değişmedi → 2
+   — veri ayrımı
+  [GEÇTİ] A'nın verisi A'da (ürün cari stok kasa cari-hareket) → 1 1 1 1 2
+  [GEÇTİ] A'nın verisi B'de yok → 0 0 0 0 0
+  [GEÇTİ] A'nın verisi anada yok → 0 0 0 0 0
+  [GEÇTİ] B'nin verisi B'de → 1 1 1 1 2
+  [GEÇTİ] B'nin verisi A'da yok → 0 0 0 0 0
+  [GEÇTİ] B'nin verisi anada yok → 0 0 0 0 0
+  [GEÇTİ] ananın işaretli verisi A ve B'de yok → 0 0
+  [GEÇTİ] B'nin stoğu A'nın stoğundan bağımsız (A 5, B 7) → 5 7
+── test24: 66 geçti, 0 kaldı ──

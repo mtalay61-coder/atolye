@@ -284,17 +284,16 @@ function FirmaSatiri({ kucuk = false }) {
 function KurulumDosyasiDugmesi() {
   const [durum, setDurum] = useState(null);   // null | "bekliyor" | { hata } | { tamam }
   async function indir() {
-    // v2'DEN SONRA DESTEKLENMİYOR (v1.730.1 denetim): betik canlı şemayı döker; geçişten sonra eski adlar görünüm, `stk_ayar`
-    // satırı yok, görünümlere grant satırı betiği bütünüyle düşürüyor. Yeni firma için doğru yol (notlarda): v2 öncesi şema +
-    // stok-v2/editor adımları. Bozuk dosya indirmek yerine söylenir.
-    if (stokV2Aktif() || cariV2Aktif() || kasaV2Aktif()) {
-      setDurum({ hata: "Veriler yeni yapıya (v2) geçtiği için kurulum dosyası şu an doğru üretilemiyor. Yeni firma gerekirse bildirin — kurulumu birlikte yapalım." });
-      return;
-    }
+    // v2 (v1.744.23): v1.730.1'de v2 için kapatılmıştı (betik görünümleri, stk_ayar satırını ve görünüm yetkilerini kuramıyor,
+    // fonksiyonları bağımlılık sırası gözetmeden yazıyordu). kurulum-betigi.sql v2 için yeniden yazıldı: tek işlem, Supabase SQL
+    // Editor uyumlu, bağımlılık sırası doğru, yetkiler birebir, ana firmanın verisi YOK, sonda parmak izi doğrulaması (tutmazsa
+    // kurulum geri alınır). Sunucuda yeni betik kurulu değilse eski betiğin bozuk dosyasını indirmemek için yanıt denetlenir:
+    // yeni dosya "kurulum_parmak_izi" doğrulamasını taşır.
     setDurum("bekliyor");
     try {
       const metin = await supabaseIstek("rpc/kurulum_betigi", { method: "POST", body: "{}" });
       if (typeof metin !== "string" || !/create table/i.test(metin)) throw new Error("Sunucudan boş yanıt geldi");
+      if (!/kurulum_parmak_izi/.test(metin)) throw new Error("Sunucudaki kurulum betiği eski (v2 öncesi) — önce kurulum-betigi.sql'in güncel hâli ana projede çalıştırılmalı");
       const blob = new Blob([metin], { type: "text/plain;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");

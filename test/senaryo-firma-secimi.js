@@ -12,7 +12,7 @@ const rehberRotasi = async (sayfa) => {
   await sayfa.route("**/firmalar.json**", (r) => r.fulfill({ status: 200, contentType: "application/json",
     body: JSON.stringify({ surum: 1, firmalar: { [ozet]: { url: YENI_URL, anahtar: YENI_ANAHTAR }, [ozetAna]: ANA } }) }));
   await sayfa.route("**/rest/v1/rpc/kurulum_betigi", (r) => r.fulfill({ status: 200, contentType: "application/json",
-    body: JSON.stringify("-- Atölye ERP — yeni firma kurulum betiği\nbegin;\ncreate table if not exists public.tanimlar (id text);\ncommit;\n") }));
+    body: JSON.stringify("-- Atölye ERP — YENİ FİRMA KURULUM DOSYASI (v2)\ndo $$\nbegin\n    execute 'create table public.tanimlar (id text)';\n  -- kurulum_parmak_izi doğrulaması\nend $$;\n") }));
   await sayfa.route("**/auth/v1/settings", (r) => r.fulfill({ status: 200, contentType: "application/json", body: "{}" }));
 };
 // "Bağlan"a bas ve sonucu bekle. Giriş ekranı / Tanımlar bulut okuması bitince bir kez yeniden çiziliyor; pencere tam o
@@ -54,7 +54,7 @@ const tohum = { "tanimlar:data": JSON.stringify({ girisAktifMi: false, renkler: 
       sayfa.click("[data-kurulum-indir]"),
     ]);
     sonuc.kurulumDosyasi = indirme ? { ad: /^atolye-kurulum-\d{4}-\d{2}-\d{2}\.sql$/.test(indirme.suggestedFilename()),
-      icerik: /create table if not exists public\.tanimlar/.test(require("fs").readFileSync(await indirme.path(), "utf8")) } : null;
+      icerik: /create table public\.tanimlar/.test(require("fs").readFileSync(await indirme.path(), "utf8")) } : null;
     // Test ortamında bulut yazmaları düşüyor ve bekleyen deftere giriyor — engel doğru çalışıyor; burada temizlenir.
     await sayfa.evaluate(() => !!(localStorage.getItem("bekleyen:yazma") || localStorage.getItem("bekleyen:kayitlar")));
     await sayfa.evaluate(() => { localStorage.removeItem("bekleyen:yazma"); localStorage.removeItem("bekleyen:kayitlar"); });
