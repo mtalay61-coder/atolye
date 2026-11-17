@@ -94,6 +94,12 @@ const yazmaMi = (x) => !["GET", "HEAD"].includes(x.m) && /^\/(rest|functions)\/v
   const stokAc = async () => { await O.modulAc(sayfa, "Stok"); await sayfa.waitForTimeout(700); };
   const formAc = async () => {
     if (!(await sayfa.locator("[data-stok-giris-seridi]").count())) { await sayfa.locator('button[title^="Bağımsız stok girişi"]').first().click(); await sayfa.waitForTimeout(400); }
+    const var_ = await sayfa.waitForFunction((u) => !!document.querySelector(`[data-stok-giris-urun] option[value="${u}"]`), URUN, { timeout: 20000 }).then(() => true).catch(() => false);
+    if (!var_) {   // teşhis: ürün listesi gelmediyse ne görünüyor (sonra selectOption hatayla durur)
+      console.log("TESHIS ürün yok · seçenekler:", JSON.stringify(await sayfa.locator("[data-stok-giris-urun] option").allInnerTexts()),
+        "· yükleme:", await sayfa.evaluate(() => document.body.innerText.slice(0, 300).replace(/\n/g, " | ")),
+        "· son istekler:", JSON.stringify(ag.slice(-15).map((x) => `${x.m} ${x.yol}`)));
+    }
     await sayfa.locator("[data-stok-giris-urun]").first().selectOption(URUN); await sayfa.waitForTimeout(250);
   };
   const mevcut = async () => {
