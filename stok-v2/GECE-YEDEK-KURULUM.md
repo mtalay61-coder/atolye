@@ -120,6 +120,28 @@ auth / storage şeması artık iki parçada kurulur (tablolar + birincil / benze
 dizin, yabancı anahtar public'ten sonra) ve envantere public / auth / storage'ın politika, dizin, kısıt, tetikleyici adlarının özeti
 ("yapı" satırları) eklendi. O klasör olduğu gibi duruyor; saklama kuralıyla (30 günden eski ve en yeni 7'nin dışında) silinir.
 
-**Sınanmayan (düzeltmeden sonraki ilk gerçek koşuda görülecek):** canlı auth / storage şemasının BAŞKA bir nesnesinin düz PostgreSQL
-17'de kurulamaması (ör. Supabase'e özgü bir uzantıya bağlı dizin / fonksiyon) ya da canlıyla sınama arasında "yapı" satırı farkı.
-Öyle olursa sınama yine BAŞARISIZ der ve BASARISIZ.txt nedeni yazar — hata atlanmaz, ayrıca açıklanır.
+**İLK SINANMIŞ YEDEK — 17 Kasım 2026 19:18 (İstanbul), `AtolyeYedek/2026-11-17-1918`.** PR #361 (`b4594bc`) birleştikten sonra elle
+çalıştırıldı (run 44124150002, iş `yedek`, sonuç success; kullanıcı doğruladı):
+
+| Aşama | Sonuç |
+|---|---|
+| Döküm (canlı, salt-okur) | 81 sn · `public.dump` 1370 KB · 44 tablo |
+| Geri yükleme (boş PostgreSQL 17.12) | dört adım hatasız, her biri tek işlem ve ilk hatada duran: auth / storage tablolar + kısıtlar → auth / storage satırları → public → auth / storage politika, RLS, tetikleyici, dizin, yabancı anahtar |
+| Envanter karşılaştırması | **SINAMA TAMAM** — karşılaştırılan her satır canlıyla AYNI: 44 tablonun tam satır sayısı, public fonksiyon + tetikleyici tanım özetleri, auth.users sayısı, kova başına dosya sayısı / bayt, 11 "yapı" satırı (public / auth / storage politika, dizin, kısıt, tetikleyici adları — `gorsel_yonetici_yazar` dahil) |
+| OneDrive doğrulaması | 12 dosya yüklendi; OneDrive'dan geri okunup boyut + özetle karşılaştırıldı: bayt bayt aynı |
+| Saklama | OneDrive'da 2 klasör, 0 silindi — `2026-11-17-1827-SINANMADI` yerinde |
+
+Kayıttaki "SINAMA TAMAM" cümlesi eski metindir (yapı satırlarını saymaz); karşılaştırma onları da kapsar (`karsilastir = t`).
+
+**Kapsam sınırları (sınanmış = aşağıdakiler HARİÇ):**
+- Sınama **düz PostgreSQL 17'ye** geri yüklemedir, yeni bir Supabase projesine değil. Felakette yeni projeye dönüş ayrı provadır
+  (`YEDEK-DONUS-PROVASI.md`); orada `gorsel_yonetici_yazar` elle yeniden kurulur (depoda kurulum SQL'i yok, `auth-storage.sql` yalnız satır taşır).
+- Supabase'e özgü uzantılar (`pg_cron`, `pg_net`, `supabase_vault`; `pg_catalog` şeması için de bir satır) sınama veritabanında
+  kurulamaz: geri yükleme adımlarından ÖNCE bilerek atlanır ve `TAMAM.txt`'de listelenir. "uzantılar" envanter satırı ve cron işleri
+  karşılaştırma DIŞI (yalnız listelenir).
+- Storage'daki DOSYALARIN kendisi, Edge Function gizli değerleri, Authentication / proje ayarları yedekte yok (yukarıdaki kapsam).
+- "yapı" satırları ADLARI karşılaştırır, tanım metnini değil (public fonksiyon / tetikleyici tanımları ayrıca md5'le karşılaştırılır).
+- Elle başlatılan koşu uyarı adımını çalıştırmaz: issue #350 açık kalır. İlk **zamanlanmış** koşu (her gece 00:17 UTC'de kuyruğa
+  girer; GitHub gecikmesiyle genelde sabah 09–11 İstanbul) başarılı olursa iş onu "Düzeldi" notuyla kendisi kapatır. **Bekleniyor.**
+- `2026-11-17-1827-SINANMADI` korunuyor; ancak saklama kuralı onu, 30 günden eski olup en yeni 7 klasörün dışına düştüğünde (en erken
+  ~17 Aralık) silecek. Kalıcı istenirse OneDrive'da AtolyeYedek DIŞINA kopyalanmalı (saklama yalnız tarih adlı klasörlere dokunur).
