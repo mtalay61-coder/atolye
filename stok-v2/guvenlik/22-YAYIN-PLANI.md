@@ -36,6 +36,9 @@ cariye bağlama ve ret çalışır. Bu yüzden sıra **SQL → ERP** ve arası k
 
 ## Aşama 1 — Canlı SQL (kullanıcı, Supabase SQL Editor, postgres; ayrı onay: "22'yi uygula")
 
+> **Durum (17 Kasım): UYGULANDI.** Önkoşul HAZIR → canlı tetikleyici incelemesi (salt okur) → `22-site-onay-atomik.sql` (b33ac92) hatasız,
+> sonuç tablosu 10/10 tamam → önkoşul UYGULANMIŞ, 16. satır "0 nesne değişmiş". Kayıt: `22-TAMAMLANDI.md`. Aşama 2 ayrı onay bekliyor.
+
 Pencere: kimse siteden gelen kayıt talebini onaylamıyorken (birkaç dakika). Aşama 0 bitmiş ve PR birleşmeye hazır olmalı.
 
 1. `22-onkosul-salt-okur.sql` (b33ac92) — aynı gün, hemen önce: GENEL **HAZIR**; 10. satır "var, etkin (O|A), degisiklik_bump() | tamam".
