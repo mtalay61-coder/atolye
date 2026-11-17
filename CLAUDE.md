@@ -43,7 +43,8 @@ Playwright'ın kendi tarayıcısı kurulu değilse (konteyner imajı güncelleni
 verin (test/ortak.js). Yeni firma kurulumu kabul testleri: `KOPRU_PG=<pg modülü> stok-v2/test/guvenlik/t24/kos-t24.sh`.
 
 Bilinen test boşlukları: paralel koşuda birkaç senaryo oynak — FARKLI çıkanı tek başına yeniden koş. (`tedarik-girisleri`
-eskiden hep FARKLI'ydı: senaryo WhatsApp penceresinin adresini gezinme bitmeden okuyordu; 17 Kasım'da düzeltildi.) (Taşımada kaybolan 15 senaryo 27 Eylül'de
+eskiden hep FARKLI'ydı: senaryo WhatsApp penceresinin adresini gezinme bitmeden okuyordu; 17 Kasım'da düzeltildi.) (`firma-secimi` oynak — main'de de: kurulum indirmesi + Değiştir tıklamasından ~110 ms sonra sayfa kendiliğinden yeniden yükleniyor,
+seçim nds kalıyor; 17 Kasım ölçümü main 16/23, 1.744.23 12/23 AYNI; kök neden bulunamadı — test/sonuc-kosu-1.744.23.txt.) (Taşımada kaybolan 15 senaryo 27 Eylül'de
 yeniden yazıldı; bkz. DEVAM-NOTU v1.505.0.)
 `src/137`, `236`, `237` derlenmiş (React.createElement) hâlde; dokunulursa JSX'e çevir.
 
