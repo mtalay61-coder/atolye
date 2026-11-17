@@ -27,7 +27,7 @@ const { normalles } = require("./senaryo-fis.js");
 // Ürün görselleri ve "fotoğraf" ayrı, boş bir sayfada kanvasla çiziliyor — Node'da kanvas yok.
 // Rastgelelik yok: aynı çizim her koşuda aynı pikselleri veriyor.
 async function gorselleriCiz() {
-  const tarayici = await chromium.launch();
+  const tarayici = await chromium.launch(process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {});
   const s = await tarayici.newPage();
   const sonuc = await s.evaluate(async () => {
     const tuval = (w, h) => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; };
