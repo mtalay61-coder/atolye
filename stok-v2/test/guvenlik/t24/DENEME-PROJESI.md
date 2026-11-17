@@ -1,4 +1,4 @@
-# Boş deneme Supabase projesinde doğrulama — adımlar (hazırlık: 17 Kasım 2026, v1.744.25)
+# Boş deneme Supabase projesinde doğrulama — adımlar (hazırlık: 17 Kasım 2026, v1.744.25; adım 6 ve kota düzeltildi)
 
 Amaç: yeni firma kurulumunu (v2 kurulum dosyası + 23 platform tabloları) ve uygulamanın yeni firmaya bağlanmasını **gerçek
 Supabase'de** sınamak. Bugüne kadarki bütün testler yerel PostgreSQL 16 ve taklit katmanlarla yapıldı (bkz. "Kapsam" sonda).
@@ -9,13 +9,18 @@ anahtar, kullanıcı şifresi) sohbette paylaşılmaz; ekran görüntülerinde g
 
 ## 0. Önce bilinmesi gerekenler
 
-- **Ücretsiz plan:** kuruluş başına en çok 2 etkin proje. Ana proje + 1 deneme projesi sığar; üçüncüsü açılmaz.
-  Deneme projesi 7 gün kullanılmazsa Supabase onu duraklatır. İş bitince silinebilir (adım 9).
-- **Tarayıcı:** denemeyi AYRI bir tarayıcı profilinde (ya da başka bir tarayıcıda) yapın. Firma değiştirme, o profildeki ana
-  firmanın yerel durumunu (oturum, bekleyen kayıtlar) saklama kutusuna kaldırır. Günlük kullandığınız profilde yapmayın.
-- **Deneme profilinde ana firmaya geçmeyin.** Ana firmaya bağlanmak canlıya giriş ve günlük yazması demek. Firmalar arası veri
-  ayrımı yerelde sınandı (t24 + ekran testi); gerçek Supabase'de ayrım ikinci bir deneme projesi gerektirir, ücretsiz planda
-  sığmaz.
+- **Ücretsiz proje kotası (Supabase faturalama belgeleri):** sınır kuruluş başına değil, **kullanıcı başına**. Owner ya da
+  Administrator olduğunuz bütün kuruluşlarda toplam **2 etkin ücretsiz proje** açılabilir. Yeni kuruluş açmak kota açmaz.
+  - **Duraklatılmış projeler sayılmaz.** Ücretsiz projeler 1 hafta hareketsiz kalınca duraklatılır.
+  - Ana proje ücretsiz plandaysa ve başka etkin ücretsiz projeniz yoksa, **1 deneme projesi** açılabilir. Başka bir etkin
+    ücretsiz projeniz varsa deneme projesi açılmaz. Önce Dashboard'daki proje listesine bakın.
+  - Gerçek iki projede firmalar arası ayrım, iki deneme projesinin AYNI ANDA etkin olmasını gerektirir. Ana proje etkin
+    kaldıkça bu kotaya sığmaz.
+- **Uygulama sabit bir yerel adresten açılır** (adım 6): `http://127.0.0.1:8080`. Bu adresin yerel deposu (oturum, firma
+  seçimi) `erp.newdiamond.com.tr`'nin deposundan tamamen ayrıdır. Günlük kullandığınız uygulamanın cihazdaki durumuna dokunmaz;
+  ayrı tarayıcı profili gerekmez.
+- **Deneme adresinde ana firmaya bağlanmayın.** İlk ekranda firma kodu yazmayın, yalnız "Gelişmiş" ile deneme projesinin
+  adresini girin. Ana firmaya bağlanmak canlıya giriş ve günlük yazması demektir.
 
 ## 1. Kurulum dosyasını hazırlama (Claude yapar)
 
@@ -58,20 +63,78 @@ Dosyada ana firma verisi yok: yalnız yapı + üç ayar satırı (stk_ayar, boş
 2. `yeni-firma-kurulum.md` §3'teki SQL'i `ahmet` → `deneme`, `Ahmet Yılmaz` → `Deneme Yönetici`, e-posta `deneme@atolye.local` ile çalıştırın.
 3. Kontrol: `select public.yonetici_mi();` SQL Editor'de `false` döner (Editor'de JWT yok). Asıl ölçüm uygulamadan girişte.
 
-## 6. Uygulamayı deneme projesine bağlama (siz, ayrı profilde)
+## 6. Uygulamayı sabit adresten, canlıya bağlanmadan çalıştırma (siz)
 
-Sürüm: dal `claude/yeni-firma-kurulum-v2`'deki `atolye-erp-v1.744.25.html` (yayında değil). Bu dosyayı GitHub'dan indirip ayrı
-profilde açın. Firma rehberine (firmalar.json) deneme kodu EKLENMEZ; bağlantı elle yapılır:
+Sürüm: dal `claude/yeni-firma-kurulum-v2`'deki `atolye-erp-v1.744.25.html` (yayında değil).
 
-1. Firma kodu ekranı → **Gelişmiş** → Project URL ve **Publishable** anahtar (Settings → API Keys). Secret anahtar girilirse
-   uygulama reddeder; öyle olmalı.
-2. Bağlan → sayfa bir kez yeniden açılır → giriş ekranı → adım 5'teki kullanıcıyla giriş.
+**Neden sabit adres:**
+- HTML'i çift tıklayıp `file://` ile açmayın. O kökende tarayıcının yerel depo davranışı farklıdır (bkz.
+  `test/sonuc-yerel-depo-kaybi-yeniden-uretim.js`) ve gerçek kullanımı temsil etmez.
+- GitHub'ın ham dosya adresi HTML'i düz metin olarak verir; tarayıcıda çalışmaz.
+- Bu yüzden dosya bilgisayarınızda küçük bir yerel sunucudan, hep aynı adresten açılır.
+
+**Klasörde yalnız bu dosya olmalı.**
+- `surum.json` yoksa uygulama başka bir sürüme kendiliğinden geçmez.
+- `firmalar.json` yoksa firma kodu rehberi çalışmaz; ana firmaya kodla yanlışlıkla bağlanılamaz.
+
+**Gerekenler:** Python 3 (Windows'ta `py`, macOS'ta `python3`) ve internet. React esm.sh'tan, yazı tipleri Google Fonts'tan gelir.
+Windows'ta Python yoksa: `winget install Python.Python.3.12` (ya da python.org).
+
+### Windows (PowerShell)
+
+```powershell
+mkdir C:\atolye-deneme
+cd C:\atolye-deneme
+curl.exe -L -o atolye-erp-v1.744.25.html https://raw.githubusercontent.com/mtalay61-coder/atolye/refs/heads/claude/yeni-firma-kurulum-v2/atolye-erp-v1.744.25.html
+Get-FileHash atolye-erp-v1.744.25.html -Algorithm SHA256
+py -m http.server 8080 --bind 127.0.0.1
+```
+
+### macOS (Terminal)
+
+```bash
+mkdir -p ~/atolye-deneme && cd ~/atolye-deneme
+curl -L -o atolye-erp-v1.744.25.html https://raw.githubusercontent.com/mtalay61-coder/atolye/refs/heads/claude/yeni-firma-kurulum-v2/atolye-erp-v1.744.25.html
+shasum -a 256 atolye-erp-v1.744.25.html
+python3 -m http.server 8080 --bind 127.0.0.1
+```
+
+**Kontroller:**
+- Özet `796cfc4edcb1c77f404866c3ef98d449bc27827b1d0f375e482630f497b004a1` olmalı (17 Kasım, dal ucu). Farklıysa
+  durun ve haber verin.
+- Sunucu penceresi açık kalmalı. Kapatmak: Ctrl+C. Sonraki denemelerde yalnız klasöre girip son satırı (sunucu komutunu)
+  yeniden çalıştırın.
+- `--bind 127.0.0.1`: sunucu yalnız sizin bilgisayarınızdan erişilebilir.
+
+**Bağlanma:**
+1. Tarayıcıda `http://127.0.0.1:8080/atolye-erp-v1.744.25.html` adresini açın. Hep aynı adres ve port kullanılmalı; port
+   değişirse yerel depo da değişir, firma yeniden seçilir.
+2. Firma kodu ekranında **kod yazmayın** → **Gelişmiş: sunucu adresi ve anahtar**.
+   - Project URL: deneme projesinin adresi.
+   - **Publishable** anahtar: Settings → API Keys.
+   - Secret anahtar girilirse uygulama reddeder; öyle olmalı.
+3. **Bağlan** → sayfa bir kez yeniden açılır → giriş ekranı → adım 5'teki kullanıcıyla giriş.
+
+**Yerel prova (17 Kasım, `deneme-provasi.sh`):** aynı akış, aynı uygulama kodu, sabit `http://127.0.0.1` adresinde. Deneme
+projesi yerine kurulum dosyasıyla kurulmuş yerel veritabanı kullanıldı. Sonuç 11/11:
+- firma kodu ekranı;
+- secret anahtar reddi;
+- tek tıkla bağlanma;
+- giriş, oturumun saklanması, F5'te şifre istenmemesi;
+- **canlı projeye (`mqdgucoomgqcvhvgixbl.supabase.co`) açılıştan sona 0 istek.**
+
+**Uygulamanın gittiği dış adresler:**
+- Deneme projesi.
+- Google Fonts.
+- Döviz kuru kaynakları: tcmb.gov.tr, haremaltin, frankfurter ve açık aracılar (allorigins, codetabs, corsproxy,
+  thingproxy). Kur, bunlarla birlikte son çare olarak `api.anthropic.com`'a sabit bir soru gönderilerek de aranıyor. ERP
+  verisi gitmez, anahtar yoktur; tarayıcıdan reddedilir. Bu davranış main'de de var, bu işin kapsamında değiştirilmedi.
 
 ## 7. Uygulamada kontrol listesi (siz)
 
 | # | İşlem | Beklenen |
 |---|---|---|
-| 1 | Girişten sonra sayfayı yenile (F5) | Şifre yeniden **istenmez** (1.744.25 düzeltmesi) |
+| 1 | Girişten sonra ana ekran yüklenince (birkaç saniye) sayfayı yenile (F5) | Şifre yeniden **istenmez** (1.744.25 düzeltmesi). Oturum, veriler yüklenince saklanır; girişten hemen sonraki ilk saniyede yenilenirse şifre yeniden istenebilir |
 | 2 | Tanımlar'a bir ürün + renk/ölçü; Stok'ta bağımsız giriş (ör. 3 adet) | Stok 3; Table Editor `stk_stok`'ta satır |
 | 3 | Bir cari + Kasa & Banka'da nakit tahsilat (ör. 150) | Kasa bakiyesi +150; `kas_hareket`'te satır |
 | 4 | Bir alış faturası (fiş) | Fiş numarası bu projede ilk numaradan (…001) başlar |
@@ -87,7 +150,8 @@ Paylaşmayın: şifreler, secret anahtar, erişim jetonları.
 
 ## 9. Temizlik
 
-Proje → Settings → General → **Delete project** (ya da duraklatın). Ayrı tarayıcı profilini silin.
+Proje → Settings → General → **Delete project** (ya da duraklatın; duraklatılmış proje kotaya sayılmaz). Sunucu penceresini
+Ctrl+C ile kapatıp `atolye-deneme` klasörünü silin. Tarayıcıda `127.0.0.1:8080` için site verilerini silmek isteğe bağlı.
 
 ## Kapsam: bugüne kadar gerçek Supabase'de SINANMAYANLAR
 
@@ -96,10 +160,11 @@ Proje → Settings → General → **Delete project** (ya da duraklatın). Ayrı
 | Kurulum dosyasının gerçek SQL Editor'de çalışması | `editor-icin.py` ile Editor bölmesi taklidi, yerel PG16 | Evet (adım 3) |
 | Supabase'in hazır şemaları (auth, storage, realtime, vault, graphql, uzantılar) ile çakışma | Asgari taban (t19 kur.sql başı) | Evet |
 | `supabase_realtime` yayını | Yerelde iki yol (var / yok) | Evet (gerçek hâli) |
-| Gerçek giriş (GoTrue), JWT, PostgREST, RLS'in gerçek rollerle uygulanması | authenticator + `request.jwt.claims` taklidi; tarayıcıda köprü | Evet (adım 5–7) |
+| Gerçek giriş (GoTrue), JWT, PostgREST, RLS'in gerçek rollerle uygulanması | authenticator + `request.jwt.claims` taklidi; tarayıcıda köprü (köprü her şifreyi kabul eder) | Evet (adım 5–7) |
 | Kaynağın canlı ile birebirliği | `atolye_guvenlik` depodaki SQL'lerden kurulur; canlı şema dökümüyle karşılaştırılmadı | **Hayır** — canlıdan üretilen dosya gerekir |
 | `kurulum-betigi.sql` ve 23'ün ana projede (canlı) çalışması | Yalnız yerel | **Hayır** — onayınızla canlı SQL |
-| Firmalar arası ayrımın gerçek iki projede ölçülmesi | Yerelde iki veritabanı (t24 66/66, ekran 42/42) | **Hayır** — ücretsiz planda ikinci deneme projesi sığmaz |
+| Firmalar arası ayrımın gerçek iki projede ölçülmesi | Yerelde iki veritabanı (t24 66/66, ekran 42/42) | **Hayır**: ana proje etkinken ikinci bir ücretsiz proje aynı anda etkin olamaz (kota kullanıcı başına 2) |
 | Edge Functions (gün sonu, yedek), cron işleri, storage bucket'ları, secret'lar | Kurulum dosyasının kapsamı dışında (`yeni-firma-kurulum.md` §4 elle) | Kısmen — §4 ayrıca denenebilir |
 | Firma rehberine (firmalar.json) yeni kod ekleme | Taklit rota | Hayır (yayın gerektirir) |
+| Paketlenmiş HTML'in (React esm.sh'tan) açılışı | Prova aynı kodun test paketiyle (React içinde) yapıldı; bu ortamda esm.sh engelli | Evet (adım 6) |
 | Safari / mobil tarayıcılar | Yalnız Chromium | Kullanılan tarayıcıya bağlı |
