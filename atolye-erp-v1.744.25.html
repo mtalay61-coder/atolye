@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.744.24</title>
+<title>Atölye ERP 1.744.25</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2319,9 +2319,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.744.24";
+const SURUM = "1.744.25";
 const SURUM_TARIHI = "2026-11-17";
-const SURUM_NOTU = "Yeni firma kurulum dosyası yeniden indirilebiliyor (v2 yapısıyla); firma değiştirme güvenilir";
+const SURUM_NOTU = "Yeni firma kurulum dosyası yeniden indirilebiliyor (v2 yapısıyla); girişten sonra sayfa yenilenince şifre yeniden istenmiyor";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2351,7 +2351,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 }
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" }; // teklif: v1.723.0, Sipariş'in alt sekmesi
 const SURUM_GECMISI = [
-    { surum: "1.744.24", tarih: "17.11.2026", eklenen: [], degisen: [], duzeltilen: ["Firma değiştirirken \"Bağlan\"dan sonra uygulama bazen ESKİ firmayla açılıyordu (tarayıcı yeni seçimi yeniden açılıştan önce kaydedemiyordu) — artık geçiş doğrulanmadan uygulama açılmaz: \"Firma değiştiriliyor…\" görünür, kayıt yerine oturunca yeni firma açılır; olmazsa açıkça söylenir.", "Oturumsuz açılışta (yeni cihaz ya da firma değiştirdikten sonra) giriş yapınca, sayfa yenilendiğinde kullanıcı adı ve şifre yeniden isteniyordu — oturum artık bu girişte de 12 saat saklanır."] },
+    { surum: "1.744.25", tarih: "17.11.2026", eklenen: [], degisen: [], duzeltilen: ["Oturumsuz açılışta (yeni cihaz ya da firma değiştirdikten sonra) giriş yapınca, sayfa yenilendiğinde kullanıcı adı ve şifre yeniden isteniyordu — oturum artık bu girişte de 12 saat saklanır."] },
     { surum: "1.744.23", tarih: "17.11.2026", eklenen: [], degisen: ["Tanımlar › Yedek & Bulut › \"Yeni firma kurulum dosyasını indir\" yeniden çalışıyor: dosya bugünkü (v2) yapıyı eksiksiz kurar — tablolar, görünümler, sunucu işlemleri, kurallar ve yetkiler birebir; ana firmanın hiçbir verisi dosyaya girmez. Yeni ve boş Supabase projesinde SQL Editor'de tek seferde çalışır; bir adım ya da sondaki doğrulama tutmazsa hiçbir şey kurulmuş olmaz. Sunucudaki kurulum betiği eskiyse dosya indirilmez, ne yapılacağı söylenir."], duzeltilen: [] },
     { surum: "1.744.22", tarih: "16.11.2026", eklenen: [], degisen: ["Siteden gelen kayıt talebini \"Onayla — cari aç\" ile onaylamak artık tek adım: cari, site hesabı ve talebin kapanışı sunucuda birlikte yapılır — başka bir cihaz aynı talebi işlerse, bağlantı koparsa ya da uygulama kapanırsa boşta cari kalmaz. Cevap alınamazsa düğme \"Tamamla\" olur ve aynı kayıtla yeniden sorar (ikinci cari açılmaz).", "Müşterinin web sitesi girişini oluşturma / değiştirme / kapatma ve siteden gelen kayıt talebini onaylama / reddetme düğmeleri yalnız Yöneticiye görünür (sunucu zaten yalnız Yöneticiye izin veriyordu)."], duzeltilen: [] },
     { surum: "1.744.21", tarih: "14.11.2026", eklenen: [], degisen: ["Cari ekstresi çıktısı (Yazdır / PDF / WhatsApp / e-posta): bedenli fişler açıklamada \"36:1, 37:2…\" yazısı yerine ekrandaki ekstre gibi beden matrisiyle — satır ürün · renk, sütun beden, sonda toplam × birim fiyat. Bedensiz ürünler ve para hareketleri eskisi gibi tek satır; pencere genişledi."], duzeltilen: [] },
@@ -5227,51 +5227,6 @@ function firmaSecimiOku() {
         return null;
     }
 }
-// FİRMA GEÇİŞİ DOĞRULAMASI (v1.744.23). "Bağlan" seçimi localStorage'a yazıp HEMEN yeniden yüklüyordu; tarayıcı yazmayı yeni
-// belgenin okumasından önce saklama katmanına ulaştıramazsa yeni belge ESKİ seçimi okuyor, o sayfa boyunca da onu kullanıyordu —
-// geçiş sessizce olmuyor, kullanıcı eski firmada kalıyordu (17 Kasım: senaryo-firma-secimi'nin oynaklığı; CDP kaydında yeniden
-// yüklemeyi firmaDegistirVeYenile ← uygula başlatıyor, yeni belge açılışta firma:secim'i eski değerle okuyordu).
-// Şimdi: seçimden SONRA aynı depoya tek kullanımlık geçiş kimliği (`firma:gecis`) yazılır ve sayfa `?firma_gecis=<kimlik>` ile
-// açılır. Aynı depoya sırayla yazıldığı için kimlik görünüyorsa seçim de görünür. Burada, uygulama hiçbir şey okumadan önce:
-// kimlik tutuyorsa geçiş tamam (adres temizlenir); tutmuyorsa (bayat okuma) uygulama BAŞLAMAZ ("Firma değiştiriliyor…",
-// AtolyeERP) ve sayfa artan aralıklarla yeniden açılır (en çok 8 deneme); yine olmazsa açıkça "değiştirilemedi" denir — sessizce
-// eski firmayla açılmaz. Adresteki kimlik TEK BAŞINA hiçbir firmayı seçtirmez (yalnız depodakiyle karşılaştırılır): bağlantıyla
-// başka sunucuya yönlendirme imkânı açmaz; bilinmeyen kimlik en kötü 8 denemeden sonra "değiştirilemedi" ekranı verir.
-const FIRMA_GECIS_ANAHTARI = "firma:gecis";
-const FIRMA_GECIS = (function () {
-    try {
-        if (typeof location === "undefined" || typeof localStorage === "undefined" || !localStorage)
-            return null;
-        const u = new URL(location.href);
-        const n = u.searchParams.get("firma_gecis");
-        if (!n)
-            return null;
-        const deneme = Math.max(1, Number(u.searchParams.get("firma_deneme")) || 1);
-        const temizle = () => {
-            u.searchParams.delete("firma_gecis");
-            u.searchParams.delete("firma_deneme");
-            try {
-                history.replaceState(null, "", u.toString());
-            }
-            catch (e) { /* file:// kısıtı: parametre kalır, zararsız */ }
-        };
-        if (localStorage.getItem(FIRMA_GECIS_ANAHTARI) === n) {
-            localStorage.removeItem(FIRMA_GECIS_ANAHTARI);
-            temizle();
-            return { durum: "tamam", deneme };
-        }
-        if (deneme >= 8) {
-            temizle();
-            return { durum: "olmadi", deneme };
-        }
-        u.searchParams.set("firma_deneme", String(deneme + 1));
-        setTimeout(() => location.replace(u.toString()), 200 * deneme);
-        return { durum: "bekle", deneme };
-    }
-    catch (e) {
-        return null;
-    }
-})();
 const AKTIF_FIRMA = firmaSecimiOku() || VARSAYILAN_FIRMA;
 const SUPABASE_URL = AKTIF_FIRMA.url;
 const SUPABASE_ANAHTAR = AKTIF_FIRMA.anahtar;
@@ -6329,36 +6284,19 @@ function firmaSeciminiDegistir(yeni, depo = localStorage, mevcut = firmaSecimiOk
     depo.setItem(FIRMA_SECIM_ANAHTARI, kayit);
     return true;
 }
-// Değiştir + adres çubuğundaki ?firma= parametresini sil + DOĞRULANAN yeniden açılış (030 FIRMA_GECIS): seçimden sonra aynı
-// depoya tek kullanımlık geçiş kimliği yazılır, sayfa ?firma_gecis=<kimlik> ile açılır; yeni belge kimliği görmeden uygulamayı
-// başlatmaz. Önce: düz location.reload() — yeni belge bazen eski seçimi okuyordu (bkz. 030).
+// Değiştir + adres çubuğundaki ?firma= parametresini sil + yeniden yükle.
 function firmaDegistirVeYenile(yeni) {
     const degisti = firmaSeciminiDegistir(yeni);
-    let u = null;
     try {
-        u = new URL(location.href);
-        u.searchParams.delete("firma");
-        u.searchParams.delete("firma_deneme");
-    }
-    catch (e) {
-        u = null;
-    }
-    if (degisti) {
-        const kimlik = Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
-        localStorage.setItem(FIRMA_GECIS_ANAHTARI, kimlik);
-        if (u) {
-            u.searchParams.set("firma_gecis", kimlik);
-            location.replace(u.toString());
-        }
-        else
-            location.reload();
-    }
-    else if (u) {
-        try {
+        const u = new URL(location.href);
+        if (u.searchParams.has("firma")) {
+            u.searchParams.delete("firma");
             history.replaceState(null, "", u.toString());
         }
-        catch (e) { /* file:// ya da eski tarayıcı: parametre kalır */ }
     }
+    catch (e) { /* file:// ya da eski tarayıcı: parametre kalır, kod aynı olduğu için pencere yeniden açılmaz */ }
+    if (degisti)
+        location.reload();
     return degisti;
 }
 // Ekranda görünen ad: girilen kod; elle (Gelişmiş) bağlanıldıysa proje kimliği.
@@ -6369,20 +6307,6 @@ function firmaGorunenAdi() {
 // Seçimsiz cihazın açılış ekranı (100 AtolyeERP kapısı). ?firma=KOD varsa kod dolu gelir.
 function FirmaGirisEkrani() {
     return React.createElement(FirmaPenceresi, { tamEkran: true, kodBaslangic: adresFirmaParametresi(), onKapat: () => { } });
-}
-// Geçiş doğrulanana kadar (030 FIRMA_GECIS) uygulamanın yerine: hiçbir veri okunmaz, hiçbir istek gitmez.
-function FirmaGecisEkrani({ durum }) {
-    const kutu = { minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24,
-        fontFamily: "system-ui, sans-serif", background: "var(--erp-panel-2, #f4f1ec)", color: "var(--erp-text, #1f1f1f)" };
-    if (durum.durum === "olmadi") {
-        return (React.createElement("div", { "data-firma-gecis": "olmadi", style: kutu },
-            React.createElement("div", { style: { maxWidth: 420, textAlign: "center" } },
-                React.createElement("div", { style: { fontSize: 16, fontWeight: 700, marginBottom: 8 } }, "Firma de\u011Fi\u015Ftirilemedi"),
-                React.createElement("div", { style: { fontSize: 13, marginBottom: 14 } }, "Taray\u0131c\u0131 yeni firma se\u00E7imini kaydedemedi. Sayfay\u0131 yenileyip firmay\u0131 yeniden se\u00E7in."),
-                React.createElement("button", { type: "button", className: "btn-primary", onClick: () => location.replace(location.pathname + location.hash) }, "Sayfay\u0131 yenile"))));
-    }
-    return React.createElement("div", { "data-firma-gecis": "bekle", style: kutu },
-        React.createElement("div", { style: { fontSize: 14 } }, "Firma de\u011Fi\u015Ftiriliyor\u2026"));
 }
 function adresFirmaParametresi() {
     try {
@@ -22922,9 +22846,6 @@ function pencereIkonu(p) {
 // cihazda firma seçimi yoksa uygulamanın HİÇBİR parçası çalışmaz — yalnız firma kodu ekranı. Kapı uygulama bileşeninin
 // DIŞINDA: içeride erken dönüş olsaydı yükleme efektleri yine çalışır, varsayılan projeye bağlanıp yerel veri açardı.
 function AtolyeERP() {
-    // Firma geçişi doğrulanmadıysa (030 FIRMA_GECIS — sayfa boyunca sabit) uygulama başlamaz: eski seçimle veri okunmasın.
-    if (FIRMA_GECIS && FIRMA_GECIS.durum !== "tamam")
-        return React.createElement(FirmaGecisEkrani, { durum: FIRMA_GECIS });
     const secim = firmaSecimiOku();
     if (!secim)
         return React.createElement(FirmaGirisEkrani, null);
@@ -73688,7 +73609,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.744.24)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.744.25)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

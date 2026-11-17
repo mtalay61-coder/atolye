@@ -11,9 +11,12 @@
 //     test kabuğu test.html ilk yüklemede ortak.js'le çizilir).
 //   · Ağ kaydı AÇILIŞTAN başlar (CDP, istek başına belge kimliği = loaderId). Geçişin TAMAMI ölçülür: tıklamayla yeni belge
 //     arasında eski belgeden yeni firmaya yalnız bağlantı denemesi (/auth/v1/settings) gidebilir; eski belgeden eski firmaya yazma
-//     gitmez; yeni belgelerden (yeniden denemeler dahil) eski firmaya HİÇBİR istek gitmez. Yeniden yüklemeyi başlatan çağrı yığını
-//     kaydedilir.
-// Adımlar: 1) A: açılış, ekrandan giriş, stok girişi (Siyah 40:3) + kasa tahsilatı (150). 2) B'ye geçiş (tek tık): giriş istenir,
+//     gitmez; yeni belgeden eski firmaya HİÇBİR istek gitmez. Yeniden yüklemeyi başlatan çağrı yığını
+//     kaydedilir. CORS ön istekleri (OPTIONS) veri taşımaz, sayılmaz; salt okur RPC'ler (POST) yazma sayılmaz.
+//   · Uygulama https kökeninden açılır (ortak.js TEST_KOK): file:// altında Chromium, taze tarayıcının ilk belgesinin depo
+//     yazmalarını gezinmede bazen düşürüyor (senaryo-firma-secimi'nin eski oynaklığı; uygulama hatası değil).
+// Adımlar: 1) A: açılış, ekrandan giriş, stok girişi (Siyah 40:3) + kasa tahsilatı (150). 1b) A'da sıradan yenileme: giriş
+// istenmez. 2) B'ye geçiş (tek tık): giriş istenir,
 // giriş, A'nın verisi görünmez, B'ye stok girişi (9). 3) A'ya dönüş (tek tık): giriş istenmez (oturum geri gelir), B'nin verisi
 // görünmez.
 // Gerekli: KOPRU_PG (node "pg" modülünün yolu); test/test.html (cd test && node derle.js && node paket-test.js).
@@ -43,7 +46,8 @@ const yazmaMi = (x) => !["GET", "HEAD"].includes(x.m) && /^\/(rest|functions)\/v
   const ag = [];          // { t, loader, host, yol, m, belge }
   const belgeler = [];    // { t, loader, url, baslatan }
   let cdp = null;
-  const { tarayici, sayfa } = await O.uygulamaAc({}, { hataYaz: false, stkAyar: ayar, onceRota: async (s) => {
+  // https kökeninden (ortak.js TEST_KOK): file:// altında taze tarayıcının ilk belgesinin depo yazmaları gezinmede düşebiliyor.
+  const { tarayici, sayfa } = await O.uygulamaAc({}, { hataYaz: false, stkAyar: ayar, adres: O.TEST_KOK + "test.html", onceRota: async (s) => {
     // ağ kaydı: ilk yüklemeden ÖNCE
     cdp = await s.context().newCDPSession(s);
     await cdp.send("Network.enable");
@@ -81,7 +85,7 @@ const yazmaMi = (x) => !["GET", "HEAD"].includes(x.m) && /^\/(rest|functions)\/v
   if (process.env.TESHIS) sayfa.on("console", (m) => { if (m.text().startsWith("IZ ")) console.log(m.text()); });
   sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   const hazir = () => sayfa.waitForFunction(() => document.body && document.querySelector("#kok") && document.querySelector("#kok").children.length > 0
-    && !document.body.innerText.includes("Yükleniyor") && !document.querySelector("[data-firma-gecis]"), null, { timeout: 30000 }).then(() => true).catch(() => false);
+    && !document.body.innerText.includes("Yükleniyor"), null, { timeout: 30000 }).then(() => true).catch(() => false);
   // giriş ekranı: Supabase oturumu yoksa uygulama giriş ister (kullanıcı adı + şifre → /auth/v1/token, köprü yerel jeton verir)
   const girisIstendi = async () => (await sayfa.locator('input[type="password"]:visible').count()) > 0;
   const girisYap = async () => {
@@ -146,8 +150,10 @@ const yazmaMi = (x) => !["GET", "HEAD"].includes(x.m) && /^\/(rest|functions)\/v
     const belgeOnce = belgeler.length;
     const tik = Date.now();
     await sayfa.click("[data-firma-uygula]");                                          // TEK tıklama — yeniden deneme yok
+    // Yerel depodaki yeni kod ESKİ belgede de hemen görünür: geçiş, yeni belge açılmadan "oldu" sayılmaz.
+    for (let i = 0; i < 300 && belgeler.length === belgeOnce; i++) await sayfa.waitForTimeout(100);
     const gecti = await sayfa.waitForFunction((k) => (JSON.parse(localStorage.getItem("firma:secim") || "{}").kod || "") === k
-      && document.querySelector("#kok") && document.querySelector("#kok").children.length > 0 && !document.querySelector("[data-firma-gecis]"), kod, { timeout: 30000 })
+      && document.querySelector("#kok") && document.querySelector("#kok").children.length > 0, kod, { timeout: 30000 })
       .then(() => true).catch(() => false);
     await hazir(); await sayfa.waitForTimeout(1500);
     const yeniBelgeler = belgeler.slice(belgeOnce);
@@ -156,7 +162,6 @@ const yazmaMi = (x) => !["GET", "HEAD"].includes(x.m) && /^\/(rest|functions)\/v
     return {
       gecti, secim: await secimKodu(), yeniLoaderlar: yeniBelgeler.map((b) => b.loader),
       belgeSayisi: yeniBelgeler.length,
-      yenidenDeneme: yeniBelgeler.filter((b) => /firma_deneme=/.test(b.url)).length,
       baslatan: yeniBelgeler.map((b) => b.baslatan),
       eskiBelgedenYeniFirmaya: [...new Set(eskiBelgeIstekleri.filter((x) => x.host === yeniHost).map((x) => `${x.m} ${x.yol}`))],
       eskiBelgedenEskiFirmayaYazma: eskiBelgeIstekleri.filter((x) => x.host === eskiHost && yazmaMi(x)).map((x) => `${x.m} ${x.yol}`),
@@ -168,7 +173,7 @@ const yazmaMi = (x) => !["GET", "HEAD"].includes(x.m) && /^\/(rest|functions)\/v
   };
   const rapor = (ad, g) => {
     if (process.env.TESHIS) console.log("TESHIS sahipsiz:", JSON.stringify([...new Set(ag.filter((x) => !belgeler.some((b) => b.loader === x.loader)).map((x) => `${x.m} ${x.yol} loader=${String(x.loader).slice(0, 8)}`))].slice(0, 12)));
-    console.log(`    ${ad}: yeni belge ${g.belgeSayisi} (yeniden deneme ${g.yenidenDeneme}) · başlatan ${JSON.stringify(g.baslatan)} · eski belgeden eski firmaya okuma ${g.eskiBelgedenEskiFirmayaOkuma} · yeni belgeden yeni firmaya ${g.yeniBelgedenYeniFirmaya} istek`);
+    console.log(`    ${ad}: yeni belge ${g.belgeSayisi} · başlatan ${JSON.stringify(g.baslatan)} · eski belgeden eski firmaya okuma ${g.eskiBelgedenEskiFirmayaOkuma} · yeni belgeden yeni firmaya ${g.yeniBelgedenYeniFirmaya} istek`);
   };
   const sunucuStok = async (k) => Number(((await k.sorgu(`select coalesce(sum(miktar), 0)::float as m from public.stk_stok where urun_id = $1 and renk_ad = 'Siyah' and olcu_ad = '40'`, [URUN]))[0] || {}).m);
   const sunucuKasa = async (k) => Number((await k.sorgu(`select coalesce(sum(case when h.veri->>'yon' = 'Giriş' then (h.veri->>'tutar')::numeric else -(h.veri->>'tutar')::numeric end), 0)::float as b

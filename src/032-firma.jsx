@@ -137,23 +137,14 @@ function firmaSeciminiDegistir(yeni, depo = localStorage, mevcut = firmaSecimiOk
   depo.setItem(FIRMA_SECIM_ANAHTARI, kayit);
   return true;
 }
-// Değiştir + adres çubuğundaki ?firma= parametresini sil + DOĞRULANAN yeniden açılış (030 FIRMA_GECIS): seçimden sonra aynı
-// depoya tek kullanımlık geçiş kimliği yazılır, sayfa ?firma_gecis=<kimlik> ile açılır; yeni belge kimliği görmeden uygulamayı
-// başlatmaz. Önce: düz location.reload() — yeni belge bazen eski seçimi okuyordu (bkz. 030).
+// Değiştir + adres çubuğundaki ?firma= parametresini sil + yeniden yükle.
 function firmaDegistirVeYenile(yeni) {
   const degisti = firmaSeciminiDegistir(yeni);
-  let u = null;
   try {
-    u = new URL(location.href);
-    u.searchParams.delete("firma"); u.searchParams.delete("firma_deneme");
-  } catch (e) { u = null; }
-  if (degisti) {
-    const kimlik = Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
-    localStorage.setItem(FIRMA_GECIS_ANAHTARI, kimlik);
-    if (u) { u.searchParams.set("firma_gecis", kimlik); location.replace(u.toString()); } else location.reload();
-  } else if (u) {
-    try { history.replaceState(null, "", u.toString()); } catch (e) { /* file:// ya da eski tarayıcı: parametre kalır */ }
-  }
+    const u = new URL(location.href);
+    if (u.searchParams.has("firma")) { u.searchParams.delete("firma"); history.replaceState(null, "", u.toString()); }
+  } catch (e) { /* file:// ya da eski tarayıcı: parametre kalır, kod aynı olduğu için pencere yeniden açılmaz */ }
+  if (degisti) location.reload();
   return degisti;
 }
 // Ekranda görünen ad: girilen kod; elle (Gelişmiş) bağlanıldıysa proje kimliği.
@@ -165,24 +156,6 @@ function firmaGorunenAdi() {
 function FirmaGirisEkrani() {
   return <FirmaPenceresi tamEkran kodBaslangic={adresFirmaParametresi()} onKapat={() => {}} />;
 }
-// Geçiş doğrulanana kadar (030 FIRMA_GECIS) uygulamanın yerine: hiçbir veri okunmaz, hiçbir istek gitmez.
-function FirmaGecisEkrani({ durum }) {
-  const kutu = { minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24,
-    fontFamily: "system-ui, sans-serif", background: "var(--erp-panel-2, #f4f1ec)", color: "var(--erp-text, #1f1f1f)" };
-  if (durum.durum === "olmadi") {
-    return (
-      <div data-firma-gecis="olmadi" style={kutu}>
-        <div style={{ maxWidth: 420, textAlign: "center" }}>
-          <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Firma değiştirilemedi</div>
-          <div style={{ fontSize: 13, marginBottom: 14 }}>Tarayıcı yeni firma seçimini kaydedemedi. Sayfayı yenileyip firmayı yeniden seçin.</div>
-          <button type="button" className="btn-primary" onClick={() => location.replace(location.pathname + location.hash)}>Sayfayı yenile</button>
-        </div>
-      </div>
-    );
-  }
-  return <div data-firma-gecis="bekle" style={kutu}><div style={{ fontSize: 14 }}>Firma değiştiriliyor…</div></div>;
-}
-
 function adresFirmaParametresi() {
   try { return new URLSearchParams(location.search).get("firma") || ""; } catch (e) { return ""; }
 }

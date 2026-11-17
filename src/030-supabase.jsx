@@ -66,39 +66,6 @@ function firmaSecimiOku() {
     return firmaBaglantisiGecerli(f) ? { kod: String(f.kod || ""), url: f.url, anahtar: String(f.anahtar).trim(), ad: f.ad || "" } : null;
   } catch (e) { return null; }
 }
-// FİRMA GEÇİŞİ DOĞRULAMASI (v1.744.23). "Bağlan" seçimi localStorage'a yazıp HEMEN yeniden yüklüyordu; tarayıcı yazmayı yeni
-// belgenin okumasından önce saklama katmanına ulaştıramazsa yeni belge ESKİ seçimi okuyor, o sayfa boyunca da onu kullanıyordu —
-// geçiş sessizce olmuyor, kullanıcı eski firmada kalıyordu (17 Kasım: senaryo-firma-secimi'nin oynaklığı; CDP kaydında yeniden
-// yüklemeyi firmaDegistirVeYenile ← uygula başlatıyor, yeni belge açılışta firma:secim'i eski değerle okuyordu).
-// Şimdi: seçimden SONRA aynı depoya tek kullanımlık geçiş kimliği (`firma:gecis`) yazılır ve sayfa `?firma_gecis=<kimlik>` ile
-// açılır. Aynı depoya sırayla yazıldığı için kimlik görünüyorsa seçim de görünür. Burada, uygulama hiçbir şey okumadan önce:
-// kimlik tutuyorsa geçiş tamam (adres temizlenir); tutmuyorsa (bayat okuma) uygulama BAŞLAMAZ ("Firma değiştiriliyor…",
-// AtolyeERP) ve sayfa artan aralıklarla yeniden açılır (en çok 8 deneme); yine olmazsa açıkça "değiştirilemedi" denir — sessizce
-// eski firmayla açılmaz. Adresteki kimlik TEK BAŞINA hiçbir firmayı seçtirmez (yalnız depodakiyle karşılaştırılır): bağlantıyla
-// başka sunucuya yönlendirme imkânı açmaz; bilinmeyen kimlik en kötü 8 denemeden sonra "değiştirilemedi" ekranı verir.
-const FIRMA_GECIS_ANAHTARI = "firma:gecis";
-const FIRMA_GECIS = (function () {
-  try {
-    if (typeof location === "undefined" || typeof localStorage === "undefined" || !localStorage) return null;
-    const u = new URL(location.href);
-    const n = u.searchParams.get("firma_gecis");
-    if (!n) return null;
-    const deneme = Math.max(1, Number(u.searchParams.get("firma_deneme")) || 1);
-    const temizle = () => {
-      u.searchParams.delete("firma_gecis"); u.searchParams.delete("firma_deneme");
-      try { history.replaceState(null, "", u.toString()); } catch (e) { /* file:// kısıtı: parametre kalır, zararsız */ }
-    };
-    if (localStorage.getItem(FIRMA_GECIS_ANAHTARI) === n) {
-      localStorage.removeItem(FIRMA_GECIS_ANAHTARI);
-      temizle();
-      return { durum: "tamam", deneme };
-    }
-    if (deneme >= 8) { temizle(); return { durum: "olmadi", deneme }; }
-    u.searchParams.set("firma_deneme", String(deneme + 1));
-    setTimeout(() => location.replace(u.toString()), 200 * deneme);
-    return { durum: "bekle", deneme };
-  } catch (e) { return null; }
-})();
 const AKTIF_FIRMA = firmaSecimiOku() || VARSAYILAN_FIRMA;
 const SUPABASE_URL = AKTIF_FIRMA.url;
 const SUPABASE_ANAHTAR = AKTIF_FIRMA.anahtar;

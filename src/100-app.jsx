@@ -23,8 +23,6 @@ function pencereIkonu(p) {
 // cihazda firma seçimi yoksa uygulamanın HİÇBİR parçası çalışmaz — yalnız firma kodu ekranı. Kapı uygulama bileşeninin
 // DIŞINDA: içeride erken dönüş olsaydı yükleme efektleri yine çalışır, varsayılan projeye bağlanıp yerel veri açardı.
 export default function AtolyeERP() {
-  // Firma geçişi doğrulanmadıysa (030 FIRMA_GECIS — sayfa boyunca sabit) uygulama başlamaz: eski seçimle veri okunmasın.
-  if (FIRMA_GECIS && FIRMA_GECIS.durum !== "tamam") return <FirmaGecisEkrani durum={FIRMA_GECIS} />;
   const secim = firmaSecimiOku();
   if (!secim) return <FirmaGirisEkrani />;
   // DEMO (v1.645.0, 034): örnek veri demo deposuna yazılmadan uygulama açılmaz (yükleme boş depoyu okumasın).
