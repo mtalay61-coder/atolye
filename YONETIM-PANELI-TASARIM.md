@@ -117,23 +117,46 @@ belgesinden doğrulanır. Panelde: barındırma "bizim organizasyon", olaylara "
 - Uygula dosyası tek işlem (do bloğu); nesnelerden biri bile varsa dokunmadan durur. Geri alma, firma / sözleşme / ödeme
   kaydı varsa durur (veri silmez).
 
-## 11. Aşama 1 / SQL — hazır, canlıya UYGULANMADI
+## 11. Aşama 1 / SQL — hazır, canlıya UYGULANMADI (17 Kasım inceleme düzeltmeleriyle)
 
 | Dosya | Satır | sha256 |
 |---|---|---|
-| `stok-v2/guvenlik/23-platform-yonetim.sql` | 228 | `b4718ce03ee1290c8ca658f63abb1b65301ae3459d3e9e93f42ffddb8fd87139` |
-| `stok-v2/guvenlik/23-platform-yonetim-geri-al.sql` | 34 | `878f782ee7ad1855c167464ca7b1d206baa1e8d75f909f4b3d69790c0934fafa` |
-| `stok-v2/guvenlik/23-onkosul-salt-okur.sql` | 51 | `4a3b091a94c6bde2981d3a494e8282b6bc918670e6d9763373821e8cef5b8245` |
+| `stok-v2/guvenlik/23-platform-yonetim.sql` | 250 | `ca0509fc7fff45605613ecf60080f901ccb1062c4931e6838847695956dad9f8` |
+| `stok-v2/guvenlik/23-platform-yonetim-geri-al.sql` | 35 | `56920c7f4ed1eeaab3babb6d580532f6e52c0b1f06db9896d5b539b5f9b5f528` |
+| `stok-v2/guvenlik/23-onkosul-salt-okur.sql` | 111 | `c81acb8ef1d8b2c73d666d8294ae38db3e15d18c71145f54db64f09ea9347285` |
 
-Test: `stok-v2/test/guvenlik/t23/test23.sh` — **83/83** (`t23/sonuc-t23.txt`; yerel PostgreSQL 16, Supabase taklidi, dosyalar
-Supabase SQL Editor gibi ifade başına ayrı istekle — `editor-icin.py`). Kapsam: Editor uyumu (3 dosya 2'şer ifade); önkoşul HAZIR →
-uygula 8/8 → UYGULANMIŞ; ikinci uygulama durur, hiçbir şey değişmez; Supabase'in açık varsayılan yetkisine rağmen anon kapalı;
-ERP Yönetici rolü / Personel / anon kendini platform yöneticisi yapamaz; platform yöneticisi ekler, okur, değiştirir, olay günlüğü
-tetikleyicilerle dolar, SİLEMEZ, ödemeyi değiştiremez, günlüğe yazamaz; 12 iş kuralı; yönetici olmayanlar 0 satır görür, yazamaz,
-tabloların tam içeriği değişmez; geri alma kayıt varken durur, boşken her şeyi kaldırır, ardından yeniden uygulama çalışır.
-Bozma denemeleri: okuma kuralını herkese açmak, ödemeye UPDATE / DELETE vermek → test kırmızı (8 ve 2 satır); uygulama dosyasının
-kendi sonuç tablosu DELETE'i "FARKLI", önkoşul "KARIŞIK" gösterdi. Dosya ilk hâlinde Editor uyumsuzdu (adlı / iç içe dolar
-tırnağı) — `editor-icin.py` yakaladı; 22 gibi tek `do $$` + tek tırnaklı gövdelere çevrildi.
+### İnceleme bulguları (17 Kasım, 0a15166 üzerine) ve düzeltmeler — dördü de yerelde yeniden üretildi
+
+| Bulgu | Yeniden üretim (0a15166) | Düzeltme |
+|---|---|---|
+| 1. Ödemesi olan sözleşmenin para birimi değiştirilebiliyordu | TRY ödemeli sözleşme USD yapıldı | `platform_sozlesme_denetle` (BEFORE UPDATE): ödemesi varken para birimi değişmez; ücret / tarih / durum değişebilir |
+| 2. Düzeltme ödemesi başka sözleşmeye bağlanabiliyordu | A'nın ödemesi B'de düzeltildi: A net +50, B net −50 | `platform_odeme_denetle`: düzeltme, düzelttiği ödemeyle aynı firma, **sözleşme** ve para biriminde (sözleşmesiz de olamaz) |
+| 3. "UYGULANMIŞ" yalnız sayıyordu | okuma kuralı `true` + ödemeye UPDATE → yine UYGULANMIŞ | önkoşul tek select; politikalar (USING / WITH CHECK dahil), anon + authenticated için 7 tablo yetkisi (sütun düzeyi ve PUBLIC'ten gelen dahil), fonksiyon gövdesi / definer / ayar / sahip / çalıştıran, tetikleyiciler, RLS **birebir**; fark adıyla yazılır |
+| 4. Yeni firma kurulumu sınanmıyordu | — | `t23/test23-yeni-firma.sh` (iki yalıtılmış proje) — aşağıda; **kurulum yolu bugün bozuk** (23'ten bağımsız) |
+| (ek) Eşzamanlılık | 0a15166'da iki işlem birbirini görmeden geçti: sözleşme USD, TRY ödeme kaldı | ödeme denetimi sözleşme satırını `for share` kilitler: biri öbürünü bekler, sonra reddeder |
+
+### Testler
+
+- `t23/test23.sh` — **126/126** (`sonuc-t23.txt`). Yeni: bulgu 1 ve 2 (5 denetim); önkoşul bozma denemeleri 10 × (GENEL KARIŞIK +
+  farkın adı + onarınca UYGULANMIŞ): okuma kuralı `true`, okuma kuralı anon'a, ödemeye tablo UPDATE, ödemeye **sütun** UPDATE,
+  PUBLIC'e DELETE, günlüğe TRUNCATE, kapı fonksiyonu `select true`, kapı fonksiyonu anon'a, ödeme denetimi tetikleyicisi kapalı,
+  RLS kapalı; eşzamanlılık iki sıra (ödeme önce / para birimi önce: ikinci işlem ≥ 1,5 sn bekler, reddeder, son hâl tutarlı).
+- Aynı test **düzeltmeden önceki SQL'le (0a15166): 29 kırmızı** (`sonuc-t23-once-0a15166.txt`) — bulgu 1, 2, 3 ve eşzamanlılık.
+  Yalnız `for share` kaldırılınca: eşzamanlılık 8 denetim kırmızı ve önkoşul gövde farkını yakalıyor.
+- `t23/test23-yeni-firma.sh` — **10 geçti, 3 kaldı, 4 atlandı** (`sonuc-t23-yeni-firma.txt`). Geçen: kurulum dosyası veri taşımıyor
+  (platform firması, kod, proje adresi, sözleşme ücreti, ödeme tutarı, platform yöneticisi kimliği, ananın carisi dosyada yok;
+  üst düzey insert / copy yok), platform_ yapısı (5 tablo) taşınıyor. Kalan (23'ten BAĞIMSIZ, bilinen):
+  - Kurulum dosyası Supabase SQL Editor uyumsuz (adlı / iç içe dolar tırnağı) — rehber "SQL Editor › Run" diyor.
+  - Boş projede 748. satırda düşüyor: `function public.stk_dizi(jsonb) does not exist` (fonksiyonlar bağımlılık sırasıyla değil
+    alfabetik). Uygulamada düğme v2'den beri bilerek kapalı (`src/032-firma.jsx`); DEVAM-NOTU: "kurulum betiği v2 için yeniden
+    yazılmalı". Kurulum düşünce firma içi denetimler (önkoşul, boş platform tabloları, firma Yönetici'sinin erişimi, veri ayrımı)
+    ATLANIR — sahte yeşil yok. Test, kurulum yolu yeniden yazıldığında KABUL TESTİDİR.
+- Tanı (`T23_KURULUM=pgdump`, `sonuc-t23-yeni-firma-pgdump-tani.txt`): ananın yapısı pg_dump ile kopyalanınca kurulum iki projede
+  çalıştı, platform tabloları boş, firma Yönetici'si platform yöneticisi değil, veri ayrımı 5/5. Ama boş projenin "yeni tablo
+  herkese açık" varsayılanı yüzünden platform tablolarında anon / authenticated'a **fazla yetki** kaldı — 23 önkoşulu adıyla
+  yakaladı (KARIŞIK), yazmayı RLS durdurdu. Ders: yeni kurulum yolu yetkileri birebir kurmalı; 23 önkoşulu bunun ölçüsü olabilir.
+- Sınanamayan: bir firmanın oturum jetonunun öbür projede geçersiz olması (Supabase'in proje başına JWT anahtarı; yerel taklit
+  imza denetlemez).
 
 Sıradaki (ayrı onay): canlıda salt-okur önkoşul → uygula → önkoşul → kendi hesabını ekleme (kullanıcı, SQL Editor). Sonra ERP
-"Yönetim" bölümü (Aşama 1 / uygulama).
+"Yönetim" bölümü. Yeni firma kurulum yolunun v2 için yeniden yazılması AYRI bir iş (firma eklemeden önce gerekli).

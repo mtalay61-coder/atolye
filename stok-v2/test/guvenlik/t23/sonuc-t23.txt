@@ -1,9 +1,9 @@
 # test23.sh · 2026-11-17 · yerel PostgreSQL 16.15 · Supabase taklidi (t19/kur.sql) · dosyalar Editor gibi (editor-icin.py, ifade başına ayrı istek)
-== Kurulum: t19/kur.sql (Supabase taklidi, açık varsayılan yetkiler) · 23 dosyaları 5fcb477 + çalışma ağacı
+== Kurulum: t19/kur.sql (Supabase taklidi, açık varsayılan yetkiler) · 23 dosyaları 0a15166 + çalışma ağacı
 == 0) Supabase SQL Editor uyumu (editor-icin.py: yalnız düz çift-dolar gövde; parça sayısı)
   [GEÇTİ] 23-platform-yonetim.sql Editor'de 2 ifadeye bölünür → 2
   [GEÇTİ] 23-platform-yonetim-geri-al.sql Editor'de 2 ifadeye bölünür → 2
-  [GEÇTİ] 23-onkosul-salt-okur.sql Editor'de 2 ifadeye bölünür → 2
+  [GEÇTİ] 23-onkosul-salt-okur.sql Editor'de 1 ifadeye bölünür → 1
 == 1) Önkoşul → uygula → önkoşul; ikinci uygulama (her dosya Editor gibi: ifade başına ayrı istek)
   [GEÇTİ] önkoşul (uygulamadan önce) → HAZIR
   [GEÇTİ] uygula: hata yok, sonuç tablosu 8 satır, hepsi tamam → 8/8 tamam
@@ -56,6 +56,11 @@
   [GEÇTİ] aynı kod ikinci kez → ret:kural
   [GEÇTİ] geçersiz durum → ret:kural
   [GEÇTİ] proje adresi yalnız https://<ref>.supabase.co → ret:kural
+  [GEÇTİ] BULGU 1: ödemesi olan sözleşmenin para birimi değiştirilemez (TRY → USD) → ret:kural
+  [GEÇTİ] BULGU 1: ödemesi olan sözleşmenin ücreti / tarihi / durumu değişebilir → ok:
+  [GEÇTİ] BULGU 1: ödemesi OLMAYAN sözleşmenin para birimi değişebilir (ve geri) → ok:
+  [GEÇTİ] BULGU 2: düzeltme, aynı firmanın BAŞKA sözleşmesine bağlanamaz → ret:kural
+  [GEÇTİ] BULGU 2: sözleşmeli ödemenin düzeltmesi sözleşmesiz olamaz → ret:kural
   [GEÇTİ] sözleşme ödemesi varken başka firmaya taşınamaz → ret:kural
 == 5) Platform yöneticisi OLMAYANLAR: hiçbir şey görmez, yazamaz; tablolar değişmez
   [GEÇTİ] ERPY okur: platform_firmalar → ok:0
@@ -82,12 +87,52 @@
   [GEÇTİ] anon okur: platform_olaylar → ret:izin
   [GEÇTİ] anon okur: platform_yoneticileri → ret:izin
   [GEÇTİ] anon firma ekler → ret:izin
-  [GEÇTİ] reddedilen denemelerden sonra beş tablonun tam içeriği aynı → 034b1e562ba49b5f4bfe32178bbb7dfb
-== 6) Geri alma
-  [GEÇTİ] kayıt varken geri alma durur → DUR: platform tablolarında 6 kayıt var
-  [GEÇTİ] durduktan sonra hiçbir şey silinmedi → 034b1e562ba49b5f4bfe32178bbb7dfb
+  [GEÇTİ] reddedilen denemelerden sonra beş tablonun tam içeriği aynı → 3af75d215879ac21c59d5a03e1a83473
+== 6) Önkoşul 'UYGULANMIŞ' demeden önce içeriği birebir karşılaştırır (bozma → KARIŞIK, satır adıyla; geri al → UYGULANMIŞ)
+  [GEÇTİ] okuma kuralı herkese açık (using true) → GENEL → KARIŞIK
+  [GEÇTİ] okuma kuralı herkese açık (using true) → farkın adı → 4|platform_firmalar.platform_firmalar_oku
+  [GEÇTİ] okuma kuralı herkese açık (using true) → onarınca → UYGULANMIŞ
+  [GEÇTİ] okuma kuralı anon'a da → GENEL → KARIŞIK
+  [GEÇTİ] okuma kuralı anon'a da → farkın adı → 4|platform_odemeler.platform_odemeler_oku
+  [GEÇTİ] okuma kuralı anon'a da → onarınca → UYGULANMIŞ
+  [GEÇTİ] ödemeye UPDATE (tablo) → GENEL → KARIŞIK
+  [GEÇTİ] ödemeye UPDATE (tablo) → farkın adı → 5|platform_odemeler → authenticated
+  [GEÇTİ] ödemeye UPDATE (tablo) → onarınca → UYGULANMIŞ
+  [GEÇTİ] ödemeye UPDATE (yalnız bir sütun) → GENEL → KARIŞIK
+  [GEÇTİ] ödemeye UPDATE (yalnız bir sütun) → farkın adı → 5|platform_odemeler → authenticated
+  [GEÇTİ] ödemeye UPDATE (yalnız bir sütun) → onarınca → UYGULANMIŞ
+  [GEÇTİ] firmaya DELETE PUBLIC'ten → GENEL → KARIŞIK
+  [GEÇTİ] firmaya DELETE PUBLIC'ten → farkın adı → 5|platform_firmalar → anon, platform_firmalar → authenticated
+  [GEÇTİ] firmaya DELETE PUBLIC'ten → onarınca → UYGULANMIŞ
+  [GEÇTİ] günlüğe TRUNCATE → GENEL → KARIŞIK
+  [GEÇTİ] günlüğe TRUNCATE → farkın adı → 5|platform_olaylar → authenticated
+  [GEÇTİ] günlüğe TRUNCATE → onarınca → UYGULANMIŞ
+  [GEÇTİ] kapı fonksiyonu herkese true → GENEL → KARIŞIK
+  [GEÇTİ] kapı fonksiyonu herkese true → farkın adı → 6|platform_yonetici_mi()
+  [GEÇTİ] kapı fonksiyonu herkese true → onarınca → UYGULANMIŞ
+  [GEÇTİ] kapı fonksiyonu anon'a açık → GENEL → KARIŞIK
+  [GEÇTİ] kapı fonksiyonu anon'a açık → farkın adı → 6|platform_yonetici_mi()
+  [GEÇTİ] kapı fonksiyonu anon'a açık → onarınca → UYGULANMIŞ
+  [GEÇTİ] ödeme denetimi kapalı → GENEL → KARIŞIK
+  [GEÇTİ] ödeme denetimi kapalı → farkın adı → 7|platform_odemeler.platform_odeme_denetle
+  [GEÇTİ] ödeme denetimi kapalı → onarınca → UYGULANMIŞ
+  [GEÇTİ] RLS kapalı → GENEL → KARIŞIK
+  [GEÇTİ] RLS kapalı → farkın adı → 8|platform_sozlesmeler
+  [GEÇTİ] RLS kapalı → onarınca → UYGULANMIŞ
+== 7) Eşzamanlılık: sözleşmenin para birimi değişikliği ile ödeme girişi aynı anda (iki ayrı oturum, PostgREST yolu)
+  [GEÇTİ] a) ödeme (önce başladı) → ok
+  [GEÇTİ] a) para birimi değişikliği ödemenin bitmesini BEKLEDİ → evet
+  [GEÇTİ] a) sonra ödemeyi görüp REDDETTİ → ret:kural
+  [GEÇTİ] a) son hâl: sözleşme ve ödeme aynı para biriminde → TRY TRY
+  [GEÇTİ] b) para birimi değişikliği (önce başladı) → ok
+  [GEÇTİ] b) ödeme değişikliğin bitmesini BEKLEDİ → evet
+  [GEÇTİ] b) sonra yeni para birimini (USD) görüp TRY ödemeyi REDDETTİ → ret:kural
+  [GEÇTİ] b) son hâl: sözleşme USD, ödeme yok → USD 0
+== 8) Geri alma
+  [GEÇTİ] kayıt varken geri alma durur → DUR: platform tablolarında 10 kayıt var
+  [GEÇTİ] durduktan sonra hiçbir şey silinmedi → 1e1778891ff5e6e5299d215cba222601
   [GEÇTİ] önkoşul hâlâ UYGULANMIŞ → UYGULANMIŞ
   [GEÇTİ] kayıtlar yokken geri alma → tamam — platform_ nesnesi kalmadı
   [GEÇTİ] önkoşul (geri almadan sonra) → HAZIR
   [GEÇTİ] yeniden uygulama (geri alınmış hâlden) → 8/8 tamam
-── test23: 83 geçti, 0 kaldı ──
+── test23: 126 geçti, 0 kaldı ──

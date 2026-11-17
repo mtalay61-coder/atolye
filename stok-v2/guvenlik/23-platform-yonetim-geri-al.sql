@@ -26,6 +26,7 @@ begin
   drop function if exists public.platform_olay_yaz();
   drop function if exists public.platform_guncelleme_damgasi();
   drop function if exists public.platform_odeme_denetle();
+  drop function if exists public.platform_sozlesme_denetle();
   drop function if exists public.platform_yonetici_mi();
 end $$;
 

@@ -10,6 +10,8 @@
 --     SİLME YOK (hiçbir rolde DELETE yetkisi yok): firma "ayrıldı", sözleşme "bitti" olur. Ödeme DEĞİŞTİRİLMEZ; düzeltme eksi
 --     tutarlı, düzelttiği ödemeyi gösteren yeni ödemedir.
 --   - public.platform_olaylar: günlük. Uygulama YAZMAZ; tetikleyiciler yazar (firma açıldı / durum / barındırma, sözleşme, ödeme).
+--   - Ödemesi olan sözleşmenin para birimi değişmez; düzeltme ödemesi düzelttiği ödemeyle aynı firma, SÖZLEŞME ve para biriminde.
+--     Sözleşme değişikliği ile aynı anda girilen ödeme birbirini bekler (satır kilidi) — ikisi birlikte tutarsızlık bırakamaz.
 --   - anon hiçbir platform_ nesnesine erişemez. Supabase'in "yeni tablo herkese açık doğar" varsayılanı burada açıkça geri alınır.
 --  NEDEN public ŞEMASI: gece yedeği yalnız public'i döker ve sınar; ayrı şema yedeğin dışında kalırdı.
 --  GÜVENLİ ÇALIŞTIRMA: tek do bloğu = tek işlem. platform_ nesnelerinden biri bile VARSA hiçbir şeye dokunmadan durur
@@ -17,6 +19,8 @@
 --  SONRA (kendi hesabınızı ekleyin; e-postanızı yazın, başka hiçbir şeyi değiştirmeyin):
 --    insert into public.platform_yoneticileri (kullanici, ad)
 --    select id, 'Platform yöneticisi' from auth.users where email = '<ERP GİRİŞ E-POSTANIZ>';
+--  DOĞRULAMA: bu dosyanın son tablosu kaba denetimdir; asıl doğrulama 23-onkosul-salt-okur.sql (politika içerikleri, bütün
+--  yetkiler, fonksiyon gövdeleri, tetikleyiciler birebir) → GENEL "UYGULANMIŞ".
 --  GERİ ALMA: 23-platform-yonetim-geri-al.sql (firma / sözleşme / ödeme kaydı varsa durur).
 -- =====================================================================================================================
 
@@ -112,24 +116,41 @@ begin
   create function public.platform_odeme_denetle() returns trigger
     language plpgsql security definer set search_path = public, pg_catalog
   as '
-  declare pb text; f uuid;
+  declare pb text; f uuid; s uuid;
   begin
     if new.sozlesme_id is not null then
-      select para_birimi into pb from public.platform_sozlesmeler where id = new.sozlesme_id;
+      -- FOR SHARE: aynı anda sözleşmenin para birimini değiştiren işlem bu ödeme bitene kadar bekler (ve sonra ödemeyi görüp
+      -- reddeder); önce o başladıysa bu satır onun bitmesini bekler ve YENİ para birimini okur. Kilit olmadan iki işlem
+      -- birbirini görmeden geçebiliyordu (TRY ödemesi + USD sözleşme).
+      select para_birimi into pb from public.platform_sozlesmeler where id = new.sozlesme_id for share;
       if pb is distinct from new.para_birimi then
         raise exception using errcode = ''23514'', message = format(''PLATFORM: ödeme para birimi (%s) sözleşmeninkiyle (%s) aynı olmalı'', new.para_birimi, pb);
       end if;
     end if;
     if new.duzeltilen_odeme is not null then
-      select firma_id, para_birimi into f, pb from public.platform_odemeler where id = new.duzeltilen_odeme;
-      if f is distinct from new.firma_id or pb is distinct from new.para_birimi then
-        raise exception using errcode = ''23514'', message = ''PLATFORM: düzeltme, düzelttiği ödemeyle aynı firma ve para biriminde olmalı'';
+      select firma_id, para_birimi, sozlesme_id into f, pb, s from public.platform_odemeler where id = new.duzeltilen_odeme;
+      if f is distinct from new.firma_id or pb is distinct from new.para_birimi or s is distinct from new.sozlesme_id then
+        raise exception using errcode = ''23514'', message = ''PLATFORM: düzeltme, düzelttiği ödemeyle aynı firma, sözleşme ve para biriminde olmalı'';
       end if;
     end if;
     return new;
   end ';
   create trigger platform_odeme_denetle before insert on public.platform_odemeler
     for each row execute function public.platform_odeme_denetle();
+
+  -- ── sözleşmenin para birimi, ödemesi varken değişmez (ödemeler o para biriminde tahsil edildi) ───────────────────────
+  create function public.platform_sozlesme_denetle() returns trigger
+    language plpgsql security definer set search_path = public, pg_catalog
+  as '
+  begin
+    if new.para_birimi is distinct from old.para_birimi
+       and exists (select 1 from public.platform_odemeler o where o.sozlesme_id = old.id) then
+      raise exception using errcode = ''23514'', message = format(''PLATFORM: ödemesi olan sözleşmenin para birimi değiştirilemez (%s → %s)'', old.para_birimi, new.para_birimi);
+    end if;
+    return new;
+  end ';
+  create trigger platform_sozlesme_denetle before update on public.platform_sozlesmeler
+    for each row execute function public.platform_sozlesme_denetle();
 
   create function public.platform_guncelleme_damgasi() returns trigger
     language plpgsql set search_path = public, pg_catalog
@@ -172,7 +193,8 @@ begin
   create trigger platform_odeme_olay after insert on public.platform_odemeler for each row execute function public.platform_olay_yaz();
 
   -- tetikleyici fonksiyonları doğrudan çağrılamasın
-  revoke all on function public.platform_odeme_denetle(), public.platform_guncelleme_damgasi(), public.platform_olay_yaz() from public, anon, authenticated;
+  revoke all on function public.platform_odeme_denetle(), public.platform_sozlesme_denetle(), public.platform_guncelleme_damgasi(), public.platform_olay_yaz()
+    from public, anon, authenticated;
 
   -- ── yetkiler ve RLS (Supabase varsayılanı tabloları anon / authenticated'a açık doğurur: önce hepsi alınır) ───────────
   revoke all on public.platform_firmalar, public.platform_sozlesmeler, public.platform_odemeler, public.platform_olaylar
