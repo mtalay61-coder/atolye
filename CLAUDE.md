@@ -27,9 +27,9 @@ kalıpları" bölümlerini, ayrıca dokunacağın konunun bölümünü oku (`gre
 - `index.html` — başlatıcı: `surum.json`'u okuyup yayındaki sürüme yönlendirir. `manifest.json`,
   `sw.js`, `ikon-*.png` — kurulabilir uygulama (PWA).
 - `atolye-erp-vX.Y.Z.html` — yayınlanmış sürümler (ÜRETİLEN dosyalar). `yap.sh` her derlemede yalnız
-  en yeni 3 tanesini bırakır, eskileri `git rm` ile siler (depo şişmesin; geçmişte dururlar). DİKKAT: yayınlanmamış
-  sürümler birikirse YAYINDAKİ dosyayı da (surum.json'un gösterdiği) siler — her derlemeden sonra `git status`'ta onu geri al
-  (`git restore --staged <dosya> && git checkout -- <dosya>`; 17 Kasım'da 1.744.22 böyle silinip geri alındı).
+  en yeni 3 tanesini bırakır, eskileri `git rm` ile siler (depo şişmesin; geçmişte dururlar). `surum.json`'un gösterdiği
+  YAYINDAKİ dosya sayıdan bağımsız hep korunur; surum.json okunamazsa hiçbir şey silinmez (`surum-temizle.sh`,
+  `test/birim-surum-temizle.js`; 17 Kasım'da korumasız kural 1.744.22'yi silmişti).
 
 ## Komutlar
 
