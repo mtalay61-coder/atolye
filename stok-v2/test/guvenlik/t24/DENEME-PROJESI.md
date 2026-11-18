@@ -52,10 +52,12 @@ Dosyada ana firma verisi yok: yalnız yapı + üç ayar satırı (stk_ayar, boş
    bırakmaz (public boş kalır). İletinin metnini olduğu gibi paylaşın (gizli değer içermez).
 4. Parmak izi (yeni sorgu):
    ```sql
-   select md5(string_agg(kategori || sayi || ozet, ',' order by kategori)) from public.kurulum_parmak_izi();
+   select md5(string_agg(kategori || sayi || ozet, ',' order by kategori collate "C")) from public.kurulum_parmak_izi();
    ```
-   Beklenen: adım 1'deki değer (`332d6e9b…`). Farklıysa şunun çıktısını paylaşın:
-   `select kategori, sayi, ozet from public.kurulum_parmak_izi() order by kategori;`
+   Beklenen: adım 1'deki değer (`332d6e9b…`). `collate "C"` şart: Supabase veritabanı `en_US.UTF-8` sıralamasıyla gelir; o
+   olmadan Türkçe harfli kategoriler başka sıraya düşer ve özet farklı çıkar (18 Kasım deneme projesinde görüldü:
+   `f21635ca…`; sıralama sabitlenince `332d6e9b…`, birebir). Farklıysa şunun çıktısını paylaşın:
+   `select kategori, sayi, ozet from public.kurulum_parmak_izi() order by kategori collate "C";`
 
 ## 4. 23 (platform tabloları) doğrulaması (siz)
 

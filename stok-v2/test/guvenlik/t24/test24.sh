@@ -86,8 +86,8 @@ for f in a b; do
   editor t24_$f $IS/kurulum.sql > $IS/sonuc-$f.txt 2> $IS/hata-$f.txt
   sonuc "proje $f: hata yok" "" "$(grep -m1 'ERROR' $IS/hata-$f.txt)"
   sonuc "proje $f: dosyanın doğrulaması (18 satır)" "18/18 tamam" "$(grep -c '|tamam$' $IS/sonuc-$f.txt)/$(grep -cE '^[0-9]+\|' $IS/sonuc-$f.txt) tamam"
-  sonuc "proje $f: ana ↔ firma parmak izi (bağımsız sorgu)" "$(q t24_ana "select md5(string_agg(kategori || sayi || ozet, ',' order by kategori)) from public.kurulum_parmak_izi()")" \
-        "$(q t24_$f "select md5(string_agg(kategori || sayi || ozet, ',' order by kategori)) from public.kurulum_parmak_izi()")"
+  sonuc "proje $f: ana ↔ firma parmak izi (bağımsız sorgu)" "$(q t24_ana "select md5(string_agg(kategori || sayi || ozet, ',' order by kategori collate \"C\")) from public.kurulum_parmak_izi()")" \
+        "$(q t24_$f "select md5(string_agg(kategori || sayi || ozet, ',' order by kategori collate \"C\")) from public.kurulum_parmak_izi()")"
   # bağımsız ölçü: pg_dump şeması (yorum / oturum ayarı / pg_dump'ın rastgele \restrict satırı dışında; SIRASIZ — yetki dizisinin
   # iç sırası anlamsız) ana ile birebir; tek bilinen fark siparisler_okuma'nın takma ad listesi (bkz. kurulum_parmak_izi notu)
   pg_dump -d t24_ana --schema-only --schema=public | grep -vE '^--|^SET |^SELECT pg_catalog.set_config|^$|^\\(un)?restrict ' | sort > $IS/dump-ana.sql

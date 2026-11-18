@@ -38,8 +38,8 @@ $PG -d postgres -c "create database deneme_bos" >/dev/null
 PGOPTIONS='-c client_min_messages=warning' $PG -d deneme_bos -f $IS/taban.sql >/dev/null 2>&1
 editor deneme_bos $OUT/deneme-kurulum.sql > $IS/sonuc.txt 2> $IS/hata.txt
 TAMAM=$(grep -c '|tamam$' $IS/sonuc.txt); TOPLAM=$(grep -cE '^[0-9]+\|' $IS/sonuc.txt)
-IZ_K=$($PG -d deneme_kaynak -Atc "select md5(string_agg(kategori || sayi || ozet, ',' order by kategori)) from public.kurulum_parmak_izi()")
-IZ_B=$($PG -d deneme_bos -Atc "select md5(string_agg(kategori || sayi || ozet, ',' order by kategori)) from public.kurulum_parmak_izi()" 2>/dev/null)
+IZ_K=$($PG -d deneme_kaynak -Atc "select md5(string_agg(kategori || sayi || ozet, ',' order by kategori collate \"C\")) from public.kurulum_parmak_izi()")
+IZ_B=$($PG -d deneme_bos -Atc "select md5(string_agg(kategori || sayi || ozet, ',' order by kategori collate \"C\")) from public.kurulum_parmak_izi()" 2>/dev/null)
 PARCA=$(python3 $A/stok-v2/editor-icin.py --bol $OUT/deneme-kurulum.sql | python3 -c 'import sys; print(len([x for x in sys.stdin.buffer.read().split(b"\0") if x.strip()]))')
 for d in deneme_kaynak deneme_bos; do $PG -d postgres -c "drop database if exists $d" >/dev/null 2>&1; done
 echo "dosya: $OUT/deneme-kurulum.sql ($(wc -l < $OUT/deneme-kurulum.sql) satır, $(grep -c 'adim := ' $OUT/deneme-kurulum.sql) adım, Editor ifadesi $PARCA)"
