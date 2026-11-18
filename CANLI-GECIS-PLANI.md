@@ -1,4 +1,4 @@
-# Canlıya geçiş ve geri dönüş planı — yeni firma kurulumu v2 + 23 + 1.744.25 (taslak, 18 Kasım 2026)
+# Canlıya geçiş ve geri dönüş planı — A6 düzeltmesi + 23 + yeni firma kurulumu v2 + 1.744.25 (taslak, 18 Kasım 2026; A6 ve sıra güncellendi)
 
 > **DURUM:** Plan. Hiçbir adım uygulanmadı; canlıya, main'e, `surum.json`'a ve yayına dokunulmadı.
 > Her faz ayrı onay ister. SQL'leri kullanıcı Supabase SQL Editor'den elle çalıştırır (canlı erişim yalnız onda).
@@ -25,15 +25,27 @@
 
 ## Geçişi engelleyen ya da önce kapanması gerekenler
 
-1. **A6 yetki yükseltme açığı (CANLIDA DA VAR):**
-   - **Açık:** Personel tanımlar satırının kimliğini değiştirebiliyor. Ardından `yetki_var_mi` herkese "evet" diyor, `yonetici_mi` herkese "hayır".
-   - **Düzeltme** ayrı SQL + geri alma + test olarak hazırlanacak, bu plandaki Faz 1. İki parça:
-     - `tanimlar_kullanici_koruma`: JWT varken güncellemede `id` değişimi reddedilir.
-     - `yetki_var_mi`: 'tekil' satırı yoksa ve JWT varsa REDDEDER. Bugün izin veriyor; JWT'siz (servis, Editor) davranış aynı kalır.
-   - **Sınama:**
-     - t23/t24 + `deneme-yetki-sinama.sql`'de A6/A6b `UYGUN` olmalı.
-     - Diğer satırlar değişmemeli.
-     - Uygulamanın tanım yazmaları (ekran testleri, tam takım) etkilenmemeli.
+1. **A6 yetki yükseltme açığı (CANLIDA DA VAR) — ÖNCELİKLİ; düzeltme HAZIRLANDI, deneme projesinde sınanacak:**
+   - **Açık:** Personel (ya da listede olmayan giriş hesabı) tanımlar satırının kimliğini değiştirebiliyor. Ardından
+     `yetki_var_mi` herkese "evet", `yonetici_mi` herkese "hayır" diyor. Kayıt kapalı olsa bile mevcut personel kullanabilir.
+   - **Düzeltme:** dal `claude/a6-tanim-kimligi-koruma` (main'den; #362 / #363'e bağlı değil).
+     - `stok-v2/guvenlik/24-a6-tanim-kimligi.sql`: oturumlu istekte tanımlar kimliği değişmez (Yönetici dahil).
+       `yetki_var_mi`, tanımlar satırı yoksa ya da bozuksa oturumlu hesaba yetki vermez.
+     - Önkoşul: `24-a6-onkosul-salt-okur.sql` (HAZIR / UYGULANMIŞ / KARIŞIK / EKSİK).
+     - Geri alma: `24-a6-tanim-kimligi-geri-al.sql`.
+     - Kaynaklar (`rls-rol.sql`, `rls-yazma.sql`) aynı gövdelerle güncellendi.
+   - **Yerel sonuçlar:**
+     - `ta6/test-a6.sh` 36/36.
+     - Mevcut düzenekler temiz: kos.sh, t19 139/139, f4.
+     - API provası (taklit): açıkken 200 + `yetki_var_mi` true; düzeltilince 403.
+   - **Deneme projesi adımları:** `stok-v2/test/guvenlik/ta6/A6-DENEME.md`. Gerçek Auth hesaplarıyla API sınaması dahil
+     (`ta6/api-sinama.js`).
+   - **⚠ GERİ ALMA A6 AÇIĞINI YENİDEN AÇAR.** Geri alma dosyası eski gövdeleri birebir kurar; ardından yetkisiz personel yine
+     tanımlar kimliğini değiştirip bütün modül yetkilerini kendine açabilir (yerelde ölçüldü: geri almadan sonra A6 yeniden
+     AÇIK). Bu yüzden:
+     - Geri alma yalnız düzeltme uygulamayı gerçekten bozarsa, kullanıcının açık onayıyla ve geçici olarak uygulanır.
+     - Öncelik ileri düzeltmedir (sorunu giderip yeni bir düzeltme).
+     - Geri alındıysa, düzeltme yeniden uygulanana kadar personel hesaplarının kapatılması değerlendirilir.
 2. **Kayıt kapalı mı (canlı):**
    - Authentication › Email › "Allow new users to sign up" **KAPALI** olmalı.
    - Neden: Deneme projesinde açık geldi. Açıksa adresi bilen herkes hesap açıp F satırlarındaki gibi okur ve yazar.
@@ -41,7 +53,7 @@
 3. **Kaynak ↔ canlı farkı:**
    - Deneme dosyası yerel kopyadan üretildi.
    - Canlıda `rls-yazma.sql`'in silme korumaları (`silme_koruma`: urunler, cariler, siparisler, uretim) var, yerel kaynakta yok.
-   - Asıl kurulum dosyası canlıdan üretilecek (Faz 3) ve bu korumaları TAŞIMALI. Faz 6'da ölçülür.
+   - Asıl kurulum dosyası canlıdan üretilecek (Faz 3) ve bu korumaları TAŞIMALI. **Faz 4'te, birleştirme ve yayından ÖNCE** ölçülür.
 
 ## Faz 0 — Hazırlık, YALNIZ OKUMA (canlıda yazma yok)
 
@@ -49,8 +61,9 @@
 |---|---|---|---|
 | 0.1 | Son gece yedeği **sınanmış** mı (OneDrive `AtolyeYedek/<tarih>` klasörü, `-SINANMADI` eki yok) | kullanıcı | Son 24 saatte sınanmış yedek var |
 | 0.2 | `23-onkosul-salt-okur.sql` canlıda | kullanıcı | GENEL = **HAZIR** (23 uygulanmamış, uygulanabilir). KARIŞIK / EKSİK → DUR |
+| 0.2b | `24-a6-onkosul-salt-okur.sql` canlıda | kullanıcı | GENEL = **HAZIR**. EKSİK: tanımlar verisi hazır değil (girisAktifMi boolean değil / kullanicilar dizi değil / Yönetici yok) → DUR, önce veri düzeltilir; aksi hâlde düzeltme sonrası oturumlu yazmalar durur. KARIŞIK → DUR |
 | 0.3 | Canlıdaki kurulum fonksiyonlarının bugünkü tanımını yedekle (salt okur: `select pg_get_functiondef(…)`; sorgu hazırlanacak) | kullanıcı | Çıktı dosyası saklandı (Faz 3 geri dönüşü bunu kullanır) |
-| 0.4 | Canlı tetikleyici envanteri (salt okur): `silme_koruma` 4 tabloda, `yazma_koruma` muhasebe / faturalar, `tanimlar_kullanici_koruma` | kullanıcı | Liste kaydedildi (Faz 6 karşılaştırması) |
+| 0.4 | Canlı tetikleyici envanteri (salt okur): `silme_koruma` 4 tabloda, `yazma_koruma` muhasebe / faturalar, `tanimlar_kullanici_koruma` | kullanıcı | Liste kaydedildi (Faz 4 karşılaştırması) |
 | 0.5 | "Allow new users to sign up" durumu | kullanıcı (göz) | KAPALI. Açıksa ayrı onayla kapatılır |
 | 0.6 | Canlı bekleyen kayıt / açık işlem yok; atölye mesai dışı | kullanıcı | Uygulamada "bekleyen kayıt" şeridi yok |
 
@@ -60,13 +73,18 @@
 
 | Adım | Ölçüt |
 |---|---|
-| Önce deneme projesinde: düzeltme SQL'i → `deneme-yetki-sinama.sql` | A6 / A6b **UYGUN**, diğer bütün satırlar önceki sonuçla aynı |
-| Deneme uygulamasında (deneme sunucusu) yönetici ile tanım değiştir, personel ile giriş | Uygulama normal çalışır |
-| Canlıda düzeltme SQL'i (mesai dışı) | Hatasız; doğrulama sorgusu (dosyanın sonunda) beklenen |
-| Canlı uygulamada yönetici girişi + bir tanım değişikliği | Kaydedilir, hata yok |
+| ÖN KOŞUL: deneme projesinde `ta6/A6-DENEME.md` adımları tamam | Önce: A6 AÇIK (SQL + gerçek API). Sonra: `yetki-sinama.sql` AÇIK 0 · BAŞARISIZ 0; API 403; yönetici tanım değiştirir, F5, stok fişi; personel girişi |
+| A6 dalı (`claude/a6-tanim-kimligi-koruma`) incelenip main'e birleştirilir (yalnız SQL / test / belge; uygulama değişmez) | Ayrı onay |
+| Canlıda `24-a6-onkosul-salt-okur.sql` | HAZIR |
+| Canlıda `24-a6-tanim-kimligi.sql` (mesai dışı, tek Run) | Hatasız |
+| Canlıda `24-a6-onkosul-salt-okur.sql` | **UYGULANMIŞ** |
+| Canlı uygulamada yönetici girişi + bir tanım değişikliği + bir stok fişi | Kaydedilir, hata yok |
 
-**Geri dönüş:**
-- Düzeltmenin geri alma dosyası, iki fonksiyonun önceki gövdesini birebir kurar. Faz 0.3'te alınan tanımla karşılaştırılarak hazırlanır.
+**Geri dönüş: ⚠ A6 AÇIĞINI YENİDEN AÇAR.**
+- Dosya: `24-a6-tanim-kimligi-geri-al.sql` → önkoşul HAZIR. Eski gövdeler birebir geri gelir; yetkisiz personel yeniden bütün
+  yetkileri kendine açabilir.
+- Yalnız düzeltme canlı uygulamayı gerçekten bozarsa ve kullanıcı onaylarsa uygulanır. Ardından hemen ileri düzeltme
+  hazırlanır; o süre boyunca personel hesaplarının kapatılması değerlendirilir.
 - Uygulama kodu değişmediği için geri dönüş yalnız SQL'dir.
 
 ## Faz 2 — 23 platform tabloları (canlı SQL)
@@ -94,7 +112,25 @@
 - Ya da yalnız yeni fonksiyonları düşürmek: `kurulum_betigi`, `kurulum_parmak_izi`, `kurulum_metni`.
 - Yayındaki 1.744.22'de düğme zaten kapalı olduğu için kullanıcıya etkisi yok.
 
-## Faz 4 — Birleştirme (dağıtım; yayın değil)
+## Faz 4 — Canlıdan üretilen kurulum dosyasının boş projede doğrulanması (BİRLEŞTİRME VE YAYINDAN ÖNCE)
+
+Yeni yer (18 Kasım kararı): genel yayından önce, canlıya yalnız Faz 1–3'ün SQL'i uygulanmışken.
+
+| Adım | Ölçüt |
+|---|---|
+| Canlıda (SQL Editor) `select public.kurulum_betigi();` → çıktının tamamı bir `.sql` dosyasına. Uygulama düğmesi 1.744.22'de kapalı; dosya Editor'den alınır. Salt okur bir üretici; yazma yok | Dosya başlığı "YENİ FİRMA KURULUM DOSYASI (v2)"; gizli değer araması 0 |
+| Dosya önce yerelde yalıtılmış boş veritabanında (Claude): editor-icin.py, 18/18, pg_dump, dolu veritabanında durma | Hepsi geçer |
+| **Boş** bir deneme projesi: mevcut deneme projesini silip yenisi ya da duraklatıp ikincisi. Kota: kullanıcı başına 2 etkin ücretsiz proje, duraklatılmış sayılmaz. "Allow new users to sign up" KAPALI | Proje boş |
+| Dosya SQL Editor'de tek Run | 18/18; parmak izi (`collate "C"`) canlıyla birebir. "Kaynak canlıyla birebir" maddesi kapanır |
+| Faz 0.4 envanteri: `silme_koruma` / `yazma_koruma` / `tanimlar_kullanici_koruma` yeni projede | Hepsi var |
+| `24-a6-onkosul-salt-okur.sql` yeni projede | UYGULANMIŞ (düzeltme canlıdan kopyalandı) |
+| İlk yönetici + personel + `ta6/yetki-sinama.sql` | AÇIK 0 · BAŞARISIZ 0; E4 / E5 / F3 artık RET (silme_koruma) |
+| Deneme sunucusuyla uygulama akışı (1.744.25): giriş, F5, stok, kasa | Normal |
+
+**Geri dönüş:** Gerek yok; canlıya yazılmaz. Ölçüt tutmazsa Faz 5 / 6'ya geçilmez. Fark bir canlı SQL'inden geliyorsa o fazın
+geri dönüşü değerlendirilir (Faz 1'in geri dönüşü açığı yeniden açar, yukarıdaki uyarı).
+
+## Faz 5 — Birleştirme (dağıtım; yayın değil)
 
 | Adım | Ölçüt |
 |---|---|
@@ -109,7 +145,7 @@
 - Birleştirme commit'ini geri alan bir PR (revert). Pages yeniden dağıtır.
 - Canlı veritabanına etkisi yok.
 
-## Faz 5 — Yayın (`surum.json` → 1.744.25)
+## Faz 6 — Yayın (`surum.json` → 1.744.25)
 
 | Adım | Ölçüt |
 |---|---|
@@ -124,19 +160,6 @@
 - Bunun için `src/`'yi 1.744.22 hâline getiren bir dal hazır tutulur: geçişten önce derlenir, sınanır, beklemede durur.
 - Veritabanı tarafı (Faz 1–3) 1.744.22 ile uyumlu. 1.744.22 kurulum düğmesini zaten kapalı tutuyor; 23 ve A6 düzeltmesi onu etkilemiyor. Bu, geri dönüş dalı derlenirken ayrıca sınanır.
 
-## Faz 6 — Geçiş sonrası doğrulama (deneme projesinde, canlıya yazmadan)
-
-1. **Kurulum dosyası:** Canlıdan indirilen kurulum dosyası, **boş** bir deneme projesine kurulur. İki yol var:
-   - mevcut deneme projesini silip yenisini açmak;
-   - ya da duraklatıp ikinci boş proje açmak.
-   - Kota: kullanıcı başına 2 etkin ücretsiz proje; duraklatılmış proje sayılmaz.
-   - Beklenen: 18/18, parmak izi canlıyla birebir. Bu, "kaynak canlıyla birebir" maddesini kapatır.
-2. **Silme korumaları:** Faz 0.4 envanterindeki `silme_koruma` / `yazma_koruma` tetikleyicileri yeni projede de var.
-3. **Yetki sınaması:** `deneme-yetki-sinama.sql` yeni projede çalıştırılır. Beklenen:
-   - A6 / A6b UYGUN (Faz 1);
-   - E4 / E5 / F3 artık RET (silme_koruma).
-4. **Deneme sunucusuyla uygulama akışı:** giriş, stok, kasa.
-
 ## Kapsam dışı (ayrı işler)
 
 - **7a aykırılığı:** `api.anthropic.com` kur çağrısının kaldırılması. Ayrı sürüm ve PR; geçişi beklemez, geçişe bağlı da değildir.
@@ -148,7 +171,8 @@
 
 | Zaman | Fazlar |
 |---|---|
-| Gün 1 | Faz 0 (salt okur) + A6 düzeltmesinin hazırlanıp deneme projesinde sınanması |
-| Gün 2, mesai dışı | Faz 1 → Faz 2 → Faz 3. Her biri ayrı onayla; bir faz ölçütünü tutturamazsa o fazın geri dönüşü uygulanır, sonrakine geçilmez |
-| Gün 3 | Faz 4 (birleştirme), birkaç saat gözlem → Faz 5 (yayın) |
-| Ardından | Faz 6 |
+| Şimdi | A6 düzeltmesi yalnız deneme projesinde sınanır (`ta6/A6-DENEME.md`). Canlıya dokunulmaz |
+| Sonra (ayrı onaylar) | Faz 0 (salt okur) |
+| Mesai dışı | Faz 1 (A6) → gözlem → Faz 2 (23) → Faz 3 (kurulum betiği). Her biri ayrı onayla; ölçüt tutmazsa o fazın geri dönüşü değerlendirilir, sonrakine geçilmez |
+| Ardından | Faz 4 (canlıdan üretilen dosya, boş projede) — tamamı geçmeden birleştirme ve yayın yok |
+| Sonra | Faz 5 (birleştirme), birkaç saat gözlem → Faz 6 (yayın) |
