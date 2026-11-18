@@ -146,7 +146,8 @@ python3 deneme-sunucu.py --proje https://<deneme-proje-kimliği>.supabase.co
   güncel özet bu rehberi verdiğim mesajdadır (dal ucuna göre). Farklıysa durun ve haber verin.
 - Sunucunun açılışta yazdığı SHA-256, uygulama dosyasınınkiyle aynı olmalı.
 - Sunucu penceresi açık kalmalı. Kapatmak: Ctrl+C. Sonraki denemelerde klasöre girip yalnız son satırı yeniden çalıştırın.
-- **Pencerede `ENGELLENDİ` satırları görmek normaldir:** döviz kaynakları ve api.anthropic.com her açılışta denenir.
+- **Pencerede `ENGELLENDİ` satırları görmek normaldir:** döviz kaynakları ve api.anthropic.com her açılışta (giriş
+  ekranında da) denenir; F12 açıksa esm.sh `*.mjs.map` (kaynak haritası) satırları da çıkar, zararsızdır.
   `<< ANA PROJE` işaretli satır görürseniz ne yaptığınızı not edip haber verin.
 
 **Bağlanma:**
@@ -188,19 +189,31 @@ Paylaşmayın: şifreler, secret anahtar, erişim jetonları.
 Proje → Settings → General → **Delete project** (ya da duraklatın; duraklatılmış proje kotaya sayılmaz). Sunucu penceresini
 Ctrl+C ile kapatıp `atolye-deneme` klasörünü silin. Tarayıcıda `127.0.0.1:8080` için site verilerini silmek isteğe bağlı.
 
+## 18 Kasım 2026 sonucu
+
+Bu rehberle gerçek bir boş ücretsiz Supabase projesinde 1–7. adımlar uçtan uca geçti; ayrıntı
+`sonuc-deneme-projesi-2026-11-18.txt`. Kısaca:
+- **Kurulum:** 18/18; parmak izi `collate "C"` ile birebir.
+- **23:** UYGULANMIŞ.
+- **Koruma:** tarayıcıda engelledi, ana projeye 0 istek.
+- **Uygulama akışı:** RLS girişsiz okumayı kesti; giriş başarılı; F5'te şifre istenmedi.
+- **Stok:** 3, fiş `MNL-…001`.
+- **Kasa:** +150, fiş `TH-…001`; sunucu doğrulaması birebir.
+- **Kurulum dosyası indirme:** çalıştı.
+
 ## Kapsam: bugüne kadar gerçek Supabase'de SINANMAYANLAR
 
 | Konu | Bugünkü sınama | Deneme projesi kapatır mı |
 |---|---|---|
-| Kurulum dosyasının gerçek SQL Editor'de çalışması | `editor-icin.py` ile Editor bölmesi taklidi, yerel PG16 | Evet (adım 3) |
-| Supabase'in hazır şemaları (auth, storage, realtime, vault, graphql, uzantılar) ile çakışma | Asgari taban (t19 kur.sql başı) | Evet |
-| `supabase_realtime` yayını | Yerelde iki yol (var / yok) | Evet (gerçek hâli) |
-| Gerçek giriş (GoTrue), JWT, PostgREST, RLS'in gerçek rollerle uygulanması | authenticator + `request.jwt.claims` taklidi; tarayıcıda köprü (köprü her şifreyi kabul eder) | Evet (adım 5–7) |
+| Kurulum dosyasının gerçek SQL Editor'de çalışması | `editor-icin.py` ile Editor bölmesi taklidi, yerel PG16 | **Kapandı (18 Kasım): 18/18** |
+| Supabase'in hazır şemaları (auth, storage, realtime, vault, graphql, uzantılar) ile çakışma | Asgari taban (t19 kur.sql başı) | **Kapandı (18 Kasım):** kurulum hatasız, 23 UYGULANMIŞ |
+| `supabase_realtime` yayını | Yerelde iki yol (var / yok) | **Kapandı (18 Kasım):** yayınlar kategorisi kaynakla birebir (0) |
+| Gerçek giriş (GoTrue), JWT, PostgREST, RLS'in gerçek rollerle uygulanması | authenticator + `request.jwt.claims` taklidi; tarayıcıda köprü (köprü her şifreyi kabul eder) | **Kısmen kapandı (18 Kasım):** gerçek şifreyle giriş, F5'te oturum, anon okuma RLS'le kesildi, Yönetici yazmaları (tanımlar, stok fişi, kasa fişi) geçti. Yönetici dışı rollerin (personel vb.) RLS'i gerçekte sınanmadı |
 | Kaynağın canlı ile birebirliği | `atolye_guvenlik` depodaki SQL'lerden kurulur; canlı şema dökümüyle karşılaştırılmadı | **Hayır** — canlıdan üretilen dosya gerekir |
 | `kurulum-betigi.sql` ve 23'ün ana projede (canlı) çalışması | Yalnız yerel | **Hayır** — onayınızla canlı SQL |
 | Firmalar arası ayrımın gerçek iki projede ölçülmesi | Yerelde iki veritabanı (t24 66/66, ekran 42/42) | **Hayır**: ana proje etkinken ikinci bir ücretsiz proje aynı anda etkin olamaz (kota kullanıcı başına 2) |
 | Edge Functions (gün sonu, yedek), cron işleri, storage bucket'ları, secret'lar | Kurulum dosyasının kapsamı dışında (`yeni-firma-kurulum.md` §4 elle) | Kısmen — §4 ayrıca denenebilir |
 | Firma rehberine (firmalar.json) yeni kod ekleme | Taklit rota | Hayır (yayın gerektirir) |
-| Paketlenmiş HTML'in (React esm.sh'tan) açılışı | Prova aynı kodun test paketiyle (React içinde) yapıldı; bu ortamda esm.sh engelli | Evet (adım 6) |
-| Korumanın gerçek tarayıcınızda (Chrome / Edge / Safari) CSP'yi uygulaması | Chromium'da 25/25 | Evet: terminaldeki `ENGELLENDİ` satırları ilk açılışta görünmeli |
+| Paketlenmiş HTML'in (React esm.sh'tan) açılışı | Prova aynı kodun test paketiyle (React içinde) yapıldı; bu ortamda esm.sh engelli | **Kapandı (18 Kasım)** |
+| Korumanın gerçek tarayıcınızda (Chrome / Edge / Safari) CSP'yi uygulaması | Chromium'da 25/25 | **Kapandı — Chrome (Windows), 18 Kasım:** engelleme + bildirim; Edge / Safari sınanmadı |
 | Safari / mobil tarayıcılar | Yalnız Chromium | Kullanılan tarayıcıya bağlı |
