@@ -29,4 +29,4 @@
    gövde md5: koruma 7a75a37deb2f40bf71569da55292d851 · yetki 85a0b3b9c38dc0f7c55f5f8f39519fc4 (geri alma dosyasının 'eski'
    gövdeleriyle birebir; arşiv metninden PostgreSQL'de yeniden hesaplandı) · tetikleyici 596f01be91f2baf1c102dfb021fb9bad
 
-5) "Allow new users to sign up" (ana proje, panel) — bekleniyor
+5) "Allow new users to sign up" (ana proje mqdgucoomgqcvhvgixbl, panel › Authentication › Sign In / Providers): KAPALI
