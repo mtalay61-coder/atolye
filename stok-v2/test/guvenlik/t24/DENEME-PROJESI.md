@@ -1,4 +1,4 @@
-# Boş deneme Supabase projesinde doğrulama — adımlar (hazırlık: 17 Kasım 2026, v1.744.25; adım 6 ve kota düzeltildi)
+# Boş deneme Supabase projesinde doğrulama — adımlar (hazırlık: 17 Kasım 2026, v1.744.25; 18 Kasım: kota, adım 6 ve deneme sunucusu koruması)
 
 Amaç: yeni firma kurulumunu (v2 kurulum dosyası + 23 platform tabloları) ve uygulamanın yeni firmaya bağlanmasını **gerçek
 Supabase'de** sınamak. Bugüne kadarki bütün testler yerel PostgreSQL 16 ve taklit katmanlarla yapıldı (bkz. "Kapsam" sonda).
@@ -16,11 +16,16 @@ anahtar, kullanıcı şifresi) sohbette paylaşılmaz; ekran görüntülerinde g
     ücretsiz projeniz varsa deneme projesi açılmaz. Önce Dashboard'daki proje listesine bakın.
   - Gerçek iki projede firmalar arası ayrım, iki deneme projesinin AYNI ANDA etkin olmasını gerektirir. Ana proje etkin
     kaldıkça bu kotaya sığmaz.
-- **Uygulama sabit bir yerel adresten açılır** (adım 6): `http://127.0.0.1:8080`. Bu adresin yerel deposu (oturum, firma
-  seçimi) `erp.newdiamond.com.tr`'nin deposundan tamamen ayrıdır. Günlük kullandığınız uygulamanın cihazdaki durumuna dokunmaz;
-  ayrı tarayıcı profili gerekmez.
-- **Deneme adresinde ana firmaya bağlanmayın.** İlk ekranda firma kodu yazmayın, yalnız "Gelişmiş" ile deneme projesinin
-  adresini girin. Ana firmaya bağlanmak canlıya giriş ve günlük yazması demektir.
+- **Uygulama sabit bir yerel adresten, korumalı sunucuyla açılır** (adım 6): `http://127.0.0.1:8080`.
+  - Bu adresin yerel deposu (oturum, firma seçimi) `erp.newdiamond.com.tr`'nin deposundan tamamen ayrıdır.
+  - Günlük kullandığınız uygulamanın cihazdaki durumuna dokunmaz; ayrı tarayıcı profili gerekmez.
+- **Ana projeye bağlanma yolları gerçekten açık. Koruma bu yüzden var.**
+  - Firma kodu rehberi yerelde `firmalar.json` bulamazsa GitHub'daki rehberi okur
+    (`https://mtalay61-coder.github.io/atolye/firmalar.json`). Klasörde `firmalar.json` olmaması **yetmez**: düz bir yerel
+    sunucuda "nds" yazmak ana projeyi seçer. Bu, yerel provada ölçüldü (kontrol koşusu).
+  - "Gelişmiş" alanına ana projenin adresi de yazılabilir.
+  - Bu yüzden düz `http.server` değil, `deneme-sunucu.py` kullanılır (adım 6). Sunucu, tarayıcıya yalnız deneme projesine
+    bağlanma izni verir. Ana proje, GitHub rehberi ve diğer her adres tarayıcıda, ağa çıkmadan engellenir.
 
 ## 1. Kurulum dosyasını hazırlama (Claude yapar)
 
@@ -63,22 +68,53 @@ Dosyada ana firma verisi yok: yalnız yapı + üç ayar satırı (stk_ayar, boş
 2. `yeni-firma-kurulum.md` §3'teki SQL'i `ahmet` → `deneme`, `Ahmet Yılmaz` → `Deneme Yönetici`, e-posta `deneme@atolye.local` ile çalıştırın.
 3. Kontrol: `select public.yonetici_mi();` SQL Editor'de `false` döner (Editor'de JWT yok). Asıl ölçüm uygulamadan girişte.
 
-## 6. Uygulamayı sabit adresten, canlıya bağlanmadan çalıştırma (siz)
+## 6. Uygulamayı korumalı yerel sunucudan çalıştırma (siz)
 
 Sürüm: dal `claude/yeni-firma-kurulum-v2`'deki `atolye-erp-v1.744.25.html` (yayında değil).
 
-**Neden sabit adres:**
-- HTML'i çift tıklayıp `file://` ile açmayın. O kökende tarayıcının yerel depo davranışı farklıdır (bkz.
-  `test/sonuc-yerel-depo-kaybi-yeniden-uretim.js`) ve gerçek kullanımı temsil etmez.
-- GitHub'ın ham dosya adresi HTML'i düz metin olarak verir; tarayıcıda çalışmaz.
-- Bu yüzden dosya bilgisayarınızda küçük bir yerel sunucudan, hep aynı adresten açılır.
+**Neden bu yol:**
+- HTML'i çift tıklayıp `file://` ile açmayın: o kökende tarayıcının yerel depo davranışı farklıdır
+  (`test/sonuc-yerel-depo-kaybi-yeniden-uretim.js`).
+- GitHub'ın ham dosya adresi HTML'i düz metin verir, tarayıcıda çalışmaz.
+- Dosya bilgisayarınızda `deneme-sunucu.py` ile, hep aynı adresten açılır.
 
-**Klasörde yalnız bu dosya olmalı.**
-- `surum.json` yoksa uygulama başka bir sürüme kendiliğinden geçmez.
-- `firmalar.json` yoksa firma kodu rehberi çalışmaz; ana firmaya kodla yanlışlıkla bağlanılamaz.
+### Koruma nasıl çalışır (`stok-v2/test/guvenlik/t24/deneme-sunucu.py`)
 
-**Gerekenler:** Python 3 (Windows'ta `py`, macOS'ta `python3`) ve internet. React esm.sh'tan, yazı tipleri Google Fonts'tan gelir.
-Windows'ta Python yoksa: `winget install Python.Python.3.12` (ya da python.org).
+- **Başlık:** Sunucu sayfayı bir `Content-Security-Policy` başlığıyla gönderir. `connect-src` listesinde yalnız sayfanın
+  kendisi ve **verdiğiniz deneme projesi** (`https://<kimlik>.supabase.co`, `wss://` dahil) vardır.
+  - Tarayıcı listede olmayan her adrese fetch / XHR / WebSocket isteğini **ağa çıkarmadan** reddeder.
+  - Engellenenler: ana proje, GitHub'daki firma rehberi, döviz kaynakları, `api.anthropic.com`.
+- **Bildirim:** Engellenen her istek terminalde `ENGELLENDİ: <adres>` olarak görünür; ana projeye gidecek olan
+  `<< ANA PROJE` ile işaretlenir.
+- **Başlamama durumları:**
+  - Ana projenin adresiyle (`mqdgucoomgqcvhvgixbl`) sunucu **hiç başlamaz**.
+  - `https://<20 harf>.supabase.co` biçiminde olmayan adresle de başlamaz.
+- **Sunulan dosyalar:** Sunucu yalnız uygulama dosyasını sunar. `surum.json`, `firmalar.json` vb. → 404, yani sürüm geçişi
+  de yok. Yalnız `127.0.0.1`'den dinler.
+- **Açık kalanlar:**
+  - sayfa;
+  - modüller (React vb. esm.sh'tan; bunlar betik yüklemesidir, `connect-src` değil);
+  - yazı tipleri;
+  - deneme projesi.
+- **Normal yayın paketine etkisi YOK.**
+  - Koruma uygulama dosyasında değil, yalnız bu yerel sunucunun HTTP başlığındadır.
+  - Sunulan dosya yayın paketiyle bayt bayt aynıdır; sunucu açılışta SHA-256 özetini yazar.
+  - GitHub Pages bu başlığı göndermez. `erp.newdiamond.com.tr`'deki uygulama, kodu aynı olsa da bu korumayı görmez ve
+    bugünkü gibi çalışır.
+  - Bu, korumanın **yalnız deneme sunucusuyla açılan sayfayı** kapsadığı anlamına da gelir. Aynı dosyayı başka bir yoldan
+    açarsanız koruma yoktur.
+- **Yerel prova (18 Kasım, `deneme-provasi.sh`): 25/25.** Kurulum dosyasıyla kurulmuş yerel veritabanı ve taklit ana proje
+  kullanıldı; gerçek ağa çıkılmadı.
+  - **Kontrol (korumasız düz sunucu):** "nds" kodu GitHub rehberinden ana projeye çözülüp **seçildi**. Kapatılan yol gerçek.
+  - **Korumalı, "nds":** seçim yazılmadı; ekranda "Firma listesi okunamadı (…)"; ana projeye ve GitHub'a 0 ağ isteği.
+  - **Korumalı, Gelişmiş'e ana proje adresi + anahtarı:** seçim yazılmadı; "Sunucuya ulaşılamadı — …"; ana projeye 0 ağ
+    isteği; terminalde `<< ANA PROJE`.
+  - **Korumalı, deneme projesi:** secret anahtar reddi, tek tıkla bağlanma, giriş, oturum saklanması, F5'te şifre istenmemesi.
+    İzinli olmayan hiçbir adrese ağ isteği yok.
+
+**Gerekenler:**
+- Python 3: Windows'ta `py`, macOS'ta `python3`. Windows'ta yoksa `winget install Python.Python.3.12` (ya da python.org).
+- İnternet: React esm.sh'tan, yazı tipleri Google Fonts'tan gelir.
 
 ### Windows (PowerShell)
 
@@ -86,8 +122,9 @@ Windows'ta Python yoksa: `winget install Python.Python.3.12` (ya da python.org).
 mkdir C:\atolye-deneme
 cd C:\atolye-deneme
 curl.exe -L -o atolye-erp-v1.744.25.html https://raw.githubusercontent.com/mtalay61-coder/atolye/refs/heads/claude/yeni-firma-kurulum-v2/atolye-erp-v1.744.25.html
-Get-FileHash atolye-erp-v1.744.25.html -Algorithm SHA256
-py -m http.server 8080 --bind 127.0.0.1
+curl.exe -L -o deneme-sunucu.py https://raw.githubusercontent.com/mtalay61-coder/atolye/refs/heads/claude/yeni-firma-kurulum-v2/stok-v2/test/guvenlik/t24/deneme-sunucu.py
+Get-FileHash atolye-erp-v1.744.25.html, deneme-sunucu.py -Algorithm SHA256
+py deneme-sunucu.py --proje https://<deneme-proje-kimliği>.supabase.co
 ```
 
 ### macOS (Terminal)
@@ -95,40 +132,36 @@ py -m http.server 8080 --bind 127.0.0.1
 ```bash
 mkdir -p ~/atolye-deneme && cd ~/atolye-deneme
 curl -L -o atolye-erp-v1.744.25.html https://raw.githubusercontent.com/mtalay61-coder/atolye/refs/heads/claude/yeni-firma-kurulum-v2/atolye-erp-v1.744.25.html
-shasum -a 256 atolye-erp-v1.744.25.html
-python3 -m http.server 8080 --bind 127.0.0.1
+curl -L -o deneme-sunucu.py https://raw.githubusercontent.com/mtalay61-coder/atolye/refs/heads/claude/yeni-firma-kurulum-v2/stok-v2/test/guvenlik/t24/deneme-sunucu.py
+shasum -a 256 atolye-erp-v1.744.25.html deneme-sunucu.py
+python3 deneme-sunucu.py --proje https://<deneme-proje-kimliği>.supabase.co
 ```
 
 **Kontroller:**
-- Özet `796cfc4edcb1c77f404866c3ef98d449bc27827b1d0f375e482630f497b004a1` olmalı (17 Kasım, dal ucu). Farklıysa
-  durun ve haber verin.
-- Sunucu penceresi açık kalmalı. Kapatmak: Ctrl+C. Sonraki denemelerde yalnız klasöre girip son satırı (sunucu komutunu)
-  yeniden çalıştırın.
-- `--bind 127.0.0.1`: sunucu yalnız sizin bilgisayarınızdan erişilebilir.
+- `<deneme-proje-kimliği>`: deneme projesinin Settings → API → Project URL'sindeki 20 harf. **Ana projenin adresi değil**;
+  verirseniz sunucu zaten başlamaz.
+- Özetler: uygulama dosyası `796cfc4edcb1c77f404866c3ef98d449bc27827b1d0f375e482630f497b004a1`; `deneme-sunucu.py` için
+  güncel özet bu rehberi verdiğim mesajdadır (dal ucuna göre). Farklıysa durun ve haber verin.
+- Sunucunun açılışta yazdığı SHA-256, uygulama dosyasınınkiyle aynı olmalı.
+- Sunucu penceresi açık kalmalı. Kapatmak: Ctrl+C. Sonraki denemelerde klasöre girip yalnız son satırı yeniden çalıştırın.
+- **Pencerede `ENGELLENDİ` satırları görmek normaldir:** döviz kaynakları ve api.anthropic.com her açılışta denenir.
+  `<< ANA PROJE` işaretli satır görürseniz ne yaptığınızı not edip haber verin.
 
 **Bağlanma:**
-1. Tarayıcıda `http://127.0.0.1:8080/atolye-erp-v1.744.25.html` adresini açın. Hep aynı adres ve port kullanılmalı; port
-   değişirse yerel depo da değişir, firma yeniden seçilir.
+1. Tarayıcıda `http://127.0.0.1:8080/` adresini açın (uygulama dosyasına yönlenir). Hep aynı adres ve port; port değişirse
+   yerel depo da değişir.
 2. Firma kodu ekranında **kod yazmayın** → **Gelişmiş: sunucu adresi ve anahtar**.
-   - Project URL: deneme projesinin adresi.
+   - Project URL: deneme projesinin adresi (sunucuya verdiğinizle aynı).
    - **Publishable** anahtar: Settings → API Keys.
    - Secret anahtar girilirse uygulama reddeder; öyle olmalı.
 3. **Bağlan** → sayfa bir kez yeniden açılır → giriş ekranı → adım 5'teki kullanıcıyla giriş.
 
-**Yerel prova (17 Kasım, `deneme-provasi.sh`):** aynı akış, aynı uygulama kodu, sabit `http://127.0.0.1` adresinde. Deneme
-projesi yerine kurulum dosyasıyla kurulmuş yerel veritabanı kullanıldı. Sonuç 11/11:
-- firma kodu ekranı;
-- secret anahtar reddi;
-- tek tıkla bağlanma;
-- giriş, oturumun saklanması, F5'te şifre istenmemesi;
-- **canlı projeye (`mqdgucoomgqcvhvgixbl.supabase.co`) açılıştan sona 0 istek.**
-
-**Uygulamanın gittiği dış adresler:**
-- Deneme projesi.
-- Google Fonts.
+**Uygulamanın denediği dış adresler (sunucuda hepsi engellenir):**
 - Döviz kuru kaynakları: tcmb.gov.tr, haremaltin, frankfurter ve açık aracılar (allorigins, codetabs, corsproxy,
-  thingproxy). Kur, bunlarla birlikte son çare olarak `api.anthropic.com`'a sabit bir soru gönderilerek de aranıyor. ERP
-  verisi gitmez, anahtar yoktur; tarayıcıdan reddedilir. Bu davranış main'de de var, bu işin kapsamında değiştirilmedi.
+  thingproxy).
+- Son çare olarak `api.anthropic.com`. Bu, dış AI entegrasyonu istememe kararına (DEVAM-NOTU 7a) **aykırı mevcut bir
+  davranış**. Kaydı DEVAM-NOTU'da "AÇIK AYKIRILIK — DÖVİZ KURU İÇİN api.anthropic.com" başlığında; düzeltmesi ayrı iş.
+- Kur deneme ortamında otomatik gelmez; gerekirse rozetteki kalemle elle girilir.
 
 ## 7. Uygulamada kontrol listesi (siz)
 
@@ -167,4 +200,5 @@ Ctrl+C ile kapatıp `atolye-deneme` klasörünü silin. Tarayıcıda `127.0.0.1:
 | Edge Functions (gün sonu, yedek), cron işleri, storage bucket'ları, secret'lar | Kurulum dosyasının kapsamı dışında (`yeni-firma-kurulum.md` §4 elle) | Kısmen — §4 ayrıca denenebilir |
 | Firma rehberine (firmalar.json) yeni kod ekleme | Taklit rota | Hayır (yayın gerektirir) |
 | Paketlenmiş HTML'in (React esm.sh'tan) açılışı | Prova aynı kodun test paketiyle (React içinde) yapıldı; bu ortamda esm.sh engelli | Evet (adım 6) |
+| Korumanın gerçek tarayıcınızda (Chrome / Edge / Safari) CSP'yi uygulaması | Chromium'da 25/25 | Evet: terminaldeki `ENGELLENDİ` satırları ilk açılışta görünmeli |
 | Safari / mobil tarayıcılar | Yalnız Chromium | Kullanılan tarayıcıya bağlı |

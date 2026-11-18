@@ -72,7 +72,8 @@ yeniden yazıldı; bkz. DEVAM-NOTU v1.505.0.)
 
 - Kullanıcıyla ve kodda **Türkçe**; kod yorumları "neden"i anlatır, yoğun ve açıklayıcıdır.
 - Supabase **secret anahtarı asla koda girmez**; yalnız publishable anahtar gömülü.
-- Dışarıya veri gönderen AI/servis entegrasyonu önerme (kullanıcı kararı, bkz. 7a).
+- Dışarıya veri gönderen AI/servis entegrasyonu önerme (kullanıcı kararı, bkz. 7a). Bu karara AYKIRI mevcut bir davranış
+  var: döviz kurunun son adımı `api.anthropic.com`'a gidiyor — kayıt ve önerilen düzeltme DEVAM-NOTU "AÇIK AYKIRILIK" bölümünde.
 - Fişsiz hareket olmaz, eksi stok kırpılmaz, matris kuralı — bkz. "Proje kuralları".
 - İnternetsiz kayıt girilmez (çevrimdışı kilit, v1.557); yazma katmanında düşen yazma fark belleğini geri alır
   ve bekleyen kayıt defterine yazar (v1.556 "Jut") — bu iki korumayı gevşetme.
