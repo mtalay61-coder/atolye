@@ -42,7 +42,10 @@ Dosyada ana firma verisi yok: yalnız yapı + üç ayar satırı (stk_ayar, boş
 
 1. supabase.com → **New project**. Ad: `atolye-deneme`; bölge ana projeyle aynı; veritabanı şifresini parola yöneticinize
    kaydedin (sohbette paylaşmayın).
-2. Proje hazır olunca **hiçbir tablo eklemeyin**: kurulum yalnız boş `public` şemasında çalışır (dolu projede dokunmadan durur).
+2. **Authentication › Sign In / Providers › Email › "Allow new users to sign up" KAPALI** (yeni-firma-kurulum.md §1.3 ile
+   aynı kural). Açıksa publishable anahtarı bilen herkes hesap açar ve "giriş yapmış herkese açık" tablolara girer (bkz. adım
+   8, F satırları). *18 Kasım ilk denemede bu adım rehberde EKSİKTİ; adım 8a'da sonradan kapatıldı.*
+3. Proje hazır olunca **hiçbir tablo eklemeyin**: kurulum yalnız boş `public` şemasında çalışır (dolu projede dokunmadan durur).
 
 ## 3. Kurulum dosyasını çalıştırma (siz)
 
@@ -188,6 +191,22 @@ Paylaşmayın: şifreler, secret anahtar, erişim jetonları.
 
 Proje → Settings → General → **Delete project** (ya da duraklatın; duraklatılmış proje kotaya sayılmaz). Sunucu penceresini
 Ctrl+C ile kapatıp `atolye-deneme` klasörünü silin. Tarayıcıda `127.0.0.1:8080` için site verilerini silmek isteğe bağlı.
+
+## 8. Yönetici olmayan kullanıcıyla yetkisiz işlem sınaması (siz)
+
+1. **8a.** "Allow new users to sign up" durumunu not edin ve KAPATIN (adım 2.2).
+2. **8b.** Authentication › Users › Add user: `personel@atolye.local`, şifre sizin, **Auto Confirm User** işaretli.
+3. **8c.** SQL Editor'de personeli Tanımlar listesine **Personel, hiçbir modül yetkisi olmadan** ekleyin. SQL Editor'de JWT
+   olmadığı için koruma tetikleyicisi bunu engellemez; yönetici ekranından eklemekle aynı sonuç:
+   ```sql
+   update public.tanimlar set veri = jsonb_set(veri, '{kullanicilar}', (veri->'kullanicilar') || jsonb_build_array(jsonb_build_object(
+     'id', 'kullanici-personel', 'ad', 'Deneme Personel', 'kullaniciAdi', 'personel', 'rol', 'Personel', 'yetkiler', '{}'::jsonb,
+     'eposta', 'personel@atolye.local', 'bulutHesabi', true))) where id = 'tekil';
+   ```
+4. **8d.** `stok-v2/test/guvenlik/t24/deneme-yetki-sinama.sql`'in tamamını SQL Editor'de çalıştırın.
+   - Her deneme, PostgREST'in yaptığı gibi `authenticated` rolü ve kişinin JWT iddialarıyla, ayrı bir alt işlemde çalışır.
+   - Sonuç ne olursa olsun alt işlem geri alınır, iz kalmaz.
+   - `durum` sütunu: `UYGUN` / `AÇIK` (bulgu) / `BİLİNEN AÇIK` (tasarım gereği izin).
 
 ## 18 Kasım 2026 sonucu
 
