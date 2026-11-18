@@ -29,3 +29,10 @@ SONUÇ: A6 açığı gerçek Auth hesaplarıyla düzeltme öncesi kanıtlandı, 
 tanım / stok yazmaları ve personel girişi bozulmadı; her API sınamasında son durum başlangıçla birebir (iz yok).
 AÇIK KALANLAR (bu işin kapsamı dışında): E / F satırları — tasarım gereği giriş yapmış her hesap eski tablolarda tam yetkili
 ("2. aşama"); kayıt kapalı kalmalı.
+
+CANLI DOĞRULAMA BETİĞİNİN DENEME PROJESİNDE SINANMASI (24-a6-canli-sinama.sql; düzeltme kurulu; proje drtmnovafswzcmpacubl)
+  Başlangıç görüntüsü (24-a6-goruntu-salt-okur.sql): tekil · 9a3552873c3a7ddb9d273f36c352190a | 9f1d714460c05aaadb1c8c66e008c02c | 16 | 1
+  Sınama: L1 RET 42501 (kimlik değiştirilemez) UYGUN · L2 UYGUN · L3 RET 42501 UYGUN · L4 İZİN 0 UYGUN ·
+          Y1 İZİN 1 UYGUN · Y2 1 UYGUN · Y3 1 UYGUN · Y4 RET 42501 UYGUN
+          ÖZET: AÇIK 0 · BAŞARISIZ 0 · UYGUN 8 · tanımlar satırı: tekil
+  Son görüntü: tekil · 9a3552873c3a7ddb9d273f36c352190a | 9f1d714460c05aaadb1c8c66e008c02c | 16 | 1  → başlangıçla BİREBİR (iz yok)
