@@ -1,0 +1,40 @@
+# DENEME PROJESİNDEN İNDİRİLEN KURULUM DOSYASI — YALITILMIŞ YEREL DOĞRULAMA (18 Kasım 2026)
+# Dosya: atolye-kurulum-2026-11-18.sql (deneme projesi, Tanımlar › Yedek & Bulut; 480 166 bayt, sha256 8913b768125f38f9…)
+# Yerel PostgreSQL 16; boş veritabanı + Supabase'e benzeyen asgari taban (t19 kur.sql başı); dosya editor-icin.py parçalarıyla,
+# her ifade ayrı oturumda (SQL Editor gibi). Ana projeye / canlıya dokunulmadı.
+
+İçerik denetimi:
+  Editor ifadesi 2 · çift-dolar dışında dolar 0 · gizli değer araması 0 · veri yazan adım yalnız 4 (ayar satırları)
+  Kaynak dosyadan (deneme-kurulum.sql) farkı: yalnız 2 adım — 'uzantı pg_stat_statements', 'uzantı uuid-ossp' (Supabase'in hazır
+  uzantıları, deneme projesinden kopyalandı); diğer bütün adım açıklamaları birebir. Başlık: 773 adım.
+
+Uygulama (boş veritabanı, kurulumdan önce public tablo 0):
+ifade 1: çıkış 0
+ifade 2: çıkış 0
+1|sütunlar|443 · cbc0b49b3acb0432485a8c19c53f3b60|443 · cbc0b49b3acb0432485a8c19c53f3b60|tamam
+2|tablo seçenekleri|46 · a80871c3d2232ebdc7b2bbb71a950b6d|46 · a80871c3d2232ebdc7b2bbb71a950b6d|tamam
+3|diziler|5 · d26166cb405cbf772e2fd9e3a9a17488|5 · d26166cb405cbf772e2fd9e3a9a17488|tamam
+4|kısıtlar|90 · f1b311c1a7712acf4e232835459fa6a5|90 · f1b311c1a7712acf4e232835459fa6a5|tamam
+5|dizinler|77 · 289ac09b5d73095185fdb6a92748c376|77 · 289ac09b5d73095185fdb6a92748c376|tamam
+6|görünümler|16 · 4e3243a595f34b43f51ea40906aaa6e8|16 · 4e3243a595f34b43f51ea40906aaa6e8|tamam
+7|fonksiyonlar|119 · 969de186241c68401500784c2c7abd2a|119 · 969de186241c68401500784c2c7abd2a|tamam
+8|tetikleyiciler|97 · d00677c4de1df0fb5ab4853a3c0ebd3b|97 · d00677c4de1df0fb5ab4853a3c0ebd3b|tamam
+9|rls|46 · 9465db9651875463fa9d0a1f55aacad5|46 · 9465db9651875463fa9d0a1f55aacad5|tamam
+10|politikalar|37 · b658f9804869734f4ab45c5449b4a186|37 · b658f9804869734f4ab45c5449b4a186|tamam
+11|tablo yetkileri|262 · 48fd5ab51060f0611a23d63626e030a2|262 · 48fd5ab51060f0611a23d63626e030a2|tamam
+12|sütun yetkileri|0 · -|0 · -|tamam
+13|fonksiyon yetkileri|193 · 185fb299cb8d530181a4cde1a86ee58d|193 · 185fb299cb8d530181a4cde1a86ee58d|tamam
+14|şema yetkileri|3 · 8bfefcb8239e2596fda7591c8be1f1b8|3 · 8bfefcb8239e2596fda7591c8be1f1b8|tamam
+15|varsayılan yetkiler|12 · 035bf462d2f4f26d505035f956ee5875|12 · 035bf462d2f4f26d505035f956ee5875|tamam
+16|yayınlar|0 · -|0 · -|tamam
+17|ayar|3 · 6a7eb4f8b8b330ecee4a03e543548dab|3 · 6a7eb4f8b8b330ecee4a03e543548dab|tamam
+99|ayar dışı tablolarda satır|yok|yok|tamam
+
+Bağımsız kontroller:
+  parmak izi (order by kategori collate "C"): 332d6e9b6124c6058a76f8493bc3cf65 — kaynak ve deneme projesiyle birebir
+  uzantılar: pg_stat_statements, pgcrypto, plpgsql, uuid-ossp
+  satırı olan tablolar (kesin sayım): degisiklik 1, kas_ayar 1, stk_ayar 1 — başka hiçbir tabloda satır yok
+  pg_dump --schema-only public (yorum/SET satırları süzülmüş, sıralı): kaynak dosyayla kurulan veritabanıyla 0 fark / 5283 satır
+
+Güvenlik ağı: aynı dosya dolu veritabanına ikinci kez → ifade 1'de "KURULUM: hedef projenin public şeması boş değil (…)" ile durdu;
+  pg_dump (şema + veri) öncesi / sonrası aynı — HİÇBİR ŞEY DEĞİŞMEDİ.
