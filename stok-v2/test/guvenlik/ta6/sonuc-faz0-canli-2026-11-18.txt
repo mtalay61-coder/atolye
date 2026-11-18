@@ -1,0 +1,32 @@
+# A6 — FAZ 0: CANLI (ANA PROJE) SALT OKUNUR KONTROLLER (18 Kasım 2026). Canlıya YAZILMADI.
+# Not: Adım 1 ilk denemede yanlışlıkla deneme projesinde (drtmnovafswzcmpacubl) çalıştı → "UYGULANMIŞ" (deneme için doğru);
+#      adres çubuğuyla fark edildi, ana projede yeniden çalıştırıldı. Salt okur olduğu için iki projede de iz yok.
+
+1) SON SINANMIŞ YEDEK (GitHub Actions, salt okur inceleme)
+   gece-yedek.yml koşu #13 · 18 Kasım 10:32 İstanbul · zamanlanmış · success
+   "SINAMA TAMAM: 44 tablonun satır sayıları, fonksiyon / tetikleyici özetleri, kullanıcı ve dosya kayıtları canlıyla AYNI"
+   OneDrive AtolyeYedek/2026-11-18-1032 · 12 dosya, kopyalar bayt bayt doğrulandı · uyarı kaydı #350 kendiliğinden kapandı
+
+2) 24-a6-onkosul-salt-okur.sql (ana proje)
+   koruma eski · yetki eski · tetikleyici var · tekil var · girisAktifMi boolean · kullanicilar array · Yönetici 3 · satır 1 → GENEL HAZIR
+
+3) 24-a6-canli-durum-salt-okur.sql (ana proje)
+   F  iki fonksiyon: eski · sahip postgres · security definer true · search_path=public · çalıştırma anon false / authenticated true / public false
+      proacl {postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}  (deneme projesiyle aynı)
+   B  yonetici_mi var (definer) · stk_yetki var · yazma_yetkisi_koruma var
+   T  tanimlar_kullanici_koruma: var / etkin / BEFORE / INSERT,UPDATE,DELETE / satır
+      tanimlar tetikleyicileri: arsiv_goruntu, arsiv_silinen, degisiklik_izle, stk_istemci_koru, stk_tanim_aynasi,
+      tanimlar_kullanici_koruma, tanimlar_surum   ← tanimlar_surum depoda yok (canlıya özgü); düzeltme ona dokunmaz
+   Y  RLS true / zorunlu değil · politika giris_yapmis_hersey: * · authenticated DELETE,INSERT,REFERENCES,SELECT,TRIGGER,UPDATE (TRUNCATE yok) · anon yok
+   V  1 satır, tekil var, başka yok · object · 28 üst düzey anahtar · girisAktifMi boolean / true · kullanicilar array / 3
+      rol dağılımı Yönetici: 3 · e-postası dolu 3 / boş 0 · yinelenen 0 · pasif 0
+   H  auth.users 3 / onaylı 3 · listedekilerden hesabı olan 3 / 3 · listede OLMAYAN hesap 0 (son 7 gün 0)
+   GENEL HAZIR
+   Değerlendirme: bugün canlıda yönetici olmayan ya da listede olmayan hesap YOK → A6 bugün fiilen kullanılamaz; ilk personel
+   eklendiğinde (ya da kayıt açılırsa) kullanılabilir hâle gelir → düzeltme personel eklenmeden önce uygulanmalı.
+
+4) 24-a6-canli-yedek-salt-okur.sql (ana proje) → arşiv: stok-v2/guvenlik/24-a6-canli-yedek-2026-11-18.sql
+   gövde md5: koruma 7a75a37deb2f40bf71569da55292d851 · yetki 85a0b3b9c38dc0f7c55f5f8f39519fc4 (geri alma dosyasının 'eski'
+   gövdeleriyle birebir; arşiv metninden PostgreSQL'de yeniden hesaplandı) · tetikleyici 596f01be91f2baf1c102dfb021fb9bad
+
+5) "Allow new users to sign up" (ana proje, panel) — bekleniyor
