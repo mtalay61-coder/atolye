@@ -1,0 +1,25 @@
+# api-sinama.js — YEREL PROVA (18 Kasım 2026). PostgREST taklidi (test/gercek-pg-kopru.js) + a6_test veritabanı; GERÇEK Auth DEĞİL.
+# Taklit jetonda sub = e-posta olduğu için adım 7'de (tanımları silme) arşiv tetikleyicisi auth.uid()'yi uuid'e çeviremiyor → 22P02;
+# taklit kaynaklı, gerçek Supabase'de sub uuid'dir (403 beklenir). Asıl ölçüm: deneme projesinde gerçek hesaplarla (A6-DENEME.md).
+
+## AÇIK HÂL (24-a6-tanim-kimligi-geri-al.sql uygulanmış)
+personel    | 2 yetki_var_mi (başlangıç)        | false
+personel    | 3 PATCH kimlik → a6-api-sinama    | AÇIK — 200
+personel    | 4 yetki_var_mi (kimlik değişince) | true   ← bütün modül yetkileri açıldı
+personel    | 5 geri: kimlik → tekil            | 200
+personel    | 6 kendini Yönetici yapma          | KAPALI — 403 42501
+personel    | 8 tanımlar kimliği (son)          | tekil
+listede yok | 3 PATCH kimlik → a6-api-sinama    | AÇIK — 200
+listede yok | 4 yetki_var_mi (kimlik değişince) | true
+listede yok | 5 geri: kimlik → tekil            | 200
+listede yok | 6 kendini Yönetici yapma          | KAPALI — 403 42501
+listede yok | 8 tanımlar kimliği (son)          | tekil
+
+## DÜZELTİLMİŞ HÂL (24-a6-tanim-kimligi.sql)
+personel    | 2 yetki_var_mi (başlangıç)        | false
+personel    | 3 PATCH kimlik → a6-api-sinama    | KAPALI — 403 42501 "Tanımlar satırının kimliği değiştirilemez"
+personel    | 6 kendini Yönetici yapma          | KAPALI — 403 42501
+personel    | 8 tanımlar kimliği (son)          | tekil
+listede yok | 3 PATCH kimlik → a6-api-sinama    | KAPALI — 403 42501
+listede yok | 6 kendini Yönetici yapma          | KAPALI — 403 42501
+listede yok | 8 tanımlar kimliği (son)          | tekil

@@ -36,10 +36,17 @@ declare
   m text;
 begin
   select veri into t from public.tanimlar where id = 'tekil';
-  if t is null or coalesce((t ->> 'girisAktifMi')::boolean, false) = false then return true; end if;
+  -- A6 (18 Kasım): satır YOKSA ya da BOZUKSA jetonlu çağrıya yetki VERİLMEZ (eskiden "evet" diyordu). Jetonsuz çağrı (servis
+  -- rolü, SQL Editor) yönetim işidir, serbest kalır.
+  if t is null or jsonb_typeof(t) <> 'object' or jsonb_typeof(t -> 'girisAktifMi') is distinct from 'boolean'
+     or jsonb_typeof(t -> 'kullanicilar') is distinct from 'array' then
+    return auth.jwt() is null;
+  end if;
+  -- Giriş sistemi BİLEREK kapalıysa (yalnız Yönetici değiştirebilir) kısıt yok.
+  if (t ->> 'girisAktifMi')::boolean = false then return true; end if;
   eposta := lower(coalesce(auth.jwt() ->> 'email', ''));
   if eposta = '' then return false; end if;
-  for k in select jsonb_array_elements(coalesce(t -> 'kullanicilar', '[]'::jsonb)) loop
+  for k in select jsonb_array_elements(t -> 'kullanicilar') loop
     aday := lower(coalesce(k ->> 'eposta', ''));
     if aday = '' then
       aday := regexp_replace(lower(translate(coalesce(k ->> 'kullaniciAdi', ''), 'ÇĞIİÖŞÜçğıöşü', 'CGIIOSUcgiosu')), '[^a-z0-9._-]', '', 'g') || '@atolye.local';
