@@ -113,6 +113,32 @@ def editor_temiz(s):
     return re.sub(r"\n{3,}", "\n\n", "\n".join(satir)).strip() + "\n"
 
 
+def literal(sql):
+    # Fonksiyon tanımını DO $$ … $$ içinde çalıştırılacak tek tırnaklı dizgeye çevirir: SQL Editor kuralı yalnız düz $$'a izin
+    # verir ve dış $$ içinde ikinci bir $$ bloğu sonlandırır → iç $$'lar chr(36) || chr(36) ile kurulur, tek tırnaklar ikilenir.
+    parca = sql.replace("'", "''").split("$$")
+    return "'" + "' || chr(36) || chr(36) || '".join(parca) + "'"
+
+
+def atomik(baslik_yorum, koruma, yetki, md5_koruma, md5_yetki, ad):
+    # TEK İFADE (DO bloğu): SQL Editor ifadeleri ayrı oturumlarda gönderse bile iki fonksiyon ya BİRLİKTE kurulur ya hiç.
+    # Sonda kurulan gövdeler md5 ile beklenenle karşılaştırılır; tutmazsa hata → blok bütünüyle geri alınır.
+    norm = "md5(btrim(regexp_replace(regexp_replace(p.prosrc, '--[^\\n]*', '', 'g'), '\\s+', ' ', 'g')))"
+    return (baslik_yorum +
+        "do $$\n"
+        "declare\n  g1 text;\n  g2 text;\n"
+        "begin\n"
+        "  execute " + literal(editor_temiz(koruma).rstrip()) + ";\n"
+        "  execute " + literal(editor_temiz(yetki).rstrip()) + ";\n"
+        f"  select {norm} into g1 from pg_proc p where p.oid = to_regprocedure('public.tanimlar_kullanici_koruma()');\n"
+        f"  select {norm} into g2 from pg_proc p where p.oid = to_regprocedure('public.yetki_var_mi(text[], text)');\n"
+        f"  if g1 is distinct from '{md5_koruma}' or g2 is distinct from '{md5_yetki}' then\n"
+        f"    raise exception '{ad} DURDU: kurulan gövde beklenenle aynı değil (koruma %, yetki %) — HİÇBİR ŞEY DEĞİŞMEDİ', g1, g2;\n"
+        "  end if;\n"
+        f"  raise notice '{ad} TAMAM: iki fonksiyon birlikte kuruldu (koruma %, yetki %)', g1, g2;\n"
+        "end $$;\n")
+
+
 def md5_pg(sql_govde, db):
     # md5'i PostgreSQL hesaplar (onkosul dosyasıyla birebir aynı normalleştirme): geçici şemada kurup prosrc'den.
     ad = re.search(r"public\.(\w+)\(", sql_govde).group(1)
@@ -139,21 +165,22 @@ def main():
          "yetki_eski": md5_pg(eski_yetki, db), "yetki_yeni": md5_pg(YENI_YETKI, db)}
     bas = "-- " + "=" * 117 + "\n"
 
-    open(os.path.join(K, "24-a6-tanim-kimligi.sql"), "w", encoding="utf-8").write(
+    open(os.path.join(K, "24-a6-tanim-kimligi.sql"), "w", encoding="utf-8").write(atomik(
         bas + "--  24-a6-tanim-kimligi.sql — A6 DÜZELTMESİ (ÜRETİLMİŞ: python3 stok-v2/guvenlik/24-uret.py; elle düzenlenmez)\n"
-        "--  Önce 24-a6-onkosul-salt-okur.sql → GENEL = HAZIR olmalı. SQL Editor › tamamı › Run. Tek işlem: hata olursa hiçbir şey değişmez.\n"
+        "--  Önce 24-a6-onkosul-salt-okur.sql → GENEL = HAZIR olmalı. SQL Editor › tamamı › Run.\n"
+        "--  TEK İFADE (DO bloğu): iki fonksiyon ya birlikte kurulur ya hiç; sonda gövdeler doğrulanır, tutmazsa hepsi geri alınır.\n"
         "--  1) tanimlar_kullanici_koruma: jetonlu istekte tanımlar satırının kimliği değiştirilemez (Yönetici dahil).\n"
         "--  2) yetki_var_mi: tanımlar satırı yoksa / bozuksa jetonlu çağrıya yetki verilmez (eskiden 'evet').\n"
-        "--  Tetikleyici bağlantısı değişmez (aynı ad); yetkiler değişmez (create or replace sahibi ve izinleri korur).\n"
-        + bas + "begin;\n\n" + editor_temiz(YENI_KORUMA) + "\n" + editor_temiz(YENI_YETKI) + "\ncommit;\n")
+        "--  Tetikleyici bağlantısı değişmez (aynı ad); yetkiler değişmez (create or replace sahibi ve izinleri korur).\n" + bas,
+        YENI_KORUMA, YENI_YETKI, m["koruma_yeni"], m["yetki_yeni"], "A6 DÜZELTMESİ"))
 
-    open(os.path.join(K, "24-a6-tanim-kimligi-geri-al.sql"), "w", encoding="utf-8").write(
+    open(os.path.join(K, "24-a6-tanim-kimligi-geri-al.sql"), "w", encoding="utf-8").write(atomik(
         bas + "--  24-a6-tanim-kimligi-geri-al.sql — A6 DÜZELTMESİNİ GERİ ALIR (ÜRETİLMİŞ: 24-uret.py)\n"
         "--  !!! UYARI: Bu dosya A6 GÜVENLİK AÇIĞINI YENİDEN AÇAR — yetkisiz personel tanımlar kimliğini değiştirip bütün modül\n"
         "--  !!! yetkilerini kendine açabilir. Yalnız düzeltme uygulamayı bozduysa, geçici olarak ve kullanıcı onayıyla çalıştırın;\n"
         "--  !!! ardından sorun giderilip düzeltme yeniden uygulanmalı.\n"
-        "--  İki fonksiyonun düzeltme ÖNCESİ gövdeleri birebir (rls-rol.sql / rls-yazma.sql, main b4594bc).\n"
-        + bas + "begin;\n\n" + editor_temiz(eski_koruma) + "\n" + editor_temiz(eski_yetki) + "\ncommit;\n")
+        "--  İki fonksiyonun düzeltme ÖNCESİ gövdeleri birebir (rls-rol.sql / rls-yazma.sql, main b4594bc). TEK İFADE: ya ikisi ya hiçbiri.\n" + bas,
+        eski_koruma, eski_yetki, m["koruma_eski"], m["yetki_eski"], "A6 GERİ ALMA"))
 
     open(os.path.join(K, "24-a6-onkosul-salt-okur.sql"), "w", encoding="utf-8").write(
         bas + "--  24-a6-onkosul-salt-okur.sql — A6 DÜZELTMESİNİN DURUMU (SALT OKUR, tek select; ÜRETİLMİŞ: 24-uret.py)\n"

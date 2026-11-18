@@ -1,9 +1,16 @@
-== a6_test: atolye_guvenlik kopyası · b4594bc + çalışma ağacı
+== a6_test: atolye_guvenlik kopyası · 1bbc910 + çalışma ağacı
 == 1) Düzeltme öncesi
   [GEÇTİ] önkoşul → HAZIR
   [GEÇTİ] A6 (kimlik değiştirme) — test açığı görüyor → AÇIK
   [GEÇTİ] A6b (ardından yetki_var_mi) → AÇIK
   [GEÇTİ] sınamada BAŞARISIZ yok (yalnız A6/A6b/Y7 AÇIK) → AÇIK: 3 · BAŞARISIZ: 0
+== 1b) Atomiklik: ikinci fonksiyon bilerek bozulur (Editor gibi ayrı oturumlar)
+  [GEÇTİ] bozulan dosya gerçekten yalnız ikinci fonksiyonda farklı → 1
+  [GEÇTİ] bozuk düzeltme hata verdi → 1
+  [GEÇTİ] kısmi değişiklik yok: iki fonksiyon da eski (önkoşul) → HAZIR
+  [GEÇTİ] kısmi değişiklik yok: koruma fonksiyonu → eski
+  [GEÇTİ] eski (atomik olmayan) sürüm aynı bozulmada YARIM kalıyordu → KARIŞIK
+  [GEÇTİ] geri alma (atomik) yarım durumu toparladı → HAZIR
 == 2) Düzeltme (Editor gibi)
   [GEÇTİ] düzeltme hatasız → 
   [GEÇTİ] önkoşul → UYGULANMIŞ
@@ -40,5 +47,10 @@
   [GEÇTİ] rls-yazma.sql (güncel) hatasız → 
   [GEÇTİ] kaynaklardan kurulunca önkoşul → UYGULANMIŞ
   [GEÇTİ] kaynaklardan kurulunca A6 → UYGUN
+== 7) stok-v2/editor/15-duzeltme.sql yeniden çalıştırılırsa
+  [GEÇTİ] 15-duzeltme kopyası hatasız → 
+  [GEÇTİ] 15-duzeltme (güncel) yeniden çalışınca önkoşul → UYGULANMIŞ
+  [GEÇTİ] ESKİ 15-duzeltme (main) yeniden çalışsaydı koruma eskiye dönerdi → KARIŞIK
+  [GEÇTİ] güncel kopya yeniden kurulunca → UYGULANMIŞ
   [GEÇTİ] son sınama özeti → AÇIK: 0 · BAŞARISIZ: 0
-── test-a6: 36 geçti, 0 kaldı ──
+── test-a6: 46 geçti, 0 kaldı ──

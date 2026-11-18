@@ -14,6 +14,12 @@
 
 ## Düzeltme (`stok-v2/guvenlik/24-a6-tanim-kimligi.sql`)
 
+**Tek ifade (DO bloğu):** SQL Editor ifadeleri ayrı oturumlarda gönderse bile iki fonksiyon ya birlikte kurulur ya hiç.
+Sonda kurulan gövdeler md5 ile doğrulanır; tutmazsa hepsi geri alınır. Yerelde ölçüldü:
+- İkinci fonksiyon bilerek bozulunca kısmi değişiklik kalmadı (önkoşul HAZIR, iki fonksiyon da eski).
+- Eski, atomik olmayan sürüm aynı bozulmada yarım kalıyordu (KARIŞIK).
+- Geri alma dosyası da aynı biçimde atomik.
+
 1. **`tanimlar_kullanici_koruma`:** Oturumlu her istekte, Yönetici dahil, satırın kimliği değiştirilemez (42501).
    - Uygulama tanımlar kimliğini hiç değiştirmez. Gerekirse bakım oturumsuz yapılır (SQL Editor).
 2. **`yetki_var_mi`:** Tanımlar satırı yoksa ya da bozuksa oturumlu hesaba yetki VERMEZ.
@@ -24,21 +30,33 @@
    - İlk yönetici kurulumu: tablo boşken ilk satır serbest.
    - Yöneticinin normal işlemleri: tanım ve kullanıcı değiştirme, uygulamanın upsert'i.
 4. **Kaynaklar:** `rls-rol.sql` ve `rls-yazma.sql` aynı gövdelerle güncellendi. Eski dosyalar yeniden çalıştırılırsa açık geri gelmez.
+5. **`stok-v2/editor/15-duzeltme.sql`:** `rls-rol.sql`'in kopyasını taşıyor. Projenin kendi yöntemiyle (`duzeltme-uret.py` +
+   `editor-icin.py`) yeniden üretildi; tek fark yeni kimlik koruması (3 satır). Yerelde ölçüldü:
+   - güncel hâli yeniden çalışınca düzeltme korunuyor;
+   - main'deki eski hâli koruyu eskiye döndürürdü (KARIŞIK).
 
 **Geri alma** (`24-a6-tanim-kimligi-geri-al.sql`) **A6 AÇIĞINI YENİDEN AÇAR.** Yalnız düzeltme uygulamayı bozarsa, onayla
 ve geçici olarak kullanılır. Yerelde ölçüldü: geri almadan sonra A6 yeniden AÇIK (`sonuc-test-a6.txt`, bölüm 5).
 
 ## Yerel sonuçlar
 
-- **`test-a6.sh`: 36/36** (`sonuc-test-a6.txt`). Sırayla ölçülenler:
+- **`test-a6.sh`: 46/46** (`sonuc-test-a6.txt`). Atomiklik (1b) ve `15-duzeltme.sql` (7) bölümleri eklendi. Sırayla ölçülenler:
   1. düzeltme öncesi açık görülüyor;
   2. düzeltme sonrası kapalı, yönetici işlemleri geçiyor;
   3. satır eksik / bozuksa yetki yok;
   4. ilk yönetici kurulumu çalışıyor;
   5. geri alma açığı yeniden açıyor;
   6. tekrar uygulanabilir; güncel kaynaklar düzeltmeyi koruyor.
-- **`api-sinama.js` yerel prova** (PostgREST taklidi): açıkken 200 ve `yetki_var_mi` true; düzeltilince 403 / 42501
-  (`sonuc-api-prova-yerel.txt`).
+- **`api-sinama.js` yerel prova** (PostgREST taklidi; `sonuc-api-prova-yerel.txt`). Dört durum:
+  - (a) açık: 200 ve `yetki_var_mi` true;
+  - (b) düzeltilmiş: 403 / 42501;
+  - (c) temizlik bilerek bozuk: sınama durdu, ikinci hesap atlandı, kurtarma SQL'i durumu birebir geri getirdi;
+  - (d) koruma kapalıyken beklenmedik başarılı rol değiştirme / silme: temizlik geri aldı.
+  - Her durumda son durum başlangıçla birebir aynı.
+- **API betiğinin temizliği:**
+  - Başlangıçta anlık görüntü alınır; tek satır `tekil` değilse sınama hiç başlamaz.
+  - `finally` ile hata olsa da kimlik, veri ve silinen satır geri alınır.
+  - Son durum anlık görüntüyle karşılaştırılır. Tutmazsa sınama DURUR, sonraki hesaba geçilmez ve kurtarma SQL'i yazılır.
 - **Sınama betiği düzeltmesi** (`yetki-sinama.sql`):
   - Her denemenin beklenen hata kodu var. Başka hata `BAŞARISIZ`; eskiden her hata başarılı ret sayılıyordu.
   - Yönetici işlemleri de ölçülüyor.
@@ -53,11 +71,12 @@ ve geçici olarak kullanılır. Yerelde ölçüldü: geri almadan sonra A6 yenid
    - a) `24-a6-onkosul-salt-okur.sql` → GENEL **HAZIR**.
    - b) `yetki-sinama.sql` → A6, A6b, Y7 **AÇIK**; **BAŞARISIZ 0**.
    - c) Deneme sunucusunun sayfasında konsol → `api-sinama.js`. İki hesabın şifresini pencereye siz yazarsınız.
-     Beklenen: 3. adım **AÇIK — 200**, 4. adım **true**, 8. adım **tekil** (betik kimliği geri alır).
+     Beklenen: 3. adım **AÇIK — 200**, 4. adım **true**, 8. adım **SON DURUM = BAŞLANGIÇ: EVET**.
+     "HAYIR" çıkarsa durun: konsoldaki KURTARMA SQL'ini SQL Editor'de çalıştırın ve sonucu paylaşın.
 3. **Düzeltme:** `24-a6-tanim-kimligi.sql` (SQL Editor, tek Run) → `24-a6-onkosul-salt-okur.sql` → **UYGULANMIŞ**.
 4. **Sonra:**
    - a) `yetki-sinama.sql` → **AÇIK 0 · BAŞARISIZ 0**.
-   - b) `api-sinama.js` → 3. adım **KAPALI — 403**, 8. adım **tekil**.
+   - b) `api-sinama.js` → 3. adım **KAPALI — 403**, 8. adım **EVET**.
    - c) Uygulama (deneme sunucusu):
      - deneme (Yönetici) ile giriş → Tanımlar'da bir renk ekle → kaydedilir;
      - F5 → şifre istenmez;

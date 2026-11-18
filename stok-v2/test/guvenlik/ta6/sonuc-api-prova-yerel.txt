@@ -1,25 +1,24 @@
-# api-sinama.js — YEREL PROVA (18 Kasım 2026). PostgREST taklidi (test/gercek-pg-kopru.js) + a6_test veritabanı; GERÇEK Auth DEĞİL.
-# Taklit jetonda sub = e-posta olduğu için adım 7'de (tanımları silme) arşiv tetikleyicisi auth.uid()'yi uuid'e çeviremiyor → 22P02;
-# taklit kaynaklı, gerçek Supabase'de sub uuid'dir (403 beklenir). Asıl ölçüm: deneme projesinde gerçek hesaplarla (A6-DENEME.md).
+# api-sinama.js (temizlik + doğrulama sürümü) — YEREL PROVA (18 Kasım 2026). PostgREST taklidi (test/gercek-pg-kopru.js) + a6_test.
+# GERÇEK Auth DEĞİL: taklit jetonda sub = e-posta → adım 7'de arşiv tetikleyicisi auth.uid()'yi uuid'e çeviremiyor (22P02, taklit
+# kaynaklı; gerçek Supabase'de sub uuid). Asıl ölçüm deneme projesinde gerçek hesaplarla (A6-DENEME.md). Dört durum:
 
-## AÇIK HÂL (24-a6-tanim-kimligi-geri-al.sql uygulanmış)
-personel    | 2 yetki_var_mi (başlangıç)        | false
-personel    | 3 PATCH kimlik → a6-api-sinama    | AÇIK — 200
-personel    | 4 yetki_var_mi (kimlik değişince) | true   ← bütün modül yetkileri açıldı
-personel    | 5 geri: kimlik → tekil            | 200
-personel    | 6 kendini Yönetici yapma          | KAPALI — 403 42501
-personel    | 8 tanımlar kimliği (son)          | tekil
-listede yok | 3 PATCH kimlik → a6-api-sinama    | AÇIK — 200
-listede yok | 4 yetki_var_mi (kimlik değişince) | true
-listede yok | 5 geri: kimlik → tekil            | 200
-listede yok | 6 kendini Yönetici yapma          | KAPALI — 403 42501
-listede yok | 8 tanımlar kimliği (son)          | tekil
-
-## DÜZELTİLMİŞ HÂL (24-a6-tanim-kimligi.sql)
-personel    | 2 yetki_var_mi (başlangıç)        | false
-personel    | 3 PATCH kimlik → a6-api-sinama    | KAPALI — 403 42501 "Tanımlar satırının kimliği değiştirilemez"
-personel    | 6 kendini Yönetici yapma          | KAPALI — 403 42501
-personel    | 8 tanımlar kimliği (son)          | tekil
-listede yok | 3 PATCH kimlik → a6-api-sinama    | KAPALI — 403 42501
-listede yok | 6 kendini Yönetici yapma          | KAPALI — 403 42501
-listede yok | 8 tanımlar kimliği (son)          | tekil
+(a) AÇIK HÂL (geri alma uygulanmış): iki hesapta da 3 → AÇIK 200, 4 → yetki_var_mi true; 6 → KAPALI 403; 8 → SON DURUM = BAŞLANGIÇ: EVET.
+(b) DÜZELTİLMİŞ: iki hesapta 3 → KAPALI 403 "Tanımlar satırının kimliği değiştirilemez"; 6 → 403; 8 → EVET.
+(c) AÇIK HÂL + TEMİZLİK BİLEREK BOZUK (window.__A6_PROVA_GERI_BOZ; geri alma yanlış kimliğe):
+    personel | T1 temizlik | beklenmeyen satırlar: a6-bozuk-hedef
+    personel | 8 SON DURUM = BAŞLANGIÇ | HAYIR → sınama DURDU, sonraki hesaba geçilmeyecek. Satırlar: a6-bozuk-hedef — kurtarma SQL'i aşağıda
+    listede yok | — | ATLANDI (önceki hesabın temizliği doğrulanamadı)
+    → yazdırılan KURTARMA SQL'i çalıştırıldı → son durum = başlangıç (kimlik + veri md5): EVET.
+(d) DÜZELTİLMİŞ + tanimlar koruma tetikleyicileri GEÇİCİ KAPALI (beklenmedik başarılı rol değiştirme / silme):
+    personel | 4 yetki_var_mi (kimlik değişince) | false   ← true = bütün modül yetkileri açıldı
+    personel | 6 kendini Yönetici yapma | AÇIK (BEKLENMEDİK) — 200 [{"id":"tekil","veri":{"renkler":["Siyah"],"girisAktifMi":true,"kull…
+    personel | 7 tanımları silme | AÇIK (BEKLENMEDİK) — 200 [{"id":"tekil","veri":{"renkler":["Siyah"],"girisAktifMi":true,"kullanicil…
+    personel | T1 silinen satır geri | 201 [{"id":"tekil","veri":{"renkler":["Siyah"],"girisAktifMi":true,"kullanicilar":[{"ad":"Deneme Yö…
+    personel | 8 SON DURUM = BAŞLANGIÇ | EVET (tek satır 'tekil', veri birebir)
+    listede yok | 4 yetki_var_mi (kimlik değişince) | false   ← true = bütün modül yetkileri açıldı
+    listede yok | 6 kendini Yönetici yapma | AÇIK (BEKLENMEDİK) — 200 [{"id":"tekil","veri":{"renkler":["Siyah"],"girisAktifMi":true,"k…
+    listede yok | 7 tanımları silme | AÇIK (BEKLENMEDİK) — 200 [{"id":"tekil","veri":{"renkler":["Siyah"],"girisAktifMi":true,"kullani…
+    listede yok | T1 silinen satır geri | 201 [{"id":"tekil","veri":{"renkler":["Siyah"],"girisAktifMi":true,"kullanicilar":[{"ad":"Deneme …
+    listede yok | 8 SON DURUM = BAŞLANGIÇ | EVET (tek satır 'tekil', veri birebir)
+    → son durum = başlangıç: EVET. Ayrıca: tetikleyici kapalıyken kimlik değişse bile yetki_var_mi FALSE kaldı (düzeltmenin
+      ikinci katmanı tek başına da yükseltmeyi engelliyor).

@@ -8,6 +8,8 @@
 #      girisAktifMi açıkça false → personel true (tasarım korunur).
 #   4) İlk yönetici kurulumu: tablo boşken listede olmayan hesap ilk satırı ekler; ikinci satırı personel ekleyemez.
 #   5) Geri alma: önkoşul HAZIR; yetki-sinama → A6 YENİDEN AÇIK (geri almanın açığı açtığı belgelenir).
+#   1b) Atomiklik: ikinci fonksiyon bilerek bozulunca HİÇBİR kısmi değişiklik kalmaz (eski atomik olmayan sürüm yarım kalıyordu).
+#   7) stok-v2/editor/15-duzeltme.sql'in (rls-rol.sql kopyası) yeniden çalıştırılması düzeltmeyi bozmaz (eski hâli bozardı).
 #   6) Yeniden düzeltme iki kez (tekrar çalıştırılabilir) → UYGULANMIŞ; güncellenen kaynaklar (rls-rol.sql, rls-yazma.sql)
 #      çalıştırılınca da UYGULANMIŞ kalır (eski dosyalar açığı geri getirmez).
 # Kullanım: ./test-a6.sh   (postgres yerel; su postgres ile)
@@ -63,6 +65,23 @@ sonuc "önkoşul" "HAZIR" "$(genel)"
 sonuc "A6 (kimlik değiştirme) — test açığı görüyor" "AÇIK" "$(satir A6)"
 sonuc "A6b (ardından yetki_var_mi)" "AÇIK" "$(satir A6b)"
 sonuc "sınamada BAŞARISIZ yok (yalnız A6/A6b/Y7 AÇIK)" "AÇIK: 3 · BAŞARISIZ: 0" "$(ozet | sed 's/ · BİLİNEN.*//')"
+
+echo "== 1b) Atomiklik: ikinci fonksiyon bilerek bozulur (Editor gibi ayrı oturumlar)"
+# Bozma: yalnız yetki_var_mi'nin gövdesinde geçen 'end loop;' → 'end lop;' (birinci fonksiyonda 'loop' yok) → derleme hatası.
+sed '0,/end loop;/s//end lop;/' $G/24-a6-tanim-kimligi.sql > $T/.bozuk.sql
+sonuc "bozulan dosya gerçekten yalnız ikinci fonksiyonda farklı" "1" "$(diff $G/24-a6-tanim-kimligi.sql $T/.bozuk.sql | grep -c '^>')"
+editor $T/.bozuk.sql >/dev/null 2>$T/.hata; sonuc "bozuk düzeltme hata verdi" "1" "$(grep -c ERROR $T/.hata | tr -d ' ' | sed 's/^[1-9][0-9]*$/1/')"
+sonuc "kısmi değişiklik yok: iki fonksiyon da eski (önkoşul)" "HAZIR" "$(genel)"
+sonuc "kısmi değişiklik yok: koruma fonksiyonu" "eski" "$(editor $G/24-a6-onkosul-salt-okur.sql 2>/dev/null | awk -F'|' '$1=="1"{print $3}')"
+# Karşılaştırma: ESKİ (atomik olmayan, begin; f1; f2; commit) sürüm aynı bozulmada yarım kalıyordu — risk gerçekti.
+git -C $A show 1bbc910:stok-v2/guvenlik/24-a6-tanim-kimligi.sql 2>/dev/null | sed '0,/end loop;/s//end lop;/' > $T/.eski-bozuk.sql
+if [ -s $T/.eski-bozuk.sql ]; then
+  editor $T/.eski-bozuk.sql >/dev/null 2>&1
+  sonuc "eski (atomik olmayan) sürüm aynı bozulmada YARIM kalıyordu" "KARIŞIK" "$(genel)"
+  editor $G/24-a6-tanim-kimligi-geri-al.sql >/dev/null 2>&1
+  sonuc "geri alma (atomik) yarım durumu toparladı" "HAZIR" "$(genel)"
+fi
+rm -f $T/.bozuk.sql $T/.eski-bozuk.sql
 
 echo "== 2) Düzeltme (Editor gibi)"
 editor $G/24-a6-tanim-kimligi.sql >/dev/null 2>$T/.hata; sonuc "düzeltme hatasız" "" "$(grep -m1 ERROR $T/.hata)"
@@ -122,6 +141,20 @@ q < $A/rls-rol.sql >/dev/null 2>$T/.hata; sonuc "rls-rol.sql (güncel) hatasız"
 q < $A/rls-yazma.sql >/dev/null 2>$T/.hata; sonuc "rls-yazma.sql (güncel) hatasız" "" "$(grep -m1 ERROR $T/.hata)"
 sonuc "kaynaklardan kurulunca önkoşul" "UYGULANMIŞ" "$(genel)"
 sonuc "kaynaklardan kurulunca A6" "UYGUN" "$(satir A6)"
+
+echo "== 7) stok-v2/editor/15-duzeltme.sql yeniden çalıştırılırsa"
+# 15-duzeltme.sql rls-rol.sql'in kopyasını taşır; yalnız o kopyadaki tanimlar_kullanici_koruma kurulur (dosyanın geri kalanı v2 kurulumu ister).
+awk '/^create or replace function public.tanimlar_kullanici_koruma\(/,/^end \$\$;/' $A/stok-v2/editor/15-duzeltme.sql > $T/.k15.sql
+q < $T/.k15.sql >/dev/null 2>$T/.hata; sonuc "15-duzeltme kopyası hatasız" "" "$(grep -m1 ERROR $T/.hata)"
+sonuc "15-duzeltme (güncel) yeniden çalışınca önkoşul" "UYGULANMIŞ" "$(genel)"
+git -C $A show origin/main:stok-v2/editor/15-duzeltme.sql 2>/dev/null | awk '/^create or replace function public.tanimlar_kullanici_koruma\(/,/^end \$\$;/' > $T/.k15eski.sql
+if [ -s $T/.k15eski.sql ]; then
+  q < $T/.k15eski.sql >/dev/null 2>&1
+  sonuc "ESKİ 15-duzeltme (main) yeniden çalışsaydı koruma eskiye dönerdi" "KARIŞIK" "$(genel)"
+  q < $T/.k15.sql >/dev/null 2>&1
+  sonuc "güncel kopya yeniden kurulunca" "UYGULANMIŞ" "$(genel)"
+fi
+rm -f $T/.k15.sql $T/.k15eski.sql
 sonuc "son sınama özeti" "AÇIK: 0 · BAŞARISIZ: 0" "$(ozet | sed 's/ · BİLİNEN.*//')"
 rm -f $T/.hata
 echo "── test-a6: $GECTI geçti, $KALDI kaldı ──"
