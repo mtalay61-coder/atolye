@@ -25,7 +25,7 @@
 
 ## Geçişi engelleyen ya da önce kapanması gerekenler
 
-1. **A6 yetki yükseltme açığı (CANLIDA DA VAR) — ÖNCELİKLİ; düzeltme HAZIRLANDI, deneme projesinde sınanacak:**
+1. **A6 yetki yükseltme açığı (CANLIDA DA VAR) — ÖNCELİKLİ; düzeltme HAZIRLANDI ve deneme projesinde GEÇTİ (18 Kasım):**
    - **Açık:** Personel (ya da listede olmayan giriş hesabı) tanımlar satırının kimliğini değiştirebiliyor. Ardından
      `yetki_var_mi` herkese "evet", `yonetici_mi` herkese "hayır" diyor. Kayıt kapalı olsa bile mevcut personel kullanabilir.
    - **Düzeltme:** dal `claude/a6-tanim-kimligi-koruma` (main'den; #362 / #363'e bağlı değil).
@@ -33,11 +33,14 @@
        `yetki_var_mi`, tanımlar satırı yoksa ya da bozuksa oturumlu hesaba yetki vermez.
      - Önkoşul: `24-a6-onkosul-salt-okur.sql` (HAZIR / UYGULANMIŞ / KARIŞIK / EKSİK).
      - Geri alma: `24-a6-tanim-kimligi-geri-al.sql`.
-     - Kaynaklar (`rls-rol.sql`, `rls-yazma.sql`) aynı gövdelerle güncellendi.
+     - Kaynaklar (`rls-rol.sql`, `rls-yazma.sql`) ve `stok-v2/editor/15-duzeltme.sql` aynı gövdelerle güncellendi.
+     - Düzeltme ve geri alma TEK İFADE (DO bloğu): ikinci fonksiyon bilerek bozulunca kısmi değişiklik kalmadı.
    - **Yerel sonuçlar:**
-     - `ta6/test-a6.sh` 36/36.
+     - `ta6/test-a6.sh` 46/46.
      - Mevcut düzenekler temiz: kos.sh, t19 139/139, f4.
-     - API provası (taklit): açıkken 200 + `yetki_var_mi` true; düzeltilince 403.
+     - API provası (taklit): açıkken 200 + `yetki_var_mi` true; düzeltilince 403. Temizlik bozuk / beklenmedik başarı
+       durumlarında da son durum = başlangıç.
+   - **Deneme projesi (gerçek Auth, 18 Kasım):** önce AÇIK, sonra AÇIK 0 · BAŞARISIZ 0, API 403, uygulama bozulmadı.
    - **Deneme projesi adımları:** `stok-v2/test/guvenlik/ta6/A6-DENEME.md`. Gerçek Auth hesaplarıyla API sınaması dahil
      (`ta6/api-sinama.js`).
    - **⚠ GERİ ALMA A6 AÇIĞINI YENİDEN AÇAR.** Geri alma dosyası eski gövdeleri birebir kurar; ardından yetkisiz personel yine
@@ -73,7 +76,7 @@
 
 | Adım | Ölçüt |
 |---|---|
-| ÖN KOŞUL: deneme projesinde `ta6/A6-DENEME.md` adımları tamam | Önce: A6 AÇIK (SQL + gerçek API). Sonra: `yetki-sinama.sql` AÇIK 0 · BAŞARISIZ 0; API 403; yönetici tanım değiştirir, F5, stok fişi; personel girişi |
+| ÖN KOŞUL — **TAMAM (18 Kasım, `ta6/sonuc-deneme-a6-2026-11-18.txt`)**: deneme projesinde `ta6/A6-DENEME.md` adımları | Önce: A6 AÇIK (SQL + gerçek API). Sonra: `yetki-sinama.sql` AÇIK 0 · BAŞARISIZ 0; API 403; yönetici tanım değiştirir, F5, stok fişi; personel girişi |
 | A6 dalı (`claude/a6-tanim-kimligi-koruma`) incelenip main'e birleştirilir (yalnız SQL / test / belge; uygulama değişmez) | Ayrı onay |
 | Canlıda `24-a6-onkosul-salt-okur.sql` | HAZIR |
 | Canlıda `24-a6-tanim-kimligi.sql` (mesai dışı, tek Run) | Hatasız |
@@ -171,7 +174,7 @@ geri dönüşü değerlendirilir (Faz 1'in geri dönüşü açığı yeniden aç
 
 | Zaman | Fazlar |
 |---|---|
-| Şimdi | A6 düzeltmesi yalnız deneme projesinde sınanır (`ta6/A6-DENEME.md`). Canlıya dokunulmaz |
+| 18 Kasım — TAMAM | A6 düzeltmesi deneme projesinde önce / sonra sınandı: önce açık (gerçek jeton 200 + yetki true), sonra kapalı (403), uygulama bozulmadı |
 | Sonra (ayrı onaylar) | Faz 0 (salt okur) |
 | Mesai dışı | Faz 1 (A6) → gözlem → Faz 2 (23) → Faz 3 (kurulum betiği). Her biri ayrı onayla; ölçüt tutmazsa o fazın geri dönüşü değerlendirilir, sonrakine geçilmez |
 | Ardından | Faz 4 (canlıdan üretilen dosya, boş projede) — tamamı geçmeden birleştirme ve yayın yok |
