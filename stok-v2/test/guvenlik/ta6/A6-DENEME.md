@@ -62,6 +62,17 @@ ve geçici olarak kullanılır. Yerelde ölçüldü: geri almadan sonra A6 yenid
   - Yönetici işlemleri de ölçülüyor.
   - Sonda özet satırı var.
 
+## 18 Kasım 2026 deneme projesi sonucu: GEÇTİ (`sonuc-deneme-a6-2026-11-18.txt`)
+
+| Aşama | Sonuç |
+|---|---|
+| Önce | Önkoşul HAZIR. SQL: A6 / A6b / Y7 AÇIK, BAŞARISIZ 0. API (gerçek jeton): iki hesapta da kimlik değişti (200) ve `yetki_var_mi` TRUE oldu; son durum = başlangıç |
+| Düzeltme | Hatasız; önkoşul UYGULANMIŞ |
+| Sonra | SQL: AÇIK 0 · BAŞARISIZ 0. API: iki hesapta da 403 / 42501 "Tanımlar satırının kimliği değiştirilemez"; son durum = başlangıç |
+| Uygulama | Yönetici renk ekledi; F5'te şifre istenmedi; stok fişi MNL-261118002, stok 5; personel girişi hatasız |
+
+Geri alma deneme projesinde uygulanmadı.
+
 ## Deneme projesinde adımlar (sırayla; her adımın sonucunu paylaşın)
 
 1. **Hazırlık:**
