@@ -1,0 +1,38 @@
+# A6 DÜZELTMESİ — GERÇEK SUPABASE DENEME PROJESİ SONUCU (18 Kasım 2026; atolye-deneme, kullanıcının Windows/Chrome'u)
+# Dal: claude/a6-tanim-kimligi-koruma (05e429a). Canlıya, main'e, surum.json'a, yayına DOKUNULMADI. Geri alma deneme projesinde UYGULANMADI.
+# Hesaplar (gerçek Supabase Auth): deneme@atolye.local (Yönetici) · personel@atolye.local (Personel, yetkiler {}) ·
+# listedeyok@atolye.local (giriş hesabı var, Tanımlar listesinde YOK). "Allow new users to sign up" KAPALI.
+
+ÖNCE (düzeltme uygulanmadan)
+  24-a6-onkosul-salt-okur.sql : koruma eski · yetki eski · tetikleyici var · tekil var · boolean · array · Yönetici 1 · satır 1 → GENEL HAZIR
+  yetki-sinama.sql            : A6 AÇIK · A6b AÇIK (yetki_var_mi 1) · Y7 AÇIK · Y1–Y6 UYGUN
+                                ÖZET: AÇIK 3 · BAŞARISIZ 0 · BİLİNEN AÇIK 10 · UYGUN 27
+  api-sinama.js (gerçek jeton): personel    → 3 PATCH kimlik 200 (AÇIK) · 4 yetki_var_mi TRUE · 6 kendini Yönetici 403 · 7 silme 403 · 8 son = başlangıç EVET
+                                listede yok → 3 PATCH kimlik 200 (AÇIK) · 4 yetki_var_mi TRUE · 6 403 · 7 403 · 8 EVET
+
+DÜZELTME
+  24-a6-tanim-kimligi.sql (tek DO bloğu) : "Success. No rows returned"
+  24-a6-onkosul-salt-okur.sql            : koruma yeni · yetki yeni · (3–8 aynı) → GENEL UYGULANMIŞ
+
+SONRA
+  yetki-sinama.sql            : A6 UYGUN (RET 42501 "Tanımlar satırının kimliği değiştirilemez") · A6b UYGUN · Y7 UYGUN · Y1–Y6 UYGUN
+                                ÖZET: AÇIK 0 · BAŞARISIZ 0 · BİLİNEN AÇIK 10 · UYGUN 30 (başka satır değişmedi)
+  api-sinama.js (gerçek jeton): personel    → 2 yetki_var_mi false · 3 PATCH kimlik 403 42501 (KAPALI) · 6 403 · 7 403 · 8 son = başlangıç EVET
+                                listede yok → 2 false · 3 403 42501 (KAPALI) · 6 403 · 7 403 · 8 EVET
+  uygulama (deneme sunucusu, 1.744.25):
+    Yönetici: Tanımlar'da renk ekleme (Mavi) → kaydedildi           GEÇTİ
+    F5 → şifre istenmedi, renk listede                               GEÇTİ
+    Bağımsız stok girişi Deneme Bot Siyah/40 +2 → fiş MNL-261118002, stok 5   GEÇTİ
+    Personel ile giriş → uygulama açıldı, hata yok                    GEÇTİ
+
+SONUÇ: A6 açığı gerçek Auth hesaplarıyla düzeltme öncesi kanıtlandı, düzeltme sonrası kapandı; yönetici işlemleri, uygulamanın
+tanım / stok yazmaları ve personel girişi bozulmadı; her API sınamasında son durum başlangıçla birebir (iz yok).
+AÇIK KALANLAR (bu işin kapsamı dışında): E / F satırları — tasarım gereği giriş yapmış her hesap eski tablolarda tam yetkili
+("2. aşama"); kayıt kapalı kalmalı.
+
+CANLI DOĞRULAMA BETİĞİNİN DENEME PROJESİNDE SINANMASI (24-a6-canli-sinama.sql; düzeltme kurulu; proje drtmnovafswzcmpacubl)
+  Başlangıç görüntüsü (24-a6-goruntu-salt-okur.sql): tekil · 9a3552873c3a7ddb9d273f36c352190a | 9f1d714460c05aaadb1c8c66e008c02c | 16 | 1
+  Sınama: L1 RET 42501 (kimlik değiştirilemez) UYGUN · L2 UYGUN · L3 RET 42501 UYGUN · L4 İZİN 0 UYGUN ·
+          Y1 İZİN 1 UYGUN · Y2 1 UYGUN · Y3 1 UYGUN · Y4 RET 42501 UYGUN
+          ÖZET: AÇIK 0 · BAŞARISIZ 0 · UYGUN 8 · tanımlar satırı: tekil
+  Son görüntü: tekil · 9a3552873c3a7ddb9d273f36c352190a | 9f1d714460c05aaadb1c8c66e008c02c | 16 | 1  → başlangıçla BİREBİR (iz yok)

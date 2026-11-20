@@ -1,0 +1,6 @@
+# A6 — güncellenen rls-rol.sql / rls-yazma.sql ile mevcut düzenekler (18 Kasım 2026, dal claude/a6-tanim-kimligi-koruma)
+# Bu düzenekler yetki_var_mi'yi doğrudan rls-yazma.sql'den yükler; yeni kural (satır yok / girisAktifMi yok → RET) onları etkiler mi?
+stok-v2/test/kos.sh (STOK_V2_DB=a6_kos)        : çıkış 0 · 166 ✓ · "temiz" özetleri: 3  (ERROR satırları testin bilerek yaptığı olumsuz denemeler)
+stok-v2/test/guvenlik/t19/test19.sh             : TOPLAM: 139 geçti, 0 kaldı
+stok-v2/test/f4/kos-gomulu.js                   : çıkış 0 · 3 ✓
+Not: bu düzeneklerin tanımlar verisinde girisAktifMi true (boolean) ve kullanicilar dizi — yeni kural etkilemiyor.
