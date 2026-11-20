@@ -109,12 +109,14 @@
   hazırlanır; o süre boyunca personel hesaplarının kapatılması değerlendirilir.
 - Uygulama kodu değişmediği için geri dönüş yalnız SQL'dir.
 
-## Faz 2 — 23 platform tabloları (canlı SQL) — PAKET HAZIR (20 Kasım), UYGULANMADI
+## Faz 2 — 23 platform tabloları (canlı SQL) — PAKET HAZIR, ÖN KONTROLLER TAMAM (20 Kasım), UYGULANMADI
 
 > Paket: `stok-v2/guvenlik/23-FAZ2-PAKET.md`. Önce / sonra kontrol `23-faz2-kontrol-salt-okur.sql` (A6 imzası). Uygulanacak
 > `23-platform-yonetim.sql` SHA-256 `ca0509fc7fff45605613ecf60080f901ccb1062c4931e6838847695956dad9f8`. Yerel prova 20/20.
 > Uygulama ayrı onay; geri alma AYRICA onay. Faz 4 (canlıdan üretilen kurulum dosyasının boş projede doğrulanması) genel
 > yayından önce ZORUNLU kalır.
+> Ön kontroller (canlı, 20 Kasım): 23 HAZIR · A6 UYGULANMIŞ · platform_ tabloları yok · A6 imzası özeti `0670954a…`
+> (`t23/sonuc-faz2-once-canli-2026-11-20.txt`).
 
 | Adım | Ölçüt |
 |---|---|
