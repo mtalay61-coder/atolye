@@ -1,0 +1,57 @@
+# FAZ 2 (23) — ÖNCE KONTROLLERİ, CANLI ANA PROJE (20 Kasım 2026). Salt okur; canlıya hiçbir şey yazılmadı.
+# Kullanıcı SQL Editor'den çalıştırıp sonuçları paylaştı (Ö1, Ö2, Ö3). Kişisel veri / sır yok.
+# SONUÇ: Ö1 HAZIR · Ö2 UYGULANMIŞ · Ö3 beş platform_ tablosu yok, A6 UYGULANMIŞ → UYGUN. Ön kontroller TAMAM.
+
+== Ö1 · 23-onkosul-salt-okur.sql (sha256 d352c5e1…)
+1 | önkoşul: auth.users ve auth.uid() | var
+2 | önkoşul: gen_random_uuid() | var
+3 | platform_ nesneleri (tablo / tüm ilişki + fonksiyon) | 0 / 0
+4 | politika farkı | platform_firmalar.platform_firmalar_degistir, platform_firmalar.platform_firmalar_ekle, platform_firmalar.platform_firmalar_oku, platform_odemeler.platform_odemeler_ekle, platform_odemeler.platform_odemeler_oku, platform_olaylar.platform_olaylar_oku, platform_sozlesmeler.platform_sozlesmeler_degistir, platform_sozlesmeler.platform_sozlesmeler_ekle, platform_sozlesmeler.platform_sozlesmeler_oku
+5 | tablo yetkisi farkı | platform_firmalar → anon, platform_firmalar → authenticated, platform_odemeler → anon, platform_odemeler → authenticated, platform_olaylar → anon, platform_olaylar → authenticated, platform_sozlesmeler → anon, platform_sozlesmeler → authenticated, platform_yoneticileri → anon, platform_yoneticileri → authenticated
+6 | fonksiyon farkı (gövde / definer / ayar / sahip / çalıştıran) | platform_guncelleme_damgasi(), platform_odeme_denetle(), platform_olay_yaz(), platform_sozlesme_denetle(), platform_yonetici_mi()
+7 | tetikleyici farkı | platform_firmalar.platform_firma_guncelleme, platform_firmalar.platform_firma_olay, platform_odemeler.platform_odeme_denetle, platform_odemeler.platform_odeme_olay, platform_sozlesmeler.platform_sozlesme_denetle, platform_sozlesmeler.platform_sozlesme_olay
+8 | RLS kapalı tablo | yok
+9 | platform yöneticisi sayısı | -
+10 | kayıtlar (firma / sözleşme / ödeme; tablo yoksa "yok") | yok / yok / yok
+99 | GENEL | HAZIR
+# Değerlendirme: GENEL HAZIR; platform_ nesnesi 0 / 0. 4–7. satırlar, HENÜZ KURULMAMIŞ beklenen nesnelerin listesidir; HAZIR'da hep
+# böyle görünür. Yerel canlı benzeri kopyada (atolye_canli + auth.users) aynı dosyanın çıktısı bu 12 satırla BİREBİR aynı.
+
+== Ö2 · 24-a6-onkosul-salt-okur.sql (sha256 92363358…)
+1 | public.tanimlar_kullanici_koruma() | yeni
+2 | public.yetki_var_mi(text[], text) | yeni
+3 | tetikleyici tanimlar_kullanici_koruma bağlı | var
+4 | tanimlar 'tekil' satırı | var
+5 | girisAktifMi türü | boolean
+6 | kullanicilar türü | array
+7 | listedeki Yönetici sayısı | 3
+8 | tanimlar tablosundaki satır sayısı | 1
+99 | GENEL | UYGULANMIŞ
+
+== Ö3 · 23-faz2-kontrol-salt-okur.sql (sha256 5f1530c4…)
+1 | platform_ satır sayısı · platform_yoneticileri | yok
+2 | platform_ satır sayısı · platform_firmalar | yok
+3 | platform_ satır sayısı · platform_sozlesmeler | yok
+4 | platform_ satır sayısı · platform_odemeler | yok
+5 | platform_ satır sayısı · platform_olaylar | yok
+6 | A6 durumu (HAZIR · UYGULANMIŞ · KARIŞIK · EKSİK) | UYGULANMIŞ
+7 | A6 imzası · public.tanimlar_kullanici_koruma() (functiondef md5 · yetki listesi) | 889fe0863581380d64f5ee4c48ff067a · {postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+8 | A6 imzası · public.yetki_var_mi(text[], text) (functiondef md5 · yetki listesi) | 4e13bc49e068c183bd58af2dcb056e76 · {postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+9 | A6 imzası · tetikleyici tanimlar_kullanici_koruma (tanım md5 · etkin) | 596f01be91f2baf1c102dfb021fb9bad · O
+10 | A6 imzası · özet (7–9 birlikte; ÖNCE = SONRA olmalı) | 0670954ad6b52222fabbd417115e5982
+# Değerlendirme: beş tablo yok; A6 UYGULANMIŞ. Satır 9 tetikleyici md5'i canlı arşiviyle (Faz 0 / Faz 1) aynı.
+# 7–8. satırlar yerelden farklı (yerel 82769550… / 9860ec2c…): pg_get_functiondef ortama bağlı biçimler içerir; karşılaştırma
+# yalnız CANLI ÖNCE ↔ CANLI SONRA arasında yapılır.
+
+== SONRA İÇİN BEKLENEN A6 İMZASI (değişmemeli; 23-faz2-kontrol-salt-okur.sql satır 7–10)
+7  | 889fe0863581380d64f5ee4c48ff067a · {postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+8  | 4e13bc49e068c183bd58af2dcb056e76 · {postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+9  | 596f01be91f2baf1c102dfb021fb9bad · O
+10 | 0670954ad6b52222fabbd417115e5982
+
+== YEDEK (GitHub Actions gece-yedek, salt okur inceleme)
+Son sınanmış yedek: koşu #15 · 20 Kasım 10:18 İstanbul · zamanlanmış · success. Faz 1'de "SINAMA TAMAM" ve OneDrive
+2026-11-20-1019 bayt bayt doğrulandı. Son 24 saat içinde.
+NOT: Bu yedek A6 düzeltmesinden (~12:00) ÖNCE alındı. Ondan geri yükleme A6 öncesi fonksiyonları getirir. Faz 2'nin geri dönüşü
+bu yedekle değil, 23-platform-yonetim-geri-al.sql ile yapılır. A6'yı içeren ilk sınanmış yedek bir sonraki gece koşusudur
+(21 Kasım ~10:20).

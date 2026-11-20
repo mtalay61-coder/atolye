@@ -1,6 +1,6 @@
 # Faz 2 — 23 platform tabloları: canlı uygulama paketi (20 Kasım 2026)
 
-> **DURUM: HAZIRLANDI — CANLIYA UYGULANMADI.**
+> **DURUM: HAZIRLANDI · ÖN KONTROLLER TAMAM (20 Kasım) — CANLIYA UYGULANMADI.**
 > - Canlı uygulama ayrı ve açık onay ister.
 > - Geri alma **ayrıca** onay ister; uygulama onayı geri almayı kapsamaz.
 > - PR birleştirme, yayın ve `surum.json` bu paketin kapsamında değil.
@@ -32,7 +32,19 @@
 2. Son 24 saatte **sınanmış** gece yedeği olmalı (GitHub Actions `gece-yedek`, "SINAMA TAMAM").
 3. Atölye kapalı, bekleyen kayıt yok. 23 mevcut veriye dokunmaz, ama Faz 1'deki gibi güvenli zaman tercih edilir.
 
-## ÖNCE — salt okur (Faz 2 için ilk adım; şimdi yapılabilir)
+## ÖNCE — salt okur — **TAMAM (20 Kasım, canlı)**
+
+> Kayıt: `stok-v2/test/guvenlik/t23/sonuc-faz2-once-canli-2026-11-20.txt`.
+> - Ö1 **HAZIR** (platform_ nesnesi 0 / 0); çıktı yereldeki HAZIR çıktısıyla birebir.
+> - Ö2 **UYGULANMIŞ**.
+> - Ö3: beş tablo `yok`, A6 **UYGULANMIŞ**.
+>
+> **SONRA'da birebir aranacak A6 imzası** (Ö3 satır 7–10):
+> - 7: `889fe0863581380d64f5ee4c48ff067a`
+> - 8: `4e13bc49e068c183bd58af2dcb056e76`
+> - Yetki listeleri: `{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}`
+> - 9: `596f01be91f2baf1c102dfb021fb9bad · O`
+> - 10 (özet): `0670954ad6b52222fabbd417115e5982`
 
 | # | Dosya | Beklenen |
 |---|---|---|
