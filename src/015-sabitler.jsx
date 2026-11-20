@@ -492,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.744.29";
+const SURUM = "1.744.31";
 const SURUM_TARIHI = "2026-11-20";
-const SURUM_NOTU = "Satın alınan ürün: mamulde tedarikçi ve reçetesiz işareti; planlamada satın almaya gider";
+const SURUM_NOTU = "Maaş fişleri (MAŞ-) Kâr-Zarar'da atölye bölümüne ve çift başı maliyete sayılır; Atölye İçi Bölümler Üretim sekmesinde";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -525,6 +525,8 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" };   // teklif: v1.723.0, Sipariş'in alt sekmesi
 
 const SURUM_GECMISI = [
+  { surum: "1.744.31", tarih: "20.11.2026", eklenen: [], degisen: [], duzeltilen: ["Onaylanan maaş fişleri (MAŞ-) ve mesai fişleri (MS-) Kâr-Zarar'da atölye bölümüne sayılmıyordu: bölüm maaşı 0, \"çift başı gerçek\" maliyet ve bölüm işçilik gideri boş görünüyordu. Artık bölümün maaşına, aylık verimine ve gider kartına girer."] },
+  { surum: "1.744.30", tarih: "20.11.2026", eklenen: [], degisen: ["Atölye İçi Bölümler (maaşlı bölümler, mesai katsayıları) Tanımlar › Ürün yerine Tanımlar › Üretim sekmesinde, Prosesler'in altında."], duzeltilen: [] },
   { surum: "1.744.29", tarih: "20.11.2026", eklenen: ["Mamul stok kartında Tedarikçi ve \"Satın alınan ürün (reçetesiz)\" işareti (ürün açarken de). İşaretli üründe Reçete / Maliyet / Kapasite sekmesi yok, maliyet alış fiyatından; siparişte reçete uyarısı çıkmaz; hammadde ihtiyacına girmez; planlamada üretilmez, satın almaya gider (tedarikçisi hazır gelir)."], degisen: [], duzeltilen: [] },
   { surum: "1.744.28", tarih: "20.11.2026", eklenen: [], degisen: ["Sipariş › Kalem Ekle: ürün ve renk kutuları aynı boyda; \"+ Renk\" düğmesi renk kutusunun yanında kalır. Yer daralınca asorti / miktar / fiyat grubu bütün olarak alt satıra iner."], duzeltilen: ["Boyut ayarı büyükken asorti \"Uygula\" düğmesi ve asorti adı miktar kutularının üstüne biniyordu (fiş formunda da)."] },
   { surum: "1.744.27", tarih: "20.11.2026", eklenen: [], degisen: ["Sipariş: cari seçilince kalem para birimi carinin kartındaki para birimine geçer (ör. USD çalışılan müşteride kalemler USD girilir). Kalem satırında elle değiştirilebilir; önceden eklenmiş kalemler değişmez."], duzeltilen: [] },
@@ -2092,10 +2094,16 @@ function bolumTahakkukKaydi(bolum, k) {
 }
 // MAAŞ + MESAİ (v1.700): mesai fişi (MESAI-YYYY-MM-<kod>, islemTipi "Mesai") maaşla aynı yolu izler — bölümün gider
 // kartına, bölüm kâr/zararına ve karşılık sayımına maaş gibi girer. Tek yerde karar verilir.
+// TEK FİŞ DEFTERİ FİŞLERİ DE (v1.744.31 — kullanıcı: "fişlerde maaş işledi fakat kesimhane tarafında görünüp maliyet
+// çıkarmıyor"). 1.740'tan beri onaylı maaş tahakkuku sunucu fişiyle kesiliyor: numara `MAŞ-…` (mesai `MS-…`, 078
+// PARA_FIS_ONEKLERI), işlem tipi gönderilmiyor; ay/kişi anahtarı `maasAnahtari`nda ("MAAS-2026-11-0007"). Bu fonksiyon
+// yalnız eski `MAAS-` / `MESAI-` numarasını ve işlem tipini tanıdığı için yeni fişler Kâr-Zarar'da bölüm maaşına, aylık
+// verime ("çift başı gerçek") ve bölüm gider kartına HİÇ girmiyordu (cari ekranı 200'de `MAŞ-`yi zaten tanıyordu).
 function maasHareketiMi(h) {
   if (!h) return false;
   const f = String(h.fisNo || "");
-  return h.islemTipi === "Maaş" || h.islemTipi === "Mesai" || /^MAAS-/.test(f) || /^MESAI-/.test(f);
+  return h.islemTipi === "Maaş" || h.islemTipi === "Mesai" || /^MAAS-/.test(f) || /^MESAI-/.test(f)
+    || /^MAŞ-/.test(f) || /^MS-/.test(f) || /^MAAS-/.test(String(h.maasAnahtari || ""));
 }
 function mesaiFisNo(ay, cari) {
   return `MESAI-${ay}-${Number(cari && cari.kod) > 0 ? String(cari.kod).padStart(4, "0") : (cari && cari.id)}`;
