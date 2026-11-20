@@ -1,0 +1,9 @@
+{
+ "adayBirAzaldi": true,
+ "adayVar": true,
+ "bosReceteSatirGorunur": true,
+ "eklenenKayitta": true,
+ "grupGorunur": true,
+ "hatalar": [],
+ "receteSatiriYok": true
+}
