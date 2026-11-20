@@ -89,7 +89,16 @@ async function calistir() {
   const urunRenkSec = async (urun) => {
     const k = sayfa.locator('input[placeholder="Model ara…"]:visible').first();
     await k.click(); await k.fill(urun); await sayfa.waitForTimeout(400);
-    await sayfa.locator(`text=${urun}`).last().click().catch(() => {});
+    // Açılan listedeki seçenek: arama kutusunun HEMEN ALTINDA, adı birebir tutan görünür öğe (sayfada aynı ad başka yerde de geçer)
+    await sayfa.evaluate((urun) => {
+      const kutu = [...document.querySelectorAll('input[placeholder="Model ara…"]')].find((x) => x.getBoundingClientRect().height > 0);
+      const alt = kutu.getBoundingClientRect().bottom;
+      const aday = [...document.querySelectorAll("span, div, button, li")].filter((e) => {
+        const r = e.getBoundingClientRect();
+        return r.height > 0 && r.top >= alt - 2 && r.top < alt + 300 && e.textContent.trim() === urun && e.children.length === 0;
+      }).sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top)[0];
+      if (aday) { aday.dispatchEvent(new MouseEvent("mousedown", { bubbles: true })); aday.click(); }
+    }, urun);
     await sayfa.waitForTimeout(500);
     const r = sayfa.locator("input[data-siparis-renk-arama]:visible").first();
     await r.click(); await r.fill("Siyah"); await sayfa.waitForTimeout(300);

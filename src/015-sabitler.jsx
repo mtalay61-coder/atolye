@@ -492,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.744.28";
+const SURUM = "1.744.29";
 const SURUM_TARIHI = "2026-11-20";
-const SURUM_NOTU = "Sipariş kalem satırı düzeni: ürün ve renk aynı boyda, asorti taşmıyor; kalem para birimi carinin para birimiyle gelir";
+const SURUM_NOTU = "Satın alınan ürün: mamulde tedarikçi ve reçetesiz işareti; planlamada satın almaya gider";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -525,6 +525,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" };   // teklif: v1.723.0, Sipariş'in alt sekmesi
 
 const SURUM_GECMISI = [
+  { surum: "1.744.29", tarih: "20.11.2026", eklenen: ["Mamul stok kartında Tedarikçi ve \"Satın alınan ürün (reçetesiz)\" işareti (ürün açarken de). İşaretli üründe Reçete / Maliyet / Kapasite sekmesi yok, maliyet alış fiyatından; siparişte reçete uyarısı çıkmaz; hammadde ihtiyacına girmez; planlamada üretilmez, satın almaya gider (tedarikçisi hazır gelir)."], degisen: [], duzeltilen: [] },
   { surum: "1.744.28", tarih: "20.11.2026", eklenen: [], degisen: ["Sipariş › Kalem Ekle: ürün ve renk kutuları aynı boyda; \"+ Renk\" düğmesi renk kutusunun yanında kalır. Yer daralınca asorti / miktar / fiyat grubu bütün olarak alt satıra iner."], duzeltilen: ["Boyut ayarı büyükken asorti \"Uygula\" düğmesi ve asorti adı miktar kutularının üstüne biniyordu (fiş formunda da)."] },
   { surum: "1.744.27", tarih: "20.11.2026", eklenen: [], degisen: ["Sipariş: cari seçilince kalem para birimi carinin kartındaki para birimine geçer (ör. USD çalışılan müşteride kalemler USD girilir). Kalem satırında elle değiştirilebilir; önceden eklenmiş kalemler değişmez."], duzeltilen: [] },
   { surum: "1.744.26", tarih: "20.11.2026", eklenen: [], degisen: ["Stok kartı › Siparişler: siparişe tıklayınca sipariş listesi süzülerek açılmıyor; sipariş üst şeritte kendi sekmesinde açılır."], duzeltilen: ["Stok kartından açılan sipariş kapatılınca stok kartı da kapanmış görünüyordu: artık stok kartına geri dönülür."] },
