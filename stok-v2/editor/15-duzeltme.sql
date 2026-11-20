@@ -601,6 +601,9 @@ begin
     end if;
     return new;
   end if;
+  if new.id is distinct from old.id then
+    raise exception 'Tanımlar satırının kimliği değiştirilemez' using errcode = '42501';
+  end if;
   if ((coalesce(new.veri -> 'kullanicilar', '[]'::jsonb)) is distinct from (coalesce(old.veri -> 'kullanicilar', '[]'::jsonb))
       or (new.veri -> 'girisAktifMi') is distinct from (old.veri -> 'girisAktifMi'))
      and not public.yonetici_mi() then

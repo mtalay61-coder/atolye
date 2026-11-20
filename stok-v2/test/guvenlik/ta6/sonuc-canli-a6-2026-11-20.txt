@@ -1,0 +1,29 @@
+# A6 DÜZELTMESİ — CANLIYA UYGULANDI (20 Kasım 2026, Cuma ~12:00 İstanbul). Ana proje mqdgucoomgqcvhvgixbl.
+# Onay: kullanıcı, "yalnız A6 düzeltmesi ve 7 adımlık doğrulama" (PR birleştirme, main, surum.json, yayın, 23, kurulum betiği HARİÇ;
+# geri alma ayrı onaya bağlı). Uygulamayı kullanıcı SQL Editor'den yaptı; her adımdan önce proje kimliği teyit edildi.
+
+ÖN KOŞULLAR
+  Güncel sınanmış yedek : gece koşusu #15 · 20 Kasım 10:19 İstanbul · "SINAMA TAMAM: 44 tablo … canlıyla AYNI" ·
+                          OneDrive 2026-11-20-1019, 12 dosya bayt bayt doğrulandı (önceki gün #14 de başarılı)
+  Mesai dışı            : kullanıcı teyidi "atölye kapalı; uygulamayı kimse kullanmıyor ve bekleyen kayıt yok"
+  Proje kimliği         : mqdgucoomgqcvhvgixbl (adres çubuğu, kullanıcı)
+  Dosya                 : stok-v2/guvenlik/24-a6-tanim-kimligi.sql · sha256 881301687be75212e96672a2897efd4654bde99cf7a0d4670c3aeec79ea316a1
+                          (deneme projesinde uygulananın aynısı; dal be447aa)
+
+ADIMLAR
+  1 önkoşul        : koruma eski · yetki eski · tetikleyici var · tekil var · boolean · array · Yönetici 3 · satır 1 → HAZIR
+  2 görüntü (önce) : tekil · 2ed848fc9fdeefe41b3f408e4eb90072 | 54339c19077d8523f9af00ded14d25c3 | gunluk 945 | arsiv 194
+  3 düzeltme       : "Success. No rows returned"
+  4 önkoşul        : koruma yeni · yetki yeni · (3–8 aynı) → UYGULANMIŞ
+  5 canlı sınama   : L1 RET 42501 "Tanımlar satırının kimliği değiştirilemez" · L2 UYGUN · L3 RET 42501 · L4 İZİN 0 ·
+                     Y1 İZİN 1 · Y2 1 · Y3 1 · Y4 RET 42501 → ÖZET AÇIK 0 · BAŞARISIZ 0 · UYGUN 8 · tanımlar satırı tekil
+  6 görüntü (sonra): tekil · 2ed848fc9fdeefe41b3f408e4eb90072 | 54339c19077d8523f9af00ded14d25c3 | 945 | 194 → BİREBİR
+  7 uygulama       : (1.744.22) giriş, F5'te şifre istenmedi, ekranlar hatasız, uyarı / bekleyen kayıt şeridi yok → GEÇTİ
+
+SONUÇ: A6 canlıda KAPALI. Veri değişmedi.
+KÖTÜYE KULLANIM — KANITIN KAPSAMI: İncelenen hesap durumunda (18 ve 20 Kasım; 3 giriş hesabı, üçü de Tanımlar listesinde Yönetici;
+listede olmayan hesap 0; tanımlar tek satır 'tekil', yapı sağlam) yönetici dışı hesap yoktu; kötüye kullanım TESPİT EDİLMEDİ. Bu,
+açığın geçmişte HİÇ kullanılmadığını kesin olarak kanıtlamaz: silinmiş hesaplar, geçmiş rol değişiklikleri ve geçmiş API istekleri bu
+kontrollerin kapsamında değil (Supabase istek / Auth günlükleri incelenmedi). Geri alma UYGULANMADI (gerek olmadı; ⚠ geri alma açığı yeniden açar, ayrı onaya bağlı).
+Canlı tanımların düzeltme öncesi arşivi: stok-v2/guvenlik/24-a6-canli-yedek-2026-11-18.sql.
+DEĞİŞMEYENLER: PR #364 taslak / birleştirilmedi · main · surum.json (1.744.22) · yayın · 23 · yeni kurulum betiği.
