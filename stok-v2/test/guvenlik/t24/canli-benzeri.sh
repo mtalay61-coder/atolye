@@ -72,7 +72,8 @@ for k in sorted(set(c) | set(y)):
     if c.get(k) == y.get(k): continue
     if k in c and k not in y and bilinen(*k): bil += 1; continue
     fark.append((k, c.get(k, "(canlıda yok)"), y.get(k, "(yerelde yok)")))
-print(f"canli-benzeri: {sum(1 for k in c if k in y and c[k] == y[k])} satır canlıyla birebir · bilinen fark (eski / site tabloları, *_surum) {bil} · başka fark {len(fark)}")
+# İfade (20 Kasım kararı): "N satır eşleşti, M satır kapsam dışında" — TAM ŞEMA EŞİTLİĞİ DEĞİL (o Faz 4'te ölçülür)
+print(f"canli-benzeri: {sum(1 for k in c if k in y and c[k] == y[k])} satır eşleşti, {bil} satır kapsam dışında (eski / site tabloları, *_surum; tam şema eşitliği değil) · beklenmeyen fark {len(fark)}")
 for (b, n), cv, yv in fark: print(f"  [FARK] {b} {n}\n     canlı: {cv}\n     yerel: {yv}")
 sys.exit(1 if fark else 0)
 PY

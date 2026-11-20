@@ -68,8 +68,9 @@
        Altta `kas_hareket` / `kas_hesap` / `lst_kayit`'a authenticated yazamaz.
      - `silme_koruma` ×4, `tanimlar_kullanici_koruma`, `gunluk_silme_koruma`: argüman ve etkinlik (O) canlıyla birebir; ortak
        fonksiyon gövdelerinin md5'i birebir (A6 dahil).
-     - Yerel ↔ canlı farkları `t24/canli-benzeri.sh` ile kapatıldı (atolye_canli; karşılaştırma betikte, fark 0). Kalan bilinen
-       fark: canlıdaki eski / site tabloları (cekler, hesaplar, cop, icerik, medya, onaylar, profil, cek_gorselleri) ve
+     - Yerel ↔ canlı: `t24/canli-benzeri.sh` (atolye_canli) ile **194 satır eşleşti, 32 satır kapsam dışında** — tam şema eşitliği
+       DEĞİL (o, Faz 4'te canlıdan üretilen dosyayla ölçülür). Kapsam dışı
+       satırlar: canlıdaki eski / site tabloları (cekler, hesaplar, cop, icerik, medya, onaylar, profil, cek_gorselleri) ve
        `surum_arttir` / `guncelleme_yaz` tetikleyicileri — şeması depoda yok, Faz 4 kapsar.
 
 ## Faz 0 — Hazırlık, YALNIZ OKUMA (canlıda yazma yok) — A6 kısmı TAMAM (18 Kasım; 23 önkoşulu 0.2 henüz çalıştırılmadı)
@@ -80,7 +81,7 @@
 | 0.2 | `23-onkosul-salt-okur.sql` canlıda | kullanıcı | GENEL = **HAZIR** (23 uygulanmamış, uygulanabilir). KARIŞIK / EKSİK → DUR |
 | 0.2b | `24-a6-onkosul-salt-okur.sql` canlıda | kullanıcı | GENEL = **HAZIR**. EKSİK: tanımlar verisi hazır değil (girisAktifMi boolean değil / kullanicilar dizi değil / Yönetici yok) → DUR, önce veri düzeltilir; aksi hâlde düzeltme sonrası oturumlu yazmalar durur. KARIŞIK → DUR |
 | 0.3 | Canlıdaki kurulum fonksiyonlarının bugünkü tanımını yedekle (salt okur: `select pg_get_functiondef(…)`; sorgu hazırlanacak) | kullanıcı | Çıktı dosyası saklandı (Faz 3 geri dönüşü bunu kullanır) |
-| 0.4 | Canlı koruma envanteri (salt okur, `24-faz04-koruma-envanteri-salt-okur.sql`) — **TAMAM 20 Kasım** | kullanıcı | Kaydedildi; yerel `canli-benzeri.sh` ile fark 0 (bilinen eski tablolar hariç) |
+| 0.4 | Canlı koruma envanteri (salt okur, `24-faz04-koruma-envanteri-salt-okur.sql`) — **TAMAM 20 Kasım** | kullanıcı | Kaydedildi; yerel `canli-benzeri.sh`: 194 satır eşleşti, 32 satır kapsam dışında (tam şema eşitliği değil) |
 | 0.5 | "Allow new users to sign up" durumu | kullanıcı (göz) | KAPALI. Açıksa ayrı onayla kapatılır |
 | 0.6 | Canlı bekleyen kayıt / açık işlem yok; atölye mesai dışı | kullanıcı | Uygulamada "bekleyen kayıt" şeridi yok |
 
@@ -108,17 +109,24 @@
   hazırlanır; o süre boyunca personel hesaplarının kapatılması değerlendirilir.
 - Uygulama kodu değişmediği için geri dönüş yalnız SQL'dir.
 
-## Faz 2 — 23 platform tabloları (canlı SQL)
+## Faz 2 — 23 platform tabloları (canlı SQL) — PAKET HAZIR (20 Kasım), UYGULANMADI
+
+> Paket: `stok-v2/guvenlik/23-FAZ2-PAKET.md`. Önce / sonra kontrol `23-faz2-kontrol-salt-okur.sql` (A6 imzası). Uygulanacak
+> `23-platform-yonetim.sql` SHA-256 `ca0509fc7fff45605613ecf60080f901ccb1062c4931e6838847695956dad9f8`. Yerel prova 20/20.
+> Uygulama ayrı onay; geri alma AYRICA onay. Faz 4 (canlıdan üretilen kurulum dosyasının boş projede doğrulanması) genel
+> yayından önce ZORUNLU kalır.
 
 | Adım | Ölçüt |
 |---|---|
+| ÖNCE: `23-onkosul-salt-okur.sql` · `24-a6-onkosul-salt-okur.sql` · `23-faz2-kontrol-salt-okur.sql` | 23 **HAZIR** · A6 **UYGULANMIŞ** · platform_ tabloları `yok` ×5 · A6 imzası kaydedilir |
 | `23-platform-yonetim.sql` canlıda (Editor, tek Run) | Hatasız |
-| `23-onkosul-salt-okur.sql` | GENEL = **UYGULANMIŞ**, kayıtlar 0/0/0 |
+| SONRA: `23-onkosul-salt-okur.sql` | GENEL = **UYGULANMIŞ**, fark yok, yönetici 0, kayıtlar 0/0/0 |
+| SONRA: `23-faz2-kontrol-salt-okur.sql` | Tablolar 0 ×5 · A6 **UYGULANMIŞ** · A6 imzası ÖNCE ile **birebir** |
 
-**Geri dönüş:**
-- `23-platform-yonetim-geri-al.sql` (t23'te sınandı).
-- Ardından önkoşul = HAZIR.
-- Platform tabloları boş olduğu için veri kaybı yok.
+**Geri dönüş (AYRI ONAY):**
+- `23-platform-yonetim-geri-al.sql`: firma / sözleşme / ödeme kaydı varsa **DURUR**, hiçbir şey silinmez.
+- Üçü boşsa beş tablo içerikleriyle kalkar: **yönetici listesi ve olay günlüğü de silinir** (günlük firmaya bağlı; firma yoksa boş).
+- Ardından 23 önkoşulu = HAZIR; A6 imzası değişmez (yerelde ölçüldü).
 
 ## Faz 3 — Yeni kurulum betiği (canlı SQL)
 

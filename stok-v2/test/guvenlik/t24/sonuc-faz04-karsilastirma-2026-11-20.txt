@@ -49,7 +49,9 @@
     - Şeması depoda olmayan canlı tablolar: cekler, hesaplar, cop, icerik, medya, onaylar, profil, cek_gorselleri.
       Bunlara surum_arttir / guncelleme_yaz tetikleyicileri (*_surum, icerik_guncelleme) de dahil.
   - hazirla.sh DEĞİŞTİRİLMEDİ: bilerek sıkılaştırma öncesi hâli kurar (kos-guvenlik "önce / sonra" ölçer). Hizalama ayrı betikte.
-  - canli-benzeri.sh sonucu: 194 satır canlıyla birebir · bilinen fark 32 · başka fark 0.
+  - canli-benzeri.sh sonucu: 194 SATIR EŞLEŞTİ, 32 SATIR KAPSAM DIŞINDA, beklenmeyen fark 0.
+    Bu TAM ŞEMA EŞİTLİĞİ DEĞİLDİR: kapsam dışı satırlar karşılaştırılmadı, envanter yalnız koruma / yetki görünümünü kapsar.
+    Tam eşitlik, canlıdan üretilen kurulum dosyasının boş projede doğrulanmasıyla (Faz 4) ölçülür.
     Bilinen fark: şeması depoda olmayan tablolar ve *_surum tetikleyicileri; uydurulmadı, Faz 4 kapsar.
 
 4) TESTLER (canlı benzeri kaynakla)
@@ -60,7 +62,7 @@
     - kas_yaz: yetkisiz personel hesap yazamaz (42501), yalnız kur yazar; Yönetici yazar.
     - lst_yaz: personel ve listede olmayan fatura yazamaz (42501); Yönetici yazar; teklif herkese açık.
     - gun_sonu_gonderim RLS açık.
-  - kos-t24 TEMİZ: canli-benzeri fark 0 · test24 196/196 · ekran-firma-ayrimi 42/42.
+  - kos-t24 TEMİZ: canli-benzeri 194 eşleşti / 32 kapsam dışında / beklenmeyen fark 0 · test24 196/196 · ekran-firma-ayrimi 42/42.
   - Diğer testler:
       ta6/test-a6.sh            46/46
       t23/test23.sh             163/163
