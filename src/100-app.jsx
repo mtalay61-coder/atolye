@@ -6140,6 +6140,7 @@ function AtolyeUygulamasi() {
               <GelirGiderEkrani
                 onFisIptal={sunucuFisiIptal}
                 stok={stok}
+                siparisler={siparisler}
                 tanimlar={tanimlar}
                 onSave={saveTanimlar}
                 muhasebe={muhasebe}

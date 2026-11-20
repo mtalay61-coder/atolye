@@ -2234,6 +2234,47 @@ function bolumAylikDokum(bolum, uretim, cariler) {
     ciftMaliyeti: k.adet > 0 ? k.maas / k.adet : null,
   }));
 }
+// SEZON BAZINDA GERÇEK MALİYET (v1.744.32 — kullanıcı: "6 ay × 140.000 ₺ ÷ 6 aylık kesimhane adedi bize kesimhane çift başı
+// gerçek maliyetini verir, bunu sezon olarak da değerlendirebiliriz … siparişi girerken sezon giriyoruz, sezonu oradan
+// çıkarabiliriz; aynı anda 2 sezon üretimi de yaptığımız oluyor"). Maaş zamana bağlı, sezon işe bağlı; iki sezon aynı ay
+// üretilince maaş düz bölünemez. Kural: her ay o ayın maaşı, o ay bölümün yaptığı ADEDE göre paylaştırılır —
+// ay çift başı = ay maaşı ÷ ay adedi; sezonun maliyeti = Σ(o sezonun o aydaki adedi × ay çift başı).
+// Sezon: tahakkukun üretimini isteyen SATIŞ siparişinin sezonu (üretim.rezervasyonSiparisId → sipariş.sezon); siparişsiz
+// (depoya) üretim "(sezonsuz)". Adet yalnız bölümün KENDİ personelinin teslimleri (bölüm tahakkuku; fasona verilen iş
+// carisine yazılır, bölüme sayılmaz — kullanıcı kararı, 015 iscilikBolumu). Dönemde maaşı olup adedi olmayan ayın maaşı
+// hiçbir sezona dağıtılamaz → `dagitilamayan` (gizlenmez; dönem çift başına dahil, sezonlara değil). Saf.
+function bolumSezonDokumu(bolum, uretim, cariler, siparisler, tarihUygun) {
+  const aylar = new Map(bolumAylikDokum(bolum, uretim, cariler).map((k) => [k.ay, k]));
+  const sezonlar = new Map();
+  const al = (sezon) => { if (!sezonlar.has(sezon)) sezonlar.set(sezon, { sezon, adet: 0, maliyet: 0, tahakkuk: 0 }); return sezonlar.get(sezon); };
+  const sipSezonu = (u) => {
+    const sp = u && u.rezervasyonSiparisId ? (siparisler || []).find((x) => x.id === u.rezervasyonSiparisId) : null;
+    return (sp && String(sp.sezon || "").trim()) || "(sezonsuz)";
+  };
+  const doneminAylari = new Set();
+  (uretim || []).forEach((u) => (u.bolumTahakkuklari || []).forEach((t) => {
+    if (t.bolumId !== bolum.id || !t.tarih || !tarihUygun(t.tarih)) return;
+    const ay = String(t.tarih).slice(0, 7);
+    doneminAylari.add(ay);
+    const k = aylar.get(ay);
+    const birim = k && k.adet > 0 ? k.maas / k.adet : 0;
+    const s = al(sipSezonu(u));
+    s.adet += t.adet || 0; s.tahakkuk += t.tutar || 0; s.maliyet += (t.adet || 0) * birim;
+  }));
+  // Dönemdeki maaşı olup adedi olmayan aylar (maaş tarihine göre)
+  let dagitilamayan = 0;
+  aylar.forEach((k) => {
+    if (k.adet > 0 || !(k.maas > 0) || !tarihUygun(`${k.ay}-15`)) return;
+    dagitilamayan += k.maas;
+  });
+  const yuvarla = (v) => Math.round(v * 100) / 100;
+  const satirlar = Array.from(sezonlar.values()).map((s) => ({
+    sezon: s.sezon, adet: s.adet, maliyet: yuvarla(s.maliyet), tahakkuk: yuvarla(s.tahakkuk),
+    ciftMaliyeti: s.adet > 0 ? yuvarla(s.maliyet / s.adet) : null,
+    receteOrtalamasi: s.adet > 0 ? yuvarla(s.tahakkuk / s.adet) : null,
+  })).sort((a, b) => (a.sezon === "(sezonsuz)") - (b.sezon === "(sezonsuz)") || b.adet - a.adet);
+  return { satirlar, dagitilamayan: yuvarla(dagitilamayan) };
+}
 // Personel bazında (dönem): adet ve tahakkuk — kim ne kadar üretti.
 function bolumPersonelDokumu(girisler) {
   const h = new Map();

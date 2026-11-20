@@ -19,6 +19,7 @@ node birim-fazla-onay.js || HATA=1
 node birim-surum-temizle.js || HATA=1
 node birim-satin-alinan.js || HATA=1
 node birim-maas-fisi-bolum.js || HATA=1
+node birim-bolum-sezon-maliyet.js || HATA=1
 node birim-gun-sonu-matris.js || HATA=1
 node birim-yedek-fis-kilidi.js || HATA=1
 node birim-siparis-iptal-sunucu.js || HATA=1
