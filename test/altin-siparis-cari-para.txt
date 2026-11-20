@@ -1,0 +1,28 @@
+{
+ "baslik": {
+  "tlYapilinca": {
+   "baslik": "TRY",
+   "kalem": "TRY"
+  },
+  "usdCarisinde": "USD"
+ },
+ "cariYok": "TRY",
+ "duzenlemedeBaslik": "TRY",
+ "elleEurKalir": "EUR",
+ "eurCari": "EUR",
+ "hatalar": [],
+ "kaydedilenSiparis": {
+  "cari": "c2",
+  "kalemler": [
+   {
+    "beden": "38",
+    "miktar": 1,
+    "paraBirimi": "TRY"
+   }
+  ],
+  "paraBirimi": "TRY"
+ },
+ "tlCari": "TRY",
+ "usdCari": "USD",
+ "usdCariyeDonus": "USD"
+}
