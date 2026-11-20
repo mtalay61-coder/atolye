@@ -11,11 +11,12 @@ const { chromium } = require("playwright");
 // `tarayiciArgs`: Chromium bayrakları — örn. sahte kamera (`--use-file-for-fake-video-capture`).
 // `adres`: uygulamayı file:// yerine bu http(s) adresinden aç — çağıran `onceRota` ile o adresi
 // test.html'e yönlendirir (sürüm dosyası gibi göreli okumalar yalnız http'de çalışıyor).
+const TEST_KOK = "https://atolye-test.invalid/";
 async function uygulamaAc(tohum = {}, { hataYaz = true, onceRota = null, tarayiciArgs = [], adres = null, cevrimdisiKilidi = false, yuklemeyiBekle = true, tanimBasliklariKapali = false, receteOnayKapisi = false, firmaSecili = true, kurulumSihirbazi = false, stkAyar = null, stkAyarHata = false, tanimTazelemeKapisi = false } = {}) {
   // UTF-8 YEREL AYAR (7 Kasım): bu konteynerde LANG boş; Chromium o zaman Türkçe harfli indirme adını ("SAT-1 - Müşteri B.html")
   // reddedip dosyayı "download" adıyla indiriyor — uygulama doğru adı veriyor, ortam bozuyordu (tedarik-girisleri farkı).
-  // TARAYICI YOLU (17 Kasım; #363 ile aynı): Playwright sürümüyle eşleşen tarayıcı kurulu değilse (konteyner imajı güncellenince)
-  // PW_CHROMIUM ile hazır Chromium verilir (ör. /opt/pw-browsers/chromium). Verilmezse Playwright'ın kendi tarayıcısı — eski davranış.
+  // TARAYICI YOLU (17 Kasım): Playwright sürümüyle eşleşen tarayıcı kurulu değilse (konteyner imajı güncellenince) PW_CHROMIUM ile
+  // hazır Chromium verilir (ör. /opt/pw-browsers/chromium/chrome-linux/chrome). Verilmezse Playwright'ın kendi tarayıcısı — eski davranış.
   const tarayici = await chromium.launch({ args: tarayiciArgs, ...(process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {}),
     env: { ...process.env, LANG: process.env.LANG || "C.UTF-8", LC_ALL: process.env.LC_ALL || "C.UTF-8" } });
   // Geniş pencere: dar ekranda kenar çubuğu daralıyor ve sekme düğmeleri gizleniyor.
@@ -124,6 +125,14 @@ async function uygulamaAc(tohum = {}, { hataYaz = true, onceRota = null, tarayic
     ? r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([stkAyar]) })
     : r.fulfill({ status: 404, contentType: "application/json",
       body: JSON.stringify({ code: "PGRST205", message: "Could not find the table 'public.stk_ayar' in the schema cache" }) })));
+  // HTTPS KÖKENİ (17 Kasım, v1.744.24): `adres` TEST_KOK altındaysa test.html bu adresten sunulur. file:// kökeninde
+  // Chromium, taze tarayıcının İLK belgesinin yerel depo yazmalarını (belge başında init script yazmışsa) gezinmede bazen
+  // tümüyle düşürüyor — uygulamasız yeniden üretim: file:// + init yazması 55 koşuda 9 kayıp, https'te 110'da 0. Yeniden
+  // yükleme içeren senaryolar (firma değiştirme) bu yüzden file://'da oynaktı; gerçek uygulama https'ten açılıyor.
+  if (adres && adres.startsWith(TEST_KOK)) {
+    const html = process.env.TEST_HTML || path.join(__dirname, "test.html");
+    await sayfa.route((u) => u.href.startsWith(TEST_KOK + "test.html"), (r) => r.fulfill({ status: 200, contentType: "text/html; charset=utf-8", path: html }));
+  }
   // HTML yolu değiştirilebilir: refaktör ÖNCESİ ve SONRASI paketleri aynı senaryoyla karşılaştırmak için.
   await sayfa.goto(adres || ("file://" + (process.env.TEST_HTML || path.join(__dirname, "test.html"))));
   await sayfa.evaluate(() => {
@@ -184,7 +193,7 @@ const cariSec = async (sayfa, unvan, kok = "", alan = "data-siparis-cari") => {
   await sayfa.waitForTimeout(200);
 };
 
-module.exports = { uygulamaAc, depoOku, bekle, modulAc, cariSec };
+module.exports = { uygulamaAc, depoOku, bekle, modulAc, cariSec, TEST_KOK };
 
 // SAĞ TIK MENÜSÜ (v1.636.0): `secici`ye sağ tık olayı gönderir (öğe başka bir katmanın altında kalsa da React işleyicisi
 // çalışır), ardından menüden `oge`yi (data-sag-tik) seçer. Menü açılmazsa ya da öğe yoksa false döner.

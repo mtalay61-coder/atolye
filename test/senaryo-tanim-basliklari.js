@@ -4,12 +4,15 @@
 // yazılınca bütün bölümler görünür): başlıklar KAPALI başlar (içerik gizli), başlığa dokununca açılır, sayfa yenilenince
 // açık bırakılan başlık açık kalır (cihazda hatırlanır), öbürleri kapalı. Diğer senaryolar `__tanimBasliklariAcik`
 // ile hepsi açık koşuyor; bu senaryo kilidi kaldırıyor (`tanimBasliklariKapali: true`).
-const { uygulamaAc, sagTikAc, sagTikSec } = require("./ortak.js");
+const { uygulamaAc, sagTikAc, sagTikSec, TEST_KOK } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
 async function calistir() {
-  const { tarayici, sayfa } = await uygulamaAc({ ...TOHUM }, { hataYaz: false, tanimBasliklariKapali: true });
+  // HTTPS'TEN (v1.744.31): senaryo sayfayı yeniler ve başlık seçiminin yerel depoda kaldığını ölçer. file:// altında Chromium
+  // ilk belgenin yerel depo yazmalarını yenilemede bazen düşürüyor (CLAUDE.md, firma-secimi ile aynı kök) → "Prosesler" yenileme
+  // sonrası kapalı görünüyordu (tek başına 4 koşuda 1). Gerçek uygulama https'ten açılıyor.
+  const { tarayici, sayfa } = await uygulamaAc({ ...TOHUM }, { hataYaz: false, tanimBasliklariKapali: true, adres: TEST_KOK + "test.html" });
   const hatalar = [];
   sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2000);
