@@ -1,0 +1,74 @@
+{
+ "botKarti": {
+  "rozet": true,
+  "sekmeler": [
+   "Siparişler",
+   "Stok Bilgileri",
+   "Fiyatlandırma",
+   "Siparişler"
+  ],
+  "tedarikci": "Tedarikçi: Tedarikçi A"
+ },
+ "duzenleme": {
+  "isaretVar": 1,
+  "isaretli": true,
+  "tedarikciSecimi": "c1"
+ },
+ "hatalar": [],
+ "isaretKaldirilinca": {
+  "kart": {
+   "rozet": false,
+   "sekmeler": [
+    "Siparişler",
+    "Stok Bilgileri",
+    "Reçete",
+    "Maliyet",
+    "Kapasite",
+    "Fiyatlandırma",
+    "Siparişler"
+   ],
+   "tedarikci": "Tedarikçi: Tedarikçi A"
+  },
+  "kayit": false
+ },
+ "modelRKarti": {
+  "rozet": false,
+  "sekmeler": [
+   "Siparişler",
+   "Stok Bilgileri",
+   "Reçete",
+   "Maliyet",
+   "Kapasite",
+   "Fiyatlandırma",
+   "Siparişler"
+  ],
+  "tedarikci": null
+ },
+ "planlama": {
+  "botUretDugmesi": false,
+  "modelRUretDugmesi": true,
+  "topluUretSonrasi": {
+   "satinalmaPanelindeBot": true,
+   "uretPanelindeBot": false
+  },
+  "uretimAcilmadiBot": true
+ },
+ "siparisUyarisi": {
+  "bot": false,
+  "modelR": true
+ },
+ "yenidenIsaretlenince": {
+  "kart": {
+   "rozet": true,
+   "sekmeler": [
+    "Siparişler",
+    "Stok Bilgileri",
+    "Fiyatlandırma",
+    "Siparişler"
+   ],
+   "tedarikci": "Tedarikçi: Tedarikçi A"
+  },
+  "kayit": true,
+  "tedarikci": "c1"
+ }
+}

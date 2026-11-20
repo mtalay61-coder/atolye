@@ -26,6 +26,19 @@ function kzDonemAraligi(donem) {
   if (donem === "buAy") return { bas: new Date(yil, ay, 1), son: new Date(yil, ay + 1, 0, 23, 59, 59) };
   if (donem === "gecenAy") return { bas: new Date(yil, ay - 1, 1), son: new Date(yil, ay, 0, 23, 59, 59) };
   if (donem === "buYil") return { bas: new Date(yil, 0, 1), son: new Date(yil, 11, 31, 23, 59, 59) };
+  // SON 3 / 6 AY (v1.744.32 — kullanıcı: "raporu ne kadar zaman için alırsak ona bölmesi gerekir, 6 ay × maaş ÷ 6 aylık adet"):
+  // içinde bulunulan ay dahil son N tam ay. Tek ay yanıltır (az iş çıkan ay da maaş aynı); dönem uzadıkça çift başı oturur.
+  if (donem === "son3Ay") return { bas: new Date(yil, ay - 2, 1), son: new Date(yil, ay + 1, 0, 23, 59, 59) };
+  if (donem === "son6Ay") return { bas: new Date(yil, ay - 5, 1), son: new Date(yil, ay + 1, 0, 23, 59, 59) };
+  // TARİH ARALIĞI (v1.744.32 — kullanıcı: "tarih aralığı da ekleyebiliriz, bu tarihler arası gibi"): "aralik:YYYY-MM-DD:YYYY-MM-DD",
+  // iki uç dahil. Tarih eksik ya da ters verilirse (başlangıç > bitiş) "Tümü" yerine BOŞ aralık — yanlışlıkla bütün yılları
+  // gösterip doğru sanılmasın.
+  if (typeof donem === "string" && donem.startsWith("aralik:")) {
+    const [, b, s] = donem.split(":");
+    const bas = b ? new Date(`${b}T00:00:00`) : null, son = s ? new Date(`${s}T23:59:59`) : null;
+    if (!bas || !son || Number.isNaN(bas.getTime()) || Number.isNaN(son.getTime()) || bas > son) return { bas: new Date(2100, 0, 1), son: new Date(2000, 0, 1) };
+    return { bas, son };
+  }
   return { bas: new Date(2000, 0, 1), son: new Date(2100, 0, 1) };
 }
 
@@ -262,10 +275,13 @@ function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem, defter
   };
 }
 
-function KarZararPaneli({ stok, cariler, muhasebe, giderKartlari, tanimlar, uretim }) {
+function KarZararPaneli({ stok, cariler, muhasebe, giderKartlari, tanimlar, uretim, siparisler }) {
   const [donem, setDonem] = useState("buAy");
+  const [aralikBas, setAralikBas] = useState("");   // "Tarih aralığı" seçiliyken (v1.744.32)
+  const [aralikSon, setAralikSon] = useState("");
   const [defter, setDefter] = useState("Tümü");
-  const sonuc = karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem, defter, uretim, tanimlar });
+  const etkinDonem = donem === "aralik" ? `aralik:${aralikBas}:${aralikSon}` : donem;
+  const sonuc = karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem: etkinDonem, defter, uretim, tanimlar });
   const [acikBolum, setAcikBolum] = useState(null);   // bölüm dökümü (v1.586.0)
   const para = (v) => `${Math.round(v).toLocaleString("tr-TR")} ₺`;
 
@@ -287,7 +303,7 @@ function KarZararPaneli({ stok, cariler, muhasebe, giderKartlari, tanimlar, uret
         </div>
       )}
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-        {[{ k: "buAy", ad: "Bu ay" }, { k: "gecenAy", ad: "Geçen ay" }, { k: "buYil", ad: "Bu yıl" }, { k: "tumu", ad: "Tümü" }].map((d) => (
+        {[{ k: "buAy", ad: "Bu ay" }, { k: "gecenAy", ad: "Geçen ay" }, { k: "son3Ay", ad: "Son 3 ay" }, { k: "son6Ay", ad: "Son 6 ay" }, { k: "buYil", ad: "Bu yıl" }, { k: "tumu", ad: "Tümü" }, { k: "aralik", ad: "Tarih aralığı" }].map((d) => (
           <button key={d.k} type="button" data-kz-donem={d.k} onClick={() => setDonem(d.k)}
             style={{ padding: "6px 14px", borderRadius: "var(--erp-r-pill)", fontSize: 13, fontWeight: 700, cursor: "pointer",
               border: `1.5px solid ${donem === d.k ? "var(--erp-primary)" : "var(--erp-border)"}`,
@@ -295,6 +311,14 @@ function KarZararPaneli({ stok, cariler, muhasebe, giderKartlari, tanimlar, uret
             {d.ad}
           </button>
         ))}
+        {donem === "aralik" && (
+          <span data-kz-aralik="1" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <input type="date" data-kz-aralik-bas="1" value={aralikBas} onChange={(e) => setAralikBas(e.target.value)} style={{ ...inputStyle, width: 150, padding: "5px 8px" }} />
+            <span style={{ fontSize: 12, color: "var(--erp-text-2)" }}>–</span>
+            <input type="date" data-kz-aralik-son="1" value={aralikSon} onChange={(e) => setAralikSon(e.target.value)} style={{ ...inputStyle, width: 150, padding: "5px 8px" }} />
+            {(!aralikBas || !aralikSon || aralikBas > aralikSon) && <span style={{ fontSize: 12, color: "var(--erp-warn)" }}>başlangıç ve bitiş tarihini seçin</span>}
+          </span>
+        )}
         {/* DEFTER SEÇİMİ (v1.543.0) — dönemden ayrı grup; kasa/cari ekranlarındaki Tümü/Genel/Resmi ile aynı. */}
         <span style={{ width: 1, height: 22, background: "var(--erp-line)", margin: "0 4px" }} />
         {["Tümü", "Genel", "Resmi"].map((d) => (
@@ -395,6 +419,11 @@ function KarZararPaneli({ stok, cariler, muhasebe, giderKartlari, tanimlar, uret
               <span style={{ flex: "1 1 140px", fontSize: 13, fontWeight: 700 }}>{acikBolum === b.id ? "▾ " : "▸ "}{b.ad}</span>
               <span className="mono" style={{ fontSize: 12, color: "var(--erp-text-2)" }}>tahakkuk {para(b.tahakkuk)} <span style={{ fontSize: 11 }}>({b.adet.toLocaleString("tr-TR")} adet)</span></span>
               <span className="mono" style={{ fontSize: 12, color: "var(--erp-text-2)" }}>maaş {para(b.maas)}</span>
+              {/* DÖNEM ÇİFT BAŞI GERÇEK (v1.744.32): seçili dönemin maaşı ÷ dönemde bölümün yaptığı adet (boş aylar dahil). */}
+              <span className="mono" data-kz-bolum-cift={b.ad} style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)" }}
+                title="Seçili dönemin bölüm maaşı ÷ dönemde bölüm personelinin teslim ettiği adet">
+                çift başı {b.adet > 0 ? `${(Math.round((b.maas / b.adet) * 100) / 100).toLocaleString("tr-TR")} ₺` : "—"}
+              </span>
               <span className="mono" data-kz-bolum-kar={b.ad} style={{ fontSize: 14, fontWeight: 700, color: b.kar >= 0 ? "var(--erp-ok)" : "var(--erp-danger)" }}>
                 {b.kar >= 0 ? "kâr" : "zarar"} {para(Math.abs(b.kar))}
               </span>
@@ -407,6 +436,7 @@ function KarZararPaneli({ stok, cariler, muhasebe, giderKartlari, tanimlar, uret
               const aylik = bolumAylikDokum(bolum, uretim, cariler);
               const girisler = bolumGirisleri(bolum, uretim, cariler, (t) => kzTarihUygun(t, sonuc.aralik));
               const kisiler = bolumPersonelDokumu(girisler);
+              const sezon = bolumSezonDokumu(bolum, uretim, cariler, siparisler, (t) => kzTarihUygun(t, sonuc.aralik));
               const yuzde = (v) => (v == null ? "—" : `%${Math.round(v)}`);
               const th = { padding: "5px 8px", fontSize: 10, letterSpacing: ".04em", textTransform: "uppercase", color: "var(--erp-text-2)", textAlign: "right", borderBottom: "1px solid var(--erp-line)", whiteSpace: "nowrap" };
               const td = { padding: "5px 8px", fontSize: 12, textAlign: "right", borderBottom: "1px solid var(--erp-head)", whiteSpace: "nowrap" };
@@ -432,6 +462,31 @@ function KarZararPaneli({ stok, cariler, muhasebe, giderKartlari, tanimlar, uret
                         </tbody>
                       </table>
                     </div>
+                  </div>
+                  {/* SEZON BAZINDA (v1.744.32): maaş her ay o ayın adedine göre sezonlara paylaştırılır (015 bolumSezonDokumu). */}
+                  <div data-kz-bolum-sezon={b.ad}>
+                    <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4 }}>Sezon bazında <span style={{ fontWeight: 400, color: "var(--erp-text-3)" }}>— seçili dönem · sezon siparişten · maaş her ay o ayın adedine göre paylaştırılır</span></div>
+                    <div style={{ overflowX: "auto" }}>
+                      <table style={{ borderCollapse: "collapse", minWidth: "100%" }}>
+                        <thead><tr>{["Sezon", "Adet", "Payına düşen maaş", "Çift başı gerçek", "Reçetedeki ortalama"].map((h, i) => <th key={h} style={{ ...th, textAlign: i === 0 ? "left" : "right" }}>{h}</th>)}</tr></thead>
+                        <tbody>
+                          {sezon.satirlar.length === 0 ? <tr><td colSpan={5} style={{ ...td, textAlign: "left", color: "var(--erp-text-3)" }}>Bu dönemde bölüm teslimi yok</td></tr> : sezon.satirlar.map((z) => (
+                            <tr key={z.sezon} data-kz-bolum-sezon-satir={z.sezon}>
+                              <td style={{ ...td, textAlign: "left", fontWeight: 700 }}>{z.sezon}</td>
+                              <td className="mono" style={td}>{z.adet.toLocaleString("tr-TR")}</td>
+                              <td className="mono" style={td}>{para(z.maliyet)}</td>
+                              <td className="mono" style={{ ...td, fontWeight: 700 }}>{z.ciftMaliyeti == null ? "—" : `${z.ciftMaliyeti.toLocaleString("tr-TR")} ₺`}</td>
+                              <td className="mono" style={td}>{z.receteOrtalamasi == null ? "—" : `${z.receteOrtalamasi.toLocaleString("tr-TR")} ₺`}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    {sezon.dagitilamayan > 0 && (
+                      <div data-kz-bolum-dagitilamayan={b.ad} style={{ fontSize: 11, color: "var(--erp-warn)", marginTop: 4 }}>
+                        Teslim girilmeyen aylardaki {para(sezon.dagitilamayan)} maaş hiçbir sezona dağıtılamadı (dönem çift başına dahil).
+                      </div>
+                    )}
                   </div>
                   <div>
                     <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4 }}>Personel bazında <span style={{ fontWeight: 400, color: "var(--erp-text-3)" }}>— seçili dönem</span></div>

@@ -323,7 +323,7 @@ function ProductMatrixCard({
   onTeknikCizimEkle, onTeknikCizimSil, onTeknikCizimGuncelle, onTeknikNotChange, onTeknikCizimAc,
   onRenkResmiChange, onRenkResmiRemove, onKategoriChange, onKapakResmiChange, cariler, onGoToCari, onRemoveHareketGlobal,
   onEkFiyatEkle, onEkFiyatSil, tumUrunler, onKullanilanUrunAc, onHizliCariEkle, onHizliHammaddeEkle, onReceteSilToplu, onReceteGrubuGuncelle: receteGrubuGuncelleHam, onProsesUcretGuncelle, tanimlarProsesler, tanimlarAraProsesler, tanimlarBirimler, tanimlarHammaddeTipleri, onUrunGuncelle,
-  onMinStokGuncelle, baslangicAcik, siparisler, uretim, onGoToSiparis, onGoToUretim, tanimlarOzelKodAlanlari, tanimlarKombinasyonlar, onYeniRenkKaydet, onBarkodTamamla, onRenkleriTipeBagla, firmaBilgileri, tanimlarFiyatGruplari, onPencereAc, onKombinasyonOlustur, onGoToUrun, showToast, asortiler, tanimlarCeviriler, onCevirilerKaydet, tanimlarSiteGruplari, onSiteGruplariKaydet }) {
+  onMinStokGuncelle, baslangicAcik, siparisler, uretim, onGoToSiparis, onSiparisPenceresiAc, onGoToUretim, tanimlarOzelKodAlanlari, tanimlarKombinasyonlar, onYeniRenkKaydet, onBarkodTamamla, onRenkleriTipeBagla, firmaBilgileri, tanimlarFiyatGruplari, onPencereAc, onKombinasyonOlustur, onGoToUrun, showToast, asortiler, tanimlarCeviriler, onCevirilerKaydet, tanimlarSiteGruplari, onSiteGruplariKaydet }) {
   const [open, setOpen] = useState(!!baslangicAcik);
   const [urunSagMenu, setUrunSagMenu] = useState(null);
   // Sitede görünen adların çevirisi (v1.651.0, 268): sağ tık › "Çeviriler".
@@ -791,6 +791,7 @@ function ProductMatrixCard({
       satisParaBirimi: product.satisParaBirimi || "₺",
       satisFiyati: String(satisFiyati),
       tedarikciId: product.tedarikciId || "",
+      satinAlinan: !!product.satinAlinan,
       varsayilanProses: product.varsayilanProses || "",
       malzemeTipi: product.malzemeTipi || "",
       ozelKodlar: { ...(product.ozelKodlar || {}) },
@@ -837,6 +838,8 @@ function ProductMatrixCard({
     // Malzeme tipi yalnızca HAMMADDE için anlamlı. Mamulde de yazsaydık, kategori sonradan
     // değiştiğinde ortada sahibi olmayan bir alan kalırdı.
     if (product.kategori === "Hammadde") fields.malzemeTipi = editForm.malzemeTipi || "";
+    // SATIN ALINAN ÜRÜN (v1.744.29): yalnız mamulde; işaret hiç kullanılmamış üründe alan yazılmaz (kayıt gereksiz değişmesin).
+    if (isMamul && (editForm.satinAlinan || product.satinAlinan)) fields.satinAlinan = !!editForm.satinAlinan;
     if (editForm.minStokTumu !== "") {
       const yeniMin = parseFloat(editForm.minStokTumu) || 0;
       fields.minStok = yeniMin;
@@ -1631,6 +1634,40 @@ function ProductMatrixCard({
                       {PARA_BIRIMLERI.map((p) => <option key={p}>{p}</option>)}
                     </select>
                   </label>
+                  {/* MAMULDE TEDARİKÇİ + SATIN ALINAN ÜRÜN (v1.744.29 — kullanıcı: "ürün stok kartında tedarikçi ekleyelim ve satın
+                      aldığımız ürünler için reçete olmasın"). Tedarikçi her mamulde seçilebilir (alış siparişinde varsayılan cari);
+                      reçetesizlik AYRI işaret: kendi ürettiğiniz modele tedarikçi yazmak onu reçetesiz yapmasın. İşaretliyken
+                      Reçete / Maliyet / Kapasite sekmeleri gizlenir, siparişte reçete uyarısı çıkmaz, planlamada satın almaya gider. */}
+                  <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 }}>
+                    Tedarikçi
+                    <select
+                      data-urun-tedarikci="1"
+                      value={editForm.tedarikciId || ""}
+                      onChange={(e) => {
+                        if (e.target.value === "__yeni__") {
+                          const ad = window.prompt("Yeni tedarikçi unvanı:");
+                          if (!ad || !ad.trim()) return;
+                          const yeniId = onHizliCariEkle && onHizliCariEkle(ad, "Tedarikçi");
+                          if (yeniId) setEditForm({ ...editForm, tedarikciId: yeniId });
+                          return;
+                        }
+                        setEditForm({ ...editForm, tedarikciId: e.target.value });
+                      }}
+                      style={{ ...inputStyle, width: 170, padding: "4px 6px", fontWeight: 400 }}
+                    >
+                      <option value="">Seçilmedi</option>
+                      {(cariler || [])
+                        .filter((c) => (c.tip === "Tedarikçi" || c.tip === "Her İkisi") && (!c.pasif || c.id === editForm.tedarikciId))
+                        .map((c) => <option key={c.id} value={c.id}>{secenekEtiketi(c, c.unvan)}</option>)}
+                      {onHizliCariEkle && <option value="__yeni__">+ Yeni tedarikçi tanımla…</option>}
+                    </select>
+                  </label>
+                  <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 }}
+                    title="Tedarikçiden hazır alınıp satılan ürün: reçetesi yok, üretilmez, planlamada satın almaya gider">
+                    <input type="checkbox" data-urun-satin-alinan="1" checked={!!editForm.satinAlinan}
+                      onChange={(e) => setEditForm({ ...editForm, satinAlinan: e.target.checked })} />
+                    Satın alınan ürün (reçetesiz)
+                  </label>
                 </>
               ) : (
                 <>
@@ -1640,6 +1677,15 @@ function ProductMatrixCard({
                   <span style={{ fontSize: 12, color: "var(--erp-text-2)" }}>
                     Satış: <span className="mono" style={{ fontWeight: 600 }}>{satisFiyati.toFixed(2)} {satisBirimi}</span>
                   </span>
+                  {(() => {
+                    const ted = product.tedarikciId ? (cariler || []).find((c) => c.id === product.tedarikciId) : null;
+                    return ted ? <span style={{ fontSize: 12, color: "var(--erp-text-2)" }}>Tedarikçi: <b>{ted.unvan}</b></span> : null;
+                  })()}
+                  {satinAlinanMi(product) && (
+                    <span data-urun-satin-alinan-rozet="1" style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: "var(--erp-r-pill)", background: "var(--erp-info-bg, #EAF1F6)", color: "var(--erp-info)", border: "1px solid var(--erp-info)" }}>
+                      Satın alınan ürün · reçetesiz
+                    </span>
+                  )}
                 </>
               )}
               {karMarji !== null ? (
@@ -2093,7 +2139,8 @@ function ProductMatrixCard({
           // Sayı, HAM satır sayısı değil ekranda görünen SATIR (hammadde girişi) sayısıdır.
           // Ham sayı yanıltıcıydı: reçete her mamul renk × beden için ayrı kayıt tuttuğu için
           // 5 hammaddelik bir reçete "131" gibi görünüyor ve hiçbir şey ifade etmiyordu.
-          ...(isMamul
+          // Satın alınan üründe (v1.744.29) reçete / maliyet / kapasite sekmesi yok: üretilmez, maliyeti alış fiyatı.
+          ...(isMamul && !satinAlinanMi(product)
             // Prosessiz reçete satırı üretimde HİÇ düşülmez — sekme etiketinde uyarmak, kullanıcının
             // reçeteyi açıp tek tek bakmasını beklemekten iyi.
             ? [{
@@ -7130,7 +7177,9 @@ function ProductMatrixCard({
                 <button
                   key={s.id}
                   type="button"
-                  onClick={() => onGoToSiparis(s.id)}
+                  // AYRI SEKMEDE (v1.744.26): siparişin kendi penceresi açılır, kapatınca bu ürün kartına dönülür
+                  // (`gelinen` = bu kartın penceresi). Eskiden sipariş listesine gidip aramayı süzüyordu.
+                  onClick={() => (onSiparisPenceresiAc ? onSiparisPenceresiAc(s.id, `urun-${product.id}`) : onGoToSiparis(s.id))}
                   style={{
                     width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "10px 12px",
                     background: "transparent", border: "none", cursor: "pointer", textAlign: "left", flexWrap: "wrap",

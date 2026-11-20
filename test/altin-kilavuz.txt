@@ -4,6 +4,7 @@
   "Cari listesi ve cari kartı",
   "Kasa & Banka, Çek & Senet",
   "Fişler ekranı",
+  "Tanımlar — nerede ne var",
   "Fason üretim, atölye içi bölüm ve maaşlı personel",
   "Cari tipleri",
   "Gelir / Gider kartları ve fişlerin karşılığı"

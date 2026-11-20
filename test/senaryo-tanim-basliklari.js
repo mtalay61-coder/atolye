@@ -4,12 +4,15 @@
 // yazılınca bütün bölümler görünür): başlıklar KAPALI başlar (içerik gizli), başlığa dokununca açılır, sayfa yenilenince
 // açık bırakılan başlık açık kalır (cihazda hatırlanır), öbürleri kapalı. Diğer senaryolar `__tanimBasliklariAcik`
 // ile hepsi açık koşuyor; bu senaryo kilidi kaldırıyor (`tanimBasliklariKapali: true`).
-const { uygulamaAc, sagTikAc, sagTikSec } = require("./ortak.js");
+const { uygulamaAc, sagTikAc, sagTikSec, TEST_KOK } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
 async function calistir() {
-  const { tarayici, sayfa } = await uygulamaAc({ ...TOHUM }, { hataYaz: false, tanimBasliklariKapali: true });
+  // HTTPS'TEN (v1.744.31): senaryo sayfayı yeniler ve başlık seçiminin yerel depoda kaldığını ölçer. file:// altında Chromium
+  // ilk belgenin yerel depo yazmalarını yenilemede bazen düşürüyor (CLAUDE.md, firma-secimi ile aynı kök) → "Prosesler" yenileme
+  // sonrası kapalı görünüyordu (tek başına 4 koşuda 1). Gerçek uygulama https'ten açılıyor.
+  const { tarayici, sayfa } = await uygulamaAc({ ...TOHUM }, { hataYaz: false, tanimBasliklariKapali: true, adres: TEST_KOK + "test.html" });
   const hatalar = [];
   sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2000);
@@ -43,13 +46,16 @@ async function calistir() {
   await sayfa.locator('[data-tanim-baslik="Prosesler"]').click();
   await sayfa.waitForTimeout(300);
   const tekrarKapali = (await durum()).prosesKutusuGorunur;
-  // Ürün › Atölye Bölümleri alt sekmesi: başlık hep açık, dokununca kapanmaz; arama yazılınca bütün bölümler görünür.
+  // Ürün alt sekmesi (Sezonlar): başlık hep açık, dokununca kapanmaz; arama yazılınca bütün bölümler görünür.
+  // v1.744.30: Atölye İçi Bölümler Üretim sekmesine taşındı (kullanıcı) — Ürün'de alt sekmesi yok, Üretim'de başlık olarak var.
   await tanimlarAc("urun");
-  await sayfa.locator('[data-urun-alt="bolum"]').click();
-  await sayfa.waitForTimeout(300);
-  await sayfa.locator('[data-tanim-baslik="Atölye İçi Bölümler"]').click();
+  const urunAltSekmeler = await sayfa.evaluate(() => [...document.querySelectorAll("[data-urun-alt]")].map((x) => x.getAttribute("data-urun-alt")));
+  await sayfa.locator('[data-urun-alt="sezon"]').click();
   await sayfa.waitForTimeout(300);
   const urunAlt = await durum();
+  await tanimlarAc("uretim");
+  const bolumUretimde = await sayfa.evaluate(() => !!document.querySelector('[data-tanim-baslik="Atölye İçi Bölümler"]'));
+  await tanimlarAc("urun");
   await sayfa.locator('input[placeholder^="Tanımlarda ara"]').fill("zzz");
   await sayfa.waitForTimeout(300);
   const urunArama = (await durum()).basliklar;
@@ -63,7 +69,7 @@ async function calistir() {
   await sayfa.waitForTimeout(300);
   const kullanicilarAcik = await sayfa.evaluate(() => [...document.querySelectorAll("button")].some((b) => b.textContent.trim() === "Pasif" && b.getBoundingClientRect().height > 0));
   await tarayici.close();
-  return { hatalar, kapaliBaslangic, birAcik, yenilemeSonrasi, tekrarKapali, urunAlt, urunArama, kullanicilar, kullanicilarAcik };
+  return { hatalar, kapaliBaslangic, birAcik, yenilemeSonrasi, tekrarKapali, urunAltSekmeler, urunAlt, bolumUretimde, urunArama, kullanicilar, kullanicilarAcik };
 }
 
 if (require.main === module) {

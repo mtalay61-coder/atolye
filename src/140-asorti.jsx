@@ -242,21 +242,24 @@ function AsortiUygulaKontrolu({ asortiler, bedenSecenekleri, onUygula, olcuTipi,
   // DAR KİP (v1.489.0, fiş formu). Kullanıcı: "Asortiyi miktarın sağına alalım ve daralsın." Tek
   // satırlık kontrol (≈330 px) miktar kutularının yanına sığmıyordu. Dar kipte iki kat: üstte seçici,
   // altta "× [set] Uygula" — 100 px, beden kutularıyla aynı yükseklikte bir sütun.
+  // GENİŞLİK İÇERİĞE GÖRE (v1.744.28 — kullanıcı: "üzerine binen yerler var"). Sütun 100 px'e SABİTTİ; Tanımlar › Görünüm › Boyut
+  // ile düğme / kutu büyütülünce (zoom) "Uygula" ve asorti adı 100 px'e sığmıyor, sağdaki miktar kutularının ÜSTÜNE taşıyordu.
+  // Artık en az 100 px, gerekirse içeriği kadar (max-content); seçici sütunu doldurur, alt satır kırılmaz.
   if (dar) {
     return (
-      <label data-asorti-dar="1" style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600, width: 100 }}>
+      <label data-asorti-dar="1" style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600, minWidth: 100, width: "max-content", flexShrink: 0 }}>
         Asorti
         <select value={asortiId} onChange={(e) => setAsortiId(e.target.value)} title="Asorti"
-          style={{ ...inputStyle, width: 100, fontSize: 11, padding: "5px 2px" }}>
+          style={{ ...inputStyle, width: "100%", maxWidth: 170, fontSize: 11, padding: "5px 2px" }}>
           <option value="">Seçin…</option>
           {asortiler.map((a) => <option key={a.id} value={a.id}>{a.ad}</option>)}
         </select>
-        <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
+        <span style={{ display: "flex", alignItems: "center", gap: 3, flexWrap: "nowrap" }}>
           <span style={{ fontSize: 11 }}>×</span>
           <input type="number" min="1" value={setSayisi} onChange={(e) => setSetSayisi(e.target.value)} title="Set sayısı"
             style={{ ...inputStyle, width: 38, fontSize: 11, padding: "4px 2px", textAlign: "center" }} />
           {/* v1.689: kullanıcı "Uygula butonu daha belirgin olsun" — soluk btn-ghost yerine dolu ana düğme. */}
-          <button type="button" className="btn-primary" data-asorti-uygula="1" style={{ fontSize: 12, fontWeight: 700, padding: "5px 10px", flex: 1 }} disabled={!asortiId} onClick={uygula}>
+          <button type="button" className="btn-primary" data-asorti-uygula="1" style={{ fontSize: 12, fontWeight: 700, padding: "5px 10px", flex: "1 0 auto", whiteSpace: "nowrap" }} disabled={!asortiId} onClick={uygula}>
             Uygula
           </button>
         </span>

@@ -11,7 +11,7 @@ const { chromium } = require("playwright");
 const fs = require("fs"); const os = require("os"); const path = require("path");
 
 async function buyukLogo() {
-  const t = await chromium.launch(); const s = await t.newPage();
+  const t = await chromium.launch(process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {}); const s = await t.newPage();
   const url = await s.evaluate(() => {
     const c = document.createElement("canvas"); c.width = 1600; c.height = 1000;
     const g = c.getContext("2d"); const d = g.createImageData(1600, 1000);

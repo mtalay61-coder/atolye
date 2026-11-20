@@ -192,13 +192,20 @@ function PlanlamaSatiri({ grup, siparis, stok, cariler, tumSiparisler, uretimSip
   // miktarları görüp Onayla'ya basabilir, ayrıca tek tek "Seçin…" açmasına gerek kalmaz. Yine de HER
   // satırın kendi seçicisi aktif kalır — isterse tek tek değiştirebilir (aynı mantık, sadece başlangıç
   // değeri farklı — "sipariş içindeki" akışla birebir aynı kod kullanılır, ayrı bir mekanizma YOKTUR).
+  // SATIN ALINAN ÜRÜN (v1.744.29): üretilmez — kalemler baştan "Alış Siparişi", tedarikçi ürün kartındaki tedarikçi.
+  const satinAlinanUrun = satinAlinanMi((stok || []).find((p) => p.id === grup.kalemler[0].urunId));
   const [kalemTipleri, setKalemTipleri] = useState(() => {
-    if (!varsayilanTip) return {};
+    const tip = satinAlinanUrun ? "Satınalma" : varsayilanTip;
+    if (!tip) return {};
     const baslangic = {};
-    grup.kalemler.filter((k) => !k.planlama).forEach((k) => { baslangic[k.id] = varsayilanTip; });
+    grup.kalemler.filter((k) => !k.planlama).forEach((k) => { baslangic[k.id] = tip; });
     return baslangic;
   });
-  const [cariId, setCariId] = useState("");
+  const [cariId, setCariId] = useState(() => {
+    const u = satinAlinanUrun ? (stok || []).find((p) => p.id === grup.kalemler[0].urunId) : null;
+    const t = u && u.tedarikciId ? (cariler || []).find((c) => c.id === u.tedarikciId && !c.pasif) : null;
+    return t ? t.id : "";
+  });
   const [miktarlar, setMiktarlar] = useState(() => {
     if (!varsayilanTip) return {};
     const baslangic = {};
@@ -496,7 +503,8 @@ function PlanlamaSatiri({ grup, siparis, stok, cariler, tumSiparisler, uretimSip
                               style={{ padding: "4px 6px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 11, fontWeight: 600 }}
                             >
                               <option value="">Seçin…</option>
-                              <option value="Uretim">Üretilecek</option>
+                              {/* Satın alınan ürün üretilmez (v1.744.29) — seçenek kapalı, nedeni üzerinde. */}
+                              <option value="Uretim" disabled={satinAlinanUrun} title={satinAlinanUrun ? "Satın alınan ürün — üretilmez" : undefined}>Üretilecek</option>
                               <option value="Satınalma">Alış Siparişi</option>
                             </select>
                           </td>

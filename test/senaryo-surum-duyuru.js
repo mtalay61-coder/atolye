@@ -68,7 +68,7 @@ async function calistir() {
 
   // BAŞLATICI (baslat.html): sabit adres, yayınlanan sürüme yönlendirir.
   const { chromium } = require("playwright");
-  const tarayici2 = await chromium.launch();
+  const tarayici2 = await chromium.launch(process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {});
   const sayfa2 = await tarayici2.newPage();
   await sayfa2.route("**/rest/v1/surum**", (route) => route.fulfill({ status: 200, contentType: "application/json",
     body: JSON.stringify([{ id: "tekil", veri: { surum: "1.280.0", url: "https://ornek.test/uygulama/atolye-erp-v1.280.0.html" } }]) }));

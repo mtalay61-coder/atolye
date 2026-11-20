@@ -24,7 +24,7 @@
  },
  "hatalar": [],
  "karZarar": {
-  "bolumSatiri": "▸ Kesimhane tahakkuk 90 ₺ (3 adet) maaş 20.000 ₺ zarar 19.910 ₺",
+  "bolumSatiri": "▸ Kesimhane tahakkuk 90 ₺ (3 adet) maaş 20.000 ₺ çift başı 6.666,67 ₺ zarar 19.910 ₺",
   "dokum": {
    "acik": true,
    "aylar": [

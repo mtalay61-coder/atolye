@@ -1,0 +1,30 @@
+{
+ "1100-cokBuyuk": {
+  "asortidenTasan": [],
+  "bosFormdaAyniBoy": true,
+  "ortusme": [],
+  "renkSecili": true,
+  "urunRenkAyniBoy": true
+ },
+ "1100-normal": {
+  "asortidenTasan": [],
+  "bosFormdaAyniBoy": true,
+  "ortusme": [],
+  "renkSecili": true,
+  "urunRenkAyniBoy": true
+ },
+ "1860-cokBuyuk": {
+  "asortidenTasan": [],
+  "bosFormdaAyniBoy": true,
+  "ortusme": [],
+  "renkSecili": true,
+  "urunRenkAyniBoy": true
+ },
+ "1860-normal": {
+  "asortidenTasan": [],
+  "bosFormdaAyniBoy": true,
+  "ortusme": [],
+  "renkSecili": true,
+  "urunRenkAyniBoy": true
+ }
+}

@@ -3,16 +3,19 @@
   "basliklar": [
    "Prosesler:açık",
    "Ara Prosesler:kapalı",
+   "Atölye İçi Bölümler:kapalı",
    "Reçete şablonları:kapalı"
   ],
   "bolumEkleKutusuGorunur": false,
   "prosesKutusuGorunur": true
  },
+ "bolumUretimde": true,
  "hatalar": [],
  "kapaliBaslangic": {
   "basliklar": [
    "Prosesler:kapalı",
    "Ara Prosesler:kapalı",
+   "Atölye İçi Bölümler:kapalı",
    "Reçete şablonları:kapalı"
   ],
   "bolumEkleKutusuGorunur": false,
@@ -26,11 +29,22 @@
  "tekrarKapali": false,
  "urunAlt": {
   "basliklar": [
-   "Atölye İçi Bölümler:açık"
+   "Sezonlar:açık"
   ],
-  "bolumEkleKutusuGorunur": true,
+  "bolumEkleKutusuGorunur": false,
   "prosesKutusuGorunur": false
  },
+ "urunAltSekmeler": [
+  "renk",
+  "beden",
+  "asorti",
+  "birim",
+  "tip",
+  "fire",
+  "sezon",
+  "fiyat",
+  "ozel"
+ ],
  "urunArama": [
   "Renkler:açık",
   "Model Rengi:açık",
@@ -40,7 +54,6 @@
   "Ürün Tipleri:açık",
   "Sezonlar:açık",
   "Fire Sebepleri:açık",
-  "Atölye İçi Bölümler:açık",
   "Fiyat Grupları:açık",
   "Özel Kod Alanları:açık"
  ],
@@ -48,6 +61,7 @@
   "basliklar": [
    "Prosesler:açık",
    "Ara Prosesler:kapalı",
+   "Atölye İçi Bölümler:kapalı",
    "Reçete şablonları:kapalı"
   ],
   "bolumEkleKutusuGorunur": false,

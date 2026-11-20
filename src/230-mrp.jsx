@@ -25,6 +25,8 @@ function mrpHesapla(siparisler, stok, uretim, sadeceUretimPlanli, kurlar) {
       if (sadeceUretimPlanli && (!k.planlama || k.planlama.tip !== "Üretim")) return;
       const urun = stok.find((p) => p.id === k.urunId);
       if (!urun || urun.kategori !== "Mamul" || !urun.recete || urun.recete.length === 0) return;
+      // Satın alınan ürün (v1.744.29) üretilmez: işaretlenmeden önce kalmış bir reçetesi olsa da hammadde ihtiyacı doğurmaz.
+      if (satinAlinanMi(urun)) return;
       const eslesenler = urun.recete.filter(
         (r) => r.mamulRenk === k.renk && (r.mamulBeden === k.beden || r.mamulBeden === "Tüm Bedenler")
       );

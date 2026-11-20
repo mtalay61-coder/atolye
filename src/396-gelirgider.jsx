@@ -45,7 +45,7 @@ async function kartHareketiSilIslem(h, { muhasebe, onMuhasebeKaydet, kullaniciYe
 function kartSilGizliMi(kullaniciYetkisiVar, onayAcik) {
   return !!kullaniciYetkisiVar && !kullaniciYetkisiVar("muhasebe", "silme") && !onayAcik;
 }
-function GelirGiderEkrani({ onFisIptal, tanimlar, onSave, muhasebe, stok, cariler, uretim, showToast, onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, onCopaAt }) {
+function GelirGiderEkrani({ onFisIptal, tanimlar, onSave, muhasebe, stok, cariler, uretim, siparisler, showToast, onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, onCopaAt }) {
   const kartHareketiSil = (h) => kartHareketiSilIslem(h, { muhasebe, onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, onCopaAt, showToast, onFisIptal });
   // Hangi bölüm açık (20 Eylül).
   const [bolum, setBolum] = useState("kartlar");
@@ -116,7 +116,7 @@ function GelirGiderEkrani({ onFisIptal, tanimlar, onSave, muhasebe, stok, carile
     </div>
 
     {bolum === "karzarar" ? (
-      <KarZararPaneli stok={stok} cariler={cariler} muhasebe={muhasebe} giderKartlari={tanimlar.giderKartlari || []} tanimlar={tanimlar} uretim={uretim} />
+      <KarZararPaneli stok={stok} cariler={cariler} muhasebe={muhasebe} giderKartlari={tanimlar.giderKartlari || []} tanimlar={tanimlar} uretim={uretim} siparisler={siparisler} />
     ) : bolum === "genel" ? (
       <GenelGiderEkrani tanimlar={tanimlar} onSave={onSave} stok={stok} muhasebe={muhasebe} showToast={showToast} />
     ) : (

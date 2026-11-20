@@ -597,6 +597,34 @@ function AtolyeUygulamasi() {
     if (!kalan.some((p) => p.id === aktifPencereId)) setAktifPencereId(null);
   }, [loading, stok, uretim, siparisler, acikPencereler, aktifPencereId, setAcikPencereler, setAktifPencereId]);
 
+  // CANLI PENCERENİN SEKMESİ: pencereyi ÇİZEN modül (ürün → Stok / Mamul Stok, sipariş → Satış / Satın Alma, üretim → Üretim).
+  // Kart, kendi modülünün içinde çiziliyor (GizliModul); ekran başka modüldeyken pencere "etkin" olsa da görünmüyordu.
+  const pencereninSekmesi = useCallback((p) => {
+    if (!p) return null;
+    if (p.tip === "urun") return ((stok.find((x) => x.id === p.kayitId) || {}).kategori === "Mamul") ? "mamulstok" : "stok";
+    if (p.tip === "siparis") {
+      const kayit = siparisler.find((x) => x.id === p.kayitId);
+      const sahipTip = (p.veri && p.veri.sahipTip) || (kayit && kayit.tip);
+      return sahipTip === "Alış" ? "satinalma" : "siparis";
+    }
+    if (p.tip === "uretim") return "uretim";
+    return null;
+  }, [stok, siparisler]);
+  // KAPATINCA GELİNEN PENCEREYE DÖNÜŞ EKRANDA DA (v1.744.26 — kullanıcı: "sekmedeki siparişi kapatınca geri stoğa dönsün";
+  // önce: "kapatınca stok kartı da kapanıyor"). 095 pencereKapat etkin pencereyi `gelinen`e (ör. ürün kartı) çeviriyordu ama
+  // ekran sipariş modülünde kalıyordu → ürün kartı gizli Stok modülünde, kullanıcıya kapanmış görünüyordu. Yalnız bir pencere
+  // KAPANDIĞINDA (açık pencere sayısı azaldı) ve yeni etkin pencere canlı bir kayıt penceresiyse ekran onun modülüne geçer;
+  // açma yolları ve menüden sekme değiştirme etkilenmez.
+  const oncekiPencereSayisi = useRef(acikPencereler.length);
+  useEffect(() => {
+    const onceki = oncekiPencereSayisi.current;
+    oncekiPencereSayisi.current = acikPencereler.length;
+    if (loading || acikPencereler.length >= onceki || !aktifPencereId) return;
+    const hedef = pencereninSekmesi(acikPencereler.find((p) => p.id === aktifPencereId));
+    if (hedef && hedef !== tab) setTab(hedef);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [acikPencereler.length, aktifPencereId]);
+
   // KISAYOLLAR (ERP standardı): aktif pencerenin çubuğundaki işlere bağlı. Ctrl+S tarayıcının
   // "sayfayı kaydet" penceresini, F5 yenilemeyi açmasın diye varsayılan engelleniyor — ama
   // yalnız çubukta karşılığı VARSA; yoksa tarayıcı davranışı korunuyor.
@@ -4256,6 +4284,19 @@ function AtolyeUygulamasi() {
     const hedef = siparisler.find((x) => x.id === siparisId);
     setTab(hedef && hedef.tip === "Alış" ? "satinalma" : "siparis");
   }, [siparisler]);
+  // SİPARİŞİ AYRI SEKMEDE AÇ (v1.744.26 — kullanıcı: "stok kartı içerisinden siparişlere tıklayınca … siparişi filtreleyip
+  // açıyor, sekme olarak açsın; sekmedeki siparişi kapatınca geri stoğa dönsün"). `sipariseGit` sipariş LİSTESİNE gidip
+  // aramayı süzüyordu: kayıt sekmesi açılmıyor, şeritte etkin görünen hâlâ ürün sekmesiydi. Burada siparişin kendi penceresi
+  // açılır — başlık ve sahip modül (`sahipTip`) 325'teki tam ekran düğmesiyle aynı, aynı sipariş iki kopyada çizilmesin.
+  // `gelinen`: açan pencere (ör. `urun-<id>`); sipariş sekmesi kapanınca oraya dönülür (095 pencereKapat), ekran da o pencereyi
+  // çizen modüle geçer (aşağıdaki etkin pencere → sekme eşlemesi).
+  const siparisPenceresiAc = useCallback((siparisId, gelinen) => {
+    const kayit = siparisler.find((x) => x.id === siparisId);
+    if (!kayit) { sipariseGit(siparisId); return; }
+    const sahipTip = kayit.tip === "Alış" ? "Alış" : "Satış";
+    pencereAc("siparis", kayit.id, `${kayit.tip}: ${kayit.siparisNo}`, { sahipTip }, gelinen || null);
+    setTab(sahipTip === "Alış" ? "satinalma" : "siparis");
+  }, [siparisler, sipariseGit, pencereAc, setTab]);
 
   // SİPARİŞTEN TAHSİLAT/ÖDEME (v1.612.0 — kullanıcı: "Siparişte ödeme girişi de olsun"). Sipariş kartı hedefi verir
   // ({ cariId, tip, tutar, paraBirimi, siparisId, siparisNo }); Cari ekranı açılır, CariModule o kartı açıp formu
@@ -5657,6 +5698,7 @@ function AtolyeUygulamasi() {
               siparisler={siparisler}
               uretim={uretim}
               onGoToSiparis={sipariseGit}
+              onSiparisPenceresiAc={siparisPenceresiAc}
               onGoToUretim={(uretimId) => { setUretimHedefId(uretimId || null); setTab("uretim"); }}
               onYeniRenkKaydet={yeniRenkKaydet}
               onBarkodTamamla={urunBarkodunuTamamla}
@@ -6098,6 +6140,7 @@ function AtolyeUygulamasi() {
               <GelirGiderEkrani
                 onFisIptal={sunucuFisiIptal}
                 stok={stok}
+                siparisler={siparisler}
                 tanimlar={tanimlar}
                 onSave={saveTanimlar}
                 muhasebe={muhasebe}
@@ -6289,13 +6332,9 @@ function AtolyeUygulamasi() {
                     // bile SATIŞ ekranına gidiliyordu — kart hiç görünmüyordu. Üretimde de aynı
                     // kimlik hedef olarak veriliyor ve hiçbir karta uymuyordu.
                     // Ürün penceresi: mamulse "Mamul Stok", değilse "Stok" sekmesi (v1.455.0).
-                    if (p.tip === "urun") setTab(((stok.find((x) => x.id === p.kayitId) || {}).kategori === "Mamul") ? "mamulstok" : "stok");
-                    else if (p.tip === "siparis") {
-                      const kayit = siparisler.find((x) => x.id === p.kayitId);
-                      const sahipTip = (p.veri && p.veri.sahipTip) || (kayit && kayit.tip);
-                      setTab(sahipTip === "Alış" ? "satinalma" : "siparis");
-                    }
-                    else if (p.tip === "uretim") setTab("uretim");
+                    // Tek kural `pencereninSekmesi`te (kapatınca dönüş de onu kullanıyor).
+                    const hedefSekme = pencereninSekmesi(p);
+                    if (hedefSekme) setTab(hedefSekme);
                   }}
                   style={{
                     display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: "6px 6px 0 0",

@@ -7,7 +7,6 @@ const URUN_ALT_SEKMELERI = [
   { key: "tip", ad: "Ürün Tipleri" },
   { key: "fire", ad: "Fire Sebepleri" },
   { key: "sezon", ad: "Sezonlar" },
-  { key: "bolum", ad: "Atölye Bölümleri" },
   { key: "fiyat", ad: "Fiyat Grupları" },
   { key: "ozel", ad: "Özel Kodlar" },
 ];
@@ -1606,89 +1605,6 @@ function TanimlarModule({ onaylar, onYetimRezervasyonSil, onDefterFisIptal, onCa
       </Bolum>
     </div>
     )}
-    {urunAltGoster("bolum") && (
-    <>
-    {/* ATÖLYE İÇİ BÖLÜMLER (v1.585.0 — kullanıcı: kesimhane 5 maaşlı kişi, parça başı tutar cariyi alacaklandırmasın).
-        Bölüm = bağlı prosesler + personel (Personel tipli cari) + aylık maaş. Bkz. 015 `prosesBolumu`. */}
-    <div data-bolumler="1" style={{ marginTop: 28 }}>
-      <TanimBasligi ad="Atölye İçi Bölümler" />
-      <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px" }}>
-        Maaşlı personelle çalışan bölüm (ör. Kesimhane). Bölüme bağlı prosesin teslimi personel carisine parça başı alacak
-        YAZMAZ; tutar bölüm tahakkuku olur (ürün maliyeti değişmez). Her ay başı buradaki maaş personel carisine "Maaş" olarak
-        tahakkuk eder, kasadan ödeme kapatır. Finans › Kâr-Zarar'da bölümün tahakkuk − maaş farkı görünür.
-      </p>
-      {/* MESAİ AYARI (v1.700, 272): saat ücreti = maaş ÷ aylık çalışma saati; mesai = saat ücreti × kat. Personel kartında
-          kişiye özel aylık saat girilebilir; boşsa buradaki. */}
-      <div data-mesai-ayar style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 10, fontSize: 12 }}>
-        <b>Mesai:</b>
-        {[["aylikSaat", "Aylık çalışma saati"], ["haftaIci", "Hafta içi kat"], ["cumartesi", "Cumartesi kat"], ["pazar", "Pazar kat"]].map(([k, et]) => (
-          <label key={k} style={{ display: "flex", alignItems: "center", gap: 4 }}>{et}
-            <input type="number" step="0.1" data-mesai-ayar-alan={k} key={`${k}${mesaiAyari(tanimlar)[k]}`} defaultValue={mesaiAyari(tanimlar)[k]}
-              onBlur={(e) => { const v = parseFloat(e.target.value); if (v > 0 && v !== mesaiAyari(tanimlar)[k]) onSave({ ...tanimlar, mesaiAyar: { ...(tanimlar.mesaiAyar || {}), [k]: v } }); }}
-              style={{ width: 64, padding: "3px 5px", fontSize: 12, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }} />
-          </label>
-        ))}
-      </div>
-      <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
-        <input value={yeniBolum} data-bolum-ad="1" onChange={(e) => setYeniBolum(e.target.value)} placeholder="Örn. Kesimhane" style={inputStyle}
-          onKeyDown={(e) => { if (e.key === "Enter") { bolumEkle(yeniBolum); setYeniBolum(""); } }} />
-        <button className="btn-primary" title="Bölüm ekle" data-bolum-ekle="1" onClick={() => { bolumEkle(yeniBolum); setYeniBolum(""); }}><Plus size={14} /></button>
-      </div>
-      {(tanimlar.bolumler || []).length === 0 ? (
-        <EmptyState text="Henüz atölye içi bölüm tanımlanmadı." />
-      ) : (tanimlar.bolumler || []).map((b) => {
-        const prosesAdlari = [...(tanimlar.prosesler || []).map((p) => p.ad), ...(tanimlar.araProsesler || []).map((p) => p.ad)].filter(Boolean);
-        const personelCariler = (cariler || []).filter((c) => c.tip === "Personel" && !c.pasif);
-        const uyeler = b.personel || [];
-        return (
-          <div key={b.id} data-bolum={b.ad} style={{ border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", background: "#fff", padding: 12, marginBottom: 10 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-              <input value={b.ad} onChange={(e) => bolumGuncelle(b.id, { ad: e.target.value })}
-                style={{ fontSize: 14, fontWeight: 700, flex: 1, padding: "4px 8px", border: "1px solid var(--erp-border-2)", borderRadius: "var(--erp-r-sm)" }} />
-              <SilOnayButonu onConfirm={() => bolumSil(b.id)} boyut={14} baslikNormal={`"${b.ad}" bölümünü sil (tahakkuk kayıtları ve cari hareketleri kalır)`} baslikOnay="Silinecek — tekrar dokunun" />
-            </div>
-            <div style={{ fontSize: 12, color: "var(--erp-text-2)", marginBottom: 4 }}>Bağlı prosesler <span style={{ fontSize: 11 }}>(bu proseslerin teslimi cariye yazılmaz)</span></div>
-            <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 10 }}>
-              {prosesAdlari.map((ad) => {
-                const secili = (b.prosesler || []).includes(ad);
-                const baska = (tanimlar.bolumler || []).find((x) => x.id !== b.id && (x.prosesler || []).includes(ad));
-                return (
-                  <button key={ad} type="button" data-bolum-proses={`${b.ad}|${ad}`} disabled={!!baska} title={baska ? `"${baska.ad}" bölümünde` : undefined}
-                    onClick={() => bolumGuncelle(b.id, { prosesler: secili ? (b.prosesler || []).filter((x) => x !== ad) : [...(b.prosesler || []), ad] })}
-                    style={{ fontSize: 12, padding: "3px 9px", borderRadius: "var(--erp-r-pill)", cursor: baska ? "default" : "pointer", opacity: baska ? 0.5 : 1,
-                      border: `1.5px solid ${secili ? "var(--erp-primary)" : "var(--erp-line)"}`, background: secili ? "#4E6B4E1A" : "#fff",
-                      color: secili ? "var(--erp-primary)" : "var(--erp-text-2)", fontWeight: secili ? 700 : 400 }}>
-                    {secili ? "✓ " : ""}{ad}
-                  </button>
-                );
-              })}
-            </div>
-            <div style={{ fontSize: 12, color: "var(--erp-text-2)", marginBottom: 4 }}>Personel ve aylık maaş (₺)</div>
-            {uyeler.map((p) => {
-              const c = (cariler || []).find((x) => x.id === p.cariId);
-              return (
-                <div key={p.cariId} data-bolum-personel={c ? c.unvan : p.cariId} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0" }}>
-                  <span style={{ flex: 1, fontSize: 13 }}>{c ? c.unvan : "silinmiş cari"}</span>
-                  <input type="text" inputMode="decimal" defaultValue={p.maas || ""} data-bolum-maas={c ? c.unvan : p.cariId} placeholder="aylık maaş" className="mono"
-                    onBlur={(e) => { const v = parseFloat(String(e.target.value).replace(",", ".")) || 0; if (v !== (p.maas || 0)) bolumGuncelle(b.id, { personel: uyeler.map((x) => (x.cariId === p.cariId ? { ...x, maas: v } : x)) }); }}
-                    style={{ width: 110, padding: "4px 8px", fontSize: 13, textAlign: "right", border: "1px solid var(--erp-border-2)", borderRadius: "var(--erp-r-sm)" }} />
-                  <span style={{ fontSize: 12, color: "var(--erp-text-3)" }}>₺ / ay</span>
-                  <button type="button" className="btn-ghost" style={{ padding: "2px 8px", fontSize: 12 }} title="Bölümden çıkar"
-                    onClick={() => bolumGuncelle(b.id, { personel: uyeler.filter((x) => x.cariId !== p.cariId) })}>×</button>
-                </div>
-              );
-            })}
-            <select value="" data-bolum-personel-ekle={b.ad} onChange={(e) => { const id = e.target.value; if (id) bolumGuncelle(b.id, { personel: [...uyeler, { cariId: id, maas: 0 }] }); }}
-              style={{ ...inputStyle, width: "auto", minWidth: 220, fontSize: 12, padding: "4px 8px", marginTop: 4 }}>
-              <option value="">+ personel ekle (Personel tipli cari)…</option>
-              {personelCariler.filter((c) => !uyeler.some((x) => x.cariId === c.id)).map((c) => <option key={c.id} value={c.id}>{c.unvan}</option>)}
-            </select>
-          </div>
-        );
-      })}
-    </div>
-    </>
-    )}
     {urunAltGoster("fiyat") && (
     <>
     <div style={{ marginTop: 28 }}>
@@ -2148,6 +2064,91 @@ function TanimlarModule({ onaylar, onYetimRezervasyonSil, onDefterFisIptal, onCa
     </>
     )}
 
+    {/* ATÖLYE İÇİ BÖLÜMLER ÜRETİM SEKMESİNDE (v1.744.30 — kullanıcı: "Atölye içi bölümler üretim sekmesinde olsun"). Bölüm,
+        üretim proseslerine ve personele bağlı bir üretim tanımı; Ürün › alt sekmesindeydi (v1.731.0). Prosesler'in hemen altında. */}
+    {aktifTanimSekme === "uretim" && (
+    <>
+    {/* ATÖLYE İÇİ BÖLÜMLER (v1.585.0 — kullanıcı: kesimhane 5 maaşlı kişi, parça başı tutar cariyi alacaklandırmasın).
+        Bölüm = bağlı prosesler + personel (Personel tipli cari) + aylık maaş. Bkz. 015 `prosesBolumu`. */}
+    <div data-bolumler="1" style={{ marginTop: 28 }}>
+      <TanimBasligi ad="Atölye İçi Bölümler" />
+      <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px" }}>
+        Maaşlı personelle çalışan bölüm (ör. Kesimhane). Bölüme bağlı prosesin teslimi personel carisine parça başı alacak
+        YAZMAZ; tutar bölüm tahakkuku olur (ürün maliyeti değişmez). Her ay başı buradaki maaş personel carisine "Maaş" olarak
+        tahakkuk eder, kasadan ödeme kapatır. Finans › Kâr-Zarar'da bölümün tahakkuk − maaş farkı görünür.
+      </p>
+      {/* MESAİ AYARI (v1.700, 272): saat ücreti = maaş ÷ aylık çalışma saati; mesai = saat ücreti × kat. Personel kartında
+          kişiye özel aylık saat girilebilir; boşsa buradaki. */}
+      <div data-mesai-ayar style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 10, fontSize: 12 }}>
+        <b>Mesai:</b>
+        {[["aylikSaat", "Aylık çalışma saati"], ["haftaIci", "Hafta içi kat"], ["cumartesi", "Cumartesi kat"], ["pazar", "Pazar kat"]].map(([k, et]) => (
+          <label key={k} style={{ display: "flex", alignItems: "center", gap: 4 }}>{et}
+            <input type="number" step="0.1" data-mesai-ayar-alan={k} key={`${k}${mesaiAyari(tanimlar)[k]}`} defaultValue={mesaiAyari(tanimlar)[k]}
+              onBlur={(e) => { const v = parseFloat(e.target.value); if (v > 0 && v !== mesaiAyari(tanimlar)[k]) onSave({ ...tanimlar, mesaiAyar: { ...(tanimlar.mesaiAyar || {}), [k]: v } }); }}
+              style={{ width: 64, padding: "3px 5px", fontSize: 12, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }} />
+          </label>
+        ))}
+      </div>
+      <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
+        <input value={yeniBolum} data-bolum-ad="1" onChange={(e) => setYeniBolum(e.target.value)} placeholder="Örn. Kesimhane" style={inputStyle}
+          onKeyDown={(e) => { if (e.key === "Enter") { bolumEkle(yeniBolum); setYeniBolum(""); } }} />
+        <button className="btn-primary" title="Bölüm ekle" data-bolum-ekle="1" onClick={() => { bolumEkle(yeniBolum); setYeniBolum(""); }}><Plus size={14} /></button>
+      </div>
+      {(tanimlar.bolumler || []).length === 0 ? (
+        <EmptyState text="Henüz atölye içi bölüm tanımlanmadı." />
+      ) : (tanimlar.bolumler || []).map((b) => {
+        const prosesAdlari = [...(tanimlar.prosesler || []).map((p) => p.ad), ...(tanimlar.araProsesler || []).map((p) => p.ad)].filter(Boolean);
+        const personelCariler = (cariler || []).filter((c) => c.tip === "Personel" && !c.pasif);
+        const uyeler = b.personel || [];
+        return (
+          <div key={b.id} data-bolum={b.ad} style={{ border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", background: "#fff", padding: 12, marginBottom: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+              <input value={b.ad} onChange={(e) => bolumGuncelle(b.id, { ad: e.target.value })}
+                style={{ fontSize: 14, fontWeight: 700, flex: 1, padding: "4px 8px", border: "1px solid var(--erp-border-2)", borderRadius: "var(--erp-r-sm)" }} />
+              <SilOnayButonu onConfirm={() => bolumSil(b.id)} boyut={14} baslikNormal={`"${b.ad}" bölümünü sil (tahakkuk kayıtları ve cari hareketleri kalır)`} baslikOnay="Silinecek — tekrar dokunun" />
+            </div>
+            <div style={{ fontSize: 12, color: "var(--erp-text-2)", marginBottom: 4 }}>Bağlı prosesler <span style={{ fontSize: 11 }}>(bu proseslerin teslimi cariye yazılmaz)</span></div>
+            <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 10 }}>
+              {prosesAdlari.map((ad) => {
+                const secili = (b.prosesler || []).includes(ad);
+                const baska = (tanimlar.bolumler || []).find((x) => x.id !== b.id && (x.prosesler || []).includes(ad));
+                return (
+                  <button key={ad} type="button" data-bolum-proses={`${b.ad}|${ad}`} disabled={!!baska} title={baska ? `"${baska.ad}" bölümünde` : undefined}
+                    onClick={() => bolumGuncelle(b.id, { prosesler: secili ? (b.prosesler || []).filter((x) => x !== ad) : [...(b.prosesler || []), ad] })}
+                    style={{ fontSize: 12, padding: "3px 9px", borderRadius: "var(--erp-r-pill)", cursor: baska ? "default" : "pointer", opacity: baska ? 0.5 : 1,
+                      border: `1.5px solid ${secili ? "var(--erp-primary)" : "var(--erp-line)"}`, background: secili ? "#4E6B4E1A" : "#fff",
+                      color: secili ? "var(--erp-primary)" : "var(--erp-text-2)", fontWeight: secili ? 700 : 400 }}>
+                    {secili ? "✓ " : ""}{ad}
+                  </button>
+                );
+              })}
+            </div>
+            <div style={{ fontSize: 12, color: "var(--erp-text-2)", marginBottom: 4 }}>Personel ve aylık maaş (₺)</div>
+            {uyeler.map((p) => {
+              const c = (cariler || []).find((x) => x.id === p.cariId);
+              return (
+                <div key={p.cariId} data-bolum-personel={c ? c.unvan : p.cariId} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0" }}>
+                  <span style={{ flex: 1, fontSize: 13 }}>{c ? c.unvan : "silinmiş cari"}</span>
+                  <input type="text" inputMode="decimal" defaultValue={p.maas || ""} data-bolum-maas={c ? c.unvan : p.cariId} placeholder="aylık maaş" className="mono"
+                    onBlur={(e) => { const v = parseFloat(String(e.target.value).replace(",", ".")) || 0; if (v !== (p.maas || 0)) bolumGuncelle(b.id, { personel: uyeler.map((x) => (x.cariId === p.cariId ? { ...x, maas: v } : x)) }); }}
+                    style={{ width: 110, padding: "4px 8px", fontSize: 13, textAlign: "right", border: "1px solid var(--erp-border-2)", borderRadius: "var(--erp-r-sm)" }} />
+                  <span style={{ fontSize: 12, color: "var(--erp-text-3)" }}>₺ / ay</span>
+                  <button type="button" className="btn-ghost" style={{ padding: "2px 8px", fontSize: 12 }} title="Bölümden çıkar"
+                    onClick={() => bolumGuncelle(b.id, { personel: uyeler.filter((x) => x.cariId !== p.cariId) })}>×</button>
+                </div>
+              );
+            })}
+            <select value="" data-bolum-personel-ekle={b.ad} onChange={(e) => { const id = e.target.value; if (id) bolumGuncelle(b.id, { personel: [...uyeler, { cariId: id, maas: 0 }] }); }}
+              style={{ ...inputStyle, width: "auto", minWidth: 220, fontSize: 12, padding: "4px 8px", marginTop: 4 }}>
+              <option value="">+ personel ekle (Personel tipli cari)…</option>
+              {personelCariler.filter((c) => !uyeler.some((x) => x.cariId === c.id)).map((c) => <option key={c.id} value={c.id}>{c.unvan}</option>)}
+            </select>
+          </div>
+        );
+      })}
+    </div>
+    </>
+        )}
     {/* REÇETE ŞABLONLARI (21 Eylül): standart malzeme listeleri. Ürün reçetesinde ve model
         reçetesinde "şablondan ekle" ile kullanılır; burada ad, satır miktarı düzenlenir, satır
         eklenir ya da silinir. Şablonu reçeteden de oluşturabilirsiniz (ürün › Reçete). */}

@@ -19,7 +19,8 @@ function urunMaliyetHesabi(urun, ctx = {}) {
   const eksikler = [];
   if (!urun) return { tur: "yok", hammadde: 0, iscilik: 0, genel: 0, tamTL: null, eksikler: ["ürün yok"] };
   const kurlar = ctx.kurlar || {};
-  const recete = urun.recete || [];
+  // Satın alınan ürün (v1.744.29): maliyet ALIŞ FİYATI — işaretlenmeden önce kalmış bir reçete hesaba girmez.
+  const recete = satinAlinanMi(urun) ? [] : (urun.recete || []);
   if (recete.length === 0) {
     const f = parseFloat(urun.alisFiyati) || 0;
     if (!(f > 0)) return { tur: "yok", hammadde: 0, iscilik: 0, genel: 0, tamTL: null, eksikler: ["reçete de alış fiyatı da yok"] };

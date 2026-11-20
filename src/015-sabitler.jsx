@@ -492,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.744.22";
-const SURUM_TARIHI = "2026-11-16";
-const SURUM_NOTU = "Web sitesi kayıt onayı tek adımda; site hesabı yönetimi yalnız Yönetici";
+const SURUM = "1.744.32";
+const SURUM_TARIHI = "2026-11-20";
+const SURUM_NOTU = "Stok kartından sipariş sekmesi, carinin para birimi, satın alınan ürün, maaş fişleri bölüme, sezon bazında çift başı maliyet";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -525,6 +525,13 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" };   // teklif: v1.723.0, Sipariş'in alt sekmesi
 
 const SURUM_GECMISI = [
+  { surum: "1.744.32", tarih: "20.11.2026", eklenen: ["Finans › Kâr-Zarar: \"Son 3 ay\", \"Son 6 ay\" ve \"Tarih aralığı\" dönemleri. Atölye bölümü satırında dönemin çift başı gerçek maliyeti (dönem maaşı ÷ dönem adedi); bölüm dökümünde sezon bazında tablo (sezon siparişten; aynı ay iki sezon üretildiyse o ayın maaşı adede göre paylaştırılır; teslim girilmeyen ayın maaşı ayrıca gösterilir)."], degisen: [], duzeltilen: [] },
+  { surum: "1.744.31", tarih: "20.11.2026", eklenen: [], degisen: [], duzeltilen: ["Onaylanan maaş fişleri (MAŞ-) ve mesai fişleri (MS-) Kâr-Zarar'da atölye bölümüne sayılmıyordu: bölüm maaşı 0, \"çift başı gerçek\" maliyet ve bölüm işçilik gideri boş görünüyordu. Artık bölümün maaşına, aylık verimine ve gider kartına girer."] },
+  { surum: "1.744.30", tarih: "20.11.2026", eklenen: [], degisen: ["Atölye İçi Bölümler (maaşlı bölümler, mesai katsayıları) Tanımlar › Ürün yerine Tanımlar › Üretim sekmesinde, Prosesler'in altında."], duzeltilen: [] },
+  { surum: "1.744.29", tarih: "20.11.2026", eklenen: ["Mamul stok kartında Tedarikçi ve \"Satın alınan ürün (reçetesiz)\" işareti (ürün açarken de). İşaretli üründe Reçete / Maliyet / Kapasite sekmesi yok, maliyet alış fiyatından; siparişte reçete uyarısı çıkmaz; hammadde ihtiyacına girmez; planlamada üretilmez, satın almaya gider (tedarikçisi hazır gelir)."], degisen: [], duzeltilen: [] },
+  { surum: "1.744.28", tarih: "20.11.2026", eklenen: [], degisen: ["Sipariş › Kalem Ekle: ürün ve renk kutuları aynı boyda; \"+ Renk\" düğmesi renk kutusunun yanında kalır. Yer daralınca asorti / miktar / fiyat grubu bütün olarak alt satıra iner."], duzeltilen: ["Boyut ayarı büyükken asorti \"Uygula\" düğmesi ve asorti adı miktar kutularının üstüne biniyordu (fiş formunda da)."] },
+  { surum: "1.744.27", tarih: "20.11.2026", eklenen: [], degisen: ["Sipariş: cari seçilince kalem para birimi carinin kartındaki para birimine geçer (ör. USD çalışılan müşteride kalemler USD girilir). Kalem satırında elle değiştirilebilir; önceden eklenmiş kalemler değişmez."], duzeltilen: [] },
+  { surum: "1.744.26", tarih: "20.11.2026", eklenen: [], degisen: ["Stok kartı › Siparişler: siparişe tıklayınca sipariş listesi süzülerek açılmıyor; sipariş üst şeritte kendi sekmesinde açılır."], duzeltilen: ["Stok kartından açılan sipariş kapatılınca stok kartı da kapanmış görünüyordu: artık stok kartına geri dönülür."] },
   { surum: "1.744.22", tarih: "16.11.2026", eklenen: [], degisen: ["Siteden gelen kayıt talebini \"Onayla — cari aç\" ile onaylamak artık tek adım: cari, site hesabı ve talebin kapanışı sunucuda birlikte yapılır — başka bir cihaz aynı talebi işlerse, bağlantı koparsa ya da uygulama kapanırsa boşta cari kalmaz. Cevap alınamazsa düğme \"Tamamla\" olur ve aynı kayıtla yeniden sorar (ikinci cari açılmaz).", "Müşterinin web sitesi girişini oluşturma / değiştirme / kapatma ve siteden gelen kayıt talebini onaylama / reddetme düğmeleri yalnız Yöneticiye görünür (sunucu zaten yalnız Yöneticiye izin veriyordu)."], duzeltilen: [] },
   { surum: "1.744.21", tarih: "14.11.2026", eklenen: [], degisen: ["Cari ekstresi çıktısı (Yazdır / PDF / WhatsApp / e-posta): bedenli fişler açıklamada \"36:1, 37:2…\" yazısı yerine ekrandaki ekstre gibi beden matrisiyle — satır ürün · renk, sütun beden, sonda toplam × birim fiyat. Bedensiz ürünler ve para hareketleri eskisi gibi tek satır; pencere genişledi."], duzeltilen: [] },
   { surum: "1.744.20", tarih: "13.11.2026", eklenen: [], degisen: [], duzeltilen: ["Vitrin düzeltmesinden sonra kalan yanlış \"Başka cihazdan güncellendi: Stok\" bildirimi: \"Standart\" ya da model renkli varyantlarda sunucu renk kimliğini boş döndürdüğü için varyant \"değişmiş\" sayılıyordu. Renk kimliği artık karşılaştırılmaz (renk adı karşılaştırılmaya devam eder). Günlükteki bildirim satırı artık en fazla 3 farkı birlikte yazar."] },
@@ -2088,10 +2095,16 @@ function bolumTahakkukKaydi(bolum, k) {
 }
 // MAAŞ + MESAİ (v1.700): mesai fişi (MESAI-YYYY-MM-<kod>, islemTipi "Mesai") maaşla aynı yolu izler — bölümün gider
 // kartına, bölüm kâr/zararına ve karşılık sayımına maaş gibi girer. Tek yerde karar verilir.
+// TEK FİŞ DEFTERİ FİŞLERİ DE (v1.744.31 — kullanıcı: "fişlerde maaş işledi fakat kesimhane tarafında görünüp maliyet
+// çıkarmıyor"). 1.740'tan beri onaylı maaş tahakkuku sunucu fişiyle kesiliyor: numara `MAŞ-…` (mesai `MS-…`, 078
+// PARA_FIS_ONEKLERI), işlem tipi gönderilmiyor; ay/kişi anahtarı `maasAnahtari`nda ("MAAS-2026-11-0007"). Bu fonksiyon
+// yalnız eski `MAAS-` / `MESAI-` numarasını ve işlem tipini tanıdığı için yeni fişler Kâr-Zarar'da bölüm maaşına, aylık
+// verime ("çift başı gerçek") ve bölüm gider kartına HİÇ girmiyordu (cari ekranı 200'de `MAŞ-`yi zaten tanıyordu).
 function maasHareketiMi(h) {
   if (!h) return false;
   const f = String(h.fisNo || "");
-  return h.islemTipi === "Maaş" || h.islemTipi === "Mesai" || /^MAAS-/.test(f) || /^MESAI-/.test(f);
+  return h.islemTipi === "Maaş" || h.islemTipi === "Mesai" || /^MAAS-/.test(f) || /^MESAI-/.test(f)
+    || /^MAŞ-/.test(f) || /^MS-/.test(f) || /^MAAS-/.test(String(h.maasAnahtari || ""));
 }
 function mesaiFisNo(ay, cari) {
   return `MESAI-${ay}-${Number(cari && cari.kod) > 0 ? String(cari.kod).padStart(4, "0") : (cari && cari.id)}`;
@@ -2221,6 +2234,47 @@ function bolumAylikDokum(bolum, uretim, cariler) {
     verim: k.maas > 0 ? (k.tahakkuk / k.maas) * 100 : null,
     ciftMaliyeti: k.adet > 0 ? k.maas / k.adet : null,
   }));
+}
+// SEZON BAZINDA GERÇEK MALİYET (v1.744.32 — kullanıcı: "6 ay × 140.000 ₺ ÷ 6 aylık kesimhane adedi bize kesimhane çift başı
+// gerçek maliyetini verir, bunu sezon olarak da değerlendirebiliriz … siparişi girerken sezon giriyoruz, sezonu oradan
+// çıkarabiliriz; aynı anda 2 sezon üretimi de yaptığımız oluyor"). Maaş zamana bağlı, sezon işe bağlı; iki sezon aynı ay
+// üretilince maaş düz bölünemez. Kural: her ay o ayın maaşı, o ay bölümün yaptığı ADEDE göre paylaştırılır —
+// ay çift başı = ay maaşı ÷ ay adedi; sezonun maliyeti = Σ(o sezonun o aydaki adedi × ay çift başı).
+// Sezon: tahakkukun üretimini isteyen SATIŞ siparişinin sezonu (üretim.rezervasyonSiparisId → sipariş.sezon); siparişsiz
+// (depoya) üretim "(sezonsuz)". Adet yalnız bölümün KENDİ personelinin teslimleri (bölüm tahakkuku; fasona verilen iş
+// carisine yazılır, bölüme sayılmaz — kullanıcı kararı, 015 iscilikBolumu). Dönemde maaşı olup adedi olmayan ayın maaşı
+// hiçbir sezona dağıtılamaz → `dagitilamayan` (gizlenmez; dönem çift başına dahil, sezonlara değil). Saf.
+function bolumSezonDokumu(bolum, uretim, cariler, siparisler, tarihUygun) {
+  const aylar = new Map(bolumAylikDokum(bolum, uretim, cariler).map((k) => [k.ay, k]));
+  const sezonlar = new Map();
+  const al = (sezon) => { if (!sezonlar.has(sezon)) sezonlar.set(sezon, { sezon, adet: 0, maliyet: 0, tahakkuk: 0 }); return sezonlar.get(sezon); };
+  const sipSezonu = (u) => {
+    const sp = u && u.rezervasyonSiparisId ? (siparisler || []).find((x) => x.id === u.rezervasyonSiparisId) : null;
+    return (sp && String(sp.sezon || "").trim()) || "(sezonsuz)";
+  };
+  const doneminAylari = new Set();
+  (uretim || []).forEach((u) => (u.bolumTahakkuklari || []).forEach((t) => {
+    if (t.bolumId !== bolum.id || !t.tarih || !tarihUygun(t.tarih)) return;
+    const ay = String(t.tarih).slice(0, 7);
+    doneminAylari.add(ay);
+    const k = aylar.get(ay);
+    const birim = k && k.adet > 0 ? k.maas / k.adet : 0;
+    const s = al(sipSezonu(u));
+    s.adet += t.adet || 0; s.tahakkuk += t.tutar || 0; s.maliyet += (t.adet || 0) * birim;
+  }));
+  // Dönemdeki maaşı olup adedi olmayan aylar (maaş tarihine göre)
+  let dagitilamayan = 0;
+  aylar.forEach((k) => {
+    if (k.adet > 0 || !(k.maas > 0) || !tarihUygun(`${k.ay}-15`)) return;
+    dagitilamayan += k.maas;
+  });
+  const yuvarla = (v) => Math.round(v * 100) / 100;
+  const satirlar = Array.from(sezonlar.values()).map((s) => ({
+    sezon: s.sezon, adet: s.adet, maliyet: yuvarla(s.maliyet), tahakkuk: yuvarla(s.tahakkuk),
+    ciftMaliyeti: s.adet > 0 ? yuvarla(s.maliyet / s.adet) : null,
+    receteOrtalamasi: s.adet > 0 ? yuvarla(s.tahakkuk / s.adet) : null,
+  })).sort((a, b) => (a.sezon === "(sezonsuz)") - (b.sezon === "(sezonsuz)") || b.adet - a.adet);
+  return { satirlar, dagitilamayan: yuvarla(dagitilamayan) };
 }
 // Personel bazında (dönem): adet ve tahakkuk — kim ne kadar üretti.
 function bolumPersonelDokumu(girisler) {

@@ -1,0 +1,19 @@
+{
+ "cariYok": "TRY",
+ "elleEurKalir": "EUR",
+ "eurCari": "EUR",
+ "hatalar": [],
+ "kaydedilenSiparis": {
+  "cari": "c2",
+  "kalemler": [
+   {
+    "beden": "38",
+    "miktar": 1,
+    "paraBirimi": "USD"
+   }
+  ]
+ },
+ "tlCari": "TRY",
+ "usdCari": "USD",
+ "usdCariyeDonus": "USD"
+}
