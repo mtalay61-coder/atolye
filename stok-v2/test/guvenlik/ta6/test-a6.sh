@@ -58,6 +58,11 @@ for f in stok-v2/guvenlik/23-platform-yonetim.sql kurulum-betigi.sql; do
   git -C $A show "$V2:$f" > $T/.v2.sql 2>/dev/null || { echo "kurulum başarısız ($V2:$f okunamadı — git fetch origin claude/yeni-firma-kurulum-v2)"; exit 2; }
   editor $T/.v2.sql >/dev/null 2>$T/.hata || { echo "kurulum başarısız ($f): $(grep -m1 ERROR $T/.hata)"; exit 2; }
 done; rm -f $T/.v2.sql
+# DÜZELTME ÖNCESİ HÂL (20 Kasım'dan sonra): A6 main'e girdi (#364) ve kaynaklar (rls-rol.sql, 15-duzeltme.sql) düzeltilmiş
+# gövdeleri taşıyor → hazirla.sh'ın kurduğu $KAYNAK artık UYGULANMIŞ doğar. Testin "öncesi" adımı canlının 20 Kasım'dan ÖNCEKİ
+# hâlini ölçer; o hâl geri alma dosyasıyla birebir kurulur (eski gövdelerin md5'i canlı arşiviyle aynı —
+# 24-a6-canli-yedek-2026-11-18.sql). Kaynak zaten eskiyse (main'in eski bir kopyası) geri alma zararsızdır.
+editor $G/24-a6-tanim-kimligi-geri-al.sql >/dev/null 2>$T/.hata || { echo "kurulum başarısız (öncesi hâl): $(grep -m1 ERROR $T/.hata)"; exit 2; }
 echo "== a6_test: $KAYNAK kopyası · $(git -C $A rev-parse --short HEAD) + çalışma ağacı"
 
 echo "== 1) Düzeltme öncesi"
@@ -147,10 +152,10 @@ echo "== 7) stok-v2/editor/15-duzeltme.sql yeniden çalıştırılırsa"
 awk '/^create or replace function public.tanimlar_kullanici_koruma\(/,/^end \$\$;/' $A/stok-v2/editor/15-duzeltme.sql > $T/.k15.sql
 q < $T/.k15.sql >/dev/null 2>$T/.hata; sonuc "15-duzeltme kopyası hatasız" "" "$(grep -m1 ERROR $T/.hata)"
 sonuc "15-duzeltme (güncel) yeniden çalışınca önkoşul" "UYGULANMIŞ" "$(genel)"
-git -C $A show origin/main:stok-v2/editor/15-duzeltme.sql 2>/dev/null | awk '/^create or replace function public.tanimlar_kullanici_koruma\(/,/^end \$\$;/' > $T/.k15eski.sql
+git -C $A show ${A6_ESKI_MAIN:-b4594bc}:stok-v2/editor/15-duzeltme.sql 2>/dev/null | awk '/^create or replace function public.tanimlar_kullanici_koruma\(/,/^end \$\$;/' > $T/.k15eski.sql
 if [ -s $T/.k15eski.sql ]; then
   q < $T/.k15eski.sql >/dev/null 2>&1
-  sonuc "ESKİ 15-duzeltme (main) yeniden çalışsaydı koruma eskiye dönerdi" "KARIŞIK" "$(genel)"
+  sonuc "ESKİ 15-duzeltme (A6 öncesi main, b4594bc) yeniden çalışsaydı koruma eskiye dönerdi" "KARIŞIK" "$(genel)"
   q < $T/.k15.sql >/dev/null 2>&1
   sonuc "güncel kopya yeniden kurulunca" "UYGULANMIŞ" "$(genel)"
 fi
