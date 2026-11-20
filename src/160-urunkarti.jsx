@@ -3654,32 +3654,35 @@ function ProductMatrixCard({
               Maliyet ve satış fiyatı → Maliyet sekmesi
             </button>
           )}
+          {/* HAMMADDESİZ PROSES EKLE (v1.593.0): yalnız işçiliği olan adım (ör. Dikim, Kalite) reçetede grup olur.
+              REÇETE BOŞKEN DE (v1.744.34 — kullanıcı: "reçeteye hammaddesiz proses ekleme olsun, daha önce söylemiştim"): satır
+              "reçetede satır VAR" koşulunun içindeydi; yeni / reçetesi boş üründe hiç görünmüyordu, kullanıcı ilk adımı
+              (ör. yalnız işçilikli Dikim) ekleyemiyordu. Artık hammadde satırı olmasa da her mamul reçetesinde durur. */}
+          {(() => {
+            const mevcut = new Set(receteProsesGrupla(product.recete || [], tanimlarProsesler, product.receteProsesSirasiOverride, product.receteEkProsesler).map((pg) => pg.proses));
+            const adaylar = (tanimlarProsesler || []).map((p) => p.ad).filter((ad) => !mevcut.has(ad));
+            // v1.605.0 (kullanıcı: "hammaddesiz proses de eklenecekti"): aday kalmayınca satır büsbütün kayboluyor,
+            // kullanıcı özelliği bulamıyordu. Satır hep durur; aday yoksa nedeni ve çözümü yazar.
+            return (
+              <div data-recete-bos-proses={adaylar.length} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8, fontSize: 12, color: "var(--erp-text-2)", flexWrap: "wrap" }}>
+                <span>Hammaddesiz proses ekle:</span>
+                {adaylar.length ? (
+                  <>
+                    <select data-recete-bos-proses-sec="1" value="" onChange={(e) => bosProsesEkle(e.target.value)}
+                      style={{ fontSize: 12, padding: "3px 6px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }}>
+                      <option value="">Seçin…</option>
+                      {adaylar.map((ad) => <option key={ad} value={ad}>{ad}</option>)}
+                    </select>
+                    <span style={{ color: "var(--erp-text-3)" }}>— yalnız işçilik girilir, üretimde adım olur</span>
+                  </>
+                ) : (
+                  <span style={{ color: "var(--erp-text-3)" }}>tanımlı bütün prosesler zaten reçetede — yeni bir adım için önce Tanımlar › Prosesler'e ekleyin</span>
+                )}
+              </div>
+            );
+          })()}
           {((product.recete || []).length > 0 || (product.receteEkProsesler || []).length > 0) && (
             <>
-              {/* HAMMADDESİZ PROSES EKLE (v1.593.0): yalnız işçiliği olan adım (ör. Dikim, Kalite) reçetede grup olur. */}
-              {(() => {
-                const mevcut = new Set(receteProsesGrupla(product.recete, tanimlarProsesler, product.receteProsesSirasiOverride, product.receteEkProsesler).map((pg) => pg.proses));
-                const adaylar = (tanimlarProsesler || []).map((p) => p.ad).filter((ad) => !mevcut.has(ad));
-                // v1.605.0 (kullanıcı: "hammaddesiz proses de eklenecekti"): aday kalmayınca satır büsbütün kayboluyor,
-                // kullanıcı özelliği bulamıyordu. Satır hep durur; aday yoksa nedeni ve çözümü yazar.
-                return (
-                  <div data-recete-bos-proses={adaylar.length} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8, fontSize: 12, color: "var(--erp-text-2)", flexWrap: "wrap" }}>
-                    <span>Hammaddesiz proses ekle:</span>
-                    {adaylar.length ? (
-                      <>
-                        <select data-recete-bos-proses-sec="1" value="" onChange={(e) => bosProsesEkle(e.target.value)}
-                          style={{ fontSize: 12, padding: "3px 6px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }}>
-                          <option value="">Seçin…</option>
-                          {adaylar.map((ad) => <option key={ad} value={ad}>{ad}</option>)}
-                        </select>
-                        <span style={{ color: "var(--erp-text-3)" }}>— yalnız işçilik girilir, üretimde adım olur</span>
-                      </>
-                    ) : (
-                      <span style={{ color: "var(--erp-text-3)" }}>tanımlı bütün prosesler zaten reçetede — yeni bir adım için önce Tanımlar › Prosesler'e ekleyin</span>
-                    )}
-                  </div>
-                );
-              })()}
               <div style={{ display: "grid", gap: 14, marginBottom: 12 }}>
               {(() => {
                 const pgListesi = receteProsesGrupla(product.recete, tanimlarProsesler, product.receteProsesSirasiOverride, product.receteEkProsesler);
