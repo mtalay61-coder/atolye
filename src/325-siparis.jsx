@@ -1764,11 +1764,21 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                 gerekirse yazıları ufalt"). Eşit sütunlu ızgara fiyatı ürün/renk kadar geniş istiyordu ve
                 tablet genişliğinde üçüncü sütun alt satıra düşüyordu. Esnek satır: ürün ve renk geniş,
                 fiyat dar (alt sınırları var); sığmayan yine alt satıra iner, telefonda alt alta. */}
-            <div style={{
-              flex: "1 1 320px", minWidth: 0,
+            {/* ÜRÜN VE RENK AYNI ÖLÇÜDE (v1.744.28 — kullanıcı: "sipariş ürün ve renk girişleri aynı ölçüde olsun … üzerine binen
+                yerler var"). Ürün seçici bir kap (.arama-kabi) içinde çerçevesiz kutu: Boyut ayarındaki kutu büyütmesi (zoom) yalnız
+                İÇTEKİ yazıya uygulanıyor, dolgusu da farklıydı → renk kutusundan kısa kalıyordu. Bu satırda kap, renk kutusuyla aynı
+                dolguyu ve aynı büyütmeyi alır; içteki yazı ikinci kez büyütülmez. Alt sınır 180 → 240 px: dar kalınca "+ Renk"
+                düğmesi alt satıra kayıyordu; artık sığmazsa miktar grubu BÜTÜN OLARAK alt satıra iner. */}
+            <style>{`
+              [data-siparis-urun-renk] .arama-kabi { zoom: var(--olcek-kutu, 1); padding: 8px 10px !important; min-height: 38px; }
+              [data-siparis-urun-renk] .arama-kabi input { zoom: 1; }
+              [data-siparis-urun-renk] input[data-siparis-renk-arama] { min-height: 38px; }
+            `}</style>
+            <div data-siparis-urun-renk="1" style={{
+              flex: "1 1 500px", minWidth: 0,
               display: "flex", flexWrap: "wrap", gap: 8, alignItems: "flex-start",
             }}>
-              <div style={{ flex: "1.5 1 180px", minWidth: 0 }}>
+              <div style={{ flex: "1 1 240px", minWidth: 0 }}>
               <Field label="Ürün">
                 {/* Sipariş girişinde de aramalı seçici: stok büyüdükçe açılır listeden ürün bulmak
                     reçetedeki kadar yavaşlıyor ve sipariş girişi seri yapılan bir iş. */}
@@ -1783,16 +1793,16 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
               </Field>
               </div>
               {!renkSorulmaz && (
-              <div style={{ flex: "1.5 1 180px", minWidth: 0 }}>
+              <div style={{ flex: "1 1 240px", minWidth: 0 }}>
               <Field label={renkBasligi(seciliUrun)}>
-                {/* Düğme KIRILABİLİR: sığmazsa seçiciyi ezmek yerine alt satıra geçiyor.
-                    Seçicinin alt sınırı var, çünkü asıl iş onda. */}
-                <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+                {/* "+ Renk" düğmesi kutunun YANINDA kalır (v1.744.28): alt satıra kayınca renk kutusu ürün kutusundan
+                    farklı yükseklikte bir blok gibi görünüyordu. Yer daralınca kutu daralır (alt sınırı var). */}
+                <div style={{ display: "flex", gap: 5, flexWrap: "nowrap", alignItems: "stretch" }}>
                   {/* RENK YAZARAK + RESİMLİ (v1.469.0 — kullanıcı: "stok renk resimleri tanımlı ise renk
                       içinde resim göstersin, yazdıkça daralan liste"). Kutudaki metin ayrı tutuluyor
                       (`kRenkYazi`); `kRenk` yalnız listedeki bir renk seçilince değişiyor — yarım
                       yazım miktar matrisini ve kalemi bozmasın. */}
-                  <div style={{ flex: "1 1 160px", minWidth: 140 }}>
+                  <div style={{ flex: "1 1 160px", minWidth: 120 }}>
                     <AramaliMetin
                       veriAdi="data-siparis-renk-arama"
                       deger={kRenkYazi}

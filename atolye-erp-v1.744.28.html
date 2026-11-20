@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.744.26</title>
+<title>Atölye ERP 1.744.28</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2319,9 +2319,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.744.26";
+const SURUM = "1.744.28";
 const SURUM_TARIHI = "2026-11-20";
-const SURUM_NOTU = "Stok kartından sipariş ayrı sekmede açılır; kapatınca stok kartına dönülür";
+const SURUM_NOTU = "Sipariş kalem satırı düzeni: ürün ve renk aynı boyda, asorti taşmıyor; kalem para birimi carinin para birimiyle gelir";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2351,6 +2351,8 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 }
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" }; // teklif: v1.723.0, Sipariş'in alt sekmesi
 const SURUM_GECMISI = [
+    { surum: "1.744.28", tarih: "20.11.2026", eklenen: [], degisen: ["Sipariş › Kalem Ekle: ürün ve renk kutuları aynı boyda; \"+ Renk\" düğmesi renk kutusunun yanında kalır. Yer daralınca asorti / miktar / fiyat grubu bütün olarak alt satıra iner."], duzeltilen: ["Boyut ayarı büyükken asorti \"Uygula\" düğmesi ve asorti adı miktar kutularının üstüne biniyordu (fiş formunda da)."] },
+    { surum: "1.744.27", tarih: "20.11.2026", eklenen: [], degisen: ["Sipariş: cari seçilince kalem para birimi carinin kartındaki para birimine geçer (ör. USD çalışılan müşteride kalemler USD girilir). Kalem satırında elle değiştirilebilir; önceden eklenmiş kalemler değişmez."], duzeltilen: [] },
     { surum: "1.744.26", tarih: "20.11.2026", eklenen: [], degisen: ["Stok kartı › Siparişler: siparişe tıklayınca sipariş listesi süzülerek açılmıyor; sipariş üst şeritte kendi sekmesinde açılır."], duzeltilen: ["Stok kartından açılan sipariş kapatılınca stok kartı da kapanmış görünüyordu: artık stok kartına geri dönülür."] },
     { surum: "1.744.22", tarih: "16.11.2026", eklenen: [], degisen: ["Siteden gelen kayıt talebini \"Onayla — cari aç\" ile onaylamak artık tek adım: cari, site hesabı ve talebin kapanışı sunucuda birlikte yapılır — başka bir cihaz aynı talebi işlerse, bağlantı koparsa ya da uygulama kapanırsa boşta cari kalmaz. Cevap alınamazsa düğme \"Tamamla\" olur ve aynı kayıtla yeniden sorar (ikinci cari açılmaz).", "Müşterinin web sitesi girişini oluşturma / değiştirme / kapatma ve siteden gelen kayıt talebini onaylama / reddetme düğmeleri yalnız Yöneticiye görünür (sunucu zaten yalnız Yöneticiye izin veriyordu)."], duzeltilen: [] },
     { surum: "1.744.21", tarih: "14.11.2026", eklenen: [], degisen: ["Cari ekstresi çıktısı (Yazdır / PDF / WhatsApp / e-posta): bedenli fişler açıklamada \"36:1, 37:2…\" yazısı yerine ekrandaki ekstre gibi beden matrisiyle — satır ürün · renk, sütun beden, sonda toplam × birim fiyat. Bedensiz ürünler ve para hareketleri eskisi gibi tek satır; pencere genişledi."], duzeltilen: [] },
@@ -33797,16 +33799,19 @@ function AsortiUygulaKontrolu({ asortiler, bedenSecenekleri, onUygula, olcuTipi,
     // DAR KİP (v1.489.0, fiş formu). Kullanıcı: "Asortiyi miktarın sağına alalım ve daralsın." Tek
     // satırlık kontrol (≈330 px) miktar kutularının yanına sığmıyordu. Dar kipte iki kat: üstte seçici,
     // altta "× [set] Uygula" — 100 px, beden kutularıyla aynı yükseklikte bir sütun.
+    // GENİŞLİK İÇERİĞE GÖRE (v1.744.28 — kullanıcı: "üzerine binen yerler var"). Sütun 100 px'e SABİTTİ; Tanımlar › Görünüm › Boyut
+    // ile düğme / kutu büyütülünce (zoom) "Uygula" ve asorti adı 100 px'e sığmıyor, sağdaki miktar kutularının ÜSTÜNE taşıyordu.
+    // Artık en az 100 px, gerekirse içeriği kadar (max-content); seçici sütunu doldurur, alt satır kırılmaz.
     if (dar) {
-        return (React.createElement("label", { "data-asorti-dar": "1", style: { display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600, width: 100 } },
+        return (React.createElement("label", { "data-asorti-dar": "1", style: { display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600, minWidth: 100, width: "max-content", flexShrink: 0 } },
             "Asorti",
-            React.createElement("select", { value: asortiId, onChange: (e) => setAsortiId(e.target.value), title: "Asorti", style: { ...inputStyle, width: 100, fontSize: 11, padding: "5px 2px" } },
+            React.createElement("select", { value: asortiId, onChange: (e) => setAsortiId(e.target.value), title: "Asorti", style: { ...inputStyle, width: "100%", maxWidth: 170, fontSize: 11, padding: "5px 2px" } },
                 React.createElement("option", { value: "" }, "Se\u00E7in\u2026"),
                 asortiler.map((a) => React.createElement("option", { key: a.id, value: a.id }, a.ad))),
-            React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 3 } },
+            React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 3, flexWrap: "nowrap" } },
                 React.createElement("span", { style: { fontSize: 11 } }, "\u00D7"),
                 React.createElement("input", { type: "number", min: "1", value: setSayisi, onChange: (e) => setSetSayisi(e.target.value), title: "Set say\u0131s\u0131", style: { ...inputStyle, width: 38, fontSize: 11, padding: "4px 2px", textAlign: "center" } }),
-                React.createElement("button", { type: "button", className: "btn-primary", "data-asorti-uygula": "1", style: { fontSize: 12, fontWeight: 700, padding: "5px 10px", flex: 1 }, disabled: !asortiId, onClick: uygula }, "Uygula"))));
+                React.createElement("button", { type: "button", className: "btn-primary", "data-asorti-uygula": "1", style: { fontSize: 12, fontWeight: 700, padding: "5px 10px", flex: "1 0 auto", whiteSpace: "nowrap" }, disabled: !asortiId, onClick: uygula }, "Uygula"))));
     }
     return (React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: satirIci ? 0 : 8 } },
         React.createElement("select", { value: asortiId, onChange: (e) => setAsortiId(e.target.value), style: { ...inputStyle, width: 160, fontSize: 12 } },
@@ -65241,6 +65246,21 @@ teklifKipi = false, teklifDuzenle = null, onTeklifKaydet, onTeklifVazgec, teklif
     }, [hedefSiparisId]);
     const [kFiyat, setKFiyat] = useState("");
     const [kParaBirimi, setKParaBirimi] = useState("TRY");
+    // CARİNİN PARA BİRİMİ (v1.744.27 — kullanıcı: "Siparişte cari seçildiğinde cariye seçilen para tipi ile sipariş açılsın ve
+    // eklenen siparişler de o cari para tipi ile girilsin"). Kalem para birimi her zaman TRY ile başlıyordu; USD çalışılan
+    // müşteride her kalemde elle değiştirmek gerekiyordu, unutulunca kalem TRY girilip sipariş toplamı karışıyordu.
+    // Cari SEÇİLDİĞİ / DEĞİŞTİĞİ an (yeni sipariş, düzenleme, site talebi, depodan alış) kalem para birimi carinin kartındaki
+    // para birimine (260 `paraBirimi`, yoksa TRY) geçer; cari boşaltılınca TRY. Kalem satırındaki seçim elle değiştirilebilir
+    // kalır; daha önce eklenmiş kalemlere dokunulmaz (kendi para birimleriyle kayıtlı).
+    const oncekiCariRef = useRef(cariId);
+    useEffect(() => {
+        if (oncekiCariRef.current === cariId)
+            return;
+        oncekiCariRef.current = cariId;
+        const c = cariId ? (cariler || []).find((x) => x.id === cariId) : null;
+        setKParaBirimi((c && c.paraBirimi) || "TRY");
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [cariId]);
     // Fiyat ELLE mi yazıldı (v1.482.0)? Yazılmadıysa her beden kendi kural fiyatını alır; yazıldıysa
     // kullanıcının fiyatı bütün bedenlere. Eskiden kutudaki TEK fiyat bütün bedenlere yazılıyordu:
     // Fiyatlandırma'da bedenlere ayrı fiyat girilmiş üründe beden fiyatları hiç çekilmiyordu.
@@ -66477,17 +66497,22 @@ teklifKipi = false, teklifDuzenle = null, onTeklifKaydet, onTeklifVazgec, teklif
                                         React.createElement(ArrowRight, { size: 12 }),
                                         " Re\u00E7eteyi a\u00E7"))),
                                 React.createElement("div", { style: { display: "flex", gap: 12, alignItems: "flex-start", flexWrap: "wrap" } },
-                                    React.createElement("div", { style: {
-                                            flex: "1 1 320px", minWidth: 0,
+                                    React.createElement("style", null, `
+              [data-siparis-urun-renk] .arama-kabi { zoom: var(--olcek-kutu, 1); padding: 8px 10px !important; min-height: 38px; }
+              [data-siparis-urun-renk] .arama-kabi input { zoom: 1; }
+              [data-siparis-urun-renk] input[data-siparis-renk-arama] { min-height: 38px; }
+            `),
+                                    React.createElement("div", { "data-siparis-urun-renk": "1", style: {
+                                            flex: "1 1 500px", minWidth: 0,
                                             display: "flex", flexWrap: "wrap", gap: 8, alignItems: "flex-start",
                                         } },
-                                        React.createElement("div", { style: { flex: "1.5 1 180px", minWidth: 0 } },
+                                        React.createElement("div", { style: { flex: "1 1 240px", minWidth: 0 } },
                                             React.createElement(Field, { label: "\u00DCr\u00FCn" },
                                                 React.createElement(AramaliUrunSecici, { veriAdi: "data-siparis-urun", urunler: urunUygun, seciliId: kUrunId, onSec: urunSec, placeholder: tip === "Alış" ? "Ürün ara…" : "Model ara…", ozelKodAlanlari: tanimlarOzelKodAlanlari }))),
-                                        !renkSorulmaz && (React.createElement("div", { style: { flex: "1.5 1 180px", minWidth: 0 } },
+                                        !renkSorulmaz && (React.createElement("div", { style: { flex: "1 1 240px", minWidth: 0 } },
                                             React.createElement(Field, { label: renkBasligi(seciliUrun) },
-                                                React.createElement("div", { style: { display: "flex", gap: 5, flexWrap: "wrap" } },
-                                                    React.createElement("div", { style: { flex: "1 1 160px", minWidth: 140 } },
+                                                React.createElement("div", { style: { display: "flex", gap: 5, flexWrap: "nowrap", alignItems: "stretch" } },
+                                                    React.createElement("div", { style: { flex: "1 1 160px", minWidth: 120 } },
                                                         React.createElement(AramaliMetin, { veriAdi: "data-siparis-renk-arama", deger: kRenkYazi, onDegis: (v) => {
                                                                 setKRenkYazi(v);
                                                                 const gecerli = renkSecenekleri.includes(v) ? v : "";
@@ -73650,7 +73675,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.744.26)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.744.28)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),
