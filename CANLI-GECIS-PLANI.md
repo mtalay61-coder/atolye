@@ -25,7 +25,7 @@
 
 ## Geçişi engelleyen ya da önce kapanması gerekenler
 
-1. **A6 yetki yükseltme açığı (CANLIDA DA VAR) — ÖNCELİKLİ; düzeltme HAZIRLANDI ve deneme projesinde GEÇTİ (18 Kasım):**
+1. **A6 yetki yükseltme açığı — CANLIDA KAPATILDI (20 Kasım; Faz 0 + Faz 1 tamam, `ta6/sonuc-canli-a6-2026-11-20.txt` A6 dalında):**
    - **Açık:** Personel (ya da listede olmayan giriş hesabı) tanımlar satırının kimliğini değiştirebiliyor. Ardından
      `yetki_var_mi` herkese "evet", `yonetici_mi` herkese "hayır" diyor. Kayıt kapalı olsa bile mevcut personel kullanabilir.
    - **Düzeltme:** dal `claude/a6-tanim-kimligi-koruma` (main'den; #362 / #363'e bağlı değil).
@@ -58,7 +58,7 @@
    - Canlıda `rls-yazma.sql`'in silme korumaları (`silme_koruma`: urunler, cariler, siparisler, uretim) var, yerel kaynakta yok.
    - Asıl kurulum dosyası canlıdan üretilecek (Faz 3) ve bu korumaları TAŞIMALI. **Faz 4'te, birleştirme ve yayından ÖNCE** ölçülür.
 
-## Faz 0 — Hazırlık, YALNIZ OKUMA (canlıda yazma yok)
+## Faz 0 — Hazırlık, YALNIZ OKUMA (canlıda yazma yok) — A6 kısmı TAMAM (18 Kasım; 23 önkoşulu 0.2 henüz çalıştırılmadı)
 
 | # | İş | Kim | Ölçüt |
 |---|---|---|---|
@@ -72,7 +72,11 @@
 
 **Geri dönüş:** Gerek yok; yazma yapılmadı.
 
-## Faz 1 — A6 düzeltmesi (canlı SQL; 23'ten ÖNCE)
+## Faz 1 — A6 düzeltmesi (canlı SQL; 23'ten ÖNCE) — TAMAM (20 Kasım)
+
+> 20 Kasım ~12:00, atölye kapalı, yedek 20 Kasım 10:19 sınanmış. Önkoşul HAZIR → düzeltme Success → UYGULANMIŞ → canlı sınama
+> (`24-a6-canli-sinama.sql`) AÇIK 0 · BAŞARISIZ 0 · UYGUN 8 → önce / sonra görüntü birebir → uygulama hatasız. Geri alma uygulanmadı.
+> PR mtalay61-coder/atolye#364 hâlâ taslak (birleştirme ayrı onay).
 
 | Adım | Ölçüt |
 |---|---|
