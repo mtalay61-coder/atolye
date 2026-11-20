@@ -64,7 +64,7 @@ const DEGISIM_ALAN = {
   sezon: { ad: "sezon", deger: true }, sezonYili: { ad: "sezon yılı", deger: true }, stokNo: { ad: "stok no", deger: true },
   durum: { ad: "durum", deger: true }, asama: { ad: "aşama", deger: true }, tarih: { ad: "tarih", deger: true }, teslimTarihi: { ad: "teslim tarihi", deger: true },
   adet: { ad: "adet", deger: true }, tip: { ad: "tip", deger: true }, paraBirimi: { ad: "para birimi", deger: true }, telefon: { ad: "telefon", deger: true },
-  varsayilanProses: { ad: "varsayılan proses", deger: true }, tedarikciId: { ad: "tedarikçi" }, paketlemeNotu: { ad: "paketleme notu" },
+  varsayilanProses: { ad: "varsayılan proses", deger: true }, tedarikciId: { ad: "tedarikçi" }, satinAlinan: { ad: "satın alınan ürün", deger: true }, paketlemeNotu: { ad: "paketleme notu" },
   recete: { ad: "reçete" }, receteGerceklesme: { ad: "reçete gerçekleşmesi" }, fiyatKurallari: { ad: "fiyat kuralları" }, prosesUcretleri: { ad: "proses ücretleri" },
   ozelKodlar: { ad: "özel kodlar" }, hariciBarkodlar: { ad: "harici barkodlar" }, kapasite: { ad: "kapasite" }, notlar: { ad: "notlar" }, aciklama: { ad: "açıklama" },
   bedenMiktarlari: { ad: "beden miktarları" }, prosesIlerleme: { ad: "proses ilerlemesi" }, prosesPlani: { ad: "proses planı" }, adres: { ad: "adres" },

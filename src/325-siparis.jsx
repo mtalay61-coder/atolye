@@ -415,7 +415,8 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
   // oluşmaz — o renk için eşleştirme yapılmadan sipariş girilirse hammadde ihtiyacı SIFIR çıkar ve
   // eksik sessizce fark edilmez. Bu yüzden sipariş ekranında, kalem eklenmeden ÖNCE uyarılır.
   const seciliRenkReceteDurumu = (() => {
-    if (!seciliUrun || !kRenk || seciliUrun.kategori !== "Mamul") return null;
+    // Satın alınan ürünün reçetesi yoktur, uyarı da yok (v1.744.29 — kullanıcı: "satın aldığımız ürünler için reçete olmasın").
+    if (!seciliUrun || !kRenk || seciliUrun.kategori !== "Mamul" || satinAlinanMi(seciliUrun)) return null;
     const recete = seciliUrun.recete || [];
     if (recete.length === 0) return { durum: "recetesiz", satirSayisi: 0 };
     const buRenk = recete.filter((r) => r.mamulRenk === kRenk);

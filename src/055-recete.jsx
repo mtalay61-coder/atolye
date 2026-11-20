@@ -26,6 +26,8 @@ function siparisHammaddeIhtiyaci(siparis, stok, tumSiparisler, stokRez, kurlar) 
 
   (siparis.kalemler || []).forEach((k) => {
     const urun = (stok || []).find((p) => p.id === k.urunId);
+    // Satın alınan ürün (v1.744.29): hammadde istemez ve "reçetesiz kalem" de SAYILMAZ (uyarı çıkmasın; kalmış reçetesi de yok sayılır).
+    if (satinAlinanMi(urun)) return;
     if (!urun || !Array.isArray(urun.recete) || urun.recete.length === 0) { recetesizKalem++; return; }
     const satirlar = urun.recete.filter(
       (r) => r.mamulRenk === k.renk && (r.mamulBeden === "Tüm Bedenler" || r.mamulBeden === k.beden)
@@ -949,9 +951,19 @@ function receteOnayDurumu(urun, stok) {
 // Üretim açma kapısı: sorun yoksa null, varsa kullanıcıya gösterilecek cümle.
 // Testlerde `window.__receteOnaySerbest` kapıyı açar (çevrimdışı kilitteki `__cevrimdisiSerbest` gibi): eski
 // senaryoların tohum reçeteleri bilerek eksik (kapsam uyarılarını ölçüyorlar). Kapıyı ölçen senaryo bunu kapatır.
+// SATIN ALINAN ÜRÜN (v1.744.29 — kullanıcı: "ürün stok kartında tedarikçi ekleyelim ve satın aldığımız ürünler için reçete
+// olmasın"). Mamul kartındaki AYRI işaret (`satinAlinan`, `ek` alanında saklanır): tedarikçiden hazır alınıp satılan model.
+// Reçetesi yoktur, ÜRETİLMEZ: siparişte reçete uyarısı çıkmaz, stok kartında Reçete / Maliyet / Kapasite gizlenir, planlamada
+// satın almaya gider. İşaret yalnız mamulde anlamlı (hammadde zaten satın alınır). Tek yerde: her ekran bunu sorar.
+function satinAlinanMi(urun) {
+  return !!(urun && urun.kategori === "Mamul" && urun.satinAlinan);
+}
+
 function uretimReceteKapisi(urun, stok) {
-  if (typeof window !== "undefined" && window.__receteOnaySerbest) return null;
   if (!urun) return "Ürün bulunamadı";
+  // Satın alınan ürün reçete onay serbestisinden ÖNCE: test kısayolu da onu üretime sokmasın.
+  if (satinAlinanMi(urun)) return `${urun.ad || "Ürün"}: satın alınan ürün (reçetesiz) — üretim açılmaz, satın almaya gönderin`;
+  if (typeof window !== "undefined" && window.__receteOnaySerbest) return null;
   const d = receteOnayDurumu(urun, stok);
   if (d.durum === "onayli") return null;
   const ad = urun.ad || "Ürün";

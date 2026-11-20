@@ -235,7 +235,11 @@ function SiparisPlanlamaSekmesi({ siparisler, stok, cariler, uretim, asortiler, 
   const uretimGosterilecek = uretimSecilenler.filter(halaBekliyorMu);
   const satinalmaGosterilecek = satinalmaSecilenler.filter(halaBekliyorMu);
 
+  // SATIN ALINAN ÜRÜN ÜRETİME GİTMEZ (v1.744.29): üretim kapısı (055) zaten reddeder; burada satır baştan Satınalma'ya düşer,
+  // kullanıcı "üret" deyip ret görmek yerine doğru panele gider.
+  const satinAlinanSecim = (secim) => satinAlinanMi((stok || []).find((p) => p.id === secim.urunId));
   function uretEkle(secim) {
+    if (satinAlinanSecim(secim)) { satinAlEkle(secim); return; }
     setUretimSecilenler((prev) => (prev.some((x) => satirAnahtari(x) === satirAnahtari(secim)) ? prev : [...prev, secim]));
   }
   function satinAlEkle(secim) {
@@ -266,7 +270,10 @@ function SiparisPlanlamaSekmesi({ siparisler, stok, cariler, uretim, asortiler, 
   const seciliSatirlar = tumSatirlar.filter(seciliMi);
   const topluUret = () => {
     const sipBazli = {};
-    seciliSatirlar.forEach((x) => { (sipBazli[x.siparisId] = sipBazli[x.siparisId] || []).push(x); });
+    // Satın alınan ürünlerin satırları Satınalma paneline (tedarikçi orada); geri kalanı üretime. Biri bile üretim kapısına
+    // takılsaydı toplu işlemin TAMAMI açılmazdı (078) — satın alınan ürün yüzünden diğer modeller de beklemesin.
+    seciliSatirlar.filter(satinAlinanSecim).forEach(satinAlEkle);
+    seciliSatirlar.filter((x) => !satinAlinanSecim(x)).forEach((x) => { (sipBazli[x.siparisId] = sipBazli[x.siparisId] || []).push(x); });
     let acilan = 0;
     for (const [sid, satirlar] of Object.entries(sipBazli)) {
       const s = bekleyenSiparisler.find((y) => y.id === sid);
@@ -397,6 +404,7 @@ function SiparisPlanlamaSekmesi({ siparisler, stok, cariler, uretim, asortiler, 
                               ))}
                               <td style={{ padding: "5px 10px" }}>
                                 <div style={{ display: "flex", gap: 4, justifyContent: "flex-end" }}>
+                                  {!satinAlinanSecim(secim) && (
                                   <button
                                     type="button"
                                     onClick={() => uretEkle(secim)}
@@ -411,6 +419,7 @@ function SiparisPlanlamaSekmesi({ siparisler, stok, cariler, uretim, asortiler, 
                                   >
                                     <Hammer size={11} />
                                   </button>
+                                  )}
                                   <button
                                     type="button"
                                     onClick={() => satinAlEkle(secim)}

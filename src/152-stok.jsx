@@ -256,7 +256,9 @@ function StokModule({ onStokFisiKes, kapsam = "genel", onFiyatGrubuMarj, onRecet
       // satabiliyor; satış fişi kesilirken fiyatın bir yerden gelmesi gerekiyor. Eskiden bu alan
       // hammaddede sıfıra çekiliyordu.
       satisFiyati: parseFloat(form.satisFiyati) || 0,
-      tedarikciId: isMamul ? "" : (form.tedarikciId || ""),
+      tedarikciId: form.tedarikciId || "",
+      // Satın alınan ürün (v1.744.29): yalnız mamulde ve işaretliyse yazılır (`ek` alanında saklanır).
+      ...(isMamul && form.satinAlinan ? { satinAlinan: true } : {}),
       kapakResmi: form.kapakResmi || "",
       olcuTipi: form.olcuTipi,
       // Renk alanının başlığı (v1.494.0): "Renk" varsayılanı kayda yazılmaz.
@@ -1663,7 +1665,9 @@ function StokModule({ onStokFisiKes, kapsam = "genel", onFiyatGrubuMarj, onRecet
                 <input type="number" step="0.01" value={form.satisFiyati} onChange={(e) => setForm({ ...form, satisFiyati: e.target.value })} placeholder={isMamul ? "Örn. 890" : "Örn. 12"} style={inputStyle} />
               </div>
             </Field>
-            {isMamul ? null : (
+            {/* TEDARİKÇİ MAMULDE DE (v1.744.29 — kullanıcı: "ürün stok kartında tedarikçi ekleyelim"): satın alınan modelde
+                alış siparişinin / planlamanın varsayılan carisi. Eskiden mamulde gizliydi ve kayıtta boşaltılıyordu. */}
+            {(
               <>
                 <Field label="Tedarikçi">
                   {/* Serbest metin yerine cari seçimi: bu bilgi alış siparişi oluştururken
@@ -1709,6 +1713,16 @@ function StokModule({ onStokFisiKes, kapsam = "genel", onFiyatGrubuMarj, onRecet
                     </span>
                   )}
                 </Field>
+                {isMamul && (
+                  <Field label="Tedarik">
+                    <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, minHeight: 36 }}
+                      title="Tedarikçiden hazır alınıp satılan ürün: reçetesi yok, üretilmez, planlamada satın almaya gider">
+                      <input type="checkbox" data-yeni-urun-satin-alinan="1" checked={!!form.satinAlinan}
+                        onChange={(e) => setForm({ ...form, satinAlinan: e.target.checked })} />
+                      Satın alınan ürün (reçetesiz)
+                    </label>
+                  </Field>
+                )}
               </>
             )}
           </div>
