@@ -492,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.744.32";
+const SURUM = "1.744.33";
 const SURUM_TARIHI = "2026-11-20";
-const SURUM_NOTU = "Stok kartından sipariş sekmesi, carinin para birimi, satın alınan ürün, maaş fişleri bölüme, sezon bazında çift başı maliyet";
+const SURUM_NOTU = "Siparişte para tipi başlıkta: cari seçilince carinin para birimi, bu sipariş için değiştirilebilir";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -525,6 +525,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" };   // teklif: v1.723.0, Sipariş'in alt sekmesi
 
 const SURUM_GECMISI = [
+  { surum: "1.744.33", tarih: "20.11.2026", eklenen: ["Sipariş başlığında \"Para Tipi\": cari seçilince carinin para birimi gelir; bu sipariş için değiştirilebilir (ör. USD müşteriye TL sipariş). Yeni kalemler bu para tipiyle eklenir; farklı para birimindeki kalem sayısı altında yazar. Düzenlemede kayıtlı para tipi korunur."], degisen: [], duzeltilen: [] },
   { surum: "1.744.32", tarih: "20.11.2026", eklenen: ["Finans › Kâr-Zarar: \"Son 3 ay\", \"Son 6 ay\" ve \"Tarih aralığı\" dönemleri. Atölye bölümü satırında dönemin çift başı gerçek maliyeti (dönem maaşı ÷ dönem adedi); bölüm dökümünde sezon bazında tablo (sezon siparişten; aynı ay iki sezon üretildiyse o ayın maaşı adede göre paylaştırılır; teslim girilmeyen ayın maaşı ayrıca gösterilir)."], degisen: [], duzeltilen: [] },
   { surum: "1.744.31", tarih: "20.11.2026", eklenen: [], degisen: [], duzeltilen: ["Onaylanan maaş fişleri (MAŞ-) ve mesai fişleri (MS-) Kâr-Zarar'da atölye bölümüne sayılmıyordu: bölüm maaşı 0, \"çift başı gerçek\" maliyet ve bölüm işçilik gideri boş görünüyordu. Artık bölümün maaşına, aylık verimine ve gider kartına girer."] },
   { surum: "1.744.30", tarih: "20.11.2026", eklenen: [], degisen: ["Atölye İçi Bölümler (maaşlı bölümler, mesai katsayıları) Tanımlar › Ürün yerine Tanımlar › Üretim sekmesinde, Prosesler'in altında."], duzeltilen: [] },

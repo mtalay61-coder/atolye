@@ -9,6 +9,8 @@
 //   - elle değiştirme korunur (aynı cari kalırken kutu elle EUR yapılırsa EUR kalır); USD carisine geçilince yine USD
 //     (eski kodda elle seçilen EUR kalırdı — kaydedilen kalem ölçümü bu yüzden ayırt edici)
 //   - eklenen kalem o para birimiyle kaydedilir (form içindeki kalem satırının para birimi)
+//   - v1.744.33 SİPARİŞ PARA TİPİ başlıkta: cari seçilince carininki; elle TL yapılınca kalem de TL; sipariş ve kalem TL kaydedilir;
+//     düzenleme açılınca kayıtlı TL korunur (carinin USD'siyle ezilmez)
 const { uygulamaAc, modulAc, cariSec, depoOku } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
@@ -75,6 +77,12 @@ async function calistir() {
   // USD carisine dönülünce kutu yine carinin para birimi
   await cariSec(sayfa, "Müşteri B"); await sayfa.waitForTimeout(400);
   sonuc.usdCariyeDonus = await kalemPB();
+  // SİPARİŞ PARA TİPİ (v1.744.33): başlıkta; cari seçilince carinin para birimi, elle değişince kalem de izler.
+  const baslikPB = () => sayfa.evaluate(() => { const s = [...document.querySelectorAll("[data-siparis-para-tipi]")].find((x) => x.getBoundingClientRect().height > 0); return s ? s.value : null; });
+  sonuc.baslik = { usdCarisinde: await baslikPB() };
+  await sayfa.locator("[data-siparis-para-tipi]:visible").first().selectOption("TRY");
+  await sayfa.waitForTimeout(300);
+  sonuc.baslik.tlYapilinca = { baslik: await baslikPB(), kalem: await kalemPB() };
 
   // KALEM EKLE (USD carisi seçili): 38 numaraya bir çift barkodla → sipariş kaydedilir → kayıtlı kalemin para birimi
   await sayfa.locator("[data-barkod-paneli-ac]:visible").first().click();
@@ -85,7 +93,19 @@ async function calistir() {
   await sayfa.locator('button:has-text("Siparişi Kaydet"):visible').first().click();
   await sayfa.waitForTimeout(1800);
   const yeni = ((await depoOku(sayfa, "siparis:data")) || []).find((sp) => (sp.kalemler || []).some((k) => k.urunId === "m125"));
-  sonuc.kaydedilenSiparis = yeni ? { cari: yeni.cariId, kalemler: yeni.kalemler.filter((k) => k.urunId === "m125").map((k) => ({ beden: k.beden, miktar: k.miktar, paraBirimi: k.paraBirimi })) } : null;
+  sonuc.kaydedilenSiparis = yeni ? { cari: yeni.cariId, paraBirimi: yeni.paraBirimi, kalemler: yeni.kalemler.filter((k) => k.urunId === "m125").map((k) => ({ beden: k.beden, miktar: k.miktar, paraBirimi: k.paraBirimi })) } : null;
+  // DÜZENLEMEDE KAYITLI PARA TİPİ KORUNUR: cari USD ama sipariş TL kaydedildi → düzenleme açılınca başlık TL kalmalı
+  if (yeni) {
+    await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /^Tümü\s*\(/.test(x.textContent.trim()) && x.getBoundingClientRect().width > 0); if (b) b.click(); });
+    await sayfa.waitForTimeout(500);
+    await sayfa.evaluate((no) => { const d = [...document.querySelectorAll("div")].filter((x) => x.textContent.includes(no) && x.getBoundingClientRect().width > 0).pop(); if (d) d.click(); }, yeni.siparisNo);
+    await sayfa.waitForTimeout(600);
+    await sayfa.locator('button[title^="Tam ekran aç"]:visible').first().click().catch(() => {});
+    await sayfa.waitForTimeout(700);
+    await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /^Düzenle/.test(x.title || "") && x.getBoundingClientRect().width > 0); if (b) b.click(); });
+    await sayfa.waitForTimeout(700);
+    sonuc.duzenlemedeBaslik = await baslikPB();
+  }
   sonuc.hatalar = hatalar;
 
   await tarayici.close();
