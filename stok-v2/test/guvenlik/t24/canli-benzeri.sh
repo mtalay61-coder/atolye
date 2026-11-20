@@ -41,7 +41,7 @@ q -c "do \$d\$ declare t text; begin
   end loop; end \$d\$;" > /dev/null || { echo "canli-benzeri: gorevler / modeller düştü"; exit 2; }
 awk '/create extension if not exists pg_cron/{exit} {print}' $A/gun-sonu.sql | PGOPTIONS='-c client_min_messages=warning' q > /dev/null \
   || { echo "canli-benzeri: gun-sonu.sql (tablo) düştü"; exit 2; }
-q -c "grant select, insert, update, delete on public.gun_sonu_gonderim to authenticated;
+q -c "grant select, insert, update, delete on public.gun_sonu_gonderim to authenticated; revoke truncate on public.gun_sonu_gonderim from authenticated;
       drop trigger if exists stk_istemci_koru on public.gun_sonu_gonderim;
       create trigger stk_istemci_koru before insert or update or delete on public.gun_sonu_gonderim for each row execute function public.stk_istemci_koru();
       grant select, insert, update, delete on public.stk_stok, public.stk_eski_hareketler_g, public.stk_eski_varyantlar_g to authenticated;" > /dev/null \

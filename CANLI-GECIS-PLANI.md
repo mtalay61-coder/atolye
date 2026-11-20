@@ -60,8 +60,17 @@
    - **Yerelde kanıtlandı (20 Kasım, `t24/sonuc-a6-koruma-2026-11-20.txt`):** ana canlı gibi kurulunca (A6 düzeltilmiş +
      `rls-yazma.sql` silme korumaları) kurulum dosyası ikisini de taşıyor; korumasız / A6 öncesi ana ile test kırmızıya düşüyor
      (29 / 47 kırmızı — sahte yeşil yok). Canlıdan üretilen dosya için Faz 4 ölçümü yine gerekli.
-   - `yazma_koruma` (muhasebe / faturalar): v2'de ikisi de GÖRÜNÜM; `rls-yazma.sql` tetikleyiciyi yalnız tabloysa kurar → v2
-     sonrası canlıda beklenmez. Faz 0.4 envanteri (canlı, salt okur) bunu teyit edecek; henüz çalıştırılmadı.
+   - **Faz 0.4 envanteri (canlı, salt okur, 20 Kasım) — TAMAM** (`t24/sonuc-faz04-envanter-canli-2026-11-20.txt`):
+     - `muhasebe`, `faturalar` (ve `gorevler`, `modeller`, öteki listeler) GÖRÜNÜM; doğrudan yazılabilir değil, INSTEAD OF yok.
+       `yazma_koruma` canlıda YOK; `eski_*` tabloları da yok.
+     - Yazma yetkisi sunucu fonksiyonlarında: `muhasebe` → `kas_yaz` (`stk_yetki(muhasebe|fisler|cari, kaydetme)`; yalnız
+       kur serbest), `faturalar` → `lst_yaz` (`stk_yetki(fisler|muhasebe, kaydetme)`). `stk_yetki` → `yetki_var_mi` (A6).
+       Altta `kas_hareket` / `kas_hesap` / `lst_kayit`'a authenticated yazamaz.
+     - `silme_koruma` ×4, `tanimlar_kullanici_koruma`, `gunluk_silme_koruma`: argüman ve etkinlik (O) canlıyla birebir; ortak
+       fonksiyon gövdelerinin md5'i birebir (A6 dahil).
+     - Yerel ↔ canlı farkları `t24/canli-benzeri.sh` ile kapatıldı (atolye_canli; karşılaştırma betikte, fark 0). Kalan bilinen
+       fark: canlıdaki eski / site tabloları (cekler, hesaplar, cop, icerik, medya, onaylar, profil, cek_gorselleri) ve
+       `surum_arttir` / `guncelleme_yaz` tetikleyicileri — şeması depoda yok, Faz 4 kapsar.
 
 ## Faz 0 — Hazırlık, YALNIZ OKUMA (canlıda yazma yok) — A6 kısmı TAMAM (18 Kasım; 23 önkoşulu 0.2 henüz çalıştırılmadı)
 
@@ -71,7 +80,7 @@
 | 0.2 | `23-onkosul-salt-okur.sql` canlıda | kullanıcı | GENEL = **HAZIR** (23 uygulanmamış, uygulanabilir). KARIŞIK / EKSİK → DUR |
 | 0.2b | `24-a6-onkosul-salt-okur.sql` canlıda | kullanıcı | GENEL = **HAZIR**. EKSİK: tanımlar verisi hazır değil (girisAktifMi boolean değil / kullanicilar dizi değil / Yönetici yok) → DUR, önce veri düzeltilir; aksi hâlde düzeltme sonrası oturumlu yazmalar durur. KARIŞIK → DUR |
 | 0.3 | Canlıdaki kurulum fonksiyonlarının bugünkü tanımını yedekle (salt okur: `select pg_get_functiondef(…)`; sorgu hazırlanacak) | kullanıcı | Çıktı dosyası saklandı (Faz 3 geri dönüşü bunu kullanır) |
-| 0.4 | Canlı tetikleyici envanteri (salt okur): `silme_koruma` 4 tabloda, `yazma_koruma` muhasebe / faturalar, `tanimlar_kullanici_koruma` | kullanıcı | Liste kaydedildi (Faz 4 karşılaştırması) |
+| 0.4 | Canlı koruma envanteri (salt okur, `24-faz04-koruma-envanteri-salt-okur.sql`) — **TAMAM 20 Kasım** | kullanıcı | Kaydedildi; yerel `canli-benzeri.sh` ile fark 0 (bilinen eski tablolar hariç) |
 | 0.5 | "Allow new users to sign up" durumu | kullanıcı (göz) | KAPALI. Açıksa ayrı onayla kapatılır |
 | 0.6 | Canlı bekleyen kayıt / açık işlem yok; atölye mesai dışı | kullanıcı | Uygulamada "bekleyen kayıt" şeridi yok |
 
