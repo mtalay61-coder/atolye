@@ -179,6 +179,20 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
   }, [hedefSiparisId]);
   const [kFiyat, setKFiyat] = useState("");
   const [kParaBirimi, setKParaBirimi] = useState("TRY");
+  // CARİNİN PARA BİRİMİ (v1.744.27 — kullanıcı: "Siparişte cari seçildiğinde cariye seçilen para tipi ile sipariş açılsın ve
+  // eklenen siparişler de o cari para tipi ile girilsin"). Kalem para birimi her zaman TRY ile başlıyordu; USD çalışılan
+  // müşteride her kalemde elle değiştirmek gerekiyordu, unutulunca kalem TRY girilip sipariş toplamı karışıyordu.
+  // Cari SEÇİLDİĞİ / DEĞİŞTİĞİ an (yeni sipariş, düzenleme, site talebi, depodan alış) kalem para birimi carinin kartındaki
+  // para birimine (260 `paraBirimi`, yoksa TRY) geçer; cari boşaltılınca TRY. Kalem satırındaki seçim elle değiştirilebilir
+  // kalır; daha önce eklenmiş kalemlere dokunulmaz (kendi para birimleriyle kayıtlı).
+  const oncekiCariRef = useRef(cariId);
+  useEffect(() => {
+    if (oncekiCariRef.current === cariId) return;
+    oncekiCariRef.current = cariId;
+    const c = cariId ? (cariler || []).find((x) => x.id === cariId) : null;
+    setKParaBirimi((c && c.paraBirimi) || "TRY");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cariId]);
   // Fiyat ELLE mi yazıldı (v1.482.0)? Yazılmadıysa her beden kendi kural fiyatını alır; yazıldıysa
   // kullanıcının fiyatı bütün bedenlere. Eskiden kutudaki TEK fiyat bütün bedenlere yazılıyordu:
   // Fiyatlandırma'da bedenlere ayrı fiyat girilmiş üründe beden fiyatları hiç çekilmiyordu.
