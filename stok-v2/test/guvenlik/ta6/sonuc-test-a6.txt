@@ -1,0 +1,56 @@
+== a6_test: atolye_guvenlik kopyası · 4f5e939 + çalışma ağacı
+== 1) Düzeltme öncesi
+  [GEÇTİ] önkoşul → HAZIR
+  [GEÇTİ] A6 (kimlik değiştirme) — test açığı görüyor → AÇIK
+  [GEÇTİ] A6b (ardından yetki_var_mi) → AÇIK
+  [GEÇTİ] sınamada BAŞARISIZ yok (yalnız A6/A6b/Y7 AÇIK) → AÇIK: 3 · BAŞARISIZ: 0
+== 1b) Atomiklik: ikinci fonksiyon bilerek bozulur (Editor gibi ayrı oturumlar)
+  [GEÇTİ] bozulan dosya gerçekten yalnız ikinci fonksiyonda farklı → 1
+  [GEÇTİ] bozuk düzeltme hata verdi → 1
+  [GEÇTİ] kısmi değişiklik yok: iki fonksiyon da eski (önkoşul) → HAZIR
+  [GEÇTİ] kısmi değişiklik yok: koruma fonksiyonu → eski
+  [GEÇTİ] eski (atomik olmayan) sürüm aynı bozulmada YARIM kalıyordu → KARIŞIK
+  [GEÇTİ] geri alma (atomik) yarım durumu toparladı → HAZIR
+== 2) Düzeltme (Editor gibi)
+  [GEÇTİ] düzeltme hatasız → 
+  [GEÇTİ] önkoşul → UYGULANMIŞ
+  [GEÇTİ] A6 → UYGUN
+  [GEÇTİ] A6b → UYGUN
+  [GEÇTİ] Y7 yönetici kimlik değiştiremez → UYGUN
+  [GEÇTİ] yönetici işlemleri (Y1–Y6) geçer → UYGUN UYGUN UYGUN UYGUN UYGUN UYGUN
+  [GEÇTİ] sınama özeti → AÇIK: 0 · BAŞARISIZ: 0
+== 3) Satır eksik / bozuk → jetonlu hesaba yetki yok
+  [GEÇTİ] satır yok: personel → f
+  [GEÇTİ] satır yok: yönetici → f
+  [GEÇTİ] satır yok: listede olmayan → f
+  [GEÇTİ] satır yok: jetonsuz (servis / Editor) → t
+  [GEÇTİ] bozuk (girisAktifMi metin): personel → f
+  [GEÇTİ] bozuk (girisAktifMi metin): yönetici → f
+  [GEÇTİ] bozuk (girisAktifMi yok): personel → f
+  [GEÇTİ] bozuk (girisAktifMi yok): yönetici → f
+  [GEÇTİ] bozuk (kullanicilar nesne): personel → f
+  [GEÇTİ] bozuk (kullanicilar nesne): yönetici → f
+  [GEÇTİ] girisAktifMi AÇIKÇA false (tasarım): personel → t
+  [GEÇTİ] geri true: personel → f
+== 4) İlk yönetici kurulumu (tablo boşken)
+  [GEÇTİ] boş tabloya ilk yönetici satırı (listede olmayan hesap) → eklendi
+  [GEÇTİ] boş tabloda personel de ilk satırı ekleyebilir (kurulum kuralı) → eklendi
+  [GEÇTİ] dolu tabloya ikinci satırı personel ekleyemez → ret:42501
+== 5) Geri alma (A6 YENİDEN AÇILIR)
+  [GEÇTİ] geri alma hatasız → 
+  [GEÇTİ] önkoşul → HAZIR
+  [GEÇTİ] A6 yeniden AÇIK (geri almanın bedeli) → AÇIK
+== 6) Yeniden düzeltme (iki kez) ve güncellenen kaynaklar
+  [GEÇTİ] iki kez uygulama hatasız → 
+  [GEÇTİ] önkoşul → UYGULANMIŞ
+  [GEÇTİ] rls-rol.sql (güncel) hatasız → 
+  [GEÇTİ] rls-yazma.sql (güncel) hatasız → 
+  [GEÇTİ] kaynaklardan kurulunca önkoşul → UYGULANMIŞ
+  [GEÇTİ] kaynaklardan kurulunca A6 → UYGUN
+== 7) stok-v2/editor/15-duzeltme.sql yeniden çalıştırılırsa
+  [GEÇTİ] 15-duzeltme kopyası hatasız → 
+  [GEÇTİ] 15-duzeltme (güncel) yeniden çalışınca önkoşul → UYGULANMIŞ
+  [GEÇTİ] ESKİ 15-duzeltme (A6 öncesi main, b4594bc) yeniden çalışsaydı koruma eskiye dönerdi → KARIŞIK
+  [GEÇTİ] güncel kopya yeniden kurulunca → UYGULANMIŞ
+  [GEÇTİ] son sınama özeti → AÇIK: 0 · BAŞARISIZ: 0
+── test-a6: 46 geçti, 0 kaldı ──
