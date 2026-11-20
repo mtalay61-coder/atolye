@@ -1,0 +1,41 @@
+{
+ "aralikBos": {
+  "ciftBasi": "çift başı —",
+  "dagitilamayan": null,
+  "sezonlar": [],
+  "uyari": true
+ },
+ "aralikGecenAy": {
+  "ciftBasi": "çift başı 140 ₺",
+  "dagitilamayan": null,
+  "sezonlar": [
+   "İlkbahar/Yaz 2027 | 600 | 84.000 ₺ | 140 ₺ | 30 ₺",
+   "Sonbahar/Kış 2026 | 400 | 56.000 ₺ | 140 ₺ | 30 ₺"
+  ]
+ },
+ "buAy": {
+  "ciftBasi": "çift başı 200 ₺",
+  "dagitilamayan": null,
+  "sezonlar": [
+   "İlkbahar/Yaz 2027 | 700 | 140.000 ₺ | 200 ₺ | 30 ₺"
+  ]
+ },
+ "donemDugmeleri": [
+  "Bu ay",
+  "Geçen ay",
+  "Son 3 ay",
+  "Son 6 ay",
+  "Bu yıl",
+  "Tümü",
+  "Tarih aralığı"
+ ],
+ "hatalar": [],
+ "son6Ay": {
+  "ciftBasi": "çift başı 247,06 ₺",
+  "dagitilamayan": "Teslim girilmeyen aylardaki 140.000 ₺ maaş hiçbir sezona dağıtılamadı (dönem çift başına dahil).",
+  "sezonlar": [
+   "İlkbahar/Yaz 2027 | 1.300 | 224.000 ₺ | 172,31 ₺ | 30 ₺",
+   "Sonbahar/Kış 2026 | 400 | 56.000 ₺ | 140 ₺ | 30 ₺"
+  ]
+ }
+}

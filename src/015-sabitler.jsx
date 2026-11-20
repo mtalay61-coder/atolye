@@ -492,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.744.31";
+const SURUM = "1.744.32";
 const SURUM_TARIHI = "2026-11-20";
-const SURUM_NOTU = "Maaş fişleri (MAŞ-) Kâr-Zarar'da atölye bölümüne ve çift başı maliyete sayılır; Atölye İçi Bölümler Üretim sekmesinde";
+const SURUM_NOTU = "Stok kartından sipariş sekmesi, carinin para birimi, satın alınan ürün, maaş fişleri bölüme, sezon bazında çift başı maliyet";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -525,6 +525,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" };   // teklif: v1.723.0, Sipariş'in alt sekmesi
 
 const SURUM_GECMISI = [
+  { surum: "1.744.32", tarih: "20.11.2026", eklenen: ["Finans › Kâr-Zarar: \"Son 3 ay\", \"Son 6 ay\" ve \"Tarih aralığı\" dönemleri. Atölye bölümü satırında dönemin çift başı gerçek maliyeti (dönem maaşı ÷ dönem adedi); bölüm dökümünde sezon bazında tablo (sezon siparişten; aynı ay iki sezon üretildiyse o ayın maaşı adede göre paylaştırılır; teslim girilmeyen ayın maaşı ayrıca gösterilir)."], degisen: [], duzeltilen: [] },
   { surum: "1.744.31", tarih: "20.11.2026", eklenen: [], degisen: [], duzeltilen: ["Onaylanan maaş fişleri (MAŞ-) ve mesai fişleri (MS-) Kâr-Zarar'da atölye bölümüne sayılmıyordu: bölüm maaşı 0, \"çift başı gerçek\" maliyet ve bölüm işçilik gideri boş görünüyordu. Artık bölümün maaşına, aylık verimine ve gider kartına girer."] },
   { surum: "1.744.30", tarih: "20.11.2026", eklenen: [], degisen: ["Atölye İçi Bölümler (maaşlı bölümler, mesai katsayıları) Tanımlar › Ürün yerine Tanımlar › Üretim sekmesinde, Prosesler'in altında."], duzeltilen: [] },
   { surum: "1.744.29", tarih: "20.11.2026", eklenen: ["Mamul stok kartında Tedarikçi ve \"Satın alınan ürün (reçetesiz)\" işareti (ürün açarken de). İşaretli üründe Reçete / Maliyet / Kapasite sekmesi yok, maliyet alış fiyatından; siparişte reçete uyarısı çıkmaz; hammadde ihtiyacına girmez; planlamada üretilmez, satın almaya gider (tedarikçisi hazır gelir)."], degisen: [], duzeltilen: [] },

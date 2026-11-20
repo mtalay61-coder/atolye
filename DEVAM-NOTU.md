@@ -10,6 +10,22 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 
 ## YENİ OTURUM — BURADAN BAŞLA
 
+### YAPILACAKLAR (güncel — 20 Kasım; kullanıcı: "yapılacaklara not et")
+1. **Reçeteye proses maliyeti önerisi** (kullanıcı fikri, onay bekliyor): reçetede proses satırının yanında "gerçek: X ₺ (son N ay)"
+   + "Uygula". Öneri = reçete ücreti × (bölüm maaşı ÷ bölüm tahakkuku) — zorluk reçete ücretiyle orantılı kalır, toplam maaşa
+   eşitlenir. Personel bazında çift başı / verim (kişinin maaşı ÷ kişinin adedi). Kaç ay ortalaması (önerim 3) sorulacak.
+   Altyapı hazır: 015 `bolumAylikDokum`, `bolumSezonDokumu` (1.744.32).
+2. **Faz 2 (23 platform tabloları, canlı SQL)** — paket hazır (`stok-v2/guvenlik/23-FAZ2-PAKET.md`), ön kontroller TAMAM
+   (20 Kasım). Bekleyen: A6'yı içeren İLK sınanmış gece yedeği (A6 uygulandıktan sonra başlamış en yeni koşu; zamanlanmış
+   hatırlatma 21 Kasım 11:00) → salt okunur ön kontrolleri YENİLE (A6 imzası özet 0670954a…) → kullanıcıya rapor → AYRI
+   uygulama onayı. Geri alma ayrıca onay. Faz 3–6 sonra; Faz 4 (canlıdan üretilen kurulum dosyası boş projede) genel
+   yayından ÖNCE zorunlu.
+3. **#362 / #363 taslak PR'lar** — main'e (1.744.32) göre yeniden birleştirilmeli: #363'te 1.744.23–25 sürüm numaraları
+   main'in 1.744.26–32'siyle çakışır (SURUM_GECMISI, sürüm HTML'leri); surum-temizle.sh / ortak.js / firma-secimi aynı içerik.
+4. **7a aykırılığı**: döviz kurunun son adımı `api.anthropic.com` (src/100-app.jsx `kurlariCek`) — kaldırılması ayrı iş.
+5. **`tanim-basliklari` / `firma-secimi`** artık https kökeninden (TEST_KOK); paralel yükte yeniden oynarsa tek başına koş.
+
+
 **Codex F3 satış sınırı (2 Kasım 2026):** codex/f3-satis-fazla-teslim, F8 2ddb6a1 üzerine. SQL-only, istemci sürümü değişmedi; canlı/main/deploy/surum.json yok. fis_kes ilk yazmadan önce, mevcut sipariş/kalem kilitleri altındayken fis_satis_teslim_koru çağırır. Alış dışındaki kalem bağlı çıkışların ana+bağlı fiş toplamı, DB miktarı ve büyük olan ham geçerli hareket toplamı/saklı karşılananla denetlenir; KR007 reddi. Miktar aynı yükte büyütülerek, pozitif satırla dengeleyerek veya sahte rol/onayla aşılamaz. İstisna: doğrulanmış yönetici + gerçek boolean onay + dolu gerekçe; gerçek kimlik/zaman/kalem değerleri ana fiş ek.fazlaTeslimOnayi alanına sunucudan yazılır, fazla işareti sunucudan verilir. Bu audit alanı kurallar kapalıyken bile değiştirilemez/silinemez; normal fiş notu serbest. Yeni helper doğrudan RPC'ye kapalı. 20 senaryo, 100 doğal yarış geçti; F0 54 yeşil/6 bilinen kırmızı, F2 70/3 beklenen; yeni temiz kurulum + R1/R1b geçti. Tarihsel fazla hesap testlerinin fixture'ları açık yönetici onaylı kurulur; eski onaysız fazla yük artık reddedilir. Alış davranışı değiştirilmedi, onay UI'si eklenmedi, eski stok yazma kapıları F8 kapsamında açık. Ayrıntı: stok-v2/CODEX-F3-SATIS-SINIRI.md.
 
 **Codex F8 renk/fiş kilidi (2 Kasım 2026):** codex/f8-renk-kilit, 3ebfaa1 üzerine; SQL-only, istemci 1.744.2 kalır, canlı/main/deploy/surum.json yok. stk_renk_tasi ilk yazmadan önce bütün kaynak varyantların geçerli/geçmiş kalemlerini ve fişlerini kimlik sırasıyla kilitler (kalem→fiş). Gerçek PG'de satır tetikleyicili bariyer eski kodda deadlock üretti; düzeltmeden sonra kalemli/kalemsiz 3'er zorlanmış ve 100 doğal yarış geçti. Normal renk birleştirme/tekrar/hedef yokken adlandırmada iki fiş ve miktar 8 korunuyor. F0 beklenenle aynı; t-f1 11 yeşil. geri-donus-F8-renk.sql eski deadlock'u yeniden üretir; F1 geri dönüşü renk işlevini helper kaldırılmadan önce geri koyar (ayrı DB kopyasında sınandı). Ayrıntı: stok-v2/CODEX-F8-RENK-KILIDI.md; ham sonuç: stok-v2/test/f8/. Tüm F8 tamamlanmadı; stok eski yazma/fiş iptali P9, diğer eski kapılar ve F5/F4 kalanları açık.
