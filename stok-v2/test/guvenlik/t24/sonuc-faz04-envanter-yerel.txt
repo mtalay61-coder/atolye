@@ -1,0 +1,197 @@
+# 24-faz04-koruma-envanteri-salt-okur.sql — YEREL çıktı (20 Kasım; canlı benzeri: atolye_guvenlik + rls-yazma.sql, 48f3f1a). Canlıyla karşılaştırma için.
+# Sütunlar: bolum|nesne|deger
+R|car_eski_hareketler_g|görünüm · rls - · auth IUD · anon -
+R|car_hareket|tablo · rls açık · auth - · anon -
+R|cari_hareketleri|görünüm · rls - · auth IUD · anon -
+R|cariler|tablo · rls açık · auth IUD · anon -
+R|degisiklik|tablo · rls açık · auth IUD · anon -
+R|faturalar|görünüm · rls - · auth IUD · anon -
+R|fis_cek_iz|tablo · rls açık · auth - · anon -
+R|fis_defteri|görünüm · rls - · auth IUD · anon -
+R|fis_karsilanan_iz|tablo · rls açık · auth - · anon -
+R|fis_listesi|görünüm · rls - · auth - · anon -
+R|fis_sayac|tablo · rls açık · auth - · anon -
+R|gun_sonu_gonderim|tablo · rls kapalı · auth IUDT · anon -
+R|gunluk|tablo · rls açık · auth IUD · anon -
+R|hesap_hareketleri|tablo · rls açık · auth IUD · anon -
+R|kas_ayar|tablo · rls açık · auth - · anon -
+R|kas_cek|tablo · rls açık · auth - · anon -
+R|kas_hareket|tablo · rls açık · auth - · anon -
+R|kas_hesap|tablo · rls açık · auth - · anon -
+R|kas_muhasebe_g|görünüm · rls - · auth IUD · anon -
+R|koliler|görünüm · rls - · auth IUD · anon -
+R|lst_kayit|tablo · rls açık · auth - · anon -
+R|mesajlar|görünüm · rls - · auth IUD · anon -
+R|muhasebe|görünüm · rls - · auth IUD · anon -
+R|silinen_arsiv|tablo · rls açık · auth - · anon -
+R|siparis_kalemleri|tablo · rls açık · auth - · anon -
+R|siparisler|tablo · rls açık · auth IUD · anon -
+R|siparisler_okuma|görünüm · rls - · auth IUD · anon -
+R|site_giris_kaydi|tablo · rls açık · auth - · anon -
+R|site_hesaplari|tablo · rls açık · auth - · anon -
+R|site_kayit_talepleri|tablo · rls açık · auth - · anon -
+R|site_oturumlari|tablo · rls açık · auth - · anon -
+R|site_talepleri|tablo · rls açık · auth IUD · anon -
+R|stk_ayar|tablo · rls açık · auth - · anon -
+R|stk_eski_hareketler_g|görünüm · rls - · auth - · anon -
+R|stk_eski_varyantlar_g|görünüm · rls - · auth - · anon -
+R|stk_fis|tablo · rls açık · auth - · anon -
+R|stk_hareket|tablo · rls açık · auth - · anon -
+R|stk_istemci_iz|tablo · rls açık · auth - · anon -
+R|stk_olcu|tablo · rls açık · auth - · anon -
+R|stk_renk|tablo · rls açık · auth - · anon -
+R|stk_stok|görünüm · rls - · auth - · anon -
+R|stk_varyant|tablo · rls açık · auth - · anon -
+R|stok_hareketleri|görünüm · rls - · auth IUD · anon -
+R|stok_rezervasyonlari|tablo · rls açık · auth IUD · anon -
+R|surum|tablo · rls açık · auth IUD · anon -
+R|tanimlar|tablo · rls açık · auth IUD · anon -
+R|teklifler|görünüm · rls - · auth IUD · anon -
+R|uretim|tablo · rls açık · auth IUD · anon -
+R|uretim_atamalari|tablo · rls açık · auth - · anon -
+R|uretim_silinen|tablo · rls açık · auth - · anon -
+R|urunler|tablo · rls açık · auth IUD · anon -
+R|varyantlar|görünüm · rls - · auth IUD · anon -
+T|car_hareket.arsiv_silinen|arsive_kopyala_silinen() · BEFORE · DELETE · satır · O
+T|car_hareket.degisiklik_izle|degisiklik_bump() · AFTER · INSERT,UPDATE,DELETE · ifade · O
+T|car_hareket.fis_satir_koru|fis_satir_koru() · BEFORE · INSERT,UPDATE,DELETE · satır · O
+T|car_hareket.stk_istemci_koru|stk_istemci_koru() · BEFORE · INSERT,UPDATE,DELETE · satır · O
+T|car_hareket.uretim_bag_koru|uretim_bag_koru() · BEFORE · INSERT,UPDATE · satır · O
+T|cariler.arsiv_silinen|arsive_kopyala_silinen() · BEFORE · DELETE · satır · O
+T|cariler.degisiklik_izle|degisiklik_bump() · AFTER · INSERT,UPDATE,DELETE · ifade · O
+T|cariler.silme_koruma|yazma_yetkisi_koruma(cari,silme) · BEFORE · DELETE · satır · O
+T|cariler.site_cari_ekleme_koru|site_cari_ekleme_koru() · BEFORE · INSERT · satır · O
+T|cariler.stk_istemci_koru|stk_istemci_koru() · BEFORE · INSERT,UPDATE,DELETE · satır · O
+T|degisiklik.stk_istemci_koru|stk_istemci_koru() · BEFORE · INSERT,UPDATE,DELETE · satır · O
+T|fis_cek_iz.stk_istemci_koru|stk_istemci_koru() · BEFORE · INSERT,UPDATE,DELETE · satır · O
+T|fis_karsilanan_iz.stk_istemci_koru|stk_istemci_koru() · BEFORE · INSERT,UPDATE,DELETE · satır · O
+T|fis_sayac.stk_istemci_koru|stk_istemci_koru() · BEFORE · INSERT,UPDATE,DELETE · satır · O
+T|gun_sonu_gonderim.stk_istemci_koru|stk_istemci_koru() · BEFORE · INSERT,UPDATE,DELETE · satır · O
+T|gunluk.gunluk_silme_koruma|gunluk_silme_koruma() · BEFORE · DELETE · satır · O
+T|gunluk.stk_istemci_koru|stk_istemci_koru() · BEFORE · INSERT,UPDATE,DELETE · satır · O
+T|hesap_hareketleri.stk_istemci_koru|stk_istemci_koru() · BEFORE · INSERT,UPDATE,DELETE · satır · O
+T|kas_ayar.degisiklik_izle|degisiklik_bump() · AFTER · INSERT,UPDATE,DELETE · ifade · O
+T|kas_ayar.stk_istemci_koru|stk_istemci_koru() · BEFORE · INSERT,UPDATE,DELETE · satır · O
+T|kas_cek.arsiv_silinen|arsive_kopyala_silinen() · BEFORE · DELETE · satır · O
+T|kas_cek.degisiklik_izle|degisiklik_bump() · AFTER · INSERT,UPDATE,DELETE · ifade · O
+T|kas_cek.stk_istemci_koru|stk_istemci_koru() · BEFORE · INSERT,UPDATE,DELETE · satır · O
+T|kas_hareket.arsiv_silinen|arsive_kopyala_silinen() · BEFORE · DELETE · satır · O
+T|kas_hareket.degisiklik_izle|degisiklik_bump() · AFTER · INSERT,UPDATE,DELETE · ifade · O
+T|kas_hareket.fis_satir_koru|fis_satir_koru() · BEFORE · INSERT,UPDATE,DELETE · satır · O
+T|kas_hareket.stk_istemci_koru|stk_istemci_koru() · BEFORE · INSERT,UPDATE,DELETE · satır · O
+T|kas_hesap.arsiv_silinen|arsive_kopyala_silinen() · BEFORE · DELETE · satır · O
+T|kas_hesap.degisiklik_izle|degisiklik_bump() · AFTER · INSERT,UPDATE,DELETE · ifade · O
+T|kas_hesap.stk_istemci_koru|stk_istemci_koru() · BEFORE · INSERT,UPDATE,DELETE · satır · O
+T|lst_kayit.arsiv_silinen|arsive_kopyala_silinen() · BEFORE · DELETE · satır · O
+T|lst_kayit.lst_sayac|lst_sayac() · AFTER · INSERT,UPDATE,DELETE · satır · O
+T|lst_kayit.siparis_canli_bag_koru|siparis_canli_bag_koru() · BEFORE · INSERT,UPDATE · satır · O
+T|lst_kayit.stk_istemci_koru|stk_istemci_koru() · BEFORE · INSERT,UPDATE,DELETE · satır · O
+T|silinen_arsiv.stk_istemci_koru|stk_istemci_koru() · BEFORE · INSERT,UPDATE,DELETE · satır · O
+T|siparis_kalemleri.arsiv_silinen|arsive_kopyala_silinen() · BEFORE · DELETE · satır · O
+T|siparis_kalemleri.degisiklik_izle|degisiklik_bump() · AFTER · INSERT,UPDATE,DELETE · ifade · O
+T|siparis_kalemleri.fis_kalem_karsilanan_koru|fis_kalem_karsilanan_koru() · BEFORE · UPDATE · satır · O
+T|siparis_kalemleri.fis_kalem_teslim_koru|fis_kalem_teslim_koru() · BEFORE · UPDATE,DELETE · satır · O
+T|siparis_kalemleri.siparis_canli_bag_koru|siparis_canli_bag_koru() · BEFORE · INSERT,UPDATE · satır · O
+T|siparis_kalemleri.stk_istemci_koru|stk_istemci_koru() · BEFORE · INSERT,UPDATE,DELETE · satır · O
+T|siparis_kalemleri.uretim_planlama_koru|uretim_planlama_koru() · BEFORE · UPDATE · satır · O
+T|siparisler.arsiv_silinen|arsive_kopyala_silinen() · BEFORE · DELETE · satır · O
+T|siparisler.degisiklik_izle|degisiklik_bump() · AFTER · INSERT,UPDATE,DELETE · ifade · O
+T|siparisler.fis_siparis_iptal_koru|fis_siparis_iptal_koru() · BEFORE · UPDATE · satır · O
+T|siparisler.fis_siparis_teslim_koru|fis_siparis_teslim_koru() · BEFORE · DELETE · satır · O
+T|siparisler.silme_koruma|yazma_yetkisi_koruma(siparis,silme) · BEFORE · DELETE · satır · O
+T|siparisler.siparis_canli_bag_koru|siparis_canli_bag_koru() · BEFORE · INSERT,UPDATE · satır · O
+T|siparisler.stk_istemci_koru|stk_istemci_koru() · BEFORE · INSERT,UPDATE,DELETE · satır · O
+T|stk_ayar.stk_istemci_koru|stk_istemci_koru() · BEFORE · INSERT,UPDATE,DELETE · satır · O
+T|stk_fis.arsiv_silinen|arsive_kopyala_silinen() · BEFORE · DELETE · satır · O
+T|stk_fis.degisiklik_izle|degisiklik_bump() · AFTER · INSERT,UPDATE,DELETE · ifade · O
+T|stk_fis.fis_baslik_koru|fis_baslik_koru() · BEFORE · INSERT,UPDATE,DELETE · satır · O
+T|stk_fis.fis_satirsiz_denetle|fis_satirsiz_denetle() · AFTER · INSERT · satır · O
+T|stk_fis.stk_istemci_koru|stk_istemci_koru() · BEFORE · INSERT,UPDATE,DELETE · satır · O
+T|stk_fis.uretim_eski_silme_koru|uretim_eski_silme_koru() · BEFORE · UPDATE · satır · O
+T|stk_hareket.arsiv_silinen|arsive_kopyala_silinen() · BEFORE · DELETE · satır · O
+T|stk_hareket.degisiklik_izle|degisiklik_bump() · AFTER · INSERT,UPDATE,DELETE · ifade · O
+T|stk_hareket.fis_bag_iz_koru|fis_bag_iz_koru() · BEFORE · INSERT,UPDATE · satır · O
+T|stk_hareket.fis_satir_koru|fis_satir_koru() · BEFORE · INSERT,UPDATE,DELETE · satır · O
+T|stk_hareket.stk_istemci_koru|stk_istemci_koru() · BEFORE · INSERT,UPDATE,DELETE · satır · O
+T|stk_hareket.uretim_bag_koru|uretim_bag_koru() · BEFORE · INSERT,UPDATE · satır · O
+T|stk_olcu.degisiklik_izle|degisiklik_bump() · AFTER · INSERT,UPDATE,DELETE · ifade · O
+T|stk_olcu.stk_istemci_koru|stk_istemci_koru() · BEFORE · INSERT,UPDATE,DELETE · satır · O
+T|stk_renk.degisiklik_izle|degisiklik_bump() · AFTER · INSERT,UPDATE,DELETE · ifade · O
+T|stk_renk.stk_istemci_koru|stk_istemci_koru() · BEFORE · INSERT,UPDATE,DELETE · satır · O
+T|stk_varyant.arsiv_silinen|arsive_kopyala_silinen() · BEFORE · DELETE · satır · O
+T|stk_varyant.degisiklik_izle|degisiklik_bump() · AFTER · INSERT,UPDATE,DELETE · ifade · O
+T|stk_varyant.stk_istemci_koru|stk_istemci_koru() · BEFORE · INSERT,UPDATE,DELETE · satır · O
+T|stok_rezervasyonlari.arsiv_silinen|arsive_kopyala_silinen() · BEFORE · DELETE · satır · O
+T|stok_rezervasyonlari.degisiklik_izle|degisiklik_bump() · AFTER · INSERT,UPDATE,DELETE · ifade · O
+T|stok_rezervasyonlari.siparis_canli_bag_koru|siparis_canli_bag_koru() · BEFORE · INSERT,UPDATE · satır · O
+T|stok_rezervasyonlari.stk_istemci_koru|stk_istemci_koru() · BEFORE · INSERT,UPDATE,DELETE · satır · O
+T|surum.stk_istemci_koru|stk_istemci_koru() · BEFORE · INSERT,UPDATE,DELETE · satır · O
+T|tanimlar.arsiv_goruntu|arsive_kopyala_goruntu() · BEFORE · UPDATE · satır · O
+T|tanimlar.arsiv_silinen|arsive_kopyala_silinen() · BEFORE · DELETE · satır · O
+T|tanimlar.degisiklik_izle|degisiklik_bump() · AFTER · INSERT,UPDATE,DELETE · ifade · O
+T|tanimlar.stk_istemci_koru|stk_istemci_koru() · BEFORE · INSERT,UPDATE,DELETE · satır · O
+T|tanimlar.stk_tanim_aynasi|stk_tanim_tetik() · AFTER · INSERT,UPDATE · satır · O
+T|tanimlar.tanimlar_kullanici_koruma|tanimlar_kullanici_koruma() · BEFORE · INSERT,UPDATE,DELETE · satır · O
+T|uretim.arsiv_silinen|arsive_kopyala_silinen() · BEFORE · DELETE · satır · O
+T|uretim.degisiklik_izle|degisiklik_bump() · AFTER · INSERT,UPDATE,DELETE · ifade · O
+T|uretim.silme_koruma|yazma_yetkisi_koruma(uretim,silme) · BEFORE · DELETE · satır · O
+T|uretim.siparis_canli_bag_koru|siparis_canli_bag_koru() · BEFORE · INSERT,UPDATE · satır · O
+T|uretim.stk_istemci_koru|stk_istemci_koru() · BEFORE · INSERT,UPDATE,DELETE · satır · O
+T|uretim.uretim_geri_yukle|uretim_silme_koru() · AFTER · INSERT · satır · O
+T|uretim.uretim_silme_koru|uretim_silme_koru() · BEFORE · DELETE · satır · O
+T|uretim_atamalari.arsiv_silinen|arsive_kopyala_silinen() · BEFORE · DELETE · satır · O
+T|uretim_atamalari.degisiklik_izle|degisiklik_bump() · AFTER · INSERT,UPDATE,DELETE · ifade · O
+T|uretim_atamalari.stk_istemci_koru|stk_istemci_koru() · BEFORE · INSERT,UPDATE,DELETE · satır · O
+T|uretim_silinen.stk_istemci_koru|stk_istemci_koru() · BEFORE · INSERT,UPDATE,DELETE · satır · O
+T|urunler.arsiv_silinen|arsive_kopyala_silinen() · BEFORE · DELETE · satır · O
+T|urunler.degisiklik_izle|degisiklik_bump() · AFTER · INSERT,UPDATE,DELETE · ifade · O
+T|urunler.silme_koruma|yazma_yetkisi_koruma(stok,silme) · BEFORE · DELETE · satır · O
+T|urunler.stk_istemci_koru|stk_istemci_koru() · BEFORE · INSERT,UPDATE,DELETE · satır · O
+F|arsive_kopyala_goruntu()|f1570c7e16f6e7df7d69b5e25141a4cc · definer true · search_path=public, pg_temp · auth çalıştırır false
+F|arsive_kopyala_silinen()|df088f1b41e2d354493390b71521fd9b · definer true · search_path=public, pg_temp · auth çalıştırır false
+F|degisiklik_bump()|4c6044ac64f3fb95626caf19c1415435 · definer true · search_path=public · auth çalıştırır true
+F|fis_bag_iz_koru()|d55139b7768579986d7b5ae1f1972f3c · definer false · search_path=public, extensions, pg_temp · auth çalıştırır true
+F|fis_baslik_koru()|f93f61fc1cf0d8588b9d2eb457afb50f · definer false · search_path=public, extensions, pg_temp · auth çalıştırır true
+F|fis_kalem_karsilanan_koru()|9635d5fdc0c0eb38cdf4c76a13826278 · definer false · search_path=public, extensions, pg_temp · auth çalıştırır true
+F|fis_kalem_teslim_koru()|804281ae4f7f9ef36c1c2f6d1c295341 · definer true · search_path=public · auth çalıştırır true
+F|fis_kes(p jsonb)|7b4e3f2474c25784e92d0f91a9053af2 · definer true · search_path=public · auth çalıştırır true
+F|fis_satir_koru()|ddfce3ae841319ca35595143633a0337 · definer false · search_path=public, extensions, pg_temp · auth çalıştırır true
+F|fis_satirsiz_denetle()|381bbc3f067158f34a4e149922680dc3 · definer true · search_path=public · auth çalıştırır true
+F|fis_siparis_iptal_koru()|ccb77748cdc3854402134ec87a73c241 · definer false · search_path=public, extensions, pg_temp · auth çalıştırır true
+F|fis_siparis_teslim_koru()|a0e88f44934e16c02257be5b74b826ca · definer true · search_path=public · auth çalıştırır true
+F|gunluk_silme_koruma()|2bdf4f2e96ca7a926b1803f41f0948ef · definer true · search_path=public · auth çalıştırır true
+F|kas_yaz(p jsonb)|19219802ad724cfd1b2ca3c94b9a5b2a · definer true · search_path=public · auth çalıştırır true
+F|lst_sayac()|906ccd44ddeff48e05d6b987bac5e9a8 · definer true · search_path=public · auth çalıştırır true
+F|lst_yaz(p jsonb)|e789b03097ed3978a3bb40c6eb53ad91 · definer true · search_path=public · auth çalıştırır true
+F|siparis_canli_bag_koru()|d0119f9c22548e5efef03c92ab5de55b · definer true · search_path=public · auth çalıştırır false
+F|site_cari_ekleme_koru()|68e61c5d9ecf07ee2888b6ce39ff0aa1 · definer true · search_path=public, pg_temp · auth çalıştırır false
+F|stk_istemci_koru()|f08c9d87572adc530225e1839f7ea65b · definer true · search_path=public · auth çalıştırır false
+F|stk_tanim_tetik()|9871753262ea715e3d97e09eebdb0145 · definer true · search_path=public · auth çalıştırır false
+F|stk_yetki(moduller text[], islem text)|c131cadcf2ef5cfc6ea0ebc6a4e0933d · definer true · search_path=public · auth çalıştırır false
+F|tanimlar_kullanici_koruma()|35c2916e7cc40fa07b98a87864f0436f · definer true · search_path=public · auth çalıştırır true
+F|uretim_bag_koru()|90dd250d983508fd82f78d1c2356b3be · definer true · search_path=public, extensions, pg_temp · auth çalıştırır false
+F|uretim_eski_silme_koru()|4cd27c427a38b77f556951f3f13df22a · definer true · search_path=public, extensions, pg_temp · auth çalıştırır false
+F|uretim_planlama_koru()|3c50a7c033da0ee2dbe11034da3cb598 · definer true · search_path=public, extensions, pg_temp · auth çalıştırır false
+F|uretim_silme_koru()|204b24b4c0eee8b972525038e71afe70 · definer true · search_path=public, extensions, pg_temp · auth çalıştırır false
+F|v2_yazma_acik(p_modul text)|56722264f87aa80f9c14ef9ff76e85e3 · definer true · search_path=public · auth çalıştırır false
+F|yazma_yetkisi_koruma()|49ec4352dc0a5ae2b8a0377cf0e96024 · definer true · search_path=public · auth çalıştırır true
+F|yetki_var_mi(moduller text[], islem text)|148fc08c0e06e554b0f81478f8e26931 · definer true · search_path=public · auth çalıştırır true
+F|yonetici_mi()|75d83f02d081b107c7aef40a93c67bd9 · definer true · search_path=public · auth çalıştırır true
+G|cari_hareketleri|görünüm · eski_cari_hareketleri: yok · doğrudan yazılabilir: YES/YES · INSTEAD OF: 0 · auth yazma: IUD
+G|faturalar|görünüm · eski_faturalar: yok · doğrudan yazılabilir: NO/NO · INSTEAD OF: 0 · auth yazma: IUD
+G|fis_defteri|görünüm · eski_fis_defteri: yok · doğrudan yazılabilir: NO/NO · INSTEAD OF: 0 · auth yazma: IUD
+G|gorevler|YOK · eski_gorevler: yok · doğrudan yazılabilir: - · INSTEAD OF: 0 · auth yazma: -
+G|koliler|görünüm · eski_koliler: yok · doğrudan yazılabilir: NO/NO · INSTEAD OF: 0 · auth yazma: IUD
+G|mesajlar|görünüm · eski_mesajlar: yok · doğrudan yazılabilir: NO/NO · INSTEAD OF: 0 · auth yazma: IUD
+G|modeller|YOK · eski_modeller: yok · doğrudan yazılabilir: - · INSTEAD OF: 0 · auth yazma: -
+G|muhasebe|görünüm · eski_muhasebe: yok · doğrudan yazılabilir: NO/NO · INSTEAD OF: 0 · auth yazma: IUD
+G|stok_hareketleri|görünüm · eski_stok_hareketleri: yok · doğrudan yazılabilir: NO/NO · INSTEAD OF: 0 · auth yazma: IUD
+G|teklifler|görünüm · eski_teklifler: yok · doğrudan yazılabilir: NO/NO · INSTEAD OF: 0 · auth yazma: IUD
+G|varyantlar|görünüm · eski_varyantlar: yok · doğrudan yazılabilir: NO/NO · INSTEAD OF: 0 · auth yazma: IUD
+G|kas_yaz (muhasebe yerine)|var · stk_yetki(muhasebe|fisler|cari, kaydetme): true · yalnız kur serbest: true · v2_yazma_acik(kasa): true
+G|lst_yaz (faturalar yerine)|var · faturalar → stk_yetki(fisler|muhasebe, kaydetme): true · v2_yazma_acik(liste): true
+G|stk_yetki (ortak denetim)|var · jetonsuz serbest: true · yetki_var_mi çağırır: true
+S|stk_ayar|kasa_aktif true · liste_aktif true · liste_tablolari teklifler,faturalar,koliler,fis_defteri,mesajlar
+Z|özet: fonksiyon gövdeleri (30)|b98a3f022fda87e90ba2e837712e6f08
+Z|özet: ilişki türleri (52)|953a6e3cb39cea648f296e47df12d6fd
+Z|özet: tetikleyiciler (95)|19805fda9d39a182e1d8ffa724cd9a5c

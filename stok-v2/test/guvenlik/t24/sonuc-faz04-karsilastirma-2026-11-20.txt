@@ -1,0 +1,71 @@
+# FAZ 0.4 — CANLI KORUMA ENVANTERİ ↔ YEREL KAYNAK (20 Kasım 2026)
+# Canlı: kullanıcı 24-faz04-koruma-envanteri-salt-okur.sql'i ana projede çalıştırdı (salt okur) → sonuc-faz04-envanter-canli-2026-11-20.txt
+# Canlıya hiçbir şey yazılmadı. Yerel: yalnız PostgreSQL 16.
+
+1) CANLIDA NE VAR
+  - muhasebe, faturalar, teklifler, koliler, gorevler, modeller, fis_defteri, mesajlar, varyantlar, stok_hareketleri: GÖRÜNÜM.
+    - Doğrudan yazılabilir: NO/NO. INSTEAD OF yok.
+    - eski_* tabloları yok (veri sıfırlama düşürdü).
+  - yazma_koruma tetikleyicisi canlıda YOK (beklenen: rls-yazma.sql onu yalnız tablolara kurar).
+  - Silme / yazma korumaları, hepsi etkin (O):
+      cariler.silme_koruma      yazma_yetkisi_koruma(cari,silme)     BEFORE DELETE satır
+      siparisler.silme_koruma   yazma_yetkisi_koruma(siparis,silme)  BEFORE DELETE satır
+      uretim.silme_koruma       yazma_yetkisi_koruma(uretim,silme)   BEFORE DELETE satır
+      urunler.silme_koruma      yazma_yetkisi_koruma(stok,silme)     BEFORE DELETE satır
+      tanimlar.tanimlar_kullanici_koruma   BEFORE INSERT,UPDATE,DELETE satır   (A6 gövdesi 35c2916e…)
+      gunluk.gunluk_silme_koruma           BEFORE DELETE satır
+    Ayrıca: uretim_silme_koru, fis_* korumaları, siparis_canli_bag_koru, stk_istemci_koru.
+  - Gövde md5'leri: canlı ile yerelin ortak fonksiyonlarının hepsi BİREBİR. Örnekler:
+      yetki_var_mi (A6)      148fc08c…
+      yazma_yetkisi_koruma   49ec4352…
+      stk_yetki              c131cadc…
+      kas_yaz                19219802…
+      lst_yaz                e789b030…
+      fis_kes                7b4e3f24…
+
+2) muhasebe / faturalar GÖRÜNÜM — YAZMA YETKİSİ HANGİ SUNUCU YOLUNDA
+  - Görünüme doğrudan yazma: her rolde 55000 ("cannot insert/update/delete view"). authenticated'ta görünen IUD yetkisi bu yüzden
+    etkisiz. Bu yetki, rls-kimlik.sql'in "grant all on all tables" satırından geliyor.
+  - muhasebe → kas_yaz(p) — security definer.
+    - Önce v2_yazma_acik('kasa').
+    - Kur dışı her yazmada stk_yetki(['muhasebe','fisler','cari'], 'kaydetme'). Yalnız kurlar / kurGecmisi serbest; bu,
+      rls-yazma.sql'in eski kuralıyla aynı.
+    - Alttaki kas_hareket / kas_hesap / kas_cek / kas_ayar tablolarında authenticated'ın yazma yetkisi yok.
+    - Fişe bağlı ödeme fis_kes içinden geçer; onun kendi yetki denetimi var.
+  - faturalar → lst_yaz(p) — security definer.
+    - Önce v2_yazma_acik('liste').
+    - tablo = 'faturalar' ise stk_yetki(['fisler','muhasebe'], 'kaydetme').
+    - Öteki listeler (teklifler, koliler, …) giriş yapmış herkese açık; tasarım, eski davranışla aynı.
+    - Alttaki lst_kayit tablosunda authenticated'ın yazma yetkisi yok.
+  - stk_yetki: jetonsuz çağrı (servis / SQL Editor) serbest. Jetonlu çağrı yetki_var_mi'ye gider; A6'dan sonra satır yoksa ya da
+    bozuksa yetki yok.
+
+3) YEREL ↔ CANLI FARKLARI VE GİDERİLMESİ (t24/canli-benzeri.sh → atolye_canli; karşılaştırma betiğin içinde)
+  - İlk karşılaştırma, kos-guvenlik sonrası atolye_guvenlik + rls-yazma.sql ile yapıldı. Farklar:
+    - gorevler / modeller yerelde yoktu; canlıda liste görünümü (liste_tablolari 7 liste).
+    - gun_sonu_gonderim: yerelde RLS kapalı + IUDT. Bunu bir test geçici açıyordu. Canlıda gun-sonu.sql ile RLS açık + IUD.
+    - stk_stok, stk_eski_hareketler_g, stk_eski_varyantlar_g: canlıda authenticated IUD, yerelde yok (etkisiz yetki).
+    - Silme korumaları yerel tabanda (hazirla.sh) yoktu. 20 Kasım'da test24 bunları yalnız kendi kopyasına kuruyordu.
+    - Şeması depoda olmayan canlı tablolar: cekler, hesaplar, cop, icerik, medya, onaylar, profil, cek_gorselleri.
+      Bunlara surum_arttir / guncelleme_yaz tetikleyicileri (*_surum, icerik_guncelleme) de dahil.
+  - hazirla.sh DEĞİŞTİRİLMEDİ: bilerek sıkılaştırma öncesi hâli kurar (kos-guvenlik "önce / sonra" ölçer). Hizalama ayrı betikte.
+  - canli-benzeri.sh sonucu: 194 SATIR EŞLEŞTİ, 32 SATIR KAPSAM DIŞINDA, beklenmeyen fark 0.
+    Bu TAM ŞEMA EŞİTLİĞİ DEĞİLDİR: kapsam dışı satırlar karşılaştırılmadı, envanter yalnız koruma / yetki görünümünü kapsar.
+    Tam eşitlik, canlıdan üretilen kurulum dosyasının boş projede doğrulanmasıyla (Faz 4) ölçülür.
+    Bilinen fark: şeması depoda olmayan tablolar ve *_surum tetikleyicileri; uydurulmadı, Faz 4 kapsar.
+
+4) TESTLER (canlı benzeri kaynakla)
+  - test24 (KAYNAK atolye_canli): 196/196. § 8b yeni.
+    - Görünüm türleri ve liste_tablolari canlıdaki gibi.
+    - muhasebe / faturalar / gorevler / cari_hareketleri / stk_eski_hareketler_g / stk_stok / kas_hareket / lst_kayit:
+      Yönetici ve personel doğrudan yazamaz.
+    - kas_yaz: yetkisiz personel hesap yazamaz (42501), yalnız kur yazar; Yönetici yazar.
+    - lst_yaz: personel ve listede olmayan fatura yazamaz (42501); Yönetici yazar; teklif herkese açık.
+    - gun_sonu_gonderim RLS açık.
+  - kos-t24 TEMİZ: canli-benzeri 194 eşleşti / 32 kapsam dışında / beklenmeyen fark 0 · test24 196/196 · ekran-firma-ayrimi 42/42.
+  - Diğer testler:
+      ta6/test-a6.sh            46/46
+      t23/test23.sh             163/163
+      t23/test23-yeni-firma.sh  25/25
+      t19                       139/139
+      kos-guvenlik.sh           TEMİZ (atolye_canli kaynağını o üretiyor)

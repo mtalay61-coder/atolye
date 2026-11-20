@@ -1,0 +1,53 @@
+# test24.sh (aynı kabul testi) ESKİ kurulum-betigi.sql ile (7331ed5; eski betik Editor uyumsuz olduğu için anaya psql ile kuruldu)
+   kurulum dosyası: 5324 satır · 0 adım
+  [KALDI] editor-icin.py: uygun, 2 ifade → beklenen: 2 · gelen: 0
+  [KALDI] dosyada çift-dolar dışında dolar yok → beklenen: 0 · gelen: 331
+  [KALDI] satır yazan adımlar yalnız ayar tabloları (stk_ayar, zamanları, degisiklik, kas_ayar) → beklenen: 4 · gelen: 0
+  [KALDI] başka insert / update adımı yok → beklenen: 0 · gelen: -4
+  [KALDI] proje a: dosyanın doğrulaması (18 satır) → beklenen: 18/18 tamam · gelen: 0/0 tamam
+  [KALDI] proje a: pg_dump şeması anayla aynı (sırasız; takma ad listesi satırı hariç) → beklenen: 0 · gelen: 5084
+  [KALDI] proje a: tüm fark yalnız o satır (bir eksik, bir fazla) → beklenen: 1 1 · gelen: 5080 5
+  [KALDI] proje a: 23 önkoşulu → beklenen: UYGULANMIŞ · gelen: HAZIR
+  [KALDI] proje a: yayın üyelikleri → beklenen: supabase_realtime:cariler,kz_tablo · gelen: 
+  [KALDI] proje a: zorlayıcı nesneler davranıyor (a→z çağrısı, gövde metni, kimlik başlangıcı, hesaplanan sütun) → beklenen: 41|tek ' tırnak | $ ve $$ ve $1 ve \n ters bölü|100|6 ·
+  [KALDI] proje b: dosyanın doğrulaması (18 satır) → beklenen: 18/18 tamam · gelen: 0/0 tamam
+  [KALDI] proje b: pg_dump şeması anayla aynı (sırasız; takma ad listesi satırı hariç) → beklenen: 0 · gelen: 5084
+  [KALDI] proje b: tüm fark yalnız o satır (bir eksik, bir fazla) → beklenen: 1 1 · gelen: 5080 5
+  [KALDI] proje b: 23 önkoşulu → beklenen: UYGULANMIŞ · gelen: HAZIR
+  [KALDI] proje b: yayın üyelikleri → beklenen: supabase_realtime:cariler,kz_tablo · gelen: 
+  [KALDI] proje b: zorlayıcı nesneler davranıyor (a→z çağrısı, gövde metni, kimlik başlangıcı, hesaplanan sütun) → beklenen: 41|tek ' tırnak | $ ve $$ ve $1 ve \n ters bölü|100|6 ·
+  [KALDI] dolu projeye ikinci uygulama durur → beklenen: public şeması boş değil · gelen: 
+  [KALDI] bozuk adım → hangi adımda durduğunu söyler → beklenen: KURULUM DURDU · gelen: 
+  [KALDI] doğrulama tutmazsa → geri alınır → beklenen: KURULUM DOĞRULAMASI TUTMADI (fonksiyonlar) · gelen: 
+  [KALDI] a: Yönetici yonetici_mi → beklenen: ok:t · gelen: hata:42883: function public.yonetici_mi() does not exist
+  [KALDI] a: Yönetici tanımları okur (kullanıcı sayısı) → beklenen: ok:1 · gelen: hata:42P01: relation "public.tanimlar" does not exist
+  [KALDI] a: listede olmayan hesap yonetici_mi → beklenen: ok:f · gelen: hata:42883: function public.yonetici_mi() does not exist
+  [KALDI] a: anon cari okuyamaz → beklenen: ret:izin · gelen: hata:42P01: relation "public.cariler" does not exist
+  [KALDI] a: firma Yönetici'si platform yöneticisi değil → beklenen: ok:f · gelen: hata:42883: function public.platform_yonetici_mi() does not exist
+  [KALDI] a: ürün + cari (uygulama gibi REST ekleme) → beklenen: ok: · gelen: hata:42P01: relation "public.urunler" does not exist
+  [KALDI] a: kasa hesabı (kas_yaz) → beklenen: ok:t · gelen: hata:42883: function public.kas_yaz(unknown) does not exist
+  [KALDI] a: alış faturası + bağlı ödeme (fis_kes) — numara sayacı sıfırdan → beklenen: ok:AF-261117001 · gelen: ok:psql:/tmp/claude-0/-home-user/6fb38da4-0d40-53c4-8348-d529c722ab74/scr
+  [KALDI] a: stok (stk_stok, Yönetici görür) → beklenen: ok:Siyah:5 · gelen: hata:42P01: relation "public.stk_stok" does not exist
+  [KALDI] a: kasa bakiyesi (kas_hareket) → beklenen: -200 · gelen: 
+  [KALDI] a: makbuz numarası da sıfırdan → beklenen: ÖD-261117001 · gelen: 
+  [KALDI] a: listede olmayan hesap fiş kesemez (yetki reddi, 42501) → beklenen: ret:yetki · gelen: hata:42883: function public.fis_kes(jsonb) does not exist
+  [KALDI] a: reddedilen denemeden sonra fiş sayısı değişmedi → beklenen: 2 · gelen: 
+  [KALDI] b: Yönetici yonetici_mi → beklenen: ok:t · gelen: hata:42883: function public.yonetici_mi() does not exist
+  [KALDI] b: Yönetici tanımları okur (kullanıcı sayısı) → beklenen: ok:1 · gelen: hata:42P01: relation "public.tanimlar" does not exist
+  [KALDI] b: listede olmayan hesap yonetici_mi → beklenen: ok:f · gelen: hata:42883: function public.yonetici_mi() does not exist
+  [KALDI] b: anon cari okuyamaz → beklenen: ret:izin · gelen: hata:42P01: relation "public.cariler" does not exist
+  [KALDI] b: firma Yönetici'si platform yöneticisi değil → beklenen: ok:f · gelen: hata:42883: function public.platform_yonetici_mi() does not exist
+  [KALDI] b: ürün + cari (uygulama gibi REST ekleme) → beklenen: ok: · gelen: hata:42P01: relation "public.urunler" does not exist
+  [KALDI] b: kasa hesabı (kas_yaz) → beklenen: ok:t · gelen: hata:42883: function public.kas_yaz(unknown) does not exist
+  [KALDI] b: alış faturası + bağlı ödeme (fis_kes) — numara sayacı sıfırdan → beklenen: ok:AF-261117001 · gelen: ok:psql:/tmp/claude-0/-home-user/6fb38da4-0d40-53c4-8348-d529c722ab74/scr
+  [KALDI] b: stok (stk_stok, Yönetici görür) → beklenen: ok:Siyah:7 · gelen: hata:42P01: relation "public.stk_stok" does not exist
+  [KALDI] b: kasa bakiyesi (kas_hareket) → beklenen: -120 · gelen: 
+  [KALDI] b: makbuz numarası da sıfırdan → beklenen: ÖD-261117001 · gelen: 
+  [KALDI] b: listede olmayan hesap fiş kesemez (yetki reddi, 42501) → beklenen: ret:yetki · gelen: hata:42883: function public.fis_kes(jsonb) does not exist
+  [KALDI] b: reddedilen denemeden sonra fiş sayısı değişmedi → beklenen: 2 · gelen: 
+  [KALDI] A'nın verisi A'da (ürün cari stok kasa cari-hareket) → beklenen: 1 1 1 1 2 · gelen: 
+  [KALDI] A'nın verisi B'de yok → beklenen: 0 0 0 0 0 · gelen: 
+  [KALDI] B'nin verisi B'de → beklenen: 1 1 1 1 2 · gelen: 
+  [KALDI] B'nin verisi A'da yok → beklenen: 0 0 0 0 0 · gelen: 
+  [KALDI] B'nin stoğu A'nın stoğundan bağımsız (A 5, B 7) → beklenen: 5 7 · gelen:  
+── test24: 16 geçti, 50 kaldı ──

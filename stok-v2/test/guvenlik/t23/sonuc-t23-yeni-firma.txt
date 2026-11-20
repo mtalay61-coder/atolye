@@ -1,6 +1,7 @@
-== Ana proje: atolye_guvenlik kopyası (v2 dahil) + 23 + platform verisi + ERP carisi · 0a15166 + çalışma ağacı
+# test23-yeni-firma.sh · 17 Kasım · yeni kurulum-betigi.sql (v2) ile — atlamasız
+== Ana proje: atolye_guvenlik kopyası (v2 dahil) + 23 + platform verisi + ERP carisi · 7331ed5 + çalışma ağacı
   [GEÇTİ] anada 23 önkoşulu → UYGULANMIŞ
-   kurulum dosyası: 5059 satır
+   kurulum dosyası: 5928 satır
 == A) Kurulum dosyası veri taşımaz
   [GEÇTİ] dosyada 'Gizli Musteri Unvani 7Q' geçmez → 0
   [GEÇTİ] dosyada 'gizli-firma-7q' geçmez → 0
@@ -12,13 +13,22 @@
   [GEÇTİ] dosyada üst düzey insert / copy ifadesi yok (fonksiyon gövdeleri girintili, sayılmaz) → 0
   [GEÇTİ] dosya platform_ YAPISINI taşır (5 tablo) → 5
 == B) Supabase SQL Editor uyumu (rehber: SQL Editor › Run)
-  [KALDI] editor-icin.py denetimi → beklenen: uygun · gelen: çift-dolar dışında dolar işareti var (adlı/iç içe tırnak ya da $1)
+  [GEÇTİ] editor-icin.py denetimi → uygun
 == C) İki boş projede çalıştırma (psql, tek işlem — dosya begin / commit taşır)
-  [KALDI] firma a: kurulum dosyası hatasız → beklenen:  · gelen: ERROR:  function public.stk_dizi(jsonb) does not exist
-  [KALDI] firma b: kurulum dosyası hatasız → beklenen:  · gelen: ERROR:  function public.stk_dizi(jsonb) does not exist
+  [GEÇTİ] firma a: kurulum dosyası hatasız → 
+  [GEÇTİ] firma b: kurulum dosyası hatasız → 
 == D) Her firmada platform_ tabloları boş ve kapalı
-  [ATLANDI] firma a/b: 23 önkoşulu — C başarısız (kurulum dosyası boş projede çalışmıyor)
-  [ATLANDI] firma a/b: platform tabloları boş — C başarısız (kurulum dosyası boş projede çalışmıyor)
-  [ATLANDI] firma Yönetici'si platform yöneticisi değil / ekleyemez — C başarısız (kurulum dosyası boş projede çalışmıyor)
-  [ATLANDI] E) veri ayrımı (5 denetim) — C başarısız (kurulum dosyası boş projede çalışmıyor)
-── test23-yeni-firma: 10 geçti, 3 kaldı, 4 atlandı ──
+  [GEÇTİ] firma a: 23 önkoşulu (yapı birebir) → UYGULANMIŞ
+  [GEÇTİ] firma a: platform tabloları boş (yönetici / firma / sözleşme / ödeme / olay) → 0 0 0 0 0
+  [GEÇTİ] firma b: 23 önkoşulu (yapı birebir) → UYGULANMIŞ
+  [GEÇTİ] firma b: platform tabloları boş (yönetici / firma / sözleşme / ödeme / olay) → 0 0 0 0 0
+  [GEÇTİ] firma a Yönetici'si platform yöneticisi değil → ok:f
+  [GEÇTİ] firma a Yönetici'si kendini platform yöneticisi yapamaz → ret:izin
+  [GEÇTİ] firma a Yönetici'si platform firması ekleyemez → ret:rls
+== E) Veri ayrımı
+  [GEÇTİ] A'nın carisi A'da → 1
+  [GEÇTİ] A'nın carisi B'de yok → 0
+  [GEÇTİ] A'nın carisi anada yok → 0
+  [GEÇTİ] ananın carisi A ve B'de yok → 0 0
+  [GEÇTİ] B'nin carisi A'da ve anada yok → 0 0
+── test23-yeni-firma: 25 geçti, 0 kaldı, 0 atlandı ──

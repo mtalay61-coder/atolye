@@ -920,6 +920,10 @@ function AtolyeUygulamasi() {
     if (!k) { showToast("Bulut hesabı var ama Tanımlar'da bu kullanıcı yok — yöneticiye başvurun"); return; }
     setAktifKullanici(k);
     setBulutKimligi(true);
+    // OTURUM BU YOLDA DA SAKLANIR (v1.744.24). Oturumsuz açılışta (yeni cihaz, firma değişimi sonrası) giriş bu ön
+    // giriş yolundan geçiyor; `oturumSakla` yalnız GirisEkrani/IlkKurulum yolundaydı. Sonuç: girişten hemen sonraki
+    // sıradan yenilemede kullanıcıdan şifre yeniden isteniyordu (ekran-firma-ayrimi 1b ölçtü: `oturum:aktif` hiç yazılmamış).
+    oturumSakla(k, true);
     gunlukKullaniciAyarla(k);
     gunlukYaz("Giriş yaptı", "oturum", { rol: k.rol, kimlik: "bulut", onGiris: true });
   }, [bulutOnGiris, loading, aktifKullanici, tanimlar]); // eslint-disable-line react-hooks/exhaustive-deps

@@ -27,7 +27,9 @@ kalıpları" bölümlerini, ayrıca dokunacağın konunun bölümünü oku (`gre
 - `index.html` — başlatıcı: `surum.json`'u okuyup yayındaki sürüme yönlendirir. `manifest.json`,
   `sw.js`, `ikon-*.png` — kurulabilir uygulama (PWA).
 - `atolye-erp-vX.Y.Z.html` — yayınlanmış sürümler (ÜRETİLEN dosyalar). `yap.sh` her derlemede yalnız
-  en yeni 3 tanesini bırakır, eskileri `git rm` ile siler (depo şişmesin; geçmişte dururlar).
+  en yeni 3 tanesini bırakır, eskileri `git rm` ile siler (depo şişmesin; geçmişte dururlar). `surum.json`'un gösterdiği
+  YAYINDAKİ dosya sayıdan bağımsız hep korunur; surum.json okunamazsa hiçbir şey silinmez (`surum-temizle.sh`,
+  `test/birim-surum-temizle.js`; 17 Kasım'da korumasız kural 1.744.22'yi silmişti).
 
 ## Komutlar
 
@@ -39,9 +41,14 @@ npm install          # bir kez: typescript, react, playwright (yalnız araçlar 
 ```
 
 Tek senaryo: `cd test && node derle.js && node paket-test.js && node senaryo-<ad>.js`.
+Playwright'ın kendi tarayıcısı kurulu değilse (konteyner imajı güncellenince "Executable doesn't exist") `PW_CHROMIUM=/opt/pw-browsers/chromium`
+verin (test/ortak.js). Yeni firma kurulumu kabul testleri: `KOPRU_PG=<pg modülü> stok-v2/test/guvenlik/t24/kos-t24.sh`.
 
 Bilinen test boşlukları: paralel koşuda birkaç senaryo oynak — FARKLI çıkanı tek başına yeniden koş. (`tedarik-girisleri`
-eskiden hep FARKLI'ydı: senaryo WhatsApp penceresinin adresini gezinme bitmeden okuyordu; 17 Kasım'da düzeltildi.) (Taşımada kaybolan 15 senaryo 27 Eylül'de
+eskiden hep FARKLI'ydı: senaryo WhatsApp penceresinin adresini gezinme bitmeden okuyordu; 17 Kasım'da düzeltildi.) (`firma-secimi` eskiden oynaktı — kök neden test ortamı: file:// altında, belge başında init script yerel depoya
+yazınca Chromium taze tarayıcının İLK belgesinin bütün localStorage yazmalarını gezinmede bazen düşürüyor (uygulamasız
+yeniden üretim 55'te 9; https'te 110'da 0). Yeniden yükleme içeren senaryolar `adres: TEST_KOK + "test.html"` ile https'ten
+açılır (test/ortak.js); 17 Kasım yük ölçümü dal 18/18, main 18/18.) (Taşımada kaybolan 15 senaryo 27 Eylül'de
 yeniden yazıldı; bkz. DEVAM-NOTU v1.505.0.)
 `src/137`, `236`, `237` derlenmiş (React.createElement) hâlde; dokunulursa JSX'e çevir.
 
@@ -65,7 +72,8 @@ yeniden yazıldı; bkz. DEVAM-NOTU v1.505.0.)
 
 - Kullanıcıyla ve kodda **Türkçe**; kod yorumları "neden"i anlatır, yoğun ve açıklayıcıdır.
 - Supabase **secret anahtarı asla koda girmez**; yalnız publishable anahtar gömülü.
-- Dışarıya veri gönderen AI/servis entegrasyonu önerme (kullanıcı kararı, bkz. 7a).
+- Dışarıya veri gönderen AI/servis entegrasyonu önerme (kullanıcı kararı, bkz. 7a). Bu karara AYKIRI mevcut bir davranış
+  var: döviz kurunun son adımı `api.anthropic.com`'a gidiyor — kayıt ve önerilen düzeltme DEVAM-NOTU "AÇIK AYKIRILIK" bölümünde.
 - Fişsiz hareket olmaz, eksi stok kırpılmaz, matris kuralı — bkz. "Proje kuralları".
 - İnternetsiz kayıt girilmez (çevrimdışı kilit, v1.557); yazma katmanında düşen yazma fark belleğini geri alır
   ve bekleyen kayıt defterine yazar (v1.556 "Jut") — bu iki korumayı gevşetme.

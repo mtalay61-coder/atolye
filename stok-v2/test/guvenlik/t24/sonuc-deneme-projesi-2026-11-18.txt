@@ -1,0 +1,33 @@
+# GERÇEK SUPABASE DENEME PROJESİ — SONUÇ (18 Kasım 2026, kullanıcının Windows bilgisayarı + Chrome)
+# Proje: atolye-deneme (ücretsiz plan, Avrupa; ana proje dışında etkin ücretsiz proje yoktu → kotaya sığdı)
+# Uygulama: atolye-erp-v1.744.25.html (dal claude/yeni-firma-kurulum-v2), SHA-256 796cfc4e…004a1
+# Sunucu: deneme-sunucu.py (SHA-256 d87257d0…0dfc0d), http://127.0.0.1:8080, izinli tek proje = deneme projesi
+# Canlıya, main'e, surum.json'a, yayına dokunulmadı. Gizli değer paylaşılmadı.
+
+1. Kurulum dosyası (deneme-kurulum.sql, yerel canlı-benzeri kopyadan) SQL Editor'de tek Run: 18/18 "tamam"
+   (17 parmak izi kategorisi + "ayar dışı tablolarda satır yok"); her kategori kaynakla birebir.
+2. Bağımsız parmak izi: order by kategori (sıralamasız) → f21635ca… (FARKLI); collate "C" → 332d6e9b… (BİREBİR).
+   Neden: Supabase veritabanı en_US.UTF-8; Türkçe harfli kategoriler başka sıraya düşüyordu. Rehber / test24 / üretici düzeltildi.
+3. 23 önkoşul (salt okur): GENEL UYGULANMIŞ; politika / yetki / fonksiyon / tetikleyici farkı yok; RLS 5/5; kayıtlar 0/0/0.
+4. İlk yönetici: auth kullanıcısı (onaylı) + tanımlar kaydı: hesap 1, onaylı 1, giriş açık, 1 kullanıcı.
+5. Koruma (tarayıcıda): konsoldan github.io/atolye/firmalar.json isteği "violates ... connect-src ... The action has been
+   blocked" → "ENGELLENDİ: Failed to fetch"; sunucuya bildirildi. Oturum boyunca << ANA PROJE işaretli satır: 0.
+   DevTools açıkken esm.sh *.mjs.map (kaynak haritası) satırları da engellenir — zararsız, uygulama kullanmaz.
+6. Paket: React / lucide / xlsx esm.sh'tan yüklendi, firma kodu ekranı geldi (bu ortamda sınanamayan madde kapandı).
+7. Gelişmiş ile deneme projesi + publishable anahtar → tek Bağlan → "Bulut kimliğiyle giriş"; "Veritabanı anahtarla
+   okunamadı (2. aşama etkin)" — RLS gerçek Supabase'de anon'u kesiyor (beklenen).
+8. Giriş (deneme): Anasayfa, kullanıcı DY (Deneme Yönetici). İlk kurulum sihirbazı (unvan "Deneme Atölye") → sunucuda:
+   unvan var, 4 renk, 1 kullanıcı.
+9. F5: şifre istenmedi (1.744.25 oturum düzeltmesi gerçek GoTrue girişiyle doğrulandı).
+10. Ürün "Deneme Bot" (Hammadde, Siyah, 40; barkod 0001-101) → bağımsız stok girişi 3 → fiş MNL-261118001.
+11. Cari "Deneme Müşteri" (0001) + kasa "Merkez Kasa" → nakit tahsilat 150 → fiş TH-261118001.
+12. Sunucu doğrulaması: stok Siyah/40 = 3; kasa bakiyesi 150; fişler MNL-261118001, TH-261118001; kasa hesabı 1.
+13. Tanımlar › Yedek & Bulut › "Yeni firma kurulum dosyasını indir": atolye-kurulum-2026-11-18, 468 KB (kurulan dosya
+    479 792 bayt = 468,5 KB); "betik eski" uyarısı yok.
+
+GÖZLEMLER (bu işte değiştirilmedi):
+- Döviz kuru zinciri (TCMB → 4 açık aracı → Harem → Frankfurter → api.anthropic.com) GİRİŞ EKRANINDA da çalışıyor ve kur
+  alınamadıkça HER sayfa açılışında yeniden deneniyor (bu oturumda 4 kez). 7a aykırılığı kaydına eklendi.
+- Sol üstte "ND" logosu: yerel depo boş, ana projeye istek 0 → logo ana projeden gelmiyor; paketin varsayılanı olmalı. Çok
+  firmalı kullanımda yeni firmalar bu logoyla açılır mı — ayrıca bakılacak.
+- Açılışın ilk saniyesinde "Test Kullanıcısı" (main'de de var).

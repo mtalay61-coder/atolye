@@ -15,7 +15,7 @@ const { normalles } = require("./senaryo-fis.js");
 const KOPRU = fs.readFileSync(path.join(__dirname, "..", "depo-koprusu.js"), "utf8");
 
 async function calistir() {
-  const tarayici = await chromium.launch();
+  const tarayici = await chromium.launch(process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {});
   const sayfa = await tarayici.newPage();
   const hatalar = [];
   sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));

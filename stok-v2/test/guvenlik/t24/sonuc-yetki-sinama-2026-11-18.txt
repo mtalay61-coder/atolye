@@ -1,0 +1,25 @@
+# YÖNETİCİ OLMAYAN KULLANICIYLA YETKİSİZ İŞLEM SINAMASI — GERÇEK SUPABASE DENEME PROJESİ (18 Kasım 2026)
+# Betik: deneme-yetki-sinama.sql (SQL Editor; her deneme authenticated + JWT iddialarıyla ayrı alt işlemde, GERİ ALINIR).
+# Kişiler: personel@atolye.local (Tanımlar'da Personel, yetkiler {}) · listede-yok@ornek.test (giriş hesabı olan, listede olmayan).
+# Önce: "Allow new users to sign up" deneme projesinde AÇIKTI (rehber adımı eksikti) → kapatıldı. Yerel prova ile satır satır aynı.
+
+UYGUN (reddedildi / etkisiz):
+  A1 kendi rolünü Yönetici yapmak · A2 kendini yeni Yönetici eklemek · A3 girisAktifMi=false · A4 tanımları silmek ·
+  A5 ikinci tanımlar satırı · A7 platform_yoneticileri'ne eklemek · A8 yonetici_mi()=0 · A9 platform_yonetici_mi()=0 ·
+  B1 auth.users okumak · B2 kurulum_betigi() · C1 stk_fis doğrudan · C2/C3 kas_hareket doğrudan yazma/silme · C4 stk_ayar ·
+  C5 fis_kes (yetkisiz) · C6 kas_yaz (yetkisiz) · D1 gunluk silmek · D2 silinen_arsiv silmek ·
+  F4 listede olmayanın kendini Yönetici eklemesi · F5 listede olmayanın fis_kes'i
+
+AÇIK — GÜVENLİK BULGUSU (canlıda da var; tetikleyici rls-rol.sql ile aynı kod):
+  A6  personel tanimlar satırının kimliğini değiştirebiliyor ('tekil' → başka): İZİN
+  A6b ardından yetki_var_mi(muhasebe, kaydetme) = TRUE → yetki_var_mi 'tekil' satırı yoksa herkese "evet" diyor; yani tek
+      istekle bütün modül yetkileri açılır (kasa, fiş, stok); yonetici_mi() herkes için false olur (gerçek yönetici de kilitlenir).
+  Önerilen düzeltme (ayrı SQL + test, canlıdan ÖNCE): tanimlar_kullanici_koruma güncellemede id değişimini reddetsin
+  (JWT varsa); yetki_var_mi / stk_yetki 'tekil' yoksa ve JWT varsa REDDETSİN (bugün izin veriyor).
+
+BİLİNEN AÇIK — TASARIM ("2. aşama": giriş yapmış her hesap eski tablolarda tam yetkili):
+  E1 carileri okumak · E2 cari eklemek · E3 cari değiştirmek · E4 cari silmek · E5 ürün silmek · E6 tanımlarda kullanıcı dışı
+  alan · E7 silinenler arşivini okumak · F1 listede olmayan tanımları (kullanıcı listesi dahil) okur · F2 carileri okur · F3 cari siler
+  NOT: Canlıda rls-yazma.sql (11 Ekim) urunler / cariler / siparisler / uretim SİLMESİNİ modül yetkisine bağlıyor (silme_koruma);
+  deneme projesinin kaynağında (atolye_guvenlik) bu tetikleyiciler YOK → E4 / E5 / F3 canlıda farklı çıkmalı (doğrulanacak).
+  Bu yüzden "Allow new users to sign up" KAPALI olmak zorunda: açıksa F satırları adresi bilen herkes için geçerli.

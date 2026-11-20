@@ -1,0 +1,58 @@
+# YENİ FİRMA KURULUMU — A6 VE SİLME KORUMALARI (20 Kasım 2026). Yalnız yerel PostgreSQL 16; canlıya / deneme projesine dokunulmadı.
+# Dallar: claude/yonetim-paneli-tasarim (#362) ← main 86bf9e2 (A6, #364) · claude/yeni-firma-kurulum-v2 (#363) ← güncel #362.
+# Birleştirmelerde çakışma yok.
+
+SORU: Kurulum dosyası (kurulum_betigi()) A6 düzeltmesini ve canlının silme korumalarını yeni firmaya taşıyor mu?
+YÖNTEM: Kurulum dosyası ANAYI kopyalar. Bu yüzden ana canlı gibi kuruldu ve dosyanın kurduğu iki boş projede (t24_a, t24_b)
+şunlar ölçüldü: yapı, davranış ve sahte yeşil olmadığı (negatif kontrol).
+  - Ana: atolye_guvenlik (hazirla.sh). Bu kopyada A6 kaynakta: 15-duzeltme / rls-rol.sql düzeltilmiş gövdeleri taşıyor.
+  - Ana: rls-yazma.sql'in tamamı da kuruldu (YENİ). Canlıda silme_koruma 11 Ekim'den beri var; hazirla.sh yalnız fonksiyonu kuruyordu.
+
+test24.sh — 134 geçti, 0 kaldı  (önceki kayıt 76 satır / 17 Kasım; yeni 0) ve 8) bölümleri)
+  0) ana: A6 önkoşulu UYGULANMIŞ; koruma tetikleyicileri:
+     cariler:silme_koruma:yazma_yetkisi_koruma(cari,silme) · siparisler:silme_koruma:…(siparis,silme) ·
+     tanimlar:tanimlar_kullanici_koruma · uretim:silme_koruma:…(uretim,silme) · urunler:silme_koruma:…(stok,silme) — hepsi etkin
+     yazma_koruma YOK: muhasebe / faturalar v2'de görünüm; rls-yazma.sql tetikleyiciyi yalnız tabloysa kurar.
+  3) iki projede:
+     - koruma tetikleyicileri anayla birebir;
+     - A6 gövde md5'leri "yeni yeni";
+     - pg_dump şeması anayla aynı (tetikleyiciler dahil);
+     - parmak izi birebir, 18/18.
+  5) iki projede A6 önkoşulu UYGULANMIŞ (ilk yönetici satırıyla).
+  8) davranış, iki projede de (PostgREST yolu: authenticator → authenticated + JWT):
+     - tanımlar kimliğini personel de Yönetici de değiştiremez (42501);
+     - satır yokken Yönetici'ye ve personele yetki_var_mi = f; satır dönünce Yönetici t;
+     - urunler / cariler / siparisler / uretim: yetkisiz personel ve listede olmayan silemez (42501);
+       silme yetkili personel ve Yönetici siler; reddedilen satırlar yerinde kalır;
+     - ta6/yetki-sinama.sql firmada: AÇIK 0 · BAŞARISIZ 0;
+       E4 / E5 / F3 (cari / ürün silme) UYGUN = RET (silme_koruma); A6 / A6b / Y7 UYGUN;
+       sınamadan sonra tanımlar 'tekil' tek satır.
+     Not: D1 (günlük silme) satır düzeyi korumayı ölçer. Yeni firmada günlük boş olduğu için tetikleyici hiç çalışmıyor ve
+     "0 satır" BAŞARISIZ sayılıyordu. Sınamadan önce bir günlük satırı eklendi (test-a6 da böyle yapıyor) → UYGUN.
+
+NEGATİF KONTROL — test gerçekten yakalıyor mu (geçici betik kopyalarıyla, depoya girmedi):
+  K1 anaya rls-yazma.sql KURULMADAN (eski kurulum, korumasız): 105 geçti, 29 kaldı
+     → ana / proje tetikleyici listesi farklı; personel ve listede olmayan 4 tabloda SİLEBİLDİ (ok:)
+  K2 ana A6 ÖNCESİ (geri alma dosyası; korumalar var): 87 geçti, 47 kaldı
+     → A6 önkoşulu HAZIR, gövdeler "eski eski"; personel ve Yönetici kimliği değiştirebildi; ardından yetki_var_mi herkese t
+
+DİĞER TESTLER (#363, birleştirilmiş ağaç):
+  kos-t24.sh (test24 + ekran-firma-ayrimi 42/42, Chromium /opt/pw-browsers/chromium)  TEMİZ
+  ta6/test-a6.sh                                      46/46
+  t23/test23.sh                                       163/163
+  t23/test23-yeni-firma.sh                            25/25 (0 atlandı) — kayıtlı sonuçla aynı
+  t19/test19.sh                                       139/139
+  kos-guvenlik.sh                                     TEMİZ (55 ✓; f0 ve f2 dahil)
+    İlk koşuda f0 / f2 kırmızı göründü: PGPORT verilmeyince 55432'deki olmayan kümeye bağlanıyorlar. Ortam hatası;
+    PGPORT=5432 ile f0 ve f2 "beklenenle AYNI".
+#362 dalında: test23 163/163 · test-a6 46/46 · test23-yeni-firma kayıtlı sonuçla aynı (10/3/4; v2 betiği bu dalda yok, beklenen)
+
+DEĞİŞEN TEST:
+  ta6/test-a6.sh: A6 main'e girince atolye_guvenlik düzeltilmiş gövdelerle doğuyor ve "öncesi" adımı 8 yerde kırmızıya
+  düşüyordu. Öncesi hâl artık geri alma dosyasıyla kuruluyor; eski gövdeler, canlı arşiviyle aynı md5. Eski 15-duzeltme
+  karşılaştırması b4594bc'ye sabitlendi.
+
+KAPSAM DIŞI / HÂLÂ GEREKLİ:
+  - Canlıdan üretilen dosyanın boş projede doğrulanması: Faz 4 (canlıya 23 ve kurulum betiği uygulanınca).
+  - Canlı tetikleyici envanteri: Faz 0.4, salt okur, henüz çalıştırılmadı. yazma_koruma'nın canlıda olmadığı orada teyit edilecek.
+  - Canlı SQL, main'e birleştirme, surum.json ve yayın yapılmadı.

@@ -1,0 +1,228 @@
+# test24.sh · 2026-11-20 · yerel PostgreSQL 16 · KAYNAK atolye_canli (canli-benzeri.sh: kos-guvenlik sonrası + Faz 0.4 hizalaması) · kurulum Editor gibi
+psql:/home/user/atolye/stok-v2/test/guvenlik/t24/zorla.sql:58: WARNING:  wal_level is insufficient to publish logical changes
+HINT:  Set wal_level to "logical" before creating subscriptions.
+== Ana: atolye_canli + sema-tamamla + 23 + kurulum-betigi + zorla.sql + rls-yazma.sql · 966dcdd + çalışma ağacı
+== 0) Ana canlı gibi mi (kurulum dosyası anayı kopyalar)
+  [GEÇTİ] ana: A6 önkoşulu (düzeltme kaynakta, canlıda 20 Kasım) → UYGULANMIŞ
+  [GEÇTİ] ana: koruma tetikleyicileri (silme_koruma ×4, tanimlar_kullanici_koruma) → cariler:silme_koruma:yazma_yetkisi_koruma(cari,silme,):O siparisler:silme_koruma:yazma_yetkisi_koruma(siparis,silme,):O tanimlar:tanimlar_kullanici_koruma:tanimlar_kullanici_koruma():O uretim:silme_koruma:yazma_yetkisi_koruma(uretim,silme,):O urunler:silme_koruma:yazma_yetkisi_koruma(stok,silme,):O
+== 1) Üretici erişimi
+  [GEÇTİ] listede olmayan hesap üretemez → ret:yetki
+  [GEÇTİ] anon üretemez → ret:izin
+  [GEÇTİ] ERP Yönetici'si üretir → ok:t
+   kurulum dosyası: 6192 satır · 858 adım
+== 2) Dosya: Editor uyumu, veri yok
+  [GEÇTİ] editor-icin.py: uygun, 2 ifade → 2
+  [GEÇTİ] dosyada çift-dolar dışında dolar yok → 0
+  [GEÇTİ] ana firmanın işaretli verisi dosyada yok (SIZINTI-7Q) → 0
+  [GEÇTİ] satır yazan adımlar yalnız ayar tabloları (stk_ayar, zamanları, degisiklik, kas_ayar) → 4
+  [GEÇTİ] başka insert / update adımı yok → 0
+== 3) İki boş projede kurulum (Editor gibi)
+WARNING:  wal_level is insufficient to publish logical changes
+HINT:  Set wal_level to "logical" before creating subscriptions.
+  [GEÇTİ] proje a: hata yok → 
+  [GEÇTİ] proje a: dosyanın doğrulaması (18 satır) → 18/18 tamam
+  [GEÇTİ] proje a: ana ↔ firma parmak izi (bağımsız sorgu) → f818e902bac085bbf3d6b01e13a7f897
+  [GEÇTİ] proje a: pg_dump şeması anayla aynı (sırasız; takma ad listesi satırı hariç) → 0
+  [GEÇTİ] proje a: tüm fark yalnız o satır (bir eksik, bir fazla) → 1 1
+  [GEÇTİ] proje a: 23 önkoşulu → UYGULANMIŞ
+  [GEÇTİ] proje a: koruma tetikleyicileri anayla birebir (silme_koruma ×4, tanimlar_kullanici_koruma) → cariler:silme_koruma:yazma_yetkisi_koruma(cari,silme,):O siparisler:silme_koruma:yazma_yetkisi_koruma(siparis,silme,):O tanimlar:tanimlar_kullanici_koruma:tanimlar_kullanici_koruma():O uretim:silme_koruma:yazma_yetkisi_koruma(uretim,silme,):O urunler:silme_koruma:yazma_yetkisi_koruma(stok,silme,):O
+  [GEÇTİ] proje a: A6 gövdeleri (md5: koruma / yetki = düzeltilmiş) → yeni yeni
+  [GEÇTİ] proje a: yayın üyelikleri → supabase_realtime:cariler,kz_tablo
+  [GEÇTİ] proje a: zorlayıcı nesneler davranıyor (a→z çağrısı, gövde metni, kimlik başlangıcı, hesaplanan sütun) → 41|tek ' tırnak | $ ve $$ ve $1 ve \n ters bölü|100|6
+pg_dump: warning: there are circular foreign-key constraints on this table:
+pg_dump: detail: platform_odemeler
+pg_dump: hint: You might not be able to restore the dump without using --disable-triggers or temporarily dropping the constraints.
+pg_dump: hint: Consider using a full dump instead of a --data-only dump to avoid this problem.
+  [GEÇTİ] proje a: ana verisi yok (SIZINTI-7Q her tabloda 0) → 0
+  [GEÇTİ] proje b: hata yok → 
+  [GEÇTİ] proje b: dosyanın doğrulaması (18 satır) → 18/18 tamam
+  [GEÇTİ] proje b: ana ↔ firma parmak izi (bağımsız sorgu) → f818e902bac085bbf3d6b01e13a7f897
+  [GEÇTİ] proje b: pg_dump şeması anayla aynı (sırasız; takma ad listesi satırı hariç) → 0
+  [GEÇTİ] proje b: tüm fark yalnız o satır (bir eksik, bir fazla) → 1 1
+  [GEÇTİ] proje b: 23 önkoşulu → UYGULANMIŞ
+  [GEÇTİ] proje b: koruma tetikleyicileri anayla birebir (silme_koruma ×4, tanimlar_kullanici_koruma) → cariler:silme_koruma:yazma_yetkisi_koruma(cari,silme,):O siparisler:silme_koruma:yazma_yetkisi_koruma(siparis,silme,):O tanimlar:tanimlar_kullanici_koruma:tanimlar_kullanici_koruma():O uretim:silme_koruma:yazma_yetkisi_koruma(uretim,silme,):O urunler:silme_koruma:yazma_yetkisi_koruma(stok,silme,):O
+  [GEÇTİ] proje b: A6 gövdeleri (md5: koruma / yetki = düzeltilmiş) → yeni yeni
+  [GEÇTİ] proje b: yayın üyelikleri → supabase_realtime:cariler,kz_tablo
+  [GEÇTİ] proje b: zorlayıcı nesneler davranıyor (a→z çağrısı, gövde metni, kimlik başlangıcı, hesaplanan sütun) → 41|tek ' tırnak | $ ve $$ ve $1 ve \n ters bölü|100|6
+pg_dump: warning: there are circular foreign-key constraints on this table:
+pg_dump: detail: platform_odemeler
+pg_dump: hint: You might not be able to restore the dump without using --disable-triggers or temporarily dropping the constraints.
+pg_dump: hint: Consider using a full dump instead of a --data-only dump to avoid this problem.
+  [GEÇTİ] proje b: ana verisi yok (SIZINTI-7Q her tabloda 0) → 0
+== 4) Güvenlik ağı
+  [GEÇTİ] dolu projeye ikinci uygulama durur → public şeması boş değil
+  [GEÇTİ] durduktan sonra parmak izi aynı → 8af78b9aac79e8c4125b2fe0b6038025
+  [GEÇTİ] bozuk adım → hangi adımda durduğunu söyler → KURULUM DURDU
+  [GEÇTİ] bozuk adımdan sonra public boş (hiçbir şey kalmadı) → 0
+  [GEÇTİ] doğrulama tutmazsa → geri alınır → KURULUM DOĞRULAMASI TUTMADI (fonksiyonlar)
+  [GEÇTİ] doğrulama tutmayınca public boş → 0
+== 5) Giriş (rehber adım 3: ilk yönetici) ve 6) stok + kasa, 7) veri ayrımı
+  [GEÇTİ] a: A6 önkoşulu (ilk yönetici satırıyla) → UYGULANMIŞ
+  [GEÇTİ] a: Yönetici yonetici_mi → ok:t
+  [GEÇTİ] a: Yönetici tanımları okur (kullanıcı sayısı) → ok:1
+  [GEÇTİ] a: listede olmayan hesap yonetici_mi → ok:f
+  [GEÇTİ] a: anon cari okuyamaz → ret:izin
+  [GEÇTİ] a: firma Yönetici'si platform yöneticisi değil → ok:f
+  [GEÇTİ] a: ürün + cari (uygulama gibi REST ekleme) → ok:
+  [GEÇTİ] a: kasa hesabı (kas_yaz) → ok:t
+  [GEÇTİ] a: alış faturası + bağlı ödeme (fis_kes) — numara sayacı sıfırdan → ok:AF-261120001
+  [GEÇTİ] a: stok (stk_stok, Yönetici görür) → ok:Siyah:5
+  [GEÇTİ] a: kasa bakiyesi (kas_hareket) → -200
+  [GEÇTİ] a: makbuz numarası da sıfırdan → ÖD-261120001
+  [GEÇTİ] a: listede olmayan hesap fiş kesemez (yetki reddi, 42501) → ret:yetki
+  [GEÇTİ] a: reddedilen denemeden sonra fiş sayısı değişmedi → 2
+  [GEÇTİ] b: A6 önkoşulu (ilk yönetici satırıyla) → UYGULANMIŞ
+  [GEÇTİ] b: Yönetici yonetici_mi → ok:t
+  [GEÇTİ] b: Yönetici tanımları okur (kullanıcı sayısı) → ok:1
+  [GEÇTİ] b: listede olmayan hesap yonetici_mi → ok:f
+  [GEÇTİ] b: anon cari okuyamaz → ret:izin
+  [GEÇTİ] b: firma Yönetici'si platform yöneticisi değil → ok:f
+  [GEÇTİ] b: ürün + cari (uygulama gibi REST ekleme) → ok:
+  [GEÇTİ] b: kasa hesabı (kas_yaz) → ok:t
+  [GEÇTİ] b: alış faturası + bağlı ödeme (fis_kes) — numara sayacı sıfırdan → ok:AF-261120001
+  [GEÇTİ] b: stok (stk_stok, Yönetici görür) → ok:Siyah:7
+  [GEÇTİ] b: kasa bakiyesi (kas_hareket) → -120
+  [GEÇTİ] b: makbuz numarası da sıfırdan → ÖD-261120001
+  [GEÇTİ] b: listede olmayan hesap fiş kesemez (yetki reddi, 42501) → ret:yetki
+  [GEÇTİ] b: reddedilen denemeden sonra fiş sayısı değişmedi → 2
+   — veri ayrımı
+  [GEÇTİ] A'nın verisi A'da (ürün cari stok kasa cari-hareket) → 1 1 1 1 2
+  [GEÇTİ] A'nın verisi B'de yok → 0 0 0 0 0
+  [GEÇTİ] A'nın verisi anada yok → 0 0 0 0 0
+  [GEÇTİ] B'nin verisi B'de → 1 1 1 1 2
+  [GEÇTİ] B'nin verisi A'da yok → 0 0 0 0 0
+  [GEÇTİ] B'nin verisi anada yok → 0 0 0 0 0
+pg_dump: warning: there are circular foreign-key constraints on this table:
+pg_dump: detail: platform_odemeler
+pg_dump: hint: You might not be able to restore the dump without using --disable-triggers or temporarily dropping the constraints.
+pg_dump: hint: Consider using a full dump instead of a --data-only dump to avoid this problem.
+pg_dump: warning: there are circular foreign-key constraints on this table:
+pg_dump: detail: platform_odemeler
+pg_dump: hint: You might not be able to restore the dump without using --disable-triggers or temporarily dropping the constraints.
+pg_dump: hint: Consider using a full dump instead of a --data-only dump to avoid this problem.
+  [GEÇTİ] ananın işaretli verisi A ve B'de yok → 0 0
+  [GEÇTİ] B'nin stoğu A'nın stoğundan bağımsız (A 5, B 7) → 5 7
+== 8) A6 ve silme korumaları — davranış (her firmada; ana firmanın değil, KURULUM DOSYASININ kurduğu kod)
+  [GEÇTİ] a: personel tanımlar kimliğini değiştiremez (A6) → ret:yetki
+  [GEÇTİ] a: Yönetici de değiştiremez (A6) → ret:yetki
+  [GEÇTİ] a: personel yetki_var_mi(muhasebe, kaydetme) → ok:f
+  [GEÇTİ] a: satır yokken Yönetici'ye bile yetki yok (A6) → ok:f
+  [GEÇTİ] a: satır yokken personele yetki yok (A6) → ok:f
+  [GEÇTİ] a: satır geri gelince Yönetici yetkili → ok:t
+  [GEÇTİ] a: urunler — personel (silme yetkisi yok) silemez → ret:yetki
+  [GEÇTİ] a: urunler — listede olmayan silemez → ret:yetki
+  [GEÇTİ] a: urunler — silme yetkili personel siler → ok:
+  [GEÇTİ] a: urunler — Yönetici siler → ok:
+  [GEÇTİ] a: urunler — kalan sınama satırları (yalnız reddedilenler) → sil-per,sil-yab
+  [GEÇTİ] a: cariler — personel (silme yetkisi yok) silemez → ret:yetki
+  [GEÇTİ] a: cariler — listede olmayan silemez → ret:yetki
+  [GEÇTİ] a: cariler — silme yetkili personel siler → ok:
+  [GEÇTİ] a: cariler — Yönetici siler → ok:
+  [GEÇTİ] a: cariler — kalan sınama satırları (yalnız reddedilenler) → sil-per,sil-yab
+  [GEÇTİ] a: siparisler — personel (silme yetkisi yok) silemez → ret:yetki
+  [GEÇTİ] a: siparisler — listede olmayan silemez → ret:yetki
+  [GEÇTİ] a: siparisler — silme yetkili personel siler → ok:
+  [GEÇTİ] a: siparisler — Yönetici siler → ok:
+  [GEÇTİ] a: siparisler — kalan sınama satırları (yalnız reddedilenler) → sil-per,sil-yab
+  [GEÇTİ] a: uretim — personel (silme yetkisi yok) silemez → ret:yetki
+  [GEÇTİ] a: uretim — listede olmayan silemez → ret:yetki
+  [GEÇTİ] a: uretim — silme yetkili personel siler → ok:
+  [GEÇTİ] a: uretim — Yönetici siler → ok:
+  [GEÇTİ] a: uretim — kalan sınama satırları (yalnız reddedilenler) → sil-per,sil-yab
+  [GEÇTİ] a: yetki-sinama.sql özeti (AÇIK / BAŞARISIZ) → AÇIK: 0 · BAŞARISIZ: 0
+  [GEÇTİ] a: E4 / E5 / F3 (cari / ürün silme) artık RET — silme_koruma → UYGUN UYGUN UYGUN
+  [GEÇTİ] a: A6 / A6b / Y7 (kimlik değiştirme) RET → UYGUN UYGUN UYGUN
+  [GEÇTİ] a: muhasebe / faturalar / gorevler / modeller görünüm; liste_tablolari canlıdaki gibi → v v v v teklifler,faturalar,koliler,gorevler,modeller,fis_defteri,mesajlar
+  [GEÇTİ] a: doğrudan yazma reddi [YON] insert into public.muhasebe (id, veri) values ('x', '{}') → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [PER] insert into public.muhasebe (id, veri) values ('x', '{}') → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [YON] update public.muhasebe set veri = veri → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [PER] update public.muhasebe set veri = veri → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [YON] delete from public.muhasebe → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [PER] delete from public.muhasebe → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [YON] insert into public.faturalar (id, veri) values ('x', '{}') → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [PER] insert into public.faturalar (id, veri) values ('x', '{}') → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [YON] update public.faturalar set veri = veri → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [PER] update public.faturalar set veri = veri → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [YON] delete from public.gorevler → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [PER] delete from public.gorevler → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [YON] insert into public.cari_hareketleri (id, cari_id) values ('x → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [PER] insert into public.cari_hareketleri (id, cari_id) values ('x → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [YON] delete from public.stk_eski_hareketler_g → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [PER] delete from public.stk_eski_hareketler_g → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [YON] delete from public.stk_stok → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [PER] delete from public.stk_stok → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [YON] insert into public.kas_hareket (id, hesap_id, veri) values ( → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [PER] insert into public.kas_hareket (id, hesap_id, veri) values ( → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [YON] insert into public.lst_kayit (tablo, id, sira, veri) values  → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [PER] insert into public.lst_kayit (tablo, id, sira, veri) values  → reddedildi
+  [GEÇTİ] a: kas_yaz — yetkisiz personel kasa hesabı yazamaz (muhasebe yolu) → ret:yetki
+  [GEÇTİ] a: kas_yaz — yetkisiz personel yalnız kur güncelleyebilir (tasarım) → ok:t
+  [GEÇTİ] a: kas_yaz — Yönetici kasa hesabı yazar → ok:t
+  [GEÇTİ] a: lst_yaz — yetkisiz personel fatura yazamaz (faturalar yolu) → ret:yetki
+  [GEÇTİ] a: lst_yaz — Yönetici fatura yazar → ok:t
+  [GEÇTİ] a: lst_yaz — teklif listesi giriş yapmış herkese açık (tasarım) → ok:t
+  [GEÇTİ] a: lst_yaz — listede olmayan fatura yazamaz → ret:yetki
+  [GEÇTİ] a: gun_sonu_gonderim RLS açık (canlıdaki gibi) → t
+  [GEÇTİ] a: sınamadan sonra tanımlar satırı tekil ve 4 kullanıcı → tekil 4
+  [GEÇTİ] b: personel tanımlar kimliğini değiştiremez (A6) → ret:yetki
+  [GEÇTİ] b: Yönetici de değiştiremez (A6) → ret:yetki
+  [GEÇTİ] b: personel yetki_var_mi(muhasebe, kaydetme) → ok:f
+  [GEÇTİ] b: satır yokken Yönetici'ye bile yetki yok (A6) → ok:f
+  [GEÇTİ] b: satır yokken personele yetki yok (A6) → ok:f
+  [GEÇTİ] b: satır geri gelince Yönetici yetkili → ok:t
+  [GEÇTİ] b: urunler — personel (silme yetkisi yok) silemez → ret:yetki
+  [GEÇTİ] b: urunler — listede olmayan silemez → ret:yetki
+  [GEÇTİ] b: urunler — silme yetkili personel siler → ok:
+  [GEÇTİ] b: urunler — Yönetici siler → ok:
+  [GEÇTİ] b: urunler — kalan sınama satırları (yalnız reddedilenler) → sil-per,sil-yab
+  [GEÇTİ] b: cariler — personel (silme yetkisi yok) silemez → ret:yetki
+  [GEÇTİ] b: cariler — listede olmayan silemez → ret:yetki
+  [GEÇTİ] b: cariler — silme yetkili personel siler → ok:
+  [GEÇTİ] b: cariler — Yönetici siler → ok:
+  [GEÇTİ] b: cariler — kalan sınama satırları (yalnız reddedilenler) → sil-per,sil-yab
+  [GEÇTİ] b: siparisler — personel (silme yetkisi yok) silemez → ret:yetki
+  [GEÇTİ] b: siparisler — listede olmayan silemez → ret:yetki
+  [GEÇTİ] b: siparisler — silme yetkili personel siler → ok:
+  [GEÇTİ] b: siparisler — Yönetici siler → ok:
+  [GEÇTİ] b: siparisler — kalan sınama satırları (yalnız reddedilenler) → sil-per,sil-yab
+  [GEÇTİ] b: uretim — personel (silme yetkisi yok) silemez → ret:yetki
+  [GEÇTİ] b: uretim — listede olmayan silemez → ret:yetki
+  [GEÇTİ] b: uretim — silme yetkili personel siler → ok:
+  [GEÇTİ] b: uretim — Yönetici siler → ok:
+  [GEÇTİ] b: uretim — kalan sınama satırları (yalnız reddedilenler) → sil-per,sil-yab
+  [GEÇTİ] b: yetki-sinama.sql özeti (AÇIK / BAŞARISIZ) → AÇIK: 0 · BAŞARISIZ: 0
+  [GEÇTİ] b: E4 / E5 / F3 (cari / ürün silme) artık RET — silme_koruma → UYGUN UYGUN UYGUN
+  [GEÇTİ] b: A6 / A6b / Y7 (kimlik değiştirme) RET → UYGUN UYGUN UYGUN
+  [GEÇTİ] b: muhasebe / faturalar / gorevler / modeller görünüm; liste_tablolari canlıdaki gibi → v v v v teklifler,faturalar,koliler,gorevler,modeller,fis_defteri,mesajlar
+  [GEÇTİ] b: doğrudan yazma reddi [YON] insert into public.muhasebe (id, veri) values ('x', '{}') → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [PER] insert into public.muhasebe (id, veri) values ('x', '{}') → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [YON] update public.muhasebe set veri = veri → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [PER] update public.muhasebe set veri = veri → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [YON] delete from public.muhasebe → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [PER] delete from public.muhasebe → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [YON] insert into public.faturalar (id, veri) values ('x', '{}') → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [PER] insert into public.faturalar (id, veri) values ('x', '{}') → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [YON] update public.faturalar set veri = veri → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [PER] update public.faturalar set veri = veri → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [YON] delete from public.gorevler → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [PER] delete from public.gorevler → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [YON] insert into public.cari_hareketleri (id, cari_id) values ('x → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [PER] insert into public.cari_hareketleri (id, cari_id) values ('x → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [YON] delete from public.stk_eski_hareketler_g → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [PER] delete from public.stk_eski_hareketler_g → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [YON] delete from public.stk_stok → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [PER] delete from public.stk_stok → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [YON] insert into public.kas_hareket (id, hesap_id, veri) values ( → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [PER] insert into public.kas_hareket (id, hesap_id, veri) values ( → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [YON] insert into public.lst_kayit (tablo, id, sira, veri) values  → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [PER] insert into public.lst_kayit (tablo, id, sira, veri) values  → reddedildi
+  [GEÇTİ] b: kas_yaz — yetkisiz personel kasa hesabı yazamaz (muhasebe yolu) → ret:yetki
+  [GEÇTİ] b: kas_yaz — yetkisiz personel yalnız kur güncelleyebilir (tasarım) → ok:t
+  [GEÇTİ] b: kas_yaz — Yönetici kasa hesabı yazar → ok:t
+  [GEÇTİ] b: lst_yaz — yetkisiz personel fatura yazamaz (faturalar yolu) → ret:yetki
+  [GEÇTİ] b: lst_yaz — Yönetici fatura yazar → ok:t
+  [GEÇTİ] b: lst_yaz — teklif listesi giriş yapmış herkese açık (tasarım) → ok:t
+  [GEÇTİ] b: lst_yaz — listede olmayan fatura yazamaz → ret:yetki
+  [GEÇTİ] b: gun_sonu_gonderim RLS açık (canlıdaki gibi) → t
+  [GEÇTİ] b: sınamadan sonra tanımlar satırı tekil ve 4 kullanıcı → tekil 4
+── test24: 196 geçti, 0 kaldı ──

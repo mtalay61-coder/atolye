@@ -1,4 +1,4 @@
-== a6_test: atolye_guvenlik kopyası · 4f5e939 + çalışma ağacı
+== a6_test: atolye_guvenlik kopyası · c1776a6 + çalışma ağacı
 == 1) Düzeltme öncesi
   [GEÇTİ] önkoşul → HAZIR
   [GEÇTİ] A6 (kimlik değiştirme) — test açığı görüyor → AÇIK
