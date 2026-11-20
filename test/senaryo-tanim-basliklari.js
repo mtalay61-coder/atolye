@@ -43,13 +43,16 @@ async function calistir() {
   await sayfa.locator('[data-tanim-baslik="Prosesler"]').click();
   await sayfa.waitForTimeout(300);
   const tekrarKapali = (await durum()).prosesKutusuGorunur;
-  // Ürün › Atölye Bölümleri alt sekmesi: başlık hep açık, dokununca kapanmaz; arama yazılınca bütün bölümler görünür.
+  // Ürün alt sekmesi (Sezonlar): başlık hep açık, dokununca kapanmaz; arama yazılınca bütün bölümler görünür.
+  // v1.744.30: Atölye İçi Bölümler Üretim sekmesine taşındı (kullanıcı) — Ürün'de alt sekmesi yok, Üretim'de başlık olarak var.
   await tanimlarAc("urun");
-  await sayfa.locator('[data-urun-alt="bolum"]').click();
-  await sayfa.waitForTimeout(300);
-  await sayfa.locator('[data-tanim-baslik="Atölye İçi Bölümler"]').click();
+  const urunAltSekmeler = await sayfa.evaluate(() => [...document.querySelectorAll("[data-urun-alt]")].map((x) => x.getAttribute("data-urun-alt")));
+  await sayfa.locator('[data-urun-alt="sezon"]').click();
   await sayfa.waitForTimeout(300);
   const urunAlt = await durum();
+  await tanimlarAc("uretim");
+  const bolumUretimde = await sayfa.evaluate(() => !!document.querySelector('[data-tanim-baslik="Atölye İçi Bölümler"]'));
+  await tanimlarAc("urun");
   await sayfa.locator('input[placeholder^="Tanımlarda ara"]').fill("zzz");
   await sayfa.waitForTimeout(300);
   const urunArama = (await durum()).basliklar;
@@ -63,7 +66,7 @@ async function calistir() {
   await sayfa.waitForTimeout(300);
   const kullanicilarAcik = await sayfa.evaluate(() => [...document.querySelectorAll("button")].some((b) => b.textContent.trim() === "Pasif" && b.getBoundingClientRect().height > 0));
   await tarayici.close();
-  return { hatalar, kapaliBaslangic, birAcik, yenilemeSonrasi, tekrarKapali, urunAlt, urunArama, kullanicilar, kullanicilarAcik };
+  return { hatalar, kapaliBaslangic, birAcik, yenilemeSonrasi, tekrarKapali, urunAltSekmeler, urunAlt, bolumUretimde, urunArama, kullanicilar, kullanicilarAcik };
 }
 
 if (require.main === module) {
