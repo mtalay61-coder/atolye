@@ -1,0 +1,1897 @@
+{
+  "moduller": {
+    "m-cek": {
+      "kod": "CEK",
+      "ad": "Çekirdek",
+      "grup": "altyapi",
+      "faz": 0,
+      "durum": "taslak",
+      "amac": "Firma, kullanıcı, rol ve yetki, oturum, çevrimdışı kilit, numaratör, ayarlar. Her komutun geçtiği kapı.",
+      "ders": "Yetki kısmen arayüzde kontrol ediliyordu; RLS sonradan, üç SQL dosyasıyla eklendi.",
+      "cekirdek": false
+    },
+    "m-bel": {
+      "kod": "BEL",
+      "ad": "Belge çekirdeği",
+      "grup": "altyapi",
+      "faz": 0,
+      "durum": "taslak",
+      "amac": "Taslak → onay → iptal yaşam döngüsü. Stok, cari ve kasa defterlerine yazan tek yer; stok, bakiye görünümleri burada.",
+      "ders": "fisYaz / fisGeriAl tek kapıya ancak sonradan toplanabildi; 4 yazıcı dışarıda kaldı.",
+      "cekirdek": true
+    },
+    "m-bak": {
+      "kod": "BAK",
+      "ad": "Bakım ve güvenlik",
+      "grup": "altyapi",
+      "faz": 0,
+      "durum": "taslak",
+      "amac": "Günlük, sunucu arşivi (her değişen ve silinen satır), gece yedeği, tutarlılık denetimleri, açılış devri, toplu işlemler.",
+      "ders": "Kök neden bulunamayan veri kaybında elde arşiv vardı; arşiv tetikleyicisi baştan kurulur.",
+      "cekirdek": false
+    },
+    "m-tan": {
+      "kod": "TAN",
+      "ad": "Tanımlar",
+      "grup": "anaveri",
+      "faz": 1,
+      "durum": "taslak",
+      "amac": "Ürün renkleri (1, 2, 3… renkli kombinasyonlar), hammadde değişkenleri (renk, kalınlık, boy… türlere ayrılmış), ölçü seti ve bedenler, birim, proses, depo, para birimi ve kur, KDV oranı, fiyat grubu.",
+      "ders": "Renk adı kayıt anahtarıydı; ad değişince binlerce varyant silinip yeniden yazıldı (v1.724).",
+      "cekirdek": false
+    },
+    "m-urn": {
+      "kod": "URN",
+      "ad": "Ürün ve varyant",
+      "grup": "anaveri",
+      "faz": 1,
+      "durum": "taslak",
+      "amac": "Hammadde, yarı mamul ve mamul kartları; renk × ölçü varyantları, barkod, görseller, fiyat. Miktar tutmaz.",
+      "ders": "Miktar varyantta önbellekti, hareketlerle ayrıştı; görseller satırla aynı istekte onlarca MB oldu.",
+      "cekirdek": false
+    },
+    "m-car": {
+      "kod": "CAR",
+      "ad": "Cari",
+      "grup": "anaveri",
+      "faz": 1,
+      "durum": "taslak",
+      "amac": "Müşteri, tedarikçi, fasoncu, personel (bir cari birden çok rol taşıyabilir). İletişim, vergi no, fiyat grubu, para birimi. Bakiye görünümden; mahsup belgesi keser.",
+      "ders": "Kasa hareketinin cariye yönü ters işleniyordu (v1.312); yön artık belge tipinde sabit.",
+      "cekirdek": false
+    },
+    "m-stn": {
+      "kod": "STN",
+      "ad": "Satınalma",
+      "grup": "ticari",
+      "faz": 2,
+      "durum": "taslak",
+      "amac": "Alış irsaliyesi (ALS), alıştan iade (ALI), ek alınan hammadde. Alış siparişinden ya da doğrudan.",
+      "ders": "Alış ve satış fişi yön göçü test verisini bozdu; yön artık belge tipinin sabiti.",
+      "cekirdek": false
+    },
+    "m-kas": {
+      "kod": "KAS",
+      "ad": "Kasa, banka ve çek",
+      "grup": "finans",
+      "faz": 2,
+      "durum": "taslak",
+      "amac": "Hesaplar, tahsilat, ödeme, virman (kurlu), çek portföyü: alma, verme, ciro, tahsil, karşılıksız.",
+      "ders": "Ciro fişi silinince çek \"Ciro Edildi\" kaldı, karşı caride yetim kayıt (v1.226).",
+      "cekirdek": false
+    },
+    "m-sip": {
+      "kod": "SIP",
+      "ad": "Sipariş",
+      "grup": "ticari",
+      "faz": 3,
+      "durum": "taslak",
+      "amac": "Satış ve alış siparişleri; matris girişi (renk × beden), notlar, ambalaj, teslim tarihi, ödeme planı. Karşılanan miktar görünümden.",
+      "ders": "Karşılanan miktar saklanıyordu; fiş silinince sipariş \"Tamamlandı\" kaldı (v1.40).",
+      "cekirdek": false
+    },
+    "m-tek": {
+      "kod": "TEK",
+      "ad": "Teklif",
+      "grup": "ticari",
+      "faz": 3,
+      "durum": "taslak",
+      "amac": "Siparişle aynı form; geçerlilik tarihi, durum (Hazırlanıyor, Gönderildi, Reddedildi, Süresi doldu). Onaylanınca siparişe dönüşür.",
+      "ders": "Teklif tek parça tablo olarak yazıldı; eski listeyi tutan cihaz başkasının teklifini sildi (v1.725).",
+      "cekirdek": false
+    },
+    "m-rec": {
+      "kod": "REC",
+      "ad": "Reçete ve rota",
+      "grup": "anaveri",
+      "faz": 4,
+      "durum": "taslak",
+      "amac": "Mamulün hammadde listesi (renk eşleme, beden bazlı miktar) ve proses sırası (asıl/ara adım, işçilik ücreti). Sürümlüdür.",
+      "ders": "Elle verilen hammadde reçeteyi eziyordu; reçete değişince açık üretim etkileniyordu.",
+      "cekirdek": false
+    },
+    "m-urt": {
+      "kod": "URT",
+      "ad": "Üretim",
+      "grup": "uretim",
+      "faz": 4,
+      "durum": "taslak",
+      "amac": "Üretim emri, rota kopyası, iş verme ve teslim alma, hurda, fason. Barkod atölye ekranı ve panel cihazı bu modülün ekranlarıdır.",
+      "ders": "Ara proses tüm siparişi akmış sayıyordu, Kesim verilmeden Saya verildi (v1.709.3); kural artık sunucuda.",
+      "cekirdek": false
+    },
+    "m-pln": {
+      "kod": "PLN",
+      "ad": "Planlama ve MRP",
+      "grup": "uretim",
+      "faz": 5,
+      "durum": "taslak",
+      "amac": "Mamul ve hammadde ihtiyacı, toplu üretim emri açma, satınalma önerisi, proses planlama (adıma kişi önceden atanır, iş verilmez).",
+      "ders": "Rezervasyon ayrı defterdi; bayat listeden yazılınca hayalet talep kaldı (v1.373, v1.713).",
+      "cekirdek": false
+    },
+    "m-dep": {
+      "kod": "DEP",
+      "ad": "Depo, koli ve sevk",
+      "grup": "ticari",
+      "faz": 6,
+      "durum": "taslak",
+      "amac": "Depolar, barkod okutma, koli doldurma ve etiket, sevkiyat merkezi, satış irsaliyesi, iade, sayım, transfer.",
+      "ders": "Fiş geri alındı ama koli \"sevk edildi\" kaldı, bir daha okutulamadı (v1.83).",
+      "cekirdek": false
+    },
+    "m-fat": {
+      "kod": "FAT",
+      "ad": "Fatura",
+      "grup": "finans",
+      "faz": 6,
+      "durum": "taslak",
+      "amac": "Bir ya da birden çok sevk belgesinden fatura derleme, KDV, e-fatura bağlantısı. Stok ve cariyi ikinci kez etkilemez.",
+      "ders": "Fatura tek parça tablodaydı.",
+      "cekirdek": false
+    },
+    "m-mal": {
+      "kod": "MAL",
+      "ad": "Maliyet ve gelir-gider",
+      "grup": "finans",
+      "faz": 7,
+      "durum": "taslak",
+      "amac": "Ortalama alış maliyeti, ürün maliyeti (hammadde + işçilik + genel gider payı + demirbaş amortismanı), gider belgeleri, demirbaş.",
+      "ders": "Maliyette para birimi ve kur sonradan eklendi; her tutar baştan para birimiyle tutulur.",
+      "cekirdek": false
+    },
+    "m-rap": {
+      "kod": "RAP",
+      "ad": "Raporlar",
+      "grup": "analiz",
+      "faz": 7,
+      "durum": "taslak",
+      "amac": "Stok durumu, cari ekstre ve mutabakat, kâr-zarar, üretim raporu, gün sonu e-postası. Hiçbir rapor veri yazmaz.",
+      "ders": "Excel ve yazdır ekrandaki tabloyla aynı olmalı (8m) kuralı ortak tablo bileşeninde.",
+      "cekirdek": false
+    },
+    "m-prt": {
+      "kod": "PRT",
+      "ad": "Web portalı",
+      "grup": "analiz",
+      "faz": 8,
+      "durum": "taslak",
+      "amac": "Müşteri girişi, sipariş talebi, kayıt talebi, herkese açık vitrin (fiyat, stok, beden gitmez).",
+      "ders": "Site fonksiyonları ayrı SQL'lerle büyüdü; portal yalnız kendi fonksiyonlarını görür.",
+      "cekirdek": false
+    },
+    "m-mdl": {
+      "kod": "MDL",
+      "ad": "Modelhane",
+      "grup": "analiz",
+      "faz": 8,
+      "durum": "taslak",
+      "amac": "Model geliştirme, teknik çizim, numune üretimi, katalog. Onaylanan model ürün ve reçete olur.",
+      "ders": "",
+      "cekirdek": false
+    }
+  },
+  "tablolar": {
+    "t-firma": {
+      "ad": "firma",
+      "tur": "tablo",
+      "sahip": "m-cek",
+      "aciklama": ""
+    },
+    "t-kullanici": {
+      "ad": "kullanici",
+      "tur": "tablo",
+      "sahip": "m-cek",
+      "aciklama": ""
+    },
+    "t-rol-yetki": {
+      "ad": "rol_yetki",
+      "tur": "tablo",
+      "sahip": "m-cek",
+      "aciklama": ""
+    },
+    "t-numarator": {
+      "ad": "numarator",
+      "tur": "tablo",
+      "sahip": "m-cek",
+      "aciklama": "belge tipi + yıl başına sıra"
+    },
+    "t-ayar": {
+      "ad": "ayar",
+      "tur": "tablo",
+      "sahip": "m-cek",
+      "aciklama": ""
+    },
+    "t-istek": {
+      "ad": "istek",
+      "tur": "tablo",
+      "sahip": "m-cek",
+      "aciklama": "komut istek kimlikleri: aynı istek iki kez gelirse ilk sonucu döner"
+    },
+    "t-belge": {
+      "ad": "belge",
+      "tur": "tablo",
+      "sahip": "m-bel",
+      "aciklama": ""
+    },
+    "t-belge-satir": {
+      "ad": "belge_satir",
+      "tur": "tablo",
+      "sahip": "m-bel",
+      "aciklama": ""
+    },
+    "t-stok-hareket": {
+      "ad": "stok_hareket",
+      "tur": "defter",
+      "sahip": "m-bel",
+      "aciklama": "varyant × depo, + giriş − çıkış; yalnız eklenir"
+    },
+    "t-cari-hareket": {
+      "ad": "cari_hareket",
+      "tur": "defter",
+      "sahip": "m-bel",
+      "aciklama": "borç/alacak, para birimi; yalnız eklenir"
+    },
+    "t-kasa-hareket": {
+      "ad": "kasa_hareket",
+      "tur": "defter",
+      "sahip": "m-bel",
+      "aciklama": "hesap × tutar; yalnız eklenir"
+    },
+    "t-v-stok": {
+      "ad": "v_stok",
+      "tur": "gorunum",
+      "sahip": "m-bel",
+      "aciklama": "varyant × depo miktarı, eksi olabilir"
+    },
+    "t-v-cari-bakiye": {
+      "ad": "v_cari_bakiye",
+      "tur": "gorunum",
+      "sahip": "m-bel",
+      "aciklama": ""
+    },
+    "t-v-kasa-bakiye": {
+      "ad": "v_kasa_bakiye",
+      "tur": "gorunum",
+      "sahip": "m-bel",
+      "aciklama": ""
+    },
+    "t-olcu-seti": {
+      "ad": "olcu_seti",
+      "tur": "tablo",
+      "sahip": "m-tan",
+      "aciklama": ""
+    },
+    "t-olcu": {
+      "ad": "olcu",
+      "tur": "tablo",
+      "sahip": "m-tan",
+      "aciklama": ""
+    },
+    "t-birim": {
+      "ad": "birim",
+      "tur": "tablo",
+      "sahip": "m-tan",
+      "aciklama": ""
+    },
+    "t-proses": {
+      "ad": "proses",
+      "tur": "tablo",
+      "sahip": "m-tan",
+      "aciklama": ""
+    },
+    "t-depo": {
+      "ad": "depo",
+      "tur": "tablo",
+      "sahip": "m-tan",
+      "aciklama": ""
+    },
+    "t-kur": {
+      "ad": "kur",
+      "tur": "tablo",
+      "sahip": "m-tan",
+      "aciklama": ""
+    },
+    "t-kdv-orani": {
+      "ad": "kdv_orani",
+      "tur": "tablo",
+      "sahip": "m-tan",
+      "aciklama": ""
+    },
+    "t-fiyat-grubu": {
+      "ad": "fiyat_grubu",
+      "tur": "tablo",
+      "sahip": "m-tan",
+      "aciklama": ""
+    },
+    "t-urun": {
+      "ad": "urun",
+      "tur": "tablo",
+      "sahip": "m-urn",
+      "aciklama": "Hammadde, yarı mamul ve mamul kartı. Hammaddede degisken_turu_id (boş olabilir): kartta değişkenin adı bu türün etiketi olur (Renk, Kalınlık…). Mamul renkleri urun_renk'ten."
+    },
+    "t-varyant": {
+      "ad": "varyant",
+      "tur": "tablo",
+      "sahip": "m-urn",
+      "aciklama": "uuid; mamulde urun_id + urun_renk_id + olcu_id, hammaddede urun_id + degisken_id (+ olcu_id) benzersiz. degisken_id ürünün değişken türünden olmalı; urun_renk_id ile degisken_id birlikte dolu olmaz (check)."
+    },
+    "t-barkod": {
+      "ad": "barkod",
+      "tur": "tablo",
+      "sahip": "m-urn",
+      "aciklama": ""
+    },
+    "t-urun-gorsel": {
+      "ad": "urun_gorsel",
+      "tur": "tablo",
+      "sahip": "m-urn",
+      "aciklama": "görsel dosyası ayrı depoda, satırda yalnız adres"
+    },
+    "t-fiyat": {
+      "ad": "fiyat",
+      "tur": "tablo",
+      "sahip": "m-urn",
+      "aciklama": ""
+    },
+    "t-cari": {
+      "ad": "cari",
+      "tur": "tablo",
+      "sahip": "m-car",
+      "aciklama": "uuid; kod (CAR-0001, numaratör). Kimlik: ad (listelerde görünen), resmi_unvan (boşsa ad; fatura ve resmi belgede), para birimi (hareketi olunca değişmez), fiyat grubu (müşteride). İletişim: yetkili, telefon, whatsapp (boşsa telefonla aynı), e-posta. Resmi: vergi dairesi, vergi_no (10 hane VKN, 11 hane TCKN), e_fatura (Bilinmiyor / e-Fatura mükellefi / e-Arşiv). Adres: adres, ilçe, il, ülke (boşsa Türkiye). Görünüm: logo (dosya deposunda, satırda yalnız adres), renk (hex; boşsa koddan otomatik) — sipariş listesinde adın yanında. web_giris: portal girişi var mı (giriş tablosu PRT'de; şifre yalnız sunucuda). Yeni cari formunda hepsi baştan açık; zorunlu yalnız ad ve en az bir rol."
+    },
+    "t-cari-rol": {
+      "ad": "cari_rol",
+      "tur": "tablo",
+      "sahip": "m-car",
+      "aciklama": ""
+    },
+    "t-cari-iletisim": {
+      "ad": "cari_iletisim",
+      "tur": "tablo",
+      "sahip": "m-car",
+      "aciklama": ""
+    },
+    "t-recete": {
+      "ad": "recete",
+      "tur": "tablo",
+      "sahip": "m-rec",
+      "aciklama": "mamul başına sürümlü"
+    },
+    "t-recete-satir": {
+      "ad": "recete_satir",
+      "tur": "tablo",
+      "sahip": "m-rec",
+      "aciklama": "Hammadde satırı. Değişken eşlemesi: sabit bir değer ya da mamul renginin N. rengine göre bir değer (ör. deri = 1. renk, taban = 2. renk)."
+    },
+    "t-rota-adim": {
+      "ad": "rota_adim",
+      "tur": "tablo",
+      "sahip": "m-rec",
+      "aciklama": ""
+    },
+    "t-iscilik-ucreti": {
+      "ad": "iscilik_ucreti",
+      "tur": "tablo",
+      "sahip": "m-rec",
+      "aciklama": ""
+    },
+    "t-teklif": {
+      "ad": "teklif",
+      "tur": "tablo",
+      "sahip": "m-tek",
+      "aciklama": ""
+    },
+    "t-teklif-satir": {
+      "ad": "teklif_satir",
+      "tur": "tablo",
+      "sahip": "m-tek",
+      "aciklama": ""
+    },
+    "t-siparis": {
+      "ad": "siparis",
+      "tur": "tablo",
+      "sahip": "m-sip",
+      "aciklama": ""
+    },
+    "t-siparis-satir": {
+      "ad": "siparis_satir",
+      "tur": "tablo",
+      "sahip": "m-sip",
+      "aciklama": ""
+    },
+    "t-odeme-plani": {
+      "ad": "odeme_plani",
+      "tur": "tablo",
+      "sahip": "m-sip",
+      "aciklama": ""
+    },
+    "t-v-siparis-durum": {
+      "ad": "v_siparis_durum",
+      "tur": "gorunum",
+      "sahip": "m-sip",
+      "aciklama": "karşılanan, üretimde, kalan, durum"
+    },
+    "t-proses-plani": {
+      "ad": "proses_plani",
+      "tur": "tablo",
+      "sahip": "m-pln",
+      "aciklama": "adıma önceden atanan kişi; iş verme değildir"
+    },
+    "t-v-ihtiyac-mamul": {
+      "ad": "v_ihtiyac_mamul",
+      "tur": "gorunum",
+      "sahip": "m-pln",
+      "aciklama": ""
+    },
+    "t-v-ihtiyac-hammadde": {
+      "ad": "v_ihtiyac_hammadde",
+      "tur": "gorunum",
+      "sahip": "m-pln",
+      "aciklama": ""
+    },
+    "t-uretim-emri": {
+      "ad": "uretim_emri",
+      "tur": "tablo",
+      "sahip": "m-urt",
+      "aciklama": ""
+    },
+    "t-emir-adim": {
+      "ad": "emir_adim",
+      "tur": "tablo",
+      "sahip": "m-urt",
+      "aciklama": "emir açılırken rotadan kopyalanır"
+    },
+    "t-atama": {
+      "ad": "atama",
+      "tur": "tablo",
+      "sahip": "m-urt",
+      "aciklama": ""
+    },
+    "t-v-adim-durum": {
+      "ad": "v_adim_durum",
+      "tur": "gorunum",
+      "sahip": "m-urt",
+      "aciklama": "verilen, teslim, hurda, bekleyen"
+    },
+    "t-koli": {
+      "ad": "koli",
+      "tur": "tablo",
+      "sahip": "m-dep",
+      "aciklama": "yalnız gruplama; sevk edildi bilgisi SAT belgesinden türer"
+    },
+    "t-koli-satir": {
+      "ad": "koli_satir",
+      "tur": "tablo",
+      "sahip": "m-dep",
+      "aciklama": ""
+    },
+    "t-sayim": {
+      "ad": "sayim",
+      "tur": "tablo",
+      "sahip": "m-dep",
+      "aciklama": ""
+    },
+    "t-fatura": {
+      "ad": "fatura",
+      "tur": "tablo",
+      "sahip": "m-fat",
+      "aciklama": ""
+    },
+    "t-fatura-belge": {
+      "ad": "fatura_belge",
+      "tur": "tablo",
+      "sahip": "m-fat",
+      "aciklama": ""
+    },
+    "t-hesap": {
+      "ad": "hesap",
+      "tur": "tablo",
+      "sahip": "m-kas",
+      "aciklama": ""
+    },
+    "t-cek": {
+      "ad": "cek",
+      "tur": "tablo",
+      "sahip": "m-kas",
+      "aciklama": ""
+    },
+    "t-cek-islem": {
+      "ad": "cek_islem",
+      "tur": "tablo",
+      "sahip": "m-kas",
+      "aciklama": ""
+    },
+    "t-gider-kategori": {
+      "ad": "gider_kategori",
+      "tur": "tablo",
+      "sahip": "m-mal",
+      "aciklama": ""
+    },
+    "t-demirbas": {
+      "ad": "demirbas",
+      "tur": "tablo",
+      "sahip": "m-mal",
+      "aciklama": ""
+    },
+    "t-v-maliyet": {
+      "ad": "v_maliyet",
+      "tur": "gorunum",
+      "sahip": "m-mal",
+      "aciklama": ""
+    },
+    "t-site-hesap": {
+      "ad": "site_hesap",
+      "tur": "tablo",
+      "sahip": "m-prt",
+      "aciklama": ""
+    },
+    "t-site-talep": {
+      "ad": "site_talep",
+      "tur": "tablo",
+      "sahip": "m-prt",
+      "aciklama": ""
+    },
+    "t-site-kayit-talebi": {
+      "ad": "site_kayit_talebi",
+      "tur": "tablo",
+      "sahip": "m-prt",
+      "aciklama": ""
+    },
+    "t-model": {
+      "ad": "model",
+      "tur": "tablo",
+      "sahip": "m-mdl",
+      "aciklama": ""
+    },
+    "t-numune": {
+      "ad": "numune",
+      "tur": "tablo",
+      "sahip": "m-mdl",
+      "aciklama": ""
+    },
+    "t-gunluk": {
+      "ad": "gunluk",
+      "tur": "tablo",
+      "sahip": "m-bak",
+      "aciklama": ""
+    },
+    "t-arsiv": {
+      "ad": "arsiv",
+      "tur": "tablo",
+      "sahip": "m-bak",
+      "aciklama": "tetikleyiciyle her değişen/silinen satır, 365 gün"
+    },
+    "t-yedek-kaydi": {
+      "ad": "yedek_kaydi",
+      "tur": "tablo",
+      "sahip": "m-bak",
+      "aciklama": ""
+    },
+    "t-urun-renk": {
+      "ad": "urun_renk",
+      "tur": "tablo",
+      "sahip": "m-tan",
+      "aciklama": "Mamul (model) rengi. uuid kimlik. Kod: 4 haneli sıra numarası, 1000'den başlar; kayıtta sunucudaki numaratör verir, kullanıcı yazmaz, hiç değişmez (barkod ve eski kayıtlar ona bakar). Ad firmada tekil (Türkçe katlanmış karşılaştırma). 1 renkli: kendi görsel kodu (hex) ve resmi var. Çok renkli: hücreleri urun_renk_bilesen'de; renk sayısı = bileşen sayısı, ayrıca saklanmaz; ad hücrelerden önerilir (Siyah-Beyaz), değiştirilebilir. Bir varyantta kullanıldıktan sonra hücreler kilitlenir. Silinmez, pasife alınır."
+    },
+    "t-urun-renk-bilesen": {
+      "ad": "urun_renk_bilesen",
+      "tur": "tablo",
+      "sahip": "m-tan",
+      "aciklama": "Çok renkli ürün renginin hücreleri: urun_renk_id + sira (1..6) benzersiz. bilesen_id yalnız 1 renkli ve etkin bir ürün rengini gösterir (iç içe kombinasyon yok). Aynı renk iki hücrede olmaz. Sıralı bileşen listesi firmada tekildir: aynı kombinasyon iki kez tanımlanmaz (Siyah-Beyaz ile Beyaz-Siyah farklıdır; 1. renk ana renktir)."
+    },
+    "t-degisken-turu": {
+      "ad": "degisken_turu",
+      "tur": "tablo",
+      "sahip": "m-tan",
+      "aciklama": "Hammadde değişkeninin türü: ad (Deri rengi, Taban rengi, Deri kalınlığı, Fermuar boyu…), etiket (hammadde kartında ve matriste sütun başlığı olarak görünen ad: Renk, Kalınlık, Boy…), görsel: renk (hex + resim gösterilir) ya da yok. Hammadde kartı en çok bir değişken türü seçer; değişkeni olmayan hammadde de olur."
+    },
+    "t-degisken": {
+      "ad": "degisken",
+      "tur": "tablo",
+      "sahip": "m-tan",
+      "aciklama": "Hammadde değişkeninin değeri: uuid, tur_id, kod, ad; hex ve resim yalnız görseli renk olan türde. Kod: 3 haneli sıra numarası, her tür kendi içinde 001'den sayar (tur_id + kod benzersiz); numaratör verir, değişmez. Ad tür içinde tekil. Kullanılan değer silinmez, pasife alınır; tür değiştirilemez."
+    }
+  },
+  "baglar": {
+    "g-001": {
+      "kimden": "m-cek",
+      "kime": "m-bel",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-002": {
+      "kimden": "m-cek",
+      "kime": "m-bak",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-003": {
+      "kimden": "m-bel",
+      "kime": "m-bak",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-004": {
+      "kimden": "m-cek",
+      "kime": "m-tan",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-005": {
+      "kimden": "m-tan",
+      "kime": "m-urn",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-006": {
+      "kimden": "m-cek",
+      "kime": "m-car",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-007": {
+      "kimden": "m-bel",
+      "kime": "m-car",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-008": {
+      "kimden": "m-bel",
+      "kime": "m-stn",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-009": {
+      "kimden": "m-urn",
+      "kime": "m-stn",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-010": {
+      "kimden": "m-car",
+      "kime": "m-stn",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-011": {
+      "kimden": "m-bel",
+      "kime": "m-kas",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-012": {
+      "kimden": "m-car",
+      "kime": "m-kas",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-013": {
+      "kimden": "m-urn",
+      "kime": "m-sip",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-014": {
+      "kimden": "m-car",
+      "kime": "m-sip",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-015": {
+      "kimden": "m-sip",
+      "kime": "m-tek",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-016": {
+      "kimden": "m-urn",
+      "kime": "m-rec",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-017": {
+      "kimden": "m-tan",
+      "kime": "m-rec",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-018": {
+      "kimden": "m-rec",
+      "kime": "m-urt",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-019": {
+      "kimden": "m-bel",
+      "kime": "m-urt",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-020": {
+      "kimden": "m-car",
+      "kime": "m-urt",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-021": {
+      "kimden": "m-sip",
+      "kime": "m-pln",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-022": {
+      "kimden": "m-rec",
+      "kime": "m-pln",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-023": {
+      "kimden": "m-bel",
+      "kime": "m-pln",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-024": {
+      "kimden": "m-urt",
+      "kime": "m-pln",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-025": {
+      "kimden": "m-stn",
+      "kime": "m-pln",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-026": {
+      "kimden": "m-bel",
+      "kime": "m-dep",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-027": {
+      "kimden": "m-sip",
+      "kime": "m-dep",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-028": {
+      "kimden": "m-urn",
+      "kime": "m-dep",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-029": {
+      "kimden": "m-dep",
+      "kime": "m-fat",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-030": {
+      "kimden": "m-bel",
+      "kime": "m-fat",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-031": {
+      "kimden": "m-bel",
+      "kime": "m-mal",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-032": {
+      "kimden": "m-rec",
+      "kime": "m-mal",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-033": {
+      "kimden": "m-bel",
+      "kime": "m-rap",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-034": {
+      "kimden": "m-mal",
+      "kime": "m-rap",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-035": {
+      "kimden": "m-urt",
+      "kime": "m-rap",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-036": {
+      "kimden": "m-sip",
+      "kime": "m-rap",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-037": {
+      "kimden": "m-sip",
+      "kime": "m-prt",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-038": {
+      "kimden": "m-car",
+      "kime": "m-prt",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-039": {
+      "kimden": "m-urn",
+      "kime": "m-prt",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-040": {
+      "kimden": "m-urn",
+      "kime": "m-mdl",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-041": {
+      "kimden": "m-rec",
+      "kime": "m-mdl",
+      "tur": "bagimli",
+      "olay": "",
+      "aciklama": ""
+    },
+    "g-042": {
+      "kimden": "m-cek",
+      "kime": "m-bak",
+      "tur": "tetik",
+      "olay": "her komut: günlüğe kim, ne zaman, hangi cihaz",
+      "aciklama": ""
+    },
+    "g-043": {
+      "kimden": "m-bel",
+      "kime": "m-rap",
+      "tur": "tetik",
+      "olay": "onay/iptal: stok, bakiye, karşılanan görünümleri değişir",
+      "aciklama": ""
+    },
+    "g-044": {
+      "kimden": "m-bel",
+      "kime": "m-mal",
+      "tur": "tetik",
+      "olay": "ALS onayı: ortalama alış maliyeti yeniden hesaplanır",
+      "aciklama": ""
+    },
+    "g-045": {
+      "kimden": "m-bel",
+      "kime": "m-sip",
+      "tur": "tetik",
+      "olay": "SAT/STI onayı ya da iptali: karşılanan miktar değişir",
+      "aciklama": ""
+    },
+    "g-046": {
+      "kimden": "m-bel",
+      "kime": "m-urt",
+      "tur": "tetik",
+      "olay": "ISV/IST onayı ya da iptali: adım durumu değişir",
+      "aciklama": ""
+    },
+    "g-047": {
+      "kimden": "m-tan",
+      "kime": "m-urn",
+      "tur": "tetik",
+      "olay": "yeni ürün rengi, hammadde değişkeni ya da ölçü varyant seçiminde görünür",
+      "aciklama": ""
+    },
+    "g-048": {
+      "kimden": "m-tan",
+      "kime": "m-urt",
+      "tur": "tetik",
+      "olay": "proses listesi rota adımlarını besler",
+      "aciklama": ""
+    },
+    "g-049": {
+      "kimden": "m-urn",
+      "kime": "m-cek",
+      "tur": "tetik",
+      "olay": "yeni varyant: numaratörden kalıcı barkod",
+      "aciklama": ""
+    },
+    "g-050": {
+      "kimden": "m-urn",
+      "kime": "m-rec",
+      "tur": "tetik",
+      "olay": "mamul açılınca boş reçete taslağı",
+      "aciklama": ""
+    },
+    "g-051": {
+      "kimden": "m-urn",
+      "kime": "m-prt",
+      "tur": "tetik",
+      "olay": "\"sitede göster\" işaretli ürün vitrine düşer",
+      "aciklama": ""
+    },
+    "g-052": {
+      "kimden": "m-rec",
+      "kime": "m-pln",
+      "tur": "tetik",
+      "olay": "hammadde ihtiyacı reçeteden hesaplanır",
+      "aciklama": ""
+    },
+    "g-053": {
+      "kimden": "m-rec",
+      "kime": "m-urt",
+      "tur": "tetik",
+      "olay": "emir açılırken reçetenin o anki sürümü kopyalanır",
+      "aciklama": ""
+    },
+    "g-054": {
+      "kimden": "m-rec",
+      "kime": "m-mal",
+      "tur": "tetik",
+      "olay": "ürün maliyeti reçeteden",
+      "aciklama": ""
+    },
+    "g-055": {
+      "kimden": "m-car",
+      "kime": "m-sip",
+      "tur": "tetik",
+      "olay": "müşteri seçilince fiyat grubu ve para birimi gelir",
+      "aciklama": ""
+    },
+    "g-056": {
+      "kimden": "m-car",
+      "kime": "m-dep",
+      "tur": "tetik",
+      "olay": "fasoncu/personel carisi = sanal depo",
+      "aciklama": ""
+    },
+    "g-057": {
+      "kimden": "m-car",
+      "kime": "m-bel",
+      "tur": "tetik",
+      "olay": "cari mahsup: MHS belgesi",
+      "aciklama": ""
+    },
+    "g-058": {
+      "kimden": "m-tek",
+      "kime": "m-sip",
+      "tur": "tetik",
+      "olay": "onay: satırlar siparişe kopyalanır, teklif sipariş kimliğini tutar",
+      "aciklama": ""
+    },
+    "g-059": {
+      "kimden": "m-sip",
+      "kime": "m-pln",
+      "tur": "tetik",
+      "olay": "onay: ihtiyaç hesabına girer",
+      "aciklama": ""
+    },
+    "g-060": {
+      "kimden": "m-sip",
+      "kime": "m-dep",
+      "tur": "tetik",
+      "olay": "sevk edilebilir satırlar sevkiyat merkezinde görünür",
+      "aciklama": ""
+    },
+    "g-061": {
+      "kimden": "m-sip",
+      "kime": "m-cek",
+      "tur": "tetik",
+      "olay": "istenirse müşteriye sipariş e-postası",
+      "aciklama": ""
+    },
+    "g-062": {
+      "kimden": "m-pln",
+      "kime": "m-urt",
+      "tur": "tetik",
+      "olay": "seçilenleri üret: üretim emirleri açılır",
+      "aciklama": ""
+    },
+    "g-063": {
+      "kimden": "m-pln",
+      "kime": "m-stn",
+      "tur": "tetik",
+      "olay": "eksik hammadde: tedarikçi başına alış siparişi taslağı",
+      "aciklama": ""
+    },
+    "g-064": {
+      "kimden": "m-stn",
+      "kime": "m-bel",
+      "tur": "tetik",
+      "olay": "mal geldi: ALS belgesi (+ stok, tedarikçi alacak)",
+      "aciklama": ""
+    },
+    "g-065": {
+      "kimden": "m-urt",
+      "kime": "m-bel",
+      "tur": "tetik",
+      "olay": "is_ver: ISV · is_teslim_al: IST (işçilik + son adımda mamul)",
+      "aciklama": ""
+    },
+    "g-066": {
+      "kimden": "m-urt",
+      "kime": "m-sip",
+      "tur": "tetik",
+      "olay": "üretilen miktar sipariş durumuna yansır",
+      "aciklama": ""
+    },
+    "g-067": {
+      "kimden": "m-urt",
+      "kime": "m-dep",
+      "tur": "tetik",
+      "olay": "biten mamul koliye hazır",
+      "aciklama": ""
+    },
+    "g-068": {
+      "kimden": "m-dep",
+      "kime": "m-bel",
+      "tur": "tetik",
+      "olay": "sevk_et: SAT · sayım farkı: SAY · transfer: TRF",
+      "aciklama": ""
+    },
+    "g-069": {
+      "kimden": "m-dep",
+      "kime": "m-fat",
+      "tur": "tetik",
+      "olay": "sevk belgeleri faturaya hazır",
+      "aciklama": ""
+    },
+    "g-070": {
+      "kimden": "m-fat",
+      "kime": "m-rap",
+      "tur": "tetik",
+      "olay": "KDV ve satış raporları",
+      "aciklama": ""
+    },
+    "g-071": {
+      "kimden": "m-kas",
+      "kime": "m-bel",
+      "tur": "tetik",
+      "olay": "THS / ODM / VRM / CEK belgeleri",
+      "aciklama": ""
+    },
+    "g-072": {
+      "kimden": "m-kas",
+      "kime": "m-car",
+      "tur": "tetik",
+      "olay": "cari bakiye görünümü değişir",
+      "aciklama": ""
+    },
+    "g-073": {
+      "kimden": "m-mal",
+      "kime": "m-bel",
+      "tur": "tetik",
+      "olay": "gider belgesi: GDR",
+      "aciklama": ""
+    },
+    "g-074": {
+      "kimden": "m-mal",
+      "kime": "m-rap",
+      "tur": "tetik",
+      "olay": "kâr-zarar, ürün kârlılığı",
+      "aciklama": ""
+    },
+    "g-075": {
+      "kimden": "m-mal",
+      "kime": "m-sip",
+      "tur": "tetik",
+      "olay": "fiyat önerisi maliyetten",
+      "aciklama": ""
+    },
+    "g-076": {
+      "kimden": "m-rap",
+      "kime": "m-cek",
+      "tur": "tetik",
+      "olay": "zamanlanmış gün sonu: Edge Function e-posta",
+      "aciklama": ""
+    },
+    "g-077": {
+      "kimden": "m-prt",
+      "kime": "m-sip",
+      "tur": "tetik",
+      "olay": "onaylanan talep: sipariş taslağı",
+      "aciklama": ""
+    },
+    "g-078": {
+      "kimden": "m-prt",
+      "kime": "m-car",
+      "tur": "tetik",
+      "olay": "onaylanan kayıt: yeni müşteri carisi",
+      "aciklama": ""
+    },
+    "g-079": {
+      "kimden": "m-mdl",
+      "kime": "m-urn",
+      "tur": "tetik",
+      "olay": "model onayı: mamul kartı açılır",
+      "aciklama": ""
+    },
+    "g-080": {
+      "kimden": "m-mdl",
+      "kime": "m-rec",
+      "tur": "tetik",
+      "olay": "model onayı: reçete taslağı",
+      "aciklama": ""
+    },
+    "g-081": {
+      "kimden": "m-bak",
+      "kime": "m-bel",
+      "tur": "tetik",
+      "olay": "devir: ACL açılış belgesi",
+      "aciklama": ""
+    },
+    "g-082": {
+      "kimden": "m-bak",
+      "kime": "m-rap",
+      "tur": "tetik",
+      "olay": "denetim bulguları",
+      "aciklama": ""
+    },
+    "g-083": {
+      "kimden": "m-tan",
+      "kime": "m-rec",
+      "tur": "tetik",
+      "olay": "ürün renginin hücre sırası (1. renk, 2. renk…) reçetede hammadde değişkeni eşlemesini besler",
+      "aciklama": "Reçete satırı 'deri = 1. renk' der; model rengi seçilince hangi deri değişkeninin kullanılacağı eşleme tablosundan gelir."
+    }
+  },
+  "belgeler": {
+    "b-acl": {
+      "kod": "ACL",
+      "ad": "Açılış (devir)",
+      "stok": "+ giriş",
+      "cari": "± bakiye",
+      "kasa": "± bakiye",
+      "kaynaklar": [
+        "m-bak"
+      ],
+      "aciklama": "Eski uygulamadan geçiş ve yıl başı devri"
+    },
+    "b-als": {
+      "kod": "ALS",
+      "ad": "Alış irsaliyesi / fişi",
+      "stok": "+ hammadde",
+      "cari": "tedarikçi alacak",
+      "kasa": "",
+      "kaynaklar": [
+        "m-stn"
+      ],
+      "aciklama": ""
+    },
+    "b-ali": {
+      "kod": "ALI",
+      "ad": "Alıştan iade",
+      "stok": "− hammadde",
+      "cari": "tedarikçi borç",
+      "kasa": "",
+      "kaynaklar": [
+        "m-stn"
+      ],
+      "aciklama": ""
+    },
+    "b-isv": {
+      "kod": "ISV",
+      "ad": "İş verme",
+      "stok": "ana depo → kişi/fasoncu deposu",
+      "cari": "",
+      "kasa": "",
+      "kaynaklar": [
+        "m-urt"
+      ],
+      "aciklama": ""
+    },
+    "b-ist": {
+      "kod": "IST",
+      "ad": "İş teslim alma",
+      "stok": "kişi deposundan tüketim; son adımda + mamul",
+      "cari": "işçilik: kişi/fasoncu alacak",
+      "kasa": "",
+      "kaynaklar": [
+        "m-urt"
+      ],
+      "aciklama": "İşçilik ayrı satır, aynı belgede"
+    },
+    "b-hrd": {
+      "kod": "HRD",
+      "ad": "Hurda / fire",
+      "stok": "− çıkış",
+      "cari": "",
+      "kasa": "",
+      "kaynaklar": [
+        "m-urt",
+        "m-dep"
+      ],
+      "aciklama": ""
+    },
+    "b-sat": {
+      "kod": "SAT",
+      "ad": "Satış / sevk irsaliyesi",
+      "stok": "− mamul",
+      "cari": "müşteri borç",
+      "kasa": "",
+      "kaynaklar": [
+        "m-dep"
+      ],
+      "aciklama": ""
+    },
+    "b-sti": {
+      "kod": "STI",
+      "ad": "Satıştan iade",
+      "stok": "+ mamul",
+      "cari": "müşteri alacak",
+      "kasa": "",
+      "kaynaklar": [
+        "m-dep"
+      ],
+      "aciklama": ""
+    },
+    "b-say": {
+      "kod": "SAY",
+      "ad": "Sayım farkı",
+      "stok": "± fark",
+      "cari": "",
+      "kasa": "",
+      "kaynaklar": [
+        "m-dep"
+      ],
+      "aciklama": ""
+    },
+    "b-trf": {
+      "kod": "TRF",
+      "ad": "Depolar arası transfer",
+      "stok": "− kaynak / + hedef",
+      "cari": "",
+      "kasa": "",
+      "kaynaklar": [
+        "m-dep"
+      ],
+      "aciklama": ""
+    },
+    "b-ths": {
+      "kod": "THS",
+      "ad": "Tahsilat",
+      "stok": "",
+      "cari": "müşteri alacak",
+      "kasa": "+ giriş",
+      "kaynaklar": [
+        "m-kas"
+      ],
+      "aciklama": ""
+    },
+    "b-odm": {
+      "kod": "ODM",
+      "ad": "Ödeme",
+      "stok": "",
+      "cari": "tedarikçi borç",
+      "kasa": "− çıkış",
+      "kaynaklar": [
+        "m-kas"
+      ],
+      "aciklama": ""
+    },
+    "b-vrm": {
+      "kod": "VRM",
+      "ad": "Virman",
+      "stok": "",
+      "cari": "",
+      "kasa": "− kaynak / + hedef (kur)",
+      "kaynaklar": [
+        "m-kas"
+      ],
+      "aciklama": ""
+    },
+    "b-cek": {
+      "kod": "CEK",
+      "ad": "Çek alma / verme / ciro / tahsil",
+      "stok": "",
+      "cari": "ilgili cari",
+      "kasa": "tahsilde banka",
+      "kaynaklar": [
+        "m-kas"
+      ],
+      "aciklama": ""
+    },
+    "b-gdr": {
+      "kod": "GDR",
+      "ad": "Gider / gelir",
+      "stok": "",
+      "cari": "varsa cari",
+      "kasa": "ödendiyse ±",
+      "kaynaklar": [
+        "m-mal"
+      ],
+      "aciklama": ""
+    },
+    "b-mhs": {
+      "kod": "MHS",
+      "ad": "Cari mahsup",
+      "stok": "",
+      "cari": "− bir cari / + öbür",
+      "kasa": "",
+      "kaynaklar": [
+        "m-car"
+      ],
+      "aciklama": ""
+    }
+  },
+  "kararlar": {
+    "k-01": {
+      "aciklama": "Eski uygulamada firma ekleme vardı. Her tabloya firma_id + RLS baştan konursa sonradan eklemek gerekmez.",
+      "baslik": "Çoklu firma baştan mı?",
+      "durum": "verildi",
+      "karar": "Çoklu firma baştan: her tabloda firma_id, RLS politikaları firmaya göre.",
+      "moduller": [
+        "m-cek"
+      ],
+      "oneri": "Evet, baştan."
+    },
+    "k-02": {
+      "aciklama": "Kullanıcılar fişi düzeltmeye alışkın. Düzenleme serbest olursa geçmiş kaybolur.",
+      "baslik": "Onaylı belge düzenlenebilsin mi?",
+      "durum": "verildi",
+      "karar": "Onaylı belge düzenlenmez. \"Düzelt\" düğmesi kalır; arkada iptal + yeni belge tek işlemde yapılır, ikisi de geçmişte görünür.",
+      "moduller": [
+        "m-bel"
+      ],
+      "oneri": "\"Düzelt\" düğmesi kalsın; arkada iptal + yeni belge tek işlemde, geçmiş görünür."
+    },
+    "k-03": {
+      "aciklama": "Verilen hammadde kimde, ne kadar bekliyor görünür; eksik/fazla teslim ölçülür.",
+      "baslik": "Fasoncu ve personel ayrı depo mu?",
+      "durum": "verildi",
+      "karar": "Her personel ve fasoncu bir sanal depodur. İş verilince malzeme o depoya geçer, teslimde oradan tüketilir.",
+      "moduller": [
+        "m-urt",
+        "m-tan"
+      ],
+      "oneri": "Evet, her kişi/fasoncu sanal depo."
+    },
+    "k-04": {
+      "aciklama": "Koliye giren mal başka siparişe satılamasın mı, yoksa koli yalnız paketleme gruplaması mı?",
+      "baslik": "Koli stoğu ayırsın mı?",
+      "durum": "verildi",
+      "karar": "Koli yalnız gruplamadır, stok ayırmaz. Stok sevk belgesiyle düşer; koli içeriği raporda rezerve görünür.",
+      "moduller": [
+        "m-dep"
+      ],
+      "oneri": "Yalnız gruplama; stok sevkte düşer, koli içeriği rezerve sayılır."
+    },
+    "k-05": {
+      "aciklama": "Sert: siparişe ayrılan stok başkasına satılamaz. Yumuşak: yalnız uyarı ve raporda görünür.",
+      "baslik": "Rezervasyon sert mi yumuşak mı?",
+      "durum": "verildi",
+      "karar": "Rezervasyon yumuşak: ayrı tablo yok, görünümden hesaplanır; başka siparişe ayrılmış mal sevk edilirken uyarı çıkar.",
+      "moduller": [
+        "m-pln",
+        "m-sip"
+      ],
+      "oneri": "Yumuşak, görünümden; sevkte uyarı."
+    },
+    "k-06": {
+      "aciklama": "Eski kayıtların bir kısmı test verisiydi. Geçmiş hareketlerin hepsini taşımak eski tutarsızlıkları da taşır.",
+      "baslik": "Eski veriden ne taşınacak?",
+      "durum": "verildi",
+      "karar": "Taşınacaklar: ürün kartları, tanımlar, cari kartları, açılış bakiyeleri (ACL belgesiyle) ve açık siparişler. Geçmiş hareketler taşınmaz; eski uygulama salt okunur arşiv olarak kalır.",
+      "moduller": [
+        "m-bak"
+      ],
+      "oneri": "Kartlar + tanımlar + açılış bakiyeleri (ACL) + açık siparişler. Eski uygulama salt okunur arşiv olarak kalsın."
+    },
+    "k-07": {
+      "aciklama": "Kod ve şema tamamen yeni olacak.",
+      "baslik": "Yeni depo mu, aynı depo mu?",
+      "durum": "verildi",
+      "karar": "Yeni GitHub deposu ve yeni Supabase projesi. Eski depo ve eski Supabase dokunulmadan çalışmaya devam eder.",
+      "moduller": [
+        "m-cek"
+      ],
+      "oneri": "Yeni GitHub deposu + yeni Supabase projesi; eski ikisi dokunulmadan çalışmaya devam eder."
+    },
+    "k-08": {
+      "baslik": "Renk yapısı nasıl kurulsun?",
+      "aciklama": "Eski uygulamada renk adı anahtardı ve hammadde ile mamul renkleri aynı listedeydi. Bazı hammaddeler renkle değil kalınlık, boy gibi başka bir özellikle çeşitlenir.",
+      "oneri": "Ürün renkleri ve hammadde değişkenleri ayrı. Çok renkli ürün rengi tek renkli ürün renklerinden kurulur. Kategori yalnız hammadde tarafında, değişken türü olarak.",
+      "karar": "İki ayrı yapı. (1) Ürün renkleri: 1 renkli temel renkler + bunlardan sıralı hücrelerle kurulan 2, 3… renkli kombinasyonlar; ad hücrelerden önerilir; kombinasyon tekil; kullanıldıktan sonra hücreler kilitli. (2) Hammadde değişkenleri: tür (Deri rengi, Taban rengi, Deri kalınlığı…) + değer; türün etiketi kartta görünen addır (Renk, Kalınlık…), görseli renk olan türde hex ve resim. Kodlar numaratörden: ürün rengi 4 hane 1000'den, hammadde değişkeni 3 hane tür içinde 001'den; kod değişmez. Her şey uuid ile bağlı, ad anahtar değildir.",
+      "durum": "verildi",
+      "moduller": [
+        "m-tan",
+        "m-urn",
+        "m-rec"
+      ]
+    }
+  },
+  "kilavuz": {
+    "kl-01": {
+      "baslik": "Giriş ve çevrimdışı kilit",
+      "modul": "m-cek",
+      "sira": 1,
+      "ozet": "Uygulamaya kullanıcı adı ve şifreyle girilir. İnternet yokken kayıt girilemez; ekran kilitlenir, bağlantı gelince kendiliğinden açılır.",
+      "adimlar": [
+        "Uygulamayı aç; kullanıcı adı ve şifreni yaz, Giriş'e bas.",
+        "Üst çubukta adın ve firma adı görünür; yetkin olmayan menüler gizlidir.",
+        "Bağlantı koparsa ekranın üstünde \"Çevrimdışı — kayıt girilemez\" şeridi çıkar; bu sırada yalnız okuyabilirsin.",
+        "Bağlantı gelince şerit kalkar; yarım kalan bir işlem yoksa devam et."
+      ],
+      "ipuclari": "Bir kaydı gönderirken bağlantı koptuysa aynı düğmeye yeniden basmak güvenlidir: sistem aynı isteği ikinci kez kaydetmez.",
+      "belgeler": []
+    },
+    "kl-02": {
+      "baslik": "Kullanıcı ve yetki tanımlamak",
+      "modul": "m-cek",
+      "sira": 2,
+      "ozet": "Yönetici yeni çalışanı ekler ve ne görüp ne değiştirebileceğini rolüyle belirler.",
+      "adimlar": [
+        "Tanımlar › Kullanıcılar'ı aç, Yeni kullanıcı'ya bas.",
+        "Ad, kullanıcı adı ve geçici şifreyi yaz.",
+        "Rol seç: Yönetici, Muhasebe, Üretim, Üretim + Muhasebe ya da Panel (atölyedeki ortak cihaz).",
+        "Panel rolünde açılacak tek ekranı seç (Barkod, Atölye ya da Paketleme).",
+        "Kaydet; kişi ilk girişte şifresini değiştirir."
+      ],
+      "ipuclari": "Yetki sunucuda denetlenir; menüde görünmeyen işi başka yoldan da yapamaz.",
+      "belgeler": []
+    },
+    "kl-03": {
+      "baslik": "Renk, değişken, beden ve proses tanımları",
+      "modul": "m-tan",
+      "sira": 1,
+      "ozet": "Ürün ve üretimde seçilen bütün listeler buradan gelir. Ürün renkleri ile hammadde değişkenleri ayrı tutulur. Bir adı değiştirmek geçmiş kayıtları bozmaz.",
+      "adimlar": [
+        "Tanımlar'ı aç; Ürün renkleri, Hammadde değişkenleri, Ölçüler, Prosesler, Depolar sekmelerinden birini seç.",
+        "Liste etrafı çizili bir kutuda, kendi içinde aşağı kayar; üstteki süzgeç satırına yazdıkça daralır. Her satırın sonunda Düzenle ve Sil var.",
+        "Ürün rengi: Yeni › 1 renkli, ad, görsel renk (renk kodu) ve istersen resim. Kodu yazmazsın: sıradaki 4 haneli numara verilir (1000, 1001…).",
+        "Çok renkli ürün rengi: Yeni › renk sayısını seç (2 renkli, 3 renkli…). O kadar hücre açılır; her hücrenin başında kaçıncı renk olduğu yazar. Her hücreye tek renklerden birini seç.",
+        "Ad seçilen renklerden önerilir (Siyah-Beyaz); istersen değiştir. Aynı sırayla aynı renkler ikinci kez tanımlanamaz.",
+        "Hammadde değişkeni: önce türü seç ya da aç (Deri rengi, Taban rengi, Deri kalınlığı…). Türün etiketi hammadde kartında görünen addır: Renk, Kalınlık, Boy. Değerin kodu tür içinde sıradaki 3 haneli numaradır (001, 002…).",
+        "Kullanılan kayıt silinmez, pasife alınır; eski kayıtlarda görünmeye devam eder."
+      ],
+      "ipuclari": "Kod hiç değişmez, ad değişebilir; kayıtlar kimlikle bağlı olduğu için ad değişince hiçbir şey silinmez. Ürünlerde kullanılmış bir rengin hücreleri değişmez: farklı bir kombinasyon için yeni renk aç.",
+      "belgeler": []
+    },
+    "kl-04": {
+      "baslik": "Ürün kartı ve varyantlar",
+      "modul": "m-urn",
+      "sira": 1,
+      "ozet": "Hammadde ve mamul kartı açılır, renk × beden varyantları seçilir. Stok miktarı kartta yazılmaz; hareketlerden hesaplanır.",
+      "adimlar": [
+        "Stok › Yeni ürün'e bas; tipini seç: Hammadde, Yarı mamul ya da Mamul.",
+        "Ad, birim, ölçü seti ve fiyatları yaz.",
+        "Renkleri seç; her renk için bedenler matriste açılır. Varyantlara barkod kendiliğinden verilir.",
+        "Görsel ekle (renk başına bir görsel olabilir).",
+        "Kaydet. Mamulse reçete sekmesi açılır."
+      ],
+      "ipuclari": "Eksi stok gösterilir, gizlenmez: girişlerin eksik olduğunu söyler. Eksiyi düzeltmenin yolu eksik giriş belgesini kesmektir.",
+      "belgeler": []
+    },
+    "kl-05": {
+      "baslik": "Cari kartı açmak",
+      "modul": "m-car",
+      "sira": 1,
+      "ozet": "Müşteri, tedarikçi, fasoncu ya da personel carisi açılır. Bir cari birden çok rol taşıyabilir.",
+      "adimlar": [
+        "Cari › Yeni (Ctrl+N).",
+        "Kimlik: ünvanı yaz, rolleri işaretle (Müşteri, Tedarikçi, Fasoncu, Personel), para birimini seç; müşteriyse fiyat grubunu seç.",
+        "İletişim: yetkili, telefon, WhatsApp (telefonla aynıysa kutu işaretli kalır) ve e-posta.",
+        "Resmi bilgiler: resmi ünvan (faturadaki ad; boşsa ünvan), vergi dairesi, vergi no (firma 10, şahıs 11 hane), e-Fatura durumu.",
+        "Adres: adres, ilçe, il, ülke. Yurt dışı caride il serbest yazılır.",
+        "Görünüm: logo ya da renk; sipariş listesinde adın yanında görünür. Boş bırakılırsa renk otomatik verilir.",
+        "Müşteriyse web sitesi girişi istenirse işaretlenir (e-posta gerekli).",
+        "Kaydet. Hepsi tek formda; kayıttan sonra ayrı bir bilgi ekranı açmak gerekmez. Fasoncu ya da personelse sanal depo kendiliğinden açılır."
+      ],
+      "ipuclari": "Bakiye kartta yazılmaz; ekstre hareketlerden hesaplanır.",
+      "belgeler": []
+    },
+    "kl-06": {
+      "baslik": "Cari mahsup",
+      "modul": "m-car",
+      "sira": 2,
+      "ozet": "İki cari arasındaki borç-alacağı kapatmak için (ör. fasoncunun borcunu müşterinin alacağından düşmek).",
+      "adimlar": [
+        "Cari › Mahsup'a bas.",
+        "Borcu düşecek cariyi ve alacağı düşecek cariyi seç.",
+        "Tutarı ve açıklamayı yaz, Onayla."
+      ],
+      "ipuclari": "",
+      "belgeler": [
+        "b-mhs"
+      ]
+    },
+    "kl-07": {
+      "baslik": "Mal kabul (alış irsaliyesi)",
+      "modul": "m-stn",
+      "sira": 1,
+      "ozet": "Tedarikçiden gelen hammadde stoğa alınır ve tedarikçinin alacağı yazılır.",
+      "adimlar": [
+        "Satınalma › Mal kabul'e bas.",
+        "Tedarikçiyi seç; açık alış siparişi varsa listeden seç, satırlar dolar.",
+        "Gelen miktarları renk × beden matrisinde düzelt; fiyatı kontrol et.",
+        "Onayla. Belge numarası verilir (ALS-2026-…)."
+      ],
+      "ipuclari": "Yanlış girdiysen belgeyi aç, Düzelt'e bas: eski belge iptal edilir, yenisi kesilir; geçmişte ikisi de görünür.",
+      "belgeler": [
+        "b-als"
+      ]
+    },
+    "kl-08": {
+      "baslik": "Tedarikçiye iade",
+      "modul": "m-stn",
+      "sira": 2,
+      "ozet": "Kusurlu ya da fazla gelen malı tedarikçiye geri göndermek.",
+      "adimlar": [
+        "Satınalma › İade'ye bas.",
+        "Tedarikçiyi ve iade edilecek malı seç.",
+        "Miktarı ve sebebi yaz, Onayla."
+      ],
+      "ipuclari": "",
+      "belgeler": [
+        "b-ali"
+      ]
+    },
+    "kl-09": {
+      "baslik": "Tahsilat ve ödeme",
+      "modul": "m-kas",
+      "sira": 1,
+      "ozet": "Müşteriden para almak ya da tedarikçiye ödemek. Kasa/banka ve cari aynı belgede değişir.",
+      "adimlar": [
+        "Kasa & Banka › Tahsilat (ya da Ödeme) düğmesine bas.",
+        "Cariyi ve hesabı seç (Kasa, banka hesabı).",
+        "Tutarı, para birimini ve ödeme şeklini yaz.",
+        "Onayla; cari ekstresinde ve hesap hareketlerinde görünür."
+      ],
+      "ipuclari": "Döviz hesabında kur o günün kurundan önerilir; değiştirebilirsin.",
+      "belgeler": [
+        "b-ths",
+        "b-odm"
+      ]
+    },
+    "kl-10": {
+      "baslik": "Çek almak, ciro etmek, tahsil etmek",
+      "modul": "m-kas",
+      "sira": 2,
+      "ozet": "Müşteriden alınan çek portföye girer; tedarikçiye ciro edilebilir ya da vadesinde bankadan tahsil edilir.",
+      "adimlar": [
+        "Kasa & Banka › Çekler › Çek al: müşteri, banka, çek no, vade, tutar, görsel.",
+        "Ciro için çeki seç, Ciro et'e bas, tedarikçiyi seç.",
+        "Vadesi gelen çek için Tahsil et'e bas, banka hesabını seç.",
+        "Karşılıksız çıkarsa Karşılıksız'a bas; müşterinin borcu geri yazılır."
+      ],
+      "ipuclari": "Ciro iptal edilirse çek kendiliğinden portföye döner.",
+      "belgeler": [
+        "b-cek"
+      ]
+    },
+    "kl-11": {
+      "baslik": "Virman",
+      "modul": "m-kas",
+      "sira": 3,
+      "ozet": "Kasa ile banka ya da iki banka hesabı arasında para aktarmak.",
+      "adimlar": [
+        "Kasa & Banka › Virman'a bas.",
+        "Kaynak ve hedef hesabı seç, tutarı yaz; para birimleri farklıysa kuru gir.",
+        "Sebebi yaz, Onayla."
+      ],
+      "ipuclari": "",
+      "belgeler": [
+        "b-vrm"
+      ]
+    },
+    "kl-12": {
+      "baslik": "Satış siparişi girmek",
+      "modul": "m-sip",
+      "sira": 1,
+      "ozet": "Müşterinin istediği ürünler renk × beden matrisiyle girilir. Sipariş stok ya da cariyi değiştirmez; ihtiyaç hesabına girer.",
+      "adimlar": [
+        "Sipariş › Yeni sipariş'e bas, müşteriyi seç.",
+        "Ürünü ara ve seç; rengi seç.",
+        "Matriste bedenlere adetleri yaz (asorti için Asortile düğmesi).",
+        "Kalemlere ekle; fiyat fiyat grubundan önerilir.",
+        "Teslim tarihini, notu ve ödeme planını yaz, Kaydet.",
+        "Müşteriye göndermek için Yazdır / PDF / WhatsApp."
+      ],
+      "ipuclari": "Siparişin durumu (Bekliyor, Üretimde, Kısmi sevk, Tamamlandı) sevk ve üretim belgelerinden hesaplanır; elle değiştirilmez.",
+      "belgeler": []
+    },
+    "kl-13": {
+      "baslik": "Teklif hazırlamak ve siparişe çevirmek",
+      "modul": "m-tek",
+      "sira": 1,
+      "ozet": "Teklif, siparişle aynı formdur; onaylanınca tek düğmeyle siparişe dönüşür.",
+      "adimlar": [
+        "Sipariş › Teklif sekmesine geç, Yeni teklif'e bas.",
+        "Siparişteki gibi müşteri, ürün, renk ve bedenleri gir; geçerlilik tarihini yaz.",
+        "Kaydet ve Gönderildi işaretle; Yazdır / PDF / WhatsApp ile paylaş.",
+        "Müşteri onaylarsa Siparişe çevir'e bas."
+      ],
+      "ipuclari": "Süresi geçen teklif kendiliğinden \"Süresi doldu\" görünür.",
+      "belgeler": []
+    },
+    "kl-14": {
+      "baslik": "Reçete ve proses sırası",
+      "modul": "m-rec",
+      "sira": 1,
+      "ozet": "Bir mamulün hangi hammaddeden ne kadar kullandığı ve hangi proseslerden geçtiği yazılır.",
+      "adimlar": [
+        "Mamul kartında Reçete sekmesini aç.",
+        "Hammadde ekle; renk eşlemesini seç (mamul rengine göre hangi hammadde rengi).",
+        "Miktarı beden bazında ya da tek değer olarak yaz.",
+        "Rota bölümünde prosesleri sırala (Kesim → Saya → Kalfa…); ara prosesleri işaretle, işçilik ücretini yaz.",
+        "Kaydet; yeni sürüm olarak saklanır."
+      ],
+      "ipuclari": "Reçeteyi değiştirmek açık üretim emirlerini etkilemez; emir açıldığı andaki reçeteyi kullanır.",
+      "belgeler": []
+    },
+    "kl-15": {
+      "baslik": "Üretim planlamak",
+      "modul": "m-pln",
+      "sira": 1,
+      "ozet": "Siparişlerin üretilecek kısmı seçilip üretim emri açılır; eksik hammadde için satınalma önerisi çıkar.",
+      "adimlar": [
+        "Planlama › Bekleyen listesini aç: her satırda sipariş, ürün, renk, kalan adet ve stokta olan.",
+        "Üretilecek satırları seç, Seçilenleri üret'e bas; üretim emirleri açılır.",
+        "Hammadde ihtiyacı tablosunda eksik olanları seç, Satın almaya gönder; tedarikçi başına alış siparişi taslağı açılır.",
+        "Proses planlama sekmesinde her adıma işi yapacak kişiyi önceden ata (bu iş vermek değildir)."
+      ],
+      "ipuclari": "Planlama stok ayırmaz; sevk sırasında başka siparişe ayrılmış mal varsa uyarı çıkar.",
+      "belgeler": []
+    },
+    "kl-16": {
+      "baslik": "İş vermek",
+      "modul": "m-urt",
+      "sira": 1,
+      "ozet": "Üretim emrinin bir adımı kişiye ya da fasoncuya verilir; malzemesi o kişinin deposuna geçer.",
+      "adimlar": [
+        "Üretim › emri aç, sıradaki adımda İşi ver'e bas.",
+        "Kime alanında planlanan kişi hazır gelir; değiştirebilirsin.",
+        "Verilecek bedenleri ve adetleri gir; bir önceki adımdan teslim alınandan fazla verilemez.",
+        "Onayla; iş fişi yazdırılabilir."
+      ],
+      "ipuclari": "Barkod ekranında kişi kendi kartını okutup kendisine planlanan işleri görür.",
+      "belgeler": [
+        "b-isv"
+      ]
+    },
+    "kl-17": {
+      "baslik": "İş teslim almak",
+      "modul": "m-urt",
+      "sira": 2,
+      "ozet": "Biten iş teslim alınır; sağlam ve hurda ayrı yazılır, işçilik kişinin carisine geçer.",
+      "adimlar": [
+        "Üretim › emirde verilmiş işi aç, Teslim al'a bas (ya da iş fişinin barkodunu okut).",
+        "Sağlam ve hurda adetlerini beden beden gir.",
+        "Onayla. Son asıl adımsa mamul ana depoya girer."
+      ],
+      "ipuclari": "Yanlış teslimi iptal edersen işçilik, malzeme ve adım durumu birlikte geri döner.",
+      "belgeler": [
+        "b-ist",
+        "b-hrd"
+      ]
+    },
+    "kl-18": {
+      "baslik": "Koli hazırlamak ve sevk etmek",
+      "modul": "m-dep",
+      "sira": 1,
+      "ozet": "Ürünler barkodla koliye okutulur; sevkte koliler tek satış irsaliyesiyle çıkar.",
+      "adimlar": [
+        "Depo › Paketleme'de siparişi seç, Yeni koli'ye bas.",
+        "Ürün barkodlarını okut; koli içeriği siparişle karşılaştırılır, fazlası uyarı verir.",
+        "Koliyi kapat, etiketini yazdır.",
+        "Sevkiyat merkezinde müşteriyi seç, gönderilecek kolileri işaretle, Sevk et'e bas."
+      ],
+      "ipuclari": "Koli stok ayırmaz; stok sevk belgesi onaylanınca düşer.",
+      "belgeler": [
+        "b-sat"
+      ]
+    },
+    "kl-19": {
+      "baslik": "Müşteri iadesi",
+      "modul": "m-dep",
+      "sira": 2,
+      "ozet": "Müşteriden geri gelen mal stoğa alınır, müşterinin borcundan düşülür.",
+      "adimlar": [
+        "Depo › İade al'a bas, müşteriyi seç.",
+        "Geri gelen ürünleri okut ya da seç, sebebi yaz.",
+        "Onayla."
+      ],
+      "ipuclari": "",
+      "belgeler": [
+        "b-sti"
+      ]
+    },
+    "kl-20": {
+      "baslik": "Stok sayımı",
+      "modul": "m-dep",
+      "sira": 3,
+      "ozet": "Raftaki gerçek miktar okutulur; farkı tek belgeyle stoğa işlenir.",
+      "adimlar": [
+        "Depo › Sayım'ı aç, depoyu seç.",
+        "Barkodları okut ya da miktarları elle gir.",
+        "Fark listesini kontrol et, Onayla."
+      ],
+      "ipuclari": "Sayım farkı eksi stoğu sıfırlamak için kullanılmaz; eksiğin sebebi eksik giriş belgesidir.",
+      "belgeler": [
+        "b-say"
+      ]
+    },
+    "kl-21": {
+      "baslik": "Depolar arası transfer",
+      "modul": "m-dep",
+      "sira": 4,
+      "ozet": "Malı bir depodan ötekine taşımak.",
+      "adimlar": [
+        "Depo › Transfer'e bas.",
+        "Kaynak ve hedef depoyu, ürünleri ve miktarları seç, Onayla."
+      ],
+      "ipuclari": "",
+      "belgeler": [
+        "b-trf"
+      ]
+    },
+    "kl-22": {
+      "baslik": "Fatura kesmek",
+      "modul": "m-fat",
+      "sira": 1,
+      "ozet": "Bir ya da birden çok sevk irsaliyesi faturaya bağlanır. Stok ve cari irsaliyede değiştiği için fatura onları ikinci kez değiştirmez.",
+      "adimlar": [
+        "Fatura › Yeni fatura'ya bas, müşteriyi seç.",
+        "Faturalanmamış sevk belgelerini işaretle.",
+        "KDV oranlarını kontrol et, Kaydet."
+      ],
+      "ipuclari": "",
+      "belgeler": []
+    },
+    "kl-23": {
+      "baslik": "Gider girmek",
+      "modul": "m-mal",
+      "sira": 1,
+      "ozet": "Kira, elektrik, yemek gibi genel giderler kategoriyle girilir; maliyete ve kâr-zarara dağıtılır.",
+      "adimlar": [
+        "Gelir-Gider › Yeni gider'e bas.",
+        "Kategoriyi seç (üretim, satış, yönetim, finansman).",
+        "Tutarı, tarihi ve ödendiyse hesabı seç, Kaydet."
+      ],
+      "ipuclari": "",
+      "belgeler": [
+        "b-gdr"
+      ]
+    },
+    "kl-24": {
+      "baslik": "Ürün maliyetini görmek",
+      "modul": "m-mal",
+      "sira": 2,
+      "ozet": "Bir mamulün çift başı maliyeti: reçetedeki hammadde (ortalama alış fiyatıyla) + işçilik + genel gider payı + demirbaş payı.",
+      "adimlar": [
+        "Mamul kartında Maliyet sekmesini aç.",
+        "Kalem kalem dökümü ve toplamı incele; para birimini değiştirebilirsin.",
+        "Önerilen satış fiyatı fiyat grubunun kâr oranından hesaplanır."
+      ],
+      "ipuclari": "",
+      "belgeler": []
+    },
+    "kl-25": {
+      "baslik": "Raporlar ve gün sonu",
+      "modul": "m-rap",
+      "sira": 1,
+      "ozet": "Stok durumu, cari ekstre, kâr-zarar ve üretim raporu. Gün sonu raporu her akşam e-postayla gelir.",
+      "adimlar": [
+        "Raporlar menüsünden raporu seç; tarih aralığını ve süzgeçleri ayarla.",
+        "Tabloyu Excel'e aktar ya da yazdır; çıktı ekrandaki tablonun aynısıdır.",
+        "Gün sonu e-postasının alıcılarını Tanımlar › Raporlar'dan ayarla."
+      ],
+      "ipuclari": "",
+      "belgeler": []
+    },
+    "kl-26": {
+      "baslik": "Açılış devri",
+      "modul": "m-bak",
+      "sira": 1,
+      "ozet": "Yeni sisteme geçerken ürün stokları ve cari bakiyeler tek açılış belgesiyle girilir.",
+      "adimlar": [
+        "Bakım › Açılış'ı aç.",
+        "Excel'den stok ve bakiye listesini yükle ya da elle gir.",
+        "Önizlemeyi kontrol et, Onayla."
+      ],
+      "ipuclari": "Açılış bir kez yapılır; sonradan düzeltme için belge iptal edilip yenisi kesilir.",
+      "belgeler": [
+        "b-acl"
+      ]
+    },
+    "kl-27": {
+      "baslik": "Silinen kaydı bulmak ve geri getirmek",
+      "modul": "m-bak",
+      "sira": 2,
+      "ozet": "Her değişiklik ve silme sunucu arşivinde 365 gün saklanır.",
+      "adimlar": [
+        "Bakım › Günlük'te kimin ne zaman ne yaptığını ara.",
+        "Bakım › Arşiv'de kaydı bul, Geri yükle'ye bas."
+      ],
+      "ipuclari": "",
+      "belgeler": []
+    },
+    "kl-28": {
+      "baslik": "Web sitesinden gelen talepler",
+      "modul": "m-prt",
+      "sira": 1,
+      "ozet": "Müşteriler siteden sipariş talebi ve kayıt talebi gönderir; ERP'de onaylanınca sipariş taslağı ya da cari olur.",
+      "adimlar": [
+        "Üst çubukta 🌐 sayacına bas.",
+        "Talebi aç; ürünleri ve adetleri kontrol et.",
+        "Siparişe çevir'e ya da Reddet'e bas (sebep yaz)."
+      ],
+      "ipuclari": "Sitede fiyat ve stok rakamı görünmez; yalnız \"stokta / üretimde\" bilgisi.",
+      "belgeler": []
+    },
+    "kl-29": {
+      "baslik": "Model geliştirmek ve numune",
+      "modul": "m-mdl",
+      "sira": 1,
+      "ozet": "Yeni model çizilir, numunesi üretilir; onaylanınca mamul kartı ve reçetesi açılır.",
+      "adimlar": [
+        "Modelhane › Yeni model'e bas; teknik çizim ve görselleri ekle.",
+        "Numune üretimi için malzemeleri ve prosesleri yaz.",
+        "Model onaylanınca Ürüne çevir'e bas; mamul kartı ve reçete taslağı açılır."
+      ],
+      "ipuclari": "",
+      "belgeler": []
+    }
+  }
+}

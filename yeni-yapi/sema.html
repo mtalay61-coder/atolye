@@ -1,0 +1,1520 @@
+<title>Atölye ERP 2 Yapı Şeması</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Yerleşim: teknik çizim paftası. Üstte özet + sekmeler; Şema sekmesinde solda çizim alanı,
+   sağda seçili modülün künyesi. Düzenleme her sekmeden aynı sağ çekmeceyle yapılır.
+   Renk = modül grubu; kırmızı/turuncu yalnız denetim bulguları için. */
+:root {
+  --kagit: #f6f7f9;
+  --yuzey: #ffffff;
+  --murekkep: #172033;
+  --soluk: #5a6478;
+  --cizgi: #d7dce5;
+  --izgara: #e9ecf2;
+  --vurgu: #2b4fd8;
+  --vurgu-zemin: #e8edff;
+  --g-altyapi: #6b7280;
+  --g-anaveri: #0f8a6d;
+  --g-ticari: #2b4fd8;
+  --g-uretim: #b45309;
+  --g-finans: #9d2f8f;
+  --g-analiz: #0e7490;
+  --hata: #b42318;
+  --hata-zemin: #fdecea;
+  --uyari: #a15c07;
+  --uyari-zemin: #fdf3e2;
+  --iyi: #0f7a3d;
+  --iyi-zemin: #e6f4ec;
+  --golge: 0 10px 30px rgba(23, 32, 51, .18);
+  --f-baslik: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --f-govde: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-kod: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --kagit: #10141d; --yuzey: #171c27; --murekkep: #e6e9f0; --soluk: #9aa3b5; --cizgi: #2a3142; --izgara: #1b2130;
+    --vurgu: #8ea6ff; --vurgu-zemin: #1d2645;
+    --g-altyapi: #a3aab8; --g-anaveri: #4cc9a6; --g-ticari: #8ea6ff; --g-uretim: #f0a35a; --g-finans: #e08bd6; --g-analiz: #5cc8de;
+    --hata: #ff8a80; --hata-zemin: #3a1d1d; --uyari: #f4b860; --uyari-zemin: #352812; --iyi: #6fd39a; --iyi-zemin: #16301f;
+    --golge: 0 10px 30px rgba(0, 0, 0, .5);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --kagit: #10141d; --yuzey: #171c27; --murekkep: #e6e9f0; --soluk: #9aa3b5; --cizgi: #2a3142; --izgara: #1b2130;
+  --vurgu: #8ea6ff; --vurgu-zemin: #1d2645;
+  --g-altyapi: #a3aab8; --g-anaveri: #4cc9a6; --g-ticari: #8ea6ff; --g-uretim: #f0a35a; --g-finans: #e08bd6; --g-analiz: #5cc8de;
+  --hata: #ff8a80; --hata-zemin: #3a1d1d; --uyari: #f4b860; --uyari-zemin: #352812; --iyi: #6fd39a; --iyi-zemin: #16301f;
+  --golge: 0 10px 30px rgba(0, 0, 0, .5);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--kagit); color: var(--murekkep);
+  font-family: var(--f-govde); font-size: 15px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 64px;
+}
+.kap { max-width: 1320px; margin: 0 auto; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--vurgu); outline-offset: 2px; }
+code, .kod { font-family: var(--f-kod); font-size: .88em; background: var(--vurgu-zemin); padding: 1px 5px; border-radius: 3px; }
+
+header.pafta { padding-block: 28px 18px; border-bottom: 2px solid var(--murekkep); display: grid; gap: 10px; }
+.ust-etiket { font-family: var(--f-kod); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--soluk); display: flex; flex-wrap: wrap; gap: 6px 18px; }
+h1 { font-family: var(--f-baslik); font-stretch: 80%; font-weight: 800; font-size: clamp(30px, 5vw, 46px); line-height: 1.02; margin: 0; letter-spacing: -.01em; }
+h2 { font-family: var(--f-baslik); font-stretch: 85%; font-weight: 700; font-size: 24px; line-height: 1.15; margin: 0 0 6px; text-wrap: balance; }
+h3 { font-family: var(--f-baslik); font-stretch: 90%; font-weight: 700; font-size: 18px; margin: 0; }
+.ozet-satir { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.sayac { font-family: var(--f-kod); font-size: 12.5px; border: 1px solid var(--cizgi); background: var(--yuzey); border-radius: 4px; padding: 4px 9px; font-variant-numeric: tabular-nums; }
+.sayac.hata { color: var(--hata); border-color: currentColor; background: var(--hata-zemin); }
+.sayac.uyari { color: var(--uyari); border-color: currentColor; background: var(--uyari-zemin); }
+.sayac.iyi { color: var(--iyi); border-color: currentColor; background: var(--iyi-zemin); }
+button.sayac { cursor: pointer; }
+.durum-metni { font-size: 13px; color: var(--soluk); }
+.bant { border-radius: 6px; padding: 10px 14px; font-size: 14px; margin-top: 12px; }
+.bant.hata { background: var(--hata-zemin); color: var(--hata); }
+
+nav.sekmeler { display: flex; gap: 2px; overflow-x: auto; border-bottom: 1px solid var(--cizgi); margin: 14px 0 18px; scrollbar-width: thin; }
+nav.sekmeler button { background: none; border: 0; border-bottom: 3px solid transparent; padding: 10px 12px 8px; font-size: 14px; color: var(--soluk); white-space: nowrap; display: inline-flex; gap: 6px; align-items: center; }
+nav.sekmeler button[aria-selected="true"] { color: var(--murekkep); border-bottom-color: var(--vurgu); font-weight: 600; }
+nav.sekmeler .rozet { font-family: var(--f-kod); font-size: 11px; border-radius: 9px; padding: 0 6px; background: var(--hata); color: var(--yuzey); }
+nav.sekmeler .rozet.u { background: var(--uyari); }
+
+.dugme { border: 1px solid var(--cizgi); background: var(--yuzey); border-radius: 5px; padding: 6px 11px; font-size: 13.5px; display: inline-flex; align-items: center; gap: 6px; }
+.dugme:hover { border-color: var(--soluk); }
+.dugme.ana { background: var(--murekkep); color: var(--kagit); border-color: var(--murekkep); }
+.dugme.tehlike { color: var(--hata); border-color: currentColor; }
+.dugme.tehlike.dolu { background: var(--hata); color: var(--yuzey); border-color: var(--hata); }
+.dugme[aria-pressed="true"] { background: var(--vurgu-zemin); border-color: var(--vurgu); color: var(--vurgu); }
+.dugme:disabled { opacity: .45; cursor: not-allowed; }
+.arac-cubugu { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+.arac-cubugu .ayrac { width: 1px; align-self: stretch; background: var(--cizgi); margin: 0 4px; }
+.ipucu { font-size: 13px; color: var(--soluk); }
+
+/* Şema sekmesi */
+.sema-duzen { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
+@media (max-width: 980px) { .sema-duzen { grid-template-columns: minmax(0, 1fr); } }
+.cizim-kap { background: var(--yuzey); border: 1px solid var(--cizgi); border-radius: 6px; overflow: auto; height: min(72vh, 760px); min-height: 380px; position: relative;
+  background-image: linear-gradient(var(--izgara) 1px, transparent 1px), linear-gradient(90deg, var(--izgara) 1px, transparent 1px); background-size: 24px 24px; }
+.cizim-kap.ciz { cursor: crosshair; }
+svg.cizim { display: block; }
+svg.cizim text { font-family: var(--f-govde); fill: var(--murekkep); }
+.dugum { cursor: grab; touch-action: none; }
+.cizim-kap.ciz .dugum { cursor: crosshair; }
+.dugum rect.govde { fill: var(--yuzey); stroke-width: 1.5; }
+.dugum rect.serit { stroke: none; }
+.dugum text.kodu { font-family: var(--f-kod); font-size: 11px; font-weight: 500; }
+.dugum text.adi { font-size: 13px; font-weight: 600; }
+.dugum text.alt { font-size: 10.5px; fill: var(--soluk); font-family: var(--f-kod); }
+.dugum.secili rect.govde { stroke-width: 3; }
+.dugum.hedef rect.govde { stroke-dasharray: 4 3; stroke-width: 2.5; }
+.dugum.sonuk, .kenar.sonuk { opacity: .18; }
+.dugum circle.rozet-h { fill: var(--hata); }
+.dugum circle.rozet-u { fill: var(--uyari); }
+.dugum text.rozet-yazi { font-family: var(--f-kod); font-size: 10px; fill: var(--yuzey); font-weight: 600; }
+.kenar { fill: none; stroke-width: 1.4; }
+.kenar.bagimli { stroke: var(--soluk); }
+.kenar.tetik { stroke: var(--vurgu); stroke-dasharray: 5 4; }
+.kenar.vurgulu { stroke-width: 2.6; }
+.kenar.hatali { stroke: var(--hata); }
+.kenar-tik { fill: none; stroke: transparent; stroke-width: 12; cursor: pointer; }
+marker path.m-bagimli { fill: var(--soluk); }
+marker path.m-tetik { fill: var(--vurgu); }
+marker path.m-hata { fill: var(--hata); }
+line.lastik { stroke: var(--vurgu); stroke-width: 2; stroke-dasharray: 4 3; pointer-events: none; }
+.bos-durum { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: 10px; padding: 24px; color: var(--soluk); }
+.lejant { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--soluk); margin-top: 8px; }
+.lejant span { display: inline-flex; gap: 6px; align-items: center; }
+.lejant i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+.lejant svg { overflow: visible; }
+
+aside.kunye { background: var(--yuzey); border: 1px solid var(--cizgi); border-radius: 6px; padding: 16px; display: grid; gap: 12px; min-width: 0; position: sticky; top: max(12px, env(safe-area-inset-top, 0px)); }
+.kunye-bas { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.modul-kod { font-family: var(--f-kod); font-size: 12px; font-weight: 500; color: var(--g); border: 1px solid var(--g); border-radius: 3px; padding: 0 5px; }
+.alan { display: grid; gap: 4px; }
+.alan > .etk { font-family: var(--f-kod); font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--soluk); }
+.alan p { margin: 0; font-size: 14px; }
+.cipler { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.cip { font-family: var(--f-kod); font-size: 12px; border: 1px solid var(--cizgi); background: var(--kagit); border-radius: 3px; padding: 1px 6px; }
+button.cip { cursor: pointer; }
+button.cip:hover { border-color: var(--vurgu); }
+.cip.defter { border-color: var(--g-uretim); color: var(--g-uretim); }
+.cip.gorunum { border-style: dashed; color: var(--g-analiz); }
+ul.liste { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 13.5px; }
+ul.liste li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; align-items: baseline; }
+ul.liste .ok { font-family: var(--f-kod); font-size: 11.5px; color: var(--soluk); white-space: nowrap; }
+ul.liste .ok.t { color: var(--vurgu); }
+.mini { background: none; border: 0; color: var(--vurgu); font-size: 12.5px; padding: 0 2px; }
+.mini:hover { text-decoration: underline; }
+.durum-pil { font-family: var(--f-kod); font-size: 11px; padding: 1px 7px; border-radius: 9px; border: 1px solid currentColor; white-space: nowrap; }
+.durum-pil.taslak { color: var(--soluk); }
+.durum-pil.oturdu { color: var(--vurgu); }
+.durum-pil.yaziliyor { color: var(--uyari); }
+.durum-pil.bitti { color: var(--iyi); background: var(--iyi-zemin); }
+.durum-pil.hata { color: var(--hata); }
+.ders { font-size: 13px; color: var(--hata); background: var(--hata-zemin); border-radius: 4px; padding: 7px 10px; }
+
+/* Bulgular */
+.bulgu { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: start; padding: 9px 12px; border-radius: 5px; font-size: 14px; }
+.bulgu.hata { background: var(--hata-zemin); }
+.bulgu.uyari { background: var(--uyari-zemin); }
+.bulgu.gider { background: var(--iyi-zemin); }
+.bulgu .sev { font-family: var(--f-kod); font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; padding-top: 2px; }
+.bulgu.hata .sev { color: var(--hata); }
+.bulgu.uyari .sev { color: var(--uyari); }
+.bulgu.gider .sev { color: var(--iyi); }
+.bulgular { display: grid; gap: 6px; }
+
+/* Tablolar */
+.tablo-kap { overflow-x: auto; border: 1px solid var(--cizgi); border-radius: 6px; background: var(--yuzey); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--cizgi); }
+th { font-family: var(--f-kod); font-weight: 500; font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--soluk); background: var(--kagit); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+tr.tik { cursor: pointer; }
+tr.tik:hover td { background: var(--vurgu-zemin); }
+td.sayi { font-variant-numeric: tabular-nums; font-family: var(--f-kod); font-size: 13px; }
+.bolum-bas { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; justify-content: space-between; margin-bottom: 12px; }
+.bolum-bas p { margin: 0; color: var(--soluk); font-size: 14px; max-width: 70ch; }
+.suzgec { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.suzgec input, .suzgec select { border: 1px solid var(--cizgi); background: var(--yuzey); border-radius: 5px; padding: 6px 9px; font-size: 13.5px; max-width: 100%; }
+
+/* Yazım sırası */
+.faz-blok { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--cizgi); }
+.faz-blok:last-child { border-bottom: 0; }
+@media (max-width: 520px) { .faz-blok { grid-template-columns: minmax(0, 1fr); gap: 8px; } }
+.faz-no { font-family: var(--f-baslik); font-weight: 800; font-size: 22px; color: var(--vurgu); line-height: 1.1; }
+.faz-no small { display: block; font-family: var(--f-kod); font-size: 11px; font-weight: 400; color: var(--soluk); }
+.sira-kartlar { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.sira-kart { background: var(--yuzey); border: 1px solid var(--cizgi); border-left: 4px solid var(--g); border-radius: 5px; padding: 10px 12px; display: grid; gap: 4px; font-size: 13.5px; text-align: left; min-width: 0; }
+.sira-kart .ust { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.sira-kart .hazir { color: var(--iyi); font-weight: 600; font-size: 12.5px; }
+.sira-kart .bekler { color: var(--soluk); font-size: 12.5px; }
+
+/* Çekmece */
+.perde { position: fixed; inset: 0; background: rgba(10, 14, 22, .35); z-index: 40; }
+.cekmece { position: fixed; top: 0; right: 0; bottom: 0; width: min(480px, 100%); background: var(--yuzey); z-index: 41; box-shadow: var(--golge); display: grid; grid-template-rows: auto minmax(0, 1fr) auto;
+  padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); padding-right: env(safe-area-inset-right, 0px); }
+.cekmece-bas { padding: 16px 20px 12px; border-bottom: 1px solid var(--cizgi); display: flex; justify-content: space-between; gap: 12px; align-items: start; }
+.cekmece-govde { overflow-y: auto; padding: 16px 20px; display: grid; gap: 14px; align-content: start; }
+.cekmece-govde form { display: grid; gap: 12px; }
+.cekmece-dip { border-top: 1px solid var(--cizgi); padding: 12px 20px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.cekmece-dip .bosluk { flex: 1; }
+.form-satir { display: grid; gap: 10px; }
+.form-alan { display: grid; gap: 5px; min-width: 0; }
+.form-alan label, .form-alan .etk { font-size: 12.5px; font-weight: 600; color: var(--soluk); }
+.form-alan input[type=text], .form-alan input[type=number], .form-alan select, .form-alan textarea { border: 1px solid var(--cizgi); background: var(--kagit); border-radius: 5px; padding: 8px 10px; font-size: 14px; width: 100%; }
+.form-alan textarea { min-height: 76px; resize: vertical; }
+.form-alan .aciklama { font-size: 12.5px; color: var(--soluk); }
+.secim-kutulari { display: flex; flex-wrap: wrap; gap: 4px 12px; max-height: 180px; overflow-y: auto; border: 1px solid var(--cizgi); border-radius: 5px; padding: 8px 10px; background: var(--kagit); }
+.secim-kutulari label { display: inline-flex; gap: 5px; align-items: center; font-weight: 400; color: var(--murekkep); font-size: 13px; }
+.onay-kutusu { display: flex; gap: 8px; align-items: center; font-size: 14px; }
+.onizleme { display: grid; gap: 6px; }
+.onizleme .baslik { font-size: 12.5px; font-weight: 600; color: var(--soluk); }
+.etki-temiz { font-size: 13.5px; color: var(--iyi); background: var(--iyi-zemin); border-radius: 5px; padding: 8px 12px; }
+.bildirim { position: fixed; left: 50%; bottom: max(20px, env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--murekkep); color: var(--kagit); padding: 9px 16px; border-radius: 6px; font-size: 14px; z-index: 60; box-shadow: var(--golge); max-width: calc(100% - 32px); }
+
+/* Kılavuz */
+.kilavuz-duzen { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 28px; align-items: start; }
+@media (max-width: 860px) { .kilavuz-duzen { grid-template-columns: minmax(0, 1fr); } .kilavuz-ic { position: static !important; max-height: none !important; } }
+.kilavuz-ic { position: sticky; top: max(12px, env(safe-area-inset-top, 0px)); max-height: calc(100vh - 40px); overflow-y: auto; font-size: 13.5px; display: grid; gap: 10px; align-content: start; }
+.kilavuz-ic input { border: 1px solid var(--cizgi); background: var(--yuzey); border-radius: 5px; padding: 7px 10px; font-size: 13.5px; width: 100%; }
+.kilavuz-ic .grup-bas { font-family: var(--f-kod); font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--soluk); margin-top: 6px; }
+.kilavuz-ic a { display: block; color: var(--murekkep); text-decoration: none; padding: 3px 0 3px 8px; border-left: 2px solid var(--cizgi); }
+.kilavuz-ic a:hover { border-left-color: var(--vurgu); color: var(--vurgu); }
+.kilavuz-ic a.plan { color: var(--soluk); }
+.konu { background: var(--yuzey); border: 1px solid var(--cizgi); border-radius: 6px; padding: 20px 22px; display: grid; gap: 12px; scroll-margin-top: 16px; min-width: 0; }
+.konu + .konu { margin-top: 14px; }
+.konu-bas { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.konu-bas h3 { font-size: 21px; }
+.konu-bas .sag { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.konu p { margin: 0; max-width: 70ch; }
+.konu ol.adimlar { margin: 0; padding-left: 22px; display: grid; gap: 6px; max-width: 70ch; }
+.konu ol.adimlar li::marker { font-family: var(--f-kod); color: var(--vurgu); font-weight: 500; }
+.konu .ipucu-kutu { background: var(--vurgu-zemin); border-radius: 5px; padding: 10px 14px; font-size: 14px; max-width: 72ch; white-space: pre-line; }
+.arkada { border-top: 1px dashed var(--cizgi); padding-top: 10px; display: grid; gap: 8px; }
+.arkada .etk { font-family: var(--f-kod); font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--soluk); }
+.etki-satir { display: grid; grid-template-columns: 52px repeat(3, minmax(0, 1fr)); gap: 8px; font-size: 13px; align-items: baseline; }
+@media (max-width: 560px) { .etki-satir { grid-template-columns: 52px minmax(0, 1fr); } .etki-satir span:nth-child(n+3) { grid-column: 2; } }
+.etki-satir b { font-family: var(--f-kod); font-weight: 500; }
+.etki-satir span i { font-style: normal; color: var(--soluk); font-family: var(--f-kod); font-size: 11px; margin-right: 4px; }
+.plan-pil { font-family: var(--f-kod); font-size: 11px; padding: 1px 7px; border-radius: 9px; background: var(--uyari-zemin); color: var(--uyari); white-space: nowrap; }
+
+/* Rehber (sabit metin) */
+.rehber section { padding-block: 22px 6px; }
+.rehber p { max-width: 72ch; }
+.giris { max-width: 70ch; color: var(--soluk); margin: 0 0 16px; }
+.ilkeler { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
+.ilke { background: var(--yuzey); border: 1px solid var(--cizgi); border-radius: 6px; padding: 14px 16px; display: grid; gap: 5px; align-content: start; }
+.ilke b { font-family: var(--f-baslik); font-stretch: 90%; font-size: 16.5px; }
+.ilke p { margin: 0; font-size: 14px; color: var(--soluk); }
+.ilke .ornek { font-family: var(--f-kod); font-size: 12px; }
+td.eski { color: var(--hata); }
+td.yeni { color: var(--iyi); }
+.akis { display: grid; counter-reset: a; }
+.adim { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 12px; padding: 12px 0; border-bottom: 1px dashed var(--cizgi); }
+.adim:last-child { border-bottom: 0; }
+.adim::before { counter-increment: a; content: counter(a); font-family: var(--f-baslik); font-weight: 800; font-size: 24px; color: var(--vurgu); line-height: 1; }
+.adim h3 { font-size: 16.5px; margin-bottom: 3px; }
+.adim p { margin: 0; font-size: 14px; }
+.yasam { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-family: var(--f-kod); font-size: 13px; }
+.yasam span.k { border: 1px solid var(--murekkep); border-radius: 4px; padding: 4px 10px; background: var(--yuzey); }
+.yasam span.o { color: var(--soluk); }
+.iki { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+.kutu { background: var(--yuzey); border: 1px solid var(--cizgi); border-radius: 6px; padding: 14px 16px; min-width: 0; }
+.kutu h3 { margin-bottom: 8px; }
+.kutu ol, .kutu ul { margin: 0; padding-left: 20px; font-size: 14px; display: grid; gap: 5px; }
+footer { margin-top: 40px; padding-top: 14px; border-top: 2px solid var(--murekkep); font-size: 13px; color: var(--soluk); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="kap">
+<header class="pafta">
+  <div class="ust-etiket"><span>Pafta 01 · Mimari</span><span>Canlı şema</span><span id="sonDegisiklik">Yükleniyor…</span></div>
+  <h1>Atölye ERP 2 Yapı Şeması</h1>
+  <div class="ozet-satir" id="ozet"><span class="sayac">Şema okunuyor…</span></div>
+  <div id="bant"></div>
+</header>
+
+<nav class="sekmeler" role="tablist" aria-label="Bölümler" id="sekmeler">
+  <button role="tab" data-sekme="sema">Şema</button>
+  <button role="tab" data-sekme="sira">Yazım sırası</button>
+  <button role="tab" data-sekme="moduller">Modüller</button>
+  <button role="tab" data-sekme="tablolar">Tablolar</button>
+  <button role="tab" data-sekme="belgeler">Belge tipleri</button>
+  <button role="tab" data-sekme="kararlar">Kararlar</button>
+  <button role="tab" data-sekme="denetim">Denetim</button>
+  <button role="tab" data-sekme="gecmis">Geçmiş</button>
+  <button role="tab" data-sekme="kilavuz">Kılavuz</button>
+  <button role="tab" data-sekme="rehber">Rehber</button>
+</nav>
+
+<!-- ŞEMA -->
+<section data-panel="sema" hidden>
+  <div class="arac-cubugu">
+    <button class="dugme" id="modSec" aria-pressed="true" title="Modüle dokun: seç. Sürükle: taşı.">Seç / taşı</button>
+    <button class="dugme" id="modCiz" aria-pressed="false" title="Bir modülden ötekine sürükle: yeni bağ.">Bağ çiz</button>
+    <span class="ayrac"></span>
+    <button class="dugme" id="gosterBagimli" aria-pressed="true">Bağımlılıklar</button>
+    <button class="dugme" id="gosterTetik" aria-pressed="true">Tetikler</button>
+    <span class="ayrac"></span>
+    <button class="dugme" id="kucult" aria-label="Uzaklaştır">−</button>
+    <button class="dugme" id="buyut" aria-label="Yakınlaştır">+</button>
+    <button class="dugme" id="otomatik" data-yaz>Otomatik yerleştir</button>
+    <span class="ayrac"></span>
+    <button class="dugme ana" id="yeniModul" data-yaz>+ Modül</button>
+  </div>
+  <div class="ipucu" id="modIpucu"></div>
+  <div class="sema-duzen" style="margin-top:10px">
+    <div style="min-width:0">
+      <div class="cizim-kap" id="cizimKap"></div>
+      <div class="lejant" id="lejant"></div>
+    </div>
+    <aside class="kunye" id="kunye"></aside>
+  </div>
+</section>
+
+<!-- YAZIM SIRASI -->
+<section data-panel="sira" hidden>
+  <div class="bolum-bas"><div><h2>Yazım sırası</h2><p>Bağımlılıklardan çıkarılır. Bir modülün yazılmaya "hazır" olması için şemada oturmuş, hatasız olması ve bağımlı olduğu her modülün bitmiş olması gerekir. Faz numarasını sen verirsin; bağımlılığına ters düşen faz denetimde hata olur.</p></div></div>
+  <div id="siraIcerik"></div>
+</section>
+
+<!-- MODÜLLER -->
+<section data-panel="moduller" hidden>
+  <div class="bolum-bas"><div><h2>Modüller</h2><p>Satıra dokun: düzenle. Durum sırası Taslak → Oturdu → Yazılıyor → Bitti.</p></div><button class="dugme ana" data-yeni="modul" data-yaz>+ Modül</button></div>
+  <div class="tablo-kap"><table><thead><tr><th>Kod</th><th>Ad</th><th>Grup</th><th>Faz</th><th>Durum</th><th>Bağ</th><th>Tablo</th><th>Konu</th><th>Bulgu</th></tr></thead><tbody id="modulTablo"></tbody></table></div>
+</section>
+
+<!-- TABLOLAR -->
+<section data-panel="tablolar" hidden>
+  <div class="bolum-bas"><div><h2>Tablolar</h2><p>Her tablonun tek sahibi vardır; ona yalnız sahibi yazar. Hareket defterlerinin sahibi belge çekirdeğidir. Görünümler (v_…) saklanmaz, hesaplanır.</p></div>
+    <div class="suzgec"><input type="text" id="tabloAra" placeholder="Tablo ara" aria-label="Tablo ara"><select id="tabloSahipSuz" aria-label="Sahibe göre süz"></select><button class="dugme ana" data-yeni="tablo" data-yaz>+ Tablo</button></div></div>
+  <div class="tablo-kap"><table><thead><tr><th>Ad</th><th>Tür</th><th>Sahibi</th><th>Açıklama</th></tr></thead><tbody id="tabloTablo"></tbody></table></div>
+</section>
+
+<!-- BELGE TİPLERİ -->
+<section data-panel="belgeler" hidden>
+  <div class="bolum-bas"><div><h2>Belge tipleri</h2><p>Stoğu, cariyi ya da kasayı etkileyen her olay bir belge tipidir. Etkisi olan belgeyi kesen modül belge çekirdeğine bağımlı olmalıdır.</p></div><button class="dugme ana" data-yeni="belge" data-yaz>+ Belge tipi</button></div>
+  <div class="tablo-kap"><table><thead><tr><th>Kod</th><th>Belge</th><th>Stok</th><th>Cari</th><th>Kasa / Banka</th><th>Kesen modül</th></tr></thead><tbody id="belgeTablo"></tbody></table></div>
+</section>
+
+<!-- KARARLAR -->
+<section data-panel="kararlar" hidden>
+  <div class="bolum-bas"><div><h2>Kararlar</h2><p>Açık karar bağlı olduğu modülün yazılmasını engeller: modül "Yazılıyor"a geçerse denetim hata verir.</p></div><button class="dugme ana" data-yeni="karar" data-yaz>+ Karar</button></div>
+  <div class="tablo-kap"><table><thead><tr><th>Konu</th><th>Durum</th><th>Öneri / karar</th><th>Modüller</th></tr></thead><tbody id="kararTablo"></tbody></table></div>
+</section>
+
+<!-- DENETİM -->
+<section data-panel="denetim" hidden>
+  <div class="bolum-bas"><div><h2>Denetim</h2><p>Şemanın mantık kuralları. Her kayıttan önce aynı denetim çalışır; yeni hata getiren değişiklik ikinci onay ister.</p></div></div>
+  <div id="denetimIcerik" class="bulgular"></div>
+  <h3 style="margin:26px 0 10px">Denetlenen kurallar</h3>
+  <div class="tablo-kap"><table><thead><tr><th>Kural</th><th>Seviye</th><th>Neden var</th></tr></thead><tbody id="kuralTablo"></tbody></table></div>
+</section>
+
+<!-- GEÇMİŞ -->
+<section data-panel="gecmis" hidden>
+  <div class="bolum-bas"><div><h2>Geçmiş</h2><p>Şemada yapılan son değişiklikler: kim, ne zaman, ne yaptı.</p></div></div>
+  <div class="tablo-kap"><table><thead><tr><th>Zaman</th><th>Kim</th><th>Değişiklik</th></tr></thead><tbody id="gecmisTablo"></tbody></table></div>
+</section>
+
+<!-- KILAVUZ -->
+<section data-panel="kilavuz" hidden>
+  <div class="bolum-bas"><div><h2>Kullanım kılavuzu</h2><p>Uygulamayı kullanacak kişi için: hangi ekranda ne yapılır, adım adım. "Arkada ne olur" kısmı şemadan kendiliğinden çıkar; belge tipi ya da bağ değişince kılavuz da değişir. Henüz yazılmamış modüllerin konuları "Planlanan" olarak görünür.</p></div><button class="dugme ana" data-yeni="kilavuz" data-yaz>+ Konu</button></div>
+  <div class="kilavuz-duzen"><nav class="kilavuz-ic" id="kilavuzIc" aria-label="Kılavuz konuları"></nav><div id="kilavuzIcerik" style="min-width:0"></div></div>
+</section>
+
+<!-- REHBER -->
+<section data-panel="rehber" class="rehber" hidden>
+  <section>
+    <h2>Eski uygulamadan öğrendiklerimiz</h2>
+    <p class="giris">Yeni yapının her kararı, eski uygulamada en az bir kez yaşanmış bir sorundan geliyor.</p>
+    <div class="tablo-kap"><table>
+      <thead><tr><th>Konu</th><th>Eski yapıda olan</th><th>Yeni yapıda</th></tr></thead>
+      <tbody>
+        <tr><td>Buluta yazma</td><td class="eski">Cihaz listenin tamamını tutup farkını yazıyordu; bayat liste tutan cihaz başkasının kaydını sildi (v1.712, v1.725).</td><td class="yeni">Her iş bir komuttur ve sunucuda tek işlemde çalışır. Fark hesabı ve toplu silme yolu yoktur.</td></tr>
+        <tr><td>Stok miktarı</td><td class="eski">Miktar hem varyantta hem harekette tutuldu, ayrıştı; açılış fişi ve onarım gerekti.</td><td class="yeni">Stok yalnız hareketlerden hesaplanır (<code>v_stok</code>).</td></tr>
+        <tr><td>Geri alma</td><td class="eski">Yeni defter yazmaya bağlanıp geri almaya bağlanmadı; 7 kez tekrarlandı.</td><td class="yeni">Durumlar saklanmaz, belgelerden türetilir; iptal edilen belgeyle kendiliğinden geri döner.</td></tr>
+        <tr><td>Kayıt anahtarı</td><td class="eski">Varyant anahtarı renk adıydı; 305 renk yeniden adlandırılınca binlerce silme oldu (v1.724).</td><td class="yeni">Her kaydın kimliği vardır; ad yalnız etikettir.</td></tr>
+        <tr><td>Tek parça tablolar</td><td class="eski">Teklif, koli, fatura, muhasebe tek JSON yazılıyordu; cihazlar birbirini ezdi.</td><td class="yeni">Her kayıt kendi satırıdır.</td></tr>
+        <tr><td>Şema</td><td class="eski"><code>TABLO_SEMA</code>'da sayılmayan alan sessizce düşüyordu.</td><td class="yeni">Şemanın tek kaynağı migration dosyaları; tipler şemadan üretilir.</td></tr>
+        <tr><td>Metinle eşleştirme</td><td class="eski">İşçilik fişi fiş numarası metninden eşleşiyordu.</td><td class="yeni">Her hareket kaynak belge satırına yabancı anahtarla bağlı.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+  <section>
+    <h2>Yapı ilkeleri</h2>
+    <div class="ilkeler">
+      <div class="ilke"><b>1 · Her şey belgedir</b><p>Stoğu, cariyi ya da kasayı etkileyen her olay bir belgeyle olur.</p><span class="ornek">stok_hareket.belge_satir_id NOT NULL</span></div>
+      <div class="ilke"><b>2 · Defterler yalnız eklenir</b><p>Hareketler güncellenmez, silinmez. Düzeltme = iptal + yeni belge.</p><span class="ornek">UPDATE/DELETE yetkisi yok</span></div>
+      <div class="ilke"><b>3 · Türetilen saklanmaz</b><p>Stok, bakiye, karşılanan, adım durumu, ihtiyaç: hepsi görünüm.</p><span class="ornek">v_stok · v_cari_bakiye</span></div>
+      <div class="ilke"><b>4 · İş kuralı sunucuda</b><p>Arayüz kural koymaz, komut gönderir. Telefon, bilgisayar, barkod ekranı aynı kuraldan geçer.</p><span class="ornek">rpc('is_teslim_al', …)</span></div>
+      <div class="ilke"><b>5 · Komut tekrar edilebilir</b><p>Her komut istek kimliği taşır; iki kez giden istek tek kayıt üretir.</p><span class="ornek">istek_id uuid UNIQUE</span></div>
+      <div class="ilke"><b>6 · Kimlikle bağ</b><p>Bağlar yabancı anahtarla kurulur; ad, kod, fiş no etikettir.</p><span class="ornek">varyant(urun_id, renk_id, olcu_id)</span></div>
+      <div class="ilke"><b>7 · İnternetsiz kayıt yok</b><p>v1.557 kararı aynen kalır: bağlantı yoksa kilit.</p><span class="ornek">çevrimdışı = salt okunur</span></div>
+    </div>
+  </section>
+  <section>
+    <h2>Belgenin yaşamı</h2>
+    <div class="yasam"><span class="k">Taslak</span><span class="o">— belge_onayla, hareketler yazılır →</span><span class="k">Onaylı</span><span class="o">— belge_iptal, ters hareketler →</span><span class="k">İptal</span></div>
+    <p class="giris" style="margin-top:10px">"Düzelt" = aynı işlemde iptal + yeni belge. Taslak silinebilir; onaylı belge silinmez. Numara sunucuda verilir: <code>SAT-2026-000123</code>.</p>
+  </section>
+  <section>
+    <h2>Uçtan uca akış: tekliften tahsilata</h2>
+    <div class="akis">
+      <div class="adim"><div><h3>Teklif onaylanır</h3><p><code>teklif_siparise_cevir</code>: satırlar siparişe kopyalanır.</p></div></div>
+      <div class="adim"><div><h3>Sipariş onaylanır</h3><p>Stok ve cari değişmez; ihtiyaç hesabına girer.</p></div></div>
+      <div class="adim"><div><h3>Planlama</h3><p>İhtiyaç = sipariş − sevk − serbest stok − açık üretim. <code>uretim_emri_ac</code>: reçete ve rota emre kopyalanır.</p></div></div>
+      <div class="adim"><div><h3>Satınalma</h3><p>Eksik hammadde için alış siparişi taslağı; mal gelince <code>ALS</code>.</p></div></div>
+      <div class="adim"><div><h3>İş verilir</h3><p><code>is_ver</code>: verilen ≤ önceki asıl adımdan teslim alınan. Malzeme kişinin deposuna geçer (<code>ISV</code>).</p></div></div>
+      <div class="adim"><div><h3>İş teslim alınır</h3><p><code>is_teslim_al</code>: işçilik cariye, hurda ayrı, son adımda mamul girişi (<code>IST</code>).</p></div></div>
+      <div class="adim"><div><h3>Koli ve sevk</h3><p>Koli yalnız gruplama. <code>sevk_et</code> tek <code>SAT</code> belgesi keser.</p></div></div>
+      <div class="adim"><div><h3>Fatura ve tahsilat</h3><p>Fatura sevk belgelerinden derlenir, stok ve cariyi ikinci kez etkilemez. Tahsilat <code>THS</code> / <code>CEK</code>.</p></div></div>
+      <div class="adim"><div><h3>Yanlış girildi</h3><p><code>belge_iptal</code>: ters hareket; bütün durumlar görünümden geldiği için kendiliğinden düzelir.</p></div></div>
+    </div>
+  </section>
+  <section>
+    <h2>Değişmez kurallar ve çalışma yöntemi</h2>
+    <div class="iki">
+      <div class="kutu"><h3>Kurallar</h3><ul>
+        <li>Fişsiz hareket olmaz (NOT NULL + FK).</li>
+        <li>Eksi stok kırpılmaz.</li>
+        <li>Matris kuralı: tek değişken boyut beden ise malzeme × beden matrisi.</li>
+        <li>İşçilik ayrı satır, aynı belgede.</li>
+        <li>Silme yok, iptal var; ana veri pasife alınır.</li>
+        <li>İnternetsiz kayıt yok.</li>
+        <li>Toplu değişiklik önizleme + onayla, tek komut.</li>
+        <li>Secret anahtar koda girmez; dışarıya veri gönderen AI entegrasyonu yok.</li>
+      </ul></div>
+      <div class="kutu"><h3>Şemadan koda</h3><ol>
+        <li>Modülü şemada tamamla: amaç, tablolar, bağlar, belge tipleri, kararlar.</li>
+        <li>Kullanıcının yapacağı işleri Kılavuz'a konu konu yaz; ekran bu adımlara göre kurulur.</li>
+        <li>Denetim temizse durumu "Oturdu" yap.</li>
+        <li>Yazım sırası "hazır" dediğinde "Yazılıyor"a çek; Claude şemayı okuyup migration + komut fonksiyonları + ekranı yazar.</li>
+        <li>Test: kaydet → etki; iptal → ilk hâl; aynı istek iki kez → tek kayıt.</li>
+        <li>Testler geçince ve kılavuz ekranla birebir tutunca "Bitti". Bir sonraki hazır modüle geç.</li>
+        <li>Yazarken şemada eksik çıkarsa önce şema güncellenir, sonra kod.</li>
+      </ol></div>
+    </div>
+  </section>
+</section>
+
+<footer>Kaynak sayfa: <code>yeni-yapi/sema.html</code>. Şema ve kılavuz verisi bu sayfanın veritabanında; Claude aynı veriyi okuyup koda geçirir ve depoya <code>yeni-yapi/sema.json</code> olarak kopyalar.</footer>
+</div>
+
+<div id="cekmeceKok"></div>
+<div id="bildirimKok"></div>
+
+<script>
+// ===================== Sabitler =====================
+// Gruplar ve durumlar kodda sabit: denetim kuralları bunlara dayanıyor, şemadan değiştirilmez.
+const GRUPLAR = [
+  { key: "altyapi", ad: "Altyapı", renk: "var(--g-altyapi)" },
+  { key: "anaveri", ad: "Ana veri", renk: "var(--g-anaveri)" },
+  { key: "ticari", ad: "Ticari", renk: "var(--g-ticari)" },
+  { key: "uretim", ad: "Üretim", renk: "var(--g-uretim)" },
+  { key: "finans", ad: "Finans", renk: "var(--g-finans)" },
+  { key: "analiz", ad: "Analiz ve dış dünya", renk: "var(--g-analiz)" },
+];
+const grupBul = (k) => GRUPLAR.find((g) => g.key === k) || GRUPLAR[0];
+const DURUMLAR = [
+  { key: "taslak", ad: "Taslak" }, { key: "oturdu", ad: "Oturdu" },
+  { key: "yaziliyor", ad: "Yazılıyor" }, { key: "bitti", ad: "Bitti" },
+];
+const DURUM_SIRA = { taslak: 0, oturdu: 1, yaziliyor: 2, bitti: 3 };
+const durumAd = (k) => (DURUMLAR.find((d) => d.key === k) || DURUMLAR[0]).ad;
+const TABLO_TURLERI = [
+  { key: "tablo", ad: "Tablo" }, { key: "defter", ad: "Hareket defteri" }, { key: "gorunum", ad: "Görünüm (hesaplanır)" },
+];
+const BAG_TURLERI = [
+  { key: "bagimli", ad: "Bağımlılık", uzun: "kaynak önce yazılır; hedef onsuz çalışamaz" },
+  { key: "tetik", ad: "Tetik", uzun: "kaynaktaki olay hedefte iş yaptırır" },
+];
+const KOLEKSIYON = { modul: "moduller", tablo: "tablolar", bag: "baglar", belge: "belgeler", karar: "kararlar", kilavuz: "kilavuz" };
+const KOLEKSIYONLAR = Object.values(KOLEKSIYON);
+const TUR_AD = { modul: "Modül", tablo: "Tablo", bag: "Bağ", belge: "Belge tipi", karar: "Karar", kilavuz: "Kılavuz konusu" };
+
+// Denetim kuralları: tek liste. Denetim sekmesindeki açıklama tablosu da buradan çizilir.
+const KURALLAR = {
+  "kod-bos": ["hata", "Modülün kodu boş", "Kod, bağlarda ve belgelerde modülü tanıtan etikettir."],
+  "kod-tekrar": ["hata", "Aynı kod iki modülde", "İki SIP olursa bağın hangisine gittiği okunamaz."],
+  "amac-bos": ["uyari", "Modülün amacı yazılmamış", "Ne yaptığını unutmamak için."],
+  "cekirdek-sayi": ["hata", "Tek belge çekirdeği", "Defterlere yazan tek kapı olmalı (eski fisYaz dağınıklığı)."],
+  "bag-uc": ["hata", "Bağın ucu yok", "Silinen modüle giden bağ yetim kalır."],
+  "bag-kendi": ["hata", "Modül kendine bağlı", "Anlamsız bağ; çoğunlukla yanlış tıklama."],
+  "bag-tekrar": ["uyari", "Aynı bağ iki kez", "Tekrar eden bağ grafiği yanıltır."],
+  "tetik-olay": ["uyari", "Tetiğin olayı yazılmamış", "Hangi olayda neyin tetiklendiği yazılmazsa unutulur."],
+  "dongu": ["hata", "Bağımlılık döngüsü", "A, B'ye; B, A'ya bağımlıysa hangisinin önce yazılacağı çıkmaz."],
+  "faz": ["hata", "Faz sırası bağımlılığa ters", "Bağımlı olduğu modülden önceki fazda yazılamaz."],
+  "durum-sira": ["hata", "Temeli bitmeden bitti", "Temeli bitmeyen modül bitmiş sayılamaz."],
+  "durum-yaziliyor": ["uyari", "Temeli bitmeden yazılıyor", "Temel değişirse bu modül yeniden yazılır."],
+  "durum-oturdu": ["uyari", "Temeli oturmadan oturdu", "Temel modül hâlâ değişebilir."],
+  "oturdu-hatali": ["hata", "Oturdu ama hatası var", "Hatalı modül kesinleşmiş sayılmaz."],
+  "yalniz": ["uyari", "Hiçbir modüle bağlı değil", "Bağsız modül ya eksik çizilmiştir ya gereksizdir."],
+  "tablo-ad": ["hata", "Tablonun adı yok", "Adsız tablo koda geçemez."],
+  "tablo-tekrar": ["hata", "Aynı tablo iki kez", "Bir tablonun tek sahibi olur."],
+  "tablo-bicim": ["uyari", "Tablo adı biçimi", "Küçük harf, rakam, alt çizgi; Türkçe karakter SQL'de sorun çıkarır."],
+  "gorunum-ad": ["uyari", "Görünüm adı v_ ile", "Saklanan ile hesaplanan ad bakışta ayrılsın."],
+  "tablo-sahip": ["hata", "Tablonun sahibi yok", "Sahipsiz tabloya kimin yazdığı belli olmaz."],
+  "defter-sahip": ["hata", "Defterin sahibi çekirdek değil", "Hareket defterine yalnız belge çekirdeği yazar (ilke 1–2)."],
+  "belge-kod": ["hata", "Belge kodu boş ya da tekrar", "Numara öneki olarak kullanılır (SAT-2026-…)."],
+  "belge-kaynak-yok": ["uyari", "Belgeyi kesen modül yok", "Hangi ekranın bu belgeyi kestiği belli olmalı."],
+  "belge-kaynak-silik": ["hata", "Belgeyi kesen modül silinmiş", "Yetim belge tipi kimse tarafından kesilmez."],
+  "belge-cekirdek": ["hata", "Etkili belge çekirdeğe bağlı değil", "Stok/cari/kasa etkisi olan belgeyi kesen modül belge çekirdeğine bağımlı olmalı."],
+  "karar-acik": ["hata", "Açık kararla yazılıyor", "Kararı verilmemiş konu kodlanırsa sonra yeniden yazılır."],
+  "karar-acik-oturdu": ["uyari", "Açık kararla oturdu", "Karar verilince modül değişebilir."],
+  "karar-bos": ["uyari", "Verildi ama karar metni yok", "Ne karar verildiği yazılmalı."],
+  "karar-modul": ["uyari", "Karar silinmiş modüle bağlı", "Kararın kimi etkilediği belli olmalı."],
+  "kilavuz-modul": ["hata", "Kılavuz konusu modülsüz", "Her konu bir modülün ekranını anlatır; modülü silinen konu yanıltır."],
+  "kilavuz-adim": ["uyari", "Kılavuz konusunda adım yok", "Kullanıcı ne yapacağını adım adım okumalı."],
+  "kilavuz-belge": ["hata", "Kılavuz olmayan belgeyi anlatıyor", "Konu, kendi modülünün kesmediği bir belgeyi anlatıyorsa kılavuz ile yapı ayrışmıştır."],
+  "kilavuz-yok": ["uyari", "Yazılıyor ama kılavuzu yok", "Kullanıcı akışı koddan önce yazılır; ekran ona göre kurulur."],
+  "kilavuz-yok-bitti": ["hata", "Kılavuzu yazılmadan bitti", "Kullanıcının nasıl kullanacağı yazılmamış modül bitmiş sayılmaz."],
+};
+
+// ===================== Durum =====================
+const S = {
+  moduller: new Map(), tablolar: new Map(), baglar: new Map(), belgeler: new Map(), kararlar: new Map(), kilavuz: new Map(),
+  gecmis: [], yuklenen: new Set(), db: null, user: null, uid: null, yazabilir: false, dbYok: false,
+};
+const G = { kilavuzAra: "", sekme: "sema", secili: null, mod: "sec", bagimliGoster: true, tetikGoster: true, olcek: 1, surukle: null, tabloAra: "", tabloSahip: "", konumlar: new Map() };
+let C = null; // açık çekmece
+
+const kayitliOku = (k, v) => { try { const x = localStorage.getItem("sema2:" + k); return x == null ? v : JSON.parse(x); } catch { return v; } };
+const kayitliYaz = (k, v) => { try { localStorage.setItem("sema2:" + k, JSON.stringify(v)); } catch {} };
+G.sekme = kayitliOku("sekme", "sema");
+if (!document.querySelector(`[data-panel="${G.sekme}"]`)) G.sekme = "sema";
+G.bagimliGoster = kayitliOku("bagimli", true);
+G.tetikGoster = kayitliOku("tetik", true);
+
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const num = (v) => (v === "" || v == null || isNaN(Number(v)) ? null : Number(v));
+const kodu = (id, M = S.moduller) => (M.get(id) || {}).kod || "(silinmiş)";
+const kar = (a, b) => String(a ?? "").localeCompare(String(b ?? ""), "tr");
+const siraliModuller = (M = S.moduller) => [...M.entries()].sort((a, b) => kar(a[1].kod, b[1].kod));
+
+// ===================== Şema hesapları (saf) =====================
+// Bağımlılık haritası: kime -> [kimden]. "kime, kimden olmadan çalışmaz; kimden önce yazılır."
+function bagimlilikHaritasi(sema) {
+  const harita = new Map();
+  sema.baglar.forEach((b) => {
+    if (b.tur !== "bagimli" || !sema.moduller.has(b.kimden) || !sema.moduller.has(b.kime) || b.kimden === b.kime) return;
+    if (!harita.has(b.kime)) harita.set(b.kime, []);
+    harita.get(b.kime).push(b.kimden);
+  });
+  return harita;
+}
+
+function donguleriBul(M, harita) {
+  const renk = new Map(); const yigin = []; const sonuc = new Map();
+  const gez = (n) => {
+    renk.set(n, 1); yigin.push(n);
+    for (const d of harita.get(n) || []) {
+      if (renk.get(d) === 1) {
+        const dongu = yigin.slice(yigin.indexOf(d));
+        const enKucuk = dongu.indexOf([...dongu].sort()[0]);
+        const normal = dongu.slice(enKucuk).concat(dongu.slice(0, enKucuk));
+        sonuc.set(normal.join(">"), normal);
+      } else if (!renk.get(d)) gez(d);
+    }
+    yigin.pop(); renk.set(n, 2);
+  };
+  [...M.keys()].forEach((n) => { if (!renk.get(n)) gez(n); });
+  return [...sonuc.values()];
+}
+
+// Seviye: bağımlı olduğu modüllerin en büyüğü + 1. Döngüdeki modül döngüyü kırarak yerleşir.
+function seviyeler(sema) {
+  const harita = bagimlilikHaritasi(sema); const seviye = new Map(); const yolda = new Set();
+  const bul = (n) => {
+    if (seviye.has(n)) return seviye.get(n);
+    if (yolda.has(n)) return 0;
+    yolda.add(n);
+    const s = Math.max(-1, ...(harita.get(n) || []).map(bul)) + 1;
+    yolda.delete(n); seviye.set(n, s); return s;
+  };
+  sema.moduller.forEach((_, id) => bul(id));
+  return seviye;
+}
+
+function atalar(id, harita) {
+  const sonuc = new Set(); const yigin = [...(harita.get(id) || [])];
+  while (yigin.length) { const n = yigin.pop(); if (sonuc.has(n)) continue; sonuc.add(n); yigin.push(...(harita.get(n) || [])); }
+  return sonuc;
+}
+
+function denetle(sema) {
+  const P = []; const M = sema.moduller;
+  const ekle = (kural, mesaj, ilgili) => {
+    P.push({ seviye: KURALLAR[kural][0], kural, mesaj, ilgili,
+      anahtar: kural + "|" + ilgili.map((i) => i.tur + ":" + i.id).sort().join(",") });
+  };
+  const k = (id) => kodu(id, M);
+
+  const kodlar = new Map();
+  M.forEach((m, id) => {
+    const kd = (m.kod || "").trim().toUpperCase();
+    if (!kd) ekle("kod-bos", `Bir modülün kodu boş (${m.ad || "adsız"})`, [{ tur: "modul", id }]);
+    else if (kodlar.has(kd)) ekle("kod-tekrar", `${kd} kodu iki modülde kullanılıyor`, [{ tur: "modul", id }, { tur: "modul", id: kodlar.get(kd) }]);
+    else kodlar.set(kd, id);
+    if (!(m.amac || "").trim()) ekle("amac-bos", `${k(id)}: amacı yazılmamış`, [{ tur: "modul", id }]);
+  });
+
+  const cekirdekler = [...M].filter(([, m]) => m.cekirdek).map(([id]) => id);
+  if (M.size && cekirdekler.length !== 1) {
+    ekle("cekirdek-sayi", cekirdekler.length
+      ? `${cekirdekler.length} modül belge çekirdeği işaretli (${cekirdekler.map(k).join(", ")}); yalnız biri olmalı`
+      : "Belge çekirdeği işaretli modül yok; defterlere yazan tek modül belli olmalı", cekirdekler.map((id) => ({ tur: "modul", id })));
+  }
+  const cekirdek = cekirdekler.length === 1 ? cekirdekler[0] : null;
+
+  const ciftler = new Set();
+  sema.baglar.forEach((b, id) => {
+    const r = [{ tur: "bag", id }];
+    if (!M.has(b.kimden) || !M.has(b.kime)) { ekle("bag-uc", `${k(b.kimden)} → ${k(b.kime)}: bağın bir ucu olmayan modüle gidiyor`, r); return; }
+    if (b.kimden === b.kime) { ekle("bag-kendi", `${k(b.kimden)} kendine bağlanmış`, r); return; }
+    const c = b.tur + "|" + b.kimden + "|" + b.kime;
+    if (ciftler.has(c)) ekle("bag-tekrar", `${k(b.kimden)} → ${k(b.kime)} ${b.tur === "tetik" ? "tetiği" : "bağımlılığı"} iki kez çizilmiş`, r);
+    ciftler.add(c);
+    if (b.tur === "tetik" && !(b.olay || "").trim()) ekle("tetik-olay", `${k(b.kimden)} → ${k(b.kime)} tetiğinin olayı yazılmamış`, r);
+  });
+
+  const harita = bagimlilikHaritasi(sema);
+  donguleriBul(M, harita).forEach((d) => ekle("dongu",
+    `Bağımlılık döngüsü: ${d.map(k).join(" ← ")} ← ${k(d[0])}. Hangisinin önce yazılacağı çıkmıyor.`, d.map((id) => ({ tur: "modul", id }))));
+
+  M.forEach((m, id) => {
+    (harita.get(id) || []).forEach((dep) => {
+      const d = M.get(dep); const r = [{ tur: "modul", id }, { tur: "modul", id: dep }];
+      if (num(m.faz) != null && num(d.faz) != null && num(m.faz) < num(d.faz))
+        ekle("faz", `${m.kod} (Faz ${m.faz}), bağımlı olduğu ${d.kod} (Faz ${d.faz}) modülünden önceki fazda olamaz`, r);
+      const ms = DURUM_SIRA[m.durum] || 0; const ds = DURUM_SIRA[d.durum] || 0;
+      if (ms >= 3 && ds < 3) ekle("durum-sira", `${m.kod} bitti ama bağımlı olduğu ${d.kod} bitmedi`, r);
+      else if (ms === 2 && ds < 3) ekle("durum-yaziliyor", `${m.kod} yazılıyor ama bağımlı olduğu ${d.kod} henüz bitmedi`, r);
+      else if (ms === 1 && ds < 1) ekle("durum-oturdu", `${m.kod} oturdu ama bağımlı olduğu ${d.kod} hâlâ taslak`, r);
+    });
+  });
+
+  const bagli = new Set();
+  sema.baglar.forEach((b) => { bagli.add(b.kimden); bagli.add(b.kime); });
+  if (M.size > 1) M.forEach((m, id) => { if (!bagli.has(id)) ekle("yalniz", `${m.kod} hiçbir modüle bağlı değil`, [{ tur: "modul", id }]); });
+
+  const tadlar = new Map();
+  sema.tablolar.forEach((t, id) => {
+    const a = (t.ad || "").trim(); const r = [{ tur: "tablo", id }];
+    if (!a) ekle("tablo-ad", "Adı boş bir tablo var", r);
+    else {
+      if (tadlar.has(a)) ekle("tablo-tekrar", `${a} iki kez tanımlı`, [...r, { tur: "tablo", id: tadlar.get(a) }]);
+      else tadlar.set(a, id);
+      if (!/^[a-z][a-z0-9_]*$/.test(a)) ekle("tablo-bicim", `${a}: yalnız küçük harf, rakam ve alt çizgi (Türkçe karakter yok)`, r);
+      if (t.tur === "gorunum" && !a.startsWith("v_")) ekle("gorunum-ad", `${a} bir görünüm; adı v_ ile başlamalı`, r);
+      if (t.tur !== "gorunum" && a.startsWith("v_")) ekle("gorunum-ad", `${a} v_ ile başlıyor ama görünüm değil`, r);
+    }
+    if (!M.has(t.sahip)) ekle("tablo-sahip", `${a || "Adsız tablo"}: sahibi olan modül yok`, r);
+    else if (t.tur === "defter" && t.sahip !== cekirdek)
+      ekle("defter-sahip", `${a} bir hareket defteri; sahibi ${k(t.sahip)} değil belge çekirdeği${cekirdek ? " (" + k(cekirdek) + ")" : ""} olmalı`, r);
+  });
+
+  const bkodlar = new Map();
+  sema.belgeler.forEach((b, id) => {
+    const kd = (b.kod || "").trim().toUpperCase(); const r = [{ tur: "belge", id }];
+    if (!kd) ekle("belge-kod", `${b.ad || "Adsız belge"}: kodu boş`, r);
+    else if (bkodlar.has(kd)) ekle("belge-kod", `${kd} belge kodu iki kez`, [...r, { tur: "belge", id: bkodlar.get(kd) }]);
+    else bkodlar.set(kd, id);
+    const kaynaklar = b.kaynaklar || [];
+    if (!kaynaklar.length) ekle("belge-kaynak-yok", `${kd || b.ad}: hangi modülün kestiği seçilmemiş`, r);
+    const etkili = [b.stok, b.cari, b.kasa].some((x) => (x || "").trim());
+    kaynaklar.forEach((mid) => {
+      if (!M.has(mid)) { ekle("belge-kaynak-silik", `${kd}: kesen modül silinmiş`, r); return; }
+      if (etkili && cekirdek && mid !== cekirdek && !atalar(mid, harita).has(cekirdek))
+        ekle("belge-cekirdek", `${kd} stok/cari/kasa etkiler ama kesen ${k(mid)} belge çekirdeğine (${k(cekirdek)}) bağımlı değil`, [...r, { tur: "modul", id: mid }]);
+    });
+  });
+
+  sema.kararlar.forEach((kr, id) => {
+    const r = [{ tur: "karar", id }];
+    if (kr.durum === "verildi" && !(kr.karar || "").trim()) ekle("karar-bos", `"${kr.baslik}" verildi işaretli ama karar yazılmamış`, r);
+    (kr.moduller || []).forEach((mid) => {
+      const m = M.get(mid);
+      if (!m) { ekle("karar-modul", `"${kr.baslik}" silinmiş bir modüle bağlı`, r); return; }
+      if (kr.durum === "verildi") return;
+      const ms = DURUM_SIRA[m.durum] || 0;
+      if (ms >= 2) ekle("karar-acik", `${m.kod} ${durumAd(m.durum).toLowerCase()} ama "${kr.baslik}" kararı verilmedi`, [...r, { tur: "modul", id: mid }]);
+      else if (ms === 1) ekle("karar-acik-oturdu", `${m.kod} oturdu ama "${kr.baslik}" kararı açık`, [...r, { tur: "modul", id: mid }]);
+    });
+  });
+
+  const konuSayisi = new Map();
+  (sema.kilavuz || new Map()).forEach((kn, id) => {
+    const r = [{ tur: "kilavuz", id }];
+    if (!M.has(kn.modul)) { ekle("kilavuz-modul", `"${kn.baslik}" kılavuz konusu olmayan bir modüle bağlı`, r); return; }
+    konuSayisi.set(kn.modul, (konuSayisi.get(kn.modul) || 0) + 1);
+    if (!(kn.adimlar || []).length) ekle("kilavuz-adim", `"${kn.baslik}" konusunda adım yazılmamış`, r);
+    (kn.belgeler || []).forEach((bid) => {
+      const b = sema.belgeler.get(bid);
+      if (!b) ekle("kilavuz-belge", `"${kn.baslik}" silinmiş bir belge tipini anlatıyor`, r);
+      else if (!(b.kaynaklar || []).includes(kn.modul))
+        ekle("kilavuz-belge", `"${kn.baslik}" ${b.kod} belgesini anlatıyor ama bu belgeyi ${k(kn.modul)} kesmiyor`, [...r, { tur: "belge", id: bid }]);
+    });
+  });
+  M.forEach((m, id) => {
+    const ms = DURUM_SIRA[m.durum] || 0;
+    if (konuSayisi.get(id)) return;
+    if (ms === 3) ekle("kilavuz-yok-bitti", `${m.kod} bitti işaretli ama kılavuz konusu yok`, [{ tur: "modul", id }]);
+    else if (ms === 2) ekle("kilavuz-yok", `${m.kod} yazılıyor ama kullanıcı akışı kılavuza yazılmadı`, [{ tur: "modul", id }]);
+  });
+
+  // Oturmuş modülün kendi hatası: tablosu, bağı, belgesi dahil.
+  const hataliModul = new Map();
+  P.filter((p) => p.seviye === "hata").forEach((p) => modulleriOf(p, sema).forEach((mid) => hataliModul.set(mid, (hataliModul.get(mid) || 0) + 1)));
+  hataliModul.forEach((n, mid) => {
+    const m = M.get(mid);
+    if (m && (DURUM_SIRA[m.durum] || 0) >= 1) ekle("oturdu-hatali", `${m.kod} ${durumAd(m.durum).toLowerCase()} işaretli ama ${n} hatası var`, [{ tur: "modul", id: mid }]);
+  });
+  return P;
+}
+
+function modulleriOf(p, sema = S) {
+  const s = new Set();
+  p.ilgili.forEach((i) => {
+    if (i.tur === "modul") s.add(i.id);
+    else if (i.tur === "tablo") { const t = sema.tablolar.get(i.id); if (t) s.add(t.sahip); }
+    else if (i.tur === "bag") { const b = sema.baglar.get(i.id); if (b) { s.add(b.kimden); s.add(b.kime); } }
+    else if (i.tur === "belge") { const b = sema.belgeler.get(i.id); if (b) (b.kaynaklar || []).forEach((x) => s.add(x)); }
+    else if (i.tur === "karar") { const kr = sema.kararlar.get(i.id); if (kr) (kr.moduller || []).forEach((x) => s.add(x)); }
+    else if (i.tur === "kilavuz") { const kn = sema.kilavuz && sema.kilavuz.get(i.id); if (kn) s.add(kn.modul); }
+  });
+  return [...s].filter((x) => sema.moduller.has(x));
+}
+
+const semaKopya = () => Object.fromEntries(KOLEKSIYONLAR.map((k) => [k, new Map(S[k])]));
+
+// ===================== Ekran: özet ve sekmeler =====================
+let BULGULAR = [];
+let cizimBekliyor = false;
+const hazirMi = () => S.dbYok || S.yuklenen.size >= KOLEKSIYONLAR.length;
+function cizHepsi() {
+  if (cizimBekliyor) return;
+  cizimBekliyor = true;
+  requestAnimationFrame(() => {
+    cizimBekliyor = false;
+    BULGULAR = denetle(S);
+    ozetCiz(); sekmeleriCiz();
+    if (!G.surukle) semaCiz();
+    kunyeCiz(); siraCiz(); modulTabloCiz(); tabloTabloCiz(); belgeTabloCiz(); kararTabloCiz(); denetimCiz(); gecmisCiz(); kilavuzCiz();
+    document.querySelectorAll("[data-yaz]").forEach((d) => { d.disabled = !S.yazabilir; });
+  });
+}
+
+function ozetCiz() {
+  const kok = document.getElementById("ozet");
+  if (S.dbYok) { kok.innerHTML = `<span class="sayac">Şema verisi yok</span>`; return; }
+  if (!hazirMi()) { kok.innerHTML = `<span class="sayac">Şema okunuyor…</span>`; return; }
+  const h = BULGULAR.filter((b) => b.seviye === "hata").length;
+  const u = BULGULAR.length - h;
+  const mod = [...S.moduller.values()];
+  const bitti = mod.filter((m) => m.durum === "bitti").length;
+  const oturdu = mod.filter((m) => (DURUM_SIRA[m.durum] || 0) >= 1).length;
+  kok.innerHTML = `
+    <span class="sayac">${S.moduller.size} modül</span>
+    <span class="sayac">${S.tablolar.size} tablo</span>
+    <span class="sayac">${S.baglar.size} bağ</span>
+    <span class="sayac">${S.belgeler.size} belge tipi</span>
+    <span class="sayac">${S.kilavuz.size} kılavuz konusu</span>
+    <span class="sayac">${oturdu}/${S.moduller.size} oturdu · ${bitti} bitti</span>
+    <button class="sayac ${h ? "hata" : "iyi"}" data-git="denetim">${h ? h + " hata" : "Hata yok"}</button>
+    ${u ? `<button class="sayac uyari" data-git="denetim">${u} uyarı</button>` : ""}
+    ${S.yazabilir ? "" : `<span class="durum-metni">Salt okunur görünüm</span>`}`;
+}
+
+function sekmeleriCiz() {
+  const h = BULGULAR.filter((b) => b.seviye === "hata").length;
+  document.querySelectorAll("#sekmeler button").forEach((b) => {
+    const s = b.dataset.sekme;
+    b.setAttribute("aria-selected", String(s === G.sekme));
+    if (s === "denetim") b.innerHTML = `Denetim${h ? `<span class="rozet">${h}</span>` : (BULGULAR.length ? `<span class="rozet u">${BULGULAR.length}</span>` : "")}`;
+  });
+  document.querySelectorAll("[data-panel]").forEach((p) => { p.hidden = p.dataset.panel !== G.sekme; });
+}
+function sekmeyeGit(s) { G.sekme = s; kayitliYaz("sekme", s); cizHepsi(); }
+
+// ===================== Ekran: çizim =====================
+const DW = 158, DH = 52, SUTUN = 230, SATIR = 72;
+function otomatikKonumlar() {
+  const sv = seviyeler(S); const sutunlar = new Map();
+  siraliModuller().forEach(([id, m]) => {
+    const s = sv.get(id) || 0;
+    if (!sutunlar.has(s)) sutunlar.set(s, []);
+    sutunlar.get(s).push([id, m]);
+  });
+  const kon = new Map();
+  sutunlar.forEach((liste, s) => {
+    liste.sort((a, b) => GRUPLAR.findIndex((g) => g.key === a[1].grup) - GRUPLAR.findIndex((g) => g.key === b[1].grup)
+      || (num(a[1].faz) ?? 99) - (num(b[1].faz) ?? 99) || kar(a[1].kod, b[1].kod));
+    liste.forEach(([id], i) => kon.set(id, { x: 30 + s * SUTUN, y: 30 + i * SATIR }));
+  });
+  return kon;
+}
+function konumlariHesapla() {
+  const oto = otomatikKonumlar();
+  G.konumlar = new Map();
+  S.moduller.forEach((m, id) => {
+    G.konumlar.set(id, num(m.x) != null && num(m.y) != null ? { x: num(m.x), y: num(m.y) } : oto.get(id));
+  });
+}
+
+// Dikdörtgenin kenarında, merkezden öteki merkeze giden doğrunun kesiştiği nokta.
+function kenarNoktasi(c, hedef) {
+  const dx = hedef.x - c.x, dy = hedef.y - c.y;
+  if (!dx && !dy) return c;
+  const sx = (DW / 2 + 4) / Math.abs(dx || 1e-9), sy = (DH / 2 + 4) / Math.abs(dy || 1e-9);
+  const s = Math.min(sx, sy);
+  return { x: c.x + dx * s, y: c.y + dy * s };
+}
+function kenarYolu(a, b, egri) {
+  const ca = { x: a.x + DW / 2, y: a.y + DH / 2 }, cb = { x: b.x + DW / 2, y: b.y + DH / 2 };
+  const p1 = kenarNoktasi(ca, cb), p2 = kenarNoktasi(cb, ca);
+  if (!egri) return `M${p1.x},${p1.y} L${p2.x},${p2.y}`;
+  const mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2;
+  const dx = p2.x - p1.x, dy = p2.y - p1.y, uz = Math.hypot(dx, dy) || 1;
+  const ofs = Math.min(60, uz * 0.18);
+  return `M${p1.x},${p1.y} Q${mx - dy / uz * ofs},${my + dx / uz * ofs} ${p2.x},${p2.y}`;
+}
+
+function semaCiz() {
+  const kap = document.getElementById("cizimKap");
+  kap.classList.toggle("ciz", G.mod === "ciz");
+  document.getElementById("modSec").setAttribute("aria-pressed", String(G.mod === "sec"));
+  document.getElementById("modCiz").setAttribute("aria-pressed", String(G.mod === "ciz"));
+  document.getElementById("gosterBagimli").setAttribute("aria-pressed", String(G.bagimliGoster));
+  document.getElementById("gosterTetik").setAttribute("aria-pressed", String(G.tetikGoster));
+  document.getElementById("modIpucu").textContent = G.mod === "ciz"
+    ? "Bağ çizme kipi: bir modülde basılı tut, ötekinin üstünde bırak. Ok yönü: önce yazılan → sonra yazılan, ya da olayın kaynağı → hedefi."
+    : "Modüle dokun: künyesi sağda açılır. Sürükleyerek yerini değiştir. Oka dokun: bağı düzenle. Yeni bağ için \"Bağ çiz\"e geç.";
+
+  if (!hazirMi()) { kap.innerHTML = `<div class="bos-durum">Şema okunuyor…</div>`; return; }
+  if (!S.moduller.size) {
+    kap.innerHTML = `<div class="bos-durum"><h3>Şema henüz boş</h3><p>İlk modülü ekleyerek başla. Modüller burada kutu olarak görünür, aralarındaki bağları sürükleyerek çizersin.</p>${S.yazabilir ? `<div><button class="dugme ana" data-yeni="modul">+ İlk modülü ekle</button></div>` : ""}</div>`;
+    document.getElementById("lejant").innerHTML = "";
+    return;
+  }
+  konumlariHesapla();
+  let gx = 0, gy = 0;
+  G.konumlar.forEach((p) => { gx = Math.max(gx, p.x + DW); gy = Math.max(gy, p.y + DH); });
+  gx += 60; gy += 60;
+
+  let ilgili = null;
+  if (G.secili && S.moduller.has(G.secili)) {
+    ilgili = new Set([G.secili]);
+    S.baglar.forEach((b) => { if (b.kimden === G.secili) ilgili.add(b.kime); if (b.kime === G.secili) ilgili.add(b.kimden); });
+  }
+  const sayac = new Map();
+  BULGULAR.forEach((p) => modulleriOf(p).forEach((mid) => {
+    const s = sayac.get(mid) || { h: 0, u: 0 }; p.seviye === "hata" ? s.h++ : s.u++; sayac.set(mid, s);
+  }));
+  const hataliBag = new Set();
+  BULGULAR.filter((p) => p.seviye === "hata").forEach((p) => p.ilgili.forEach((i) => { if (i.tur === "bag") hataliBag.add(i.id); }));
+  const dongu = new Set();
+  BULGULAR.filter((p) => p.kural === "dongu").forEach((p) => p.ilgili.forEach((i) => dongu.add(i.id)));
+
+  let kenarlar = "";
+  S.baglar.forEach((b, id) => {
+    if (b.tur === "bagimli" && !G.bagimliGoster) return;
+    if (b.tur === "tetik" && !G.tetikGoster) return;
+    const a = G.konumlar.get(b.kimden), c = G.konumlar.get(b.kime);
+    if (!a || !c || b.kimden === b.kime) return;
+    const hatali = hataliBag.has(id) || (b.tur === "bagimli" && dongu.has(b.kimden) && dongu.has(b.kime));
+    const sonuk = ilgili && !(b.kimden === G.secili || b.kime === G.secili);
+    const vurgulu = ilgili && !sonuk;
+    const yol = kenarYolu(a, c, b.tur === "tetik");
+    const ok = hatali ? "m-hata" : b.tur === "bagimli" ? "m-bagimli" : "m-tetik";
+    const baslik = `${kodu(b.kimden)} → ${kodu(b.kime)} · ${b.tur === "bagimli" ? "bağımlılık" : "tetik: " + (b.olay || "olay yazılmamış")}`;
+    kenarlar += `<g class="kenar-g" data-bag="${id}"><path class="kenar ${b.tur}${hatali ? " hatali" : ""}${sonuk ? " sonuk" : ""}${vurgulu ? " vurgulu" : ""}" d="${yol}" marker-end="url(#${ok})"/><path class="kenar-tik" d="${yol}"><title>${esc(baslik)}</title></path></g>`;
+  });
+
+  let dugumler = "";
+  siraliModuller().forEach(([id, m]) => {
+    const p = G.konumlar.get(id); const g = grupBul(m.grup); const s = sayac.get(id);
+    const sonuk = ilgili && !ilgili.has(id);
+    const ad = String(m.ad || "").length > 20 ? m.ad.slice(0, 19) + "…" : (m.ad || "");
+    const alt = `${durumAd(m.durum)}${num(m.faz) != null ? " · Faz " + m.faz : ""}`;
+    let rozet = "";
+    if (s && (s.h || s.u)) {
+      const sinif = s.h ? "rozet-h" : "rozet-u"; const n = s.h || s.u;
+      rozet = `<circle class="${sinif}" cx="${DW - 2}" cy="2" r="9"/><text class="rozet-yazi" x="${DW - 2}" y="5.5" text-anchor="middle">${n}</text>`;
+    }
+    dugumler += `<g class="dugum${G.secili === id ? " secili" : ""}${sonuk ? " sonuk" : ""}" data-modul="${id}" transform="translate(${p.x},${p.y})" tabindex="0" role="button" aria-label="${esc(m.kod + " " + m.ad)}">
+      <rect class="govde" width="${DW}" height="${DH}" rx="5" style="stroke:${g.renk}"/>
+      <rect class="serit" width="5" height="${DH}" rx="2" style="fill:${g.renk}"/>
+      <text class="kodu" x="13" y="17" style="fill:${g.renk}">${esc(m.kod)}${m.cekirdek ? " ◆" : ""}</text>
+      <text class="adi" x="13" y="33">${esc(ad)}</text>
+      <text class="alt" x="13" y="46">${esc(alt)}</text>
+      ${rozet}<title>${esc(m.kod + " · " + m.ad)}</title></g>`;
+  });
+
+  kap.innerHTML = `<svg class="cizim" id="cizimSvg" width="${gx * G.olcek}" height="${gy * G.olcek}" viewBox="0 0 ${gx} ${gy}" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="m-bagimli" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="m-bagimli" d="M0,0 L10,5 L0,10 z"/></marker>
+      <marker id="m-tetik" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="m-tetik" d="M0,0 L10,5 L0,10 z"/></marker>
+      <marker id="m-hata" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="m-hata" d="M0,0 L10,5 L0,10 z"/></marker>
+    </defs>
+    <g id="kenarlar">${kenarlar}</g><g id="dugumler">${dugumler}</g><line class="lastik" id="lastik" x1="0" y1="0" x2="0" y2="0" visibility="hidden"/></svg>`;
+
+  document.getElementById("lejant").innerHTML = GRUPLAR.map((g) => `<span><i style="background:${g.renk}"></i>${g.ad}</span>`).join("")
+    + `<span><svg width="30" height="8" aria-hidden="true"><line x1="0" y1="4" x2="30" y2="4" stroke="var(--soluk)" stroke-width="1.6"/></svg>bağımlılık (önce yazılır)</span>`
+    + `<span><svg width="30" height="8" aria-hidden="true"><line x1="0" y1="4" x2="30" y2="4" stroke="var(--vurgu)" stroke-width="1.6" stroke-dasharray="5 4"/></svg>tetik (olay)</span>`
+    + `<span>◆ belge çekirdeği</span>`;
+}
+
+function svgNoktasi(e) {
+  const svg = document.getElementById("cizimSvg");
+  const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+  return pt.matrixTransform(svg.getScreenCTM().inverse());
+}
+
+function cizimOlaylari() {
+  const kap = document.getElementById("cizimKap");
+  kap.addEventListener("pointerdown", (e) => {
+    const dg = e.target.closest(".dugum");
+    if (!dg || e.button > 0) return;
+    const id = dg.dataset.modul; const p = svgNoktasi(e); const k = G.konumlar.get(id);
+    G.surukle = { id, bas: p, ilk: { ...k }, oynadi: false, el: dg, kip: G.mod };
+    try { dg.setPointerCapture(e.pointerId); } catch {}
+    e.preventDefault();
+  });
+  kap.addEventListener("pointermove", (e) => {
+    const s = G.surukle; if (!s) return;
+    const p = svgNoktasi(e);
+    if (!s.oynadi && Math.hypot(p.x - s.bas.x, p.y - s.bas.y) < 5) return;
+    s.oynadi = true;
+    if (s.kip === "ciz") {
+      const l = document.getElementById("lastik"); const k = G.konumlar.get(s.id);
+      l.setAttribute("x1", k.x + DW / 2); l.setAttribute("y1", k.y + DH / 2);
+      l.setAttribute("x2", p.x); l.setAttribute("y2", p.y); l.setAttribute("visibility", "visible");
+      document.querySelectorAll(".dugum.hedef").forEach((d) => d.classList.remove("hedef"));
+      const alt = document.elementFromPoint(e.clientX, e.clientY)?.closest(".dugum");
+      if (alt && alt.dataset.modul !== s.id) alt.classList.add("hedef");
+    } else {
+      if (!S.yazabilir) return;
+      const nx = Math.max(0, Math.round((s.ilk.x + p.x - s.bas.x) / 6) * 6), ny = Math.max(0, Math.round((s.ilk.y + p.y - s.bas.y) / 6) * 6);
+      G.konumlar.set(s.id, { x: nx, y: ny });
+      s.el.setAttribute("transform", `translate(${nx},${ny})`);
+      document.querySelectorAll("#kenarlar .kenar-g").forEach((gr) => {
+        const b = S.baglar.get(gr.dataset.bag); if (!b || (b.kimden !== s.id && b.kime !== s.id)) return;
+        const yol = kenarYolu(G.konumlar.get(b.kimden), G.konumlar.get(b.kime), b.tur === "tetik");
+        gr.querySelectorAll("path").forEach((pt) => pt.setAttribute("d", yol));
+      });
+    }
+  });
+  const bitir = async (e) => {
+    const s = G.surukle; if (!s) return;
+    G.surukle = null;
+    if (s.kip === "ciz") {
+      document.getElementById("lastik")?.setAttribute("visibility", "hidden");
+      document.querySelectorAll(".dugum.hedef").forEach((d) => d.classList.remove("hedef"));
+      const alt = document.elementFromPoint(e.clientX, e.clientY)?.closest(".dugum");
+      if (s.oynadi && alt && alt.dataset.modul !== s.id) {
+        if (S.yazabilir) cekmeceAc("bag", null, { kimden: s.id, kime: alt.dataset.modul, tur: "bagimli", olay: "", aciklama: "" });
+      } else if (!s.oynadi) { G.secili = s.id; cizHepsi(); }
+      return;
+    }
+    if (s.oynadi && S.yazabilir) {
+      const k = G.konumlar.get(s.id);
+      try { await S.db.collection("moduller").doc(s.id).update({ x: k.x, y: k.y }); }
+      catch (err) { bildir("Konum kaydedilemedi: " + (err.message || err.code)); }
+      cizHepsi();
+    } else if (!s.oynadi) { G.secili = G.secili === s.id ? null : s.id; cizHepsi(); }
+  };
+  kap.addEventListener("pointerup", bitir);
+  kap.addEventListener("pointercancel", () => { G.surukle = null; cizHepsi(); });
+  kap.addEventListener("click", (e) => {
+    const kg = e.target.closest(".kenar-g");
+    if (kg && G.mod === "sec") { cekmeceAc("bag", kg.dataset.bag); return; }
+    if (!e.target.closest(".dugum") && !e.target.closest("button") && G.secili) { G.secili = null; cizHepsi(); }
+  });
+  kap.addEventListener("keydown", (e) => {
+    const dg = e.target.closest(".dugum");
+    if (dg && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); G.secili = dg.dataset.modul; cizHepsi(); }
+  });
+}
+
+// ===================== Ekran: künye =====================
+function kunyeCiz() {
+  const kok = document.getElementById("kunye");
+  const id = G.secili; const m = id && S.moduller.get(id);
+  if (!m) {
+    const hazir = hazirModuller();
+    const cek = [...S.moduller].filter(([, x]) => x.cekirdek);
+    kok.innerHTML = `<h3>Künye</h3><p class="ipucu" style="margin:0">Bir modüle dokun: amacı, tabloları, bağları ve bulguları burada görünür.</p>
+      <div class="alan"><span class="etk">Şimdi yazılabilir</span><div class="cipler">${hazir.map((h) => `<button class="cip" data-sec="${h}">${esc(kodu(h))}</button>`).join("") || `<span class="ipucu">Hazır modül yok. Yazım sırası sekmesine bak.</span>`}</div></div>
+      <div class="alan"><span class="etk">Belge çekirdeği</span><p>${esc(cek.map(([, x]) => x.kod + " · " + x.ad).join(", ") || "Seçilmedi")}</p></div>`;
+    return;
+  }
+  const g = grupBul(m.grup);
+  const tablolar = [...S.tablolar].filter(([, t]) => t.sahip === id).sort((a, b) => kar(a[1].ad, b[1].ad));
+  const giden = [...S.baglar].filter(([, b]) => b.kimden === id);
+  const gelen = [...S.baglar].filter(([, b]) => b.kime === id);
+  const belgeler = [...S.belgeler].filter(([, b]) => (b.kaynaklar || []).includes(id));
+  const kararlar = [...S.kararlar].filter(([, k]) => (k.moduller || []).includes(id));
+  const bulgular = BULGULAR.filter((p) => modulleriOf(p).includes(id));
+  const konular = [...S.kilavuz].filter(([, kn]) => kn.modul === id).sort((a, b) => (num(a[1].sira) ?? 99) - (num(b[1].sira) ?? 99));
+  const bagSatir = ([bid, b], yon) => {
+    const karsi = yon === "giden" ? b.kime : b.kimden;
+    const ok = b.tur === "bagimli" ? (yon === "giden" ? "temeli →" : "← dayanır") : (yon === "giden" ? "tetikler →" : "← tetiklenir");
+    const ac = b.tur === "bagimli" ? (yon === "giden" ? `${kodu(karsi)} buna dayanır` : `${kodu(karsi)} önce yazılır`) : (b.olay || "olay yazılmamış");
+    return `<li><span class="ok${b.tur === "tetik" ? " t" : ""}">${ok} <button class="mini" data-sec="${karsi}">${esc(kodu(karsi))}</button></span><span>${esc(ac)}</span>${S.yazabilir ? `<button class="mini" data-duzenle="bag" data-id="${bid}">düzenle</button>` : "<span></span>"}</li>`;
+  };
+  kok.innerHTML = `
+    <div class="kunye-bas" style="--g:${g.renk}"><span class="modul-kod">${esc(m.kod)}</span><h3>${esc(m.ad)}</h3><span class="durum-pil ${esc(m.durum || "taslak")}">${durumAd(m.durum)}</span></div>
+    <div class="ipucu">${g.ad}${num(m.faz) != null ? " · Faz " + m.faz : ""}${m.cekirdek ? " · belge çekirdeği" : ""}</div>
+    <div class="alan"><span class="etk">Amaç</span><p>${esc(m.amac || "Yazılmamış")}</p></div>
+    <div class="alan"><span class="etk">Tablolar (${tablolar.length})</span><div class="cipler">${tablolar.map(([tid, t]) => `<button class="cip ${esc(t.tur)}" data-duzenle="tablo" data-id="${tid}">${esc(t.ad)}</button>`).join("") || `<span class="ipucu">Yok</span>`}
+      ${S.yazabilir ? `<button class="mini" data-yeni="tablo" data-sahip="${id}">+ tablo</button>` : ""}</div></div>
+    <div class="alan"><span class="etk">Giden bağlar (${giden.length})</span><ul class="liste">${giden.map((x) => bagSatir(x, "giden")).join("") || `<li><span class="ipucu">Yok</span></li>`}</ul></div>
+    <div class="alan"><span class="etk">Gelen bağlar (${gelen.length})</span><ul class="liste">${gelen.map((x) => bagSatir(x, "gelen")).join("") || `<li><span class="ipucu">Yok</span></li>`}</ul></div>
+    ${belgeler.length ? `<div class="alan"><span class="etk">Kestiği belgeler</span><div class="cipler">${belgeler.map(([bid, b]) => `<button class="cip" data-duzenle="belge" data-id="${bid}">${esc(b.kod)} · ${esc(b.ad)}</button>`).join("")}</div></div>` : ""}
+    ${kararlar.length ? `<div class="alan"><span class="etk">Kararlar</span><ul class="liste">${kararlar.map(([kid, k]) => `<li><span class="ok">${k.durum === "verildi" ? "✓" : "?"}</span><span>${esc(k.baslik)}</span><button class="mini" data-duzenle="karar" data-id="${kid}">aç</button></li>`).join("")}</ul></div>` : ""}
+    <div class="alan"><span class="etk">Kılavuz konuları</span><div class="cipler">${konular.map(([kid, kn]) => `<button class="cip" data-konu="${kid}">${esc(kn.baslik)}</button>`).join("") || `<span class="ipucu">Yok</span>`}
+      ${S.yazabilir ? `<button class="mini" data-yeni="kilavuz" data-modul="${id}">+ konu</button>` : ""}</div></div>
+    ${m.ders ? `<div class="ders"><b>Eskiden:</b> ${esc(m.ders)}</div>` : ""}
+    ${bulgular.length ? `<div class="alan"><span class="etk">Bulgular</span><div class="bulgular">${bulgular.map(bulguHtml).join("")}</div></div>` : ""}
+    ${S.yazabilir ? `<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="dugme ana" data-duzenle="modul" data-id="${id}">Düzenle</button><button class="dugme" data-yeni="bag" data-kimden="${id}">+ Bağ</button><button class="dugme" data-yeni="tablo" data-sahip="${id}">+ Tablo</button></div>` : ""}`;
+}
+
+function bulguHtml(p) {
+  const hedef = p.ilgili[0];
+  return `<div class="bulgu ${p.seviye}"><span class="sev">${p.seviye === "hata" ? "Hata" : "Uyarı"}</span><span>${esc(p.mesaj)}</span>${hedef && S.yazabilir ? `<button class="mini" data-duzenle="${hedef.tur}" data-id="${hedef.id}">düzelt</button>` : "<span></span>"}</div>`;
+}
+
+// ===================== Ekran: yazım sırası =====================
+function hazirModuller() {
+  const harita = bagimlilikHaritasi(S);
+  return siraliModuller().filter(([id, m]) => m.durum === "oturdu"
+    && (harita.get(id) || []).every((d) => S.moduller.get(d)?.durum === "bitti")
+    && !BULGULAR.some((p) => p.seviye === "hata" && modulleriOf(p).includes(id))).map(([id]) => id);
+}
+function siraCiz() {
+  const kok = document.getElementById("siraIcerik");
+  if (!S.moduller.size) { kok.innerHTML = `<p class="ipucu">Modül eklenince sıra burada çıkar.</p>`; return; }
+  const sv = seviyeler(S); const harita = bagimlilikHaritasi(S); const hazir = new Set(hazirModuller());
+  const fazlar = new Map();
+  S.moduller.forEach((m, id) => { const f = num(m.faz); const k = f == null ? "yok" : f; if (!fazlar.has(k)) fazlar.set(k, []); fazlar.get(k).push(id); });
+  const anahtarlar = [...fazlar.keys()].sort((a, b) => (a === "yok") - (b === "yok") || a - b);
+  kok.innerHTML = anahtarlar.map((f) => {
+    const liste = fazlar.get(f).sort((a, b) => (sv.get(a) - sv.get(b)) || kar(kodu(a), kodu(b)));
+    const biten = liste.filter((id) => S.moduller.get(id).durum === "bitti").length;
+    return `<div class="faz-blok"><div class="faz-no">${f === "yok" ? "—" : "Faz " + f}<small>${f === "yok" ? "faz atanmamış" : biten + "/" + liste.length + " bitti"}</small></div>
+      <div class="sira-kartlar">${liste.map((id) => {
+        const m = S.moduller.get(id); const g = grupBul(m.grup);
+        const deps = harita.get(id) || [];
+        const bekleyen = deps.filter((d) => S.moduller.get(d)?.durum !== "bitti");
+        let alt;
+        if (m.durum === "bitti") alt = `<span class="hazir">✓ Bitti</span>`;
+        else if (hazir.has(id)) alt = `<span class="hazir">Yazılmaya hazır</span>`;
+        else if (m.durum === "yaziliyor") alt = `<span class="bekler">Yazılıyor${bekleyen.length ? " · bekleyen temel: " + bekleyen.map((d) => esc(kodu(d))).join(", ") : ""}</span>`;
+        else if (m.durum === "taslak") alt = `<span class="bekler">Önce şemada oturmalı${bekleyen.length ? " · sonra " + bekleyen.map((d) => esc(kodu(d))).join(", ") + " bitmeli" : ""}</span>`;
+        else alt = `<span class="bekler">${bekleyen.length ? "Önce bitmeli: " + bekleyen.map((d) => esc(kodu(d))).join(", ") : "Hatası giderilmeli"}</span>`;
+        return `<button class="sira-kart" style="--g:${g.renk}" data-sec="${id}" data-git="sema">
+          <span class="ust"><span class="modul-kod">${esc(m.kod)}</span><b>${esc(m.ad)}</b><span class="durum-pil ${esc(m.durum || "taslak")}">${durumAd(m.durum)}</span></span>
+          <span class="ipucu">Seviye ${sv.get(id)}${deps.length ? " · dayanır: " + deps.map((d) => esc(kodu(d))).join(", ") : " · temel modül"}</span>${alt}</button>`;
+      }).join("")}</div></div>`;
+  }).join("");
+}
+
+// ===================== Ekran: listeler =====================
+function modulTabloCiz() {
+  const kok = document.getElementById("modulTablo");
+  if (!S.moduller.size) { kok.innerHTML = `<tr><td colspan="9" class="ipucu">Henüz modül yok.</td></tr>`; return; }
+  kok.innerHTML = siraliModuller().map(([id, m]) => {
+    const bag = [...S.baglar.values()].filter((b) => b.kimden === id || b.kime === id).length;
+    const tab = [...S.tablolar.values()].filter((t) => t.sahip === id).length;
+    const b = BULGULAR.filter((p) => modulleriOf(p).includes(id));
+    const h = b.filter((p) => p.seviye === "hata").length;
+    const g = grupBul(m.grup);
+    return `<tr class="tik" data-duzenle="modul" data-id="${id}" style="--g:${g.renk}"><td><span class="modul-kod">${esc(m.kod)}</span></td><td>${esc(m.ad)}${m.cekirdek ? " ◆" : ""}</td><td>${g.ad}</td><td class="sayi">${num(m.faz) ?? "—"}</td><td><span class="durum-pil ${esc(m.durum || "taslak")}">${durumAd(m.durum)}</span></td><td class="sayi">${bag}</td><td class="sayi">${tab}</td><td class="sayi">${[...S.kilavuz.values()].filter((k) => k.modul === id).length}</td><td>${h ? `<span class="sayac hata">${h} hata</span>` : b.length ? `<span class="sayac uyari">${b.length} uyarı</span>` : "—"}</td></tr>`;
+  }).join("");
+}
+
+function tabloTabloCiz() {
+  const sec = document.getElementById("tabloSahipSuz");
+  sec.innerHTML = `<option value="">Bütün modüller</option>` + siraliModuller().map(([id, m]) => `<option value="${id}" ${G.tabloSahip === id ? "selected" : ""}>${esc(m.kod)} · ${esc(m.ad)}</option>`).join("");
+  const ara = G.tabloAra.toLowerCase();
+  const satirlar = [...S.tablolar].filter(([, t]) => (!G.tabloSahip || t.sahip === G.tabloSahip) && (!ara || String(t.ad || "").includes(ara) || String(t.aciklama || "").toLowerCase().includes(ara)))
+    .sort((a, b) => kar(kodu(a[1].sahip), kodu(b[1].sahip)) || kar(a[1].ad, b[1].ad));
+  document.getElementById("tabloTablo").innerHTML = satirlar.map(([id, t]) => `<tr class="tik" data-duzenle="tablo" data-id="${id}"><td><code>${esc(t.ad)}</code></td><td>${esc((TABLO_TURLERI.find((x) => x.key === t.tur) || TABLO_TURLERI[0]).ad)}</td><td>${esc(kodu(t.sahip))}</td><td>${esc(t.aciklama || "")}</td></tr>`).join("")
+    || `<tr><td colspan="4" class="ipucu">Eşleşen tablo yok.</td></tr>`;
+}
+
+function belgeTabloCiz() {
+  const satirlar = [...S.belgeler].sort((a, b) => kar(a[1].kod, b[1].kod));
+  document.getElementById("belgeTablo").innerHTML = satirlar.map(([id, b]) => `<tr class="tik" data-duzenle="belge" data-id="${id}"><td><code>${esc(b.kod)}</code></td><td>${esc(b.ad)}</td><td>${esc(b.stok || "—")}</td><td>${esc(b.cari || "—")}</td><td>${esc(b.kasa || "—")}</td><td>${(b.kaynaklar || []).map((k) => esc(kodu(k))).join(", ") || "—"}</td></tr>`).join("")
+    || `<tr><td colspan="6" class="ipucu">Henüz belge tipi yok.</td></tr>`;
+}
+
+function kararTabloCiz() {
+  const satirlar = [...S.kararlar].sort((a, b) => (a[1].durum === "verildi") - (b[1].durum === "verildi") || kar(a[1].baslik, b[1].baslik));
+  document.getElementById("kararTablo").innerHTML = satirlar.map(([id, k]) => `<tr class="tik" data-duzenle="karar" data-id="${id}"><td><b>${esc(k.baslik)}</b><div class="ipucu">${esc(k.aciklama || "")}</div></td><td><span class="durum-pil ${k.durum === "verildi" ? "bitti" : "yaziliyor"}">${k.durum === "verildi" ? "Verildi" : "Açık"}</span></td><td>${k.durum === "verildi" ? esc(k.karar || "") : `<span class="ipucu">Öneri:</span> ${esc(k.oneri || "")}`}</td><td>${(k.moduller || []).map((x) => esc(kodu(x))).join(", ") || "—"}</td></tr>`).join("")
+    || `<tr><td colspan="4" class="ipucu">Henüz karar yok.</td></tr>`;
+}
+
+function denetimCiz() {
+  const kok = document.getElementById("denetimIcerik");
+  const sirali = [...BULGULAR].sort((a, b) => (a.seviye === "uyari") - (b.seviye === "uyari"));
+  kok.innerHTML = !hazirMi() ? `<p class="ipucu">Şema okunuyor…</p>` : sirali.length ? sirali.map(bulguHtml).join("") : `<div class="etki-temiz">Şemada mantık hatası ya da uyarı yok.</div>`;
+  document.getElementById("kuralTablo").innerHTML = Object.values(KURALLAR).map(([sev, ad, neden]) =>
+    `<tr><td>${esc(ad)}</td><td><span class="durum-pil ${sev === "hata" ? "hata" : "yaziliyor"}">${sev === "hata" ? "Hata" : "Uyarı"}</span></td><td class="ipucu">${esc(neden)}</td></tr>`).join("");
+}
+
+async function gecmisCiz() {
+  const kok = document.getElementById("gecmisTablo");
+  const son = S.gecmis[0];
+  document.getElementById("sonDegisiklik").textContent = S.dbYok ? "Veri yok" : son ? "Son değişiklik " + zamanYaz(son.zaman) : (hazirMi() ? "Henüz değişiklik yok" : "Yükleniyor…");
+  if (!S.gecmis.length) { kok.innerHTML = `<tr><td colspan="3" class="ipucu">Henüz kayıt yok.</td></tr>`; return; }
+  const idler = [...new Set(S.gecmis.map((g) => g.kim).filter(Boolean))];
+  let adlar = {};
+  try { if (S.user && idler.length) adlar = await S.user.profiles(idler); } catch {}
+  kok.innerHTML = "";
+  S.gecmis.forEach((g) => {
+    const tr = document.createElement("tr");
+    const t1 = document.createElement("td"); t1.className = "sayi"; t1.textContent = zamanYaz(g.zaman);
+    const t2 = document.createElement("td"); t2.textContent = g.kim ? ((adlar[g.kim] && adlar[g.kim].name) || "Biri") : "Claude";
+    const t3 = document.createElement("td"); t3.textContent = g.ozet || "";
+    tr.append(t1, t2, t3); kok.appendChild(tr);
+  });
+}
+const zamanYaz = (z) => { try { return new Date(z).toLocaleString("tr-TR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }); } catch { return z; } };
+
+// ===================== Ekran: kılavuz =====================
+// Kılavuz, şemanın kullanıcıya bakan yüzüdür: adımları insan yazar, "arkada ne olur" şemadan çıkar.
+function siraliKonular() {
+  // Kullanıcının yolculuğu: önce fazı, aynı fazda temel modül önce (bağımlılık seviyesi).
+  const M = S.moduller; const sv = seviyeler(S);
+  return [...S.kilavuz].sort((a, b) => {
+    const ma = M.get(a[1].modul) || {}, mb = M.get(b[1].modul) || {};
+    return (num(ma.faz) ?? 99) - (num(mb.faz) ?? 99) || (sv.get(a[1].modul) ?? 99) - (sv.get(b[1].modul) ?? 99) || kar(ma.kod, mb.kod) || (num(a[1].sira) ?? 99) - (num(b[1].sira) ?? 99) || kar(a[1].baslik, b[1].baslik);
+  });
+}
+function kilavuzCiz() {
+  const ic = document.getElementById("kilavuzIc"); const kok = document.getElementById("kilavuzIcerik");
+  if (!document.getElementById("kilavuzAra")) ic.innerHTML = `<input type="text" id="kilavuzAra" placeholder="Kılavuzda ara" aria-label="Kılavuzda ara"><div id="kilavuzListe" style="display:grid;gap:2px"></div>`;
+  if (!hazirMi()) { kok.innerHTML = `<p class="ipucu">Kılavuz okunuyor…</p>`; return; }
+  const ara = G.kilavuzAra.trim().toLocaleLowerCase("tr");
+  const konular = siraliKonular().filter(([, kn]) => !ara || [kn.baslik, kn.ozet, kn.ipuclari, ...(kn.adimlar || [])].join(" ").toLocaleLowerCase("tr").includes(ara));
+  let liste = ""; let sonModul = null;
+  konular.forEach(([id, kn]) => {
+    const m = S.moduller.get(kn.modul);
+    if (kn.modul !== sonModul) { liste += `<div class="grup-bas">${esc(m ? m.ad : "Modülsüz")}</div>`; sonModul = kn.modul; }
+    liste += `<a href="#konu-${id}" class="${m && m.durum === "bitti" ? "" : "plan"}" data-konu-git="${id}">${esc(kn.baslik)}</a>`;
+  });
+  document.getElementById("kilavuzListe").innerHTML = liste || `<span class="ipucu">${ara ? "Eşleşen konu yok." : "Henüz konu yok."}</span>`;
+  if (!konular.length) {
+    kok.innerHTML = `<div class="konu"><h3>${ara ? "Aramayla eşleşen konu yok" : "Kılavuz henüz boş"}</h3><p class="ipucu">Her modül için kullanıcının yapacağı işleri konu konu yaz. Adımlar koddan önce yazılır; ekran bu adımlara göre kurulur.</p></div>`;
+    return;
+  }
+  kok.innerHTML = konular.map(([id, kn]) => {
+    const m = S.moduller.get(kn.modul) || {}; const g = grupBul(m.grup);
+    const belgeler = (kn.belgeler || []).map((b) => S.belgeler.get(b)).filter(Boolean);
+    const tetikler = [...S.baglar.values()].filter((b) => b.tur === "tetik" && b.kimden === kn.modul && S.moduller.has(b.kime));
+    const plan = m.durum !== "bitti";
+    return `<article class="konu" id="konu-${id}">
+      <div class="konu-bas" style="--g:${g.renk}"><span class="modul-kod">${esc(m.kod || "?")}</span><h3>${esc(kn.baslik)}</h3>
+        <span class="sag">${plan ? `<span class="plan-pil" title="Modül durumu: ${esc(durumAd(m.durum))}">Planlanan</span>` : ""}${S.yazabilir ? `<button class="mini" data-duzenle="kilavuz" data-id="${id}">düzenle</button>` : ""}</span></div>
+      ${kn.ozet ? `<p>${esc(kn.ozet)}</p>` : ""}
+      ${(kn.adimlar || []).length ? `<ol class="adimlar">${kn.adimlar.map((a) => `<li>${esc(a)}</li>`).join("")}</ol>` : `<p class="ipucu">Adımlar yazılmadı.</p>`}
+      ${kn.ipuclari ? `<div class="ipucu-kutu">${esc(kn.ipuclari)}</div>` : ""}
+      ${belgeler.length || tetikler.length ? `<div class="arkada"><span class="etk">Arkada ne olur</span>
+        ${belgeler.map((b) => `<div class="etki-satir"><b>${esc(b.kod)}</b><span><i>stok</i>${esc(b.stok || "—")}</span><span><i>cari</i>${esc(b.cari || "—")}</span><span><i>kasa</i>${esc(b.kasa || "—")}</span></div>`).join("")}
+        ${belgeler.length ? `<span class="ipucu">Yanlış girilirse belge iptal edilir; bu etkilerin tersi yazılır, bağlı durumlar kendiliğinden düzelir.</span>` : ""}
+        ${tetikler.length ? `<ul class="liste">${tetikler.map((b) => `<li><span class="ok t">→ ${esc(kodu(b.kime))}</span><span>${esc(b.olay)}</span><span></span></li>`).join("")}</ul>` : ""}
+      </div>` : ""}
+    </article>`;
+  }).join("");
+}
+
+// ===================== Çekmece: düzenleme =====================
+const BOS = {
+  modul: () => ({ kod: "", ad: "", grup: "ticari", durum: "taslak", faz: "", amac: "", ders: "", cekirdek: false }),
+  tablo: () => ({ ad: "", tur: "tablo", sahip: G.secili || "", aciklama: "" }),
+  bag: () => ({ kimden: G.secili || "", kime: "", tur: "bagimli", olay: "", aciklama: "" }),
+  belge: () => ({ kod: "", ad: "", stok: "", cari: "", kasa: "", kaynaklar: [], aciklama: "" }),
+  karar: () => ({ baslik: "", aciklama: "", oneri: "", karar: "", durum: "acik", moduller: [] }),
+  kilavuz: () => ({ baslik: "", modul: G.secili || "", sira: "", ozet: "", adimlar: [], ipuclari: "", belgeler: [] }),
+};
+function belgeKutulari(secililer) {
+  return `<div class="secim-kutulari">${[...S.belgeler].sort((a, b) => kar(a[1].kod, b[1].kod)).map(([id, b]) => `<label><input type="checkbox" data-coklu="belgeler" value="${id}" ${secililer.includes(id) ? "checked" : ""}>${esc(b.kod)}</label>`).join("") || `<span class="ipucu">Belge tipi yok</span>`}</div>`;
+}
+
+function modulSecenekleri(secili, bosEtiket) {
+  return (bosEtiket ? `<option value="">${bosEtiket}</option>` : "") + siraliModuller().map(([id, m]) => `<option value="${id}" ${secili === id ? "selected" : ""}>${esc(m.kod)} · ${esc(m.ad)}</option>`).join("");
+}
+function modulKutulari(alan, secililer) {
+  return `<div class="secim-kutulari">${siraliModuller().map(([id, m]) => `<label><input type="checkbox" data-coklu="${alan}" value="${id}" ${secililer.includes(id) ? "checked" : ""}>${esc(m.kod)}</label>`).join("")}</div>`;
+}
+const metin = (alan, etiket, v, ek = "") => `<div class="form-alan"><label for="f-${alan}">${etiket}</label><input type="text" id="f-${alan}" data-alan="${alan}" value="${esc(v)}" ${ek}></div>`;
+const uzun = (alan, etiket, v, aciklama = "") => `<div class="form-alan"><label for="f-${alan}">${etiket}</label><textarea id="f-${alan}" data-alan="${alan}">${esc(v)}</textarea>${aciklama ? `<span class="aciklama">${aciklama}</span>` : ""}</div>`;
+const secim = (alan, etiket, v, secenekler, aciklama = "") => `<div class="form-alan"><label for="f-${alan}">${etiket}</label><select id="f-${alan}" data-alan="${alan}">${secenekler.map((s) => `<option value="${s.key}" ${s.key === v ? "selected" : ""}>${esc(s.ad)}</option>`).join("")}</select>${aciklama ? `<span class="aciklama">${aciklama}</span>` : ""}</div>`;
+
+function formHtml(tur, t) {
+  if (tur === "modul") return `
+    <div class="form-satir" style="grid-template-columns:100px minmax(0,1fr)">${metin("kod", "Kod", t.kod, 'maxlength="5" autocapitalize="characters" spellcheck="false"')}${metin("ad", "Ad", t.ad)}</div>
+    <div class="form-satir" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr) 80px">${secim("grup", "Grup", t.grup, GRUPLAR)}${secim("durum", "Durum", t.durum, DURUMLAR)}<div class="form-alan"><label for="f-faz">Faz</label><input type="number" id="f-faz" data-alan="faz" min="0" max="30" value="${esc(t.faz ?? "")}"></div></div>
+    ${uzun("amac", "Amaç", t.amac, "Ne iş yapar, neyi yapmaz. Bir iki cümle.")}
+    ${uzun("ders", "Eskiden yaşanan", t.ders, "Eski uygulamada bu konuda olan hata; neden böyle kurduğumuzu hatırlatır.")}
+    <label class="onay-kutusu"><input type="checkbox" data-alan="cekirdek" ${t.cekirdek ? "checked" : ""}> Belge çekirdeği (hareket defterlerine yazan tek modül)</label>`;
+  if (tur === "tablo") return `
+    ${metin("ad", "Tablo adı", t.ad, 'autocapitalize="off" spellcheck="false"')}
+    <div class="form-satir" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)">${secim("tur", "Tür", t.tur, TABLO_TURLERI)}<div class="form-alan"><label for="f-sahip">Sahibi</label><select id="f-sahip" data-alan="sahip">${modulSecenekleri(t.sahip, "Seç")}</select></div></div>
+    ${uzun("aciklama", "Açıklama", t.aciklama)}`;
+  if (tur === "bag") return `
+    <div class="form-alan"><label for="f-kimden">Kaynak (ok buradan çıkar)</label><select id="f-kimden" data-alan="kimden">${modulSecenekleri(t.kimden, "Seç")}</select></div>
+    <div class="form-alan"><label for="f-kime">Hedef (ok buraya girer)</label><select id="f-kime" data-alan="kime">${modulSecenekleri(t.kime, "Seç")}</select></div>
+    <button type="button" class="dugme" id="yonCevir" style="justify-self:start">⇄ Yönü çevir</button>
+    ${secim("tur", "Tür", t.tur, BAG_TURLERI.map((b) => ({ key: b.key, ad: b.ad + ": " + b.uzun })))}
+    <div class="ipucu" id="bagAnlam"></div>
+    ${metin("olay", "Olay (tetikte zorunlu)", t.olay, 'placeholder="ör. sipariş onaylandı: ihtiyaç hesabına girer"')}
+    ${uzun("aciklama", "Not", t.aciklama)}`;
+  if (tur === "belge") return `
+    <div class="form-satir" style="grid-template-columns:100px minmax(0,1fr)">${metin("kod", "Kod", t.kod, 'maxlength="4" spellcheck="false"')}${metin("ad", "Belge adı", t.ad)}</div>
+    <div class="form-satir" style="grid-template-columns:repeat(3,minmax(0,1fr))">${metin("stok", "Stok etkisi", t.stok, 'placeholder="+ hammadde"')}${metin("cari", "Cari etkisi", t.cari)}${metin("kasa", "Kasa etkisi", t.kasa)}</div>
+    <div class="form-alan"><span class="etk">Kesen modüller</span>${modulKutulari("kaynaklar", t.kaynaklar || [])}</div>
+    ${uzun("aciklama", "Açıklama", t.aciklama)}`;
+  if (tur === "karar") return `
+    ${metin("baslik", "Konu", t.baslik)}
+    ${uzun("aciklama", "Soru / bağlam", t.aciklama)}
+    ${uzun("oneri", "Öneri", t.oneri)}
+    ${secim("durum", "Durum", t.durum, [{ key: "acik", ad: "Açık" }, { key: "verildi", ad: "Verildi" }])}
+    ${uzun("karar", "Verilen karar", t.karar)}
+    <div class="form-alan"><span class="etk">İlgili modüller</span>${modulKutulari("moduller", t.moduller || [])}</div>`;
+  if (tur === "kilavuz") return `
+    ${metin("baslik", "Konu başlığı", t.baslik, 'placeholder="ör. Satış siparişi girmek"')}
+    <div class="form-satir" style="grid-template-columns:minmax(0,1fr) 80px"><div class="form-alan"><label for="f-modul">Modül (ekranın sahibi)</label><select id="f-modul" data-alan="modul">${modulSecenekleri(t.modul, "Seç")}</select></div><div class="form-alan"><label for="f-sira">Sıra</label><input type="number" id="f-sira" data-alan="sira" min="0" value="${esc(t.sira ?? "")}"></div></div>
+    ${uzun("ozet", "Ne işe yarar", t.ozet, "Kullanıcının diliyle bir iki cümle: bu ekranda ne yapılır, ne zaman gerekir.")}
+    <div class="form-alan"><label for="f-adimlar">Adımlar</label><textarea id="f-adimlar" data-alan="adimlar" style="min-height:150px">${esc(Array.isArray(t.adimlar) ? t.adimlar.join("\n") : t.adimlar)}</textarea><span class="aciklama">Her satır bir adım. Düğme ve alan adlarını ekranda yazdığı gibi yaz.</span></div>
+    ${uzun("ipuclari", "İpuçları ve sık hatalar", t.ipuclari)}
+    <div class="form-alan"><span class="etk">Bu işlemin kestiği belgeler</span>${belgeKutulari(t.belgeler || [])}<span class="aciklama">"Arkada ne olur" bölümü bu belgelerin stok, cari ve kasa etkisinden kendiliğinden yazılır.</span></div>`;
+  return "";
+}
+
+function cekmeceAc(tur, id, taslak) {
+  if (!S.yazabilir || !S.db) { bildir("Bu görünümde düzenleme kapalı."); return; }
+  const kaynak = id ? S[KOLEKSIYON[tur]].get(id) : null;
+  if (id && !kaynak) return;
+  C = { tur, id, taslak: { ...(BOS[tur]()), ...(kaynak ? JSON.parse(JSON.stringify(kaynak)) : {}), ...(taslak || {}) }, zorla: false, silOnay: false, mesgul: false, etki: null };
+  const kok = document.getElementById("cekmeceKok");
+  const baslik = id ? `${TUR_AD[tur]} düzenle` : `Yeni ${TUR_AD[tur].toLowerCase()}`;
+  kok.innerHTML = `<div class="perde" data-kapat></div>
+    <div class="cekmece" role="dialog" aria-modal="true" aria-labelledby="cekmeceBaslik">
+      <div class="cekmece-bas"><div><div class="ipucu">${TUR_AD[tur]}</div><h2 id="cekmeceBaslik" style="margin:0">${baslik}</h2></div><button class="dugme" data-kapat aria-label="Kapat">✕</button></div>
+      <div class="cekmece-govde"><form id="cekmeceForm" novalidate>${formHtml(tur, C.taslak)}</form><div class="onizleme" id="onizleme"></div></div>
+      <div class="cekmece-dip">${id ? `<button class="dugme tehlike" id="silDugme">Sil</button>` : ""}<span class="bosluk"></span><button class="dugme" data-kapat>Vazgeç</button><button class="dugme ana" id="kaydetDugme">Kaydet</button></div>
+    </div>`;
+  const form = document.getElementById("cekmeceForm");
+  form.addEventListener("input", formDegisti);
+  form.addEventListener("change", formDegisti);
+  form.addEventListener("submit", (e) => { e.preventDefault(); kaydet(); });
+  document.getElementById("yonCevir")?.addEventListener("click", () => {
+    const a = C.taslak.kimden; C.taslak.kimden = C.taslak.kime; C.taslak.kime = a;
+    document.getElementById("f-kimden").value = C.taslak.kimden; document.getElementById("f-kime").value = C.taslak.kime;
+    C.zorla = false; onizlemeGuncelle();
+  });
+  document.getElementById("kaydetDugme").addEventListener("click", kaydet);
+  document.getElementById("silDugme")?.addEventListener("click", sil);
+  onizlemeGuncelle();
+  setTimeout(() => form.querySelector("input,select,textarea")?.focus(), 30);
+}
+function cekmeceKapat() { C = null; document.getElementById("cekmeceKok").innerHTML = ""; }
+
+function formDegisti(e) {
+  if (!C) return;
+  const el = e.target;
+  if (el.dataset.alan) C.taslak[el.dataset.alan] = el.type === "checkbox" ? el.checked : el.value;
+  if (el.dataset.coklu) C.taslak[el.dataset.coklu] = [...document.querySelectorAll(`[data-coklu="${el.dataset.coklu}"]:checked`)].map((x) => x.value);
+  C.zorla = false; C.silOnay = false;
+  onizlemeGuncelle();
+}
+
+function temizle(tur, t) {
+  const v = { ...t };
+  Object.keys(v).forEach((k) => { if (typeof v[k] === "string") v[k] = v[k].trim(); });
+  if (tur === "modul") { v.kod = v.kod.toUpperCase(); v.faz = num(v.faz); v.cekirdek = !!v.cekirdek; }
+  if (tur === "belge") v.kod = v.kod.toUpperCase();
+  if (tur === "tablo") v.ad = v.ad.toLowerCase();
+  if (tur === "kilavuz") { v.sira = num(v.sira); v.adimlar = (Array.isArray(t.adimlar) ? t.adimlar : String(t.adimlar || "").split("\n")).map((x) => String(x).replace(/^\s*\d+[.)]\s*/, "").trim()).filter(Boolean); }
+  return v;
+}
+
+// Değişikliği şemanın kopyasına uygulayıp önceki ve sonraki denetimi karşılaştırır.
+function etkiHesapla(silme) {
+  const aday = semaKopya(); const kol = KOLEKSIYON[C.tur];
+  const silinecekBaglar = [];
+  if (silme) {
+    aday[kol].delete(C.id);
+    if (C.tur === "modul") aday.baglar.forEach((b, bid) => { if (b.kimden === C.id || b.kime === C.id) { silinecekBaglar.push(bid); aday.baglar.delete(bid); } });
+  } else {
+    const v = temizle(C.tur, C.taslak);
+    aday[kol].set(C.id || "__yeni__", v);
+    // Kaydette yapılan şey burada da yapılır: çekirdek tektir, başkasınınki kalkar.
+    if (C.tur === "modul" && v.cekirdek) aday.moduller.forEach((m, mid) => { if (mid !== (C.id || "__yeni__") && m.cekirdek) aday.moduller.set(mid, { ...m, cekirdek: false }); });
+  }
+  const once = new Set(BULGULAR.map((p) => p.anahtar));
+  const sonra = denetle(aday);
+  const sonraA = new Set(sonra.map((p) => p.anahtar));
+  return { yeni: sonra.filter((p) => !once.has(p.anahtar)), giden: BULGULAR.filter((p) => !sonraA.has(p.anahtar)), silinecekBaglar };
+}
+
+function onizlemeGuncelle() {
+  if (!C) return;
+  const kok = document.getElementById("onizleme");
+  const anlam = document.getElementById("bagAnlam");
+  if (anlam) {
+    const a = esc(kodu(C.taslak.kimden)), b = esc(kodu(C.taslak.kime));
+    anlam.innerHTML = C.taslak.kimden && C.taslak.kime
+      ? (C.taslak.tur === "bagimli" ? `Okunuşu: <b>${a}</b> önce yazılır, <b>${b}</b> onsuz çalışamaz.` : `Okunuşu: <b>${a}</b>'daki olay <b>${b}</b>'da iş yaptırır.`) : "";
+  }
+  const zorunlu = zorunluEksik();
+  if (zorunlu) { C.etki = null; kok.innerHTML = `<div class="bulgu uyari"><span class="sev">Eksik</span><span>${esc(zorunlu)}</span><span></span></div>`; dugmeleriAyarla(); return; }
+  const e = etkiHesapla(C.silOnay);
+  let html = `<div class="baslik">${C.silOnay ? "Silmenin etkisi" : "Bu değişikliğin şemaya etkisi"}</div>`;
+  if (C.silOnay && e.silinecekBaglar.length) html += `<div class="bulgu uyari"><span class="sev">Bağ</span><span>Modülle birlikte ${e.silinecekBaglar.length} bağ silinecek: ${e.silinecekBaglar.map((b) => { const x = S.baglar.get(b); return esc(kodu(x.kimden) + "→" + kodu(x.kime)); }).join(", ")}</span><span></span></div>`;
+  if (!e.yeni.length && !e.giden.length) html += `<div class="etki-temiz">Yeni hata ya da uyarı doğurmuyor.</div>`;
+  if (e.yeni.length) html += `<div class="baslik">Yeni bulgular (${e.yeni.length})</div>` + e.yeni.map((p) => `<div class="bulgu ${p.seviye}"><span class="sev">${p.seviye === "hata" ? "Hata" : "Uyarı"}</span><span>${esc(p.mesaj)}</span><span></span></div>`).join("");
+  if (e.giden.length) html += `<div class="baslik">Düzelecek bulgular (${e.giden.length})</div>` + e.giden.map((p) => `<div class="bulgu gider"><span class="sev">Gider</span><span>${esc(p.mesaj)}</span><span></span></div>`).join("");
+  if (C.tur === "modul" && C.id && !C.silOnay) {
+    const m = S.moduller.get(C.id);
+    if (m && (DURUM_SIRA[m.durum] || 0) >= 1) {
+      const bagli = new Set(); S.baglar.forEach((b) => { if (b.kimden === C.id) bagli.add(b.kime); if (b.kime === C.id) bagli.add(b.kimden); });
+      html += `<div class="bulgu uyari"><span class="sev">Dikkat</span><span>${esc(m.kod)} ${durumAd(m.durum).toLowerCase()} işaretli. Değişiklik bağlı modülleri de etkileyebilir: ${[...bagli].map((x) => esc(kodu(x))).join(", ") || "yok"}.</span><span></span></div>`;
+    }
+  }
+  kok.innerHTML = html;
+  C.etki = e;
+  dugmeleriAyarla();
+}
+
+function zorunluEksik() {
+  const t = C.taslak;
+  if (C.silOnay) return "";
+  if (C.tur === "modul" && (!String(t.kod).trim() || !String(t.ad).trim())) return "Kod ve ad gerekli.";
+  if (C.tur === "tablo" && (!String(t.ad).trim() || !t.sahip)) return "Tablo adı ve sahibi gerekli.";
+  if (C.tur === "bag" && (!t.kimden || !t.kime)) return "Kaynak ve hedef modül seçilmeli.";
+  if (C.tur === "bag" && t.kimden === t.kime) return "Kaynak ve hedef aynı modül olamaz.";
+  if (C.tur === "belge" && (!String(t.kod).trim() || !String(t.ad).trim())) return "Kod ve ad gerekli.";
+  if (C.tur === "karar" && !String(t.baslik).trim()) return "Konu gerekli.";
+  if (C.tur === "kilavuz" && (!String(t.baslik).trim() || !t.modul)) return "Başlık ve modül gerekli.";
+  return "";
+}
+
+function dugmeleriAyarla() {
+  const k = document.getElementById("kaydetDugme"); const s = document.getElementById("silDugme");
+  if (!k || !C) return;
+  const yeniHata = C.etki && !C.silOnay ? C.etki.yeni.filter((p) => p.seviye === "hata").length : 0;
+  const tehlikeli = !!(yeniHata && C.zorla);
+  k.disabled = C.mesgul || !!zorunluEksik() || C.silOnay;
+  k.textContent = tehlikeli ? `${yeniHata} hatayla yine de kaydet` : "Kaydet";
+  k.classList.toggle("tehlike", tehlikeli); k.classList.toggle("dolu", tehlikeli); k.classList.toggle("ana", !tehlikeli);
+  if (s) {
+    const silHata = C.silOnay && C.etki ? C.etki.yeni.filter((p) => p.seviye === "hata").length : 0;
+    s.textContent = C.silOnay ? (silHata ? `${silHata} hatayla yine de sil` : "Silmeyi onayla") : "Sil";
+    s.classList.toggle("dolu", C.silOnay);
+    s.disabled = C.mesgul;
+  }
+}
+
+async function gecmiseYaz(ozet) {
+  try { await S.db.collection("gecmis").add({ zaman: new Date().toISOString(), kim: S.uid || null, ozet }); } catch {}
+}
+function ozetMetni(tur, v) {
+  if (!v) return "";
+  if (tur === "modul") return `${v.kod} · ${v.ad}`;
+  if (tur === "tablo") return `${v.ad} (${kodu(v.sahip)})`;
+  if (tur === "bag") return `${kodu(v.kimden)} → ${kodu(v.kime)} ${v.tur === "tetik" ? "tetik" : "bağımlılık"}`;
+  if (tur === "belge") return `${v.kod} · ${v.ad}`;
+  if (tur === "karar") return v.baslik;
+  if (tur === "kilavuz") return `${v.baslik} (${kodu(v.modul)})`;
+  return "";
+}
+function farkMetni(eski, yeni) {
+  if (!eski) return "";
+  const adlar = { kod: "kod", ad: "ad", grup: "grup", durum: "durum", faz: "faz", amac: "amaç", ders: "ders", cekirdek: "çekirdek", tur: "tür", sahip: "sahip", aciklama: "açıklama", kimden: "kaynak", kime: "hedef", olay: "olay", stok: "stok", cari: "cari", kasa: "kasa", kaynaklar: "kesen modüller", baslik: "başlık", oneri: "öneri", karar: "karar", moduller: "modüller", modul: "modül", sira: "sıra", ozet: "özet", adimlar: "adımlar", ipuclari: "ipuçları", belgeler: "belgeler" };
+  const f = [];
+  Object.keys(adlar).forEach((k) => {
+    if (!(k in yeni) && !(k in eski)) return;
+    if (JSON.stringify(eski[k] ?? "") === JSON.stringify(yeni[k] ?? "")) return;
+    if (k === "durum" && yeni.durum in DURUM_SIRA) f.push(`durum ${durumAd(eski[k])} → ${durumAd(yeni[k])}`);
+    else if (k === "faz") f.push(`faz ${eski[k] ?? "—"} → ${yeni[k] ?? "—"}`);
+    else f.push(adlar[k]);
+  });
+  return f.join(", ");
+}
+
+async function kaydet() {
+  if (!C || C.mesgul || !S.yazabilir) return;
+  if (zorunluEksik()) { onizlemeGuncelle(); return; }
+  if (!C.etki) onizlemeGuncelle();
+  const yeniHata = C.etki.yeni.filter((p) => p.seviye === "hata").length;
+  if (yeniHata && !C.zorla) { C.zorla = true; dugmeleriAyarla(); bildir("Bu değişiklik şemaya yeni hata getiriyor. Yine de kaydetmek için düğmeye bir daha bas."); return; }
+  const v = temizle(C.tur, C.taslak); const kol = KOLEKSIYON[C.tur];
+  C.mesgul = true; dugmeleriAyarla();
+  try {
+    if (C.tur === "modul" && v.cekirdek) {
+      for (const [mid, m] of S.moduller) if (mid !== C.id && m.cekirdek) await S.db.collection("moduller").doc(mid).update({ cekirdek: false });
+    }
+    const eski = C.id ? S[kol].get(C.id) : null;
+    const ref = C.id ? S.db.collection(kol).doc(C.id) : S.db.collection(kol).doc();
+    await ref.set(v);
+    const fark = farkMetni(eski, v);
+    await gecmiseYaz(C.id ? `${TUR_AD[C.tur]} değişti: ${ozetMetni(C.tur, v)}${fark ? " (" + fark + ")" : ""}${yeniHata ? ` · ${yeniHata} hatayla` : ""}`
+      : `${TUR_AD[C.tur]} eklendi: ${ozetMetni(C.tur, v)}${yeniHata ? ` · ${yeniHata} hatayla` : ""}`);
+    if (C.tur === "modul" && !C.id) G.secili = ref.id;
+    cekmeceKapat(); bildir("Kaydedildi");
+  } catch (err) {
+    if (C) { C.mesgul = false; dugmeleriAyarla(); }
+    bildir(err && err.code === "invalid_argument" ? "Kaydedilemedi: bu şemada yazma yetkin yok." : "Kaydedilemedi: " + ((err && (err.message || err.code)) || "bilinmeyen hata"));
+  }
+}
+
+async function sil() {
+  if (!C || C.mesgul || !S.yazabilir) return;
+  if (!C.silOnay) { C.silOnay = true; C.zorla = false; onizlemeGuncelle(); return; }
+  const kol = KOLEKSIYON[C.tur]; const eski = S[kol].get(C.id);
+  const e = etkiHesapla(true);
+  const silHata = e.yeni.filter((p) => p.seviye === "hata").length;
+  C.mesgul = true; dugmeleriAyarla();
+  try {
+    for (const bid of e.silinecekBaglar) await S.db.collection("baglar").doc(bid).delete();
+    await S.db.collection(kol).doc(C.id).delete();
+    await gecmiseYaz(`${TUR_AD[C.tur]} silindi: ${ozetMetni(C.tur, eski)}${e.silinecekBaglar.length ? ` (+${e.silinecekBaglar.length} bağ)` : ""}${silHata ? ` · ${silHata} hata bıraktı` : ""}`);
+    if (G.secili === C.id) G.secili = null;
+    cekmeceKapat(); bildir("Silindi");
+  } catch (err) {
+    if (C) { C.mesgul = false; dugmeleriAyarla(); }
+    bildir("Silinemedi: " + ((err && (err.message || err.code)) || "bilinmeyen hata"));
+  }
+}
+
+let bildirimZaman = null;
+function bildir(metinStr) {
+  const kok = document.getElementById("bildirimKok");
+  kok.innerHTML = `<div class="bildirim" role="status"></div>`; kok.firstChild.textContent = metinStr;
+  clearTimeout(bildirimZaman); bildirimZaman = setTimeout(() => { kok.innerHTML = ""; }, 3600);
+}
+
+// ===================== Olaylar =====================
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("[data-kapat],[data-git],[data-sec],[data-duzenle],[data-yeni],[data-konu],[data-konu-git],#sekmeler button");
+  if (!t) return;
+  if (t.dataset.konuGit) { e.preventDefault(); document.getElementById("konu-" + t.dataset.konuGit)?.scrollIntoView({ block: "start" }); return; }
+  if (t.dataset.konu) { G.sekme = "kilavuz"; kayitliYaz("sekme", "kilavuz"); cizHepsi(); requestAnimationFrame(() => requestAnimationFrame(() => document.getElementById("konu-" + t.dataset.konu)?.scrollIntoView({ block: "start" }))); return; }
+  if (t.matches("#sekmeler button")) { sekmeyeGit(t.dataset.sekme); return; }
+  if (t.hasAttribute("data-kapat")) { cekmeceKapat(); return; }
+  if (t.dataset.sec) { G.secili = t.dataset.sec; if (t.dataset.git) sekmeyeGit(t.dataset.git); else cizHepsi(); return; }
+  if (t.dataset.git) { sekmeyeGit(t.dataset.git); return; }
+  if (t.dataset.duzenle) { cekmeceAc(t.dataset.duzenle, t.dataset.id); return; }
+  if (t.dataset.yeni) {
+    const ek = {};
+    if (t.dataset.sahip) ek.sahip = t.dataset.sahip;
+    if (t.dataset.kimden) ek.kimden = t.dataset.kimden;
+    if (t.dataset.modul) ek.modul = t.dataset.modul;
+    cekmeceAc(t.dataset.yeni, null, ek);
+  }
+});
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && C) cekmeceKapat(); });
+document.getElementById("modSec").addEventListener("click", () => { G.mod = "sec"; semaCiz(); });
+document.getElementById("modCiz").addEventListener("click", () => { G.mod = "ciz"; semaCiz(); });
+document.getElementById("gosterBagimli").addEventListener("click", () => { G.bagimliGoster = !G.bagimliGoster; kayitliYaz("bagimli", G.bagimliGoster); semaCiz(); });
+document.getElementById("gosterTetik").addEventListener("click", () => { G.tetikGoster = !G.tetikGoster; kayitliYaz("tetik", G.tetikGoster); semaCiz(); });
+document.getElementById("kucult").addEventListener("click", () => { G.olcek = Math.max(0.4, +(G.olcek - 0.15).toFixed(2)); semaCiz(); });
+document.getElementById("buyut").addEventListener("click", () => { G.olcek = Math.min(1.8, +(G.olcek + 0.15).toFixed(2)); semaCiz(); });
+document.getElementById("yeniModul").addEventListener("click", () => cekmeceAc("modul", null));
+document.getElementById("otomatik").addEventListener("click", async () => {
+  if (!S.yazabilir || !S.db) return;
+  const elle = [...S.moduller].filter(([, m]) => num(m.x) != null);
+  if (!elle.length) { bildir("Zaten otomatik yerleşimde."); return; }
+  try {
+    for (const [id] of elle) await S.db.collection("moduller").doc(id).update({ x: null, y: null });
+    bildir("Modüller bağımlılık seviyesine göre yeniden dizildi.");
+  } catch (err) { bildir("Yerleşim kaydedilemedi: " + ((err && (err.message || err.code)) || "")); }
+});
+document.getElementById("kilavuzIc").addEventListener("input", (e) => { if (e.target.id === "kilavuzAra") { G.kilavuzAra = e.target.value; kilavuzCiz(); } });
+document.getElementById("tabloAra").addEventListener("input", (e) => { G.tabloAra = e.target.value; tabloTabloCiz(); });
+document.getElementById("tabloSahipSuz").addEventListener("change", (e) => { G.tabloSahip = e.target.value; tabloTabloCiz(); });
+cizimOlaylari();
+cizHepsi();
+
+// ===================== Veri bağlantısı =====================
+(async () => {
+  const claude = window.claude;
+  let db = null, user = null;
+  try { [db, user] = await Promise.all([claude && claude.use ? claude.use("db") : null, claude && claude.use ? claude.use("user") : null]); } catch {}
+  if (!db) {
+    S.dbYok = true;
+    document.getElementById("bant").innerHTML = `<div class="bant hata">Şema verisi bu görünümde açılamıyor. Sayfayı claude.ai'de oturum açarak aç. Rehber sekmesi yine okunabilir.</div>`;
+    cizHepsi(); return;
+  }
+  S.db = db; S.user = user;
+  try { S.uid = user ? await user.id() : null; } catch {}
+  let yaz = null;
+  try { yaz = user ? await user.can("data.write") : null; } catch {}
+  S.yazabilir = yaz !== false;
+  KOLEKSIYONLAR.forEach((kol) => {
+    db.collection(kol).onSnapshot((snap) => {
+      const m = new Map(); snap.docs.forEach((d) => m.set(d.id, d.data()));
+      S[kol] = m; S.yuklenen.add(kol);
+      if (G.secili && S.yuklenen.has("moduller") && !S.moduller.has(G.secili)) G.secili = null;
+      cizHepsi();
+      if (C && !C.mesgul) onizlemeGuncelle();
+    }, (err) => {
+      document.getElementById("bant").innerHTML = `<div class="bant hata">Şema verisi okunamadı (${esc(err && err.code)}). Sayfayı yenile.</div>`;
+    });
+  });
+  db.collection("gecmis").orderBy("zaman", "desc").limit(150).onSnapshot((snap) => {
+    S.gecmis = snap.docs.map((d) => d.data()); cizHepsi();
+  }, () => {});
+})();
+</script>
