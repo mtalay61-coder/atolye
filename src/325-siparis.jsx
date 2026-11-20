@@ -185,12 +185,22 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
   // Cari SEÇİLDİĞİ / DEĞİŞTİĞİ an (yeni sipariş, düzenleme, site talebi, depodan alış) kalem para birimi carinin kartındaki
   // para birimine (260 `paraBirimi`, yoksa TRY) geçer; cari boşaltılınca TRY. Kalem satırındaki seçim elle değiştirilebilir
   // kalır; daha önce eklenmiş kalemlere dokunulmaz (kendi para birimleriyle kayıtlı).
+  // SİPARİŞİN PARA TİPİ BAŞLIKTA (v1.744.33 — kullanıcı: "siparişte p.tipi olsun üst kısımda; örn. müşteri USD tipinde ama
+  // satırlar TL olacak. Şu mantığı bozmasın: cari girildiğinde tüm sipariş cari p.tipine dönsün, eklenen kalemler o p.tipiyle").
+  // `siparisPB` siparişin para tipi (kayıtta `paraBirimi`, şema dışı → `ek`): cari seçilince carinin para birimi; başlıktan
+  // elle değiştirilebilir (bu sipariş için); kalem para birimi (`kParaBirimi`) onu izler, kalem satırında yine elle değişebilir.
+  // Düzenleme açılışında KAYITLI para tipi korunur (`duzenlemePbRef`): cari "değişti" sayılıp carininkiyle ezilmesin.
+  const [siparisPB, setSiparisPB] = useState("TRY");
+  const duzenlemePbRef = useRef(null);
   const oncekiCariRef = useRef(cariId);
   useEffect(() => {
     if (oncekiCariRef.current === cariId) return;
     oncekiCariRef.current = cariId;
     const c = cariId ? (cariler || []).find((x) => x.id === cariId) : null;
-    setKParaBirimi((c && c.paraBirimi) || "TRY");
+    const pb = duzenlemePbRef.current || (c && c.paraBirimi) || "TRY";
+    duzenlemePbRef.current = null;
+    setSiparisPB(pb);
+    setKParaBirimi(pb);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cariId]);
   // Fiyat ELLE mi yazıldı (v1.482.0)? Yazılmadıysa her beden kendi kural fiyatını alır; yazıldıysa
@@ -473,6 +483,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
     setGecerlilikTarihi(teklifKipi ? teklifGecerlilikVarsayilani(bugunYerel()) : "");
     setKalemler([]); setKUrunId(""); setKRenk(""); setKMiktarlar({}); setKFiyat(""); setKNotlar([]); setKNotTaslak(null); setKNotAnahtar((x) => x + 1); setSiparisDefter("Genel");
     setMusteriKodu(""); setBelgeNo(""); setSezon(""); setKayitParaBirimi(null); setKayitKurlari({});
+    setSiparisPB("TRY"); setKParaBirimi("TRY"); duzenlemePbRef.current = null;
     setKAmbalajRenk(""); setSiteTalepId(null);
     // ÖNCEKİ SİPARİŞİN OKUTMA SONUCU TEMİZLENİR (v1.614.0 — kullanıcı: "Yeni sipariş açınca eski barkodu gösteriyor
     // ekranda hâlâ 27454, önceki siparişten kalma"). Sonuç satırı bir sonraki okutmaya kadar kalıyordu; yeni sipariş
@@ -736,6 +747,13 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
     duzenlemeKaynagiRef.current = siparisler.find((x) => x.id === siparisId) || null;
     setDuzenlenenId(siparisId);
     setTip(siparis.tip);
+    {
+      // Kayıtlı para tipi; eski siparişte yoksa ilk kalemin, o da yoksa carinin para birimi.
+      const kc = (cariler || []).find((x) => x.id === siparis.cariId);
+      const pb = siparis.paraBirimi || ((siparis.kalemler || [])[0] || {}).paraBirimi || (kc && kc.paraBirimi) || "TRY";
+      duzenlemePbRef.current = (siparis.cariId || "") !== cariId ? pb : null;   // cari değişecekse etki bunu kullansın
+      setSiparisPB(pb); setKParaBirimi(pb);
+    }
     setCariId(siparis.cariId || "");
     setTarih(siparis.tarih || bugunYerel());
     setTeslimTarihi(siparis.teslimTarihi || "");
@@ -801,7 +819,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
     const guncelAlanlar = {
       cariId, tarih, teslimTarihi, not: not.trim(), musteriKodu: musteriKodu.trim(),
       belgeNo: belgeNo.trim() || undefined, sezon: sezon.trim() || undefined,
-      defterTercihi: siparisDefter, kayitParaBirimi, kayitKurlari,
+      defterTercihi: siparisDefter, kayitParaBirimi, kayitKurlari, paraBirimi: siparisPB,
       kalemler: sonKalemler,
     };
     // TEKLİF KİPİ: kayıt sarmalayıcıya (326) gider; sipariş listesine dokunulmaz.
@@ -909,7 +927,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
       tip, cariId, tarih, teslimTarihi, not: not.trim(),
       musteriKodu: musteriKodu.trim(),
       ...(belgeNo.trim() ? { belgeNo: belgeNo.trim() } : {}), ...(sezon.trim() ? { sezon: sezon.trim() } : {}),
-      kayitParaBirimi, kayitKurlari,
+      kayitParaBirimi, kayitKurlari, paraBirimi: siparisPB,
       durum: "Bekliyor", kalemler,
       defterTercihi: siparisDefter,
       olusturuldu: new Date().toISOString(),
@@ -1380,6 +1398,21 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
               <Field label="Not">
                 <input value={not} onChange={(e) => setNot(e.target.value)} placeholder="Opsiyonel" style={inputStyle} />
               </Field>
+            </div>
+            {/* PARA TİPİ (v1.744.33): cari seçilince carinin para birimi; bu sipariş için değiştirilebilir, yeni kalemler bununla. */}
+            <div style={{ flex: "1 1 110px", minWidth: 0, maxWidth: 160 }}>
+            <Field label="Para Tipi">
+              <select value={siparisPB} data-siparis-para-tipi="1"
+                onChange={(e) => { setSiparisPB(e.target.value); setKParaBirimi(e.target.value); }} style={inputStyle}
+                title="Siparişin para tipi — cari seçilince carinin para birimi gelir; yeni kalemler bu para tipiyle eklenir">
+                {MUHASEBE_PARA_BIRIMLERI.map((pb) => <option key={pb} value={pb}>{pb}</option>)}
+              </select>
+            </Field>
+            {kalemler.some((k) => (k.paraBirimi || "TRY") !== siparisPB) && (
+              <div data-siparis-para-farkli="1" style={{ fontSize: 11, color: "var(--erp-warn)", marginTop: 3 }}>
+                {kalemler.filter((k) => (k.paraBirimi || "TRY") !== siparisPB).length} kalem başka para biriminde
+              </div>
+            )}
             </div>
             {/* Kısa seçim: tek başına kalınca satırı boydan boya kaplamasın (v1.625.0). */}
             <div style={{ flex: "1 1 140px", minWidth: 0, maxWidth: 260 }}>
