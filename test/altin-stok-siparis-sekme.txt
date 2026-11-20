@@ -1,0 +1,51 @@
+{
+ "Bot": {
+  "acilinca": {
+   "aramaSuzulmus": null,
+   "seritPencereleri": [
+    "Ürün: Bot",
+    "Alış: AS-1"
+   ],
+   "seritteEtkin": "Alış: AS-1",
+   "siparisKarti": "s1",
+   "stokKarti": null
+  },
+  "kapaninca": {
+   "aramaSuzulmus": null,
+   "seritPencereleri": [
+    "Ürün: Bot"
+   ],
+   "seritteEtkin": "Ürün: Bot",
+   "siparisKarti": null,
+   "stokKarti": "Bot"
+  },
+  "onceStok": "Bot",
+  "satirTiklandi": true,
+  "siparislerSekmesi": true
+ },
+ "Deri": {
+  "acilinca": {
+   "aramaSuzulmus": null,
+   "seritPencereleri": [
+    "Ürün: Deri",
+    "Alış: AS-1"
+   ],
+   "seritteEtkin": "Alış: AS-1",
+   "siparisKarti": "s1",
+   "stokKarti": null
+  },
+  "kapaninca": {
+   "aramaSuzulmus": null,
+   "seritPencereleri": [
+    "Ürün: Deri"
+   ],
+   "seritteEtkin": "Ürün: Deri",
+   "siparisKarti": null,
+   "stokKarti": "Deri"
+  },
+  "onceStok": "Deri",
+  "satirTiklandi": true,
+  "siparislerSekmesi": true
+ },
+ "hatalar": []
+}

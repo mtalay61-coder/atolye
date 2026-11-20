@@ -1,4 +1,4 @@
-function StokModule({ onStokFisiKes, kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet, kurlar, kurGecmisi, onFiseGitNo, hedefUrunId, hedefSekme, onHedefTuketildi, donusHedefi, onDonusYap, stokRezervasyonlari, tumSiparisler, items, onSave, showToast, tanimlar, onGoToTanimlar, cariler, onCariHareket, onGoToCari, onRemoveHareketGlobal, siparisler, uretim, onGoToSiparis, onGoToUretim, onCopaAt, onYeniRenkKaydet, onBarkodTamamla, onRenkleriTipeBagla, onHizliCariEkle, onYeniMalzemeTipiKaydet, onYeniOlcuKaydet, onYeniMamulTipiKaydet, onYeniOzelKodAlani, onKombinasyonOlustur, onMamulRenkEtiketleri, onAsortiOlustur, kullaniciYetkisiVar, onayIste, onPencereAc, aktifPencereId, onPencereKapat, onPencereKucult, acikUrunIdleri, onCevirilerKaydet, onSiteGruplariKaydet }) {
+function StokModule({ onStokFisiKes, kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet, kurlar, kurGecmisi, onFiseGitNo, hedefUrunId, hedefSekme, onHedefTuketildi, donusHedefi, onDonusYap, stokRezervasyonlari, tumSiparisler, items, onSave, showToast, tanimlar, onGoToTanimlar, cariler, onCariHareket, onGoToCari, onRemoveHareketGlobal, siparisler, uretim, onGoToSiparis, onSiparisPenceresiAc, onGoToUretim, onCopaAt, onYeniRenkKaydet, onBarkodTamamla, onRenkleriTipeBagla, onHizliCariEkle, onYeniMalzemeTipiKaydet, onYeniOlcuKaydet, onYeniMamulTipiKaydet, onYeniOzelKodAlani, onKombinasyonOlustur, onMamulRenkEtiketleri, onAsortiOlustur, kullaniciYetkisiVar, onayIste, onPencereAc, aktifPencereId, onPencereKapat, onPencereKucult, acikUrunIdleri, onCevirilerKaydet, onSiteGruplariKaydet }) {
   const [showForm, setShowForm] = useState(false);
   // ARAMA KAPSAMA GÖRE AYRI (v1.596.0 — kullanıcı: "mamul arama ile stok arama aynıları kalıyor, hammadde ile ayrılsın"):
   // Stok ve Mamul Stok aynı bileşen (kapsam prop'u), tek `query` iki ekranda da görünüyordu. Metin kapsam başına tutulur.
@@ -2931,6 +2931,7 @@ function StokModule({ onStokFisiKes, kapsam = "genel", onFiyatGrubuMarj, onRecet
                   siparisler={siparisler}
                   uretim={uretim}
                   onGoToSiparis={onGoToSiparis}
+                  onSiparisPenceresiAc={onSiparisPenceresiAc}
                   onGoToUretim={onGoToUretim}
                   firmaBilgileri={tanimlar.firmaBilgileri}
                   tanimlarFiyatGruplari={tanimlar.fiyatGruplari || []}

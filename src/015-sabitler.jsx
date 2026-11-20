@@ -492,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.744.22";
-const SURUM_TARIHI = "2026-11-16";
-const SURUM_NOTU = "Web sitesi kayıt onayı tek adımda; site hesabı yönetimi yalnız Yönetici";
+const SURUM = "1.744.26";
+const SURUM_TARIHI = "2026-11-20";
+const SURUM_NOTU = "Stok kartından sipariş ayrı sekmede açılır; kapatınca stok kartına dönülür";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -525,6 +525,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" };   // teklif: v1.723.0, Sipariş'in alt sekmesi
 
 const SURUM_GECMISI = [
+  { surum: "1.744.26", tarih: "20.11.2026", eklenen: [], degisen: ["Stok kartı › Siparişler: siparişe tıklayınca sipariş listesi süzülerek açılmıyor; sipariş üst şeritte kendi sekmesinde açılır."], duzeltilen: ["Stok kartından açılan sipariş kapatılınca stok kartı da kapanmış görünüyordu: artık stok kartına geri dönülür."] },
   { surum: "1.744.22", tarih: "16.11.2026", eklenen: [], degisen: ["Siteden gelen kayıt talebini \"Onayla — cari aç\" ile onaylamak artık tek adım: cari, site hesabı ve talebin kapanışı sunucuda birlikte yapılır — başka bir cihaz aynı talebi işlerse, bağlantı koparsa ya da uygulama kapanırsa boşta cari kalmaz. Cevap alınamazsa düğme \"Tamamla\" olur ve aynı kayıtla yeniden sorar (ikinci cari açılmaz).", "Müşterinin web sitesi girişini oluşturma / değiştirme / kapatma ve siteden gelen kayıt talebini onaylama / reddetme düğmeleri yalnız Yöneticiye görünür (sunucu zaten yalnız Yöneticiye izin veriyordu)."], duzeltilen: [] },
   { surum: "1.744.21", tarih: "14.11.2026", eklenen: [], degisen: ["Cari ekstresi çıktısı (Yazdır / PDF / WhatsApp / e-posta): bedenli fişler açıklamada \"36:1, 37:2…\" yazısı yerine ekrandaki ekstre gibi beden matrisiyle — satır ürün · renk, sütun beden, sonda toplam × birim fiyat. Bedensiz ürünler ve para hareketleri eskisi gibi tek satır; pencere genişledi."], duzeltilen: [] },
   { surum: "1.744.20", tarih: "13.11.2026", eklenen: [], degisen: [], duzeltilen: ["Vitrin düzeltmesinden sonra kalan yanlış \"Başka cihazdan güncellendi: Stok\" bildirimi: \"Standart\" ya da model renkli varyantlarda sunucu renk kimliğini boş döndürdüğü için varyant \"değişmiş\" sayılıyordu. Renk kimliği artık karşılaştırılmaz (renk adı karşılaştırılmaya devam eder). Günlükteki bildirim satırı artık en fazla 3 farkı birlikte yazar."] },

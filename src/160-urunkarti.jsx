@@ -323,7 +323,7 @@ function ProductMatrixCard({
   onTeknikCizimEkle, onTeknikCizimSil, onTeknikCizimGuncelle, onTeknikNotChange, onTeknikCizimAc,
   onRenkResmiChange, onRenkResmiRemove, onKategoriChange, onKapakResmiChange, cariler, onGoToCari, onRemoveHareketGlobal,
   onEkFiyatEkle, onEkFiyatSil, tumUrunler, onKullanilanUrunAc, onHizliCariEkle, onHizliHammaddeEkle, onReceteSilToplu, onReceteGrubuGuncelle: receteGrubuGuncelleHam, onProsesUcretGuncelle, tanimlarProsesler, tanimlarAraProsesler, tanimlarBirimler, tanimlarHammaddeTipleri, onUrunGuncelle,
-  onMinStokGuncelle, baslangicAcik, siparisler, uretim, onGoToSiparis, onGoToUretim, tanimlarOzelKodAlanlari, tanimlarKombinasyonlar, onYeniRenkKaydet, onBarkodTamamla, onRenkleriTipeBagla, firmaBilgileri, tanimlarFiyatGruplari, onPencereAc, onKombinasyonOlustur, onGoToUrun, showToast, asortiler, tanimlarCeviriler, onCevirilerKaydet, tanimlarSiteGruplari, onSiteGruplariKaydet }) {
+  onMinStokGuncelle, baslangicAcik, siparisler, uretim, onGoToSiparis, onSiparisPenceresiAc, onGoToUretim, tanimlarOzelKodAlanlari, tanimlarKombinasyonlar, onYeniRenkKaydet, onBarkodTamamla, onRenkleriTipeBagla, firmaBilgileri, tanimlarFiyatGruplari, onPencereAc, onKombinasyonOlustur, onGoToUrun, showToast, asortiler, tanimlarCeviriler, onCevirilerKaydet, tanimlarSiteGruplari, onSiteGruplariKaydet }) {
   const [open, setOpen] = useState(!!baslangicAcik);
   const [urunSagMenu, setUrunSagMenu] = useState(null);
   // Sitede görünen adların çevirisi (v1.651.0, 268): sağ tık › "Çeviriler".
@@ -7130,7 +7130,9 @@ function ProductMatrixCard({
                 <button
                   key={s.id}
                   type="button"
-                  onClick={() => onGoToSiparis(s.id)}
+                  // AYRI SEKMEDE (v1.744.26): siparişin kendi penceresi açılır, kapatınca bu ürün kartına dönülür
+                  // (`gelinen` = bu kartın penceresi). Eskiden sipariş listesine gidip aramayı süzüyordu.
+                  onClick={() => (onSiparisPenceresiAc ? onSiparisPenceresiAc(s.id, `urun-${product.id}`) : onGoToSiparis(s.id))}
                   style={{
                     width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "10px 12px",
                     background: "transparent", border: "none", cursor: "pointer", textAlign: "left", flexWrap: "wrap",
