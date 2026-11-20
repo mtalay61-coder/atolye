@@ -57,6 +57,11 @@
    - Deneme dosyası yerel kopyadan üretildi.
    - Canlıda `rls-yazma.sql`'in silme korumaları (`silme_koruma`: urunler, cariler, siparisler, uretim) var, yerel kaynakta yok.
    - Asıl kurulum dosyası canlıdan üretilecek (Faz 3) ve bu korumaları TAŞIMALI. **Faz 4'te, birleştirme ve yayından ÖNCE** ölçülür.
+   - **Yerelde kanıtlandı (20 Kasım, `t24/sonuc-a6-koruma-2026-11-20.txt`):** ana canlı gibi kurulunca (A6 düzeltilmiş +
+     `rls-yazma.sql` silme korumaları) kurulum dosyası ikisini de taşıyor; korumasız / A6 öncesi ana ile test kırmızıya düşüyor
+     (29 / 47 kırmızı — sahte yeşil yok). Canlıdan üretilen dosya için Faz 4 ölçümü yine gerekli.
+   - `yazma_koruma` (muhasebe / faturalar): v2'de ikisi de GÖRÜNÜM; `rls-yazma.sql` tetikleyiciyi yalnız tabloysa kurar → v2
+     sonrası canlıda beklenmez. Faz 0.4 envanteri (canlı, salt okur) bunu teyit edecek; henüz çalıştırılmadı.
 
 ## Faz 0 — Hazırlık, YALNIZ OKUMA (canlıda yazma yok) — A6 kısmı TAMAM (18 Kasım; 23 önkoşulu 0.2 henüz çalıştırılmadı)
 
@@ -129,7 +134,7 @@ Yeni yer (18 Kasım kararı): genel yayından önce, canlıya yalnız Faz 1–3'
 | Dosya önce yerelde yalıtılmış boş veritabanında (Claude): editor-icin.py, 18/18, pg_dump, dolu veritabanında durma | Hepsi geçer |
 | **Boş** bir deneme projesi: mevcut deneme projesini silip yenisi ya da duraklatıp ikincisi. Kota: kullanıcı başına 2 etkin ücretsiz proje, duraklatılmış sayılmaz. "Allow new users to sign up" KAPALI | Proje boş |
 | Dosya SQL Editor'de tek Run | 18/18; parmak izi (`collate "C"`) canlıyla birebir. "Kaynak canlıyla birebir" maddesi kapanır |
-| Faz 0.4 envanteri: `silme_koruma` / `yazma_koruma` / `tanimlar_kullanici_koruma` yeni projede | Hepsi var |
+| Faz 0.4 envanteri: `silme_koruma` ×4 / `tanimlar_kullanici_koruma` yeni projede (`yazma_koruma` yalnız canlıda varsa) | Canlıyla birebir |
 | `24-a6-onkosul-salt-okur.sql` yeni projede | UYGULANMIŞ (düzeltme canlıdan kopyalandı) |
 | İlk yönetici + personel + `ta6/yetki-sinama.sql` | AÇIK 0 · BAŞARISIZ 0; E4 / E5 / F3 artık RET (silme_koruma) |
 | Deneme sunucusuyla uygulama akışı (1.744.25): giriş, F5, stok, kasa | Normal |

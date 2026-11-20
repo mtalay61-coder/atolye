@@ -20,6 +20,11 @@
 #      bakiyesi (kas_hareket) beklenen.
 #   7) Veri ayrımı: A'nın ürün / fiş / kasa / cari satırları B'de ve anada yok; B'ninkiler A'da ve anada yok; ananın işaretli verisi
 #      A ve B'de yok; numara sayaçları birbirinden bağımsız.
+#   8) A6 ve canlının koruma tetikleyicileri (20 Kasım; A6 canlıda): ana canlı gibi A6 düzeltilmiş (15-duzeltme / rls-rol.sql) VE
+#      rls-yazma.sql'in silme korumaları kurulu (canlıda 11 Ekim'den beri; hazirla.sh kurmuyordu). Kurulum dosyası bunları TAŞIMALI:
+#      her firmada A6 önkoşulu UYGULANMIŞ, koruma tetikleyicileri anayla birebir; davranış: personel ve Yönetici tanımlar kimliğini
+#      değiştiremez, satır yoksa jetonlu hesaba yetki yok, yetkisiz personel / listede olmayan 4 ana tabloda silemez, silme
+#      yetkili personel ve Yönetici siler; ta6/yetki-sinama.sql firmada AÇIK 0 · BAŞARISIZ 0, E4 / E5 / F3 RET (silme_koruma).
 # Kullanım: ./test24.sh   (T24_HOST / T24_PORT; postgres + authenticator şifresiz; atolye_guvenlik hazır — hazirla.sh)
 T=$(cd "$(dirname "$0")" && pwd); A=$(cd "$T/../../../.." && pwd); G=$A/stok-v2/guvenlik
 H=${T24_HOST:-localhost}; PT=${T24_PORT:-5432}; KAYNAK=${GUVENLIK_DB:-atolye_guvenlik}
@@ -60,8 +65,20 @@ PGOPTIONS='-c client_min_messages=warning' $PG -d t24_ana -f $A/test/ekran/sema-
 editor t24_ana $G/23-platform-yonetim.sql >/dev/null 2>&1 || { echo "kurulum başarısız (23)"; exit 2; }
 editor t24_ana $A/kurulum-betigi.sql >/dev/null 2>&1 || { echo "kurulum başarısız (kurulum-betigi.sql Editor gibi)"; exit 2; }
 PGOPTIONS='-c client_min_messages=warning' $PG -d t24_ana -f $T/zorla.sql >/dev/null || { echo "kurulum başarısız (zorla.sql)"; exit 2; }
+# CANLI GİBİ: rls-yazma.sql'in tamamı (silme_koruma: urunler / cariler / siparisler / uretim; yazma_koruma yalnız muhasebe / faturalar
+# TABLOYSA — v2'de ikisi de görünüm, kurulmaz). hazirla.sh yalnız fonksiyonu kurar (kos.sh taklidinde bu tablolar yoktu); canlıda
+# tetikleyiciler 11 Ekim'den beri var. Kurulum dosyası ana neyse onu kopyalar — korumayı ancak anada varsa sınayabiliriz.
+PGOPTIONS='-c client_min_messages=warning' $PG -d t24_ana -f $A/rls-yazma.sql >/dev/null || { echo "kurulum başarısız (rls-yazma.sql)"; exit 2; }
 sed -n '1,/ERP tablolarının en küçük/p' $A/stok-v2/test/guvenlik/t19/kur.sql | grep -v 'ERP tablolarının' > $IS/taban.sql
-echo "== Ana: $KAYNAK + sema-tamamla + 23 + kurulum-betigi + zorla.sql · $(git -C $A rev-parse --short HEAD) + çalışma ağacı"
+echo "== Ana: $KAYNAK + sema-tamamla + 23 + kurulum-betigi + zorla.sql + rls-yazma.sql · $(git -C $A rev-parse --short HEAD) + çalışma ağacı"
+# koruma <db>: canlının koruma tetikleyicileri (tablo:ad:fonksiyon:argümanlar:etkin), sıralı
+koruma() { q "$1" "select string_agg(g.tgrelid::regclass::text || ':' || g.tgname || ':' || g.tgfoid::regproc::text || '(' || encode(g.tgargs, 'escape') || ')' || ':' || g.tgenabled::text, ' ' order by g.tgrelid::regclass::text collate \"C\", g.tgname)
+  from pg_trigger g where not g.tgisinternal and g.tgname in ('silme_koruma', 'yazma_koruma', 'tanimlar_kullanici_koruma')" | sed 's/\\000/,/g'; }
+a6() { editor "$1" $G/24-a6-onkosul-salt-okur.sql 2>/dev/null | awk -F'|' '$1=="99"{print $3}'; }
+KORUMA_BEKLENEN="cariler:silme_koruma:yazma_yetkisi_koruma(cari,silme,):O siparisler:silme_koruma:yazma_yetkisi_koruma(siparis,silme,):O tanimlar:tanimlar_kullanici_koruma:tanimlar_kullanici_koruma():O uretim:silme_koruma:yazma_yetkisi_koruma(uretim,silme,):O urunler:silme_koruma:yazma_yetkisi_koruma(stok,silme,):O"
+echo "== 0) Ana canlı gibi mi (kurulum dosyası anayı kopyalar)"
+sonuc "ana: A6 önkoşulu (düzeltme kaynakta, canlıda 20 Kasım)" "UYGULANMIŞ" "$(a6 t24_ana)"
+sonuc "ana: koruma tetikleyicileri (silme_koruma ×4, tanimlar_kullanici_koruma)" "$KORUMA_BEKLENEN" "$(koruma t24_ana)"
 
 echo "== 1) Üretici erişimi"
 sonuc "listede olmayan hesap üretemez" "ret:yetki" "$(api t24_ana "$YAB" "select length(public.kurulum_betigi()) > 0")"
@@ -95,6 +112,8 @@ for f in a b; do
   sonuc "proje $f: pg_dump şeması anayla aynı (sırasız; takma ad listesi satırı hariç)" "0" "$(diff <(grep -vE 'jsonb_populate_record\(NULL::public\.siparisler' $IS/dump-ana.sql) <(grep -vE 'jsonb_populate_record\(NULL::public\.siparisler' $IS/dump-$f.sql) | grep -c '^[<>]')"
   sonuc "proje $f: tüm fark yalnız o satır (bir eksik, bir fazla)" "1 1" "$(diff $IS/dump-ana.sql $IS/dump-$f.sql | grep -c '^<') $(diff $IS/dump-ana.sql $IS/dump-$f.sql | grep -c '^>')"
   sonuc "proje $f: 23 önkoşulu" "UYGULANMIŞ" "$(editor t24_$f $G/23-onkosul-salt-okur.sql | grep '^99|' | cut -d'|' -f3)"
+  sonuc "proje $f: koruma tetikleyicileri anayla birebir (silme_koruma ×4, tanimlar_kullanici_koruma)" "$KORUMA_BEKLENEN" "$(koruma t24_$f)"
+  sonuc "proje $f: A6 gövdeleri (md5: koruma / yetki = düzeltilmiş)" "yeni yeni" "$(editor t24_$f $G/24-a6-onkosul-salt-okur.sql 2>/dev/null | awk -F'|' '$1=="1"||$1=="2"{print $3}' | tr '\n' ' ' | sed 's/ $//')"
   sonuc "proje $f: yayın üyelikleri" "supabase_realtime:cariler,kz_tablo" "$(q t24_$f "select pubname || ':' || string_agg(tablename, ',' order by tablename) from pg_publication_tables where schemaname = 'public' group by pubname")"
   sonuc "proje $f: zorlayıcı nesneler davranıyor (a→z çağrısı, gövde metni, kimlik başlangıcı, hesaplanan sütun)" \
         "41|tek ' tırnak | \$ ve \$\$ ve \$1 ve \\n ters bölü|100|6" \
@@ -131,6 +150,7 @@ for f in a b; do
   q t24_$f "insert into public.tanimlar (id, veri) values ('tekil', jsonb_build_object('girisAktifMi', true, 'kullanicilar', jsonb_build_array(jsonb_build_object(
     'id', 'kullanici-ilk', 'ad', 'Ali', 'kullaniciAdi', 'ali', 'rol', 'Yönetici', 'yetkiler', '{}'::jsonb, 'eposta', 'ali@atolye.local', 'bulutHesabi', true))))
     on conflict (id) do nothing" >/dev/null
+  sonuc "$f: A6 önkoşulu (ilk yönetici satırıyla)" "UYGULANMIŞ" "$(a6 t24_$f)"
   sonuc "$f: Yönetici yonetici_mi" "ok:t" "$(api t24_$f "$YON" "select public.yonetici_mi()")"
   sonuc "$f: Yönetici tanımları okur (kullanıcı sayısı)" "ok:1" "$(api t24_$f "$YON" "select jsonb_array_length(veri->'kullanicilar') from public.tanimlar")"
   sonuc "$f: listede olmayan hesap yonetici_mi" "ok:f" "$(api t24_$f "$YAB" "select public.yonetici_mi()")"
@@ -161,6 +181,51 @@ sonuc "B'nin verisi A'da yok" "0 0 0 0 0" "$(sayim t24_a b)"
 sonuc "B'nin verisi anada yok" "0 0 0 0 0" "$(sayim t24_ana b)"
 sonuc "ananın işaretli verisi A ve B'de yok" "0 0" "$(pg_dump -d t24_a --data-only | grep -c 'SIZINTI-7Q') $(pg_dump -d t24_b --data-only | grep -c 'SIZINTI-7Q')"
 sonuc "B'nin stoğu A'nın stoğundan bağımsız (A 5, B 7)" "5 7" "$(q t24_a "select miktar::int from public.stk_stok where urun_id = 'urun-a'") $(q t24_b "select miktar::int from public.stk_stok where urun_id = 'urun-b'")"
+
+echo "== 8) A6 ve silme korumaları — davranış (her firmada; ana firmanın değil, KURULUM DOSYASININ kurduğu kod)"
+PER='{"role":"authenticated","email":"personel@atolye.local"}'
+SIL='{"role":"authenticated","email":"silici@atolye.local"}'
+for f in a b; do
+  # personel: hiçbir modül yetkisi yok; silici: 4 modülde yalnız "silme". Ayrıca ta6/yetki-sinama.sql'in kişileri (deneme = Yönetici).
+  q t24_$f "update public.tanimlar set veri = jsonb_set(veri, '{kullanicilar}', (veri->'kullanicilar') || jsonb_build_array(
+      jsonb_build_object('id','k-per','ad','Personel','kullaniciAdi','personel','rol','Personel','yetkiler','{}'::jsonb,'eposta','personel@atolye.local'),
+      jsonb_build_object('id','k-sil','ad','Silici','kullaniciAdi','silici','rol','Personel','eposta','silici@atolye.local','yetkiler',
+        '{\"stok\": {\"silme\": true}, \"cari\": {\"silme\": true}, \"siparis\": {\"silme\": true}, \"uretim\": {\"silme\": true}}'::jsonb),
+      jsonb_build_object('id','k-den','ad','Deneme','kullaniciAdi','deneme','rol','Yönetici','yetkiler','{}'::jsonb,'eposta','deneme@atolye.local')))
+    where id = 'tekil';
+    insert into auth.users (email) select e from unnest(array['personel@atolye.local', 'deneme@atolye.local', 'listedeyok@atolye.local']) e
+      where not exists (select 1 from auth.users u where u.email = e);
+    -- D1 (günlük silme) satır düzeyi korumayı ölçer: boş günlükte tetikleyici hiç çalışmaz, '0 satır' sahte geçer → bir satır
+    insert into public.gunluk (id) values ('t24-g') on conflict do nothing" >/dev/null
+  # A6: kimlik değişikliği herkese kapalı (jetonlu); satır yoksa jetonlu hesaba yetki yok
+  sonuc "$f: personel tanımlar kimliğini değiştiremez (A6)" "ret:yetki" "$(api t24_$f "$PER" "update public.tanimlar set id = 'ele-gecir' where id = 'tekil'")"
+  sonuc "$f: Yönetici de değiştiremez (A6)" "ret:yetki" "$(api t24_$f "$YON" "update public.tanimlar set id = 'ele-gecir' where id = 'tekil'")"
+  sonuc "$f: personel yetki_var_mi(muhasebe, kaydetme)" "ok:f" "$(api t24_$f "$PER" "select public.yetki_var_mi(array['muhasebe'], 'kaydetme')")"
+  q t24_$f "update public.tanimlar set id = 'bakim' where id = 'tekil'" >/dev/null   # jetonsuz bakım (Editor) serbest
+  sonuc "$f: satır yokken Yönetici'ye bile yetki yok (A6)" "ok:f" "$(api t24_$f "$YON" "select public.yetki_var_mi(array['muhasebe'], 'kaydetme')")"
+  sonuc "$f: satır yokken personele yetki yok (A6)" "ok:f" "$(api t24_$f "$PER" "select public.yetki_var_mi(array['muhasebe'], 'kaydetme')")"
+  q t24_$f "update public.tanimlar set id = 'tekil' where id = 'bakim'" >/dev/null
+  sonuc "$f: satır geri gelince Yönetici yetkili" "ok:t" "$(api t24_$f "$YON" "select public.yetki_var_mi(array['muhasebe'], 'kaydetme')")"
+  # silme_koruma: her tabloda bir satır; yetkisiz ve listede olmayan silemez, silici ve Yönetici siler
+  for t in urunler:ad cariler:unvan siparisler:id uretim:id; do
+    tb=${t%%:*}; sut=${t##*:}
+    q t24_$f "insert into public.$tb (id$([ $sut = id ] || echo ", $sut")) values ('sil-per'$([ $sut = id ] || echo ", 'x'")), ('sil-yab'$([ $sut = id ] || echo ", 'x'")), ('sil-sil'$([ $sut = id ] || echo ", 'x'")), ('sil-yon'$([ $sut = id ] || echo ", 'x'"))" >/dev/null
+    sonuc "$f: $tb — personel (silme yetkisi yok) silemez" "ret:yetki" "$(api t24_$f "$PER" "delete from public.$tb where id = 'sil-per'")"
+    sonuc "$f: $tb — listede olmayan silemez" "ret:yetki" "$(api t24_$f "$YAB" "delete from public.$tb where id = 'sil-yab'")"
+    sonuc "$f: $tb — silme yetkili personel siler" "ok:" "$(api t24_$f "$SIL" "delete from public.$tb where id = 'sil-sil'")"
+    sonuc "$f: $tb — Yönetici siler" "ok:" "$(api t24_$f "$YON" "delete from public.$tb where id = 'sil-yon'")"
+    sonuc "$f: $tb — kalan sınama satırları (yalnız reddedilenler)" "sil-per,sil-yab" "$(q t24_$f "select string_agg(id, ',' order by id) from public.$tb where id like 'sil-%'")"
+    q t24_$f "alter table public.$tb disable trigger user; delete from public.$tb where id like 'sil-%'; alter table public.$tb enable trigger user" >/dev/null
+  done
+  # ta6/yetki-sinama.sql (canlı / deneme projesinde kullanılan sıkı sınama; her deneme geri alınır) — tek oturum (SQL Editor gibi)
+  ys=$($PG -d t24_$f -At -F '|' < $A/stok-v2/test/guvenlik/ta6/yetki-sinama.sql 2>&1)
+  sonuc "$f: yetki-sinama.sql özeti (AÇIK / BAŞARISIZ)" "AÇIK: 0 · BAŞARISIZ: 0" "$(echo "$ys" | awk -F'|' '$1=="ZZ"{print $3}' | sed 's/ · BİLİNEN.*//')"
+  sonuc "$f: E4 / E5 / F3 (cari / ürün silme) artık RET — silme_koruma" "UYGUN UYGUN UYGUN" "$(for r in E4 E5 F3; do echo "$ys" | awk -F'|' -v r=$r '$1==r{print $6}'; done | tr '\n' ' ' | sed 's/ $//')"
+  sonuc "$f: A6 / A6b / Y7 (kimlik değiştirme) RET" "UYGUN UYGUN UYGUN" "$(for r in A6 A6b Y7; do echo "$ys" | awk -F'|' -v r=$r '$1==r{print $6}'; done | tr '\n' ' ' | sed 's/ $//')"
+  echo "$ys" > $IS/yetki-sinama-$f.txt
+  [ -n "${T24_SINAMA_DOK:-}" ] && cp $IS/yetki-sinama-$f.txt "$T24_SINAMA_DOK-$f.txt"
+  sonuc "$f: sınamadan sonra tanımlar satırı tekil ve 4 kullanıcı" "tekil 4" "$(q t24_$f "select string_agg(id, ',') || ' ' || max(jsonb_array_length(veri->'kullanicilar')) from public.tanimlar")"
+done
 
 [ -n "${T24_TUT:-}" ] || for d in t24_ana t24_a t24_b t24_c t24_d; do $PG -d postgres -c "drop database if exists $d" >/dev/null 2>&1; done
 echo "── test24: $GECTI geçti, $KALDI kaldı ──"; [ $KALDI = 0 ]

@@ -33,6 +33,8 @@ dosyasının tamamını Supabase › SQL Editor'da çalıştırın. Kurulum dosy
    - Bir adım düşerse ileti hangi adımda ve neden durduğunu yazar ("KURULUM DURDU — 412. adım (…)"); doğrulama tutmazsa
      "KURULUM DOĞRULAMASI TUTMADI (…)". İki durumda da **hiçbir şey kurulmamış olur** (tek işlem) — iletiyi paylaşın.
    - Dosya yalnız BOŞ projede çalışır; dolu projeye yanlışlıkla yapıştırılırsa hiçbir şeye dokunmadan durur.
+   - Güvenlik korumaları ana projeden birebir gelir: A6 (tanımlar kimliği değiştirilemez, satır yoksa yetki yok) ve
+     `silme_koruma` (ürün / cari / sipariş / üretim silmesi modül yetkisine bağlı). Yerel kabul testi: `t24/test24.sh` 0) ve 8).
 
 Dosya **veri taşımaz**: ana firmanın carisi, ürünü, fişi, kasası, tanımları, e-posta ayarı… hiçbiri dosyaya girmez. Yalnız üç ayar
 satırı yazılır: `stk_ayar` (v2 bayrakları — ana projeyle aynı), `degisiklik` ve `kas_ayar` (boş). Numara sayaçları sıfırdan başlar.
