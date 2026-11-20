@@ -20,6 +20,10 @@ ADIMLAR
   6 görüntü (sonra): tekil · 2ed848fc9fdeefe41b3f408e4eb90072 | 54339c19077d8523f9af00ded14d25c3 | 945 | 194 → BİREBİR
   7 uygulama       : (1.744.22) giriş, F5'te şifre istenmedi, ekranlar hatasız, uyarı / bekleyen kayıt şeridi yok → GEÇTİ
 
-SONUÇ: A6 canlıda KAPALI. Veri değişmedi. Geri alma UYGULANMADI (gerek olmadı; ⚠ geri alma açığı yeniden açar, ayrı onaya bağlı).
+SONUÇ: A6 canlıda KAPALI. Veri değişmedi.
+KÖTÜYE KULLANIM — KANITIN KAPSAMI: İncelenen hesap durumunda (18 ve 20 Kasım; 3 giriş hesabı, üçü de Tanımlar listesinde Yönetici;
+listede olmayan hesap 0; tanımlar tek satır 'tekil', yapı sağlam) yönetici dışı hesap yoktu; kötüye kullanım TESPİT EDİLMEDİ. Bu,
+açığın geçmişte HİÇ kullanılmadığını kesin olarak kanıtlamaz: silinmiş hesaplar, geçmiş rol değişiklikleri ve geçmiş API istekleri bu
+kontrollerin kapsamında değil (Supabase istek / Auth günlükleri incelenmedi). Geri alma UYGULANMADI (gerek olmadı; ⚠ geri alma açığı yeniden açar, ayrı onaya bağlı).
 Canlı tanımların düzeltme öncesi arşivi: stok-v2/guvenlik/24-a6-canli-yedek-2026-11-18.sql.
 DEĞİŞMEYENLER: PR #364 taslak / birleştirilmedi · main · surum.json (1.744.22) · yayın · 23 · yeni kurulum betiği.

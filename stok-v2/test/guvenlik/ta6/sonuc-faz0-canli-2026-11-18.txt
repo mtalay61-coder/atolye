@@ -22,8 +22,11 @@
       rol dağılımı Yönetici: 3 · e-postası dolu 3 / boş 0 · yinelenen 0 · pasif 0
    H  auth.users 3 / onaylı 3 · listedekilerden hesabı olan 3 / 3 · listede OLMAYAN hesap 0 (son 7 gün 0)
    GENEL HAZIR
-   Değerlendirme: bugün canlıda yönetici olmayan ya da listede olmayan hesap YOK → A6 bugün fiilen kullanılamaz; ilk personel
-   eklendiğinde (ya da kayıt açılırsa) kullanılabilir hâle gelir → düzeltme personel eklenmeden önce uygulanmalı.
+   Değerlendirme (KAPSAMI SINIRLI): incelenen anda (18 Kasım) canlıda yönetici dışı ya da listede olmayan giriş hesabı yoktu;
+   bu anlık bir durumdur — geçmişte böyle bir hesabın bulunmadığını ya da açığın hiç kullanılmadığını KANITLAMAZ (silinmiş
+   hesaplar, rol değişiklikleri ve geçmiş istekler bu sorguyla görülmez). Kötüye kullanım TESPİT EDİLMEDİ: tanımlar satırı tek
+   ve 'tekil', veri yapısı sağlam, listede olmayan hesap 0. İlk personel eklendiğinde açık kullanılabilir hâle gelirdi → düzeltme
+   personel eklenmeden önce uygulanmalıydı (20 Kasım uygulandı).
 
 4) 24-a6-canli-yedek-salt-okur.sql (ana proje) → arşiv: stok-v2/guvenlik/24-a6-canli-yedek-2026-11-18.sql
    gövde md5: koruma 7a75a37deb2f40bf71569da55292d851 · yetki 85a0b3b9c38dc0f7c55f5f8f39519fc4 (geri alma dosyasının 'eski'
