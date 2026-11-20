@@ -12,6 +12,8 @@ T=$(cd "$(dirname "$0")" && pwd); A=$(cd "$T/../../../.." && pwd)
 export PGHOST=${PGHOST:-localhost} PGUSER=${PGUSER:-postgres}
 [ -n "${KOPRU_PG:-}" ] || { echo "KOPRU_PG gerekli (node pg modülü)"; exit 2; }
 hata=0
+# ana: canlı benzeri kopya (Faz 0.4 envanteriyle karşılaştırılır; fark varsa koşu kırmızı). Önce kos-guvenlik.sh gerekir.
+bash $T/canli-benzeri.sh || hata=$((hata + 1))
 T24_TUT=1 bash $T/test24.sh || hata=$((hata + 1))
 for d in t24_a t24_b; do
   psql -X -q -v ON_ERROR_STOP=1 -d $d -c "update public.tanimlar set veri = veri || '{\"giderKartlari\": []}'::jsonb" -f $A/test/ekran/kurulum.sql > /dev/null \

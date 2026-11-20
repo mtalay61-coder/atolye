@@ -27,7 +27,9 @@
 #      yetkili personel ve Yönetici siler; ta6/yetki-sinama.sql firmada AÇIK 0 · BAŞARISIZ 0, E4 / E5 / F3 RET (silme_koruma).
 # Kullanım: ./test24.sh   (T24_HOST / T24_PORT; postgres + authenticator şifresiz; atolye_guvenlik hazır — hazirla.sh)
 T=$(cd "$(dirname "$0")" && pwd); A=$(cd "$T/../../../.." && pwd); G=$A/stok-v2/guvenlik
-H=${T24_HOST:-localhost}; PT=${T24_PORT:-5432}; KAYNAK=${GUVENLIK_DB:-atolye_guvenlik}
+# Kaynak (20 Kasım): atolye_canli = canli-benzeri.sh (kos-guvenlik.sh'ın sıkılaştırılmış atolye_guvenlik'i + Faz 0.4 canlı envanteriyle
+# hizalama; envanter karşılaştırması orada). Eski davranış için T24_KAYNAK=atolye_guvenlik.
+H=${T24_HOST:-localhost}; PT=${T24_PORT:-5432}; KAYNAK=${T24_KAYNAK:-atolye_canli}
 export PGHOST=$H PGPORT=$PT PGUSER=postgres
 PG="psql -X -q -v ON_ERROR_STOP=1"
 IS=$(mktemp -d /tmp/t24.XXXXXX); trap 'rm -rf "$IS"' EXIT
@@ -59,13 +61,13 @@ YAB='{"role":"authenticated","email":"listede-yok@baska.test"}'
 ANON='{"role":"anon"}'
 
 for d in t24_ana t24_a t24_b t24_c t24_d; do $PG -d postgres -c "drop database if exists $d" >/dev/null 2>&1; done
-$PG -d postgres -c "create database t24_ana template $KAYNAK" >/dev/null || { echo "kurulum başarısız ($KAYNAK yok — hazirla.sh)"; exit 2; }
+$PG -d postgres -c "create database t24_ana template $KAYNAK" >/dev/null || { echo "kurulum başarısız ($KAYNAK yok — t24/canli-benzeri.sh)"; exit 2; }
 q t24_ana "create table if not exists auth.users (id uuid primary key default gen_random_uuid(), email text)" >/dev/null
 PGOPTIONS='-c client_min_messages=warning' $PG -d t24_ana -f $A/test/ekran/sema-tamamla.sql >/dev/null 2>&1 || { echo "kurulum başarısız (sema-tamamla)"; exit 2; }
 editor t24_ana $G/23-platform-yonetim.sql >/dev/null 2>&1 || { echo "kurulum başarısız (23)"; exit 2; }
 editor t24_ana $A/kurulum-betigi.sql >/dev/null 2>&1 || { echo "kurulum başarısız (kurulum-betigi.sql Editor gibi)"; exit 2; }
 PGOPTIONS='-c client_min_messages=warning' $PG -d t24_ana -f $T/zorla.sql >/dev/null || { echo "kurulum başarısız (zorla.sql)"; exit 2; }
-# CANLI GİBİ: rls-yazma.sql'in tamamı (silme_koruma: urunler / cariler / siparisler / uretim; yazma_koruma yalnız muhasebe / faturalar
+# CANLI GİBİ (canli-benzeri.sh zaten kurar; burada tekrar — eski kaynakla da koşabilsin, tekrar zararsız): rls-yazma.sql'in tamamı (silme_koruma: urunler / cariler / siparisler / uretim; yazma_koruma yalnız muhasebe / faturalar
 # TABLOYSA — v2'de ikisi de görünüm, kurulmaz). hazirla.sh yalnız fonksiyonu kurar (kos.sh taklidinde bu tablolar yoktu); canlıda
 # tetikleyiciler 11 Ekim'den beri var. Kurulum dosyası ana neyse onu kopyalar — korumayı ancak anada varsa sınayabiliriz.
 PGOPTIONS='-c client_min_messages=warning' $PG -d t24_ana -f $A/rls-yazma.sql >/dev/null || { echo "kurulum başarısız (rls-yazma.sql)"; exit 2; }
@@ -224,6 +226,31 @@ for f in a b; do
   sonuc "$f: A6 / A6b / Y7 (kimlik değiştirme) RET" "UYGUN UYGUN UYGUN" "$(for r in A6 A6b Y7; do echo "$ys" | awk -F'|' -v r=$r '$1==r{print $6}'; done | tr '\n' ' ' | sed 's/ $//')"
   echo "$ys" > $IS/yetki-sinama-$f.txt
   [ -n "${T24_SINAMA_DOK:-}" ] && cp $IS/yetki-sinama-$f.txt "$T24_SINAMA_DOK-$f.txt"
+  # 8b) Görünüme çevrilen tablolar (canlı Faz 0.4: muhasebe / faturalar / gorevler / modeller … görünüm, authenticated'ta IUD yetkisi
+  #     görünür) DOĞRUDAN yazılamaz; yazma tek kapıdan: muhasebe → kas_yaz (stk_yetki muhasebe|fisler|cari kaydetme; yalnız kur
+  #     serbest), faturalar → lst_yaz (stk_yetki fisler|muhasebe kaydetme). Firmada da canlıdaki gibi.
+  sonuc "$f: muhasebe / faturalar / gorevler / modeller görünüm; liste_tablolari canlıdaki gibi" \
+        "v v v v teklifler,faturalar,koliler,gorevler,modeller,fis_defteri,mesajlar" \
+        "$(q t24_$f "select string_agg(c.relkind::text, ' ' order by array_position(array['muhasebe','faturalar','gorevler','modeller'], c.relname::text)) || ' ' || (select array_to_string(liste_tablolari, ',') from public.stk_ayar where id = 'tekil') from pg_class c where c.relnamespace = 'public'::regnamespace and c.relname in ('muhasebe','faturalar','gorevler','modeller')")"
+  for g in "insert into public.muhasebe (id, veri) values ('x', '{}')" "update public.muhasebe set veri = veri" "delete from public.muhasebe" \
+           "insert into public.faturalar (id, veri) values ('x', '{}')" "update public.faturalar set veri = veri" "delete from public.gorevler" \
+           "insert into public.cari_hareketleri (id, cari_id) values ('x', 'c')" "delete from public.stk_eski_hareketler_g" "delete from public.stk_stok" \
+           "insert into public.kas_hareket (id, hesap_id, veri) values ('x', 'K1', '{}')" "insert into public.lst_kayit (tablo, id, sira, veri) values ('faturalar', 'x', 1, '{}')"; do
+    for kim in YON PER; do
+      r=$(api t24_$f "${!kim}" "$g"); case "$r" in ok:*) r="YAZDI ($r)";; *) r="reddedildi";; esac
+      sonuc "$f: doğrudan yazma reddi [$kim] ${g:0:60}" "reddedildi" "$r"
+    done
+  done
+  KUR='{"ayar": {"kurlar": {"USD": 1}}}'; KASA='{"hesaplar": [{"id": "K-t24", "tur": "kasa", "veri": {"ad": "Sinama"}}]}'
+  FAT='{"tablo": "faturalar", "kayitlar": [{"id": "t24-fat", "veri": {"no": 1}}]}'; TEK='{"tablo": "teklifler", "kayitlar": [{"id": "t24-tek", "veri": {"no": 1}}]}'
+  sonuc "$f: kas_yaz — yetkisiz personel kasa hesabı yazamaz (muhasebe yolu)" "ret:yetki" "$(api t24_$f "$PER" "select public.kas_yaz('$KASA') is not null")"
+  sonuc "$f: kas_yaz — yetkisiz personel yalnız kur güncelleyebilir (tasarım)" "ok:t" "$(api t24_$f "$PER" "select public.kas_yaz('$KUR') is not null")"
+  sonuc "$f: kas_yaz — Yönetici kasa hesabı yazar" "ok:t" "$(api t24_$f "$YON" "select public.kas_yaz('$KASA') is not null")"
+  sonuc "$f: lst_yaz — yetkisiz personel fatura yazamaz (faturalar yolu)" "ret:yetki" "$(api t24_$f "$PER" "select public.lst_yaz('$FAT') is not null")"
+  sonuc "$f: lst_yaz — Yönetici fatura yazar" "ok:t" "$(api t24_$f "$YON" "select public.lst_yaz('$FAT') is not null")"
+  sonuc "$f: lst_yaz — teklif listesi giriş yapmış herkese açık (tasarım)" "ok:t" "$(api t24_$f "$PER" "select public.lst_yaz('$TEK') is not null")"
+  sonuc "$f: lst_yaz — listede olmayan fatura yazamaz" "ret:yetki" "$(api t24_$f "$YAB" "select public.lst_yaz('$FAT') is not null")"
+  sonuc "$f: gun_sonu_gonderim RLS açık (canlıdaki gibi)" "t" "$(q t24_$f "select relrowsecurity from pg_class where oid = 'public.gun_sonu_gonderim'::regclass")"
   sonuc "$f: sınamadan sonra tanımlar satırı tekil ve 4 kullanıcı" "tekil 4" "$(q t24_$f "select string_agg(id, ',') || ' ' || max(jsonb_array_length(veri->'kullanicilar')) from public.tanimlar")"
 done
 
