@@ -2,8 +2,14 @@
 --  23-platform-yonetim-geri-al.sql — 23'Ü GERİ ALIR (platform_ tabloları ve fonksiyonları)   (AYRI ONAYLA)
 --  Supabase › SQL Editor › dosyanın TAMAMI › Run. Tek do bloğu = tek işlem.
 -- =====================================================================================================================
---  VERİ SİLMEZ: platform_firmalar / platform_sozlesmeler / platform_odemeler'de tek satır bile varsa hiçbir şeye dokunmadan DURUR.
---  (Olay günlüğü ve yönetici listesi yalnız bu üçüne bağlı ya da yeniden kurulabilir bilgidir; üçü boşsa birlikte kalkar.)
+--  ⚠ AYRI VE AÇIK ONAY GEREKİR: Faz 2 uygulama onayı geri almayı KAPSAMAZ (23-FAZ2-PAKET.md "Geri dönüş").
+--  DURMA KOŞULU: platform_firmalar / platform_sozlesmeler / platform_odemeler'de tek satır bile varsa hiçbir şeye dokunmadan
+--  DURUR ("DUR: platform tablolarında N kayıt var"); hiçbir şey silinmez.
+--  KALDIRILANLAR (üçü boşsa, tek işlemde): beş tablo ve beş fonksiyon — İÇERİKLERİYLE BİRLİKTE:
+--    - platform_yoneticileri: YÖNETİCİ LİSTESİ SİLİNİR (eklenmiş platform yöneticisi hesapları; giriş hesapları auth.users'ta kalır).
+--      Yeniden uygulamada 23-platform-yonetim.sql'in "SONRA" adımıyla tekrar eklenmeleri gerekir.
+--    - platform_olaylar: OLAY GÜNLÜĞÜ SİLİNİR. Günlük firmaya bağlıdır (firma_id zorunlu, firma silinemez); firma yoksa günlük de
+--      boştur — yani bu yol yalnız boş günlüğü kaldırır.
 --  Kayıt varken geri almak gerekiyorsa önce kayıtları bilinçli olarak dışarı alın; bu dosya o kararı sizin yerinize vermez.
 --  Eksik tablolar (yarım kalmış kurulum) hata vermez: her tablo ayrı denetlenir, olanlar kaldırılır.
 --  Sonra 23-onkosul-salt-okur.sql → GENEL "HAZIR" (23 uygulanmamış hâl).
