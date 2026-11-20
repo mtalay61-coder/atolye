@@ -1,7 +1,7 @@
-# test24.sh · 2026-11-20 · yerel PostgreSQL 16 · ana: atolye_guvenlik (A6 dahil, main 86bf9e2) + sema-tamamla + 23 + kurulum-betigi + zorla.sql + rls-yazma.sql · kurulum Editor gibi (ifade başına ayrı oturum)
+# test24.sh · 2026-11-20 · yerel PostgreSQL 16 · KAYNAK atolye_canli (canli-benzeri.sh: kos-guvenlik sonrası + Faz 0.4 hizalaması) · kurulum Editor gibi
 psql:/home/user/atolye/stok-v2/test/guvenlik/t24/zorla.sql:58: WARNING:  wal_level is insufficient to publish logical changes
 HINT:  Set wal_level to "logical" before creating subscriptions.
-== Ana: atolye_guvenlik + sema-tamamla + 23 + kurulum-betigi + zorla.sql + rls-yazma.sql · c1776a6 + çalışma ağacı
+== Ana: atolye_canli + sema-tamamla + 23 + kurulum-betigi + zorla.sql + rls-yazma.sql · 966dcdd + çalışma ağacı
 == 0) Ana canlı gibi mi (kurulum dosyası anayı kopyalar)
   [GEÇTİ] ana: A6 önkoşulu (düzeltme kaynakta, canlıda 20 Kasım) → UYGULANMIŞ
   [GEÇTİ] ana: koruma tetikleyicileri (silme_koruma ×4, tanimlar_kullanici_koruma) → cariler:silme_koruma:yazma_yetkisi_koruma(cari,silme,):O siparisler:silme_koruma:yazma_yetkisi_koruma(siparis,silme,):O tanimlar:tanimlar_kullanici_koruma:tanimlar_kullanici_koruma():O uretim:silme_koruma:yazma_yetkisi_koruma(uretim,silme,):O urunler:silme_koruma:yazma_yetkisi_koruma(stok,silme,):O
@@ -9,7 +9,7 @@ HINT:  Set wal_level to "logical" before creating subscriptions.
   [GEÇTİ] listede olmayan hesap üretemez → ret:yetki
   [GEÇTİ] anon üretemez → ret:izin
   [GEÇTİ] ERP Yönetici'si üretir → ok:t
-   kurulum dosyası: 6226 satır · 882 adım
+   kurulum dosyası: 6192 satır · 858 adım
 == 2) Dosya: Editor uyumu, veri yok
   [GEÇTİ] editor-icin.py: uygun, 2 ifade → 2
   [GEÇTİ] dosyada çift-dolar dışında dolar yok → 0
@@ -21,7 +21,7 @@ WARNING:  wal_level is insufficient to publish logical changes
 HINT:  Set wal_level to "logical" before creating subscriptions.
   [GEÇTİ] proje a: hata yok → 
   [GEÇTİ] proje a: dosyanın doğrulaması (18 satır) → 18/18 tamam
-  [GEÇTİ] proje a: ana ↔ firma parmak izi (bağımsız sorgu) → 829c5f157d11dca0e9e7301b4bcdb0ef
+  [GEÇTİ] proje a: ana ↔ firma parmak izi (bağımsız sorgu) → f818e902bac085bbf3d6b01e13a7f897
   [GEÇTİ] proje a: pg_dump şeması anayla aynı (sırasız; takma ad listesi satırı hariç) → 0
   [GEÇTİ] proje a: tüm fark yalnız o satır (bir eksik, bir fazla) → 1 1
   [GEÇTİ] proje a: 23 önkoşulu → UYGULANMIŞ
@@ -36,7 +36,7 @@ pg_dump: hint: Consider using a full dump instead of a --data-only dump to avoid
   [GEÇTİ] proje a: ana verisi yok (SIZINTI-7Q her tabloda 0) → 0
   [GEÇTİ] proje b: hata yok → 
   [GEÇTİ] proje b: dosyanın doğrulaması (18 satır) → 18/18 tamam
-  [GEÇTİ] proje b: ana ↔ firma parmak izi (bağımsız sorgu) → 829c5f157d11dca0e9e7301b4bcdb0ef
+  [GEÇTİ] proje b: ana ↔ firma parmak izi (bağımsız sorgu) → f818e902bac085bbf3d6b01e13a7f897
   [GEÇTİ] proje b: pg_dump şeması anayla aynı (sırasız; takma ad listesi satırı hariç) → 0
   [GEÇTİ] proje b: tüm fark yalnız o satır (bir eksik, bir fazla) → 1 1
   [GEÇTİ] proje b: 23 önkoşulu → UYGULANMIŞ
@@ -51,7 +51,7 @@ pg_dump: hint: Consider using a full dump instead of a --data-only dump to avoid
   [GEÇTİ] proje b: ana verisi yok (SIZINTI-7Q her tabloda 0) → 0
 == 4) Güvenlik ağı
   [GEÇTİ] dolu projeye ikinci uygulama durur → public şeması boş değil
-  [GEÇTİ] durduktan sonra parmak izi aynı → 62c2f960331da10d6ae1b634321b256c
+  [GEÇTİ] durduktan sonra parmak izi aynı → 8af78b9aac79e8c4125b2fe0b6038025
   [GEÇTİ] bozuk adım → hangi adımda durduğunu söyler → KURULUM DURDU
   [GEÇTİ] bozuk adımdan sonra public boş (hiçbir şey kalmadı) → 0
   [GEÇTİ] doğrulama tutmazsa → geri alınır → KURULUM DOĞRULAMASI TUTMADI (fonksiyonlar)
@@ -132,6 +132,37 @@ pg_dump: hint: Consider using a full dump instead of a --data-only dump to avoid
   [GEÇTİ] a: yetki-sinama.sql özeti (AÇIK / BAŞARISIZ) → AÇIK: 0 · BAŞARISIZ: 0
   [GEÇTİ] a: E4 / E5 / F3 (cari / ürün silme) artık RET — silme_koruma → UYGUN UYGUN UYGUN
   [GEÇTİ] a: A6 / A6b / Y7 (kimlik değiştirme) RET → UYGUN UYGUN UYGUN
+  [GEÇTİ] a: muhasebe / faturalar / gorevler / modeller görünüm; liste_tablolari canlıdaki gibi → v v v v teklifler,faturalar,koliler,gorevler,modeller,fis_defteri,mesajlar
+  [GEÇTİ] a: doğrudan yazma reddi [YON] insert into public.muhasebe (id, veri) values ('x', '{}') → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [PER] insert into public.muhasebe (id, veri) values ('x', '{}') → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [YON] update public.muhasebe set veri = veri → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [PER] update public.muhasebe set veri = veri → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [YON] delete from public.muhasebe → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [PER] delete from public.muhasebe → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [YON] insert into public.faturalar (id, veri) values ('x', '{}') → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [PER] insert into public.faturalar (id, veri) values ('x', '{}') → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [YON] update public.faturalar set veri = veri → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [PER] update public.faturalar set veri = veri → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [YON] delete from public.gorevler → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [PER] delete from public.gorevler → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [YON] insert into public.cari_hareketleri (id, cari_id) values ('x → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [PER] insert into public.cari_hareketleri (id, cari_id) values ('x → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [YON] delete from public.stk_eski_hareketler_g → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [PER] delete from public.stk_eski_hareketler_g → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [YON] delete from public.stk_stok → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [PER] delete from public.stk_stok → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [YON] insert into public.kas_hareket (id, hesap_id, veri) values ( → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [PER] insert into public.kas_hareket (id, hesap_id, veri) values ( → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [YON] insert into public.lst_kayit (tablo, id, sira, veri) values  → reddedildi
+  [GEÇTİ] a: doğrudan yazma reddi [PER] insert into public.lst_kayit (tablo, id, sira, veri) values  → reddedildi
+  [GEÇTİ] a: kas_yaz — yetkisiz personel kasa hesabı yazamaz (muhasebe yolu) → ret:yetki
+  [GEÇTİ] a: kas_yaz — yetkisiz personel yalnız kur güncelleyebilir (tasarım) → ok:t
+  [GEÇTİ] a: kas_yaz — Yönetici kasa hesabı yazar → ok:t
+  [GEÇTİ] a: lst_yaz — yetkisiz personel fatura yazamaz (faturalar yolu) → ret:yetki
+  [GEÇTİ] a: lst_yaz — Yönetici fatura yazar → ok:t
+  [GEÇTİ] a: lst_yaz — teklif listesi giriş yapmış herkese açık (tasarım) → ok:t
+  [GEÇTİ] a: lst_yaz — listede olmayan fatura yazamaz → ret:yetki
+  [GEÇTİ] a: gun_sonu_gonderim RLS açık (canlıdaki gibi) → t
   [GEÇTİ] a: sınamadan sonra tanımlar satırı tekil ve 4 kullanıcı → tekil 4
   [GEÇTİ] b: personel tanımlar kimliğini değiştiremez (A6) → ret:yetki
   [GEÇTİ] b: Yönetici de değiştiremez (A6) → ret:yetki
@@ -162,5 +193,36 @@ pg_dump: hint: Consider using a full dump instead of a --data-only dump to avoid
   [GEÇTİ] b: yetki-sinama.sql özeti (AÇIK / BAŞARISIZ) → AÇIK: 0 · BAŞARISIZ: 0
   [GEÇTİ] b: E4 / E5 / F3 (cari / ürün silme) artık RET — silme_koruma → UYGUN UYGUN UYGUN
   [GEÇTİ] b: A6 / A6b / Y7 (kimlik değiştirme) RET → UYGUN UYGUN UYGUN
+  [GEÇTİ] b: muhasebe / faturalar / gorevler / modeller görünüm; liste_tablolari canlıdaki gibi → v v v v teklifler,faturalar,koliler,gorevler,modeller,fis_defteri,mesajlar
+  [GEÇTİ] b: doğrudan yazma reddi [YON] insert into public.muhasebe (id, veri) values ('x', '{}') → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [PER] insert into public.muhasebe (id, veri) values ('x', '{}') → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [YON] update public.muhasebe set veri = veri → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [PER] update public.muhasebe set veri = veri → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [YON] delete from public.muhasebe → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [PER] delete from public.muhasebe → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [YON] insert into public.faturalar (id, veri) values ('x', '{}') → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [PER] insert into public.faturalar (id, veri) values ('x', '{}') → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [YON] update public.faturalar set veri = veri → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [PER] update public.faturalar set veri = veri → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [YON] delete from public.gorevler → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [PER] delete from public.gorevler → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [YON] insert into public.cari_hareketleri (id, cari_id) values ('x → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [PER] insert into public.cari_hareketleri (id, cari_id) values ('x → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [YON] delete from public.stk_eski_hareketler_g → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [PER] delete from public.stk_eski_hareketler_g → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [YON] delete from public.stk_stok → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [PER] delete from public.stk_stok → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [YON] insert into public.kas_hareket (id, hesap_id, veri) values ( → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [PER] insert into public.kas_hareket (id, hesap_id, veri) values ( → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [YON] insert into public.lst_kayit (tablo, id, sira, veri) values  → reddedildi
+  [GEÇTİ] b: doğrudan yazma reddi [PER] insert into public.lst_kayit (tablo, id, sira, veri) values  → reddedildi
+  [GEÇTİ] b: kas_yaz — yetkisiz personel kasa hesabı yazamaz (muhasebe yolu) → ret:yetki
+  [GEÇTİ] b: kas_yaz — yetkisiz personel yalnız kur güncelleyebilir (tasarım) → ok:t
+  [GEÇTİ] b: kas_yaz — Yönetici kasa hesabı yazar → ok:t
+  [GEÇTİ] b: lst_yaz — yetkisiz personel fatura yazamaz (faturalar yolu) → ret:yetki
+  [GEÇTİ] b: lst_yaz — Yönetici fatura yazar → ok:t
+  [GEÇTİ] b: lst_yaz — teklif listesi giriş yapmış herkese açık (tasarım) → ok:t
+  [GEÇTİ] b: lst_yaz — listede olmayan fatura yazamaz → ret:yetki
+  [GEÇTİ] b: gun_sonu_gonderim RLS açık (canlıdaki gibi) → t
   [GEÇTİ] b: sınamadan sonra tanımlar satırı tekil ve 4 kullanıcı → tekil 4
-── test24: 134 geçti, 0 kaldı ──
+── test24: 196 geçti, 0 kaldı ──

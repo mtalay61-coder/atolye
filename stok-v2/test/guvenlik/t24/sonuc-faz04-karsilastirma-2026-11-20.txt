@@ -60,4 +60,10 @@
     - kas_yaz: yetkisiz personel hesap yazamaz (42501), yalnız kur yazar; Yönetici yazar.
     - lst_yaz: personel ve listede olmayan fatura yazamaz (42501); Yönetici yazar; teklif herkese açık.
     - gun_sonu_gonderim RLS açık.
-  - Diğer koşu sonuçları: bkz. PR açıklaması ve commit mesajı.
+  - kos-t24 TEMİZ: canli-benzeri fark 0 · test24 196/196 · ekran-firma-ayrimi 42/42.
+  - Diğer testler:
+      ta6/test-a6.sh            46/46
+      t23/test23.sh             163/163
+      t23/test23-yeni-firma.sh  25/25
+      t19                       139/139
+      kos-guvenlik.sh           TEMİZ (atolye_canli kaynağını o üretiyor)
