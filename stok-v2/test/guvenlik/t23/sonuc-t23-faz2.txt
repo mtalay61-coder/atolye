@@ -1,0 +1,30 @@
+NOTICE:  database "t23_faz2" does not exist, skipping
+== t23_faz2: atolye_canli kopyası · fba4fa5 + çalışma ağacı
+  [GEÇTİ] kontrol dosyası SQL Editor kuralına uygun → 0
+== ÖNCE
+  [GEÇTİ] 23 önkoşulu → HAZIR
+  [GEÇTİ] A6 önkoşulu → UYGULANMIŞ
+  [GEÇTİ] kontrol: platform_ tabloları → yok yok yok yok yok
+  [GEÇTİ] kontrol: A6 durumu → UYGULANMIŞ
+   A6 imzası (önce): 8acbdfd407b290ab7f21039727f4ea3b
+== UYGULA (23-platform-yonetim.sql, Editor gibi)
+  [GEÇTİ] uygulama hatasız → 
+== SONRA
+  [GEÇTİ] 23 önkoşulu → UYGULANMIŞ
+  [GEÇTİ] kontrol: platform_ tabloları boş (yönetici, firma, sözleşme, ödeme, olay) → 0 0 0 0 0
+  [GEÇTİ] kontrol: A6 durumu → UYGULANMIŞ
+  [GEÇTİ] A6 imzası önceyle birebir (fonksiyon tanımları, yetkileri, tetikleyici) → 8acbdfd407b290ab7f21039727f4ea3b
+  [GEÇTİ] A6 imza satırları 7–9 önceyle birebir → 7|A6 imzası · public.tanimlar_kullanici_koruma() (functiondef md5 · yetki listesi)|82769550c41834ca031b5e56f4e357fd · {postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+8|A6 imzası · public.yetki_var_mi(text[], text) (functiondef md5 · yetki listesi)|9860ec2cfa02a5aff21ea206f7ce82a6 · {postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+9|A6 imzası · tetikleyici tanimlar_kullanici_koruma (tanım md5 · etkin)|596f01be91f2baf1c102dfb021fb9bad · O
+  [GEÇTİ] ikinci uygulama hiçbir şeye dokunmadan durur → 1
+== GERİ DÖNÜŞ koşulları
+  [GEÇTİ] firma kaydı varken geri alma DURUR → 1
+  [GEÇTİ] durduktan sonra 23 hâlâ UYGULANMIŞ (hiçbir şey silinmedi) → UYGULANMIŞ
+  [GEÇTİ] durduktan sonra firma ve olay kaydı yerinde (firma 1, olay ≥ 1) → 1 true
+  [GEÇTİ] yönetici listesinde 1 kayıt → 1
+  [GEÇTİ] yalnız yönetici listesi doluyken geri alma DURMAZ (listeyi ve olay günlüğünü kaldırır) → tamam — platform_ nesnesi kalmadı
+  [GEÇTİ] geri alma sonrası 23 önkoşulu → HAZIR
+  [GEÇTİ] geri alma sonrası A6 imzası değişmedi → 8acbdfd407b290ab7f21039727f4ea3b
+  [GEÇTİ] geri alma sonrası A6 → UYGULANMIŞ
+── test23-faz2: 20 geçti, 0 kaldı ──

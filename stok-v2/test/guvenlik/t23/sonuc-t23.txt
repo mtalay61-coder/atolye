@@ -1,0 +1,176 @@
+# test23.sh · 2026-11-17 · yerel PostgreSQL 16.15 · Supabase taklidi (t19/kur.sql) · dosyalar Editor gibi (editor-icin.py, ifade başına ayrı istek)
+== Kurulum: t19/kur.sql (Supabase taklidi, açık varsayılan yetkiler) · 23 dosyaları da0e268 + çalışma ağacı
+== 0) Supabase SQL Editor uyumu (editor-icin.py: yalnız düz çift-dolar gövde; parça sayısı)
+  [GEÇTİ] 23-platform-yonetim.sql Editor'de 2 ifadeye bölünür → 2
+  [GEÇTİ] 23-platform-yonetim-geri-al.sql Editor'de 2 ifadeye bölünür → 2
+  [GEÇTİ] 23-onkosul-salt-okur.sql Editor'de 1 ifadeye bölünür → 1
+== 1) Önkoşul → uygula → önkoşul; ikinci uygulama (her dosya Editor gibi: ifade başına ayrı istek)
+  [GEÇTİ] önkoşul (uygulamadan önce) → HAZIR
+  [GEÇTİ] uygula: hata yok, sonuç tablosu 8 satır, hepsi tamam → 8/8 tamam
+  [GEÇTİ] önkoşul (uygulamadan sonra) → UYGULANMIŞ
+  [GEÇTİ] ikinci uygulama durur → DUR: platform_ nesneleri zaten var
+  [GEÇTİ] ikinci uygulamadan sonra tablolar aynı → 336d5ebc5436534e61d16e63ddfca327
+  [GEÇTİ] Supabase varsayılanına rağmen anon platform_firmalar okuyamaz → f
+== 2) Kendini platform yöneticisi yapma denemesi (henüz yönetici yok)
+  [GEÇTİ] ERPY: platform_yoneticileri'ne kendini ekler → ret:izin
+  [GEÇTİ] ERPY: platform_yoneticileri okur → ret:izin
+  [GEÇTİ] PER: platform_yoneticileri'ne kendini ekler → ret:izin
+  [GEÇTİ] PER: platform_yoneticileri okur → ret:izin
+  [GEÇTİ] anon: platform_yonetici_mi çağırır → ret:izin
+  [GEÇTİ] anon: platform_yoneticileri'ne ekler → ret:izin
+  [GEÇTİ] SQL Editor yolu (postgres) ile platform yöneticisi eklendi → 1
+  [GEÇTİ] platform_yonetici_mi — platform yöneticisi → ok:t
+  [GEÇTİ] platform_yonetici_mi — ERP Yönetici rolü (platform yöneticisi değil) → ok:f
+  [GEÇTİ] platform_yonetici_mi — Personel → ok:f
+  [GEÇTİ] platform_yonetici_mi — JWT'siz authenticated → ok:f
+  [GEÇTİ] platform yöneticisi bile yönetici listesini okuyamaz (yalnız SQL Editor) → ret:izin
+== 3) Platform yöneticisi: ekler, okur, değiştirir; silemez
+  [GEÇTİ] firma ekle (deneme, firmanın hesabı) → ok:
+  [GEÇTİ] ikinci firma ekle → ok:
+  [GEÇTİ] sözleşme ekle (TRY) → ok:
+  [GEÇTİ] sözleşme ekle (USD, ikinci firma) → ok:
+  [GEÇTİ] ödeme ekle (sözleşmeye bağlı, TRY) → ok:
+  [GEÇTİ] ödeme düzeltmesi (eksi, düzelttiği ödemeyi gösterir) → ok:
+  [GEÇTİ] firma durumunu değiştir (deneme → aktif, barındırma → bizim_org) → ok:
+  [GEÇTİ] platform yöneticisi okur: firma sayısı / ödenen net TRY → ok:2 10000.00
+  [GEÇTİ] olay günlüğü tetikleyicilerle doldu (firma 2 + sözleşme 2 + ödeme 2 + değişiklik 1) → ok:7
+  [GEÇTİ] durum değişikliği olayı → ok:durum: deneme → aktif; barındırma: firma_hesabi → bizim_org
+  [GEÇTİ] olayda 'kim' = platform yöneticisi → ok:00000000-0000-0000-0000-0000000000a1
+  [GEÇTİ] SİLEMEZ: platform_firmalar → ret:izin
+  [GEÇTİ] SİLEMEZ: platform_sozlesmeler → ret:izin
+  [GEÇTİ] SİLEMEZ: platform_odemeler → ret:izin
+  [GEÇTİ] SİLEMEZ: platform_olaylar → ret:izin
+  [GEÇTİ] ödemeyi DEĞİŞTİREMEZ → ret:izin
+  [GEÇTİ] günlüğe YAZAMAZ → ret:izin
+  [GEÇTİ] günlüğü DEĞİŞTİREMEZ → ret:izin
+  [GEÇTİ] tetikleyici fonksiyonunu doğrudan çağıramaz → ret:izin
+== 4) Kurallar (platform yöneticisi bile)
+  [GEÇTİ] ödeme başka firmanın sözleşmesine bağlanamaz → ret:kural
+  [GEÇTİ] ödeme para birimi sözleşmeninkiyle aynı olmalı → ret:kural
+  [GEÇTİ] eksi tutar düzeltme olmadan olmaz → ret:kural
+  [GEÇTİ] sıfır tutar olmaz → ret:kural
+  [GEÇTİ] düzeltme başka firmanın ödemesini gösteremez → ret:kural
+  [GEÇTİ] geçersiz para birimi (EUR) → ret:kural
+  [GEÇTİ] bitiş başlangıçtan önce olamaz → ret:kural
+  [GEÇTİ] kod biçimi (büyük harf / boşluk) → ret:kural
+  [GEÇTİ] aynı kod ikinci kez → ret:kural
+  [GEÇTİ] geçersiz durum → ret:kural
+  [GEÇTİ] proje adresi yalnız https://<ref>.supabase.co → ret:kural
+  [GEÇTİ] BULGU 1: ödemesi olan sözleşmenin para birimi değiştirilemez (TRY → USD) → ret:kural
+  [GEÇTİ] BULGU 1: ödemesi olan sözleşmenin ücreti / tarihi / durumu değişebilir → ok:
+  [GEÇTİ] BULGU 1: ödemesi OLMAYAN sözleşmenin para birimi değişebilir (ve geri) → ok:
+  [GEÇTİ] BULGU 2: düzeltme, aynı firmanın BAŞKA sözleşmesine bağlanamaz → ret:kural
+  [GEÇTİ] BULGU 2: sözleşmeli ödemenin düzeltmesi sözleşmesiz olamaz → ret:kural
+  [GEÇTİ] sözleşme ödemesi varken başka firmaya taşınamaz → ret:kural
+== 5) Platform yöneticisi OLMAYANLAR: hiçbir şey görmez, yazamaz; tablolar değişmez
+  [GEÇTİ] ERPY okur: platform_firmalar → ok:0
+  [GEÇTİ] ERPY okur: platform_sozlesmeler → ok:0
+  [GEÇTİ] ERPY okur: platform_odemeler → ok:0
+  [GEÇTİ] ERPY okur: platform_olaylar → ok:0
+  [GEÇTİ] ERPY firma ekler → ret:rls
+  [GEÇTİ] ERPY ödeme ekler → ret:rls
+  [GEÇTİ] ERPY firma değiştirir (0 satır) → ok:0
+  [GEÇTİ] ERPY sözleşme değiştirir (0 satır) → ok:0
+  [GEÇTİ] ERPY siler → ret:izin
+  [GEÇTİ] PER okur: platform_firmalar → ok:0
+  [GEÇTİ] PER okur: platform_sozlesmeler → ok:0
+  [GEÇTİ] PER okur: platform_odemeler → ok:0
+  [GEÇTİ] PER okur: platform_olaylar → ok:0
+  [GEÇTİ] PER firma ekler → ret:rls
+  [GEÇTİ] PER ödeme ekler → ret:rls
+  [GEÇTİ] PER firma değiştirir (0 satır) → ok:0
+  [GEÇTİ] PER sözleşme değiştirir (0 satır) → ok:0
+  [GEÇTİ] PER siler → ret:izin
+  [GEÇTİ] anon okur: platform_firmalar → ret:izin
+  [GEÇTİ] anon okur: platform_sozlesmeler → ret:izin
+  [GEÇTİ] anon okur: platform_odemeler → ret:izin
+  [GEÇTİ] anon okur: platform_olaylar → ret:izin
+  [GEÇTİ] anon okur: platform_yoneticileri → ret:izin
+  [GEÇTİ] anon firma ekler → ret:izin
+  [GEÇTİ] reddedilen denemelerden sonra beş tablonun tam içeriği aynı → 8dfe802ff2400f78174506e11b999fbe
+== 6) Önkoşul 'UYGULANMIŞ' demeden önce içeriği birebir karşılaştırır (bozma → KARIŞIK, satır adıyla; geri al → UYGULANMIŞ)
+  [GEÇTİ] okuma kuralı herkese açık (using true) → GENEL → KARIŞIK
+  [GEÇTİ] okuma kuralı herkese açık (using true) → farkın adı → 4|platform_firmalar.platform_firmalar_oku
+  [GEÇTİ] okuma kuralı herkese açık (using true) → onarınca → UYGULANMIŞ
+  [GEÇTİ] okuma kuralı anon'a da → GENEL → KARIŞIK
+  [GEÇTİ] okuma kuralı anon'a da → farkın adı → 4|platform_odemeler.platform_odemeler_oku
+  [GEÇTİ] okuma kuralı anon'a da → onarınca → UYGULANMIŞ
+  [GEÇTİ] ödemeye UPDATE (tablo) → GENEL → KARIŞIK
+  [GEÇTİ] ödemeye UPDATE (tablo) → farkın adı → 5|platform_odemeler → authenticated
+  [GEÇTİ] ödemeye UPDATE (tablo) → onarınca → UYGULANMIŞ
+  [GEÇTİ] ödemeye UPDATE (yalnız bir sütun) → GENEL → KARIŞIK
+  [GEÇTİ] ödemeye UPDATE (yalnız bir sütun) → farkın adı → 5|platform_odemeler → authenticated
+  [GEÇTİ] ödemeye UPDATE (yalnız bir sütun) → onarınca → UYGULANMIŞ
+  [GEÇTİ] firmaya DELETE PUBLIC'ten → GENEL → KARIŞIK
+  [GEÇTİ] firmaya DELETE PUBLIC'ten → farkın adı → 5|platform_firmalar → anon, platform_firmalar → authenticated
+  [GEÇTİ] firmaya DELETE PUBLIC'ten → onarınca → UYGULANMIŞ
+  [GEÇTİ] günlüğe TRUNCATE → GENEL → KARIŞIK
+  [GEÇTİ] günlüğe TRUNCATE → farkın adı → 5|platform_olaylar → authenticated
+  [GEÇTİ] günlüğe TRUNCATE → onarınca → UYGULANMIŞ
+  [GEÇTİ] kapı fonksiyonu herkese true → GENEL → KARIŞIK
+  [GEÇTİ] kapı fonksiyonu herkese true → farkın adı → 6|platform_yonetici_mi()
+  [GEÇTİ] kapı fonksiyonu herkese true → onarınca → UYGULANMIŞ
+  [GEÇTİ] kapı fonksiyonu anon'a açık → GENEL → KARIŞIK
+  [GEÇTİ] kapı fonksiyonu anon'a açık → farkın adı → 6|platform_yonetici_mi()
+  [GEÇTİ] kapı fonksiyonu anon'a açık → onarınca → UYGULANMIŞ
+  [GEÇTİ] ödeme denetimi kapalı → GENEL → KARIŞIK
+  [GEÇTİ] ödeme denetimi kapalı → farkın adı → 7|platform_odemeler.platform_odeme_denetle
+  [GEÇTİ] ödeme denetimi kapalı → onarınca → UYGULANMIŞ
+  [GEÇTİ] RLS kapalı → GENEL → KARIŞIK
+  [GEÇTİ] RLS kapalı → farkın adı → 8|platform_sozlesmeler
+  [GEÇTİ] RLS kapalı → onarınca → UYGULANMIŞ
+== 7) Eşzamanlılık: sözleşmenin para birimi değişikliği ile ödeme girişi aynı anda (iki ayrı oturum, PostgREST yolu)
+  [GEÇTİ] a) ödeme (önce başladı) → ok
+  [GEÇTİ] a) para birimi değişikliği ödemenin bitmesini BEKLEDİ → evet
+  [GEÇTİ] a) sonra ödemeyi görüp REDDETTİ → ret:kural
+  [GEÇTİ] a) son hâl: sözleşme ve ödeme aynı para biriminde → TRY TRY
+  [GEÇTİ] b) para birimi değişikliği (önce başladı) → ok
+  [GEÇTİ] b) ödeme değişikliğin bitmesini BEKLEDİ → evet
+  [GEÇTİ] b) sonra yeni para birimini (USD) görüp TRY ödemeyi REDDETTİ → ret:kural
+  [GEÇTİ] b) son hâl: sözleşme USD, ödeme yok → USD 0
+== 8) Geri alma
+  [GEÇTİ] kayıt varken geri alma durur → DUR: platform tablolarında 10 kayıt var
+  [GEÇTİ] durduktan sonra hiçbir şey silinmedi → 6ae00ff7a8e5a9086c0a48a95a49fbad
+  [GEÇTİ] önkoşul hâlâ UYGULANMIŞ → UYGULANMIŞ
+  [GEÇTİ] kayıtlar yokken geri alma → tamam — platform_ nesnesi kalmadı
+  [GEÇTİ] önkoşul (geri almadan sonra) → HAZIR
+  [GEÇTİ] yeniden uygulama (geri alınmış hâlden) → 8/8 tamam
+== 9) Eksik tablo senaryoları (yarım kalmış / elle bozulmuş kurulum): önkoşul HATA vermez, KARIŞIK der; geri alma tamamlar
+  [GEÇTİ] yalnız sözleşmeler yok: önkoşul hata vermez → 0
+  [GEÇTİ] yalnız sözleşmeler yok: GENEL → KARIŞIK
+  [GEÇTİ] yalnız sözleşmeler yok: eksik tablo yetki farkında adıyla görünür → evet
+  [GEÇTİ] yalnız sözleşmeler yok: geri alma tamamlar → tamam — platform_ nesnesi kalmadı
+  [GEÇTİ] yalnız sözleşmeler yok: sonra önkoşul → HAZIR
+  [GEÇTİ] yalnız ödemeler yok: önkoşul hata vermez → 0
+  [GEÇTİ] yalnız ödemeler yok: GENEL → KARIŞIK
+  [GEÇTİ] yalnız ödemeler yok: eksik tablo yetki farkında adıyla görünür → evet
+  [GEÇTİ] yalnız ödemeler yok: geri alma tamamlar → tamam — platform_ nesnesi kalmadı
+  [GEÇTİ] yalnız ödemeler yok: sonra önkoşul → HAZIR
+  [GEÇTİ] yalnız firmalar yok (bağlı tablolar kalır): önkoşul hata vermez → 0
+  [GEÇTİ] yalnız firmalar yok (bağlı tablolar kalır): GENEL → KARIŞIK
+  [GEÇTİ] yalnız firmalar yok (bağlı tablolar kalır): eksik tablo yetki farkında adıyla görünür → evet
+  [GEÇTİ] yalnız firmalar yok (bağlı tablolar kalır): geri alma tamamlar → tamam — platform_ nesnesi kalmadı
+  [GEÇTİ] yalnız firmalar yok (bağlı tablolar kalır): sonra önkoşul → HAZIR
+  [GEÇTİ] yalnız günlük yok: önkoşul hata vermez → 0
+  [GEÇTİ] yalnız günlük yok: GENEL → KARIŞIK
+  [GEÇTİ] yalnız günlük yok: eksik tablo yetki farkında adıyla görünür → evet
+  [GEÇTİ] yalnız günlük yok: geri alma tamamlar → tamam — platform_ nesnesi kalmadı
+  [GEÇTİ] yalnız günlük yok: sonra önkoşul → HAZIR
+  [GEÇTİ] yalnız yöneticiler yok: önkoşul hata vermez → 0
+  [GEÇTİ] yalnız yöneticiler yok: GENEL → KARIŞIK
+  [GEÇTİ] yalnız yöneticiler yok: eksik tablo yetki farkında adıyla görünür → evet
+  [GEÇTİ] yalnız yöneticiler yok: geri alma tamamlar → tamam — platform_ nesnesi kalmadı
+  [GEÇTİ] yalnız yöneticiler yok: sonra önkoşul → HAZIR
+  [GEÇTİ] sözleşmeler + ödemeler yok: önkoşul hata vermez → 0
+  [GEÇTİ] sözleşmeler + ödemeler yok: GENEL → KARIŞIK
+  [GEÇTİ] sözleşmeler + ödemeler yok: eksik tablo yetki farkında adıyla görünür → evet
+  [GEÇTİ] sözleşmeler + ödemeler yok: geri alma tamamlar → tamam — platform_ nesnesi kalmadı
+  [GEÇTİ] sözleşmeler + ödemeler yok: sonra önkoşul → HAZIR
+  [GEÇTİ] yöneticiler dışında hepsi yok: önkoşul hata vermez → 0
+  [GEÇTİ] yöneticiler dışında hepsi yok: GENEL → KARIŞIK
+  [GEÇTİ] yöneticiler dışında hepsi yok: eksik tablo yetki farkında adıyla görünür → evet
+  [GEÇTİ] yöneticiler dışında hepsi yok: geri alma tamamlar → tamam — platform_ nesnesi kalmadı
+  [GEÇTİ] yöneticiler dışında hepsi yok: sonra önkoşul → HAZIR
+  [GEÇTİ] yarım hâlde kayıt varken geri alma durur → DUR: platform tablolarında 1 kayıt var
+  [GEÇTİ] yarım hâlde önkoşul kayıt satırı → 10|1 / yok / 0
+── test23: 163 geçti, 0 kaldı ──

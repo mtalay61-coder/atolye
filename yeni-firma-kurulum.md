@@ -1,5 +1,10 @@
 # Yeni firma kurulumu (v1.642.0)
 
+> **DURUM (17 Kasım 2026): bu yol şu an ÇALIŞMIYOR.** Veriler v2'ye geçtikten sonra kurulum dosyası doğru üretilemiyor; uygulamadaki
+> "Yeni firma kurulum dosyasını indir" düğmesi bu yüzden bilerek kapalı (`src/032-firma.jsx`). Yerel ölçüm: üretilen dosya boş
+> projede `function public.stk_dizi(jsonb) does not exist` ile düşüyor ve Supabase SQL Editor uyumlu değil
+> (`stok-v2/test/guvenlik/t23/test23-yeni-firma.sh`). Kurulum yolu yeniden yazılana kadar yeni firma açmayın.
+
 Her müşteri firmanın **ayrı bir Supabase projesi** olur. Uygulama aynıdır. Firma kodu **her cihazda bir kez** sorulur
 (ana firma dahil — ana firmanın kodu `nds`); seçilmeden uygulama açılmaz. `?firma=KOD` bağlantısı kodu doldurur.
 Bir firmanın verisi ötekine hiçbir yoldan karışmaz.

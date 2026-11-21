@@ -1,0 +1,31 @@
+# test23.sh (17 Kasım inceleme sonrası hâli) DÜZELTMEDEN ÖNCEKİ SQL dosyalarıyla (0a15166) — bulguların testte yakalandığının kaydı
+  [KALDI] 23-onkosul-salt-okur.sql Editor'de 1 ifadeye bölünür → beklenen: 1 · gelen: 2
+  [KALDI] BULGU 1: ödemesi olan sözleşmenin para birimi değiştirilemez (TRY → USD) → beklenen: ret:kural · gelen: ok:
+  [KALDI] BULGU 2: düzeltme, aynı firmanın BAŞKA sözleşmesine bağlanamaz → beklenen: ret:kural · gelen: ok:
+  [KALDI] BULGU 2: sözleşmeli ödemenin düzeltmesi sözleşmesiz olamaz → beklenen: ret:kural · gelen: ok:
+  [KALDI] okuma kuralı herkese açık (using true) → GENEL → beklenen: KARIŞIK · gelen: UYGULANMIŞ
+  [KALDI] okuma kuralı herkese açık (using true) → farkın adı → beklenen: 4|platform_firmalar.platform_firmalar_oku · gelen: 4|4 / tüm platform_ fonksiyonları 4
+  [KALDI] okuma kuralı anon'a da → GENEL → beklenen: KARIŞIK · gelen: UYGULANMIŞ
+  [KALDI] okuma kuralı anon'a da → farkın adı → beklenen: 4|platform_odemeler.platform_odemeler_oku · gelen: 4|4 / tüm platform_ fonksiyonları 4
+  [KALDI] ödemeye UPDATE (tablo) → GENEL → beklenen: KARIŞIK · gelen: UYGULANMIŞ
+  [KALDI] ödemeye UPDATE (tablo) → farkın adı → beklenen: 5|platform_odemeler → authenticated · gelen: 5|5 / 9 / 5
+  [KALDI] ödemeye UPDATE (yalnız bir sütun) → GENEL → beklenen: KARIŞIK · gelen: UYGULANMIŞ
+  [KALDI] ödemeye UPDATE (yalnız bir sütun) → farkın adı → beklenen: 5|platform_odemeler → authenticated · gelen: 5|5 / 9 / 5
+  [KALDI] firmaya DELETE PUBLIC'ten → farkın adı → beklenen: 5|platform_firmalar → anon, platform_firmalar → authenticated · gelen: 5|5 / 9 / 5
+  [KALDI] günlüğe TRUNCATE → GENEL → beklenen: KARIŞIK · gelen: UYGULANMIŞ
+  [KALDI] günlüğe TRUNCATE → farkın adı → beklenen: 5|platform_olaylar → authenticated · gelen: 5|5 / 9 / 5
+  [KALDI] kapı fonksiyonu herkese true → GENEL → beklenen: KARIŞIK · gelen: UYGULANMIŞ
+  [KALDI] kapı fonksiyonu herkese true → farkın adı → beklenen: 6|platform_yonetici_mi() · gelen: 6|yok
+  [KALDI] kapı fonksiyonu anon'a açık → GENEL → beklenen: KARIŞIK · gelen: UYGULANMIŞ
+  [KALDI] kapı fonksiyonu anon'a açık → farkın adı → beklenen: 6|platform_yonetici_mi() · gelen: 6|yok
+  [KALDI] ödeme denetimi kapalı → GENEL → beklenen: KARIŞIK · gelen: UYGULANMIŞ
+  [KALDI] ödeme denetimi kapalı → farkın adı → beklenen: 7|platform_odemeler.platform_odeme_denetle · gelen: 7|1
+  [KALDI] RLS kapalı → farkın adı → beklenen: 8|platform_sozlesmeler · gelen: 8|2 / 3 / 4
+  [KALDI] a) para birimi değişikliği ödemenin bitmesini BEKLEDİ → beklenen: evet · gelen: hayır
+  [KALDI] a) sonra ödemeyi görüp REDDETTİ → beklenen: ret:kural · gelen: ok:
+  [KALDI] a) son hâl: sözleşme ve ödeme aynı para biriminde → beklenen: TRY TRY · gelen: USD TRY
+  [KALDI] b) ödeme değişikliğin bitmesini BEKLEDİ → beklenen: evet · gelen: hayır
+  [KALDI] b) sonra yeni para birimini (USD) görüp TRY ödemeyi REDDETTİ → beklenen: ret:kural · gelen: ok:
+  [KALDI] b) son hâl: sözleşme USD, ödeme yok → beklenen: USD 0 · gelen: USD 1
+  [KALDI] kayıt varken geri alma durur → beklenen: DUR: platform tablolarında 10 kayıt var · gelen: DUR: platform tablolarında 13 kayıt var
+── test23: 97 geçti, 29 kaldı ──
