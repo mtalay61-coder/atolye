@@ -2,9 +2,7 @@
  "acilis": {
   "formKapali": true,
   "hareketGorunur": true,
-  "islemDugmeleri": [
-   "virman"
-  ]
+  "islemDugmeleri": []
  },
  "duzenleme": {
   "cariKarsiligi": [
@@ -16,33 +14,6 @@
   ]
  },
  "hatalar": [],
- "hedefTutarSoruldu": true,
- "ogrenenListe": [
-  "Kira için nakit",
-  "Döviz bozdurma",
-  "Nakit çekme (bankadan kasaya)",
-  "Nakit yatırma (kasadan bankaya)",
-  "Hesaplar arası aktarım",
-  "Kasa devri"
- ],
- "sebepSecenekleri": [
-  "Döviz bozdurma",
-  "Nakit çekme (bankadan kasaya)",
-  "Nakit yatırma (kasadan bankaya)"
- ],
- "sebepsizKaydedilmedi": true,
- "sonuc": {
-  "aciklama": "Virman → USD Kasa · Kira için nakit",
-  "ayniBag": true,
-  "sebep": "Kira için nakit",
-  "tlKasa": [
-   "Çıkış:480:VRM",
-   "Giriş:1000:"
-  ],
-  "usdKasa": [
-   "Giriş:10:VRM"
-  ]
- },
  "virmanSilme": {
   "tlKalan": 0,
   "usdKalan": 0,

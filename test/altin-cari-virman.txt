@@ -1,0 +1,55 @@
+{
+ "acilanHesaplar": {
+  "bankalar": [
+   "Ziraat Vadesiz:Ziraat Bankası:TR000000000000000000000001:USD"
+  ],
+  "kasalar": [
+   "Ana Kasa:TRY:0"
+  ],
+  "seciliBanka": "Ziraat Vadesiz"
+ },
+ "hatalar": [],
+ "istekler": [
+  "fis_kes:Cari virmanı:CVR:cari2:kasa0",
+  "fis_kes:Cari virmanı:CVR:cari2:kasa0"
+ ],
+ "kasaBankaEkrani": {
+  "hesapAcik": true,
+  "virmanDugmesi": false,
+  "yeniKasaDugmesi": false
+ },
+ "kasaBankaHareketi": 0,
+ "kasaSatiri": [
+  "Ana Kasa"
+ ],
+ "kasaYokken": {
+  "arti": true,
+  "uyari": true
+ },
+ "odemeVirmani": {
+  "Müşteri B": [
+   "CVR-261123001:Ödeme:Borç:1000:TRY:Virman:Virman (ödeme) — karşı: Tedarikçi A: mahsup"
+  ],
+  "Tedarikçi A": [
+   "CVR-261123001:Tahsilat:Alacak:1000:TRY:Virman:Virman (tahsilat) — karşı: Müşteri B: mahsup"
+  ],
+  "formTemizlendi": true
+ },
+ "sonListe": 4,
+ "tahsilatVirmani": {
+  "Müşteri B": [
+   "CVR-261123001:Ödeme:Borç:1000:TRY:Virman:Virman (ödeme) — karşı: Tedarikçi A: mahsup",
+   "CVR-261123002:Ödeme:Borç:250:TRY:Virman:Virman (ödeme) — karşı: Tedarikçi A"
+  ],
+  "Tedarikçi A": [
+   "CVR-261123001:Tahsilat:Alacak:1000:TRY:Virman:Virman (tahsilat) — karşı: Müşteri B: mahsup",
+   "CVR-261123002:Tahsilat:Alacak:250:TRY:Virman:Virman (tahsilat) — karşı: Müşteri B"
+  ]
+ },
+ "virmanEkrani": {
+  "formAcik": true,
+  "kartCikmaz": true,
+  "kasaSatiriYok": true,
+  "ozet": "Kaydedilince: Müşteri B: ödeme (borç) · Tedarikçi A: tahsilat (alacak) — tek fişte, kasa / banka hareketi yok."
+ }
+}

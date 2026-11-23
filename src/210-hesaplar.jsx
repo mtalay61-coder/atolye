@@ -22,8 +22,6 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
   // Düzenlenen hesabın kimliği ve form içeriği (19 Eylül).
   const [duzenlenen, setDuzenlenen] = useState(null);
   const [duzenForm, setDuzenForm] = useState({});
-  const [yeniForm, setYeniForm] = useState({ paraBirimi: "TRY" });
-  const [showYeni, setShowYeni] = useState(false);
   const [acikHesap, setAcikHesap] = useState(null);
   // Düzen ikonu detay başlığında (v1.533.0); aynı anda tek hesap açık olduğu için tek ref yeter.
   const hesapDuzenAcRef = useRef(null);
@@ -66,12 +64,7 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
   // varsayılan olarak hesabınkiyle aynıdır (dönüşüm yok, cari de aynı tutarı aynı para biriminde alır).
   const [hForm, setHForm] = useState({ yon: "Giriş", tutar: "", aciklama: "", cariId: "", defter: "Genel", donusturulecekPB: null, kur: "", hedefTutar: "" });
 
-  function yeniKaydet() {
-    if (!yeniForm.ad || !yeniForm.ad.trim()) return;
-    onHesapEkle({ paraBirimi: "TRY", ...yeniForm });
-    setYeniForm({ paraBirimi: "TRY" });
-    setShowYeni(false);
-  }
+
 
   function hareketiKaydet(hesapId, hesapPB) {
     const tutar = parseFloat(hForm.tutar);
@@ -158,52 +151,10 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
             ))
           )}
         </div>
-        <button className="btn-primary" onClick={() => setShowYeni((v) => !v)}>
-          <Plus size={14} /> Yeni {birimAdi}
-        </button>
+        {/* YENİ KASA / BANKA DÜĞMESİ KALKTI (v1.744.35 — kullanıcı: "kasa banka açma işlerimizi [Ödeme & Tahsilat'ta] kasanın
+            yanına ekleme tuşu ekleyerek yapabiliriz"): hesap, ödeme şeklinin Kasa / Banka satırındaki + ile açılır (260). */}
       </div>
 
-      {showYeni && (
-        <div style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 14, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}>
-          {/* MOR KAYIT ŞERİDİ (v1.625.0): Kaydet · Vazgeç formun üstünde, tam genişlik. */}
-          <KayitSeridi baslik={`Yeni ${birimAdi || "Hesap"}`} veri="data-hesap-form-seridi" style={{ flex: "1 1 100%", marginBottom: 4 }}>
-            <button className="btn-primary btn-save" onClick={yeniKaydet}><Save size={14} /> Kaydet</button>
-            <button className="btn-ghost" onClick={() => { setShowYeni(false); setYeniForm({ paraBirimi: "TRY" }); }}>Vazgeç</button>
-          </KayitSeridi>
-          {ekleAlanlari.map((a) => (
-            <label key={a.key} style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 }}>
-              {a.label}
-              {/* ÖĞRENEN ALAN (kullanıcı, 19 Eylül: "daha önce girilen bankaları hatırlasın,
-                  seçmeli olsun"). Banka adı gibi tekrar eden alanlar her hesapta yeniden
-                  yazılıyordu; aynı banka "Ziraat", "Ziraat Bankası", "ziraat bankasi" diye üç
-                  farklı yazımla kaydedilebiliyordu. Öneriler AYRI BİR LİSTEDE TUTULMUYOR —
-                  var olan hesaplardan toplanıyor, tıpkı virman sebebinde olduğu gibi. */}
-              <input
-                value={yeniForm[a.key] || ""}
-                data-hesap-alan={a.key}
-                list={`hesap-oneri-${a.key}`}
-                onChange={(e) => setYeniForm({ ...yeniForm, [a.key]: e.target.value })}
-                placeholder={a.placeholder}
-                style={{ padding: "6px 8px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 13 }}
-              />
-              <datalist id={`hesap-oneri-${a.key}`}>
-                {[...new Set((tumHesaplar || hesaplar || []).map((h) => String(h[a.key] || "").trim()).filter(Boolean))]
-                  .map((v) => <option key={v} value={v} />)}
-              </datalist>
-            </label>
-          ))}
-          <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 }}>
-            Para Birimi
-            <select
-              value={yeniForm.paraBirimi || "TRY"}
-              onChange={(e) => setYeniForm({ ...yeniForm, paraBirimi: e.target.value })}
-              style={{ padding: "6px 8px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 13 }}
-            >
-              {MUHASEBE_PARA_BIRIMLERI.map((pb) => <option key={pb} value={pb}>{pb}</option>)}
-            </select>
-          </label>
-        </div>
-      )}
 
       {(() => {
         // Hesaplarda GEÇEN her para birimi için bir sekme gösterilir — sadece bir tanesi varsa (örn.
@@ -455,7 +406,10 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                 <DuzenAlani ekran={birimAdi === "Kasa" ? "kasaDetay" : "bankaDetay"} aralik={0} acRef={hesapDuzenAcRef} disIkon bloklar={[
                 { id: "islem", ad: "İşlem düğmeleri ve formlar", icerik: (<>
                 {/* İŞLEM ÇUBUĞU: hesap açılınca görünen ilk şey. Form seçilen işleme göre açılıyor. */}
-                {acik && (
+                {/* KASALAR ARASI VİRMAN DÜĞMESİ KAPALI (v1.744.35 — kullanıcı: "virmanı cari içerisinden yapalım, buradan
+                    kaldıralım"). Virman Ödeme & Tahsilat'ta ödeme şekli "Virman" (cariden cariye, 337). Bu form (kasadan bankaya
+                    aktarım) silinmedi, yalnız gizli: geri istenirse `false &&` kaldırılır. */}
+                {false && acik && (
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap", padding: "10px 12px 0" }}>
                     {[
                       // RENKLER HAREKET_TIPI_RENK'TEN (v1.535.0 — kullanıcı: "Ödeme, tahsilat renkleri var, butonları o renge
@@ -486,7 +440,7 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                   </div>
                 )}
 
-                {acik && islem === "virman" && (
+                {false && acik && islem === "virman" && (
                   <div data-virman-formu="1" style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end", padding: "10px 12px" }}>
                     {/* VİRMAN: bu hesaptan ÇIKIŞ, hedef hesaba GİRİŞ — tek işlem, iki kayıt, aynı
                         bağ kimliği. Cari yok: para şirket içinde yer değiştiriyor. Para birimi

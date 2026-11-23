@@ -94,6 +94,7 @@ const IZINLI_YAZICILAR = new Set(process.env.SAYIM ? [] : [
   "PersonelBilgileriPaneli",    // mesai yazımı: sunucu yolunda paraFisiKes (MS fişi, v1.738.0); eski yolda cari kartı hunisi
   "DemirbasBolumu",             // demirbaş alımı (v1.742.0): sunucu yolunda onParaFisiKes (AF), değilse addCariHareketFromStok
   "maasTahakkukOnayla",         // onaylı maaş tahakkuku (v1.740.0): personel başına paraFisiKes (MAŞ fişi)
+  "cariVirmaniKaydet",          // cari virmanı (v1.744.35, 260/337): iki carinin satırı tek paraFisiKes fişinde (CVR), yalnız sunucu yolu
 ]);
 
 // Geri alan yollar ayrı sayılır: bunlar hareket YAZMAZ, siler. Yazıcı listesiyle karıştırmak,

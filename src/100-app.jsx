@@ -3688,13 +3688,15 @@ function AtolyeUygulamasi() {
   // sonraki adımda. Eskiden cari ve kasa ayağı AYRI yazılıyordu (cari kartında zarfsız): biri düşüp öteki kalabiliyordu.
   // Döner: { no, hareketIdler } ya da null (yazılamadı — ekranda hiçbir şey değişmez, kullanıcı uyarılır). `anahtar`la çift basış yok.
   const paraFisiSuruyorRef = useRef(new Set());
-  const paraFisiKes = useCallback(async ({ fis, cariId, hareketler, kasa, cekler, anahtar, hataEtiketi }) => {
-    const tarihler = [...(hareketler || []).map((h) => h && h.tarih), ...(Array.isArray(kasa) ? kasa : [kasa]).map((k) => k && k.hareket && k.hareket.tarih)];
+  const paraFisiKes = useCallback(async ({ fis, cariId, hareketler, kasa, cekler, anahtar, hataEtiketi, ekCariler }) => {
+    const tarihler = [...(hareketler || []).map((h) => h && h.tarih), ...(Array.isArray(kasa) ? kasa : [kasa]).map((k) => k && k.hareket && k.hareket.tarih),
+      ...(ekCariler || []).flatMap((e) => ((e && e.hareketler) || []).map((h) => h && h.tarih))];
     if (donemKilidiEngel(tarihler.filter(Boolean), showToast, hataEtiketi || "Kayıt")) return null;
     if (anahtar && paraFisiSuruyorRef.current.has(anahtar)) return null;
     const kullaniciAd = (aktifKullanici && aktifKullanici.ad) || damgaKullaniciAdi() || null;
-    const h = paraFisiYuku({ fis, cariId, hareketler, kasa, cekler, cekOnceki: (muhasebe && muhasebe.cekler) || [], istek: uid("fis"), zaman: new Date().toISOString(), kullaniciAd });
+    const h = paraFisiYuku({ fis, cariId, hareketler, kasa, cekler, cekOnceki: (muhasebe && muhasebe.cekler) || [], istek: uid("fis"), zaman: new Date().toISOString(), kullaniciAd, ekCariler });
     const cariEski = cariId ? (cariler || []).find((c) => c.id === cariId) : null;   // taban: bekleme ÖNCESİ fotoğraf
+    const ekCariEskiler = h.ekCariHareketleri.map((e) => (cariler || []).find((c) => c.id === e.cariId)).filter(Boolean);
     if (anahtar) paraFisiSuruyorRef.current.add(anahtar);
     let r;
     try {
@@ -3717,6 +3719,14 @@ function AtolyeUygulamasi() {
       });
       if (cariEski) fisKesTabaniKur("cariler", [cariEski], [{ ...cariEski, hareketler: [...yeniHareketler, ...(cariEski.hareketler || [])] }]);
     }
+    // Fişin öteki carileri (v1.744.35 cari virmanı): her biri kendi satırlarıyla, aynı numarayla.
+    const ekYeni = h.ekCariHareketleri.map((e) => ({ cariId: e.cariId, hareketler: d(e.hareketler) }));
+    if (ekYeni.length) {
+      const ekle = (c) => { const e = ekYeni.find((x) => x.cariId === c.id); return e ? { ...c, hareketler: [...e.hareketler, ...(c.hareketler || [])] } : c; };
+      setCariler((onceki) => { const n = (onceki || []).map(ekle); fisKesYerelYaz("cari:data", n); return n; });
+      if (ekCariEskiler.length) fisKesTabaniKur("cariler", ekCariEskiler, ekCariEskiler.map(ekle));
+    }
+    const tumCariHareketleri = [...yeniHareketler, ...ekYeni.flatMap((e) => e.hareketler)];
     const ayaklar = h.ayaklar.map((k) => ({ hesapTur: k.hesapTur, hesapId: k.hesapId, hareket: d(k.hareket) }));
     // Çek kayıtları (v1.738.0): fişle birlikte sunucuda yazıldı — yeni çek eklenir, değişen çek kimliğiyle yerini alır.
     const cekKayitlari = (cekler || []).map(d);
@@ -3734,9 +3744,9 @@ function AtolyeUygulamasi() {
       });
       fisKesKasaTabaniKur(ayaklar, [], cekKayitlari);
     }
-    setFisDefteri((onceki) => [sunucuFisKaydi(h.yuk, no, [], yeniHareketler, ayaklar.map((k) => k.hareket)), ...(onceki || [])]);
+    setFisDefteri((onceki) => [sunucuFisKaydi(h.yuk, no, [], tumCariHareketleri, ayaklar.map((k) => k.hareket)), ...(onceki || [])]);
     gunlukYaz(`Para fişi kesildi: ${(fis && fis.tur) || ""} → ${no}`, "cari", { fisNo: no, cariId, tutar: h.yuk.fis.tutar });
-    return { no, hareketIdler: yeniHareketler.map((x) => x.id), kasaHareketIdler: ayaklar.map((k) => k.hareket.id) };
+    return { no, hareketIdler: tumCariHareketleri.map((x) => x.id), kasaHareketIdler: ayaklar.map((k) => k.hareket.id) };
   }, [cariler, muhasebe, aktifKullanici, showToast]);
   paraFisiKesRef.current = paraFisiKes;
   // Geri al (bildirimden): sunucu fişi → fis_iptal (100 yetimFisTemizle, sunucu dalı).

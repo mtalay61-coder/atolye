@@ -1,19 +1,19 @@
 {
  "defter": [
-  "VRM-261031001|Virman|2|iptal"
+  "CVR-261031001|Cari virmanı|2 cari|0 kasa|iptal"
  ],
  "hatalar": [],
  "istekler": [
-  "fis_kes:Virman:k1/Çıkış/300+k3/Giriş/300",
-  "fis_iptal:VRM-261031001"
+  "fis_kes:Cari virmanı:2 cari satırı:0 kasa satırı",
+  "fis_iptal:CVR-261031001"
  ],
  "silmeSonrasi": [
-  "k1:",
-  "k3:"
+  "Müşteri B:",
+  "Tedarikçi A:"
  ],
- "toast": "\"VRM-NNN\" iptal edildi — N kasa satırı",
+ "toast": "\"CVR-NNN\" iptal edildi — N cari satırı",
  "virmanSonrasi": [
-  "k1:VRM-261031001/Çıkış/300",
-  "k3:VRM-261031001/Giriş/300"
+  "Müşteri B:CVR-261031001/Borç/300",
+  "Tedarikçi A:CVR-261031001/Alacak/300"
  ]
 }
