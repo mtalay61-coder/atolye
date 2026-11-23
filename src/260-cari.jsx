@@ -63,6 +63,13 @@ function CariModule({ onParaFisi, onFisIptal, tanimlar, onTanimlarKaydet, onMuha
   // Döner: true (kesildi; kapı numarayla bildirdi) | false (yazılamadı — form dolu kalır).
   async function cariVirmaniKaydet(ilkCariId, { karsiCariId, ilk, karsi }) {
     if (!onParaFisi || !fisKesYolu()) { showToast("Cari virmanı fiş defteri kurulu değilken yapılamaz"); return false; }
+    // Kapıda da aynı kural (337 `cariVirmanDogrula`) + satırlar kuralla uyumlu mu: iki satır aynı tutar, ikisi de ilk carinin
+    // para biriminde, karşılıklı yön.
+    const ilkCari = (cariler || []).find((c) => c.id === ilkCariId), karsiCari = (cariler || []).find((c) => c.id === karsiCariId);
+    const hata = cariVirmanDogrula({ ilkCari, karsiCari, tutar: ilk && ilk.tutar })
+      || (!ilk || !karsi || ilk.tutar !== karsi.tutar || ilk.yon === karsi.yon
+        || ilk.paraBirimi !== ((ilkCari && ilkCari.paraBirimi) || "TRY") || karsi.paraBirimi !== ilk.paraBirimi ? "Virman satırları tutarsız — kaydedilmedi" : null);
+    if (hata) { showToast(hata); return false; }
     const r = await onParaFisi({ fis: { tur: CARI_VIRMAN_TURU, onek: paraFisOneki(CARI_VIRMAN_TURU), kaynak: "Ödeme & Tahsilat", ek: { karsiCariId } },
       cariId: ilkCariId, hareketler: [ilk], ekCariler: [{ cariId: karsiCariId, hareketler: [karsi] }],
       anahtar: `cari-virman|${ilkCariId}|${karsiCariId}|${ilk.tutar}`, hataEtiketi: "Cari virmanı" });
@@ -412,7 +419,7 @@ function CariModule({ onParaFisi, onFisIptal, tanimlar, onTanimlarKaydet, onMuha
             {tipDugmesi("Tahsilat")}{tipDugmesi("Ödeme")}
             <span style={{ fontSize: 12, color: "var(--erp-text-2)", marginLeft: 6 }}>
               {odemeSekliSecim === "Virman"
-                ? (odemeTip === "Tahsilat" ? "Virman: seçilen cariden tahsilat, karşı cariye ödeme (para el değiştirmez)" : "Virman: seçilen cariye ödeme, karşı cariden tahsilat (para el değiştirmez)")
+                ? (odemeTip === "Tahsilat" ? "Cari virmanı: seçilen cariden tahsilat, karşı cariye ödeme (para el değiştirmez; kasa / banka aktarımı Kasa & Banka › Hesaplar arası aktarım)" : "Cari virmanı: seçilen cariye ödeme, karşı cariden tahsilat (para el değiştirmez; kasa / banka aktarımı Kasa & Banka › Hesaplar arası aktarım)")
                 : odemeTip === "Tahsilat" ? "Müşteriden / cariden para, çek ya da senet alındı" : "Tedarikçiye / cariye para, çek ya da senet verildi"}
             </span>
           </div>
@@ -427,7 +434,7 @@ function CariModule({ onParaFisi, onFisIptal, tanimlar, onTanimlarKaydet, onMuha
                   style={{ padding: "5px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer", borderRadius: "var(--erp-r-pill)",
                     border: `1.5px solid ${aktif ? "var(--erp-purple)" : "var(--erp-line)"}`, background: aktif ? "var(--erp-purple)" : "#fff",
                     color: aktif ? "#fff" : "var(--erp-text-2)" }}>
-                  {o === "Nakit" ? "Nakit (kasa)" : o === "Havale/EFT" ? "Havale / EFT (banka)" : o === "Virman" ? "Virman (cariden cariye)" : o}
+                  {o === "Nakit" ? "Nakit (kasa)" : o === "Havale/EFT" ? "Havale / EFT (banka)" : o === "Virman" ? "Cari virmanı (cariden cariye)" : o}
                 </button>
               );
             })}

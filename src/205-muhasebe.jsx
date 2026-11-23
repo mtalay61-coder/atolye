@@ -170,7 +170,7 @@ function MuhasebeModule({ onParaFisiKes, onFisIptal, sunucuFisiMi, kapsam = "gen
           defter: "Muhasebe", ek: { sebep: sebep || null } },
         cariId: null, hareketler: [],
         kasa: [{ hesapTur: kaynak.tur, hesapId: kaynak.id, hareket: cikis }, { hesapTur: hedef.tur, hesapId: hedef.id, hareket: giris }],
-        anahtar: `virman|${kaynak.id}`, hataEtiketi: "Virman",
+        anahtar: `virman|${kaynak.id}`, hataEtiketi: "Hesaplar arası aktarım",
       });
       if (!sonuc) return false;
       showToast(`Virman: ${kaynak.ad} → ${hedef.ad} · ${sonuc.no}`);

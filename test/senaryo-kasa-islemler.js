@@ -2,11 +2,9 @@
 // hareketleri getirsin; hareketlerin üzerinde ödeme, tahsilat, kasalar arası virman yapabileceğimiz
 // işlemler butonu olsun, oralardan işlem yapalım").
 //
-// v1.744.35 (kullanıcı 23 Kasım: "virmanı cari içerisinden yapalım, [Kasa & Banka'dan] kaldıralım"): kasalar arası Virman
-// düğmesi ve formu GİZLİ → işlem çubuğu boş; virman kaydı / sebep önerileri bölümleri bu senaryodan çıktı (yeni virman:
-// senaryo-cari-virman). KALAN ölçüler: (1) hesap açılınca form DEĞİL hareketler görünüyor, işlem düğmesi yok;
-// (2) cariye bağlı ödeme düzeltilince cari karşılığı da güncelleniyor; (3) ESKİ virman kaydı (canlıda var olan VRM ayakları)
-// düzenlenmez ama silinir, bir ayağı silmek ikisini de siler.
+// Ölçülen: (1) hesap açılınca form DEĞİL hareketler görünüyor, üstte dört işlem düğmesi var;
+// (2) virman kaynaktan çıkış, hedefe giriş yazıyor, VRM fişiyle; (3) farklı para biriminde hedefe
+// geçen tutar ayrıca soruluyor (kur tahmin edilmiyor).
 const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
@@ -34,6 +32,51 @@ async function calistir() {
     hareketGorunur: /açılış/.test(document.body.innerText),
   }));
 
+  await sayfa.evaluate(() => { const b = document.querySelector('[data-islem="virman"]'); if (b) b.click(); });
+  await sayfa.waitForTimeout(500);
+  await sayfa.evaluate(() => {
+    const s = document.querySelector("[data-virman-hedef]");
+    const o = [...s.options].find((x) => /USD Kasa/.test(x.textContent));
+    s.value = o.value; s.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  await sayfa.waitForTimeout(300);
+  await sayfa.locator("[data-virman-tutar]").fill("480");
+  await sayfa.waitForTimeout(300);
+  const hedefTutarSoruldu = await sayfa.evaluate(() => !!document.querySelector("[data-virman-hedef-tutar]"));
+  await sayfa.locator("[data-virman-hedef-tutar]").fill("10");
+  // SEBEP ZORUNLU (17 Eylül): seçilmeden kaydedilmiyor.
+  // ÖĞRENEN LİSTE (17 Eylül): alan serbest yazılıyor, öneriler datalist'te.
+  const sebepSecenekleri = await sayfa.evaluate(() => {
+    const dl = document.getElementById("virman-sebep-onerileri");
+    return dl ? [...dl.options].map((o) => o.value).slice(0, 3) : [];
+  });
+  await sayfa.evaluate(() => { const b = document.querySelector("[data-virman-kaydet]"); if (b) b.click(); });
+  await sayfa.waitForTimeout(600);
+  const sebepsizKaydedilmedi = await sayfa.evaluate(() => !!document.querySelector("[data-virman-formu]"));
+  // Listede olmayan YENİ bir sebep yazılıyor: bir dahaki sefere önerilere girmeli.
+  await sayfa.locator("[data-virman-sebep]").fill("Kira için nakit");
+  await sayfa.waitForTimeout(300);
+  await sayfa.evaluate(() => { const b = document.querySelector("[data-virman-kaydet]"); if (b) b.click(); });
+  await sayfa.waitForTimeout(1500);
+
+  const m = await depoOku(sayfa, "muhasebe:data");
+  const sonuc = {
+    tlKasa: (m.kasalar[0].hareketler || []).map((x) => `${x.yon}:${x.tutar}:${(x.fisNo || "").slice(0, 3)}`),
+    usdKasa: (m.kasalar[1].hareketler || []).map((x) => `${x.yon}:${x.tutar}:${(x.fisNo || "").slice(0, 3)}`),
+    sebep: (() => {
+      const a2 = (m.kasalar[0].hareketler || []).find((x) => x.virmanMi);
+      return a2 && a2.virmanSebebi;
+    })(),
+    aciklama: (() => {
+      const a2 = (m.kasalar[0].hareketler || []).find((x) => x.virmanMi);
+      return a2 && a2.aciklama;
+    })(),
+    ayniBag: (() => {
+      const a = (m.kasalar[0].hareketler || []).find((x) => x.virmanMi);
+      const b = (m.kasalar[1].hareketler || []).find((x) => x.virmanMi);
+      return !!(a && b && a.muhasebeBagId === b.muhasebeBagId);
+    })(),
+  };
 
   // ---- DÜZENLEME + ONAYLI SİLME (17 Eylül) ----
   // Cariye bağlı bir ödeme: tutarı düzeltilince cari karşılığı da güncellenmeli.
@@ -66,6 +109,30 @@ async function calistir() {
     cariKarsiligi: ((await depoOku(ikinci.sayfa, "cari:data")).find((x) => x.id === "c1").hareketler || []).map((x) => `${x.yon}:${x.tutar}`),
   };
   await ikinci.tarayici.close();
+
+  // ---- ÖĞRENEN LİSTE: yazılan sebep bir sonraki virmanda öneriliyor ----
+  const t3 = { ...TOHUM };
+  t3["muhasebe:data"] = JSON.stringify({
+    hesaplar: [], bankalar: [], cekler: [], defter: [], kurlar: { USD: 48, EUR: 56 },
+    kasalar: [
+      { id: "k1", ad: "TL Kasa", paraBirimi: "TRY", hareketler: [{ id: "v1", tarih: "2026-09-16", yon: "Çıkış", tutar: 100, virmanMi: true, virmanSebebi: "Kira için nakit", aciklama: "Virman → USD Kasa · Kira için nakit", defter: "Genel" }] },
+      { id: "k2", ad: "USD Kasa", paraBirimi: "USD", hareketler: [] },
+    ],
+  });
+  const ucuncu = await uygulamaAc(t3, { hataYaz: false });
+  ucuncu.sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
+  await ucuncu.sayfa.waitForTimeout(2400);
+  await modulAc(ucuncu.sayfa, "Kasa & Banka");
+  await ucuncu.sayfa.waitForTimeout(900);
+  await ucuncu.sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /TL Kasa/.test(x.textContent) && x.offsetParent); if (b) b.click(); });
+  await ucuncu.sayfa.waitForTimeout(700);
+  await ucuncu.sayfa.evaluate(() => { const b = document.querySelector('[data-islem="virman"]'); if (b) b.click(); });
+  await ucuncu.sayfa.waitForTimeout(500);
+  const ogrenenListe = await ucuncu.sayfa.evaluate(() => {
+    const dl = document.getElementById("virman-sebep-onerileri");
+    return dl ? [...dl.options].map((o) => o.value) : [];
+  });
+  await ucuncu.tarayici.close();
 
   // ---- VİRMAN TEK İŞLEM: bir ayağı silmek ikisini de siler (17 Eylül) ----
   const t4 = { ...TOHUM };
@@ -115,7 +182,7 @@ async function calistir() {
   await dorduncu.tarayici.close();
 
   await tarayici.close();
-  return { hatalar, virmanSilme, acilis, duzenleme };
+  return { hatalar, virmanSilme, acilis, hedefTutarSoruldu, sebepSecenekleri, sebepsizKaydedilmedi, sonuc, duzenleme, ogrenenListe };
 }
 
 if (require.main === module) {

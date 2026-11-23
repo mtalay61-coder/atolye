@@ -406,10 +406,12 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                 <DuzenAlani ekran={birimAdi === "Kasa" ? "kasaDetay" : "bankaDetay"} aralik={0} acRef={hesapDuzenAcRef} disIkon bloklar={[
                 { id: "islem", ad: "İşlem düğmeleri ve formlar", icerik: (<>
                 {/* İŞLEM ÇUBUĞU: hesap açılınca görünen ilk şey. Form seçilen işleme göre açılıyor. */}
-                {/* KASALAR ARASI VİRMAN DÜĞMESİ KAPALI (v1.744.35 — kullanıcı: "virmanı cari içerisinden yapalım, buradan
-                    kaldıralım"). Virman Ödeme & Tahsilat'ta ödeme şekli "Virman" (cariden cariye, 337). Bu form (kasadan bankaya
-                    aktarım) silinmedi, yalnız gizli: geri istenirse `false &&` kaldırılır. */}
-                {false && acik && (
+                {/* HESAPLAR ARASI AKTARIM (v1.744.35 — kullanıcı: önce "virmanı cari içerisinden yapalım, buradan kaldıralım",
+                    ardından "kasa–banka ve hesaplar arası para aktarımını da arayüzde erişilebilir bırak; cari virmanından ayrı,
+                    açık isimli bir işlem olsun"). Cari virmanı (cariden cariye, kasa yok) Ödeme & Tahsilat'ta (337); burada
+                    şirket içi para yer değiştirmesi (kasadan bankaya, bankadan kasaya, hesaptan hesaba). Kayıt ve fiş aynı
+                    (VRM); yalnız ad açık. Veri öznitelikleri (data-islem="virman", data-virman-*) testler için aynı kaldı. */}
+                {acik && (
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap", padding: "10px 12px 0" }}>
                     {[
                       // RENKLER HAREKET_TIPI_RENK'TEN (v1.535.0 — kullanıcı: "Ödeme, tahsilat renkleri var, butonları o renge
@@ -418,7 +420,7 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                       // HAREKET GİRİŞİ KALDIRILDI (v1.674.0 — kullanıcı: "kasa banka ekranında hareket girmesin, ödeme ve
                       // tahsilatta giriliyor"). Tahsilat / ödeme / gelir-gider kartı girişi Ödeme & Tahsilat'ta; burada yalnız
                       // hesaplar arası VİRMAN kaldı (şirket içi para yer değiştirmesi, karşı tarafı yok).
-                      { k: "virman", ad: "Virman", ikon: "Virman", ipucu: "Kasalar/bankalar arası aktarım", renk: "var(--erp-info)" },
+                      { k: "virman", ad: "Hesaplar arası aktarım", ikon: "Virman", ipucu: "Kasa ↔ banka / hesaptan hesaba para aktarımı — cari etkilenmez (cariden cariye virman: Ödeme & Tahsilat › Cari virmanı)", renk: "var(--erp-info)" },
                     ].map((x) => (
                       <button
                       key={x.k} type="button" data-islem={x.k} title={x.ipucu}
@@ -440,7 +442,7 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                   </div>
                 )}
 
-                {false && acik && islem === "virman" && (
+                {acik && islem === "virman" && (
                   <div data-virman-formu="1" style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end", padding: "10px 12px" }}>
                     {/* VİRMAN: bu hesaptan ÇIKIŞ, hedef hesaba GİRİŞ — tek işlem, iki kayıt, aynı
                         bağ kimliği. Cari yok: para şirket içinde yer değiştiriyor. Para birimi
@@ -564,7 +566,7 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                         setIslem(null);
                       }}
                       style={{ padding: "8px 14px", fontSize: 13 }}>
-                      Virmanı Kaydet
+                      Aktarımı Kaydet
                     </button>
                   </div>
                 )}

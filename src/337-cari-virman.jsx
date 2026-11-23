@@ -10,9 +10,26 @@
 //
 // İki satır TEK sunucu fişinde (CVR-…, 078 `paraFisiYuku` `ekCariler`): biri yazılıp öteki düşemez; fiş iptali ikisini birden
 // kaldırır. Satırlar sıradan tahsilat / ödeme satırı (`islemTipi`), ödeme şekli "Virman" — ekstre, son tahsilat ve ödemeler
-// listesi ve raporlar onları ayrı kural yazmadan tanır. İki satır aynı tutar ve aynı para biriminde (kur yok: para hareket
-// etmiyor; carinin bakiyesi para birimi bazında tutulur).
+// listesi ve raporlar onları ayrı kural yazmadan tanır. İki satır aynı tutar ve aynı para biriminde.
+//
+// KUR DÖNÜŞÜMÜ YOK → FARKLI PARA BİRİMİ REDDEDİLİR (kullanıcı 23 Kasım: "kur dönüşümü yoksa farklı para birimlerini reddet").
+// Virmanın para birimi ilk carinin para birimidir (seçilemez); karşı cari başka para birimindeyse virman yazılmaz — USD
+// carinin bakiyesine TL satır düşmek, yapılmamış bir kur çevrimini yapılmış gibi gösterirdi. Kasalar / bankalar arası para
+// aktarımı AYRI işlem: Kasa & Banka › "Hesaplar arası aktarım" (210; orada kur çevirici var).
 const CARI_VIRMAN_TURU = "Cari virmanı";
+
+// Saf: virman yazılabilir mi? Döner: null (geçerli) ya da kullanıcıya gösterilecek neden. Form (kaydet) ve kayıt kapısı
+// (260 `cariVirmaniKaydet`) AYNI kuralı kullanır — form atlanıp kapı doğrudan çağrılsa da kural geçerli.
+function cariVirmanDogrula({ ilkCari, karsiCari, tutar }) {
+  if (!ilkCari) return "İlk cariyi seçin";
+  if (!karsiCari) return "Karşı cariyi seçin";
+  if (karsiCari.id === ilkCari.id) return "Karşı cari ilk cariyle aynı olamaz";
+  const t = typeof tutar === "number" ? tutar : parseFloat(String(tutar == null ? "" : tutar).replace(",", "."));
+  if (!Number.isFinite(t) || t <= 0) return "Geçerli bir tutar girin (sıfırdan büyük)";
+  const a = ilkCari.paraBirimi || "TRY", b = karsiCari.paraBirimi || "TRY";
+  if (a !== b) return `Para birimleri farklı (${ilkCari.unvan}: ${a}, ${karsiCari.unvan}: ${b}) — cari virmanında kur dönüşümü yok; aynı para birimindeki cariler arasında yapılır`;
+  return null;
+}
 
 // Saf: iki carinin hareket satırları. Döner: { ilk, karsi } — ikisi de 035 cari hareketi biçiminde (fiş no'yu kapı verir).
 function cariVirmanHareketleri({ tip, ilkCari, karsiCari, tarih, tutar, paraBirimi, defter, aciklama }) {
@@ -30,7 +47,8 @@ function cariVirmanHareketleri({ tip, ilkCari, karsiCari, tarih, tutar, paraBiri
 // props: tip ("Tahsilat" | "Ödeme"), cari (ilk seçilen), cariler, showToast,
 //        onKaydet({ karsiCariId, ilk, karsi }) → true (kaydedildi) | false (yazılamadı, form dolu kalır)
 function CariVirmanSatiri({ tip, cari, cariler, showToast, onKaydet }) {
-  const [form, setForm] = useState(() => ({ karsiCariId: "", tarih: bugunYerel(), tutar: "", paraBirimi: cari.paraBirimi || "TRY", defter: "Genel", aciklama: "" }));
+  const pb = cari.paraBirimi || "TRY";   // virmanın para birimi = ilk carinin (seçilemez; yukarıdaki kural)
+  const [form, setForm] = useState(() => ({ karsiCariId: "", tarih: bugunYerel(), tutar: "", defter: "Genel", aciklama: "" }));
   const kaydediliyorRef = useRef(false);
   const karsiCari = (cariler || []).find((c) => c.id === form.karsiCariId) || null;
   const t = parseFloat(form.tutar);
@@ -38,11 +56,10 @@ function CariVirmanSatiri({ tip, cari, cariler, showToast, onKaydet }) {
 
   async function kaydet() {
     if (kaydediliyorRef.current) return;
-    if (!karsiCari) { showToast("Karşı cariyi seçin"); return; }
-    if (karsiCari.id === cari.id) { showToast("Karşı cari ilk cariyle aynı olamaz"); return; }
-    if (!(t > 0)) { showToast("Tutar girin"); return; }
+    const hata = cariVirmanDogrula({ ilkCari: cari, karsiCari, tutar: form.tutar });
+    if (hata) { showToast(hata); return; }
     const { ilk, karsi } = cariVirmanHareketleri({ tip, ilkCari: cari, karsiCari, tarih: form.tarih, tutar: t,
-      paraBirimi: form.paraBirimi, defter: form.defter, aciklama: form.aciklama });
+      paraBirimi: pb, defter: form.defter, aciklama: form.aciklama });
     kaydediliyorRef.current = true;
     let ok = false;
     try { ok = await onKaydet({ karsiCariId: karsiCari.id, ilk, karsi }); }
@@ -77,9 +94,8 @@ function CariVirmanSatiri({ tip, cari, cariler, showToast, onKaydet }) {
         <Field label="Tutar">
           <div style={{ display: "flex", gap: 4 }}>
             <input type="number" step="0.01" min="0" data-cari-virman-tutar="1" value={form.tutar} onChange={(e) => setForm({ ...form, tutar: e.target.value })} style={{ ...inputStyle, flex: 1 }} />
-            <select data-cari-virman-pb="1" value={form.paraBirimi} onChange={(e) => setForm({ ...form, paraBirimi: e.target.value })} style={{ ...inputStyle, width: 68 }}>
-              {MUHASEBE_PARA_BIRIMLERI.map((pb) => <option key={pb} value={pb}>{pb}</option>)}
-            </select>
+            <span data-cari-virman-pb={pb} title="Virmanın para birimi ilk carinin para birimidir (kur dönüşümü yok)"
+              style={{ ...inputStyle, width: 56, display: "inline-flex", alignItems: "center", justifyContent: "center", background: "var(--erp-panel)", fontWeight: 700 }}>{pb}</span>
           </div>
         </Field>
         <Field label="Defter">
@@ -93,6 +109,11 @@ function CariVirmanSatiri({ tip, cari, cariler, showToast, onKaydet }) {
           <input value={form.aciklama} data-cari-virman-aciklama="1" placeholder="Opsiyonel" onChange={(e) => setForm({ ...form, aciklama: e.target.value })} style={inputStyle} />
         </Field>
       </div>
+      {karsiCari && (karsiCari.paraBirimi || "TRY") !== pb && (
+        <div data-cari-virman-pb-uyari="1" style={{ fontSize: 12, color: "var(--erp-warn)", marginTop: 8 }}>
+          {cariVirmanDogrula({ ilkCari: cari, karsiCari, tutar: 1 })}
+        </div>
+      )}
       {ozet && <div data-cari-virman-ozet="1" style={{ fontSize: 12, color: "var(--erp-text-2)", marginTop: 8 }}>Kaydedilince: {ozet} — tek fişte, kasa / banka hareketi yok.</div>}
     </div>
   );

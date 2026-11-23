@@ -492,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.744.35";
+const SURUM = "1.744.36";
 const SURUM_TARIHI = "2026-11-23";
-const SURUM_NOTU = "Cari virmanı Ödeme & Tahsilat'ta; kasa / banka formdaki + ile açılır";
+const SURUM_NOTU = "Cari virmanı Ödeme & Tahsilat'ta (aynı para biriminde); kasa / banka arası aktarım Kasa & Banka'da; hesap formdaki + ile açılır";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -525,6 +525,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" };   // teklif: v1.723.0, Sipariş'in alt sekmesi
 
 const SURUM_GECMISI = [
+  { surum: "1.744.36", tarih: "23.11.2026", eklenen: ["Kasa & Banka › hesap › \"Hesaplar arası aktarım\": kasadan bankaya, bankadan kasaya, hesaptan hesaba para aktarımı yeniden arayüzde (cari virmanından ayrı işlem; kur çevirici ve aktarım sebebi aynen)."], degisen: ["Ödeme & Tahsilat'taki virman \"Cari virmanı (cariden cariye)\" adını aldı. Para birimi ilk carinin para birimidir; karşı cari başka para birimindeyse virman yapılmaz (kur dönüşümü yok). Aynı cari ve sıfır / eksi / boş tutar reddedilir."], duzeltilen: [] },
   { surum: "1.744.35", tarih: "23.11.2026", eklenen: ["Ödeme & Tahsilat › ödeme şekli \"Virman (cariden cariye)\": ilk cari ve karşı cari seçilir. Ödemede ilk cariye ödeme, karşı cariden tahsilat; tahsilatta ilk cariden tahsilat, karşı cariye ödeme. İki satır tek fişte (CVR-…), kasa / banka hareketi yok; geri alınca ikisi birden kalkar.", "Ödeme & Tahsilat › Kasa / Banka satırının yanında + düğmesi: yeni kasa ya da banka hesabı oradan açılır ve hemen seçilir."], degisen: ["Kasa & Banka ekranında Virman ve \"Yeni Kasa / Yeni Banka Hesabı\" düğmeleri kalktı (hesap düzenleme, arşivleme ve silme yerinde)."], duzeltilen: [] },
   { surum: "1.744.34", tarih: "20.11.2026", eklenen: [], degisen: [], duzeltilen: ["Ürün kartı › Reçete: \"Hammaddesiz proses ekle\" satırı yalnız reçetede hammadde satırı varken görünüyordu; reçetesi boş yeni üründe de görünür, ilk adım (ör. yalnız işçilikli Dikim) doğrudan eklenir."] },
   { surum: "1.744.33", tarih: "20.11.2026", eklenen: ["Sipariş başlığında \"Para Tipi\": cari seçilince carinin para birimi gelir; bu sipariş için değiştirilebilir (ör. USD müşteriye TL sipariş). Yeni kalemler bu para tipiyle eklenir; farklı para birimindeki kalem sayısı altında yazar. Düzenlemede kayıtlı para tipi korunur."], degisen: [], duzeltilen: [] },

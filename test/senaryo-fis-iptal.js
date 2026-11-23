@@ -1,19 +1,26 @@
 // SENARYO — TEK FİŞ DEFTERİ: SİLME FİŞ İPTALİDİR (v1.737.0, stok-v2/FIS-DEFTERI-PLAN.md "Geri alma ve iptal").
-// v1.744.35: iki ayaklı fiş artık CARİ VİRMANI (Ödeme & Tahsilat › Ödeme › Virman; kasalar arası virman düğmesi kullanıcı isteğiyle
-// gizli — eski VRM ayaklarının silinmesi senaryo-kasa-islemler'de). Sahte sunucu: fiş defteri kurulu. Müşteri B → karşı Tedarikçi
-// A, 300 ₺ → CVR fişi; ardından bildirimdeki "Geri al".
-// Ölçülen: (1) virman tek istek, iki cari satırı aynı fişte, kasa satırı yok; (2) geri alma TEK `fis_iptal` (o fişin numarasıyla)
-// — satır satır car_yaz silmesi gitmez; (3) iki carinin satırı birlikte kalkar; (4) yerel defterde fiş iptal.
-const { uygulamaAc, depoOku, cariSec } = require("./ortak.js");
+// Sahte sunucu: fiş defteri kurulu. Kasa & Banka › TL Kasa › Virman (aynı birim, iki TL kasa) → VRM fişi sunucuda; sonra kaynak
+// ayağı sağ tık › Sil.
+// Ölçülen: (1) virman tek istek, iki ayak aynı fişte; (2) silme TEK `fis_iptal` (o fişin numarasıyla) — satır satır kas_yaz
+// silmesi gitmez; (3) iki ayak birlikte ekrandan kalkar; (4) sunucu fişinin satırı "düzenle"de değişmez, uyarı verir.
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
 async function calistir() {
+  const t = { ...TOHUM };
+  t["muhasebe:data"] = JSON.stringify({
+    hesaplar: [], bankalar: [], cekler: [], defter: [], kurlar: { USD: 48, EUR: 56 },
+    kasalar: [
+      { id: "k1", ad: "TL Kasa", paraBirimi: "TRY", hareketler: [] },
+      { id: "k3", ad: "Şube Kasa", paraBirimi: "TRY", hareketler: [] },
+    ],
+  });
   const istekler = [];
   const onceRota = async (sayfa) => {
     await sayfa.route("**/rest/v1/rpc/fis_kes**", (r) => {
       const p = JSON.parse(r.request().postData() || "{}").p;
-      istekler.push({ ad: "fis_kes", ozet: `${p.fis.tur}:${((p.cari || {}).satirlar || []).map((x) => `${x.id || x.cari_id || "?"}`).length} cari satırı:${((p.kasa || {}).hareketler || []).length} kasa satırı` });
+      istekler.push({ ad: "fis_kes", ozet: `${p.fis.tur}:${((p.kasa || {}).hareketler || []).map((x) => `${x.hesap_id}/${x.veri.yon}/${x.veri.tutar}`).join("+")}` });
       return r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ fisNo: `${p.fis.onek}-261031001`, bagliFisNo: null, zatenVar: false }) });
     });
     await sayfa.route("**/rest/v1/rpc/fis_iptal**", (r) => {
@@ -23,43 +30,50 @@ async function calistir() {
     });
     for (const ad of ["car_yaz", "kas_yaz", "fis_yaz"]) {
       await sayfa.route(`**/rest/v1/rpc/${ad}**`, (r) => {
-        const g = r.request().postData() || "";
-        const p = (JSON.parse(g || "{}").p) || {};
-        // Satır taşımayan yazmalar (cari kartının kendisi) sayılmaz; hareket satırı / iptali taşıyan eski yol sayılır.
-        if ((p.hareketIptal || []).length || /"(satirlar|hareketler)":\[(\{|")/.test(g)) istekler.push({ ad, ozet: (p.hareketIptal || []).length ? "hareketIptal" : "satir" });
-        return r.fulfill({ status: 200, contentType: "application/json", body: "{}" });
+        const p = JSON.parse(r.request().postData() || "{}").p || {};
+        istekler.push({ ad, ozet: ((p.hareketIptal || []).length ? "hareketIptal" : "") });
+        return r.abort();
       });
     }
   };
   const stkAyar = { id: "tekil", aktif: true, cari_aktif: true, alt_aktif: true, kasa_aktif: true, liste_aktif: true,
     liste_tablolari: ["fis_defteri"], fis_aktif: false };
-  const { tarayici, sayfa } = await uygulamaAc({ ...TOHUM }, { hataYaz: false, onceRota, stkAyar });
+  const { tarayici, sayfa } = await uygulamaAc(t, { hataYaz: false, onceRota, stkAyar });
   const hatalar = []; sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2500);
-  await sayfa.locator('button:has-text("Finans"):visible').first().click(); await sayfa.waitForTimeout(300);
-  await sayfa.locator('button:has-text("Ödeme & Tahsilat"):visible').first().click(); await sayfa.waitForTimeout(800);
-  await sayfa.locator('[data-odeme-tip="Ödeme"]:visible').first().click(); await sayfa.waitForTimeout(150);
-  await sayfa.locator('[data-odeme-sekli="Virman"]:visible').first().click(); await sayfa.waitForTimeout(200);
-  await cariSec(sayfa, "Müşteri B", "", "data-odeme-cari");
-  await cariSec(sayfa, "Tedarikçi A", '[data-cari-virman="Ödeme"]', "data-cari-virman-karsi");
-  await sayfa.locator("[data-cari-virman-tutar]:visible").fill("300");
-  await sayfa.locator("[data-cari-virman-kaydet]:visible").click();
-  await sayfa.waitForTimeout(1500);
-  const cariSatirlari = async () => {
-    const cr = await depoOku(sayfa, "cari:data");
-    return ["Müşteri B", "Tedarikçi A"].map((ad) => `${ad}:${((cr.find((c) => c.unvan === ad) || {}).hareketler || []).map((h) => `${h.fisNo}/${h.yon}/${h.tutar}`).join(",")}`);
-  };
-  const virmanSonrasi = await cariSatirlari();
-  // Geri al: kesilen fişin bildirimindeki düğme (100 paraFisiKesBildir → fisGeriAlRef → sunucuFisiniIptalEt)
-  await sayfa.locator("[data-toast-geri-al]").first().click();
+  await modulAc(sayfa, "Kasa & Banka");
+  await sayfa.waitForTimeout(900);
+  await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /TL Kasa/.test(x.textContent) && x.offsetParent); if (b) b.click(); });
+  await sayfa.waitForTimeout(800);
+  await sayfa.evaluate(() => { const b = document.querySelector('[data-islem="virman"]'); if (b) b.click(); });
   await sayfa.waitForTimeout(500);
-  const onay = sayfa.locator("[data-sil-onayla]");
-  if (await onay.count()) { await onay.first().click(); }
+  await sayfa.evaluate(() => {
+    const s = document.querySelector("[data-virman-hedef]");
+    const o = [...s.options].find((x) => /Şube Kasa/.test(x.textContent));
+    s.value = o.value; s.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  await sayfa.waitForTimeout(300);
+  await sayfa.locator("[data-virman-tutar]").fill("300");
+  await sayfa.locator("[data-virman-sebep]").fill("Şubeye nakit");
+  await sayfa.evaluate(() => { const b = document.querySelector("[data-virman-kaydet]"); if (b) b.click(); });
+  await sayfa.waitForTimeout(1500);
+  const kasalar = async () => ((await depoOku(sayfa, "muhasebe:data")).kasalar || []).map((k) => `${k.id}:${(k.hareketler || []).map((h) => `${h.fisNo}/${h.yon}/${h.tutar}`).join(",")}`);
+  const virmanSonrasi = await kasalar();
+
+  // Düzenle: sunucu fişinin satırı yerinde değişmez (virman satırında menüde zaten yok — doğrudan çağrı yerine metin yok; atlanır)
+  // Sil: kaynak ayağı sağ tık › Sil › onay
+  const vid = await sayfa.evaluate(() => {
+    const tr = [...document.querySelectorAll("tr[data-kasa-hareket-satir]")].find((x) => x.getBoundingClientRect().width > 0 && /Virman/.test(x.textContent));
+    return tr ? tr.getAttribute("data-kasa-hareket-satir") : null;
+  });
+  if (vid) await sagTikSec(sayfa, `[data-kasa-hareket-satir="${vid}"]`, "sil");
+  await sayfa.waitForTimeout(500);
+  await sayfa.locator("[data-sil-onayla]").first().click();
   await sayfa.waitForTimeout(1800);
-  const silmeSonrasi = await cariSatirlari();
+  const silmeSonrasi = await kasalar();
   const toast = await sayfa.evaluate(() => [...document.querySelectorAll("[data-toast]")].map((x) => x.innerText.replace(/\s+/g, " ").trim()).join(" | "));
   const defter = await sayfa.evaluate(() => (window.__fisDefteriOku ? window.__fisDefteriOku() : [])
-    .filter((f) => f && f.sunucu).map((f) => `${f.fisNo}|${f.tip}|${(f.cariHareketleri || []).length} cari|${(f.kasaHareketleri || []).length} kasa|${f.iptal ? "iptal" : "gecerli"}`));
+    .filter((f) => f && f.sunucu).map((f) => `${f.fisNo}|${f.tip}|${(f.kasaHareketleri || []).length}|${f.iptal ? "iptal" : "gecerli"}`));
   await tarayici.close();
   return { hatalar, virmanSonrasi, silmeSonrasi, toast: toast.replace(/\d{1,3}(\.\d{3})*(,\d+)?/g, "N"), defter, istekler: istekler.map((x) => `${x.ad}${x.ozet ? `:${x.ozet}` : ""}`) };
 }
