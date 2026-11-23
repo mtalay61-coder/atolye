@@ -1,0 +1,33 @@
+veritabanı atolye_ekran hazır · uretim_sil 0 · kurallar f
+istemci const SURUM = "1.744.36"
+ekran-cari-virman · atolye_ekran · kurallar KAPALI
+1 · Ödeme + Cari virmanı 1.000 (Alıcı → karşı Satıcı)
+  ✓ [tek fiş, başlık] {"tur":"Cari virmanı","onek":"CVR","cari_id":"ekr-alici","iptal":false,"kasa_satiri":0}
+  ✓ [iki satır: yön, tutar, para birimi, şekil, işlem] [{"cari_id":"ekr-alici","yon":"Borç","tutar":1000,"para_birimi":"TRY","odeme_sekli":"Virman","islem":"Ödeme","iptal":false},{"cari_id":"ekr-satici","yon":"Alacak","tutar":1000,"para_birimi":"TRY","odeme_sekli":"Virman","islem":"Tahsilat","iptal":false}]
+  ✓ [sunucu bakiyesi] {"ekr-alici":1000,"ekr-satici":-1000}
+  ✓ [bildirim] true
+2 · TEK İŞLEM: ikinci satırın tutarı yolda NaN yapılır
+  ✓ [sunucu reddetti] [true]
+    (sunucu yanıtı: {"code":"KR010","message":"Cari hareket tutarı sonlu bir sayı olmalı","details":null,"hint":null})
+  ✓ [ilk satır da yazılmadı, fiş açılmadı (car_hareket / stk_fis aynı)] {"car":"2","fis":"1"}
+  ✓ [ekranda kaydedilemedi] true
+  ✓ [ekranda 77'lik satır yok] 0
+  ✓ [form dolu kaldı] "77"
+3 · Tahsilat + Cari virmanı 250 (Satıcı → karşı Alıcı)
+  ✓ [ayrı tek fiş] true
+  ✓ [iki satır] [{"cari_id":"ekr-alici","yon":"Borç","tutar":250,"para_birimi":"TRY","odeme_sekli":"Virman","islem":"Ödeme","iptal":false},{"cari_id":"ekr-satici","yon":"Alacak","tutar":250,"para_birimi":"TRY","odeme_sekli":"Virman","islem":"Tahsilat","iptal":false}]
+  ✓ [sunucu bakiyesi] {"ekr-alici":1250,"ekr-satici":-1250}
+5 · İptal (Geri al, 3'teki fiş)
+  ✓ [fiş iptal] true
+  ✓ [iki satır birlikte iptal] ["ekr-alici:true","ekr-satici:true"]
+  ✓ [ilk fiş geçerli] false
+  ✓ [sunucu bakiyesi 1'deki hâle döndü] {"ekr-alici":1000,"ekr-satici":-1000}
+4 · Farklı para birimi (Alıcı TRY → Ekran Müşteri USD)
+  ✓ [ekranda ret] true
+  ✓ [sunucuya fiş gitmedi] "2"
+6 · Sayfa yenilendi
+  ✓ [ekran (sunucudan yüklendi): yalnız 1. fişin iki satırı, yön / şekil doğru, iptal edilen yok] ["Ekran Alıcı Ödeme Virman — Genel 1.000 ₺ fiş1 Virman (ödeme) — karşı: Ekran Satıcı","Ekran Satıcı Tahsilat Virman — Genel 1.000 ₺ fiş1 Virman (tahsilat) — karşı: Ekran Alıcı"]
+  ✓ [kasa / banka satırı hiç değişmedi] "8"
+  ✓ [sayfa hatası yok] []
+── ekran-cari-virman: 21 ✓ / 0 ✗ ──
+── kos-ekran: TEMİZ ──

@@ -286,16 +286,23 @@ function sunucuFisKaydi(yuk, no, stokHareketleri, cariHareketleri, kasaHareketle
 // ve (para hareketiyse) bir kasa / banka satırı TEK fişte. Satırların `fisNo`'su yer tutucu; kullanıcının yazdığı belge numarası
 // (tedarikçinin makbuzu) `fis.ek.belgeNo`da. Önek işlem tipinden (`paraFisOneki`). Kasa ayağı yoksa yalnız cari satırı.
 const PARA_FIS_ONEKLERI = { "Tahsilat": "TH", "Ödeme": "ÖD", "Alış": "AF", "Satış": "SF", "Mesai": "MS", "Maaş": "MAŞ", "İşçilik": "İŞ",
-  "Virman": "VRM", "Gider": "GD", "Gelir": "GL", "Çek cirosu": "ÇC", "Çek iadesi": "Çİ", "Çek tahsili": "ÇT" };
+  "Virman": "VRM", "Gider": "GD", "Gelir": "GL", "Çek cirosu": "ÇC", "Çek iadesi": "Çİ", "Çek tahsili": "ÇT",
+  "Cari virmanı": "CVR" };
 function paraFisOneki(tip) { return PARA_FIS_ONEKLERI[tip] || "CH"; }
 // `kasa`: tek kasa / banka ayağı ya da DİZİ (virman: kaynaktan çıkış + hedefe giriş — iki ayak tek fişte). Cari yoksa yalnız kasa
 // satırları (gider / gelir kartı, virman). Döner: `kasaHareketleri` (dizi) ve geriye uyum için `kasaHareketi` (ilki).
 // `cekler` (v1.738.0): fişin doğurduğu / değiştirdiği çek kayıtları (çek alma / verme, ciro, iade, tahsil) — kas_yaz'ın çek satırı,
 // fişle AYNI işlemde.
-function paraFisiYuku({ fis, cariId, hareketler, kasa, cekler, cekOnceki, istek, zaman, kullaniciAd }) {
-  const cariHareketleri = (hareketler || []).map((h) => ({
+// `ekCariler` (v1.744.35 — CARİ VİRMANI): [{ cariId, hareketler }] — fişin İKİNCİ (ve sonraki) carisinin satırları, aynı fişte.
+// Sunucu (18 fis_tek_kes → car_yaz) her satırı kendi carisine yazar; fiş başlığındaki cari ilk cari. İki ayak tek fişte: biri
+// yazılıp öteki düşemez, iptal ikisini birden kaldırır (fiş no'dan).
+function paraFisiYuku({ fis, cariId, hareketler, kasa, cekler, cekOnceki, istek, zaman, kullaniciAd, ekCariler }) {
+  const satirKur = (h) => ({
     ...h, id: h.id || uid("hrk"), fisNo: FIS_YER, zaman: h.zaman || zaman, kullanici: h.kullanici || kullaniciAd || null,
-  }));
+  });
+  const cariHareketleri = (hareketler || []).map(satirKur);
+  const ekCariHareketleri = (ekCariler || []).filter((e) => e && e.cariId && (e.hareketler || []).length)
+    .map((e) => ({ cariId: e.cariId, hareketler: e.hareketler.map(satirKur) }));
   const ayaklar = (Array.isArray(kasa) ? kasa : [kasa]).filter((k) => k && k.hesapId && k.hareket)
     .map((k) => ({ ...k, hareket: { ...k.hareket, fisNo: FIS_YER } }));
   const kasaHareketleri = ayaklar.map((k) => k.hareket);
@@ -309,13 +316,14 @@ function paraFisiYuku({ fis, cariId, hareketler, kasa, cekler, cekOnceki, istek,
       tutar: ilk.tutar != null ? ilk.tutar : (kasaHareketi ? kasaHareketi.tutar : null), aciklama: ilk.aciklama || (kasaHareketi && kasaHareketi.aciklama) || null,
       kullanici: kullaniciAd || null, kalemler: [], ...fis,
     },
-    cari: { satirlar: cariId ? cariHareketleri.map((h) => fisKesCariSatiri(cariId, h)) : [] },
+    cari: { satirlar: [...(cariId ? cariHareketleri.map((h) => fisKesCariSatiri(cariId, h)) : []),
+      ...ekCariHareketleri.flatMap((e) => e.hareketler.map((h) => fisKesCariSatiri(e.cariId, h)))] },
     ...(ayaklar.length || (cekler || []).length ? { kasa: {
       hareketler: ayaklar.map((k) => fisKesKasaHareketi(k.hesapId, k.hareket)),
       ...((cekler || []).length ? { cekler: cekler.map((c) => ({ id: String(c.id), veri: c, onceki: (cekOnceki || []).find((x) => String(x.id) === String(c.id)) || null })) } : {}),
     } } : {}),
   };
-  return { yuk, cariHareketleri, kasaHareketi, kasaHareketleri, ayaklar };
+  return { yuk, cariHareketleri, kasaHareketi, kasaHareketleri, ayaklar, ekCariHareketleri };
 }
 
 // Kasa & Banka tabanı (tek parça belge, 030 `tekilTabanOku`): eklenen hareketler hesabına, iptal edilenler çıkar.

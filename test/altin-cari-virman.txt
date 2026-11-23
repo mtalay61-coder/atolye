@@ -1,0 +1,169 @@
+{
+ "baslangic": {
+  "Döviz Tedarikçi": {
+   "bakiye": {},
+   "satirlar": []
+  },
+  "Müşteri B": {
+   "bakiye": {},
+   "satirlar": []
+  },
+  "Tedarikçi A": {
+   "bakiye": {},
+   "satirlar": []
+  },
+  "kasaBanka": [
+   "Ana Kasa:1 hareket:1000 TRY",
+   "Şube Kasa:0 hareket:0 TRY",
+   "Ziraat:1 hareket:500 TRY",
+   "Vakıf Döviz:0 hareket:0 USD"
+  ]
+ },
+ "defter": [
+  "CVR-261123002|Cari virmanı|2 cari|0 kasa|iptal",
+  "CVR-261123001|Cari virmanı|2 cari|0 kasa|gecerli"
+ ],
+ "geriAl": {
+  "Döviz Tedarikçi": {
+   "bakiye": {},
+   "satirlar": []
+  },
+  "Müşteri B": {
+   "bakiye": {
+    "TRY": 1000
+   },
+   "satirlar": [
+    "CVR-261123001:Ödeme:Borç:1000:TRY:Virman"
+   ]
+  },
+  "Tedarikçi A": {
+   "bakiye": {
+    "TRY": -1000
+   },
+   "satirlar": [
+    "CVR-261123001:Tahsilat:Alacak:1000:TRY:Virman"
+   ]
+  },
+  "istekler": [
+   "fis_iptal:CVR-261123002"
+  ],
+  "kasaBanka": [
+   "Ana Kasa:1 hareket:1000 TRY",
+   "Şube Kasa:0 hareket:0 TRY",
+   "Ziraat:1 hareket:500 TRY",
+   "Vakıf Döviz:0 hareket:0 USD"
+  ],
+  "odemeVirmaniHalineDondu": true,
+  "toast": "\"CVR-261123002\" iptal edildi — 2 cari satırı"
+ },
+ "hatalar": [],
+ "hesapAcma": {
+  "bankaSecili": "Vakıf Döviz",
+  "bankalar": [
+   "Ziraat:Ziraat Bankası::TRY",
+   "Vakıf Döviz:Vakıfbank:TR000000000000000000000001:USD"
+  ],
+  "kasaSecili": "Şube Kasa",
+  "kasalar": [
+   "Ana Kasa:TRY",
+   "Şube Kasa:TRY"
+  ]
+ },
+ "istekler": [
+  "fis_kes:Cari virmanı:CVR:cari2:kasa0",
+  "fis_kes:Cari virmanı:CVR:cari2:kasa0",
+  "fis_iptal:CVR-261123002"
+ ],
+ "kasaBankaEkrani": {
+  "aktarimFormu": true,
+  "hedefler": [
+   "Şube Kasa (TRY)",
+   "Ziraat (TRY)",
+   "Vakıf Döviz (USD)"
+  ],
+  "islemDugmeleri": [
+   "virman:Hesaplar arası aktarım"
+  ],
+  "yeniKasaDugmesi": false
+ },
+ "kasaBankaHicDegismedi": true,
+ "odemeOzeti": "Kaydedilince: Müşteri B: ödeme (borç) · Tedarikçi A: tahsilat (alacak) — tek fişte, kasa / banka hareketi yok.",
+ "odemeVirmani": {
+  "Döviz Tedarikçi": {
+   "bakiye": {},
+   "satirlar": []
+  },
+  "Müşteri B": {
+   "bakiye": {
+    "TRY": 1000
+   },
+   "satirlar": [
+    "CVR-261123001:Ödeme:Borç:1000:TRY:Virman"
+   ]
+  },
+  "Tedarikçi A": {
+   "bakiye": {
+    "TRY": -1000
+   },
+   "satirlar": [
+    "CVR-261123001:Tahsilat:Alacak:1000:TRY:Virman"
+   ]
+  },
+  "formTemizlendi": true,
+  "kasaBanka": [
+   "Ana Kasa:1 hareket:1000 TRY",
+   "Şube Kasa:0 hareket:0 TRY",
+   "Ziraat:1 hareket:500 TRY",
+   "Vakıf Döviz:0 hareket:0 USD"
+  ],
+  "toast": "Cari virmanı kaydedildi — CVR-261123001"
+ },
+ "ret": {
+  "bos": "Geçerli bir tutar girin (sıfırdan büyük)",
+  "durumDegismedi": true,
+  "eksi": "Geçerli bir tutar girin (sıfırdan büyük)",
+  "farkliParaBirimi": "Para birimleri farklı (Müşteri B: TRY, Döviz Tedarikçi: USD) — cari virmanında kur dönüşümü yok; aynı para birimindeki cariler arasında yapılır",
+  "farkliParaBirimiUyari": "Para birimleri farklı (Müşteri B: TRY, Döviz Tedarikçi: USD) — cari virmanında kur dönüşümü yok; aynı para birimindeki cariler arasında yapılır",
+  "istekYok": true,
+  "sifir": "Geçerli bir tutar girin (sıfırdan büyük)"
+ },
+ "tahsilatVirmani": {
+  "Döviz Tedarikçi": {
+   "bakiye": {},
+   "satirlar": []
+  },
+  "Müşteri B": {
+   "bakiye": {
+    "TRY": 1250
+   },
+   "satirlar": [
+    "CVR-261123001:Ödeme:Borç:1000:TRY:Virman",
+    "CVR-261123002:Ödeme:Borç:250:TRY:Virman"
+   ]
+  },
+  "Tedarikçi A": {
+   "bakiye": {
+    "TRY": -1250
+   },
+   "satirlar": [
+    "CVR-261123001:Tahsilat:Alacak:1000:TRY:Virman",
+    "CVR-261123002:Tahsilat:Alacak:250:TRY:Virman"
+   ]
+  },
+  "kasaBanka": [
+   "Ana Kasa:1 hareket:1000 TRY",
+   "Şube Kasa:0 hareket:0 TRY",
+   "Ziraat:1 hareket:500 TRY",
+   "Vakıf Döviz:0 hareket:0 USD"
+  ],
+  "toast": "Cari virmanı kaydedildi — CVR-261123002"
+ },
+ "virmanEkrani": {
+  "ayniCariListedeYok": true,
+  "formAcik": true,
+  "gelirGiderKartiYok": true,
+  "kasaSatiriYok": true,
+  "paraBirimi": "TRY",
+  "sekliAdi": "Cari virmanı (cariden cariye)"
+ }
+}

@@ -48,12 +48,33 @@ function CariModule({ onParaFisi, onFisIptal, tanimlar, onTanimlarKaydet, onMuha
   // GELİR / GİDER KARTI (v1.674.0 — kullanıcı: "kasa banka ekranında hareket girmesin, ödeme ve tahsilatta giriliyor";
   // "cari boş seçilmesin, gelir veya gider kartlarımız listelensin, boş ödeme olmaz"). Karşı taraf cari YA DA kart.
   const [odemeKartId, setOdemeKartId] = useState("");
+  // KASA / BANKA AÇMA (v1.744.35 — kullanıcı: "kasa banka açma işlerimizi kasanın yanına ekleme tuşu ekleyerek yapabiliriz"):
+  // Kasa & Banka ekranındaki "Yeni Kasa / Banka" düğmesi kalktı; hesap, ödeme şeklinin hesap satırındaki + ile açılır.
+  // { tur: "kasa" | "banka", ad, banka, iban, paraBirimi } | null
+  const [hesapEkleForm, setHesapEkleForm] = useState(null);
   const odemeFormunuAc = (cariId, tip, sekil) => {
     setOdemeKartGoster(false);
     if (cariId) setOdemeKartId("");
     setOdemeCariId(cariId || "");
     setOdemeYerelHedef(cariId ? { cariId, tip, odemeSekli: sekil } : null);
   };
+  // CARİ VİRMANI KAYDI (v1.744.35, 337): yalnız sunucu fiş defteri yolunda — iki carinin satırı TEK para fişinde (CVR-…, App
+  // `paraFisiKes` kapısı, `ekCariler`). Eski yolda iki ayrı yazma yarım kalabilirdi: virman hiç yazılmaz, kullanıcıya söylenir.
+  // Döner: true (kesildi; kapı numarayla bildirdi) | false (yazılamadı — form dolu kalır).
+  async function cariVirmaniKaydet(ilkCariId, { karsiCariId, ilk, karsi }) {
+    if (!onParaFisi || !fisKesYolu()) { showToast("Cari virmanı fiş defteri kurulu değilken yapılamaz"); return false; }
+    // Kapıda da aynı kural (337 `cariVirmanDogrula`) + satırlar kuralla uyumlu mu: iki satır aynı tutar, ikisi de ilk carinin
+    // para biriminde, karşılıklı yön.
+    const ilkCari = (cariler || []).find((c) => c.id === ilkCariId), karsiCari = (cariler || []).find((c) => c.id === karsiCariId);
+    const hata = cariVirmanDogrula({ ilkCari, karsiCari, tutar: ilk && ilk.tutar })
+      || (!ilk || !karsi || ilk.tutar !== karsi.tutar || ilk.yon === karsi.yon
+        || ilk.paraBirimi !== ((ilkCari && ilkCari.paraBirimi) || "TRY") || karsi.paraBirimi !== ilk.paraBirimi ? "Virman satırları tutarsız — kaydedilmedi" : null);
+    if (hata) { showToast(hata); return false; }
+    const r = await onParaFisi({ fis: { tur: CARI_VIRMAN_TURU, onek: paraFisOneki(CARI_VIRMAN_TURU), kaynak: "Ödeme & Tahsilat", ek: { karsiCariId } },
+      cariId: ilkCariId, hareketler: [ilk], ekCariler: [{ cariId: karsiCariId, hareketler: [karsi] }],
+      anahtar: `cari-virman|${ilkCariId}|${karsiCariId}|${ilk.tutar}`, hataEtiketi: "Cari virmanı" });
+    return !!r;
+  }
   // SİPARİŞTEN GELEN TAHSİLAT/ÖDEME HEDEFİ (v1.612.0): süzgeçleri sıfırla (kart listede görünsün) ve o kartı aç.
   // Formu doldurma işi kartın kendisinde (CariCard, `odemeHedefi` etkisi); hedefi de o tüketir.
   useEffect(() => {
@@ -397,20 +418,23 @@ function CariModule({ onParaFisi, onFisIptal, tanimlar, onTanimlarKaydet, onMuha
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
             {tipDugmesi("Tahsilat")}{tipDugmesi("Ödeme")}
             <span style={{ fontSize: 12, color: "var(--erp-text-2)", marginLeft: 6 }}>
-              {odemeTip === "Tahsilat" ? "Müşteriden / cariden para, çek ya da senet alındı" : "Tedarikçiye / cariye para, çek ya da senet verildi"}
+              {odemeSekliSecim === "Virman"
+                ? (odemeTip === "Tahsilat" ? "Cari virmanı: seçilen cariden tahsilat, karşı cariye ödeme (para el değiştirmez; kasa / banka aktarımı Kasa & Banka › Hesaplar arası aktarım)" : "Cari virmanı: seçilen cariye ödeme, karşı cariden tahsilat (para el değiştirmez; kasa / banka aktarımı Kasa & Banka › Hesaplar arası aktarım)")
+                : odemeTip === "Tahsilat" ? "Müşteriden / cariden para, çek ya da senet alındı" : "Tedarikçiye / cariye para, çek ya da senet verildi"}
             </span>
           </div>
           <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
             <span style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)", minWidth: 90 }}>Ödeme şekli</span>
-            {ODEME_SEKILLERI.map((o) => {
+            {/* VİRMAN (v1.744.35, 337): cariden cariye aktarım — kasa / banka yok; gelir / gider kartı seçilemez. */}
+            {[...ODEME_SEKILLERI, "Virman"].map((o) => {
               const aktif = odemeSekliSecim === o;
               return (
                 <button key={o} type="button" data-odeme-sekli={o}
-                  onClick={() => { setOdemeSekliSecim(o); if (odemeCariId) odemeFormunuAc(odemeCariId, odemeTip, o); }}
+                  onClick={() => { setOdemeSekliSecim(o); setHesapEkleForm(null); if (o === "Virman") setOdemeKartId(""); if (odemeCariId) odemeFormunuAc(odemeCariId, odemeTip, o); }}
                   style={{ padding: "5px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer", borderRadius: "var(--erp-r-pill)",
                     border: `1.5px solid ${aktif ? "var(--erp-purple)" : "var(--erp-line)"}`, background: aktif ? "var(--erp-purple)" : "#fff",
                     color: aktif ? "#fff" : "var(--erp-text-2)" }}>
-                  {o === "Nakit" ? "Nakit (kasa)" : o === "Havale/EFT" ? "Havale / EFT (banka)" : o}
+                  {o === "Nakit" ? "Nakit (kasa)" : o === "Havale/EFT" ? "Havale / EFT (banka)" : o === "Virman" ? "Cari virmanı (cariden cariye)" : o}
                 </button>
               );
             })}
@@ -419,7 +443,7 @@ function CariModule({ onParaFisi, onFisIptal, tanimlar, onTanimlarKaydet, onMuha
             <div data-odeme-hesaplar={odemeSekliSecim} style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)", minWidth: 90 }}>{odemeSekliSecim === "Nakit" ? "Kasa" : "Banka"}</span>
               {hesapListesi.length === 0 ? (
-                <span style={{ fontSize: 12, color: "var(--erp-warn)" }}>{odemeSekliSecim === "Nakit" ? "Kasa" : "Banka"} tanımlı değil — Kasa & Banka sekmesinden açın.</span>
+                <span style={{ fontSize: 12, color: "var(--erp-warn)" }}>{odemeSekliSecim === "Nakit" ? "Kasa" : "Banka"} tanımlı değil — yandaki + ile açın.</span>
               ) : hesapListesi.map((x) => {
                 const aktif = seciliHesap && seciliHesap.deger === x.deger;
                 return (
@@ -432,19 +456,80 @@ function CariModule({ onParaFisi, onFisIptal, tanimlar, onTanimlarKaydet, onMuha
                   </button>
                 );
               })}
+              {onMuhasebeKaydet && (
+                <button type="button" data-odeme-hesap-ekle={odemeSekliSecim === "Nakit" ? "kasa" : "banka"}
+                  title={odemeSekliSecim === "Nakit" ? "Yeni kasa aç" : "Yeni banka hesabı aç"}
+                  onClick={() => setHesapEkleForm((f) => (f ? null : { tur: odemeSekliSecim === "Nakit" ? "kasa" : "banka", ad: "", banka: "", iban: "", paraBirimi: "TRY" }))}
+                  style={{ width: 30, height: 30, display: "inline-flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
+                    borderRadius: "var(--erp-r-pill)", border: "1.5px dashed #2F6B4F", background: hesapEkleForm ? alfaEkle("#2F6B4F", "1A") : "#fff", color: "#2F6B4F" }}>
+                  <Plus size={15} />
+                </button>
+              )}
             </div>
           )}
+          {kisaSekil && hesapEkleForm && (() => {
+            const f = hesapEkleForm;
+            const kasaMi = f.tur === "kasa";
+            const tumHesaplar = [...((muhasebe && muhasebe.kasalar) || []), ...((muhasebe && muhasebe.bankalar) || [])];
+            const kaydet = () => {
+              const ad = String(f.ad || "").trim();
+              if (!ad) { showToast(kasaMi ? "Kasa adını yazın" : "Hesap adını yazın"); return; }
+              const anahtar = kasaMi ? "kasalar" : "bankalar";
+              // Kasa & Banka ekranının eski "Yeni Kasa / Banka" formuyla AYNI kayıt (205 `hesapEkle`): kimlik, boş hareketler, alanlar.
+              const yeni = { id: uid(f.tur), hareketler: [], ad, paraBirimi: f.paraBirimi || "TRY",
+                ...(kasaMi ? {} : { banka: String(f.banka || "").trim(), iban: String(f.iban || "").trim() }) };
+              onMuhasebeKaydet({ ...muhasebe, [anahtar]: [...((muhasebe && muhasebe[anahtar]) || []), yeni] });
+              setOdemeHesapSecim((o) => ({ ...o, [odemeSekliSecim]: `${f.tur}:${yeni.id}` }));
+              setHesapEkleForm(null);
+              showToast(`"${ad}" eklendi`);
+            };
+            const alan = (k, etiket, ph) => (
+              <label key={k} style={{ display: "flex", flexDirection: "column", gap: 3, fontSize: 11, fontWeight: 700, color: "var(--erp-text-2)" }}>
+                {etiket}
+                <input value={f[k] || ""} data-hesap-ekle-alan={k} placeholder={ph} list={`odeme-hesap-oneri-${k}`}
+                  onChange={(e) => setHesapEkleForm({ ...f, [k]: e.target.value })}
+                  onKeyDown={(e) => { if (e.key === "Enter") kaydet(); if (e.key === "Escape") setHesapEkleForm(null); }}
+                  style={{ ...inputStyle, width: k === "iban" ? 220 : 160 }} />
+                <datalist id={`odeme-hesap-oneri-${k}`}>
+                  {[...new Set(tumHesaplar.map((h) => String(h[k] || "").trim()).filter(Boolean))].map((v) => <option key={v} value={v} />)}
+                </datalist>
+              </label>
+            );
+            return (
+              <div data-odeme-hesap-ekle-formu={f.tur} style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap", padding: "8px 10px", marginLeft: 96,
+                background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)" }}>
+                {alan("ad", kasaMi ? "Kasa adı" : "Hesap adı", kasaMi ? "örn. Ana Kasa" : "örn. Ziraat Vadesiz")}
+                {!kasaMi && alan("banka", "Banka", "örn. Ziraat Bankası")}
+                {!kasaMi && alan("iban", "IBAN", "TR..")}
+                <label style={{ display: "flex", flexDirection: "column", gap: 3, fontSize: 11, fontWeight: 700, color: "var(--erp-text-2)" }}>
+                  Para birimi
+                  <select value={f.paraBirimi} data-hesap-ekle-pb="1" onChange={(e) => setHesapEkleForm({ ...f, paraBirimi: e.target.value })} style={{ ...inputStyle, width: 80 }}>
+                    {MUHASEBE_PARA_BIRIMLERI.map((pb) => <option key={pb} value={pb}>{pb}</option>)}
+                  </select>
+                </label>
+                <button type="button" className="btn-primary btn-save" data-hesap-ekle-kaydet="1" onClick={kaydet}><Save size={14} /> {kasaMi ? "Kasayı aç" : "Hesabı aç"}</button>
+                <button type="button" className="btn-ghost" onClick={() => setHesapEkleForm(null)}>Vazgeç</button>
+              </div>
+            );
+          })()}
           <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)", minWidth: 90 }}>Cari / kart</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)", minWidth: 90 }}>{odemeSekliSecim === "Virman" ? "Cari" : "Cari / kart"}</span>
             <div style={{ minWidth: 280, flex: "0 1 420px" }}>
-              <CariSecici cariler={karsiTarafListesi(cariler, giderKartlari)} deger={odemeKartId ? `kart:${odemeKartId}` : odemeCariId} veriAdi="data-odeme-cari"
-                placeholder="Cari ya da gelir/gider kartı ara…"
+              <CariSecici cariler={karsiTarafListesi(cariler, odemeSekliSecim === "Virman" ? [] : giderKartlari)} deger={odemeKartId ? `kart:${odemeKartId}` : odemeCariId} veriAdi="data-odeme-cari"
+                placeholder={odemeSekliSecim === "Virman" ? "İlk cariyi ara…" : "Cari ya da gelir/gider kartı ara…"}
                 onDegis={(id) => { const k = karsiTarafCoz(id); setOdemeKartId(k.kartId); odemeFormunuAc(k.cariId, odemeTip, odemeSekliSecim); }} />
             </div>
           </div>
         </div>
 
-        {odemeKartId && !odemeCari ? (
+        {odemeSekliSecim === "Virman" ? (
+          odemeCari ? (
+            <CariVirmanSatiri key={`${odemeCari.id}|${odemeTip}`} tip={odemeTip} cari={odemeCari} cariler={cariler} showToast={showToast}
+              onKaydet={(k) => cariVirmaniKaydet(odemeCari.id, k)} />
+          ) : (
+            <EmptyState text={`Virman için önce ilk cariyi seçin; ardından karşı cariyi ve tutarı girin.`} />
+          )
+        ) : odemeKartId && !odemeCari ? (
           !KISA_FORM_SEKILLERI.includes(odemeSekliSecim)
             ? <div style={{ fontSize: 12, color: "var(--erp-warn)" }}>Gelir/gider kartına çek/senet girilmez — nakit, havale ya da kredi kartı seçin.</div>
             : <KartOdemeSatiri key={`${odemeKartId}|${odemeTip}|${odemeSekliSecim}`} tip={odemeTip} kart={giderKartlari.find((k) => k.id === odemeKartId)}
