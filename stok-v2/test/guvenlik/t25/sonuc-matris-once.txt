@@ -1,0 +1,191 @@
+── G-25 yetki matrisi · atolye_t25_once · ÖNCE
+A · CVR · Ali · geçti
+A · CVR · Muhasip · geçti
+A · CVR · Carici · geçti
+A · CVR · Muhasebeci · geçti
+A · CVR · Uretimci · geçti
+A · CVR · Ayse · geçti
+A · CVR · Fisci · geçti
+A · CVR · Veli · ret 42501
+A · CVR · Deniz · ret 42501
+A · TH_nakit · Ali · geçti
+A · TH_nakit · Muhasip · geçti
+A · TH_nakit · Carici · geçti
+A · TH_nakit · Muhasebeci · geçti
+A · TH_nakit · Uretimci · ret 42501
+A · TH_nakit · Ayse · ret 42501
+A · TH_nakit · Fisci · geçti
+A · TH_nakit · Veli · ret 42501
+A · TH_nakit · Deniz · ret 42501
+A · CH_serbest · Ali · geçti
+A · CH_serbest · Muhasip · geçti
+A · CH_serbest · Carici · geçti
+A · CH_serbest · Muhasebeci · geçti
+A · CH_serbest · Uretimci · geçti
+A · CH_serbest · Ayse · geçti
+A · CH_serbest · Fisci · geçti
+A · CH_serbest · Veli · ret 42501
+A · CH_serbest · Deniz · ret 42501
+A · AF_urunsuz · Ali · geçti
+A · AF_urunsuz · Muhasip · geçti
+A · AF_urunsuz · Carici · geçti
+A · AF_urunsuz · Muhasebeci · geçti
+A · AF_urunsuz · Uretimci · geçti
+A · AF_urunsuz · Ayse · geçti
+A · AF_urunsuz · Fisci · geçti
+A · AF_urunsuz · Veli · ret 42501
+A · AF_urunsuz · Deniz · ret 42501
+A · AF_demirbas · Ali · geçti
+A · AF_demirbas · Muhasip · geçti
+A · AF_demirbas · Carici · geçti
+A · AF_demirbas · Muhasebeci · geçti
+A · AF_demirbas · Uretimci · geçti
+A · AF_demirbas · Ayse · geçti
+A · AF_demirbas · Fisci · geçti
+A · AF_demirbas · Veli · ret 42501
+A · AF_demirbas · Deniz · ret 42501
+A · MAS · Ali · geçti
+A · MAS · Muhasip · geçti
+A · MAS · Carici · geçti
+A · MAS · Muhasebeci · geçti
+A · MAS · Uretimci · geçti
+A · MAS · Ayse · geçti
+A · MAS · Fisci · geçti
+A · MAS · Veli · ret 42501
+A · MAS · Deniz · ret 42501
+A · MS · Ali · geçti
+A · MS · Muhasip · geçti
+A · MS · Carici · geçti
+A · MS · Muhasebeci · geçti
+A · MS · Uretimci · geçti
+A · MS · Ayse · geçti
+A · MS · Fisci · geçti
+A · MS · Veli · ret 42501
+A · MS · Deniz · ret 42501
+A · AF_stok · Ali · geçti
+A · AF_stok · Muhasip · geçti
+A · AF_stok · Carici · geçti
+A · AF_stok · Muhasebeci · geçti
+A · AF_stok · Uretimci · geçti
+A · AF_stok · Ayse · geçti
+A · AF_stok · Fisci · geçti
+A · AF_stok · Veli · ret 42501
+A · AF_stok · Deniz · ret 42501
+A · SF_stok · Ali · geçti
+A · SF_stok · Muhasip · geçti
+A · SF_stok · Carici · geçti
+A · SF_stok · Muhasebeci · geçti
+A · SF_stok · Uretimci · geçti
+A · SF_stok · Ayse · geçti
+A · SF_stok · Fisci · geçti
+A · SF_stok · Veli · ret 42501
+A · SF_stok · Deniz · ret 42501
+A · SF_pesin · Ali · geçti
+A · SF_pesin · Muhasip · geçti
+A · SF_pesin · Carici · geçti
+A · SF_pesin · Muhasebeci · geçti
+A · SF_pesin · Uretimci · ret 42501
+A · SF_pesin · Ayse · ret 42501
+A · SF_pesin · Fisci · geçti
+A · SF_pesin · Veli · ret 42501
+A · SF_pesin · Deniz · ret 42501
+A · URT_teslim · Ali · geçti
+A · URT_teslim · Muhasip · geçti
+A · URT_teslim · Carici · geçti
+A · URT_teslim · Muhasebeci · geçti
+A · URT_teslim · Uretimci · geçti
+A · URT_teslim · Ayse · geçti
+A · URT_teslim · Fisci · geçti
+A · URT_teslim · Veli · ret 42501
+A · URT_teslim · Deniz · ret 42501
+A · URT_ara · Ali · geçti
+A · URT_ara · Muhasip · geçti
+A · URT_ara · Carici · geçti
+A · URT_ara · Muhasebeci · geçti
+A · URT_ara · Uretimci · geçti
+A · URT_ara · Ayse · geçti
+A · URT_ara · Fisci · geçti
+A · URT_ara · Veli · ret 42501
+A · URT_ara · Deniz · ret 42501
+A · VRM · Ali · geçti
+A · VRM · Muhasip · geçti
+A · VRM · Carici · geçti
+A · VRM · Muhasebeci · geçti
+A · VRM · Uretimci · ret 42501
+A · VRM · Ayse · ret 42501
+A · VRM · Fisci · geçti
+A · VRM · Veli · ret 42501
+A · VRM · Deniz · ret 42501
+A · MNL · Ali · geçti
+A · MNL · Muhasip · geçti
+A · MNL · Carici · geçti
+A · MNL · Muhasebeci · geçti
+A · MNL · Uretimci · geçti
+A · MNL · Ayse · geçti
+A · MNL · Fisci · geçti
+A · MNL · Veli · ret 42501
+A · MNL · Deniz · ret 42501
+A7 · car_yaz satır · Ali · geçti
+A7 · car_yaz satır · Muhasip · geçti
+A7 · car_yaz satır · Ayse · geçti
+A7 · car_yaz satır · Uretimci · geçti
+A7 · car_yaz satır · Fisci · geçti
+A4 · a_TH_stok_satiri · Ayse · geçti
+A4 · a_TH_stok_satiri · Uretimci · geçti
+A4 · b_AF_tahsilat_tipi · Ayse · geçti
+A4 · b_AF_tahsilat_tipi · Uretimci · geçti
+A4 · c_kimlik_uymuyor · Ayse · geçti
+A4 · c_kimlik_uymuyor · Uretimci · geçti
+A4 · d_tutar_sisirme · Ayse · geçti
+A4 · d_tutar_sisirme · Uretimci · geçti
+A4 · e_baska_cari · Ayse · geçti
+A4 · e_baska_cari · Uretimci · geçti
+A4 · f_satis_yon_ters · Ayse · geçti
+A4 · f_satis_yon_ters · Uretimci · geçti
+A4 · g_stok_fisine_kasa · Ayse · ret 42501
+A4 · g_stok_fisine_kasa · Uretimci · ret 42501
+A4 · h_urt_atanmamis_cari · Ayse · geçti
+A4 · h_urt_atanmamis_cari · Uretimci · geçti
+A4 · i_urt_ucret_yok · Ayse · geçti
+A4 · i_urt_ucret_yok · Uretimci · geçti
+A4 · j_urt_adet_asimi · Ayse · geçti
+A4 · j_urt_adet_asimi · Uretimci · geçti
+A4 · k_bilinmeyen_onek · Ayse · geçti
+A4 · k_bilinmeyen_onek · Uretimci · geçti
+A4 · l_urt_kayit_yok · Ayse · geçti
+A4 · l_urt_kayit_yok · Uretimci · geçti
+GÖZLEM · AF 0,001 × 12 (gerçek stok hareketi) · Ayse · geçti
+A6 · iptal AF_stok · Stokcu · geçti
+A6 · iptal AF_stok · Uretsil · geçti
+A6 · iptal AF_stok · Muhasip · geçti
+A6 · iptal AF_stok · Ayse · ret 42501
+A6 · iptal SF_pesin (+bağlı) · Stokcu · geçti
+A6 · iptal SF_pesin (+bağlı) · Uretsil · geçti
+A6 · iptal SF_pesin (+bağlı) · Muhasip · geçti
+A6 · iptal SF_pesin (+bağlı) · Ayse · ret 42501
+A6 · iptal CVR · Stokcu · geçti
+A6 · iptal CVR · Uretsil · geçti
+A6 · iptal CVR · Muhasip · geçti
+A6 · iptal CVR · Ayse · ret 42501
+A6 · iptal VRM · Stokcu · geçti
+A6 · iptal VRM · Uretsil · geçti
+A6 · iptal VRM · Muhasip · geçti
+A6 · iptal VRM · Ayse · ret 42501
+A6 · iptal URT_teslim · Stokcu · geçti
+A6 · iptal URT_teslim · Uretsil · geçti
+A6 · iptal URT_teslim · Muhasip · geçti
+A6 · iptal URT_teslim · Ayse · ret 42501
+A6 · iptal TH_nakit · Stokcu · geçti
+A6 · iptal TH_nakit · Uretsil · geçti
+A6 · iptal TH_nakit · Muhasip · geçti
+A6 · iptal TH_nakit · Ayse · ret 42501
+A8 · mesai_bildir · Veli · ret PGRST202
+A8 · mesai_bildir · Uretimci · ret PGRST202
+A8 · mesai_onayla · Uretimci · ret PGRST202
+A8 · mesai_onayla · Muhasip (MS fişi + onay tek işlem) · ret PGRST202
+A8 · onaylı ayı yeniden bildirme · Uretimci · ret PGRST202
+A8 · maaş değiştirme · Uretimci · geçti
+A8 · mesai katı değiştirme · Uretimci · geçti
+A8 · bölüm adı değiştirme · Uretimci · geçti
+A8 · maaş değiştirme · Muhasip · geçti
+── 189 satır ──

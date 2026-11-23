@@ -35,12 +35,29 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
    stok fişinin cari ayağı: stok VE cari?) — kullanıcı kararı. Düzeltme sunucu SQL'i (car_yaz / fis_kes'te tür bazlı denetim)
    → canlı SQL: ayrı paket, önkoşul salt okur sorgusu, yerel + canlı benzeri kopyada sınama (Veli / Deniz / Ayşe + yönetici),
    geri alma dosyası, ayrı uygulama onayı. Ret iletisindeki modül adı hep "stok" (stk_yetki metni) — aynı işte düzeltilebilir.
-   Durum: TASARIM HAZIR (23 Kasım) — `stok-v2/guvenlik/25-G25-TASARIM.md` (dal `claude/g25-car-yaz-yetki`, PR yok): sunucu yetki
-   haritası, fiş türü × yetki grubu tablosu (STOK / ÜRETİM / PARA), etkilenecek işlemler (stok / Üretim rolü için kapanacaklar:
-   CVR, cari kartı serbest hareketi, ürünsüz alış / satış, karara bağlı demirbaş / maaş / mesai; devam edecekler: alış / satış
-   fişi, sipariş teslimi, üretim teslimi işçiliği), sahtecilik kuralları, test planı, kullanıcı kararları K1–K6. Kanıt: kural
-   provası main 3f175bc — 274 senaryo, fiş yolunda eski yol hareket yazması 0, satır taşıyan köprü isteği 0. SQL yazılmadı,
-   canlıya bir şey uygulanmadı.
+   Durum: PAKET HAZIR, YEREL SINAMA TEMİZ (23 Kasım) — CANLIYA UYGULANMADI. Kararlar K1–K6 (kullanıcı): PARA (cari / muhasebe
+   kaydetme) tahsilat / ödeme / cari virmanı için, yalnız fisler yetmez; mesai saati girişi (üretim) ile parasal tahakkuk / onay / ücret
+   (PARA) ayrı; demirbaş PARA; sahtecilik korumaları zorunlu (sunucu cari satırının gerçek stok / üretim işlemiyle bağını, carisini,
+   yönünü, tutarını, para birimini doğrular); iptal kayıtlı içeriğe göre grubun SİLME yetkisiyle, bağlı satırlar birlikte; arayüzde de
+   kapalı (istemci ayrı sürüm). Tasarım + kabul ölçütleri A1–A10: `stok-v2/guvenlik/25-G25-TASARIM.md` (dal `claude/g25-car-yaz-yetki`).
+   SQL (dal `claude/g25-sql`, PR yok): `25-onkosul-salt-okur.sql`, `25-cari-yetki-uygula.sql` (atomik, yedek guvenlik.g25_yedek),
+   `25-sonra-dogrula-salt-okur.sql`, `25-cari-yetki-geri-al.sql` (atomik; AÇIĞI YENİDEN AÇAR) — üretici `25-uret.py`, kaynak
+   `25-kaynak/yeni.sql` + 15 car_yaz + 18 fis_kes / fis_iptal'a birer satır; çalıştırma `25-PAKET.md`. Sunucu: fis_kes yazmadan önce
+   g25_fis_cari_yetki (PARA yetkilisi / Yönetici bugünkü gibi; değilse yalnız stoklu AF / SF ve ÜRT, grubun yetkisi + bağlantı
+   denetimi; gerisi 42501); car_yaz fiş dışından → PARA; fis_iptal → g25_fis_iptal_yetki; mes_bildirim + mesai_bildir / _bildirimleri /
+   _bildirim_iptal / mesai_onayla; tanimlar ücret tetikleyicisi. Bağlantı kuralının dayanağı: 23 Kasım yük derlemi (274 senaryodan 75
+   fis_kes yükü; alış / satışta cari satırı stok satırının kimliğini taşıyor, 175 / 175 satır kurala uyuyor). Sınama `stok-v2/test/
+   guvenlik/t25/test25.sh` (canlı benzeri kopya + tohum; JWT'li authenticated; sonuç `sonuc-test25.txt`, matrisler `sonuc-matris-*`):
+   önkoşul HAZIR → uygula → ikinci uygulama reddi (envanter aynı) → sonra-doğrula TAMAM → Faz 0.4 envanterinde YALNIZ beklenen 5 fark
+   (fis_kes gövdesi, g25 tetikleyici fonksiyonu, mes_bildirim, tanimlar tetikleyicisi) → SONRA matrisi 188 beklenti ✓ / 0 ✗ → geri al:
+   önkoşul HAZIR, envanter tabanla birebir, matris ÖNCE ile birebir (açık yeniden açık), ikinci geri alma reddi → uygula-geri al-uygula
+   matrisi ilkle birebir → üretici --denetle aynı → uygulanmış kopyada ekran-cari-virman 29 / ekran-stok 24 / ekran-kasa 29 temiz.
+   ÖLÇÜLEN (çıkarım değil): sahteciliğin 24 denemesinden 22'si ÖNCE geçiyordu (açık gerçek), SONRA hepsi gerekçeyle 42501; stok /
+   Üretim rolü için nakit tahsilat ve peşinli satış ÖNCE de kas_yaz yüzünden reddediliyordu; yalnız fisler yetkilisi ÖNCE tahsilat /
+   peşinli satış yapabiliyordu (K1 ile kapandı). Kalan riskler (tasarım § 8): proses ücretinin kendisini stok / tanımlar yetkilisi
+   değiştirebilir; stoklu alış / satışta fiyatın makullüğü denetlenmez (GÖZLEM satırı). Regresyonda koşulmayanlar: stok-v2/test/kos.sh
+   sinama-*.sql ve kos-guvenlik davranış bataryası G-25 UYGULANMIŞ veritabanında koşulmadı (kendi tabanlarını kurarlar); istemci
+   değişmediği için test/kosu.sh gerekmedi.
 
 
 **Codex F3 satış sınırı (2 Kasım 2026):** codex/f3-satis-fazla-teslim, F8 2ddb6a1 üzerine. SQL-only, istemci sürümü değişmedi; canlı/main/deploy/surum.json yok. fis_kes ilk yazmadan önce, mevcut sipariş/kalem kilitleri altındayken fis_satis_teslim_koru çağırır. Alış dışındaki kalem bağlı çıkışların ana+bağlı fiş toplamı, DB miktarı ve büyük olan ham geçerli hareket toplamı/saklı karşılananla denetlenir; KR007 reddi. Miktar aynı yükte büyütülerek, pozitif satırla dengeleyerek veya sahte rol/onayla aşılamaz. İstisna: doğrulanmış yönetici + gerçek boolean onay + dolu gerekçe; gerçek kimlik/zaman/kalem değerleri ana fiş ek.fazlaTeslimOnayi alanına sunucudan yazılır, fazla işareti sunucudan verilir. Bu audit alanı kurallar kapalıyken bile değiştirilemez/silinemez; normal fiş notu serbest. Yeni helper doğrudan RPC'ye kapalı. 20 senaryo, 100 doğal yarış geçti; F0 54 yeşil/6 bilinen kırmızı, F2 70/3 beklenen; yeni temiz kurulum + R1/R1b geçti. Tarihsel fazla hesap testlerinin fixture'ları açık yönetici onaylı kurulur; eski onaysız fazla yük artık reddedilir. Alış davranışı değiştirilmedi, onay UI'si eklenmedi, eski stok yazma kapıları F8 kapsamında açık. Ayrıntı: stok-v2/CODEX-F3-SATIS-SINIRI.md.

@@ -1,0 +1,191 @@
+── G-25 yetki matrisi · atolye_t25_a · SONRA
+A · CVR · Ali · geçti ✓
+A · CVR · Muhasip · geçti ✓
+A · CVR · Carici · geçti ✓
+A · CVR · Muhasebeci · geçti ✓
+A · CVR · Uretimci · ret 42501 ✓  [Bu işlem için yetkiniz yok: Cari virmanı (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A · CVR · Ayse · ret 42501 ✓  [Bu işlem için yetkiniz yok: Cari virmanı (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A · CVR · Fisci · ret 42501 ✓  [Bu işlem için yetkiniz yok: Cari virmanı (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A · CVR · Veli · ret 42501 ✓  [Bu işlem için yetkiniz yok: Cari virmanı (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A · CVR · Deniz · ret 42501 ✓  [Bu işlem için yetkiniz yok: Cari virmanı (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A · TH_nakit · Ali · geçti ✓
+A · TH_nakit · Muhasip · geçti ✓
+A · TH_nakit · Carici · geçti ✓
+A · TH_nakit · Muhasebeci · geçti ✓
+A · TH_nakit · Uretimci · ret 42501 ✓  [Bu işlem için yetkiniz yok: Tahsilat (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A · TH_nakit · Ayse · ret 42501 ✓  [Bu işlem için yetkiniz yok: Tahsilat (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A · TH_nakit · Fisci · ret 42501 ✓  [Bu işlem için yetkiniz yok: Tahsilat (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A · TH_nakit · Veli · ret 42501 ✓  [Bu işlem için yetkiniz yok: Tahsilat (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A · TH_nakit · Deniz · ret 42501 ✓  [Bu işlem için yetkiniz yok: Tahsilat (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A · CH_serbest · Ali · geçti ✓
+A · CH_serbest · Muhasip · geçti ✓
+A · CH_serbest · Carici · geçti ✓
+A · CH_serbest · Muhasebeci · geçti ✓
+A · CH_serbest · Uretimci · ret 42501 ✓  [Bu işlem için yetkiniz yok: Cari hareketi (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A · CH_serbest · Ayse · ret 42501 ✓  [Bu işlem için yetkiniz yok: Cari hareketi (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A · CH_serbest · Fisci · ret 42501 ✓  [Bu işlem için yetkiniz yok: Cari hareketi (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A · CH_serbest · Veli · ret 42501 ✓  [Bu işlem için yetkiniz yok: Cari hareketi (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A · CH_serbest · Deniz · ret 42501 ✓  [Bu işlem için yetkiniz yok: Cari hareketi (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A · AF_urunsuz · Ali · geçti ✓
+A · AF_urunsuz · Muhasip · geçti ✓
+A · AF_urunsuz · Carici · geçti ✓
+A · AF_urunsuz · Muhasebeci · geçti ✓
+A · AF_urunsuz · Uretimci · ret 42501 ✓  [Bu işlem için yetkiniz yok: Alış (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A · AF_urunsuz · Ayse · ret 42501 ✓  [Bu işlem için yetkiniz yok: Alış (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A · AF_urunsuz · Fisci · ret 42501 ✓  [Bu işlem için yetkiniz yok: Alış (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A · AF_urunsuz · Veli · ret 42501 ✓  [Bu işlem için yetkiniz yok: Alış (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A · AF_urunsuz · Deniz · ret 42501 ✓  [Bu işlem için yetkiniz yok: Alış (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A · AF_demirbas · Ali · geçti ✓
+A · AF_demirbas · Muhasip · geçti ✓
+A · AF_demirbas · Carici · geçti ✓
+A · AF_demirbas · Muhasebeci · geçti ✓
+A · AF_demirbas · Uretimci · ret 42501 ✓  [Bu işlem için yetkiniz yok: Alış (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A · AF_demirbas · Ayse · ret 42501 ✓  [Bu işlem için yetkiniz yok: Alış (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A · AF_demirbas · Fisci · ret 42501 ✓  [Bu işlem için yetkiniz yok: Alış (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A · AF_demirbas · Veli · ret 42501 ✓  [Bu işlem için yetkiniz yok: Alış (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A · AF_demirbas · Deniz · ret 42501 ✓  [Bu işlem için yetkiniz yok: Alış (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A · MAS · Ali · geçti ✓
+A · MAS · Muhasip · geçti ✓
+A · MAS · Carici · geçti ✓
+A · MAS · Muhasebeci · geçti ✓
+A · MAS · Uretimci · ret 42501 ✓  [Bu işlem için yetkiniz yok: Maaş (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A · MAS · Ayse · ret 42501 ✓  [Bu işlem için yetkiniz yok: Maaş (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A · MAS · Fisci · ret 42501 ✓  [Bu işlem için yetkiniz yok: Maaş (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A · MAS · Veli · ret 42501 ✓  [Bu işlem için yetkiniz yok: Maaş (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A · MAS · Deniz · ret 42501 ✓  [Bu işlem için yetkiniz yok: Maaş (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A · MS · Ali · geçti ✓
+A · MS · Muhasip · geçti ✓
+A · MS · Carici · geçti ✓
+A · MS · Muhasebeci · geçti ✓
+A · MS · Uretimci · ret 42501 ✓  [Bu işlem için yetkiniz yok: Mesai (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A · MS · Ayse · ret 42501 ✓  [Bu işlem için yetkiniz yok: Mesai (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A · MS · Fisci · ret 42501 ✓  [Bu işlem için yetkiniz yok: Mesai (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A · MS · Veli · ret 42501 ✓  [Bu işlem için yetkiniz yok: Mesai (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A · MS · Deniz · ret 42501 ✓  [Bu işlem için yetkiniz yok: Mesai (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A · AF_stok · Ali · geçti ✓
+A · AF_stok · Muhasip · geçti ✓
+A · AF_stok · Carici · geçti ✓
+A · AF_stok · Muhasebeci · geçti ✓
+A · AF_stok · Uretimci · geçti ✓
+A · AF_stok · Ayse · geçti ✓
+A · AF_stok · Fisci · geçti ✓
+A · AF_stok · Veli · ret 42501 ✓  [Bu işlem için yetkiniz yok: Alış (stok / fisler / siparis / uretim kaydetme yetkisi gerekir)]
+A · AF_stok · Deniz · ret 42501 ✓  [Bu işlem için yetkiniz yok: Alış (stok / fisler / siparis / uretim kaydetme yetkisi gerekir)]
+A · SF_stok · Ali · geçti ✓
+A · SF_stok · Muhasip · geçti ✓
+A · SF_stok · Carici · geçti ✓
+A · SF_stok · Muhasebeci · geçti ✓
+A · SF_stok · Uretimci · geçti ✓
+A · SF_stok · Ayse · geçti ✓
+A · SF_stok · Fisci · geçti ✓
+A · SF_stok · Veli · ret 42501 ✓  [Bu işlem için yetkiniz yok: Satış (stok / fisler / siparis / uretim kaydetme yetkisi gerekir)]
+A · SF_stok · Deniz · ret 42501 ✓  [Bu işlem için yetkiniz yok: Satış (stok / fisler / siparis / uretim kaydetme yetkisi gerekir)]
+A · SF_pesin · Ali · geçti ✓
+A · SF_pesin · Muhasip · geçti ✓
+A · SF_pesin · Carici · geçti ✓
+A · SF_pesin · Muhasebeci · geçti ✓
+A · SF_pesin · Uretimci · ret 42501 ✓  [Bu işlem için yetkiniz yok: Tahsilat (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A · SF_pesin · Ayse · ret 42501 ✓  [Bu işlem için yetkiniz yok: Tahsilat (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A · SF_pesin · Fisci · ret 42501 ✓  [Bu işlem için yetkiniz yok: Tahsilat (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A · SF_pesin · Veli · ret 42501 ✓  [Bu işlem için yetkiniz yok: Satış (stok / fisler / siparis / uretim kaydetme yetkisi gerekir)]
+A · SF_pesin · Deniz · ret 42501 ✓  [Bu işlem için yetkiniz yok: Satış (stok / fisler / siparis / uretim kaydetme yetkisi gerekir)]
+A · URT_teslim · Ali · geçti ✓
+A · URT_teslim · Muhasip · geçti ✓
+A · URT_teslim · Carici · geçti ✓
+A · URT_teslim · Muhasebeci · geçti ✓
+A · URT_teslim · Uretimci · geçti ✓
+A · URT_teslim · Ayse · geçti ✓
+A · URT_teslim · Fisci · geçti ✓
+A · URT_teslim · Veli · ret 42501 ✓  [Bu işlem için yetkiniz yok: Üretim (uretim / stok / fisler / siparis kaydetme yetkisi gerekir)]
+A · URT_teslim · Deniz · ret 42501 ✓  [Bu işlem için yetkiniz yok: Üretim (uretim / stok / fisler / siparis kaydetme yetkisi gerekir)]
+A · URT_ara · Ali · geçti ✓
+A · URT_ara · Muhasip · geçti ✓
+A · URT_ara · Carici · geçti ✓
+A · URT_ara · Muhasebeci · geçti ✓
+A · URT_ara · Uretimci · geçti ✓
+A · URT_ara · Ayse · geçti ✓
+A · URT_ara · Fisci · geçti ✓
+A · URT_ara · Veli · ret 42501 ✓  [Bu işlem için yetkiniz yok: Üretim (uretim / stok / fisler / siparis kaydetme yetkisi gerekir)]
+A · URT_ara · Deniz · ret 42501 ✓  [Bu işlem için yetkiniz yok: Üretim (uretim / stok / fisler / siparis kaydetme yetkisi gerekir)]
+A · VRM · Ali · geçti ✓
+A · VRM · Muhasip · geçti ✓
+A · VRM · Carici · geçti ✓
+A · VRM · Muhasebeci · geçti ✓
+A · VRM · Uretimci · ret 42501 ✓  [Bu işlem için yetkiniz yok (stok: kaydetme)]
+A · VRM · Ayse · ret 42501 ✓  [Bu işlem için yetkiniz yok (stok: kaydetme)]
+A · VRM · Fisci · geçti ✓
+A · VRM · Veli · ret 42501 ✓  [Bu işlem için yetkiniz yok (stok: kaydetme)]
+A · VRM · Deniz · ret 42501 ✓  [Bu işlem için yetkiniz yok (stok: kaydetme)]
+A · MNL · Ali · geçti ✓
+A · MNL · Muhasip · geçti ✓
+A · MNL · Carici · geçti ✓
+A · MNL · Muhasebeci · geçti ✓
+A · MNL · Uretimci · geçti ✓
+A · MNL · Ayse · geçti ✓
+A · MNL · Fisci · geçti ✓
+A · MNL · Veli · ret 42501 ✓  [Bu işlem için yetkiniz yok (stok: kaydetme)]
+A · MNL · Deniz · ret 42501 ✓  [Bu işlem için yetkiniz yok (stok: kaydetme)]
+A7 · car_yaz satır · Ali · geçti ✓
+A7 · car_yaz satır · Muhasip · geçti ✓
+A7 · car_yaz satır · Ayse · ret 42501 ✓  [Bu işlem için yetkiniz yok: fiş dışından cari hareketi (cari / muhasebe kaydetme yetkisi gerekir)]
+A7 · car_yaz satır · Uretimci · ret 42501 ✓  [Bu işlem için yetkiniz yok: fiş dışından cari hareketi (cari / muhasebe kaydetme yetkisi gerekir)]
+A7 · car_yaz satır · Fisci · ret 42501 ✓  [Bu işlem için yetkiniz yok: fiş dışından cari hareketi (cari / muhasebe kaydetme yetkisi gerekir)]
+A4 · a_TH_stok_satiri · Ayse · ret 42501 ✓  [Bu işlem için yetkiniz yok: Tahsilat (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A4 · a_TH_stok_satiri · Uretimci · ret 42501 ✓  [Bu işlem için yetkiniz yok: Tahsilat (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A4 · b_AF_tahsilat_tipi · Ayse · ret 42501 ✓  [Cari hareketi gerçek bir stok işlemine bağlı değil (cari satırı g25-s-24271-311 işlem tipi Tahsilat) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+A4 · b_AF_tahsilat_tipi · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir stok işlemine bağlı değil (cari satırı g25-s-24271-313 işlem tipi Tahsilat) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+A4 · c_kimlik_uymuyor · Ayse · ret 42501 ✓  [Cari hareketi gerçek bir stok işlemine bağlı değil (cari satırı g25-x-24271-315 bir stok satırına bağlı değil) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+A4 · c_kimlik_uymuyor · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir stok işlemine bağlı değil (cari satırı g25-x-24271-318 bir stok satırına bağlı değil) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+A4 · d_tutar_sisirme · Ayse · ret 42501 ✓  [Cari hareketi gerçek bir stok işlemine bağlı değil (cari satırı g25-s-24271-321 tutarı miktar × birim fiyattan farklı) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+A4 · d_tutar_sisirme · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir stok işlemine bağlı değil (cari satırı g25-s-24271-323 tutarı miktar × birim fiyattan farklı) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+A4 · e_baska_cari · Ayse · ret 42501 ✓  [Cari hareketi gerçek bir stok işlemine bağlı değil (cari satırı g25-s-24271-325 başka cariye yazılıyor) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+A4 · e_baska_cari · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir stok işlemine bağlı değil (cari satırı g25-s-24271-327 başka cariye yazılıyor) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+A4 · f_satis_yon_ters · Ayse · ret 42501 ✓  [Cari hareketi gerçek bir stok işlemine bağlı değil (cari satırı g25-s-24271-329 yönü Satış türüne uymuyor) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+A4 · f_satis_yon_ters · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir stok işlemine bağlı değil (cari satırı g25-s-24271-331 yönü Satış türüne uymuyor) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+A4 · g_stok_fisine_kasa · Ayse · ret 42501 ✓  [Cari hareketi gerçek bir stok işlemine bağlı değil (stok fişinde kasa / çek satırı var) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+A4 · g_stok_fisine_kasa · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir stok işlemine bağlı değil (stok fişinde kasa / çek satırı var) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+A4 · h_urt_atanmamis_cari · Ayse · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (işçilik satırı g25-c-24271-339 için cari g25-m ve ücret 35 bu üretimin atamalarında / ara proseslerinde yok) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+A4 · h_urt_atanmamis_cari · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (işçilik satırı g25-c-24271-341 için cari g25-m ve ücret 35 bu üretimin atamalarında / ara proseslerinde yok) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+A4 · i_urt_ucret_yok · Ayse · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (işçilik satırı g25-c-24271-343 için cari g25-p ve ücret 1000 bu üretimin atamalarında / ara proseslerinde yok) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+A4 · i_urt_ucret_yok · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (işçilik satırı g25-c-24271-345 için cari g25-p ve ücret 1000 bu üretimin atamalarında / ara proseslerinde yok) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+A4 · j_urt_adet_asimi · Ayse · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (işçilik satırı g25-c-24271-347 miktarı üretim adedinden (10) büyük) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+A4 · j_urt_adet_asimi · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (işçilik satırı g25-c-24271-349 miktarı üretim adedinden (10) büyük) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+A4 · k_bilinmeyen_onek · Ayse · ret 42501 ✓  [Bu işlem için yetkiniz yok: Bilinmeyen (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A4 · k_bilinmeyen_onek · Uretimci · ret 42501 ✓  [Bu işlem için yetkiniz yok: Bilinmeyen (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
+A4 · l_urt_kayit_yok · Ayse · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (üretim kaydı yok-uretim sunucuda yok) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+A4 · l_urt_kayit_yok · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (üretim kaydı yok-uretim sunucuda yok) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+GÖZLEM · AF 0,001 × 12 (gerçek stok hareketi) · Ayse · geçti
+A6 · iptal AF_stok · Stokcu · geçti ✓
+A6 · iptal AF_stok · Uretsil · geçti ✓
+A6 · iptal AF_stok · Muhasip · geçti ✓
+A6 · iptal AF_stok · Ayse · ret 42501 ✓  [Bu işlem için yetkiniz yok (stok: silme)]
+A6 · iptal SF_pesin (+bağlı) · Stokcu · ret 42501 ✓  [Bu işlem için yetkiniz yok: kasa / banka / çek satırlı fişin iptali (TH-261124009) (muhasebe / fisler / cari silme yetkisi gerekir)]
+A6 · iptal SF_pesin (+bağlı) · Uretsil · ret 42501 ✓  [Bu işlem için yetkiniz yok: kasa / banka / çek satırlı fişin iptali (TH-261124010) (muhasebe / fisler / cari silme yetkisi gerekir)]
+A6 · iptal SF_pesin (+bağlı) · Muhasip · geçti ✓
+A6 · iptal SF_pesin (+bağlı) · Ayse · ret 42501 ✓  [Bu işlem için yetkiniz yok (stok: silme)]
+A6 · iptal CVR · Stokcu · ret 42501 ✓  [Bu işlem için yetkiniz yok: cari hareketli fişin iptali (CVR-261124005) (cari / muhasebe silme yetkisi gerekir)]
+A6 · iptal CVR · Uretsil · ret 42501 ✓  [Bu işlem için yetkiniz yok: cari hareketli fişin iptali (CVR-261124006) (cari / muhasebe silme yetkisi gerekir)]
+A6 · iptal CVR · Muhasip · geçti ✓
+A6 · iptal CVR · Ayse · ret 42501 ✓  [Bu işlem için yetkiniz yok (stok: silme)]
+A6 · iptal VRM · Stokcu · ret 42501 ✓  [Bu işlem için yetkiniz yok: kasa / banka / çek satırlı fişin iptali (VRM-261124006) (muhasebe / fisler / cari silme yetkisi gerekir)]
+A6 · iptal VRM · Uretsil · ret 42501 ✓  [Bu işlem için yetkiniz yok: kasa / banka / çek satırlı fişin iptali (VRM-261124007) (muhasebe / fisler / cari silme yetkisi gerekir)]
+A6 · iptal VRM · Muhasip · geçti ✓
+A6 · iptal VRM · Ayse · ret 42501 ✓  [Bu işlem için yetkiniz yok (stok: silme)]
+A6 · iptal URT_teslim · Stokcu · geçti ✓
+A6 · iptal URT_teslim · Uretsil · geçti ✓
+A6 · iptal URT_teslim · Muhasip · geçti ✓
+A6 · iptal URT_teslim · Ayse · ret 42501 ✓  [Bu işlem için yetkiniz yok (stok: silme)]
+A6 · iptal TH_nakit · Stokcu · ret 42501 ✓  [Bu işlem için yetkiniz yok: kasa / banka / çek satırlı fişin iptali (TH-261124013) (muhasebe / fisler / cari silme yetkisi gerekir)]
+A6 · iptal TH_nakit · Uretsil · ret 42501 ✓  [Bu işlem için yetkiniz yok: kasa / banka / çek satırlı fişin iptali (TH-261124014) (muhasebe / fisler / cari silme yetkisi gerekir)]
+A6 · iptal TH_nakit · Muhasip · geçti ✓
+A6 · iptal TH_nakit · Ayse · ret 42501 ✓  [Bu işlem için yetkiniz yok (stok: silme)]
+A8 · mesai_bildir · Veli · ret 42501 ✓  [Bu işlem için yetkiniz yok: mesai saati bildirimi (uretim / cari / muhasebe kaydetme yetkisi gerekir)]
+A8 · mesai_bildir · Uretimci · geçti ✓
+A8 · mesai_onayla · Uretimci · ret 42501 ✓  [Bu işlem için yetkiniz yok: mesai tahakkukunun onayı (cari / muhasebe kaydetme yetkisi gerekir)]
+A8 · mesai_onayla · Muhasip (MS fişi + onay tek işlem) · geçti ✓
+A8 · onaylı ayı yeniden bildirme · Uretimci · ret KR014 ✓  [Bu ayın mesaisi onaylanmış (fiş MS-261124005) — değiştirilemez]
+A8 · maaş değiştirme · Uretimci · ret 42501 ✓  [Bu işlem için yetkiniz yok: maaş, aylık çalışma saati ya da mesai katı değişikliği (cari / muhasebe kaydetme yetkisi gerekir)]
+A8 · mesai katı değiştirme · Uretimci · ret 42501 ✓  [Bu işlem için yetkiniz yok: maaş, aylık çalışma saati ya da mesai katı değişikliği (cari / muhasebe kaydetme yetkisi gerekir)]
+A8 · bölüm adı değiştirme · Uretimci · geçti ✓
+A8 · maaş değiştirme · Muhasip · geçti ✓
+── 189 satır · hepsi beklenen ──
