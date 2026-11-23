@@ -10,7 +10,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 
 ## YENİ OTURUM — BURADAN BAŞLA
 
-### YAPILACAKLAR (güncel — 20 Kasım; kullanıcı: "yapılacaklara not et")
+### YAPILACAKLAR (güncel — 23 Kasım; kullanıcı: "yapılacaklara not et")
 1. **Reçeteye proses maliyeti önerisi** (kullanıcı fikri, onay bekliyor): reçetede proses satırının yanında "gerçek: X ₺ (son N ay)"
    + "Uygula". Öneri = reçete ücreti × (bölüm maaşı ÷ bölüm tahakkuku) — zorluk reçete ücretiyle orantılı kalır, toplam maaşa
    eşitlenir. Personel bazında çift başı / verim (kişinin maaşı ÷ kişinin adedi). Kaç ay ortalaması (önerim 3) sorulacak.
@@ -24,6 +24,18 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
    main'in 1.744.26–32'siyle çakışır (SURUM_GECMISI, sürüm HTML'leri); surum-temizle.sh / ortak.js / firma-secimi aynı içerik.
 4. **7a aykırılığı**: döviz kurunun son adımı `api.anthropic.com` (src/100-app.jsx `kurlariCek`) — kaldırılması ayrı iş.
 5. **`tanim-basliklari` / `firma-secimi`** artık https kökeninden (TEST_KOK); paralel yükte yeniden oynarsa tek başına koş.
+6. **GÜVENLİK İŞİ G-25 — `car_yaz` yetki genişliği (23 Kasım; kullanıcı: "Stok kaydetme yetkisinin cari virmanı ve
+   ödeme/tahsilata izin vermesini ayrı bir güvenlik işi olarak kaydet; bu PR'da sunucu yetkilerini değiştirme").** BULGU
+   (`test/ekran/ekran-cari-virman.js` 7d, canlı benzeri kopya, JWT'li authenticated; `sonuc-ekran-cari-virman-canli-*.txt`):
+   yalnız STOK kaydetme yetkili kullanıcı (Ayşe) uygulamanın CVR isteğini kendi jetonuyla gönderince fiş KESİLDİ (2 cari satırı).
+   Neden: `car_yaz` → `stk_yetki(array['cari','fisler','muhasebe','siparis','uretim','stok','tanimlar'], 'kaydetme')` →
+   `yetki_var_mi` listedeki modüllerden HERHANGİ BİRİNDE yetkiyi yeterli sayar. Aynı kapıdan geçenler: cari virmanı (CVR),
+   tahsilat / ödeme makbuzu (TH / ÖD), ürünsüz alış / satış, maaş / mesai — yani her cari hareketi. Bu PR'la (#368) gelmedi,
+   önceden var. Kapsam / karar: hangi fiş türü hangi modül yetkisini istemeli (ör. para fişi: cari VEYA muhasebe kaydetme;
+   stok fişinin cari ayağı: stok VE cari?) — kullanıcı kararı. Düzeltme sunucu SQL'i (car_yaz / fis_kes'te tür bazlı denetim)
+   → canlı SQL: ayrı paket, önkoşul salt okur sorgusu, yerel + canlı benzeri kopyada sınama (Veli / Deniz / Ayşe + yönetici),
+   geri alma dosyası, ayrı uygulama onayı. Ret iletisindeki modül adı hep "stok" (stk_yetki metni) — aynı işte düzeltilebilir.
+   Durum: KAYDEDİLDİ, başlanmadı.
 
 
 **Codex F3 satış sınırı (2 Kasım 2026):** codex/f3-satis-fazla-teslim, F8 2ddb6a1 üzerine. SQL-only, istemci sürümü değişmedi; canlı/main/deploy/surum.json yok. fis_kes ilk yazmadan önce, mevcut sipariş/kalem kilitleri altındayken fis_satis_teslim_koru çağırır. Alış dışındaki kalem bağlı çıkışların ana+bağlı fiş toplamı, DB miktarı ve büyük olan ham geçerli hareket toplamı/saklı karşılananla denetlenir; KR007 reddi. Miktar aynı yükte büyütülerek, pozitif satırla dengeleyerek veya sahte rol/onayla aşılamaz. İstisna: doğrulanmış yönetici + gerçek boolean onay + dolu gerekçe; gerçek kimlik/zaman/kalem değerleri ana fiş ek.fazlaTeslimOnayi alanına sunucudan yazılır, fazla işareti sunucudan verilir. Bu audit alanı kurallar kapalıyken bile değiştirilemez/silinemez; normal fiş notu serbest. Yeni helper doğrudan RPC'ye kapalı. 20 senaryo, 100 doğal yarış geçti; F0 54 yeşil/6 bilinen kırmızı, F2 70/3 beklenen; yeni temiz kurulum + R1/R1b geçti. Tarihsel fazla hesap testlerinin fixture'ları açık yönetici onaylı kurulur; eski onaysız fazla yük artık reddedilir. Alış davranışı değiştirilmedi, onay UI'si eklenmedi, eski stok yazma kapıları F8 kapsamında açık. Ayrıntı: stok-v2/CODEX-F3-SATIS-SINIRI.md.
