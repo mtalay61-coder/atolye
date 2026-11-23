@@ -7,21 +7,25 @@ const W = process.env.ISTEMCI_DIZIN || path.join(__dirname, "../..");
 const O = require(path.join(W, "test/ortak.js"));
 const EPOSTA = "ali@atolye.local";
 
-async function ekranAc(veritabani, { mudahale = null } = {}) {
+// Kullanıcı adından giriş e-postası (uygulamanın ve yetki_var_mi'nin kuralı: Türkçe harfler sadeleşir + @atolye.local)
+const kullaniciEpostasi = (ad) => String(ad).toLowerCase().replace(/[çğıiöşü]/g, (h) => ({ ç: "c", ğ: "g", ı: "i", i: "i", ö: "o", ş: "s", ü: "u" })[h]).replace(/[^a-z0-9._-]/g, "") + "@atolye.local";
+// `kullanici` (23 Kasım): oturumu açılan ve giriş ekranında yazılan kullanıcı (vars. Ali = Yönetici).
+async function ekranAc(veritabani, { mudahale = null, kullanici = "Ali" } = {}) {
+  const eposta = kullanici === "Ali" ? EPOSTA : kullaniciEpostasi(kullanici);
   const k = kopruKur({ veritabani });
   const ayar = (await k.sorgu("select row_to_json(a) as r from public.stk_ayar a"))[0].r;
   process.env.TEST_HTML = path.join(W, "test/test.html");
   const hatalar = [];
   const { tarayici, sayfa } = await O.uygulamaAc({}, { hataYaz: false, stkAyar: ayar, onceRota: async (s) => {
-    await s.addInitScript((e) => { localStorage.setItem("atolye:oturum", JSON.stringify({ erisim: `yerel-test:${e}`, yenileme: `yerel-test:${e}`, sonaErme: Date.now() + 864e5, email: e })); }, EPOSTA);
+    await s.addInitScript((e) => { localStorage.setItem("atolye:oturum", JSON.stringify({ erisim: `yerel-test:${e}`, yenileme: `yerel-test:${e}`, sonaErme: Date.now() + 864e5, email: e })); }, eposta);
     await k.bagla(s);
     // senaryonun ağ müdahalesi (yanıt kaybı, istek tekrarı) köprüden SONRA kaydedilir → önce o denenir
     if (mudahale) await mudahale(s, k);
   } });
   sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2500);
-  await girisYap(sayfa);
-  return { tarayici, sayfa, k, hatalar, ayar };
+  await girisYap(sayfa, kullanici);
+  return { tarayici, sayfa, k, hatalar, ayar, eposta };
 }
 
 // KULLANICI GİRİŞİ (Tanımlar'da giriş açıksa): ekrandan kullanıcı adı + şifre → uygulama /auth/v1/token ister (köprü yerel jeton
@@ -50,4 +54,4 @@ async function yenile(sayfa) {
 
 const toastlar = (sayfa) => sayfa.evaluate(() => [...document.querySelectorAll("[data-toast]")].map((x) => x.innerText.replace(/\s+/g, " ").trim()).join(" | "));
 
-module.exports = { ekranAc, yenile, girisYap, toastlar, O, W, EPOSTA };
+module.exports = { ekranAc, yenile, girisYap, toastlar, O, W, EPOSTA, kullaniciEpostasi };
