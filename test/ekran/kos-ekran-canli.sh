@@ -76,8 +76,10 @@ PY
 echo "fiş kuralları: $(psql -X -At -d "$DB" -c "select case when public.fis_kural_aktif() then 'AÇIK' else 'KAPALI' end") · sürüm kapısı: $(psql -X -At -d "$DB" -c "select coalesce(min_istemci_surum, 'KAPALI') from public.stk_ayar")"
 hata=0
 for t in $EKRAN_TESTLER; do
-  [ -f "test/ekran/$t.js" ] || continue
+  # Adı yanlış / dosyası olmayan test ATLANMAZ, kırmızı sayılır (sessizce "TEMİZ" demesin)
+  [ -f "test/ekran/$t.js" ] || { echo "  ✗ test/ekran/$t.js yok"; hata=$((hata + 1)); continue; }
   EKRAN_DB=$DB EKRAN_TABLO=${EKRAN_CIKTI:-/tmp}/$t.json node test/ekran/$t.js || hata=$((hata + 1))
 done
+[ -n "${EKRAN_TESTLER// /}" ] || { echo "  ✗ koşulacak test yok"; hata=$((hata + 1)); }
 echo "── kos-ekran-canli: $([ $hata = 0 ] && echo TEMİZ || echo "$hata test kırmızı") ──"
 exit $([ $hata = 0 ] && echo 0 || echo 1)

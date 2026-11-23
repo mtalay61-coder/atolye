@@ -1,0 +1,12 @@
+ekran-geri-donus-cvr · atolye_ekran · fiş CVR-261123001
+  ✓ [eski istemci] "1.744.34"
+  ✓ [veritabanında geçerli CVR fişi var] true
+  ✓ [eski istemci iki satırı gösteriyor] ["Ekran Alıcı Ödeme Virman","Ekran Satıcı Tahsilat Virman"]
+  ✓ [cari kartı ekstresinde fişin sil düğmesi var] true
+    (bildirim: "CVR-261123001" iptal edildi — 2 cari satırı)
+  ✓ [sunucu: fiş iptal] true
+  ✓ [sunucu: iki satır birlikte iptal] ["ekr-alici:true","ekr-satici:true"]
+  ✓ [iki carinin bakiyesi 0] ["ekr-alici:0","ekr-satici:0"]
+  ✓ [kasa / banka satırı aynı] 111
+  ✓ [sayfa hatası yok] []
+── ekran-geri-donus-cvr: 9 ✓ / 0 ✗ ──
