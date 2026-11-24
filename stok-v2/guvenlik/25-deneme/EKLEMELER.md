@@ -1,0 +1,41 @@
+# Deneme projesi — kullanıcı ve veri EKLEMELERİ (yalnız ekleme; silme / sıfırlama YOK)
+
+Durum: HAZIRLANDI, UYGULANMADI. SQL ile değil, uygulamanın kendi ekranlarından (1.745.1, korumalı yerel sunucu, deneme projesi),
+mevcut **Yönetici** kullanıcıyla girilir. Şifreleri kullanıcı girer; bu belgede ve sohbette şifre yok. Var olan kayıtlara dokunulmaz.
+Sıra: G-25 SQL uygulanıp doğrulandıktan SONRA (onaylar G-25 nesnelerine yazar).
+
+## 1. Kullanıcılar — Tanımlar › Kullanıcılar › Yeni kullanıcı
+
+| Kullanıcı adı | Rol | Yetkiler (görüntüleme / kaydetme / silme) | Ne sınanır |
+|---|---|---|---|
+| `DenemeMuhasebe` | Kullanıcı | cari g/k/s · muhasebe g/k/s · fişler g/k · sipariş g · üretim g | Onaylar (iş / tamir / mesai), maaş şeridi, iptal |
+| `DenemeUretim` | Kullanıcı | üretim g/k · stok g/k · sipariş g · fişler g (cari YOK) | mesai bildirimi, teslim, kısmi teslim, tamir talebi |
+| `DenemeSef` | Kullanıcı | cari g · üretim g/k · stok g/k · fişler g/k · sipariş g | cari kartında "Mesaiyi onaya gönder"; maaş ve para düğmeleri kapalı |
+
+Her birine giriş hesabı (şifre) kullanıcı tarafından verilir. Not: uygulama giriş hesabını `functions/v1/kullanici` sunucu
+fonksiyonuyla açar; deneme projesinde bu fonksiyon kurulu değilse hesap açılmaz — o durumda ne görüldüğü bildirilir (SQL ile hesap
+AÇILMAZ).
+
+## 2. Cariler — Cari › Yeni cari
+
+| Ünvan | Tip | Not |
+|---|---|---|
+| `Deneme Maaşlı Personel` | Personel | bölüme eklenecek (maaşlı; mesai denemesi) |
+| `Deneme Usta` | Personel | bölümde DEĞİL (parça başı; işçilik ona yazılır) |
+
+## 3. Bölüm — Tanımlar › Üretim › Atölye İçi Bölümler (Yönetici; G-25 sonrası maaş cari / muhasebe yetkisi ister)
+
+`Deneme Bölüm` → personel: `Deneme Maaşlı Personel`, aylık maaş **30.000**. Bağlı proses SEÇİLMEZ (Kesim işçiliği cariye yazılsın).
+
+## 4. Mamul — Stok › Yeni ürün (Mamul)
+
+`Deneme Bot` · renk `Siyah` · beden `40` · reçetede proses `Kesim` (hammaddesiz proses olabilir) · proses ücreti **Kesim 35 ₺**.
+
+## 5. Üretim — Üretim › Yeni Üretim Siparişi
+
+`Deneme Bot` · Siyah · 40 × **10** → Kesim adımında **iş ver**: `Deneme Usta`, 10 adet.
+(Kontrol listesinin teslim / kısmi teslim / tamir / iptal adımları bu iş üzerinde; gerekirse ikinci bir üretim aynı biçimde.)
+
+## Beklenen sonrası (salt okur `durum-salt-okur.sql` ile ölçülür)
+4. satır: toplam 5 · Yönetici 1 · cari/muhasebe ≥ 1 · üretim ≥ 1 · 6. satır auth hesabı ≥ 6 · 7. satır 1 · 1 · 1 · 8. satır Personel 2 ·
+9. satır ≥ 1 · 10. satır üretim 1 · açık atama 1.
