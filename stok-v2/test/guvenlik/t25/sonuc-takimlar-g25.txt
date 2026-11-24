@@ -4,7 +4,7 @@
    işlendi: stok-v2/editor/15-duzeltme.sql (car_yaz)
    işlendi: stok-v2/fis-defteri.sql (fis_kes, fis_iptal)
    işlendi: stok-v2/editor/18-fis-defteri.sql (fis_kes, fis_iptal)
-   ✓ ağaç: /tmp/t25-takim/agac ( 5 files changed, 1368 insertions(+))
+   ✓ ağaç: /tmp/t25-takim/agac ( 5 files changed, 1410 insertions(+))
 ══ 2) sunucu takımı: stok-v2/test/kos.sh (atolye_g25_kos)
    ✓ kos.sh çıkış 0 (102 adım)
 ══ 3) güvenlik takımı: kos-guvenlik.sh (atolye_g25_guvenlik)
