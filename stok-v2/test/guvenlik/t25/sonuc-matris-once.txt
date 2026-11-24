@@ -180,12 +180,27 @@ A6 · iptal TH_nakit · Uretsil · geçti
 A6 · iptal TH_nakit · Muhasip · geçti
 A6 · iptal TH_nakit · Ayse · ret 42501
 A8 · mesai_bildir · Veli · ret PGRST202
-A8 · mesai_bildir · Uretimci · ret PGRST202
+A8 · mesai_bildir · Uretimci (yalnız bildirim; cari / kasa / fiş değişmez) · ret PGRST202
+A8 · bildirimleri görme · Uretimci (tutar gösterilmez) · ret PGRST202
+A8 · bildirimleri görme · Muhasip (sunucu tutarı 2.400) · ret PGRST202
 A8 · mesai_onayla · Uretimci · ret PGRST202
-A8 · mesai_onayla · Muhasip (MS fişi + onay tek işlem) · ret PGRST202
+A8 · mesai_onayla yanlış tutar (500) · Muhasip · ret PGRST202
+A8 · mesai_onayla · Muhasip (tek MS fişi 2.400 ₺ + bildirim onaylı, tek işlem) · ret PGRST202
+A8 · aynı bildirimi İKİNCİ kez onaylama · Muhasip (yeni fiş yok) · ret PGRST202
+A8 · EŞZAMANLI iki onay × 5 ay · Muhasip (her ayda tek fiş) [01: MS 0, yeni 0, zatenVar 0, ret PGRST202,PGRST202 · 02: MS 0, yeni 0, zatenVar 0, ret PGRST202,PGRST202 · 03: MS 0, yeni 0, zatenVar 0, ret PGRST202,PGRST202 · 04: MS 0, yeni 0, zatenVar 0, ret PGRST202,PGRST202 · 05: MS 0, yeni 0, zatenVar 0, ret PGRST202,PGRST202] · ret çift tahakkuk
+A8 · onaylı aya eski yoldan (cari kartı) ikinci MS · Muhasip · geçti
+A8 · eski yoldan (cari kartı) MS 2026-09 · Muhasip · geçti
+A8 · eski yolla tahakkuk etmiş aya bildirim · Uretimci · ret PGRST202
+A8 · bildirimi tablodan 'bekliyor'a çevirme · Uretimci · ret 42P01
+A8 · bildirimi tablodan silme · Veli · ret 42P01
+A8 · onaylı bildirimi iptal · Uretimci · ret PGRST202
 A8 · onaylı ayı yeniden bildirme · Uretimci · ret PGRST202
+A8 · bildirim hâlâ onaylı, fişi aynı · ret undefined
+A8 · onaylı MS fişinin iptali · Muhasip · ret P0002
+A8 · iptalden sonra yeniden bildirme (5 saat) · Uretimci · ret PGRST202
+A8 · yeniden onay (1.000 ₺) · Muhasip (tek geçerli fiş) · ret PGRST202
 A8 · maaş değiştirme · Uretimci · geçti
 A8 · mesai katı değiştirme · Uretimci · geçti
 A8 · bölüm adı değiştirme · Uretimci · geçti
 A8 · maaş değiştirme · Muhasip · geçti
-── 189 satır ──
+── 204 satır ──

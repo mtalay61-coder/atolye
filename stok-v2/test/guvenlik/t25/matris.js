@@ -90,12 +90,28 @@ const SAHTE = {
     let g = null; try { g = JSON.parse(y.body); } catch (e) { g = null; }
     return { ok: y.status < 300, kod: y.status < 300 ? null : ((g && g.code) || String(y.status)), mesaj: g && g.message, govde: g };
   };
-  const sayac = async () => JSON.stringify((await k.sorgu(`select (select count(*) from public.stk_fis) f, (select count(*) from public.stk_hareket) s,
-    (select count(*) from public.car_hareket) c, (select count(*) from public.kas_hareket) k, (select coalesce(sum(son), 0) from public.fis_sayac) n,
-    (select count(*) from public.uretim_atamalari) a`))[0]);
+  // ANLIK GÖRÜNTÜ (A5): satır SAYISI yetmez — her tablonun bütün satırlarının içerik özeti (md5, sıralı) + cari / kasa bakiyeleri + stok.
+  // Ret sonrası birebir aynı olmalı: var olan bir satırın değişmesi (ör. iptal bayrağı, tutar, bildirim durumu) de yakalanır.
+  const TABLOLAR = ["stk_fis", "stk_hareket", "car_hareket", "kas_hareket", "kas_cek", "fis_sayac", "uretim_atamalari", "siparis_kalemleri", "tanimlar", "cariler", "mes_bildirim"];
+  const sayac = async () => {
+    const icerik = {};
+    for (const t of TABLOLAR) {
+      const r = await k.sorgu(`select case when to_regclass('public.${t}') is null then 'yok' else
+        (select count(*)::text || ':' || coalesce(md5(string_agg(x::text, '|' order by x::text)), '-') from (select to_jsonb(z) x from public.${t} z) y) end as v`).catch(() => [{ v: "yok" }]);
+      icerik[t] = r[0].v;
+    }
+    const cari = await k.sorgu(`select h.cari_id, coalesce(h.para_birimi, 'TRY') pb, sum(case when h.yon = 'Borç' then h.tutar else -h.tutar end)::text b
+      from public.car_hareket h left join public.stk_fis f on f.id = h.fis_no where not h.iptal and not coalesce(f.iptal, false) group by 1, 2 order by 1, 2`);
+    const kasa = await k.sorgu(`select h.hesap_id, sum(case when h.veri ->> 'yon' = 'Giriş' then (h.veri ->> 'tutar')::numeric else -(h.veri ->> 'tutar')::numeric end)::text b
+      from public.kas_hareket h left join public.stk_fis f on f.id = h.fis_id where not h.iptal and not coalesce(f.iptal, false) group by 1 order by 1`);
+    const stok = await k.sorgu(`select varyant_id, miktar::text from public.stk_stok order by 1`).catch(() => []);
+    return JSON.stringify({ icerik, cari, kasa, stok });
+  };
+  const farkAdi = (a, b) => { const x = JSON.parse(a), y = JSON.parse(b);
+    return [...Object.keys(x.icerik).filter((t) => x.icerik[t] !== y.icerik[t]), ...["cari", "kasa", "stok"].filter((t) => JSON.stringify(x[t]) !== JSON.stringify(y[t])).map((t) => `${t} bakiyesi`)].join(", "); };
   const satirlar = []; let kirmizi = 0;
   const yaz = (anahtar, sonuc, beklenen) => {
-    const durum = sonuc.ok ? "geçti" : `ret ${sonuc.kod}${sonuc.atomik === false ? " · SATIR KALDI" : ""}`;
+    const durum = sonuc.ok ? "geçti" : `ret ${sonuc.kod}${sonuc.atomik === false ? ` · DEĞİŞEN: ${sonuc.degisen}` : ""}`;
     let isaret = "";
     if (BEKLENEN && beklenen !== undefined) {
       const tutar = beklenen === "geçti" ? sonuc.ok : (!sonuc.ok && (beklenen === "ret" || durum.startsWith(beklenen)) && sonuc.atomik !== false);
@@ -105,10 +121,10 @@ const SAHTE = {
     satirlar.push(`${anahtar} · ${durum}${isaret}`);
     console.log(`${anahtar} · ${durum}${isaret}${!sonuc.ok && sonuc.mesaj && process.env.T25_AYRINTI ? `  [${sonuc.mesaj}]` : ""}`);
   };
-  const dene = async (kul, yol, govde) => {
+  const dene = async (kul, yol, govde, yontem = "POST", ek = {}) => {
     const once = await sayac();
-    const r = await istek(kul, yol, govde);
-    if (!r.ok) r.atomik = (await sayac()) === once;
+    const r = await istek(kul, yol, govde, yontem, ek);
+    if (!r.ok) { const sonra = await sayac(); r.atomik = sonra === once; if (!r.atomik) r.degisen = farkAdi(once, sonra); }
     return r;
   };
 
@@ -167,24 +183,70 @@ const SAHTE = {
     }
   }
 
-  // A8: mesai (ÖNCE'de fonksiyonlar yok — ret kodu kaydedilir)
-  const ay = "2026-11";
-  await k.sorgu("delete from public.mes_bildirim where cari_id = 'g25-p'").catch(() => {});
-  const bildir = { p: { cariId: "g25-p", ay, saatler: { haftaIci: 10, cumartesi: 2, pazar: 0 } } };
-  yaz("A8 · mesai_bildir · Veli", await dene("Veli", "rpc/mesai_bildir", bildir), "ret 42501");
-  const b1 = await dene("Uretimci", "rpc/mesai_bildir", bildir);
-  yaz("A8 · mesai_bildir · Uretimci", b1, "geçti");
+  // A8: MESAİ UÇTAN UCA (ÖNCE'de fonksiyonlar yok — ret kodu kaydedilir). Personel g25-p: maaş 30.000, aylık saat yok → 225;
+  // katlar varsayılan (1,5 / 1,5 / 2). 10 saat hafta içi + 2 saat Cumartesi → 30000 / 225 × (15 + 3) = 2.400,00 ₺.
+  const anahtar = (ay) => `MESAI-${ay}-g25-p`;   // g25-p'nin kodu yok → 1.744.36 mesaiFisNo gibi cari kimliği
+  const msOnay = (tutar) => { const p = ISLEMLER.MS(); p.cari.satirlar[0].tutar = tutar; return p; };
+  const gecerliMs = async (ay) => Number((await k.sorgu(`select count(*) n from public.car_hareket h left join public.stk_fis f on f.id = h.fis_no
+    where h.cari_id = 'g25-p' and not h.iptal and not coalesce(f.iptal, false) and (h.ek ->> 'mesaiAnahtari' = $1 or h.fis_no = $1)`, [anahtar(ay)]).catch(() => [{ n: -1 }]))[0].n);
+  const bildirim = async (id) => ((await k.sorgu("select durum, fis_no from public.mes_bildirim where id = $1", [id]).catch(() => []))[0] || {});
+  const bildir = (ay, hi = 10, ct = 2) => ({ p: { cariId: "g25-p", ay, saatler: { haftaIci: hi, cumartesi: ct, pazar: 0 } } });
+  yaz("A8 · mesai_bildir · Veli", await dene("Veli", "rpc/mesai_bildir", bildir("2026-11")), "ret 42501");
+  const onceB = await sayac();
+  const b1 = await dene("Uretimci", "rpc/mesai_bildir", bildir("2026-11"));
+  if (b1.ok && farkAdi(onceB, await sayac()) !== "mes_bildirim") b1.ok = false, b1.kod = `PARA / BAŞKA TABLO DEĞİŞTİ: ${farkAdi(onceB, await sayac())}`;
+  yaz("A8 · mesai_bildir · Uretimci (yalnız bildirim; cari / kasa / fiş değişmez)", b1, "geçti");
   const bid = b1.ok && b1.govde && b1.govde.id;
-  const msYuk = () => { const p = ISLEMLER.MS(); p.fis.ek = { mesaiAnahtari: `MESAI-${ay}-g25-p` }; return p; };
-  yaz("A8 · mesai_onayla · Uretimci", await dene("Uretimci", "rpc/mesai_onayla", { p: { bildirimId: bid, fis: msYuk() } }), "ret 42501");
-  const onay = await dene("Muhasip", "rpc/mesai_onayla", { p: { bildirimId: bid, fis: msYuk() } });
-  if (onay.ok) {
-    const d = (await k.sorgu("select durum, fis_no from public.mes_bildirim where id = $1", [bid]))[0] || {};
-    const c = (await k.sorgu("select count(*) as n from public.car_hareket where fis_no = $1 and cari_id = 'g25-p'", [d.fis_no]))[0].n;
-    if (d.durum !== "onaylandi" || Number(c) !== 1) onay.ok = false, onay.kod = `DURUM ${d.durum} / satır ${c}`;
-  }
-  yaz("A8 · mesai_onayla · Muhasip (MS fişi + onay tek işlem)", onay, "geçti");
-  yaz("A8 · onaylı ayı yeniden bildirme · Uretimci", await dene("Uretimci", "rpc/mesai_bildir", bildir), "ret KR014");
+  const liste = async (kul) => { const r = await istek(kul, "rpc/mesai_bildirimleri", { p: { ay: "2026-11" } });
+    const x = r.ok && Array.isArray(r.govde) ? r.govde.find((y) => y.id === bid) : null; return { ...r, ok: !!x, kod: r.kod || (x ? null : "listede yok"), x }; };
+  { const l = await liste("Uretimci"); if (l.ok && l.x.hesaplananTutar != null) l.ok = false, l.kod = "Üretim tutarı görüyor";
+    yaz("A8 · bildirimleri görme · Uretimci (tutar gösterilmez)", l, "geçti"); }
+  { const l = await liste("Muhasip"); if (l.ok && Number(l.x.hesaplananTutar) !== 2400) l.ok = false, l.kod = `tutar ${l.x.hesaplananTutar}`;
+    yaz("A8 · bildirimleri görme · Muhasip (sunucu tutarı 2.400)", l, "geçti"); }
+  yaz("A8 · mesai_onayla · Uretimci", await dene("Uretimci", "rpc/mesai_onayla", { p: { bildirimId: bid, fis: msOnay(2400) } }), "ret 42501");
+  yaz("A8 · mesai_onayla yanlış tutar (500) · Muhasip", await dene("Muhasip", "rpc/mesai_onayla", { p: { bildirimId: bid, fis: msOnay(500) } }), "ret 22023");
+  const onay = await dene("Muhasip", "rpc/mesai_onayla", { p: { bildirimId: bid, fis: msOnay(2400) } });
+  if (onay.ok) { const d = await bildirim(bid); const n = await gecerliMs("2026-11");
+    const t = (await k.sorgu("select tutar::text t from public.car_hareket where fis_no = $1", [d.fis_no]))[0] || {};
+    if (d.durum !== "onaylandi" || n !== 1 || Number(t.t) !== 2400) onay.ok = false, onay.kod = `bildirim ${d.durum} · geçerli MS ${n} · tutar ${t.t}`; }
+  yaz("A8 · mesai_onayla · Muhasip (tek MS fişi 2.400 ₺ + bildirim onaylı, tek işlem)", onay, "geçti");
+  { const once2 = await sayac(); const r = await istek("Muhasip", "rpc/mesai_onayla", { p: { bildirimId: bid, fis: msOnay(2400) } });
+    const degismedi = (await sayac()) === once2;
+    yaz("A8 · aynı bildirimi İKİNCİ kez onaylama · Muhasip (yeni fiş yok)", { ok: r.ok && r.govde && r.govde.zatenVar === true && degismedi,
+      kod: r.ok ? (degismedi ? "zatenVar değil" : `DEĞİŞTİ: ${farkAdi(once2, await sayac())}`) : r.kod }, "geçti"); }
+  // EŞZAMANLI ONAY: 5 ayrı ay; her birinde iki onay AYNI ANDA (iki ayrı bağlantı, farklı istek kimliği). Beklenen: her ayda tek geçerli
+  // MS satırı, bir yanıt yeni fiş, öteki "zatenVar" (ikinci istek ilkinin kilidini bekleyip onaylı bildirimi görür).
+  { const turlar = [];
+    for (const ay of ["2026-01", "2026-02", "2026-03", "2026-04", "2026-05"]) {
+      const b2 = await istek("Uretimci", "rpc/mesai_bildir", bildir(ay));
+      const bid2 = b2.ok && b2.govde && b2.govde.id;
+      const [r1, r2] = await Promise.all([1, 2].map(() => istek("Muhasip", "rpc/mesai_onayla", { p: { bildirimId: bid2, fis: msOnay(2400) } })));
+      const n = await gecerliMs(ay);
+      const yeni = [r1, r2].filter((r) => r.ok && r.govde && !r.govde.zatenVar).length, zaten = [r1, r2].filter((r) => r.ok && r.govde && r.govde.zatenVar).length;
+      turlar.push({ ay, n, yeni, zaten, ret: [r1, r2].filter((r) => !r.ok).map((r) => r.kod) });
+    }
+    const iyi = turlar.every((t) => t.n === 1 && t.yeni === 1 && t.zaten + t.ret.length === 1);
+    yaz(`A8 · EŞZAMANLI iki onay × 5 ay · Muhasip (her ayda tek fiş) [${turlar.map((t) => `${t.ay.slice(5)}: MS ${t.n}, yeni ${t.yeni}, zatenVar ${t.zaten}${t.ret.length ? `, ret ${t.ret}` : ""}`).join(" · ")}]`,
+      { ok: iyi, kod: "çift tahakkuk" }, "geçti"); }
+  // ESKİ YOL ÇAKIŞMASI: 1.744.36 cari kartı aynı anahtarla doğrudan MS keser (PARA yetkilisi)
+  { const p = msOnay(2400); p.cari.satirlar[0].ek.mesaiAnahtari = anahtar("2026-11");
+    yaz("A8 · onaylı aya eski yoldan (cari kartı) ikinci MS · Muhasip", await dene("Muhasip", "rpc/fis_kes", { p }), "ret KR014"); }
+  { const p = msOnay(800); p.cari.satirlar[0].ek.mesaiAnahtari = anahtar("2026-09");
+    yaz("A8 · eski yoldan (cari kartı) MS 2026-09 · Muhasip", await dene("Muhasip", "rpc/fis_kes", { p }), "geçti");
+    yaz("A8 · eski yolla tahakkuk etmiş aya bildirim · Uretimci", await dene("Uretimci", "rpc/mesai_bildir", bildir("2026-09")), "ret KR014"); }
+  // YETKİSİZ DURUM DEĞİŞTİRME (onaylı bildirim)
+  yaz("A8 · bildirimi tablodan 'bekliyor'a çevirme · Uretimci", await dene("Uretimci", `mes_bildirim?id=eq.${bid}`, { durum: "bekliyor", fis_no: null }, "PATCH", { prefer: "return=minimal" }), "ret");
+  yaz("A8 · bildirimi tablodan silme · Veli", await dene("Veli", `mes_bildirim?id=eq.${bid}`, {}, "DELETE", { prefer: "return=minimal" }), "ret");
+  yaz("A8 · onaylı bildirimi iptal · Uretimci", await dene("Uretimci", "rpc/mesai_bildirim_iptal", { p: { id: bid } }), "ret P0002");
+  yaz("A8 · onaylı ayı yeniden bildirme · Uretimci", await dene("Uretimci", "rpc/mesai_bildir", bildir("2026-11", 5, 0)), "ret KR014");
+  { const d = await bildirim(bid); yaz("A8 · bildirim hâlâ onaylı, fişi aynı", { ok: d.durum === "onaylandi" && !!d.fis_no, kod: `${d.durum}` }, "geçti"); }
+  // ONAYLI FİŞ İPTAL EDİLİRSE: bildirim yeniden açılır, yeniden onay yine TEK geçerli fiş
+  { const d = await bildirim(bid);
+    yaz("A8 · onaylı MS fişinin iptali · Muhasip", await dene("Muhasip", "rpc/fis_iptal", { p: { no: d.fis_no, sebep: "G-25 sınaması" } }), "geçti");
+    yaz("A8 · iptalden sonra yeniden bildirme (5 saat) · Uretimci", await dene("Uretimci", "rpc/mesai_bildir", bildir("2026-11", 5, 0)), "geçti");
+    const r = await dene("Muhasip", "rpc/mesai_onayla", { p: { bildirimId: bid, fis: msOnay(1000) } });   // 30000/225 × 7,5 = 1.000
+    const n = await gecerliMs("2026-11"); if (r.ok && n !== 1) r.ok = false, r.kod = `geçerli MS ${n}`;
+    yaz("A8 · yeniden onay (1.000 ₺) · Muhasip (tek geçerli fiş)", r, "geçti"); }
   // ücret koruması (tanimlar'a doğrudan yazma, uygulamanın yaptığı gibi)
   const tanim = async () => (await k.sorgu("select veri from public.tanimlar where id = 'tekil'"))[0].veri;
   const tanimYaz = async (kul, degistir) => {

@@ -134,16 +134,71 @@ begin
   return null;
 end $$;
 -- @@
+-- MESAİ ANAHTARI — 1.744.36 015 mesaiFisNo ile aynı: MESAI-YYYY-MM-<cari kodu (sayısal, > 0) 4 haneye tamamlanmış | cari kimliği>.
+-- Aynı personel + ay için tahakkuk bu anahtarla tektir (cari kartından eski yol da, mesai_onayla da aynı anahtarı taşır).
+create or replace function public.g25_mesai_anahtari(p_cari text, p_ay text) returns text
+language sql stable security definer set search_path = public as $$
+  select 'MESAI-' || p_ay || '-' || coalesce((
+    select case when k ~ '^[0-9]+\Z' and k::numeric > 0 then case when length(k) >= 4 then k else lpad(k, 4, '0') end end
+      from (select btrim(coalesce(to_jsonb(c) ->> 'kod', '')) as k from public.cariler c where c.id::text = p_cari) x), p_cari)
+$$;
+-- @@
+-- Geçerli (iptal edilmemiş satır, fişi iptal edilmemiş) mesai tahakkuku var mı → fiş no.
+create or replace function public.g25_mesai_tahakkuku(p_cari text, p_anahtar text) returns text
+language sql stable security definer set search_path = public as $$
+  select coalesce(h.fis_no, h.id::text) from public.car_hareket h left join public.stk_fis f on f.id = h.fis_no
+   where h.cari_id::text = p_cari and not h.iptal and not coalesce(f.iptal, false)
+     and (h.ek ->> 'mesaiAnahtari' = p_anahtar or h.fis_no = p_anahtar)
+   limit 1
+$$;
+-- @@
+-- Bildirilen saatlerin tutarı — 1.744.36 015 mesaiHesapla ile aynı: saat ücreti = maaş ÷ aylık saat (personelin; yoksa mesaiAyar;
+-- yoksa 225); tutar = saat ücreti × (hafta içi × kat + Cumartesi × kat + Pazar × kat), kuruşa yuvarlı. Maaş yoksa null.
+create or replace function public.g25_mesai_tutari(p_cari text, p_saatler jsonb) returns numeric
+language plpgsql stable security definer set search_path = public as $$
+declare
+  t jsonb; pe jsonb; ayar jsonb; maas numeric; saat numeric;
+begin
+  select veri into t from public.tanimlar where id = 'tekil';
+  select x into pe from jsonb_array_elements(case when jsonb_typeof(t -> 'bolumler') = 'array' then t -> 'bolumler' else '[]'::jsonb end) bo,
+                        jsonb_array_elements(case when jsonb_typeof(bo -> 'personel') = 'array' then bo -> 'personel' else '[]'::jsonb end) x
+   where x ->> 'cariId' = p_cari limit 1;
+  maas := public.stk_sayi(pe ->> 'maas');
+  if maas is null or maas <= 0 then return null; end if;
+  ayar := '{"aylikSaat": 225, "haftaIci": 1.5, "cumartesi": 1.5, "pazar": 2}'::jsonb
+          || coalesce(case when jsonb_typeof(t -> 'mesaiAyar') = 'object' then jsonb_strip_nulls(t -> 'mesaiAyar') end, '{}'::jsonb);
+  saat := coalesce(nullif(public.stk_sayi(pe ->> 'aylikSaat'), 0), public.stk_sayi(ayar ->> 'aylikSaat'));
+  if saat is null or saat <= 0 then saat := 225; end if;
+  return round(maas / saat * (coalesce(public.stk_sayi(p_saatler ->> 'haftaIci'), 0) * public.stk_sayi(ayar ->> 'haftaIci')
+                            + coalesce(public.stk_sayi(p_saatler ->> 'cumartesi'), 0) * public.stk_sayi(ayar ->> 'cumartesi')
+                            + coalesce(public.stk_sayi(p_saatler ->> 'pazar'), 0) * public.stk_sayi(ayar ->> 'pazar')), 2);
+end $$;
+-- @@
 -- KAYDETME DENETİMİ — tek fiş (ana ya da bağlı). Cari satırı yoksa kural yok; PARA yetkilisi (Yönetici dahil) bugünkü gibi geçer.
 create or replace function public.g25_fis_cari_yetki_tek(f jsonb, p_stok jsonb, p_cari jsonb, p_kasa jsonb, p_alt jsonb) returns void
-language plpgsql stable security definer set search_path = public as $$
+language plpgsql security definer set search_path = public as $$
 declare
   onek text := coalesce(f ->> 'onek', '');
   ne text := coalesce(nullif(f ->> 'tur', ''), onek, 'fiş');
   grup text;
   hata text;
+  c jsonb; v_anahtar text; v_var text;
 begin
   if jsonb_array_length(public.stk_dizi(p_cari -> 'satirlar')) = 0 then return; end if;
+  -- MESAİ ÇİFT TAHAKKUK (K2, bütünlük — yetkiden bağımsız): aynı personel + ay anahtarıyla geçerli tahakkuk varsa ikinci MS yazılmaz.
+  -- Anahtar başına kilit: iki eşzamanlı istek (eski yoldan cari kartı + mesai_onayla, ya da iki onay) sırayla denetlenir.
+  if onek = 'MS' then
+    for c in select x from jsonb_array_elements(public.stk_dizi(p_cari -> 'satirlar')) x loop
+      v_anahtar := nullif(c -> 'ek' ->> 'mesaiAnahtari', '');
+      if v_anahtar is not null then
+        perform pg_advisory_xact_lock(hashtextextended('g25_mesai:' || (c ->> 'cari_id') || ':' || v_anahtar, 0));
+        v_var := public.g25_mesai_tahakkuku(c ->> 'cari_id', v_anahtar);
+        if v_var is not null then
+          raise exception 'Bu personelin bu ayki mesaisi zaten tahakkuk etmiş (%) — ikinci kez yazılmaz', v_var using errcode = 'KR014';
+        end if;
+      end if;
+    end loop;
+  end if;
   if auth.jwt() is null then return; end if;
   if coalesce(public.yetki_var_mi(array['cari', 'muhasebe'], 'kaydetme'), false) then return; end if;
   grup := case when onek in ('AF', 'SF') and coalesce(f ->> 'aile', '') = 'stok' and jsonb_array_length(public.stk_dizi(p_stok -> 'satirlar')) > 0 then 'stok'
@@ -164,7 +219,7 @@ begin
 end $$;
 -- @@
 create or replace function public.g25_fis_cari_yetki(p jsonb) returns void
-language plpgsql stable security definer set search_path = public as $$
+language plpgsql security definer set search_path = public as $$
 begin
   perform public.g25_fis_cari_yetki_tek(p -> 'fis', p -> 'stok', p -> 'cari', p -> 'kasa', p -> 'alt');
   if jsonb_typeof(p -> 'bagli') = 'object' then
@@ -213,7 +268,7 @@ end $$;
 create table public.mes_bildirim (
   id text primary key,
   cari_id text not null,
-  ay text not null check (ay ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'),
+  ay text not null check (ay ~ '^[0-9]{4}-(0[1-9]|1[0-2])\Z'),
   saatler jsonb not null,
   durum text not null default 'bekliyor' check (durum in ('bekliyor', 'onaylandi', 'iptal')),
   giren text,
@@ -236,12 +291,12 @@ declare
   v_cari text := nullif(btrim(coalesce(p ->> 'cariId', '')), '');
   v_ay text := coalesce(p ->> 'ay', '');
   v_saat jsonb;
-  k text; n numeric;
+  k text; n numeric; v_var text;
   b public.mes_bildirim;
   eposta text := lower(auth.jwt() ->> 'email');
 begin
   perform public.g25_yetki_iste(array['uretim', 'cari', 'muhasebe'], 'kaydetme', 'mesai saati bildirimi');
-  if v_ay !~ '^[0-9]{4}-(0[1-9]|1[0-2])$' then raise exception 'Ay YYYY-AA olmalı' using errcode = '22023'; end if;
+  if v_ay !~ '^[0-9]{4}-(0[1-9]|1[0-2])\Z' then raise exception 'Ay YYYY-AA olmalı' using errcode = '22023'; end if;
   if v_cari is null or not exists (
       select 1 from public.tanimlar t, jsonb_array_elements(case when jsonb_typeof(t.veri -> 'bolumler') = 'array' then t.veri -> 'bolumler' else '[]'::jsonb end) bo,
                     jsonb_array_elements(case when jsonb_typeof(bo -> 'personel') = 'array' then bo -> 'personel' else '[]'::jsonb end) pe
@@ -255,12 +310,15 @@ begin
     v_saat := v_saat || jsonb_build_object(k, n);
   end loop;
   perform pg_advisory_xact_lock(hashtextextended('mes_bildirim:' || v_cari || ':' || v_ay, 0));
-  select * into b from public.mes_bildirim where cari_id = v_cari and ay = v_ay and durum <> 'iptal' for update;
-  if found and b.durum = 'onaylandi' then
-    raise exception 'Bu ayın mesaisi onaylanmış (fiş %) — değiştirilemez', b.fis_no using errcode = 'KR014';
+  v_var := public.g25_mesai_tahakkuku(v_cari, public.g25_mesai_anahtari(v_cari, v_ay));
+  if v_var is not null then
+    raise exception 'Bu ayın mesaisi tahakkuk etmiş (fiş %) — değiştirilemez', v_var using errcode = 'KR014';
   end if;
+  select * into b from public.mes_bildirim where cari_id = v_cari and ay = v_ay and durum <> 'iptal' for update;
   if found then
-    update public.mes_bildirim set saatler = v_saat, giren = eposta, guncelleme = now() where id = b.id returning * into b;
+    -- onaylıydı ama fişi iptal edilmişse (tahakkuk yok — yukarıda denetlendi) bildirim yeniden bekler
+    update public.mes_bildirim set saatler = v_saat, giren = eposta, guncelleme = now(), durum = 'bekliyor', onaylayan = null, onay_zamani = null, fis_no = null
+     where id = b.id returning * into b;
   else
     insert into public.mes_bildirim (id, cari_id, ay, saatler, giren) values ('mes-' || gen_random_uuid()::text, v_cari, v_ay, v_saat, eposta)
     returning * into b;
@@ -273,7 +331,10 @@ language plpgsql stable security definer set search_path = public as $$
 begin
   perform public.g25_yetki_iste(array['uretim', 'cari', 'muhasebe'], 'goruntuleme', 'mesai bildirimleri');
   return coalesce((select jsonb_agg(jsonb_build_object('id', b.id, 'cariId', b.cari_id, 'ay', b.ay, 'saatler', b.saatler, 'durum', b.durum,
-      'giren', b.giren, 'girisZamani', b.giris_zamani, 'onaylayan', b.onaylayan, 'onayZamani', b.onay_zamani, 'fisNo', b.fis_no) order by b.ay desc, b.cari_id)
+      'giren', b.giren, 'girisZamani', b.giris_zamani, 'onaylayan', b.onaylayan, 'onayZamani', b.onay_zamani, 'fisNo', b.fis_no,
+      'anahtar', public.g25_mesai_anahtari(b.cari_id, b.ay),
+      'hesaplananTutar', case when auth.jwt() is null or coalesce(public.yetki_var_mi(array['cari', 'muhasebe'], 'goruntuleme'), false)
+                              then public.g25_mesai_tutari(b.cari_id, b.saatler) end) order by b.ay desc, b.cari_id)
     from public.mes_bildirim b
    where (nullif(p ->> 'ay', '') is null or b.ay = p ->> 'ay') and (nullif(p ->> 'durum', '') is null or b.durum = p ->> 'durum')), '[]'::jsonb);
 end $$;
@@ -296,24 +357,43 @@ declare
   b public.mes_bildirim;
   fp jsonb := p -> 'fis';
   satirlar jsonb;
+  v_satir jsonb;
+  v_anahtar text;
+  v_tutar numeric;
   r jsonb;
 begin
   perform public.g25_yetki_iste(array['cari', 'muhasebe'], 'kaydetme', 'mesai tahakkukunun onayı');
   select * into b from public.mes_bildirim where id = p ->> 'bildirimId' for update;
   if not found or b.durum = 'iptal' then raise exception 'Mesai bildirimi bulunamadı' using errcode = 'P0002'; end if;
-  if b.durum = 'onaylandi' then
+  v_anahtar := public.g25_mesai_anahtari(b.cari_id, b.ay);
+  -- İkinci / eşzamanlı onay: ilki işlemi bitirene kadar FOR UPDATE'te bekler, sonra onaylı + geçerli fişi görür → yeni fiş YOK.
+  if b.durum = 'onaylandi' and public.g25_mesai_tahakkuku(b.cari_id, v_anahtar) is not null then
     return jsonb_build_object('fisNo', b.fis_no, 'zatenVar', true, 'bildirimId', b.id);
   end if;
   satirlar := public.stk_dizi(fp -> 'cari' -> 'satirlar');
   if coalesce(fp -> 'fis' ->> 'onek', '') <> 'MS' or jsonb_array_length(satirlar) <> 1
      or satirlar -> 0 ->> 'cari_id' is distinct from b.cari_id or coalesce(fp -> 'fis' ->> 'cariId', b.cari_id) <> b.cari_id
-     or jsonb_array_length(public.stk_dizi(fp -> 'stok' -> 'satirlar')) > 0 or jsonb_typeof(fp -> 'bagli') = 'object' then
-    raise exception 'Mesai onayı tek satırlık MS fişi olmalı ve bildirimin personeline yazılmalı' using errcode = '22023';
+     or coalesce(satirlar -> 0 ->> 'yon', '') <> 'Alacak' or coalesce(satirlar -> 0 ->> 'para_birimi', 'TRY') <> 'TRY'
+     or jsonb_array_length(public.stk_dizi(fp -> 'stok' -> 'satirlar')) > 0 or jsonb_array_length(public.stk_dizi(fp -> 'kasa' -> 'hareketler')) > 0
+     or jsonb_typeof(fp -> 'bagli') = 'object' then
+    raise exception 'Mesai onayı tek satırlık (Alacak, TRY) MS fişi olmalı ve bildirimin personeline yazılmalı' using errcode = '22023';
   end if;
+  -- TUTAR bildirilen saatlerden sunucuda hesaplanır; onaylanan tutar onunla aynı olmalı (onaylanan saat ↔ para bağı).
+  v_tutar := public.g25_mesai_tutari(b.cari_id, b.saatler);
+  if v_tutar is null then raise exception 'Personelin maaşı tanımlı değil — mesai tutarı hesaplanamaz' using errcode = '22023'; end if;
+  if abs(coalesce(public.stk_sayi(satirlar -> 0 ->> 'tutar'), -1) - v_tutar) > 0.011 then
+    raise exception 'Mesai tutarı bildirilen saatlerden hesaplanan % ₺ ile aynı değil (gelen %)', v_tutar, satirlar -> 0 ->> 'tutar' using errcode = '22023';
+  end if;
+  -- Anahtar ve bildirim bağı SUNUCUDAN (istemcinin yazdığı değil): çift tahakkuk denetimi fis_kes içinde bu anahtarla yapılır.
+  v_satir := jsonb_set(satirlar -> 0, '{ek}', coalesce(case when jsonb_typeof(satirlar -> 0 -> 'ek') = 'object' then satirlar -> 0 -> 'ek' end, '{}'::jsonb)
+             || jsonb_build_object('mesaiAnahtari', v_anahtar, 'mesaiBildirimId', b.id, 'islemTipi', 'Mesai'));
+  fp := jsonb_set(fp, '{cari,satirlar}', jsonb_build_array(v_satir));
+  fp := jsonb_set(fp, '{fis,ek}', coalesce(case when jsonb_typeof(fp -> 'fis' -> 'ek') = 'object' then fp -> 'fis' -> 'ek' end, '{}'::jsonb)
+             || jsonb_build_object('mesaiAnahtari', v_anahtar, 'mesaiBildirimId', b.id));
   r := public.fis_kes(fp);
   update public.mes_bildirim set durum = 'onaylandi', onaylayan = lower(auth.jwt() ->> 'email'), onay_zamani = now(),
          fis_no = r ->> 'fisNo', guncelleme = now() where id = b.id;
-  return r || jsonb_build_object('bildirimId', b.id);
+  return r || jsonb_build_object('bildirimId', b.id, 'tutar', v_tutar);
 end $$;
 -- @@
 revoke all on function public.mesai_bildir(jsonb), public.mesai_bildirimleri(jsonb), public.mesai_bildirim_iptal(jsonb), public.mesai_onayla(jsonb) from public, anon
@@ -322,7 +402,8 @@ grant execute on function public.mesai_bildir(jsonb), public.mesai_bildirimleri(
 -- @@
 revoke all on function public.g25_yetki_iste(text[], text, text), public.g25_stok_bagi(jsonb, jsonb, jsonb, jsonb),
   public.g25_uretim_bagi(jsonb, jsonb, jsonb, jsonb), public.g25_fis_cari_yetki_tek(jsonb, jsonb, jsonb, jsonb, jsonb),
-  public.g25_fis_cari_yetki(jsonb), public.g25_fis_iptal_yetki(text) from public, anon, authenticated
+  public.g25_fis_cari_yetki(jsonb), public.g25_fis_iptal_yetki(text), public.g25_mesai_anahtari(text, text),
+  public.g25_mesai_tahakkuku(text, text), public.g25_mesai_tutari(text, jsonb) from public, anon, authenticated
 -- @@
 -- ÜCRET KORUMASI (K2): personel maaşı / aylık saati ve mesai katları yalnız PARA kaydetme ile değişir.
 create or replace function public.g25_ucret_ozeti(t jsonb) returns jsonb

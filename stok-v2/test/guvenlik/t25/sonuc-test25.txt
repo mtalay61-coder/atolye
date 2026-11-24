@@ -7,6 +7,10 @@
    (açık) A · CVR · Ayse · geçti
    (açık) A6 · iptal CVR · Stokcu · geçti
    (açık) A8 · maaş değiştirme · Uretimci · geçti
+══ 3a) ATOMİKLİK: uygulama son adımda düşerse hiçbir şey kalmaz
+NOTICE:  schema "guvenlik" already exists, skipping
+   ✓ uygulama son adımda (g25_sonuc) düştü — önceki tüm adımlar çalışmıştı
+   ✓ düşen uygulamadan sonra önkoşul HAZIR, yedek yok, envanter tabanla birebir (yarım nesne yok)
 ══ 3) uygulama
    ✓ uygulandı
    ✓ ikinci uygulama reddedildi
@@ -15,7 +19,7 @@
    ✓ önkoşul şimdi UYGULANMIŞ
    ✓ Faz 0.4 envanterinde YALNIZ beklenen fark: < F|fis_kes(p jsonb) > F|fis_kes(p jsonb) > F|g25_tanimlar_ucret_koruma() > R|mes_bildirim > T|tanimlar.g25_tanimlar_ucret_koruma 
 ══ 4) SONRA matrisi (beklentiler A1–A8)
-   ✓ ── 189 satır · hepsi beklenen ──
+   ✓ ── 204 satır · hepsi beklenen ──
 ══ 5) GERİ ALMA
    ✓ geri alındı · 98 | UYARI | G-25 yetki açığı YENİDEN AÇIK (tasarım § 7)
    ✓ geri almadan sonra önkoşul HAZIR

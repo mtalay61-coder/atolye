@@ -17,7 +17,7 @@
 -- =====================================================================================================================
 begin;
 
-do $g25d$
+do $$
 declare
   v_eksik text;
   v_r record;
@@ -48,7 +48,7 @@ begin
       raise exception '% yetkisi / sahibi uygulamadan sonra değişmiş (şimdi %, yedek %). Hiçbir şey değişmedi.', v_r.ad, v_r.simdi, v_r.yetki;
     end if;
   end loop;
-  select string_agg(x, ', ') into v_eksik from unnest(array['public.g25_fis_cari_yetki(jsonb)', 'public.g25_fis_cari_yetki_tek(jsonb, jsonb, jsonb, jsonb, jsonb)', 'public.g25_fis_iptal_yetki(text)', 'public.g25_stok_bagi(jsonb, jsonb, jsonb, jsonb)', 'public.g25_tanimlar_ucret_koruma()', 'public.g25_ucret_ozeti(jsonb)', 'public.g25_uretim_bagi(jsonb, jsonb, jsonb, jsonb)', 'public.g25_yetki_iste(text[], text, text)', 'public.mesai_bildir(jsonb)', 'public.mesai_bildirim_iptal(jsonb)', 'public.mesai_bildirimleri(jsonb)', 'public.mesai_onayla(jsonb)']) x where to_regprocedure(x) is null;
+  select string_agg(x, ', ') into v_eksik from unnest(array['public.g25_fis_cari_yetki(jsonb)', 'public.g25_fis_cari_yetki_tek(jsonb, jsonb, jsonb, jsonb, jsonb)', 'public.g25_fis_iptal_yetki(text)', 'public.g25_mesai_anahtari(text, text)', 'public.g25_mesai_tahakkuku(text, text)', 'public.g25_mesai_tutari(text, jsonb)', 'public.g25_stok_bagi(jsonb, jsonb, jsonb, jsonb)', 'public.g25_tanimlar_ucret_koruma()', 'public.g25_ucret_ozeti(jsonb)', 'public.g25_uretim_bagi(jsonb, jsonb, jsonb, jsonb)', 'public.g25_yetki_iste(text[], text, text)', 'public.mesai_bildir(jsonb)', 'public.mesai_bildirim_iptal(jsonb)', 'public.mesai_bildirimleri(jsonb)', 'public.mesai_onayla(jsonb)']) x where to_regprocedure(x) is null;
   if v_eksik is not null or to_regclass('public.mes_bildirim') is null
      or not exists (select 1 from pg_trigger where tgname = 'g25_tanimlar_ucret_koruma' and tgrelid = 'public.tanimlar'::regclass) then
     raise exception 'G-25 nesneleri eksik (%) — karışık durum. Hiçbir şey değişmedi.', coalesce(v_eksik, 'mes_bildirim / tetikleyici');
@@ -72,6 +72,9 @@ begin
   drop function public.g25_fis_iptal_yetki(text);
   drop function public.g25_fis_cari_yetki(jsonb);
   drop function public.g25_fis_cari_yetki_tek(jsonb, jsonb, jsonb, jsonb, jsonb);
+  drop function public.g25_mesai_tutari(text, jsonb);
+  drop function public.g25_mesai_tahakkuku(text, text);
+  drop function public.g25_mesai_anahtari(text, text);
   drop function public.g25_uretim_bagi(jsonb, jsonb, jsonb, jsonb);
   drop function public.g25_stok_bagi(jsonb, jsonb, jsonb, jsonb);
   drop function public.g25_yetki_iste(text[], text, text);
@@ -94,7 +97,7 @@ begin
     (3, 'mes_bildirim', case when v_dolu = 0 then 'boştu, silindi' else v_dolu || ' bildirim guvenlik.g25_mes_bildirim_arsiv''e taşındı' end),
     (98, 'UYARI', 'G-25 yetki açığı YENİDEN AÇIK (tasarım § 7)'),
     (99, 'GENEL', 'GERİ ALINDI');
-end $g25d$;
+end $$;
 
 select sira, kontrol, deger from guvenlik.g25_geri_sonuc order by sira;
 

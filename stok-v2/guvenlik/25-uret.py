@@ -83,6 +83,7 @@ YENI_FONK_IMZA = {
     "public.g25_fis_cari_yetki": "(jsonb)", "public.g25_fis_iptal_yetki": "(text)", "public.mesai_bildir": "(jsonb)",
     "public.mesai_bildirimleri": "(jsonb)", "public.mesai_bildirim_iptal": "(jsonb)", "public.mesai_onayla": "(jsonb)",
     "public.g25_ucret_ozeti": "(jsonb)", "public.g25_tanimlar_ucret_koruma": "()",
+    "public.g25_mesai_anahtari": "(text, text)", "public.g25_mesai_tahakkuku": "(text, text)", "public.g25_mesai_tutari": "(text, jsonb)",
 }
 if sorted(YENI_FONK_IMZA) != YENI_FONK:
     sys.exit(f"yeni fonksiyon listesi imza tablosuyla uyuşmuyor: {YENI_FONK}")
@@ -147,7 +148,18 @@ select sira, kontrol, deger from (
 
 # --- uygulama ---------------------------------------------------------------------------------------------------------------
 def ex(s):
-    return f"  execute {ETIKET}{s}{ETIKET};"
+    """do $$ … $$ bloğunun İÇİNE yazılacak ifade (Editor kuralı: adlı / iç içe dolar tırnağı yok, $$ dışında $ yok). Fonksiyon
+    gövdesi çift-dolar yerine tek tırnakla (içindeki tırnaklar ikilenir) — 22-site-onay-atomik.sql'in yöntemi."""
+    if "$$" in s:
+        i, j = s.index("$$"), s.rindex("$$")
+        govde_ = s[i + 2:j]
+        if "$" in govde_:
+            sys.exit("gövdede dolar işareti: " + s[:80])
+        s = s[:i] + "'" + govde_.replace("'", "''") + "'" + s[j + 2:]
+    if "$" in s:
+        sys.exit("ifadede dolar işareti: " + s[:80])
+    # Kaynak ifade kendi ';' ile bitebilir ("$$ language plpgsql;"): ikilenirse ';;' boş ifade olur ve do bloğu derlenmez.
+    return "  " + s.strip().rstrip(";").rstrip().replace("\n", "\n  ") + ";"
 
 uygula = f"""-- =====================================================================================================================
 --  25-cari-yetki-uygula.sql — G-25 UYGULAMA (AYRI ONAYLA; canlıya uygulanmadı)
@@ -173,7 +185,7 @@ uygula = f"""-- ================================================================
 -- =====================================================================================================================
 begin;
 
-do $g25d$
+do $$
 declare
   v_eksik text;
   v_r record;
@@ -234,7 +246,7 @@ begin
     (4, 'tanimlar ücret tetikleyicisi', 'kuruldu, etkin'),
     (5, 'yedek', 'guvenlik.g25_yedek (3 fonksiyon)'),
     (99, 'GENEL', 'UYGULANDI — 25-sonra-dogrula-salt-okur.sql ile doğrulayın');
-end $g25d$;
+end $$;
 
 select sira, kontrol, deger from guvenlik.g25_sonuc order by sira;
 
@@ -281,7 +293,7 @@ geri = f"""-- ==================================================================
 -- =====================================================================================================================
 begin;
 
-do $g25d$
+do $$
 declare
   v_eksik text;
   v_r record;
@@ -321,7 +333,8 @@ begin
   drop trigger g25_tanimlar_ucret_koruma on public.tanimlar;
 {chr(10).join(f"  drop function {a}{YENI_FONK_IMZA[a]};" for a in RPC)}
 {chr(10).join(f"  drop function {a}{YENI_FONK_IMZA[a]};" for a in ["public.g25_tanimlar_ucret_koruma", "public.g25_ucret_ozeti", "public.g25_fis_iptal_yetki",
-      "public.g25_fis_cari_yetki", "public.g25_fis_cari_yetki_tek", "public.g25_uretim_bagi", "public.g25_stok_bagi", "public.g25_yetki_iste"])}
+      "public.g25_fis_cari_yetki", "public.g25_fis_cari_yetki_tek", "public.g25_mesai_tutari", "public.g25_mesai_tahakkuku", "public.g25_mesai_anahtari",
+      "public.g25_uretim_bagi", "public.g25_stok_bagi", "public.g25_yetki_iste"])}
   select count(*) into v_dolu from public.mes_bildirim;
   if v_dolu = 0 then
     drop table public.mes_bildirim;
@@ -341,15 +354,68 @@ begin
     (3, 'mes_bildirim', case when v_dolu = 0 then 'boştu, silindi' else v_dolu || ' bildirim guvenlik.g25_mes_bildirim_arsiv''e taşındı' end),
     (98, 'UYARI', 'G-25 yetki açığı YENİDEN AÇIK (tasarım § 7)'),
     (99, 'GENEL', 'GERİ ALINDI');
-end $g25d$;
+end $$;
 
 select sira, kontrol, deger from guvenlik.g25_geri_sonuc order by sira;
 
 commit;
 """
 
+# --- KAYNAĞA İŞLE (--kaynaga-isle <kök>) -------------------------------------------------------------------------------------
+# Verilen ağaçtaki KURULUM kaynaklarına G-25'i işler — sunucu / güvenlik takımları veritabanını kurarken ve kaynakları yeniden
+# çalıştırırken G-25 kalsın (işlenmemiş 18-fis-defteri.sql yeniden çalışınca fis_kes / fis_iptal G-25 öncesine döner: 24 Kasım ölçüldü).
+# geri-donus-*.sql BİLEREK işlenmez (eski sürüme dönüş dosyaları — kullanılırlarsa G-25 de kalkar).
+CAPALAR = {
+    "car_yaz": ("  perform public.stk_yetki(array['cari', 'fisler', 'muhasebe', 'siparis', 'uretim', 'stok', 'tanimlar'], 'kaydetme');",),
+    "fis_kes": ("      'kalemler', public.fis_kalem_durumlari(v_idler), 'karsilananDuzeltme', '[]'::jsonb);\n  end if;",),
+    "fis_iptal": ("  perform public.stk_yetki(array['stok', 'fisler', 'siparis', 'uretim', 'cari', 'muhasebe'], 'silme');",),
+}
+EKLER = {a: YENI[a].replace(ESKI[a].split("\n")[0], "", 1) for a in YENI}   # yalnız fark kontrolü için
+def isle_blok(metin, ad):
+    eski = blok(metin, ad)
+    capa = CAPALAR[ad][0]
+    yeni_satir = {"car_yaz": YENI["car_yaz"], "fis_kes": YENI["fis_kes"], "fis_iptal": YENI["fis_iptal"]}[ad]
+    # eklenecek satırlar = YENİ tanımda çapadan sonra gelip ESKİ'de olmayan kısım
+    i = yeni_satir.index(capa) + len(capa)
+    j = ESKI[ad].index(capa) + len(capa)
+    ek = yeni_satir[i:len(yeni_satir) - (len(ESKI[ad]) - j)]
+    return metin.replace(eski, ekle(eski, capa, ek.lstrip("\n"), ad), 1)
+YARDIMCI = """-- G-25 (kaynağa işlendi): car_yaz'ın fiş dışı denetimi bu iki yardımcıyı çağırır; fis-defteri.sql'den önce kurulan dosyada da bulunsun.
+create or replace function public.fis_kapi_acik() returns boolean
+language sql volatile set search_path = public, extensions, pg_temp as $$
+  select coalesce(current_setting('fis.kapi', true), '') = 'acik'
+$$;
+""" + [x[x.index("create or replace function public.g25_yetki_iste("):] for x in ifadeler if "create or replace function public.g25_yetki_iste(" in x][0] + ";\nrevoke all on function public.g25_yetki_iste(text[], text, text) from public, anon, authenticated;\n"
+def idempotent(x):
+    x = x.replace("create table public.mes_bildirim (", "create table if not exists public.mes_bildirim (")
+    x = x.replace("create unique index mes_bildirim_acik", "create unique index if not exists mes_bildirim_acik")
+    x = x.replace("create trigger g25_tanimlar_ucret_koruma", "drop trigger if exists g25_tanimlar_ucret_koruma on public.tanimlar;\ncreate trigger g25_tanimlar_ucret_koruma")
+    return x
+YENI_KURULUM = "\n-- ===== G-25 (kaynağa işlendi: stok-v2/guvenlik/25-kaynak/yeni.sql) =====\n" + "\n".join(idempotent(x) + ";" for x in ifadeler) + "\n"
+KAYNAKLAR = {"stok-v2/cari-v2.sql": ["car_yaz"], "stok-v2/editor/4-cari-kurulum.sql": ["car_yaz"], "stok-v2/editor/15-duzeltme.sql": ["car_yaz"],
+             "stok-v2/fis-defteri.sql": ["fis_kes", "fis_iptal"], "stok-v2/editor/18-fis-defteri.sql": ["fis_kes", "fis_iptal"]}
+if "--kaynaga-isle" in sys.argv:
+    hedef = sys.argv[sys.argv.index("--kaynaga-isle") + 1]
+    for yol, adlar in KAYNAKLAR.items():
+        tam = os.path.join(hedef, yol)
+        metin = open(tam, encoding="utf-8").read()
+        if "G-25 (kaynağa işlendi" in metin:
+            sys.exit(f"{yol}: zaten işlenmiş")
+        for ad in adlar:
+            metin = isle_blok(metin, ad)
+        if "car_yaz" in adlar:
+            metin = YARDIMCI + "\n" + metin
+        else:
+            metin = metin + YENI_KURULUM
+        open(tam, "w", encoding="utf-8").write(metin)
+        print(f"işlendi: {yol} ({', '.join(adlar)})")
+    sys.exit(0)
+
 dosyalar = {"25-onkosul-salt-okur.sql": onkosul, "25-cari-yetki-uygula.sql": uygula,
             "25-sonra-dogrula-salt-okur.sql": sonra, "25-cari-yetki-geri-al.sql": geri}
+for ad, metin in dosyalar.items():   # Editor kuralı (editor-icin.py denetle): $$ çift sayıda, başka dolar yok
+    if metin.count("$$") % 2 or metin.replace("$$", "").count("$"):
+        sys.exit(f"{ad}: Supabase SQL Editor için uygun değil (dolar işareti)")
 denetle = "--denetle" in sys.argv
 fark = []
 for ad, metin in dosyalar.items():
