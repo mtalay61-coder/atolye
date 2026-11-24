@@ -1,4 +1,8 @@
 ── G-25 yetki matrisi · atolye_t25_a · SONRA
+C · onay listesinde Kesim 35 ₺ (onaysız) · Uretimci görür · geçti ✓
+C · ücret onayı · Uretimci · ret 42501 ✓  [Bu işlem için yetkiniz yok: işçilik ücreti onayı (cari / muhasebe kaydetme yetkisi gerekir)]
+C · eski görüntüyle onay (ekranda 30) · Muhasip · ret KR015 ✓  [Onaylanan değer güncel değil (proses|ekr-bot|Kesim): ekranda {"ucret": 30} — sunucuda {"ucret": 35}. Listeyi yenileyip yeniden onaylayın]
+C · ücret onayı Kesim 35 + Boya (g25-f, 2) · Muhasip · geçti ✓
 A · CVR · Ali · geçti ✓
 A · CVR · Muhasip · geçti ✓
 A · CVR · Carici · geçti ✓
@@ -92,7 +96,7 @@ A · SF_pesin · Deniz · ret 42501 ✓  [Bu işlem için yetkiniz yok: Satış 
 A · URT_teslim · Ali · geçti ✓
 A · URT_teslim · Muhasip · geçti ✓
 A · URT_teslim · Carici · geçti ✓
-A · URT_teslim · Muhasebeci · geçti ✓
+A · URT_teslim · Muhasebeci · ret 42501 ✓  [Bu işlem için yetkiniz yok (stok: kaydetme)]
 A · URT_teslim · Uretimci · geçti ✓
 A · URT_teslim · Ayse · geçti ✓
 A · URT_teslim · Fisci · geçti ✓
@@ -132,28 +136,32 @@ A7 · car_yaz satır · Uretimci · ret 42501 ✓  [Bu işlem için yetkiniz yok
 A7 · car_yaz satır · Fisci · ret 42501 ✓  [Bu işlem için yetkiniz yok: fiş dışından cari hareketi (cari / muhasebe kaydetme yetkisi gerekir)]
 A4 · a_TH_stok_satiri · Ayse · ret 42501 ✓  [Bu işlem için yetkiniz yok: Tahsilat (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
 A4 · a_TH_stok_satiri · Uretimci · ret 42501 ✓  [Bu işlem için yetkiniz yok: Tahsilat (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
-A4 · b_AF_tahsilat_tipi · Ayse · ret 42501 ✓  [Cari hareketi gerçek bir stok işlemine bağlı değil (cari satırı g25-s-25583-311 işlem tipi Tahsilat) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
-A4 · b_AF_tahsilat_tipi · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir stok işlemine bağlı değil (cari satırı g25-s-25583-313 işlem tipi Tahsilat) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
-A4 · c_kimlik_uymuyor · Ayse · ret 42501 ✓  [Cari hareketi gerçek bir stok işlemine bağlı değil (cari satırı g25-x-25583-315 bir stok satırına bağlı değil) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
-A4 · c_kimlik_uymuyor · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir stok işlemine bağlı değil (cari satırı g25-x-25583-318 bir stok satırına bağlı değil) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
-A4 · d_tutar_sisirme · Ayse · ret 42501 ✓  [Cari hareketi gerçek bir stok işlemine bağlı değil (cari satırı g25-s-25583-321 tutarı miktar × birim fiyattan farklı) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
-A4 · d_tutar_sisirme · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir stok işlemine bağlı değil (cari satırı g25-s-25583-323 tutarı miktar × birim fiyattan farklı) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
-A4 · e_baska_cari · Ayse · ret 42501 ✓  [Cari hareketi gerçek bir stok işlemine bağlı değil (cari satırı g25-s-25583-325 başka cariye yazılıyor) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
-A4 · e_baska_cari · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir stok işlemine bağlı değil (cari satırı g25-s-25583-327 başka cariye yazılıyor) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
-A4 · f_satis_yon_ters · Ayse · ret 42501 ✓  [Cari hareketi gerçek bir stok işlemine bağlı değil (cari satırı g25-s-25583-329 yönü Satış türüne uymuyor) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
-A4 · f_satis_yon_ters · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir stok işlemine bağlı değil (cari satırı g25-s-25583-331 yönü Satış türüne uymuyor) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+A4 · b_AF_tahsilat_tipi · Ayse · ret 42501 ✓  [Cari hareketi gerçek bir stok işlemine bağlı değil (cari satırı g25-s-16906-347 işlem tipi Tahsilat) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+A4 · b_AF_tahsilat_tipi · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir stok işlemine bağlı değil (cari satırı g25-s-16906-349 işlem tipi Tahsilat) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+A4 · c_kimlik_uymuyor · Ayse · ret 42501 ✓  [Cari hareketi gerçek bir stok işlemine bağlı değil (cari satırı g25-x-16906-351 bir stok satırına bağlı değil) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+A4 · c_kimlik_uymuyor · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir stok işlemine bağlı değil (cari satırı g25-x-16906-354 bir stok satırına bağlı değil) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+A4 · d_tutar_sisirme · Ayse · ret 42501 ✓  [Cari hareketi gerçek bir stok işlemine bağlı değil (cari satırı g25-s-16906-357 tutarı miktar × birim fiyattan farklı) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+A4 · d_tutar_sisirme · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir stok işlemine bağlı değil (cari satırı g25-s-16906-359 tutarı miktar × birim fiyattan farklı) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+A4 · e_baska_cari · Ayse · ret 42501 ✓  [Cari hareketi gerçek bir stok işlemine bağlı değil (cari satırı g25-s-16906-361 başka cariye yazılıyor) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+A4 · e_baska_cari · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir stok işlemine bağlı değil (cari satırı g25-s-16906-363 başka cariye yazılıyor) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+A4 · f_satis_yon_ters · Ayse · ret 42501 ✓  [Cari hareketi gerçek bir stok işlemine bağlı değil (cari satırı g25-s-16906-365 yönü Satış türüne uymuyor) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+A4 · f_satis_yon_ters · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir stok işlemine bağlı değil (cari satırı g25-s-16906-367 yönü Satış türüne uymuyor) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
 A4 · g_stok_fisine_kasa · Ayse · ret 42501 ✓  [Cari hareketi gerçek bir stok işlemine bağlı değil (stok fişinde kasa / çek satırı var) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
 A4 · g_stok_fisine_kasa · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir stok işlemine bağlı değil (stok fişinde kasa / çek satırı var) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
-A4 · h_urt_atanmamis_cari · Ayse · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (işçilik satırı g25-c-25583-339 için cari g25-m ve ücret 35 bu üretimin atamalarında / ara proseslerinde yok) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
-A4 · h_urt_atanmamis_cari · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (işçilik satırı g25-c-25583-341 için cari g25-m ve ücret 35 bu üretimin atamalarında / ara proseslerinde yok) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
-A4 · i_urt_ucret_yok · Ayse · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (işçilik satırı g25-c-25583-343 için cari g25-p ve ücret 1000 bu üretimin atamalarında / ara proseslerinde yok) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
-A4 · i_urt_ucret_yok · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (işçilik satırı g25-c-25583-345 için cari g25-p ve ücret 1000 bu üretimin atamalarında / ara proseslerinde yok) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
-A4 · j_urt_adet_asimi · Ayse · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (işçilik satırı g25-c-25583-347 miktarı üretim adedinden (10) büyük) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
-A4 · j_urt_adet_asimi · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (işçilik satırı g25-c-25583-349 miktarı üretim adedinden (10) büyük) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+A4 · h_urt_atanmamis_cari · Ayse · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (işçilik satırı g25-c-16906-377 için cari g25-m teslim edilen kayıtlı bir atamaya ya da onaylı bir ara prosese bağlı değil) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+A4 · h_urt_atanmamis_cari · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (işçilik satırı g25-c-16906-381 için cari g25-m teslim edilen kayıtlı bir atamaya ya da onaylı bir ara prosese bağlı değil) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+A4 · i_urt_ucret_yok · Ayse · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (ücret 1000 onaylı Kesim ücretinden (35) farklı) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+A4 · i_urt_ucret_yok · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (ücret 1000 onaylı Kesim ücretinden (35) farklı) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+A4 · j_urt_adet_asimi · Ayse · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (işçilik satırı g25-c-16906-393 miktarı üretim adedinden (10) büyük) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+A4 · j_urt_adet_asimi · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (işçilik satırı g25-c-16906-397 miktarı üretim adedinden (10) büyük) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
 A4 · k_bilinmeyen_onek · Ayse · ret 42501 ✓  [Bu işlem için yetkiniz yok: Bilinmeyen (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
 A4 · k_bilinmeyen_onek · Uretimci · ret 42501 ✓  [Bu işlem için yetkiniz yok: Bilinmeyen (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)]
 A4 · l_urt_kayit_yok · Ayse · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (üretim kaydı yok-uretim sunucuda yok) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
 A4 · l_urt_kayit_yok · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (üretim kaydı yok-uretim sunucuda yok) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+A4 · m_urt_teslimsiz · Ayse · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (işçilik satırı g25-c-16906-413 için cari g25-q teslim edilen kayıtlı bir atamaya ya da onaylı bir ara prosese bağlı değil) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+A4 · m_urt_teslimsiz · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (işçilik satırı g25-c-16906-417 için cari g25-q teslim edilen kayıtlı bir atamaya ya da onaylı bir ara prosese bağlı değil) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+A4 · n_urt_bolum_personeli · Ayse · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (cari g25-p atölye içi bölüm personeli ya da proses bölüme bağlı — cariye işçilik yazılmaz) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+A4 · n_urt_bolum_personeli · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (cari g25-p atölye içi bölüm personeli ya da proses bölüme bağlı — cariye işçilik yazılmaz) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
 GÖZLEM · AF 0,001 × 12 (gerçek stok hareketi) · Ayse · geçti
 A6 · iptal AF_stok · Stokcu · geçti ✓
 A6 · iptal AF_stok · Uretsil · geçti ✓
@@ -207,14 +215,39 @@ A8 · upsert: renk / bölüm adı (ücret aynı) · Uretimci · geçti ✓
 A8 · upsert: ücret aynı · Deniz (yalnız görüntüleme) · geçti ✓
 A8 · upsert: maaş değiştirme · Uretimci · ret 42501 ✓  [Bu işlem için yetkiniz yok: maaş, aylık çalışma saati ya da mesai katı değişikliği (cari / muhasebe kaydetme yetkisi gerekir)]
 A8 · upsert: maaş değiştirme · Muhasip · geçti ✓
-AÇIK RİSK · R1 tek istekte tamir ataması 5.000 ₺ + işçilik 10 × 5.000 · Uretimci · geçti → yazılan: g25-p Alacak 50000
-AÇIK RİSK · R1b tek istekte müşteri carisine tamir ataması + işçilik · Uretimci · geçti → yazılan: g25-m Alacak 50000
-AÇIK RİSK · R2a ürün proses ücreti 35 → 500 · Uretimci · geçti
-AÇIK RİSK · R2b işçilik 10 × 500 (ürün kartındaki yeni ücret) · Uretimci · geçti → yazılan: g25-p Alacak 5000
-AÇIK RİSK · R3a ürüne özel ara proses carisi → müşteri, ücreti → 900 · Uretimci · geçti
-AÇIK RİSK · R3b ara proses işçiliği müşteri carisine 10 × 900 · Uretimci · geçti → yazılan: g25-m Alacak 9000
-AÇIK RİSK · R4a Tanımlar ara proses ücreti 2 → 700 · Uretimci · geçti
-AÇIK RİSK · R4b ara proses işçiliği 10 × 700 · Uretimci · geçti → yazılan: g25-f Alacak 7000
-AÇIK RİSK · R5a üretim kaydında proses ücreti → 800 · Uretimci · geçti
-AÇIK RİSK · R5b işçilik 10 × 800 (üretim kaydındaki ücret) · Uretimci · geçti → yazılan: g25-p Alacak 8000
-── 218 satır · hepsi beklenen ──
+K4 · R1 istekte tamir ataması 5.000 ₺ + işçilik 10 × 5.000 · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (işçilik satırı g25-c-16906-542 için cari g25-q teslim edilen kayıtlı bir atamaya ya da onaylı bir ara prosese bağlı değil) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+K4 · R1b istekte müşteri carisine tamir ataması + işçilik · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (işçilik satırı g25-c-16906-547 için cari g25-m teslim edilen kayıtlı bir atamaya ya da onaylı bir ara prosese bağlı değil) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+K4 · R1c kayıtlı, ONAYSIZ tamir ataması 10 × 5.000 · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (tamir ücreti (5000 ₺) cari / muhasebe onayı bekliyor ya da onaydan sonra değişti) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+K4 · R1d kayıtlı atama müşteri carisinde, işçilik 10 × 35 · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (cari g25-m müşteri — müşteriye işçilik alacağı yazılmaz) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+K4 · R2a ürün proses ücreti 35 → 500 (öneri; yazma serbest) · Uretimci · geçti ✓
+K4 · R2b işçilik 10 × 500 (onaysız yeni ücret) · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (Kesim ücreti (500 ₺) cari / muhasebe onayı bekliyor ya da onaydan sonra değişti) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+K4 · R2c işçilik 10 × 35 (onay artık geçersiz — ücret değişti) · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (Kesim ücreti (500 ₺) cari / muhasebe onayı bekliyor ya da onaydan sonra değişti) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+K4 · R2d ücret 35'e döndü, onay yeniden geçerli: 10 × 35 · Uretimci · geçti ✓
+K4 · R3a ürüne özel ara proses carisi → müşteri, ücreti → 900 · Uretimci · geçti ✓
+K4 · R3b ara proses işçiliği müşteri carisine 10 × 900 · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (Boya ara proses ücreti / carisi cari / muhasebe onayı bekliyor ya da onaydan sonra değişti) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+K4 · R4a Tanımlar ara proses ücreti 2 → 700 · Uretimci · geçti ✓
+K4 · R4b ara proses işçiliği 10 × 700 · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (Boya ara proses ücreti / carisi cari / muhasebe onayı bekliyor ya da onaydan sonra değişti) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+K4 · R5a üretim kaydında proses ücreti → 800 · Uretimci · geçti ✓
+K4 · R5b işçilik 10 × 800 (üretim kaydındaki onaysız ücret) · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (Kesim ücreti (800 ₺) cari / muhasebe onayı bekliyor ya da onaydan sonra değişti) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+K4 · meşru teslim: onaylı Kesim 35, kayıtlı atama, 10 × 35 · Uretimci · geçti ✓
+K4 · meşru kısmi teslim: atama 10, işçilik 6 × 35 · Uretimci · geçti ✓
+K4 · meşru ara proses: onaylı Boya g25-f, 10 × 2 · Uretimci · geçti ✓
+K4 · kayıtlı atama miktarından fazla (atama 4, işçilik 6) · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (işçilik miktarı (6) atamanın kayıtlı miktarından (4) büyük) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+K4 · aynı atama: ilk teslim · Uretimci · geçti ✓
+K4 · aynı atama: İKİNCİ teslim (yeni istek) · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (işçilik satırı g25-c-16906-601 için cari g25-q teslim edilen kayıtlı bir atamaya ya da onaylı bir ara prosese bağlı değil) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+K4 · aynı ara proses adımı: ilk · Uretimci · geçti ✓
+K4 · aynı ara proses adımı: İKİNCİ · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (Boya ara prosesinin işçiliği bu üretim için zaten ödenmiş) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+K4 · EŞZAMANLI 5 teslim aynı atama · Uretimci [geçen 1, fiş 1] · geçti ✓
+K4 · iptal edilen teslimden sonra yeniden teslim (iptal tamam) · Uretimci · geçti ✓
+K4 · Her İkisi kartına işçilik (cari onayı yok) · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (cari g25-h hem müşteri hem tedarikçi — işçilik alıcısı olarak cari / muhasebe onayı gerekir) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+K4 · Her İkisi kartını işçilik alıcısı olarak onaylama · Muhasip · geçti ✓
+K4 · Her İkisi kartına işçilik (cari onaylı) · Uretimci · geçti ✓
+K4 · tamir talebi onay listesinde (onaysız, önerilen 5.000) · Muhasip görür · geçti ✓
+K4 · tamir ücretini belirleme · Uretimci · ret 42501 ✓  [Bu işlem için yetkiniz yok: işçilik ücreti onayı (cari / muhasebe kaydetme yetkisi gerekir)]
+K4 · tamir ücretini 40 belirleyip onaylama, EŞZAMANLI iki kez · Muhasip [ok/ok, atama ücreti 40] · geçti ✓
+K4 · tamir: onaylanmamış eski ücretle (5.000) teslim · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (ücret 5000 onaylı tamir ücretinden (40) farklı) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+K4 · tamir: onaydan sonra miktar 10 → 12, 10 × 40 teslim (eski onay geçersiz) · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (tamir ücreti (40 ₺) cari / muhasebe onayı bekliyor ya da onaydan sonra değişti) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+K4 · tamir: onaylı 10 × 40 teslim · Uretimci · geçti ✓
+K4 · kısmi teslimden kalan tamir (4 × 40, kaynak onaylı) · Uretimci · geçti ✓
+K4 · kısmi kalan tamir ücreti 40 → 90 (kaynak onayı geçmez) · Uretimci · ret 42501 ✓  [Cari hareketi gerçek bir üretim işlemine bağlı değil (tamir ücreti (90 ₺) cari / muhasebe onayı bekliyor ya da onaydan sonra değişti) — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir]
+── 251 satır · hepsi beklenen ──

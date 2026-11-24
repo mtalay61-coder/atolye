@@ -1,0 +1,60 @@
+══ ETKİ TABLOSU (G-25'siz → G-25'li) ══
+
+Ali
+  A maaş şeridi: görünür true/true · MAŞ yazıldı 1/1 → aynı (yapabiliyor)
+      G-25'li ekran: şerit sonra false · bildirim ""
+  B mesai: menüde Cari true/true · kart true/true · panel true/true · MS yazıldı 1/1 → aynı (yapabiliyor)
+      G-25'li ekran: saat kutusu "" · bildirim ""
+  C maaş değişikliği: sunucu 30000→31000 / 30000→31000 → aynı (yapabiliyor)
+      G-25'li ekran: kutu "31000" · bildirim "" · inceleme "" · yenileme sonrası ekran "31000" sunucu 31000
+
+Muhasip
+  A maaş şeridi: görünür true/true · MAŞ yazıldı 1/1 → aynı (yapabiliyor)
+      G-25'li ekran: şerit sonra false · bildirim ""
+  B mesai: menüde Cari true/true · kart true/true · panel true/true · MS yazıldı 1/1 → aynı (yapabiliyor)
+      G-25'li ekran: saat kutusu "" · bildirim ""
+  C maaş değişikliği: sunucu 30000→31000 / 30000→31000 → aynı (yapabiliyor)
+      G-25'li ekran: kutu "31000" · bildirim "" · inceleme "" · yenileme sonrası ekran "31000" sunucu 31000
+
+Sefci
+  A maaş şeridi: görünür false/false · MAŞ yazıldı undefined/undefined → aynı (zaten yapamıyor)
+      G-25'li ekran: şerit sonra undefined · bildirim ""
+  B mesai: menüde Cari true/true · kart true/true · panel false/false · MS yazıldı undefined/undefined → aynı (zaten yapamıyor)
+      G-25'li ekran: saat kutusu "undefined" · bildirim ""
+  C maaş değişikliği: sunucu 30000→undefined / 30000→undefined → aynı (zaten yapamıyor)
+      G-25'li ekran: kutu "undefined" · bildirim "" · inceleme "" · yenileme sonrası ekran "undefined" sunucu undefined
+      G-25'siz hata: C_hata: locator.fill: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('[data-personel-maas]:visible').first()[22m
+[2m    - locator resolved to <input  Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+      G-25'li hata: C_hata: locator.fill: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('[data-personel-maas]:visible').first()[22m
+[2m    - locator resolved to <input  Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+
+Uretimci
+  A maaş şeridi: görünür false/false · MAŞ yazıldı undefined/undefined → aynı (zaten yapamıyor)
+      G-25'li ekran: şerit sonra undefined · bildirim ""
+  B mesai: menüde Cari false/false · kart undefined/undefined · panel undefined/undefined · MS yazıldı undefined/undefined → aynı (zaten yapamıyor)
+      G-25'li ekran: saat kutusu "undefined" · bildirim ""
+  C maaş değişikliği: sunucu undefined→undefined / undefined→undefined → aynı (zaten yapamıyor)
+      G-25'li ekran: kutu "undefined" · bildirim "" · inceleme "" · yenileme sonrası ekran "undefined" sunucu undefined
+      G-25'siz hata: B_hata: Menüde "Cari" yok 
+      G-25'li hata: B_hata: Menüde "Cari" yok 
+
+Deniz
+  A maaş şeridi: görünür false/false · MAŞ yazıldı undefined/undefined → aynı (zaten yapamıyor)
+      G-25'li ekran: şerit sonra undefined · bildirim ""
+  B mesai: menüde Cari true/true · kart true/true · panel false/false · MS yazıldı undefined/undefined → aynı (zaten yapamıyor)
+      G-25'li ekran: saat kutusu "undefined" · bildirim ""
+  C maaş değişikliği: sunucu 30000→undefined / 30000→undefined → aynı (zaten yapamıyor)
+      G-25'li ekran: kutu "undefined" · bildirim "" · inceleme "" · yenileme sonrası ekran "undefined" sunucu undefined
+      G-25'siz hata: C_hata: locator.fill: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('[data-personel-maas]:visible').first()[22m
+[2m    - locator resolved to <input  Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+      G-25'li hata: C_hata: locator.fill: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('[data-personel-maas]:visible').first()[22m
+[2m    - locator resolved to <input  Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+etki=0

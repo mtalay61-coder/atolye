@@ -129,23 +129,25 @@ açılış · stok / üretim fişlerinin iptali (silme yetkisiyle) · mesai saat
 
 **Değişmeyenler:** PARA yetkili kullanıcıların (Muhasebe, Üretim + Muhasebe, Yönetici) bütün işlemleri; cari satırı olmayan fişler.
 
-**1.744.36 ETKİSİ — EKRANDAN ÖLÇÜLDÜ (24 Kasım; `t25/kos-g25-etki.sh` → `t25/sonuc-g25-etki.txt`).** Aynı kullanıcı aynı işi G-25'siz
-ve G-25'li kopyada ekrandan yaptı (JWT'li oturum, giriş ekranından). Personel g25-p: bölümde, maaş 30.000.
+**1.744.36 ETKİSİ — EKRANDAN ÖLÇÜLDÜ (24 Kasım, DÜZELTİLMİŞ; `t25/kos-g25-etki.sh` ISTEMCI_DIZIN = main 3f175bc).** Aynı kullanıcı aynı
+işi G-25'siz ve G-25'li kopyada ekrandan yaptı (JWT'li oturum, giriş ekranından). Personel g25-p: bölümde, maaş 30.000.
+DÜZELTME: 23 Kasım ölçümünde tohum kullanıcılarının `id`'si yoktu; istemci yetki tazelemesi `id` ile eşlediği için ARAYÜZ her
+kullanıcıda Yönetici gibi davranıyordu (sunucu jetonu doğruydu). Aşağıdaki tablo kimlikleri düzeltilmiş tohumla.
 
 | Kullanıcı (yetki) | Maaş şeridi "Onayla" (MAŞ) | Cari kartı "Mesaiyi yaz" (MS) | Personel maaşı değiştirme |
 |---|---|---|---|
 | Ali (Yönetici) | yapıyor → yapıyor | yapıyor → yapıyor | yapıyor → yapıyor |
 | Muhasip (cari + muhasebe) | yapıyor → yapıyor | yapıyor → yapıyor | yapıyor → yapıyor |
 | Sefci (cari görüntüleme + üretim / stok / fişler kaydetme) | yapıyor → **DURUR** | yapıyor → **DURUR** | yapıyor → **DURUR** |
-| Uretimci (Üretim rolü: üretim + stok kaydetme) | yapıyor → **DURUR** | yapıyor → **DURUR** | yapıyor → **DURUR** |
+| Uretimci (Üretim rolü; cari görüntüleme yok) | yapıyor → **DURUR** | Cari menüsü yok (yapamıyor) | Cari menüsü yok (yapamıyor) |
 | Deniz (cari / muhasebe yalnız görüntüleme) | yapamıyor → yapamıyor | yapamıyor → yapamıyor | yapıyor → **DURUR** |
 
-Ekranda ne oluyor (G-25'li): şerit ve "Onayla" görünmeye devam ediyor, basınca MAŞ yazılmıyor ve şerit kalıyor; "Mesaiyi yaz"
-etkin, basınca MS yazılmıyor, saat kutusu dolu kalıyor — ölçümde **ret metni yakalanmadı** (kullanıcı neden olmadığını görmeyebilir);
-maaş kutusu yeni değeri gösteriyor, "Buluta yazılamadı: tanimlar" bildirimi çıkıyor, sayfa yenilenince eski değer (30.000) geri geliyor.
-Bugün maaşı yalnız görüntüleme yetkilisi bile değiştirebiliyor (Deniz satırı: G-25 bunu da kapatır).
-Not: test kurulumunda Uretimci'nin menüsünde Cari görünüyor ve kartı açabiliyor (tohumda cari görüntülemesi yok) — 1.744.36'nın menü
-yetkisi ayrıca incelenmeli; bu ölçüm onu değiştirmez.
+1.744.36 + G-25'te ekranda: şerit ve "Onayla" görünmeye devam eder, basınca MAŞ yazılmaz ve şerit kalır; "Mesaiyi yaz" etkin, basınca
+MS yazılmaz, saat kutusu dolu kalır — ölçümde kalıcı ret metni yakalanmadı (kısa bildirim); maaş kutusu yeni değeri gösterir, "Buluta
+yazılamadı: tanimlar" çıkar, yenileyince eski değer gelir. → SESSİZ DURMA; SQL 1.744.36 ile önerilmez.
+**1.745.0 + G-25 (aynı ölçüm, `ISTEMCI_DIZIN` = bu dal):** Ali / Muhasip değişmez; Sefci / Uretimci / Deniz'de maaş şeridi YOK, maaş
+kutusu KAPALI, Sefci'de "Mesaiyi yaz" yerine "Mesaiyi onaya gönder" (onaya gider); Üretim'de Mesai bildirimi. Sessizce duran işlem yok
+(`test/ekran/ekran-g25-akis.js` 31 / 31).
 Canlıda kaç kullanıcının bu satırlara düştüğünü `25-onkosul-salt-okur.sql` satır 8 SAYAR (ad / e-posta dökmeden).
 
 ## 6. Kabul ölçütleri

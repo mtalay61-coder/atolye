@@ -27,10 +27,12 @@ Sefci
 Uretimci
   A maaş şeridi: görünür true/true · MAŞ yazıldı 1/0 → DURUR
       G-25'li ekran: şerit sonra true · bildirim ""
-  B mesai: menüde Cari true/true · kart true/true · panel true/true · MS yazıldı 1/0 → DURUR
-      G-25'li ekran: saat kutusu "10" · bildirim ""
-  C maaş değişikliği: sunucu 30000→31000 / 30000→30000 → DURUR
-      G-25'li ekran: kutu "31000" · bildirim "Buluta yazılamadı: tanimlar" · inceleme "" · yenileme sonrası ekran "30000" sunucu 30000
+  B mesai: menüde Cari false/false · kart undefined/undefined · panel undefined/undefined · MS yazıldı undefined/undefined → aynı (zaten yapamıyor)
+      G-25'li ekran: saat kutusu "undefined" · bildirim ""
+  C maaş değişikliği: sunucu undefined→undefined / undefined→undefined → aynı (zaten yapamıyor)
+      G-25'li ekran: kutu "undefined" · bildirim "" · inceleme "" · yenileme sonrası ekran "undefined" sunucu undefined
+      G-25'siz hata: B_hata: Menüde "Cari" yok 
+      G-25'li hata: B_hata: Menüde "Cari" yok 
 
 Deniz
   A maaş şeridi: görünür true/true · MAŞ yazıldı 0/0 → aynı (zaten yapamıyor)
