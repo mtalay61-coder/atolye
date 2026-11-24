@@ -2081,9 +2081,12 @@ function TanimlarModule({ onaylar, onYetimRezervasyonSil, onDefterFisIptal, onCa
           kişiye özel aylık saat girilebilir; boşsa buradaki. */}
       <div data-mesai-ayar style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 10, fontSize: 12 }}>
         <b>Mesai:</b>
+        {/* G-25 (v1.745.0): maaş, aylık saat, mesai katı ve bölüm personel listesi (maaş haritası) cari / muhasebe kaydetme ister —
+            sunucu tetikleyicisi de reddeder. Bölüm adı ve bağlı prosesler serbest. */}
+        {!paraYetkisiVar() && <span data-mesai-ayar-kilitli style={{ color: "var(--erp-text-2)" }}>({PARA_YETKI_METNI.toLocaleLowerCase("tr-TR")})</span>}
         {[["aylikSaat", "Aylık çalışma saati"], ["haftaIci", "Hafta içi kat"], ["cumartesi", "Cumartesi kat"], ["pazar", "Pazar kat"]].map(([k, et]) => (
           <label key={k} style={{ display: "flex", alignItems: "center", gap: 4 }}>{et}
-            <input type="number" step="0.1" data-mesai-ayar-alan={k} key={`${k}${mesaiAyari(tanimlar)[k]}`} defaultValue={mesaiAyari(tanimlar)[k]}
+            <input type="number" step="0.1" data-mesai-ayar-alan={k} key={`${k}${mesaiAyari(tanimlar)[k]}`} defaultValue={mesaiAyari(tanimlar)[k]} disabled={!paraYetkisiVar()}
               onBlur={(e) => { const v = parseFloat(e.target.value); if (v > 0 && v !== mesaiAyari(tanimlar)[k]) onSave({ ...tanimlar, mesaiAyar: { ...(tanimlar.mesaiAyar || {}), [k]: v } }); }}
               style={{ width: 64, padding: "3px 5px", fontSize: 12, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }} />
           </label>
@@ -2105,7 +2108,7 @@ function TanimlarModule({ onaylar, onYetimRezervasyonSil, onDefterFisIptal, onCa
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
               <input value={b.ad} onChange={(e) => bolumGuncelle(b.id, { ad: e.target.value })}
                 style={{ fontSize: 14, fontWeight: 700, flex: 1, padding: "4px 8px", border: "1px solid var(--erp-border-2)", borderRadius: "var(--erp-r-sm)" }} />
-              <SilOnayButonu onConfirm={() => bolumSil(b.id)} boyut={14} baslikNormal={`"${b.ad}" bölümünü sil (tahakkuk kayıtları ve cari hareketleri kalır)`} baslikOnay="Silinecek — tekrar dokunun" />
+              {(paraYetkisiVar() || !uyeler.length) && <SilOnayButonu onConfirm={() => bolumSil(b.id)} boyut={14} baslikNormal={`"${b.ad}" bölümünü sil (tahakkuk kayıtları ve cari hareketleri kalır)`} baslikOnay="Silinecek — tekrar dokunun" />}
             </div>
             <div style={{ fontSize: 12, color: "var(--erp-text-2)", marginBottom: 4 }}>Bağlı prosesler <span style={{ fontSize: 11 }}>(bu proseslerin teslimi cariye yazılmaz)</span></div>
             <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 10 }}>
@@ -2130,15 +2133,16 @@ function TanimlarModule({ onaylar, onYetimRezervasyonSil, onDefterFisIptal, onCa
                 <div key={p.cariId} data-bolum-personel={c ? c.unvan : p.cariId} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0" }}>
                   <span style={{ flex: 1, fontSize: 13 }}>{c ? c.unvan : "silinmiş cari"}</span>
                   <input type="text" inputMode="decimal" defaultValue={p.maas || ""} data-bolum-maas={c ? c.unvan : p.cariId} placeholder="aylık maaş" className="mono"
+                    disabled={!paraYetkisiVar()} title={paraYetkisiVar() ? "" : PARA_YETKI_METNI}
                     onBlur={(e) => { const v = parseFloat(String(e.target.value).replace(",", ".")) || 0; if (v !== (p.maas || 0)) bolumGuncelle(b.id, { personel: uyeler.map((x) => (x.cariId === p.cariId ? { ...x, maas: v } : x)) }); }}
                     style={{ width: 110, padding: "4px 8px", fontSize: 13, textAlign: "right", border: "1px solid var(--erp-border-2)", borderRadius: "var(--erp-r-sm)" }} />
                   <span style={{ fontSize: 12, color: "var(--erp-text-3)" }}>₺ / ay</span>
-                  <button type="button" className="btn-ghost" style={{ padding: "2px 8px", fontSize: 12 }} title="Bölümden çıkar"
+                  <button type="button" className="btn-ghost" style={{ padding: "2px 8px", fontSize: 12 }} title={paraYetkisiVar() ? "Bölümden çıkar" : PARA_YETKI_METNI} disabled={!paraYetkisiVar()}
                     onClick={() => bolumGuncelle(b.id, { personel: uyeler.filter((x) => x.cariId !== p.cariId) })}>×</button>
                 </div>
               );
             })}
-            <select value="" data-bolum-personel-ekle={b.ad} onChange={(e) => { const id = e.target.value; if (id) bolumGuncelle(b.id, { personel: [...uyeler, { cariId: id, maas: 0 }] }); }}
+            <select value="" data-bolum-personel-ekle={b.ad} disabled={!paraYetkisiVar()} title={paraYetkisiVar() ? "" : PARA_YETKI_METNI} onChange={(e) => { const id = e.target.value; if (id) bolumGuncelle(b.id, { personel: [...uyeler, { cariId: id, maas: 0 }] }); }}
               style={{ ...inputStyle, width: "auto", minWidth: 220, fontSize: 12, padding: "4px 8px", marginTop: 4 }}>
               <option value="">+ personel ekle (Personel tipli cari)…</option>
               {personelCariler.filter((c) => !uyeler.some((x) => x.cariId === c.id)).map((c) => <option key={c.id} value={c.id}>{c.unvan}</option>)}

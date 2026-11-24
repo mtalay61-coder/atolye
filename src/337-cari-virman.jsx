@@ -80,7 +80,7 @@ function CariVirmanSatiri({ tip, cari, cariler, showToast, onKaydet }) {
         </span>
         <span style={{ fontSize: 12, color: "var(--erp-text-2)" }}>{cari.unvan}</span>
         <span style={{ marginLeft: "auto" }}>
-          <button type="button" className="btn-primary btn-save" data-cari-virman-kaydet="1" onClick={kaydet}><Save size={14} /> Kaydet</button>
+          <button type="button" className="btn-primary btn-save" data-cari-virman-kaydet="1" disabled={!paraYetkisiVar()} title={paraYetkisiVar() ? undefined : PARA_YETKI_METNI} onClick={kaydet}><Save size={14} /> Kaydet</button>
         </span>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 10 }}>

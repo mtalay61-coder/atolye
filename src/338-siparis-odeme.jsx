@@ -95,7 +95,7 @@ function SiparisOdemeFormu({ siparis, cari, tip, tutar, paraBirimi, odemeSekli, 
         <span className="mono" style={{ fontSize: 12, fontWeight: 700, padding: "3px 10px", borderRadius: "var(--erp-r-pill)", background: alfaEkle(renk, "22"), color: renk, display: "inline-flex", alignItems: "center", gap: 5 }}><HareketIkonu tip={tip} size={13} />{tip}</span>
         <span style={{ fontSize: 12, color: "var(--erp-text-2)" }}>{cari.unvan}{sip.siparisNo ? ` · ${sip.siparisNo}` : ""}</span>
         <span style={{ marginLeft: "auto", display: "inline-flex", gap: 8 }}>
-          <button type="button" className="btn-primary btn-save" data-siparis-odeme-kaydet="1" onClick={kaydet}><Save size={14} /> Kaydet</button>
+          <button type="button" className="btn-primary btn-save" data-siparis-odeme-kaydet="1" disabled={!paraYetkisiVar()} title={paraYetkisiVar() ? undefined : PARA_YETKI_METNI} onClick={kaydet}><Save size={14} /> Kaydet</button>
           <button type="button" className="btn-ghost" onClick={onVazgec}><X size={14} /> Vazgeç</button>
         </span>
       </div>
@@ -272,7 +272,7 @@ function OdemeSatiri({ tip, odemeSekli, hesap, cari, kurlar, onKaydet, showToast
       )}
       {alan("Açıklama", <input value={f.aciklama} placeholder="Opsiyonel" onChange={(e) => setF({ ...f, aciklama: e.target.value })}
         onKeyDown={(e) => { if (e.key === "Enter") kaydet(); }} style={{ ...kutu, width: "100%" }} />, 160)}
-      <button type="button" className="btn-primary btn-save" data-odeme-satiri-kaydet="1" onClick={kaydet}
+      <button type="button" className="btn-primary btn-save" data-odeme-satiri-kaydet="1" disabled={!paraYetkisiVar()} title={paraYetkisiVar() ? undefined : PARA_YETKI_METNI} onClick={kaydet}
         style={{ background: renk, borderColor: renk, padding: "8px 16px", whiteSpace: "nowrap" }}>
         <HareketIkonu tip={tip} size={14} /> {tip} kaydet
       </button>

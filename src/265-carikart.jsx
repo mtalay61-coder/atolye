@@ -1201,7 +1201,7 @@ function CariCard({ onParaFisi, siteYonetici = false, tanimlar, onTanimlarKaydet
                     : "Bakiye azalacak — biz cariye borçlanırız"}
                 </span>
                 <span style={{ marginLeft: "auto", display: "inline-flex", gap: 8 }}>
-                  <button className="btn-primary btn-save" onClick={submitHareket}><Save size={14} /> Kaydet</button>
+                  <button className="btn-primary btn-save" data-cari-hareket-kaydet disabled={!paraYetkisiVar()} title={paraYetkisiVar() ? undefined : PARA_YETKI_METNI} onClick={submitHareket}><Save size={14} /> Kaydet</button>
                   <button className="btn-ghost" onClick={() => { setShowHareket(false); setHareketTipi(null); }}><X size={14} /> Vazgeç</button>
                 </span>
               </div>

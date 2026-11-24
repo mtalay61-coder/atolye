@@ -43,6 +43,12 @@ function PersonelBilgileriPaneli({ cari, tanimlar, onTanimlarKaydet, onAddHareke
   // ("MESAI-2026-10-0007") satırda `mesaiAnahtari` alanında kalır. Eski kayıtlarda anahtar fiş numarasının kendisi.
   const mevcut = (cari.hareketler || []).find((x) => (x.mesaiAnahtari || x.fisNo) === fisNo);
   const [mesaiYaziliyor, setMesaiYaziliyor] = useState(false);
+  // G-25 (v1.745.0, 278): maaş / aylık saat ve mesai TUTARI cari / muhasebe kaydetme ister (sunucu da reddeder). Yetkisi olmayan ama
+  // üretim kaydetmeli kullanıcı saati BİLDİRİR (mesai_bildir — onaya gider, tutar gösterilmez). Ret iletisi düğmenin altında kalır.
+  const para = paraYetkisiVar();
+  const bildirebilir = !para && mesaiBildirmeYetkisiVar();
+  const [mesaiHata, setMesaiHata] = useState("");
+  const [mesaiBildirildi, setMesaiBildirildi] = useState("");
   const kutu = { ...inputStyle, width: 110, fontSize: 13 };
   return (
     <div data-personel-paneli style={{ border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 12, margin: "10px 0", background: "#fff" }}>
@@ -55,7 +61,7 @@ function PersonelBilgileriPaneli({ cari, tanimlar, onTanimlarKaydet, onAddHareke
           </select>
         </Field>
         <Field label="Aylık maaş (₺)">
-          <input data-personel-maas type="text" inputMode="decimal" key={`m${maas}`} defaultValue={maas || ""} disabled={!bolum}
+          <input data-personel-maas type="text" inputMode="decimal" key={`m${maas}`} defaultValue={maas || ""} disabled={!bolum || !para} title={para ? "" : PARA_YETKI_METNI}
             onBlur={(e) => bolum && yaz(bolum.id, { maas: parseFloat(String(e.target.value).replace(",", ".")) || 0 })} style={kutu} />
         </Field>
         <Field label="İşe başlangıç">
@@ -63,11 +69,12 @@ function PersonelBilgileriPaneli({ cari, tanimlar, onTanimlarKaydet, onAddHareke
             onChange={(e) => bolum && yaz(bolum.id, { iseBaslangic: e.target.value })} style={{ ...kutu, width: 150 }} />
         </Field>
         <Field label="Aylık çalışma saati">
-          <input data-personel-saat type="number" key={`s${aylikSaat}`} defaultValue={(kayit && kayit.aylikSaat) || ""} placeholder={String(ayar.aylikSaat)} disabled={!bolum}
+          <input data-personel-saat type="number" key={`s${aylikSaat}`} defaultValue={(kayit && kayit.aylikSaat) || ""} placeholder={String(ayar.aylikSaat)} disabled={!bolum || !para} title={para ? "" : PARA_YETKI_METNI}
             onBlur={(e) => bolum && yaz(bolum.id, { aylikSaat: parseFloat(e.target.value) || undefined })} style={{ ...kutu, width: 90 }} />
         </Field>
         <div style={{ fontSize: 12, color: "var(--erp-text-2)", paddingBottom: 8 }}>Saat ücreti: <b>{h.saatUcreti.toLocaleString("tr-TR")} ₺</b></div>
       </div>
+      {!para && <div data-personel-ucret-kilitli style={{ fontSize: 11, color: "var(--erp-text-2)", marginTop: 4 }}>Maaş ve aylık çalışma saati: {PARA_YETKI_METNI.toLocaleLowerCase("tr-TR")}.</div>}
       {bolum && maas > 0 && (
         <div data-mesai style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid var(--erp-line-soft)" }}>
           <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>Mesai <span style={{ fontSize: 11, fontWeight: 400, color: "var(--erp-text-2)" }}>
@@ -77,8 +84,25 @@ function PersonelBilgileriPaneli({ cari, tanimlar, onTanimlarKaydet, onAddHareke
             {[["haftaIci", "Hafta içi (saat)"], ["cumartesi", "Cumartesi (saat)"], ["pazar", "Pazar (saat)"]].map(([k, et]) => (
               <Field key={k} label={et}><input data-mesai-saat={k} type="number" min="0" step="0.5" value={saat[k]} onChange={(e) => setSaat({ ...saat, [k]: e.target.value })} style={{ ...kutu, width: 90 }} /></Field>
             ))}
-            <div style={{ fontSize: 13, paddingBottom: 8 }}>Tutar: <b data-mesai-tutar>{h.tutar.toLocaleString("tr-TR")} ₺</b></div>
-            <button type="button" className="btn-primary" data-mesai-yaz disabled={!(h.tutar > 0) || !!mevcut || mesaiYaziliyor} style={{ marginBottom: 4 }}
+            {para && <div style={{ fontSize: 13, paddingBottom: 8 }}>Tutar: <b data-mesai-tutar>{h.tutar.toLocaleString("tr-TR")} ₺</b></div>}
+            {!para && (
+              <button type="button" className="btn-primary" data-mesai-bildir-kart disabled={!bildirebilir || mesaiYaziliyor || !!mevcut
+                || !((Number(saat.haftaIci) || 0) + (Number(saat.cumartesi) || 0) + (Number(saat.pazar) || 0) > 0)}
+                title={bildirebilir ? "Saatler onaya gider; tutarı cari / muhasebe yetkilisi onaylar" : "Üretim kaydetme yetkisi gerekir"} style={{ marginBottom: 4 }}
+                onClick={async () => {
+                  const bildirilenAy = ay;   // bekleme öncesi (denetim 18)
+                  setMesaiYaziliyor(true); setMesaiHata(""); setMesaiBildirildi("");
+                  try {
+                    await g25Rpc("mesai_bildir", { cariId: cari.id, ay: bildirilenAy, saatler: { haftaIci: Number(saat.haftaIci) || 0, cumartesi: Number(saat.cumartesi) || 0, pazar: Number(saat.pazar) || 0 } });
+                    setSaat({ haftaIci: "", cumartesi: "", pazar: "" });
+                    setMesaiBildirildi(`${ayAdi(bildirilenAy)} mesaisi bildirildi — cari / muhasebe yetkilisinin onayını bekliyor`);
+                  } catch (e) { setMesaiHata(`Bildirilemedi: ${sunucuHataMetni(e)}`); }
+                  finally { setMesaiYaziliyor(false); }
+                }}>
+                Mesaiyi onaya gönder
+              </button>
+            )}
+            {para && <button type="button" className="btn-primary" data-mesai-yaz disabled={!(h.tutar > 0) || !!mevcut || mesaiYaziliyor} style={{ marginBottom: 4 }}
               title={mevcut ? `${mevcut.fisNo || fisNo} zaten yazılmış — değiştirmek için önce fişi silin` : ""}
               onClick={async () => {
                 const ayAdi = new Date(`${ay}-01T12:00:00`).toLocaleDateString("tr-TR", { month: "long", year: "numeric" });
@@ -97,14 +121,17 @@ function PersonelBilgileriPaneli({ cari, tanimlar, onTanimlarKaydet, onAddHareke
                       cariId: cari.id, hareketler: [{ ...hareket, islemTipi: undefined }], anahtar: `mesai|${fisNo}`, hataEtiketi: "Mesai" });
                   } finally { setMesaiYaziliyor(false); }
                   if (r) setSaat({ haftaIci: "", cumartesi: "", pazar: "" });
+                  else setMesaiHata(g25SonParaHatasi() || "Mesai kaydedilemedi");
                   return;
                 }
                 const ok = onAddHareket(cari.id, hareket);
                 if (ok !== false) setSaat({ haftaIci: "", cumartesi: "", pazar: "" });
               }}>
               Mesaiyi yaz
-            </button>
+            </button>}
             {mevcut && <span style={{ fontSize: 12, color: "var(--erp-warn)", paddingBottom: 8 }}>{mevcut.fisNo || fisNo} yazılmış ({(mevcut.tutar || 0).toLocaleString("tr-TR")} ₺)</span>}
+            {mesaiHata && <div data-mesai-hata style={{ flexBasis: "100%", fontSize: 12, color: "var(--erp-danger, #B42318)" }}>{mesaiHata}</div>}
+            {mesaiBildirildi && <div data-mesai-bildirildi style={{ flexBasis: "100%", fontSize: 12, color: "var(--erp-ok, #067647)" }}>{mesaiBildirildi}</div>}
           </div>
         </div>
       )}

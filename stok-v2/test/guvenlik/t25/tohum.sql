@@ -22,6 +22,13 @@ update public.tanimlar set veri = jsonb_set(veri, '{kullanicilar}',
     {"kullaniciAdi": "Deniz", "rol": "Kullanıcı", "yetkiler": {"cari": {"goruntuleme": true}, "muhasebe": {"goruntuleme": true}}}
   ]'::jsonb)
  where id = 'tekil';
+-- KULLANICI KİMLİKLERİ (24 Kasım): gerçek kayıtlarda `id` var; istemcinin yetki tazelemesi (100 "YETKİ TAZELEME") oturumdaki kullanıcıyı
+-- `id` ile eşler. Kimliksiz kayıtta ilk kimliksiz kaydı (Yönetici Ali) bulup onun rolünü kopyalıyordu — ekran testlerinde ARAYÜZ her
+-- kullanıcıda Yönetici gibi davranıyordu (sunucu jetonu doğruydu). Eksik kimlikler k-<ad> olarak tamamlanır.
+update public.tanimlar set veri = jsonb_set(veri, '{kullanicilar}', (select jsonb_agg(case when coalesce(x ->> 'id', '') = ''
+    then x || jsonb_build_object('id', 'k-' || lower(translate(x ->> 'kullaniciAdi', 'ÇĞİÖŞÜçğıöşü', 'CGIOSUcgiosu'))) else x end)
+  from jsonb_array_elements(veri -> 'kullanicilar') x))
+ where id = 'tekil';
 update public.tanimlar set veri = jsonb_set(jsonb_set(veri,
     '{araProsesler}', coalesce((select jsonb_agg(x) from jsonb_array_elements(case when jsonb_typeof(veri -> 'araProsesler') = 'array' then veri -> 'araProsesler' else '[]'::jsonb end) x where x ->> 'id' <> 'ap-g25'), '[]'::jsonb)
       || '[{"id": "ap-g25", "ad": "Boya", "cariId": "g25-f", "ucret": 2}]'::jsonb),

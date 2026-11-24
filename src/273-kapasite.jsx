@@ -528,7 +528,7 @@ function DemirbasBolumu({ kayit, tur, tanimlar, cariler, stok, onGuncelle, onCar
               <option>Genel</option><option>Resmi</option>
             </select>
           </Field>
-          <button type="button" className="btn-primary" data-demirbas-kaydet onClick={kaydet}>Cariye yaz</button>
+          <button type="button" className="btn-primary" data-demirbas-kaydet disabled={!paraYetkisiVar()} title={paraYetkisiVar() ? undefined : PARA_YETKI_METNI} onClick={kaydet}>Cariye yaz</button>
         </div>
       )}
     </div>

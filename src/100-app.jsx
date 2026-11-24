@@ -1254,6 +1254,8 @@ function AtolyeUygulamasi() {
   function kullaniciYetkisiVar(modul, islemTipi) {
     return yetkiVarMi(tanimlar, aktifKullanici, modul, islemTipi);
   }
+  // G-25 (v1.745.0, 278): bileşenlerin yetki aynası bu kurala bağlı (paraYetkisiVar, mesaiBildirmeYetkisiVar).
+  g25YetkiBagla(kullaniciYetkisiVar);
 
   // SEKME YETKİ KAPISI (v1.569.0, denetim): modüller hep kurulu, yalnız gizleniyor; görüntüleme yetkisi yalnız MENÜYÜ
   // süzüyordu. Ürün/sipariş kartındaki "cariye git" gibi bağlantılar yetkisiz kullanıcıya Cari'yi, Üretim'i açıyordu.
@@ -3139,6 +3141,10 @@ function AtolyeUygulamasi() {
   // ("MAAS-2026-10-0007") satırda `maasAnahtari` alanında — sunucu numara verdiği için tekrar kontrolü onunla.
   const [maasBekleyen, setMaasBekleyen] = useState([]);
   const [maasErtelendi, setMaasErtelendi] = useState(false);
+  const [maasOnayHata, setMaasOnayHata] = useState("");
+  // G-25 Onaylar penceresi (278) ve onay şeridinin yeniden sayma tetiği
+  const [onayMerkeziAcik, setOnayMerkeziAcik] = useState(false);
+  const [onayYenile, setOnayYenile] = useState(0);
   // Adlı yazıcı (kapidenetim.js `IZINLI_YAZICILAR`): cari hareketini yalnız bu fonksiyon yazar; efekt yalnız çağırır.
   const maasTahakkukEt = useCallback(() => {
     const bolumler = tanimlar.bolumler || [];
@@ -3181,6 +3187,7 @@ function AtolyeUygulamasi() {
     if (maasOnaySuruyorRef.current || !paraFisiKesRef.current) return;
     maasOnaySuruyorRef.current = true;
     let yazilan = 0;
+    setMaasOnayHata("");
     try {
       for (const y of maasBekleyen) {
         const r = await paraFisiKesRef.current({
@@ -3188,6 +3195,7 @@ function AtolyeUygulamasi() {
           cariId: y.cariId, hareketler: [{ ...y.h, maasAnahtari: y.h.fisNo, islemTipi: undefined }], anahtar: `maas|${y.h.fisNo}`, hataEtiketi: "Maaş tahakkuku",
         });
         if (r) yazilan++;
+        else { setMaasOnayHata(paraFisiSonHataRef.current || "Maaş tahakkuku kaydedilemedi"); break; }
       }
     } finally { maasOnaySuruyorRef.current = false; }
     if (yazilan) {
@@ -3688,7 +3696,19 @@ function AtolyeUygulamasi() {
   // sonraki adımda. Eskiden cari ve kasa ayağı AYRI yazılıyordu (cari kartında zarfsız): biri düşüp öteki kalabiliyordu.
   // Döner: { no, hareketIdler } ya da null (yazılamadı — ekranda hiçbir şey değişmez, kullanıcı uyarılır). `anahtar`la çift basış yok.
   const paraFisiSuruyorRef = useRef(new Set());
+  // Son para fişi reddinin metni (v1.745.0): ekranlar ret iletisini kısa bildirim yerine düğmenin yanında KALICI gösterir.
+  const paraFisiSonHataRef = useRef("");
   const paraFisiKes = useCallback(async ({ fis, cariId, hareketler, kasa, cekler, anahtar, hataEtiketi, ekCariler }) => {
+    paraFisiSonHataRef.current = ""; g25SonParaHatasiYaz(paraFisiSonHataRef.current);
+    // G-25 (K1 / K6): bu kapıdan geçen her fiş sunucuda PARA grubudur (cari satırı olan para fişi ya da kasa / çek satırı) — cari /
+    // muhasebe kaydetme ister. Yetkisiz kullanıcının isteği hiç gönderilmez; neden yapılamadığı söylenir. Cari satırı olmayan
+    // yalnız-kasa fişi (virman, gider / gelir kartı) kasa yazıcısının kuralına (muhasebe / fişler / cari) tabi — ona dokunulmaz.
+    const cariSatiriVar = (cariId && (hareketler || []).length) || (ekCariler || []).some((e) => e && (e.hareketler || []).length);
+    if (cariSatiriVar && !paraYetkisiVar()) {
+      paraFisiSonHataRef.current = `${hataEtiketi || "Kayıt"}: ${PARA_YETKI_METNI}`; g25SonParaHatasiYaz(paraFisiSonHataRef.current);
+      showToast(`${hataEtiketi || "Kayıt"} kaydedilmedi — ${PARA_YETKI_METNI}`);
+      return null;
+    }
     const tarihler = [...(hareketler || []).map((h) => h && h.tarih), ...(Array.isArray(kasa) ? kasa : [kasa]).map((k) => k && k.hareket && k.hareket.tarih),
       ...(ekCariler || []).flatMap((e) => ((e && e.hareketler) || []).map((h) => h && h.tarih))];
     if (donemKilidiEngel(tarihler.filter(Boolean), showToast, hataEtiketi || "Kayıt")) return null;
@@ -3702,7 +3722,8 @@ function AtolyeUygulamasi() {
     try {
       r = await fisKesGonder(h.yuk);
     } catch (e) {
-      showToast(`${hataEtiketi || "Kayıt"} kaydedilemedi — hiçbir değişiklik yapılmadı (${String((e && e.message) || e).slice(0, 160)})`);
+      paraFisiSonHataRef.current = `${hataEtiketi || "Kayıt"} kaydedilemedi: ${sunucuHataMetni(e)}`; g25SonParaHatasiYaz(paraFisiSonHataRef.current);
+      showToast(`${hataEtiketi || "Kayıt"} kaydedilemedi — hiçbir değişiklik yapılmadı (${sunucuHataMetni(e).slice(0, 220)})`);
       gunlukYaz(`${hataEtiketi || "Para fişi"} kaydedilemedi: ${String((e && e.message) || e).slice(0, 200)}`, "cari", { cariId, tur: fis && fis.tur });
       return null;
     } finally {
@@ -3749,6 +3770,7 @@ function AtolyeUygulamasi() {
     return { no, hareketIdler: tumCariHareketleri.map((x) => x.id), kasaHareketIdler: ayaklar.map((k) => k.hareket.id) };
   }, [cariler, muhasebe, aktifKullanici, showToast]);
   paraFisiKesRef.current = paraFisiKes;
+  const paraFisiSonHata = useCallback(() => paraFisiSonHataRef.current, []);
   // Geri al (bildirimden): sunucu fişi → fis_iptal (100 yetimFisTemizle, sunucu dalı).
   const paraFisiGeriAl = useCallback((sonuc) => () => fisGeriAlRef.current && fisGeriAlRef.current(sonuc.no, sonuc.hareketIdler), []);
   // Ekranlar için: kes + numarayla bildir (Geri al düğmeli). Döner: paraFisiKes sonucu.
@@ -5254,7 +5276,8 @@ function AtolyeUygulamasi() {
           </div>
         )}
         {/* MAAŞ TAHAKKUKU BEKLİYOR (v1.740.0, karar 3): ay başı maaşları kendiliğinden yazılmaz — onaylanınca MAŞ fişi kesilir. */}
-        {maasBekleyen.length > 0 && !maasErtelendi && (
+        {/* G-25 (v1.745.0): maaş tahakkukunu yalnız cari / muhasebe kaydetme yetkilisi onaylar — öteki oturumlarda şerit yok. */}
+        {maasBekleyen.length > 0 && !maasErtelendi && paraYetkisiVar() && (
           <div data-maas-bekliyor={maasBekleyen.length} style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8,
             background: "var(--erp-purple-bg, #F1ECF7)", border: "1.5px solid var(--erp-purple, #6B4E8A)", borderRadius: "var(--erp-r-md)", padding: "7px 12px", fontSize: 13 }}>
             <span style={{ flex: "1 1 260px" }}>
@@ -5264,7 +5287,13 @@ function AtolyeUygulamasi() {
             </span>
             <button type="button" className="btn-primary" data-maas-onayla="1" onClick={maasTahakkukOnayla} style={{ padding: "6px 14px", fontSize: 13 }}>Onayla</button>
             <button type="button" className="btn-ghost" data-maas-sonra="1" onClick={() => setMaasErtelendi(true)} style={{ padding: "6px 12px", fontSize: 12 }}>Sonra</button>
+            {maasOnayHata && <div data-maas-onay-hata style={{ flexBasis: "100%", fontSize: 12, color: "var(--erp-danger, #B42318)" }}>{maasOnayHata}</div>}
           </div>
+        )}
+        {!loading && !baglantiYok && <OnayBekleyenSeridi onAc={() => setOnayMerkeziAcik(true)} yenile={onayYenile} />}
+        {onayMerkeziAcik && (
+          <OnayMerkezi tanimlar={tanimlar} cariler={cariler} kullaniciAd={(aktifKullanici && aktifKullanici.ad) || null} showToast={showToast}
+            onCarilerTazele={carileriBuluttanTazele} onKapat={() => { setOnayMerkeziAcik(false); setOnayYenile((n) => n + 1); }} />
         )}
         {/* İNCELEME GEREKİYOR (v1.744.0, F2 — kullanıcı kararı 2 Kasım): sunucunun KURAL gereği reddettiği değişiklikler. Kendiliğinden
             yeniden gönderilmez; aynı tablonun öteki değişiklikleri gönderilmiştir. Reddedilen yerel hâl yedekte durur (silinmez);

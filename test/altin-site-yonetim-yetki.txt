@@ -1,6 +1,9 @@
 {
  "A": {
-  "cagrilar": [],
+  "cagrilar": [
+   "mesai_bildirimleri:?",
+   "ucret_onaylari:?"
+  ],
   "kartMusteriB": "düğme yok",
   "kartMusteriD": "düğme yok",
   "kayitDugmeleri": [
@@ -24,6 +27,8 @@
   "alinmisTiklandi": true,
   "c2HesapKapandi": true,
   "cagrilar": [
+   "mesai_bildirimleri:?",
+   "ucret_onaylari:?",
    "site_kayit_onayla_yeni_cari:HATA",
    "site_kayit_onayla_yeni_cari:HATA",
    "site_kayit_onayla_yeni_cari:TAMAM",
@@ -123,6 +128,8 @@
  },
  "C": {
   "cagrilar": [
+   "mesai_bildirimleri:?",
+   "ucret_onaylari:?",
    "site_kayit_onayla_yeni_cari:RET"
   ],
   "kayitDugmeleri": [

@@ -117,7 +117,7 @@ const araProsesSunucuyaKes = useCallback(async ({ hazirliklar, siparis, anahtar,
     for (const y of yazilan) {
       try { await fisIptalGonder(y.no, "İş verme kaydedilemedi — ara proses fişi geri alındı"); } catch (e2) { geriAlinamayan.push(y.no); }
     }
-    showToast(`İş verilemedi — hiçbir değişiklik yapılmadı (${String((e && e.message) || e).slice(0, 160)})`
+    showToast(`İş verilemedi — hiçbir değişiklik yapılmadı (${sunucuHataMetni(e).slice(0, 240)})`
       + (geriAlinamayan.length ? ` ⚠ ${geriAlinamayan.join(", ")} fişi sunucuda kaldı, iptal edilemedi — Fiş Defteri'nden kontrol edin` : ""));
     gunlukYaz(`İş verme kaydedilemedi (${siparis.siparisNo}): ${String((e && e.message) || e).slice(0, 200)}`, "uretim",
       { uretimId: siparis.id, yazilipIptalEdilen: yazilan.map((y) => y.no), iptalEdilemeyen: geriAlinamayan });

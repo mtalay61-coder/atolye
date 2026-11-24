@@ -581,6 +581,15 @@ async function supabaseIstek(yol, secenekler = {}, tekrarMi = false, islemDeneme
     }
     const kuralMesaji = (metin.match(/"message"\s*:\s*"((?:Bu işlem için yetkiniz yok|[^"]*yalnız Yönetici)[^"]*)"/) || [])[1];
     if (kuralMesaji) throw new Error(kuralMesaji);
+    // G-25 (v1.745.0): sunucunun Türkçe yetki / bağlantı reddi (42501, ör. "Cari hareketi gerçek bir üretim işlemine bağlı değil (…)
+    // — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir") da OLDUĞU GİBİ gösterilir. 1.744.36 yalnız "Bu işlem için yetkiniz
+    // yok" ile başlayanı tanıyordu; ötekiler aşağıdaki "giriş yapılmamış" metnine düşüyor, kullanıcıyı yanlış yönlendiriyordu.
+    // Postgres'in kendi "permission denied for …" iletisi (gerçekten girişsiz) bu kapsamda değil.
+    const yetkiMesaji = /"code"\s*:\s*"42501"/.test(metin) ? (metin.match(/"message"\s*:\s*"((?:[^"\\]|\\.)*)"/) || [])[1] : null;
+    if (yetkiMesaji && !/^permission denied/i.test(yetkiMesaji)) {
+      let m = yetkiMesaji; try { m = JSON.parse(`"${yetkiMesaji}"`); } catch (x) { /* ham metin */ }
+      const e = new Error(m); e.yetkiReddi = true; throw e;
+    }
     if (/42501|permission denied/i.test(metin)) {
       const tablo = (metin.match(/for table (\w+)/) || [])[1] || "";
       throw new Error(`Buluta yazma yetkisi yok${tablo ? ` (${tablo})` : ""} — kimlik koruması açık ama giriş yapılmamış. `

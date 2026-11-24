@@ -220,7 +220,9 @@ function TeslimAlmaFormu({ atama, prosesler, buProses, hammaddeler, iadeAdaylari
               <label style={{ display: "flex", flexDirection: "column", gap: 3 }}>
                 {/* Ücret DEĞİŞKEN: hatayı yapan usta bedelsiz düzeltebilir (0), başka birine
                     yaptırılırsa ona ödenir. Reçetedeki proses ücretiyle ilgisi yoktur. */}
-                <span style={{ fontSize: 10, color: "var(--erp-text-2)" }}>Tamir ücreti (₺/adet)</span>
+                {/* G-25 (v1.745.0): cari / muhasebe yetkisi yoksa girilen tutar ÖNERİDİR — tamir talebi onaya düşer, yetkili ücreti
+                    onaylar ya da belirler (Onaylar › Ücretler); onaysız tamirin teslimi işçilik yazamaz. */}
+                <span style={{ fontSize: 10, color: "var(--erp-text-2)" }}>{paraYetkisiVar() ? "Tamir ücreti (₺/adet)" : "Önerilen tamir ücreti (₺/adet) — onaya gider"}</span>
                 <input
                   type="number" min="0" step="0.01"
                   value={d.ucret || ""}

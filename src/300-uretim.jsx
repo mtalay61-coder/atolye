@@ -24,6 +24,8 @@ function UretimModule({ panelKipi, orders, cop, onAtamaPersonelVer, onSave, show
   // düğmesi çalışmaz — cihaz o ekrana kilitli. Atölyedeki ortak tablet için: kalfa barkodunu
   // okutur, iş listesini görür; menüye, fişlere, cariye hiç ulaşmaz.
   const [atolyeEkraniAcik, setAtolyeEkraniAcik] = useState(panelKipi === "atolye");
+  // G-25 (v1.745.0, 278): Üretim'de mesai SAATİ bildirimi (tutarı cari / muhasebe onaylar) ve onay bekleyen işçilik ücretleri.
+  const [g25Panel, setG25Panel] = useState(null);   // null | "mesai" | "ucret"
 
   const mamulUrunler = (stok || []).filter((p) => p.kategori === "Mamul");
   const seciliUrun = mamulUrunler.find((p) => p.id === urunId);
@@ -182,6 +184,12 @@ function UretimModule({ panelKipi, orders, cop, onAtamaPersonelVer, onSave, show
         >
           <ScanLine size={15} /> Barkod Okut
         </button>
+        <button type="button" className="btn-ghost" data-uretim-mesai-bildirimi onClick={() => setG25Panel((x) => (x === "mesai" ? null : "mesai"))}>
+          <ClipboardList size={15} /> Mesai bildirimi
+        </button>
+        <button type="button" className="btn-ghost" data-uretim-ucret-onaylari onClick={() => setG25Panel((x) => (x === "ucret" ? null : "ucret"))}>
+          <Check size={15} /> Ücret onayları
+        </button>
         <button
                           data-yeni-uretim="1"
           className="btn-primary"
@@ -196,6 +204,9 @@ function UretimModule({ panelKipi, orders, cop, onAtamaPersonelVer, onSave, show
           <Plus size={15} /> Yeni Üretim Siparişi
         </button>
       </div>
+
+      {g25Panel === "mesai" && <MesaiBildirimPaneli tanimlar={tanimlar} cariler={cariler} />}
+      {g25Panel === "ucret" && <UcretOnayDurumu yenile={g25Panel} />}
 
       {atolyeEkraniAcik && (
         <AtolyeEkrani

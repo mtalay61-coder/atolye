@@ -56,6 +56,7 @@ const IZINLI_YAZICILAR = new Set(process.env.SAYIM ? [] : [
   "bagimsizStokGirisiYap",      // fişsiz/serbest stok girişi
   "hareketEkle",                // stok kartından elle hareket
   "addHareket",                 // cari kartından elle hareket
+  "mesaiOnayYukuKur",           // G-25 (v1.745.0, 278): onaylanan mesai bildiriminin MS yükü — sunucu mesai_onayla keser, yerelde yazmaz
   // — KÖPRÜ —
   "addCariHareketFromStok",     // stok tarafının cariye yazması (tek geçit, kendisi kapı değil)
   "hesabaHareketEkle",          // kasa/banka defterine hareket yerleştirme — saf geçit; fişin peşin

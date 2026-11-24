@@ -395,7 +395,8 @@ begin
                ''urunAd'', (select x.ad from public.urunler x where x.id::text = k.urun), ''uretimId'', k.uid, ''siparisNo'', k.siparis_no, ''proses'', k.proses,
                ''guncel'', g.ozet, ''onayli'', case when k.tur = ''tamir'' then public.g25_tamir_onayli(split_part(k.anahtar, ''|'', 2)) else o.ozet is not null and o.ozet = g.ozet end, ''onaylanan'', o.ozet, ''onaylayan'', o.onaylayan, ''onayZamani'', o.onay_zamani)
              order by (o.ozet is not null and o.ozet = g.ozet), k.tur, k.anahtar)
-        from anahtarlar k
+        -- anahtar başına TEK satır (aynı ürünün birden çok açık üretimi aynı proses anahtarını üretir)
+        from (select distinct on (anahtar) * from anahtarlar order by anahtar, uid nulls last) k
         cross join lateral (select public.g25_ucret_guncel(k.anahtar) as ozet) g
         left join public.ucr_onay o on o.anahtar = k.anahtar
        where g.ozet is not null and (k.tur <> ''ara'' or (g.ozet ->> ''ucret'')::numeric > 0)), ''[]''::jsonb);

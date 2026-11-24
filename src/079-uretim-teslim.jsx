@@ -114,7 +114,7 @@ const uretimTeslimSunucuyaKes = useCallback(async ({ hazirlik, siparis, atamaId,
   try {
     r = await fisKesGonder(yuk);
   } catch (e) {
-    showToast(`Teslim kaydedilemedi — hiçbir değişiklik yapılmadı (${String((e && e.message) || e).slice(0, 160)})`);
+    showToast(`Teslim kaydedilemedi — hiçbir değişiklik yapılmadı (${sunucuHataMetni(e).slice(0, 240)})`);
     gunlukYaz(`Üretim teslimi kaydedilemedi (${siparis.siparisNo}): ${String((e && e.message) || e).slice(0, 200)}`, "uretim", { uretimId: siparis.id, atamaId });
     return false;
   } finally {
