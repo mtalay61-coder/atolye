@@ -19,7 +19,7 @@ NOTICE:  schema "guvenlik" already exists, skipping
    ✓ önkoşul şimdi UYGULANMIŞ
    ✓ Faz 0.4 envanterinde YALNIZ beklenen fark: < F|fis_kes(p jsonb) > F|fis_kes(p jsonb) > F|g25_tanimlar_ucret_koruma() > R|isc_odeme > R|mes_bildirim > R|ucr_onay > T|tanimlar.g25_tanimlar_ucret_koruma 
 ══ 4) SONRA matrisi (beklentiler A1–A8)
-   ✓ ── 260 satır · hepsi beklenen ──
+   ✓ ── 271 satır · hepsi beklenen ──
 ══ 5) GERİ ALMA
    ✓ geri alındı · 98 | UYARI | G-25 yetki açığı YENİDEN AÇIK (tasarım § 7)
    ✓ geri almadan sonra önkoşul HAZIR

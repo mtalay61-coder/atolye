@@ -249,7 +249,18 @@ K4 · M3b kalan parçadan kısmi 3 (kalan 1) · Uretimci · geçti
 K4 · M3c son parça 1 (zincirde toplam 10 ödendi) · Uretimci · geçti
 K4 · M3 zincirde ödenen toplam = onaylanan 10 [-1] · ret ödenen -1
 K4 · M4 zincire sonradan eklenen 10'luk parça (toplam 20 ≠ onaylı 10) · Uretimci · geçti
-K4 · EŞZAMANLI 6 teslim, iki parça (5 + 5, onaylı 10) · Uretimci [geçen 6, fiş 6, ödenen -1] · ret toplam aşıldı
+K4 · O1 istek · kök (10 → kısmi) · istenen 6 · kabul · kaydedilen 6
+K4 · O1 istek · kalan parça (4) · istenen 5 · kabul · kaydedilen 5
+K4 · O1 istek · kalan parça (4) · istenen 4 · kabul · kaydedilen 4
+K4 · O1 kalan parçaya fazla istek (5 > 4) açıkça reddedildi, iz yok · Uretimci · geçti
+K4 · O1 işte ödenen = 6 + 4 = 10 (kırpma yok) [-1] · ret ödenen -1
+K4 · EŞZAMANLI istek · kalan parça (5) · istenen 5 · kabul · kaydedilen 5
+K4 · EŞZAMANLI istek · kalan parça (5) · istenen 5 · kabul · kaydedilen 5
+K4 · EŞZAMANLI istek · kalan parça (5) · istenen 6 · kabul · kaydedilen 6
+K4 · EŞZAMANLI istek · kök parça (5) · istenen 5 · kabul · kaydedilen 5
+K4 · EŞZAMANLI istek · kök parça (5) · istenen 5 · kabul · kaydedilen 5
+K4 · EŞZAMANLI istek · kök parça (5) · istenen 6 · kabul · kaydedilen 6
+K4 · EŞZAMANLI 6 istek, iki parça (onaylı 10) · Uretimci [kabul edilen istekler [5,5,5,5,6,6], fiş 6, kaydedilen 32, ödeme kaydı -1] · ret toplam / kırpma
 K4 · tamir talebi onay listesinde (onaysız, önerilen 5.000) · Muhasip görür · ret listede yok
 K4 · tamir ücretini belirleme · Uretimci · ret PGRST202
 K4 · tamir ücretini 40 belirleyip onaylama, EŞZAMANLI iki kez · Muhasip [PGRST202/PGRST202, atama ücreti 5000, onay kaydı -1] · ret onay
@@ -259,4 +270,4 @@ K4 · tamir: onaylı 10 × 40 teslim · Uretimci · geçti
 K4 · tamir kısmi teslim 6 × 40 (kalan 4) · Uretimci · geçti
 K4 · tamir kalan parçanın ücreti 40 → 90 (zincir tutarsız) 4 × 90 · Uretimci · geçti
 K4 · tamir kalan 4 × 40 (zincir yeniden tutarlı, onay geçerli) · Uretimci · geçti
-── 260 satır ──
+── 271 satır ──
