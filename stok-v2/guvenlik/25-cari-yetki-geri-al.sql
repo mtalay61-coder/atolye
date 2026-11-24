@@ -33,7 +33,7 @@ begin
   if v_dolu <> 3 then
     raise exception 'G-25 yedeği eksik (% / 3 fonksiyon). Hiçbir şey değişmedi.', v_dolu;
   end if;
-  if (select md5(btrim(regexp_replace(regexp_replace(p.prosrc, '--[^\n]*', '', 'g'), '\s+', ' ', 'g'))) from pg_proc p where p.oid = to_regprocedure('public.car_yaz(jsonb)')) is distinct from '4ee7bfb498c6d729a6ddcf47a420031b' then
+  if (select md5(btrim(regexp_replace(regexp_replace(p.prosrc, '--[^\n]*', '', 'g'), '\s+', ' ', 'g'))) from pg_proc p where p.oid = to_regprocedure('public.car_yaz(jsonb)')) is distinct from 'f83e760fce533be489ec87be9002b91c' then
     raise exception 'car_yaz uygulandığı hâlde değil (gövde %) — sonradan değişmiş; ezilmez. Hiçbir şey değişmedi.', coalesce((select md5(btrim(regexp_replace(regexp_replace(p.prosrc, '--[^\n]*', '', 'g'), '\s+', ' ', 'g'))) from pg_proc p where p.oid = to_regprocedure('public.car_yaz(jsonb)')), 'yok');
   end if;
   if (select md5(btrim(regexp_replace(regexp_replace(p.prosrc, '--[^\n]*', '', 'g'), '\s+', ' ', 'g'))) from pg_proc p where p.oid = to_regprocedure('public.fis_kes(jsonb)')) is distinct from 'c071d8020d8a22b20765cff7aec77c47' then

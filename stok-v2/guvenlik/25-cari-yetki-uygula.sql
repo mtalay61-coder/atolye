@@ -63,7 +63,7 @@ begin
   revoke all on schema guvenlik from public, anon, authenticated;
   create table guvenlik.g25_yedek (ad text primary key, tanim text not null, yetki text, sahip text not null, ozet_once text not null, ozet_sonra text not null);
   revoke all on guvenlik.g25_yedek from public, anon, authenticated;
-  insert into guvenlik.g25_yedek select 'car_yaz', pg_get_functiondef(p.oid), p.proacl::text, pg_get_userbyid(p.proowner), '1af5a49a2fa60b90210f48fac5076a27', '4ee7bfb498c6d729a6ddcf47a420031b'
+  insert into guvenlik.g25_yedek select 'car_yaz', pg_get_functiondef(p.oid), p.proacl::text, pg_get_userbyid(p.proowner), '1af5a49a2fa60b90210f48fac5076a27', 'f83e760fce533be489ec87be9002b91c'
     from pg_proc p where p.oid = 'public.car_yaz(jsonb)'::regprocedure;
   insert into guvenlik.g25_yedek select 'fis_kes', pg_get_functiondef(p.oid), p.proacl::text, pg_get_userbyid(p.proowner), '7b4e3f2474c25784e92d0f91a9053af2', 'c071d8020d8a22b20765cff7aec77c47'
     from pg_proc p where p.oid = 'public.fis_kes(jsonb)'::regprocedure;
@@ -474,8 +474,10 @@ begin
   begin
     perform public.v2_yazma_acik(''cari'');   -- v1.730.1: geri dönüldüyse yazma yok (stok-v2.sql)
     perform public.stk_yetki(array[''cari'', ''fisler'', ''muhasebe'', ''siparis'', ''uretim'', ''stok'', ''tanimlar''], ''kaydetme'');
-    -- G-25: fiş dışından (kapı kapalı — eski zarf yazıcıları) satır ya da iptal yalnız cari / muhasebe kaydetme ile.
-    if not public.fis_kapi_acik() and (jsonb_array_length(public.stk_dizi(p -> ''satirlar'')) > 0
+    -- G-25: fiş dışından (kapı kapalı — eski zarf yazıcıları) satır ya da iptal yalnız cari / muhasebe kaydetme ile. Kapı fis_kapi_acik()''ın
+    -- gövdesiyle AYNI ifadeyle okunur, fonksiyon çağrılmaz: o fonksiyonun VARLIĞI ''fiş defteri kurulu'' işaretidir (kas_hesap_kilitle,
+    -- tutarsız satır denetimi) — defterden önce kurulan dosyaya eklenirse onları erken açar (24 Kasım, sinama-kasa yakaladı).
+    if coalesce(current_setting(''fis.kapi'', true), '''') <> ''acik'' and (jsonb_array_length(public.stk_dizi(p -> ''satirlar'')) > 0
         or jsonb_array_length(public.stk_dizi(p -> ''iptal'')) > 0) then
       perform public.g25_yetki_iste(array[''cari'', ''muhasebe''], ''kaydetme'', ''fiş dışından cari hareketi'');
     end if;
@@ -673,7 +675,7 @@ begin
   end ';
 
   -- SONRA DENETİMİ (tutmazsa bütün blok geri alınır)
-  if (select md5(btrim(regexp_replace(regexp_replace(p.prosrc, '--[^\n]*', '', 'g'), '\s+', ' ', 'g'))) from pg_proc p where p.oid = to_regprocedure('public.car_yaz(jsonb)')) is distinct from '4ee7bfb498c6d729a6ddcf47a420031b' then raise exception 'car_yaz uygulanan hâlde değil'; end if;
+  if (select md5(btrim(regexp_replace(regexp_replace(p.prosrc, '--[^\n]*', '', 'g'), '\s+', ' ', 'g'))) from pg_proc p where p.oid = to_regprocedure('public.car_yaz(jsonb)')) is distinct from 'f83e760fce533be489ec87be9002b91c' then raise exception 'car_yaz uygulanan hâlde değil'; end if;
   if (select md5(btrim(regexp_replace(regexp_replace(p.prosrc, '--[^\n]*', '', 'g'), '\s+', ' ', 'g'))) from pg_proc p where p.oid = to_regprocedure('public.fis_kes(jsonb)')) is distinct from 'c071d8020d8a22b20765cff7aec77c47' then raise exception 'fis_kes uygulanan hâlde değil'; end if;
   if (select md5(btrim(regexp_replace(regexp_replace(p.prosrc, '--[^\n]*', '', 'g'), '\s+', ' ', 'g'))) from pg_proc p where p.oid = to_regprocedure('public.fis_iptal(jsonb)')) is distinct from '2ea9f6ce73682303f69f1b8f191e84ab' then raise exception 'fis_iptal uygulanan hâlde değil'; end if;
   for v_r in select y.ad, y.yetki, y.sahip, p.proacl::text as simdi, pg_get_userbyid(p.proowner) as sahip_simdi
@@ -687,7 +689,7 @@ begin
   create table guvenlik.g25_sonuc (sira int primary key, kontrol text not null, deger text not null);
   revoke all on guvenlik.g25_sonuc from public, anon, authenticated;
   insert into guvenlik.g25_sonuc values
-    (1, 'car_yaz / fis_kes / fis_iptal', 'G-25 hâlinde (4ee7bfb4, c071d802, 2ea9f6ce)'),
+    (1, 'car_yaz / fis_kes / fis_iptal', 'G-25 hâlinde (f83e760f, c071d802, 2ea9f6ce)'),
     (2, 'yeni fonksiyonlar', '15'),
     (3, 'mes_bildirim tablosu (RLS açık, doğrudan erişim yok)', 'kuruldu'),
     (4, 'tanimlar ücret tetikleyicisi', 'kuruldu, etkin'),

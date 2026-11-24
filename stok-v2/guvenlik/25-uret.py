@@ -52,8 +52,10 @@ ESKI = {"car_yaz": blok(k15, "car_yaz"), "fis_kes": blok(k18, "fis_kes"), "fis_i
 YENI = {
     "car_yaz": ekle(ESKI["car_yaz"],
         "  perform public.stk_yetki(array['cari', 'fisler', 'muhasebe', 'siparis', 'uretim', 'stok', 'tanimlar'], 'kaydetme');",
-        "  -- G-25: fiş dışından (kapı kapalı — eski zarf yazıcıları) satır ya da iptal yalnız cari / muhasebe kaydetme ile.\n"
-        "  if not public.fis_kapi_acik() and (jsonb_array_length(public.stk_dizi(p -> 'satirlar')) > 0\n"
+        "  -- G-25: fiş dışından (kapı kapalı — eski zarf yazıcıları) satır ya da iptal yalnız cari / muhasebe kaydetme ile. Kapı fis_kapi_acik()'ın\n"
+        "  -- gövdesiyle AYNI ifadeyle okunur, fonksiyon çağrılmaz: o fonksiyonun VARLIĞI 'fiş defteri kurulu' işaretidir (kas_hesap_kilitle,\n"
+        "  -- tutarsız satır denetimi) — defterden önce kurulan dosyaya eklenirse onları erken açar (24 Kasım, sinama-kasa yakaladı).\n"
+        "  if coalesce(current_setting('fis.kapi', true), '') <> 'acik' and (jsonb_array_length(public.stk_dizi(p -> 'satirlar')) > 0\n"
         "      or jsonb_array_length(public.stk_dizi(p -> 'iptal')) > 0) then\n"
         "    perform public.g25_yetki_iste(array['cari', 'muhasebe'], 'kaydetme', 'fiş dışından cari hareketi');\n"
         "  end if;", "car_yaz"),
@@ -380,11 +382,8 @@ def isle_blok(metin, ad):
     j = ESKI[ad].index(capa) + len(capa)
     ek = yeni_satir[i:len(yeni_satir) - (len(ESKI[ad]) - j)]
     return metin.replace(eski, ekle(eski, capa, ek.lstrip("\n"), ad), 1)
-YARDIMCI = """-- G-25 (kaynağa işlendi): car_yaz'ın fiş dışı denetimi bu iki yardımcıyı çağırır; fis-defteri.sql'den önce kurulan dosyada da bulunsun.
-create or replace function public.fis_kapi_acik() returns boolean
-language sql volatile set search_path = public, extensions, pg_temp as $$
-  select coalesce(current_setting('fis.kapi', true), '') = 'acik'
-$$;
+# fis_kapi_acik() BİLEREK eklenmez: varlığı başka fonksiyonlarda "fiş defteri kurulu" işareti (yukarıdaki car_yaz notu).
+YARDIMCI = """-- G-25 (kaynağa işlendi): car_yaz'ın fiş dışı denetimi bu yardımcıyı çağırır; fis-defteri.sql'den önce kurulan dosyada da bulunsun.
 """ + [x[x.index("create or replace function public.g25_yetki_iste("):] for x in ifadeler if "create or replace function public.g25_yetki_iste(" in x][0] + ";\nrevoke all on function public.g25_yetki_iste(text[], text, text) from public, anon, authenticated;\n"
 def idempotent(x):
     x = x.replace("create table public.mes_bildirim (", "create table if not exists public.mes_bildirim (")

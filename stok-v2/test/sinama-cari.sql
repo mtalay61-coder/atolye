@@ -33,14 +33,33 @@ declare
                "tutar": 300, "para_birimi": "TRY", "defter": "Genel", "fis_no": "AF-1", "aciklama": "Alış", "ek": {"miktar": 2}}]}';
   r jsonb;
   b numeric := pg_temp.bakiye('c-1');
+  -- G-25 (24 Kasım; stok-v2/guvenlik/25-G25-TASARIM.md K1): fiş dışından cari hareketi yalnız cari / muhasebe kaydetme ile. Ayşe yalnız
+  -- STOK kaydetmeli — G-25 kuruluysa reddedilmeli ve iz bırakmamalı; olumlu akış PARA yetkilisiyle (Ali, Yönetici) sınanır. G-25
+  -- kurulu değilse (bugünkü canlı) eski davranış: Ayşe yazar.
+  g25 boolean := to_regprocedure('public.g25_yetki_iste(text[], text, text)') is not null;
+  kim text := 'ayse@atolye.local';
 begin
+  if g25 then
+    begin
+      perform public.car_yaz(p);
+      raise exception 'G-25: yalnız stok yetkilisi (Ayşe) fiş dışından cari hareketi yazabildi';
+    exception when insufficient_privilege then null; end;
+    begin
+      perform public.car_yaz('{"iptal": ["ch1"]}');
+      raise exception 'G-25: yalnız stok yetkilisi (Ayşe) fiş dışından cari hareketi iptal edebildi';
+    exception when insufficient_privilege then null; end;
+    assert pg_temp.bakiye('c-1') = b and not exists (select 1 from public.car_hareket where id = 'ch10')
+       and not (select iptal from public.car_hareket where id = 'ch1'), 'G-25: ret iz bıraktı';
+    perform pg_temp.kullanici('ali@atolye.local'); kim := 'ali@atolye.local';
+    raise notice 'TAMAM: G-25 — stok yetkilisinin fiş dışı cari yazması / iptali reddedildi, iz yok';
+  end if;
   r := public.car_yaz(p);
   assert (r ->> 'satir')::int = 1 and pg_temp.bakiye('c-1') = b - 300, 'yazılmadı';
   r := public.car_yaz(p);
   assert (r ->> 'satir')::int = 0 and pg_temp.bakiye('c-1') = b - 300, 'yeniden gönderim iki kez yazdı';
   r := public.car_yaz('{"iptal": ["ch10"]}');
   assert (r ->> 'iptal')::int = 1 and pg_temp.bakiye('c-1') = b, 'iptal';
-  assert (select iptal_eden from public.car_hareket where id = 'ch10') = 'ayse@atolye.local', 'iptal eden';
+  assert (select iptal_eden from public.car_hareket where id = 'ch10') = kim, 'iptal eden';
   r := public.car_yaz(p);
   assert pg_temp.bakiye('c-1') = b - 300, 'geri yükleme';
   begin
@@ -48,12 +67,25 @@ begin
     raise exception 'carisiz satır kabul edildi';
   exception when invalid_parameter_value then null; end;
   raise notice 'TAMAM: car_yaz';
+  perform pg_temp.kullanici('ayse@atolye.local');   -- sonraki bölümler Ayşe'yle sürer (G-25 etkisi her birinde ayrıca görünsün)
 end $$;
 
 -- 3) FIS_YAZ — stok ve cari TEK İŞLEMDE: cari kısmı hatalıysa stok da yazılmaz
 do $$
 declare r jsonb;
 begin
+  -- G-25: Ayşe'nin (yalnız stok) stok + cari zarfı cari kısmında 42501 ile düşmeli ve STOK KISMI DA YAZILMAMALI (tek işlem).
+  if to_regprocedure('public.g25_yetki_iste(text[], text, text)') is not null then
+    begin
+      perform public.fis_yaz('{"stok": {"satirlar": [{"id": "fs1", "fisId": "SF-1", "urunId": "u-kosele", "renk": "Siyah", "miktar": -1, "kaynak": "Satış"}]},
+                               "cari": {"satirlar": [{"id": "fc1", "cari_id": "c-2", "tarih": "2026-10-28", "yon": "Alacak", "tutar": 99, "fis_no": "SF-1"}]}}');
+      raise exception 'G-25: yalnız stok yetkilisi fis_yaz ile cari satırı yazabildi';
+    exception when insufficient_privilege then null; end;
+    assert not exists (select 1 from public.stk_hareket where id = 'fs1') and not exists (select 1 from public.car_hareket where id = 'fc1'),
+      'G-25: cari kısmı reddedildi ama stok / cari satırı kaldı';
+    perform pg_temp.kullanici('ali@atolye.local');
+    raise notice 'TAMAM: G-25 — stok yetkilisinin stok + cari zarfı bütünüyle reddedildi';
+  end if;
   r := public.fis_yaz('{"stok": {"satirlar": [{"id": "fs1", "fisId": "SF-1", "urunId": "u-kosele", "renk": "Siyah", "miktar": -1, "kaynak": "Satış"}]},
                         "cari": {"satirlar": [{"id": "fc1", "cari_id": "c-2", "tarih": "2026-10-28", "yon": "Alacak", "tutar": 99, "fis_no": "SF-1"}]}}');
   assert (r -> 'stok' ->> 'satir')::int = 1 and (r -> 'cari' ->> 'satir')::int = 1, 'fis_yaz ' || r::text;
@@ -65,6 +97,7 @@ begin
   exception when invalid_parameter_value then null; end;
   assert not exists (select 1 from public.stk_hareket where id = 'fs2'), 'cari düştü ama stok yazıldı — tek işlem değil';
   raise notice 'TAMAM: fis_yaz tek işlem';
+  perform pg_temp.kullanici('ayse@atolye.local');
 end $$;
 
 -- 4) Yetki
