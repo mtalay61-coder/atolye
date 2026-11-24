@@ -203,4 +203,18 @@ A8 · maaş değiştirme · Uretimci · geçti
 A8 · mesai katı değiştirme · Uretimci · geçti
 A8 · bölüm adı değiştirme · Uretimci · geçti
 A8 · maaş değiştirme · Muhasip · geçti
-── 204 satır ──
+A8 · upsert: renk / bölüm adı (ücret aynı) · Uretimci · geçti
+A8 · upsert: ücret aynı · Deniz (yalnız görüntüleme) · geçti
+A8 · upsert: maaş değiştirme · Uretimci · geçti
+A8 · upsert: maaş değiştirme · Muhasip · geçti
+AÇIK RİSK · R1 tek istekte tamir ataması 5.000 ₺ + işçilik 10 × 5.000 · Uretimci · geçti → yazılan: g25-p Alacak 50000
+AÇIK RİSK · R1b tek istekte müşteri carisine tamir ataması + işçilik · Uretimci · geçti → yazılan: g25-m Alacak 50000
+AÇIK RİSK · R2a ürün proses ücreti 35 → 500 · Uretimci · geçti
+AÇIK RİSK · R2b işçilik 10 × 500 (ürün kartındaki yeni ücret) · Uretimci · geçti → yazılan: g25-p Alacak 5000
+AÇIK RİSK · R3a ürüne özel ara proses carisi → müşteri, ücreti → 900 · Uretimci · geçti
+AÇIK RİSK · R3b ara proses işçiliği müşteri carisine 10 × 900 · Uretimci · geçti → yazılan: g25-m Alacak 9000
+AÇIK RİSK · R4a Tanımlar ara proses ücreti 2 → 700 · Uretimci · geçti
+AÇIK RİSK · R4b ara proses işçiliği 10 × 700 · Uretimci · geçti → yazılan: g25-f Alacak 7000
+AÇIK RİSK · R5a üretim kaydında proses ücreti → 800 · Uretimci · geçti
+AÇIK RİSK · R5b işçilik 10 × 800 (üretim kaydındaki ücret) · Uretimci · geçti → yazılan: g25-p Alacak 8000
+── 218 satır ──

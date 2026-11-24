@@ -124,6 +124,25 @@ açılış · stok / üretim fişlerinin iptali (silme yetkisiyle) · mesai saat
 
 **Değişmeyenler:** PARA yetkili kullanıcıların (Muhasebe, Üretim + Muhasebe, Yönetici) bütün işlemleri; cari satırı olmayan fişler.
 
+**1.744.36 ETKİSİ — EKRANDAN ÖLÇÜLDÜ (24 Kasım; `t25/kos-g25-etki.sh` → `t25/sonuc-g25-etki.txt`).** Aynı kullanıcı aynı işi G-25'siz
+ve G-25'li kopyada ekrandan yaptı (JWT'li oturum, giriş ekranından). Personel g25-p: bölümde, maaş 30.000.
+
+| Kullanıcı (yetki) | Maaş şeridi "Onayla" (MAŞ) | Cari kartı "Mesaiyi yaz" (MS) | Personel maaşı değiştirme |
+|---|---|---|---|
+| Ali (Yönetici) | yapıyor → yapıyor | yapıyor → yapıyor | yapıyor → yapıyor |
+| Muhasip (cari + muhasebe) | yapıyor → yapıyor | yapıyor → yapıyor | yapıyor → yapıyor |
+| Sefci (cari görüntüleme + üretim / stok / fişler kaydetme) | yapıyor → **DURUR** | yapıyor → **DURUR** | yapıyor → **DURUR** |
+| Uretimci (Üretim rolü: üretim + stok kaydetme) | yapıyor → **DURUR** | yapıyor → **DURUR** | yapıyor → **DURUR** |
+| Deniz (cari / muhasebe yalnız görüntüleme) | yapamıyor → yapamıyor | yapamıyor → yapamıyor | yapıyor → **DURUR** |
+
+Ekranda ne oluyor (G-25'li): şerit ve "Onayla" görünmeye devam ediyor, basınca MAŞ yazılmıyor ve şerit kalıyor; "Mesaiyi yaz"
+etkin, basınca MS yazılmıyor, saat kutusu dolu kalıyor — ölçümde **ret metni yakalanmadı** (kullanıcı neden olmadığını görmeyebilir);
+maaş kutusu yeni değeri gösteriyor, "Buluta yazılamadı: tanimlar" bildirimi çıkıyor, sayfa yenilenince eski değer (30.000) geri geliyor.
+Bugün maaşı yalnız görüntüleme yetkilisi bile değiştirebiliyor (Deniz satırı: G-25 bunu da kapatır).
+Not: test kurulumunda Uretimci'nin menüsünde Cari görünüyor ve kartı açabiliyor (tohumda cari görüntülemesi yok) — 1.744.36'nın menü
+yetkisi ayrıca incelenmeli; bu ölçüm onu değiştirmez.
+Canlıda kaç kullanıcının bu satırlara düştüğünü `25-onkosul-salt-okur.sql` satır 8 SAYAR (ad / e-posta dökmeden).
+
 ## 6. Kabul ölçütleri
 
 Hepsi canlı benzeri yerel kopyada (A6'lı, Faz 0.4 envanteriyle hizalı), **JWT'li `authenticated`** ile; jetonsuz / SQL Editor
