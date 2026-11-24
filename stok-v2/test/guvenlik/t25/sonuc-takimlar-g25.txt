@@ -4,21 +4,21 @@
    işlendi: stok-v2/editor/15-duzeltme.sql (car_yaz)
    işlendi: stok-v2/fis-defteri.sql (fis_kes, fis_iptal)
    işlendi: stok-v2/editor/18-fis-defteri.sql (fis_kes, fis_iptal)
-   ✓ ağaç: /tmp/t25-takim/agac ( 5 files changed, 880 insertions(+))
+   ✓ ağaç: /tmp/t25-takim/agac ( 5 files changed, 1368 insertions(+))
 ══ 2) sunucu takımı: stok-v2/test/kos.sh (atolye_g25_kos)
    ✓ kos.sh çıkış 0 (102 adım)
 ══ 3) güvenlik takımı: kos-guvenlik.sh (atolye_g25_guvenlik)
    ✓ kos-guvenlik.sh çıkış 0
    ! 20:   ✓ 0b'nin sabitlediği site_pb KİLİT 2'de atlandı (sıra bağımsız)
    (55 ✓ satırı, 0 ✗ satırı)
-══ 4) denetim noktası çözümlemesi (58 geçiş, 14 yeniden kurulum)
+══ 4) denetim noktası çözümlemesi (74 geçiş, 14 yeniden kurulum)
    ✓ hiçbir adımda G-25 kaldırılmadı (arada yeniden kurulum olmadan Y/G → E/F/- geçişi yok)
-   ✓ son durum atolye_g25_kos: car_yaz=Y fis_iptal=Y fis_kes=Y yeni=15+1+1
-   ✓ son durum atolye_g25_guvenlik: car_yaz=Y fis_iptal=Y fis_kes=Y yeni=15+1+1
-   ✓ son durum atolye_koruma_paket: car_yaz=Y fis_iptal=Y fis_kes=Y yeni=15+1+1
-   ✓ son durum atolye_uretim_paket: car_yaz=Y fis_iptal=Y fis_kes=Y yeni=15+1+1
-   ✓ son durum atolye_uretim_bakiye: car_yaz=Y fis_iptal=Y fis_kes=Y yeni=15+1+1
-   ✓ son durum atolye_istemci_sinama: car_yaz=Y fis_iptal=Y fis_kes=Y yeni=15+1+1
+   ✓ son durum atolye_g25_kos: car_yaz=Y fis_iptal=Y fis_kes=Y yeni=21+3+1
+   ✓ son durum atolye_g25_guvenlik: car_yaz=Y fis_iptal=Y fis_kes=Y yeni=21+3+1
+   ✓ son durum atolye_koruma_paket: car_yaz=Y fis_iptal=Y fis_kes=Y yeni=21+3+1
+   ✓ son durum atolye_uretim_paket: car_yaz=Y fis_iptal=Y fis_kes=Y yeni=21+3+1
+   ✓ son durum atolye_uretim_bakiye: car_yaz=Y fis_iptal=Y fis_kes=Y yeni=21+3+1
+   ✓ son durum atolye_istemci_sinama: car_yaz=Y fis_iptal=Y fis_kes=Y yeni=21+3+1
    günlük: /tmp/t25-takim/nokta.log
 ── takımlar (G-25 işlenmiş): TEMİZ ──
 takim=0
