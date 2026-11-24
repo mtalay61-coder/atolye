@@ -194,10 +194,13 @@ const SAHTE = {
       yaz(`A · ${is} · ${kul}`, await dene(kul, "rpc/fis_kes", { p: await ISLEMLER[is]() }), beklenen(kul, is));
     }
   }
+  const KURAL_ACIK = ((await k.sorgu("select public.fis_kural_aktif() a").catch(() => [{ a: false }]))[0] || {}).a === true;
+  console.log(`── fiş kuralları: ${KURAL_ACIK ? "AÇIK" : "KAPALI"}`);
   // A7: car_yaz fiş dışından
   for (const kul of ["Ali", "Muhasip", "Ayse", "Uretimci", "Fisci"]) {
     yaz(`A7 · car_yaz satır · ${kul}`, await dene(kul, "rpc/car_yaz", { p: { satirlar: [{ ...cariSatir("g25-m", "Borç", 1), fis_no: null }] } }),
-      ["Ali", "Muhasip"].includes(kul) ? "geçti" : "ret 42501");
+      // fiş kuralları AÇIKKEN fiş dışı satır herkese kapalı (fiş defteri kuralı — G-25'ten bağımsız; deneme projesinde kurallar açık)
+      (["Ali", "Muhasip"].includes(kul) && !KURAL_ACIK) ? "geçti" : "ret 42501");
   }
   // A4: sahtecilik
   for (const [ad, f] of Object.entries(SAHTE)) {
