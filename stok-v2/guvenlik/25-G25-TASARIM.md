@@ -2,9 +2,11 @@
 
 **Durum:** TASARIM KARARLARLA GÜNCELLENDİ (23 Kasım), sınama bulgularıyla düzeltildi (24 Kasım). SQL paketi ve yerel testler ayrı
 dalda (`claude/g25-sql`). Canlıya uygulama, `main`'e birleştirme, yayın YOK. Faz 2 ve "muhasebe yetkisiyle stok yazma" gözlemi ayrı.
-**K4 TAMAMEN KAPANMADI:** STOK kapısı ve PARA fişleri kapalı; ÜRT (işçilik) kapısında ücretin ve carinin kaynağı üretim / stok /
-tanımlar yetkilisinin yazabildiği yerlerde — § 8 "AÇIK RİSK" (ölçüldü) ve dar kapatma önerisi. **Dağıtım kararı kullanıcının:**
-1.744.36'da duracak işler § 5'te; arayüz hazır olmadan SQL'i uygulamak otomatik olarak uygun SAYILMAZ (§ 4 "Dağıtım sırası").
+**K4 (24 Kasım, kullanıcı kararlarıyla genişletildi):** ÜRT işçiliği yalnız sunucuda KAYITLI ve teslim edilen atamaya ya da onaylı ara
+prosese, cari / muhasebe yetkilisinin ONAYLADIĞI ücretle bağlanır (`ucr_onay`; değer onaydan sonra değişirse onay geçersiz); müşteri
+carisine işçilik yazılmaz; her atama bir kez ödenir (`isc_odeme`). 23 Kasım'daki R1–R5 yolları yerel matriste KAPALI (§ 8). Kalan
+riskler § 8'de. **Dağıtım kararı kullanıcının:** SQL 1.744.36'da bugün çalışan işleri durdurur (§ 5) — tek başına canlıya
+önerilmez; istemci 1.745.0 ile birlikte, önce deneme projesinde (`25-DENEME-PAKETI.md`).
 
 ## 1. Bulgu (ölçülen)
 
@@ -105,9 +107,12 @@ cari kartı hareket formu, demirbaş alımı, maaş "Onayla", mesai tutarı, ipt
   bunu önceden söylemez (düğmeler açık, ret basıldıktan sonra gelir) — kim, hangi işlem, ekranda ne olur: § 5 "1.744.36 etkisi"
   (ekrandan ölçüldü). Mesai ve maaş tahakkukunda PARA'sız kullanıcının yeni yolu (saat bildirimi) 1.744.36'da YOK: o kullanıcılar
   için mesai girişi istemci sürümü gelene kadar tamamen durur.
-- Bu yüzden "önce SQL" kendiliğinden uygun sayılmaz. Seçenekler: (a) önce istemci (K6 + Üretim'de saat bildirimi + muhasebe onay
-  ekranı), sonra SQL; (b) önce SQL, § 5'teki duracak işler bilerek kabul edilerek (canlıda önkoşul satır 8 kaç kullanıcının etkilendiğini
-  SAYAR); (c) birlikte.
+- Bu yüzden "önce SQL" kendiliğinden uygun sayılmaz. **Kullanıcı kararı (24 Kasım): "1.744.36'da çalışan işlemleri sessizce durduran
+  SQL'i tek başına canlıya önerme."** → SQL yalnız istemci 1.745.0 ile BİRLİKTE (1.745.0 yeni yolları getirir: Üretim'de saat bildirimi,
+  Onaylar, ücret / tamir onayı; yetkisiz düğmeler kapalı ve gerekçeli). Önce deneme projesi: `25-DENEME-PAKETI.md`. 1.745.0 G-25'siz
+  sunucuda yeni ekranlar "fonksiyon yok" der; PARA'sız kullanıcının para düğmeleri yine kapalıdır (istemci kuralı) — o yüzden istemci
+  de tek başına yayınlanmaz. Canlıya geçişte ilk iş: cari / muhasebe yetkilisinin Onaylar › Ücretler › "bütün ürünlerin ücretleri"
+  ile toplu onayı (yoksa PARA'sız kullanıcının teslim işçiliği yazılmaz).
 - Hangisi seçilirse seçilsin: kaynak dosyalar (cari-v2, editor 4 / 15 / 18, fis-defteri.sql) G-25 işlenmiş hâliyle depoya AYNI ANDA
   girmeli (`25-uret.py --kaynaga-isle`). İşlenmemiş kaynak yeniden çalıştırılırsa fis_kes / fis_iptal sessizce G-25 öncesine döner
   (23 Kasım ölçüldü: editor/18 yeniden → önkoşul KARIŞIK). `geri-donus-*.sql` dosyaları bilerek işlenmez — onlar zaten bir geri dönüş;
@@ -179,36 +184,27 @@ yetkisiyle iptal edebilir; maaş / mesai katı yine herkesçe değiştirilebilir
 
 ## 8. Kalan riskler / ayrı kararlar
 
-- **AÇIK RİSK — ÜRT (işçilik) kapısı (K4 burada kapanmadı; 24 Kasım ölçüldü, `t25/matris.js` "AÇIK RİSK", G-25 uygulanmış kopyada,
-  Üretim rolü = üretim + stok kaydetme, PARA yok; g25-u1 adet 10, Kesim ücreti 35 → meşru üst sınır 350 ₺):**
+- **ÜRT (işçilik) kapısı — 23 Kasım AÇIK RİSKİ, 24 Kasım KAPATILDI (yerel matris `t25/matris.js` "K4" bölümü; G-25 uygulanmış kopya,
+  Üretim rolü; ÖNCE matrisinde aynı satırlar GEÇİYOR):**
 
-  | | Yol | Adım | G-25 sonrası | Yazılan |
-  |---|---|---|---|---|
-  | R1 | Aynı istekte tamir ataması (ücret 5.000) + işçilik | **tek istek** | geçti | personel cari Alacak 50.000 |
-  | R1b | R1, ama tamir ataması **müşteri** carisine | **tek istek** | geçti | **müşteri** cari Alacak 50.000 (müşteri borcu düşer) |
-  | R2 | Ürün kartında proses ücreti 35 → 500, sonra işçilik | iki istek | geçti | personel Alacak 5.000 |
-  | R3 | Ürüne özel ara proses carisi → müşteri, ücreti → 900, sonra işçilik | iki istek | geçti | **müşteri** Alacak 9.000 |
-  | R4 | Tanımlar'da ara proses ücreti 2 → 700, sonra işçilik | iki istek | geçti | fasoncu Alacak 7.000 |
-  | R5 | Üretim kaydında (numune ücreti) Kesim → 800, sonra işçilik | iki istek | geçti | personel Alacak 8.000 |
+  | | Yol | G-25 sonrası (24 Kasım) |
+  |---|---|---|
+  | R1 / R1b | aynı istekte tamir ataması 5.000 ₺ + işçilik (personele / müşteriye) | ret 42501 — istekteki atama dayanak değil |
+  | R1c | kayıtlı ama ONAYSIZ tamir ataması | ret — "tamir ücreti onay bekliyor" |
+  | R1d | kayıtlı atama müşteri carisinde | ret — müşteriye işçilik yok |
+  | R2 | ürün proses ücreti 35 → 500, sonra 500 ya da eski 35 ile | ret (onay 35'teydi; değer değişince onay geçersiz); 35'e dönünce geçer |
+  | R3 | ürüne özel ara proses carisi → müşteri, ücret 900 | ret |
+  | R4 | Tanımlar ara proses ücreti 2 → 700 | ret |
+  | R5 | üretim kaydında numune ücreti 800 | ret |
 
-  Neden: `g25_uretim_bagi` (cari, ücret) çiftinin VARLIĞINI doğrular; çiftin kaynakları (aynı istekteki atamalar dahil, `urunler`,
-  `uretim`, `uretim_atamalari`, `tanimlar`) üretim / stok / tanımlar yetkilisine yazmaya açık ve carinin TİPİNE bakılmaz. Sınır yalnız
-  miktar ≤ üretim adedi. G-25'ten ÖNCE de hepsi açıktı (ÖNCE matrisinde aynı satırlar geçiyor) — G-25 kötüleştirmedi, ama kapatmadı.
-
-  **Dar kapatma önerisi (ayrı onay; uygulanmadı):**
-  - **P1** (`g25_uretim_bagi`, tek satır): ücret kaynağı olarak AYNI İSTEKTE gelen atamalar sayılmaz, yalnız sunucuda kayıtlı atamalar.
-    R1 / R1b'nin TEK ADIMLI hâlini kapatır. Gerekçe: 1.744.36'da tamir ataması bir teslimde açılır, işçiliği SONRAKİ teslimde ödenir
-    (079 `tamirAtamasi` → 336 `atama.tamirUcret`) — meşru akış aynı isteğe dayanmıyor görünüyor; uygulamadan önce senaryolarla doğrulanmalı.
-  - **P2** (`g25_uretim_bagi`): işçilik satırının carisi `Müşteri` tipinde olamaz (Personel / Tedarikçi / Fasoncu olur; `Her İkisi` için
-    karar gerekir). R1b / R3'ün müşteri borcunu düşürme yolunu kapatır.
-  - **P3** (tetikleyiciler — `tanimlar` ücret korumasıyla aynı kalıp; değişmeyen yazma serbest): değişiklik PARA kaydetme ister —
-    `urunler.proses_ucretleri` ve `ek.prosesUcretleri` / `ek.araProsesUcretleri` / `ek.araProsesCariOverride` (+ eski `veri.prosesUcretleri`);
-    `uretim.ek.prosesUcretleri`; `uretim_atamalari` tamir ataması (`tamir_ucret` > 0 ekleme ya da `tamir_ucret` / `tamir_mi` /
-    `personel_id` değişimi); `tanimlar.araProsesler[].ucret / cariId` (`g25_ucret_ozeti`'ne eklenir). R2–R5 ve R1'in iki adımlı hâlini kapatır.
-    **İstemci etkisi:** PARA'sız kullanıcı ürün kartında proses ücreti, Tanımlar'da ara proses ücreti / carisi ve teslimde tamir ücreti
-    giremez olur (tamir ücreti 079'da üretim kullanıcısınca elle girilir) — K6 istemci adımı ya da tamir ücretine mesai gibi
-    "bildirim + onay" gerekir. Kullanıcı kararı.
-  - P1–P3 sonrası kalan: normal atamada personel seçimi ve miktar (≤ adet) üretim yetkilisinin işi; işçilik ≤ adet × KAYITLI ücret.
+  Yazmanın kendisi (ürün kartında ücret, Tanımlar'da ara proses) SERBEST kaldı — öneri gibi işler; ödeme onaysız değerle yapılmaz.
+  Meşru: onaylı ücretle teslim, kısmi teslim, ara proses, Her İkisi (cari onayıyla), tamir talebi → yetkili ücret belirler → teslim,
+  kısmi kalan tamir (kaynağın onayı; kişi / ücret aynı, miktar küçük) geçiyor. Tekrar / eşzamanlılık: aynı atamaya ikinci teslim ret;
+  aynı anda 5 teslim → 1 fiş; aynı anda iki tamir onayı → tek onay; teslim fişi iptal edilip atama yeniden açılırsa tek geçerli fiş.
+  **KALAN (P1–P3 sonrası):** normal atamada personel seçimi ve atama miktarı üretimin işi (müşteri değil, bölüm personeli değil);
+  işçilik ≤ atamanın kayıtlı miktarı ve proses başına toplam ≤ üretim adedi × ONAYLI ücret. Atama miktarını büyütüp (≤ adet) onaylı
+  ücretle fazla ödeme hâlâ mümkün değil: proses başına toplam adetle sınırlı. PARA yetkilisi bu denetimden geçmez (bugünkü gibi).
+  Canlıya geçişte ilk toplu ücret onayı yapılmadan PARA'sız kullanıcının teslim işçiliği yazılmaz (üretim durur) — dağıtım adımı.
 - **Stoklu alış / satışta fiyat:** stok yetkilisi fiyatı belirler (bu onun işi); bağlantı kuralı tutarın miktar × fiyat olduğunu ve
   gerçek bir stok hareketine bağlı olduğunu doğrular, fiyatın makullüğünü değil.
 - "Muhasebe yetkisiyle stok yazma" (`stk_yaz` listesi) — ayrı iş.

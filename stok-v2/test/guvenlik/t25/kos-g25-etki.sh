@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # G-25'İN 1.744.36'YA ETKİSİ — EKRANDAN (24 Kasım). Yalnız yerel; Supabase'e bağlanmaz. Önkoşul: test25.sh'ın kurduğu atolye_t25_taban.
+# ISTEMCI_DIZIN: ölçülen istemcinin ağacı (test/test.html derlenmiş) — 1.744.36 için main'in çalışma ağacı; verilmezse bu depo.
 # Her kullanıcı × {G-25'siz, G-25'li} için tabanın TAZE kopyası → test/ekran/ekran-g25-etki.js (A maaş şeridi, B mesai, C maaş
 # değişikliği). Beklenti YAZILMAZ: iki kopyadaki sonuç yan yana yazılır, "DURUR" = bugün yapabildiği işi G-25'le yapamıyor.
 # Kullanıcılar (t25/tohum.sql + bu dosyanın eklediği Sefci):
@@ -25,7 +26,7 @@ for kip in once sonra; do for u in Ali Muhasip Sefci Uretimci Deniz; do
   psql -X -q -d postgres -c "drop database if exists $db" -c "create database $db template atolye_t25_taban" || exit 2
   psql -X -q -d "$db" -c "update public.tanimlar set veri = jsonb_set(veri, '{kullanicilar}', (veri -> 'kullanicilar') || '[$SEFCI]'::jsonb) where id = 'tekil'" || exit 2
   if [ $kip = sonra ]; then ed "$db" $G/25-cari-yetki-uygula.sql > /dev/null || { echo "uygulama düştü ($db)"; exit 2; }; fi
-  EKRAN_DB=$db EKRAN_KULLANICI=$u ISTEMCI_DIZIN="$KOK" timeout 240 node test/ekran/ekran-g25-etki.js > "$CIK/$kip-$u.json" 2> "$CIK/$kip-$u.err"
+  EKRAN_DB=$db EKRAN_KULLANICI=$u ISTEMCI_DIZIN="${ISTEMCI_DIZIN:-$KOK}" timeout 240 node test/ekran/ekran-g25-etki.js > "$CIK/$kip-$u.json" 2> "$CIK/$kip-$u.err"
   echo "$kip $u: $(cut -c1-400 "$CIK/$kip-$u.json")"
 done; done
 node - "$CIK" <<'JS'

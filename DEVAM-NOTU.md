@@ -58,6 +58,35 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
    değiştirebilir; stoklu alış / satışta fiyatın makullüğü denetlenmez (GÖZLEM satırı). Regresyonda koşulmayanlar: stok-v2/test/kos.sh
    sinama-*.sql ve kos-guvenlik davranış bataryası G-25 UYGULANMIŞ veritabanında koşulmadı (kendi tabanlarını kurarlar); istemci
    değişmediği için test/kosu.sh gerekmedi.
+   **24 KASIM GÜNCELLEMESİ (dal `claude/g25-sql`; canlı / main / yayın / surum.json YOK; Faz 2 ayrı).** (a) PAKET Supabase SQL Editor
+   biçiminde: tek `do` bloğu, gövdeler tek tırnaklı, `$$` dışında `$` yok; test25 dosyaları Editor gibi (ifade ifade, ayrı oturum)
+   uygular; atomiklik son adım bilerek düşürülerek sınanır (ilk Editor biçimli koşu `end ';;` hatasını yakaladı). (b) Sunucu + güvenlik
+   takımları G-25 KAYNAKLARA İŞLENMİŞ hâlde (`t25/kos-takimlar-g25.sh`: `25-uret.py --kaynaga-isle` + her psql çağrısında denetim
+   noktası `t25/nokta/psql`): yeniden kurulumlar G-25'i kaldırmıyor. Bulunan ve düzeltilenler: kaynağa işlerken `fis_kapi_acik()`
+   eklemek kasa hesap kilidini erken açıyordu (varlığı "fiş defteri kurulu" işareti) → car_yaz kapıyı doğrudan okur; regresyon
+   betikleri şablon olarak sabit atolye_guvenlik'i kopyalıyordu → GUVENLIK_DB; f0 koşucusu PGPORT'suz 55432'ye bağlanıyordu;
+   ücret tetikleyicisi UPSERT'te (insert … on conflict) eski hâli {} sayıp PARA'sız kullanıcının BÜTÜN tanım kayıtlarını reddediyordu
+   (ekran ölçümü yakaladı) → mevcut satırdan okur; tetikleyici kaynağa "yoksa kur" ile işlenir (drop + create arası korumasız an yok).
+   sinama-cari iki kipli (G-25 varken Ayşe'nin fiş dışı car_yaz / fis_yaz cari kısmı 42501, iz yok). (c) K4 — KULLANICI KARARLARI
+   (24 Kasım): aynı istekteki atama / ücret yetki dayanağı değil; kayıtlı olması da yetmez, ücret yetkilinin belirlediği / onayladığı
+   olmalı; işçilik carisi sunucuda doğrulanır (müşteriye asla, Her İkisi ayrıca); P3 için bildirim–onay; onaydan sonra miktar / ücret
+   değişirse eski onay geçmez. YAPILAN: `ucr_onay` (anahtarlar proses|ürün|proses, numune|üretim|proses, ara|ürün|ara proses,
+   tamir|atama, cari|cari; onay özeti şu anki değerle birebir olmalı), `isc_odeme` (her atama / ara proses adımı bir kez; kilitli; fiş
+   iptal edilirse yeniden açılır), `g25_uretim_bagi` yeniden (yalnız sunucuda kayıtlı, teslim edilen atama / onaylı ara proses; bölüm
+   personeline ve müşteriye işçilik yok), `ucret_onaylari` / `ucret_onayla` (cari / muhasebe; tamirde ücreti belirler; ekranda görülen
+   özet güncel değilse KR015). Matris (`t25/matris.js`): ÖNCE'de R1–R5 hepsi geçiyor, SONRA'da hepsi ret; meşru teslim / kısmi / ara
+   proses / Her İkisi (onaylı) / tamir talep-onay / kısmi kalan tamir geçiyor; aynı atamaya ikinci teslim ret, EŞZAMANLI 5 teslim → 1
+   fiş, eşzamanlı iki tamir onayı tek onay, iptal sonrası yeniden teslim tek geçerli fiş. (d) İSTEMCİ 1.745.0 (YAYINLANMADI; dalda
+   `atolye-erp-v1.745.0.html`): yeni `src/278-g25-onay.jsx` (yetki aynası, Üretim › Mesai bildirimi ve Ücret onayları, Onaylar
+   penceresi + şerit), para fişi kapısında ön denetim + kalıcı ret satırı, maaş şeridi yalnız PARA'ya, personel paneli / Tanımlar
+   maaş-mesai alanları kapalı, cari virmanı / sipariş ödemesi / ödeme satırı / cari kartı hareketi / demirbaş Kaydet kapalı, teslimde
+   tamir ücreti öneri; 030: sunucunun 42501 iletisi olduğu gibi (1.744.36 G-25 reddini "giriş yapılmamış" diye gösterecekti).
+   `test/ekran/ekran-g25-akis.js` 31 / 31. test/kosu.sh: yalnız site-yonetim-yetki FARKLI (onay şeridinin iki RPC çağrısı — bilinçli,
+   altın güncellendi). DİKKAT — TEST FİKSTÜRÜ HATASI: t25 tohum kullanıcılarında `id` yoktu; istemcinin yetki tazelemesi `id` ile
+   eşlediği için ekran testlerinde ARAYÜZ her kullanıcıda Yönetici gibi davranıyordu (sunucu JWT'si doğruydu). 23 Kasım 1.744.36 etki
+   ölçümünün ARAYÜZ gözlemleri (ör. "Uretimci Cari menüsünü görüyor") geçersiz; düzeltilmiş tohumla yeniden ölçüldü (tasarım § 5).
+   Deneme paketi: `stok-v2/guvenlik/25-DENEME-PAKETI.md` (deneme projesi; SQL + 1.745.0 birlikte; 1.744.36'da işleri durduran SQL
+   tek başına canlıya önerilmez).
 
 
 **Codex F3 satış sınırı (2 Kasım 2026):** codex/f3-satis-fazla-teslim, F8 2ddb6a1 üzerine. SQL-only, istemci sürümü değişmedi; canlı/main/deploy/surum.json yok. fis_kes ilk yazmadan önce, mevcut sipariş/kalem kilitleri altındayken fis_satis_teslim_koru çağırır. Alış dışındaki kalem bağlı çıkışların ana+bağlı fiş toplamı, DB miktarı ve büyük olan ham geçerli hareket toplamı/saklı karşılananla denetlenir; KR007 reddi. Miktar aynı yükte büyütülerek, pozitif satırla dengeleyerek veya sahte rol/onayla aşılamaz. İstisna: doğrulanmış yönetici + gerçek boolean onay + dolu gerekçe; gerçek kimlik/zaman/kalem değerleri ana fiş ek.fazlaTeslimOnayi alanına sunucudan yazılır, fazla işareti sunucudan verilir. Bu audit alanı kurallar kapalıyken bile değiştirilemez/silinemez; normal fiş notu serbest. Yeni helper doğrudan RPC'ye kapalı. 20 senaryo, 100 doğal yarış geçti; F0 54 yeşil/6 bilinen kırmızı, F2 70/3 beklenen; yeni temiz kurulum + R1/R1b geçti. Tarihsel fazla hesap testlerinin fixture'ları açık yönetici onaylı kurulur; eski onaysız fazla yük artık reddedilir. Alış davranışı değiştirilmedi, onay UI'si eklenmedi, eski stok yazma kapıları F8 kapsamında açık. Ayrıntı: stok-v2/CODEX-F3-SATIS-SINIRI.md.
