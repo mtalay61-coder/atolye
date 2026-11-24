@@ -39,7 +39,7 @@ for (const u of ["Ali", "Muhasip", "Sefci", "Uretimci", "Deniz"]) {
   console.log(`\n${u}${a.olumcul || b.olumcul ? `  ölümcül: ${a.olumcul || ""} ${b.olumcul || ""}` : ""}`);
   console.log(`  A maaş şeridi: görünür ${a.A_serit_gorunur}/${b.A_serit_gorunur} · MAŞ yazıldı ${a.A_mas_yazildi}/${b.A_mas_yazildi} → ${durum(a.A_mas_yazildi > 0, b.A_mas_yazildi > 0)}`);
   console.log(`      G-25'li ekran: şerit sonra ${b.A_serit_sonra} · bildirim "${kisa(b.A_bildirim)}"`);
-  console.log(`  B mesai: kart ${a.B_kart_bulundu}/${b.B_kart_bulundu} · panel ${a.B_panel}/${b.B_panel} · MS yazıldı ${a.B_ms_yazildi}/${b.B_ms_yazildi} → ${durum(a.B_ms_yazildi > 0, b.B_ms_yazildi > 0)}`);
+  console.log(`  B mesai: menüde Cari ${a.B_menude_cari}/${b.B_menude_cari} · kart ${a.B_kart_bulundu}/${b.B_kart_bulundu} · panel ${a.B_panel}/${b.B_panel} · MS yazıldı ${a.B_ms_yazildi}/${b.B_ms_yazildi} → ${durum(a.B_ms_yazildi > 0, b.B_ms_yazildi > 0)}`);
   console.log(`      G-25'li ekran: saat kutusu "${b.B_saat_kutusu_sonra}" · bildirim "${kisa(b.B_bildirim)}"`);
   console.log(`  C maaş değişikliği: sunucu ${a.C_sunucu_once}→${a.C_sunucu_sonra} / ${b.C_sunucu_once}→${b.C_sunucu_sonra} → ${durum(a.C_sunucu_sonra === 31000, b.C_sunucu_sonra === 31000)}`);
   console.log(`      G-25'li ekran: kutu "${b.C_ekran_sonra}" · bildirim "${kisa(b.C_bildirim)}" · inceleme "${kisa(b.C_inceleme_seridi)}" · yenileme sonrası ekran "${b.C_yenileme_sonrasi_ekran}" sunucu ${b.C_yenileme_sonrasi_sunucu}`);

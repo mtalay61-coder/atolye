@@ -20,7 +20,10 @@ if (!DB) { console.error("EKRAN_DB gerekli"); process.exit(2); }
   const fisSay = async (onek) => (await k.sorgu(`select count(*)::int as n from public.stk_fis where cari_id = 'g25-p' and onek = $1 and not iptal`, [onek]))[0].n;
   const maasSunucu = async () => (await k.sorgu(`select (p ->> 'maas')::numeric as m from public.tanimlar t, jsonb_array_elements(t.veri -> 'bolumler') b,
       jsonb_array_elements(b -> 'personel') p where t.id = 'tekil' and b ->> 'id' = 'bk-g25' and p ->> 'cariId' = 'g25-p'`))[0].m;
-  const bildirim = async () => { const t = await toastlar(sayfa); return t ? t.slice(0, 220) : ""; };
+  // Bildirim: önce [data-toast]; yoksa sayfanın görünür metninde ret / hata cümlesi (uygulama reddi şeritte ya da pencerede de gösterebilir)
+  const bildirim = async () => { const t = await toastlar(sayfa); if (t) return t.slice(0, 220);
+    return sayfa.evaluate(() => (document.body.innerText.match(/[^\n]*(yetki|kaydedilemedi|reddetti|gönderilemedi|yazılamadı)[^\n]*/gi) || [])
+      .filter((x) => x.length < 300).slice(0, 3).join(" | ")).catch(() => ""); };
   const temizleBildirim = () => sayfa.evaluate(() => document.querySelectorAll("[data-toast]").forEach((x) => x.remove())).catch(() => {});
   sonuc.giris = await sayfa.evaluate(() => !document.querySelector('input[type="password"]'));
 
@@ -29,9 +32,9 @@ if (!DB) { console.error("EKRAN_DB gerekli"); process.exit(2); }
     const serit = sayfa.locator("[data-maas-bekliyor]");
     sonuc.A_serit_gorunur = (await serit.count()) > 0;
     if (sonuc.A_serit_gorunur) {
-      const once = await fisSay("MAS"); await temizleBildirim();
+      const once = await fisSay("MAŞ"); await temizleBildirim();
       await sayfa.locator("[data-maas-onayla]").first().click(); await sayfa.waitForTimeout(3500);
-      sonuc.A_mas_yazildi = (await fisSay("MAS")) - once;
+      sonuc.A_mas_yazildi = (await fisSay("MAŞ")) - once;
       sonuc.A_serit_sonra = (await serit.count()) > 0;
       sonuc.A_bildirim = await bildirim();
     }
@@ -39,6 +42,7 @@ if (!DB) { console.error("EKRAN_DB gerekli"); process.exit(2); }
 
   // B. MESAİ
   try {
+    sonuc.B_menude_cari = await sayfa.evaluate(() => !!document.querySelector('[data-nav="Cari"]'));
     await O.modulAc(sayfa, "Cari"); await sayfa.waitForTimeout(700);
     const kart = sayfa.locator('button:has-text("G25 Personel"):visible');
     sonuc.B_kart_bulundu = (await kart.count()) > 0;

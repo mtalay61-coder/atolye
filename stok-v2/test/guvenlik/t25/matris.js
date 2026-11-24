@@ -261,6 +261,18 @@ const SAHTE = {
   yaz("A8 · mesai katı değiştirme · Uretimci", await tanimYaz("Uretimci", (v) => { v.mesaiAyar = { haftaIci: 3 }; }), "ret 42501");
   yaz("A8 · bölüm adı değiştirme · Uretimci", await tanimYaz("Uretimci", (v) => { bolum(v).ad = "G25 Kesimhane " + sira; }), "geçti");
   yaz("A8 · maaş değiştirme · Muhasip", await tanimYaz("Muhasip", (v) => { bolum(v).personel[0].maas = 31000 + sira; }), "geçti");
+  // UPSERT BİÇİMİ (24 Kasım): uygulama tanımları PATCH ile değil "insert … on conflict do update" ile yazar (önce BEFORE INSERT
+  // tetiklenir). İlk sürüm tetikleyici bunu her kayıtta ret sayıyordu — ekran ölçümü yakaladı; bu satırlar o biçimi sınar.
+  const tanimUpsert = async (kul, degistir) => {
+    const v = await tanim(); degistir(v); const once = JSON.stringify(await tanim());
+    const r = await istek(kul, "tanimlar?on_conflict=id", [{ id: "tekil", veri: v }], "POST", { prefer: "resolution=merge-duplicates,return=minimal" });
+    if (!r.ok) r.atomik = JSON.stringify(await tanim()) === once;
+    return r;
+  };
+  yaz("A8 · upsert: renk / bölüm adı (ücret aynı) · Uretimci", await tanimUpsert("Uretimci", (v) => { bolum(v).ad = "G25 Kesimhane u" + sira; }), "geçti");
+  yaz("A8 · upsert: ücret aynı · Deniz (yalnız görüntüleme)", await tanimUpsert("Deniz", (v) => { bolum(v).ad = "G25 Kesimhane d" + sira; }), "geçti");
+  yaz("A8 · upsert: maaş değiştirme · Uretimci", await tanimUpsert("Uretimci", (v) => { bolum(v).personel[0].maas = 77777; }), "ret 42501");
+  yaz("A8 · upsert: maaş değiştirme · Muhasip", await tanimUpsert("Muhasip", (v) => { bolum(v).personel[0].maas = 32000 + sira; }), "geçti");
 
   // AÇIK RİSK — G-25 KAPATMAZ (24 Kasım; kullanıcı: "Proses ücretini değiştirerek işçilik tutarını yükseltme yolunu açık risk olarak koru;
   // 'K4 tamamen kapandı' deme"). ÜRETİM bağlantısı (g25_uretim_bagi) işçilik ücretini doğrular ama ücretin KAYNAKLARI üretim / stok /

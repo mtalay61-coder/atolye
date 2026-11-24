@@ -453,9 +453,19 @@ begin
   ';
   create or replace function public.g25_tanimlar_ucret_koruma() returns trigger
   language plpgsql security definer set search_path = public as '
+  declare
+    onceki jsonb;
   begin
     if auth.jwt() is null or coalesce(new.id, '''') <> ''tekil'' then return new; end if;
-    if public.g25_ucret_ozeti(case when tg_op = ''INSERT'' then ''{}''::jsonb else old.veri end) is not distinct from public.g25_ucret_ozeti(new.veri) then
+    -- UPSERT (24 Kasım): istemci tanımları "insert … on conflict do update" ile yazar; önce BEFORE INSERT çalışır. INSERT''te eski hâl
+    -- satır zaten VARSA odur ({} değil) — yoksa PARA''sız kullanıcının maaşa dokunmayan her tanım kaydı reddedilirdi (ekran ölçümü yakaladı).
+    if tg_op = ''INSERT'' then
+      select t.veri into onceki from public.tanimlar t where t.id = new.id;
+      onceki := coalesce(onceki, ''{}''::jsonb);
+    else
+      onceki := old.veri;
+    end if;
+    if public.g25_ucret_ozeti(onceki) is not distinct from public.g25_ucret_ozeti(new.veri) then
       return new;
     end if;
     perform public.g25_yetki_iste(array[''cari'', ''muhasebe''], ''kaydetme'', ''maaş, aylık çalışma saati ya da mesai katı değişikliği'');
