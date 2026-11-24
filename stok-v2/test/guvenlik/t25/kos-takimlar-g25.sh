@@ -13,6 +13,8 @@
 # Çıkış 0: iki takım temiz VE kayıp yok VE son durumlar tam G-25.
 set -uo pipefail
 case "${PGHOST:-}" in localhost|127.0.0.1) ;; *) echo "PGHOST=localhost gerekli"; exit 2;; esac
+# f0/kos.sh PGPORT verilmezse 55432'ye bağlanır ("kurallar açık değil / veritabanı yok" der) — 24 Kasım ilk koşuda böyle düştü.
+export PGPORT=${PGPORT:-5432} PGUSER=${PGUSER:-postgres}
 cd "$(dirname "$0")/../../../.."
 KOK=$(pwd); T=$KOK/stok-v2/test/guvenlik/t25
 CIK=${T25_TAKIM_CIKTI:-/tmp/t25-takim}; rm -rf "$CIK"; mkdir -p "$CIK"

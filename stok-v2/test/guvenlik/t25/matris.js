@@ -262,6 +262,49 @@ const SAHTE = {
   yaz("A8 · bölüm adı değiştirme · Uretimci", await tanimYaz("Uretimci", (v) => { bolum(v).ad = "G25 Kesimhane " + sira; }), "geçti");
   yaz("A8 · maaş değiştirme · Muhasip", await tanimYaz("Muhasip", (v) => { bolum(v).personel[0].maas = 31000 + sira; }), "geçti");
 
+  // AÇIK RİSK — G-25 KAPATMAZ (24 Kasım; kullanıcı: "Proses ücretini değiştirerek işçilik tutarını yükseltme yolunu açık risk olarak koru;
+  // 'K4 tamamen kapandı' deme"). ÜRETİM bağlantısı (g25_uretim_bagi) işçilik ücretini doğrular ama ücretin KAYNAKLARI üretim / stok /
+  // tanımlar yetkilisinin yazabildiği yerlerdedir. Beklenti YAZILMAZ (davranış ölçülür); geçen her satırda yazılan tutar gösterilir.
+  // Uretimci = Üretim rolü (üretim + stok kaydetme, PARA yok). g25-u1: adet 10, Kesim ücreti 35 → meşru üst sınır 10 × 35 = 350 ₺.
+  {
+    const yazilan = async (r) => { if (!r.ok || !r.govde) return "";
+      const t = (await k.sorgu("select string_agg(cari_id || ' ' || yon || ' ' || tutar::text, ', ') t from public.car_hareket where fis_no = $1", [r.govde.fisNo]))[0].t;
+      return ` → yazılan: ${t}`; };
+    const atama = (alan) => ({ id: yeniId("a"), uretim_id: "g25-u1", proses: "Kesim", personel_id: "g25-p", beden_miktarlari: { 40: 10 }, miktar: 10,
+      verildi_mi: true, tamamlandi_mi: false, tamir_mi: true, tamir_ucret: 5000, ek: {}, ...alan });
+    const risk = async (ad, r) => { const y = await yazilan(r); satirlar.push(`AÇIK RİSK · ${ad} · ${r.ok ? "geçti" : `ret ${r.kod}`}${y}`);
+      console.log(`AÇIK RİSK · ${ad} · ${r.ok ? "geçti" : `ret ${r.kod}`}${y}${!r.ok && r.mesaj ? `  [${r.mesaj}]` : ""}`); };
+    // R1: aynı istekte tamir ataması (keyfi ücret) + işçilik — tek adım
+    { const p = urt("g25-p", 10, 5000); p.alt = { uretim_atamalari: { satirlar: [atama()] } };
+      await risk("R1 tek istekte tamir ataması 5.000 ₺ + işçilik 10 × 5.000 · Uretimci", await istek("Uretimci", "rpc/fis_kes", { p })); }
+    // R1b: aynı, ama tamir ataması MÜŞTERİ carisine (personel olmayan cariye işçilik alacağı)
+    { const p = urt("g25-m", 10, 5000); p.alt = { uretim_atamalari: { satirlar: [atama({ personel_id: "g25-m" })] } };
+      await risk("R1b tek istekte müşteri carisine tamir ataması + işçilik · Uretimci", await istek("Uretimci", "rpc/fis_kes", { p })); }
+    // R2: ürün kartında proses ücreti 35 → 500 (urunler yazması), sonra işçilik 10 × 500
+    { const u = await istek("Uretimci", "urunler?id=eq.ekr-bot", { proses_ucretleri: { Kesim: 500 } }, "PATCH", { prefer: "return=minimal" });
+      await risk("R2a ürün proses ücreti 35 → 500 · Uretimci", u);
+      await risk("R2b işçilik 10 × 500 (ürün kartındaki yeni ücret) · Uretimci", await istek("Uretimci", "rpc/fis_kes", { p: urt("g25-p", 10, 500) }));
+      await k.sorgu(`update public.urunler set proses_ucretleri = '{"Kesim": 35}'::jsonb where id = 'ekr-bot'`); }
+    // R3: ürüne özel ara proses carisi + ücreti (urunler.ek) → müşteri carisine 10 × 900
+    { const ek = ((await k.sorgu("select ek from public.urunler where id = 'ekr-bot'"))[0] || {}).ek || {};
+      const u = await istek("Uretimci", "urunler?id=eq.ekr-bot", { ek: { ...ek, araProsesCariOverride: { "ap-g25": "g25-m" }, araProsesUcretleri: { "ap-g25": 900 } } }, "PATCH", { prefer: "return=minimal" });
+      await risk("R3a ürüne özel ara proses carisi → müşteri, ücreti → 900 · Uretimci", u);
+      await risk("R3b ara proses işçiliği müşteri carisine 10 × 900 · Uretimci", await istek("Uretimci", "rpc/fis_kes", { p: urt("g25-m", 10, 900) }));
+      await k.sorgu("update public.urunler set ek = $1 where id = 'ekr-bot'", [ek]); }
+    // R4: Tanımlar'da ara proses ücreti 2 → 700 (tanimlar yazması), sonra fasoncuya 10 × 700
+    { const r = await tanimYaz("Uretimci", (v) => { v.araProsesler.find((a) => a.id === "ap-g25").ucret = 700; });
+      await risk("R4a Tanımlar ara proses ücreti 2 → 700 · Uretimci", r);
+      await risk("R4b ara proses işçiliği 10 × 700 · Uretimci", await istek("Uretimci", "rpc/fis_kes", { p: urt("g25-f", 10, 700) }));
+      await k.sorgu(`update public.tanimlar set veri = jsonb_set(veri, '{araProsesler}', (select jsonb_agg(case when a ->> 'id' = 'ap-g25' then jsonb_set(a, '{ucret}', '2') else a end)
+        from jsonb_array_elements(veri -> 'araProsesler') a)) where id = 'tekil'`); }
+    // R5: üretim kaydında (numune ücreti) Kesim → 800 (uretim yazması), sonra 10 × 800
+    { const ek = ((await k.sorgu("select ek from public.uretim where id = 'g25-u1'"))[0] || {}).ek || {};
+      const u = await istek("Uretimci", "uretim?id=eq.g25-u1", { ek: { ...ek, prosesUcretleri: { Kesim: 800 } } }, "PATCH", { prefer: "return=minimal" });
+      await risk("R5a üretim kaydında proses ücreti → 800 · Uretimci", u);
+      await risk("R5b işçilik 10 × 800 (üretim kaydındaki ücret) · Uretimci", await istek("Uretimci", "rpc/fis_kes", { p: urt("g25-p", 10, 800) }));
+      await k.sorgu("update public.uretim set ek = $1 where id = 'g25-u1'", [ek]); }
+  }
+
   console.log(`── ${satirlar.length} satır${BEKLENEN ? ` · ${kirmizi ? kirmizi + " ✗" : "hepsi beklenen"}` : ""} ──`);
   await k.kapat();
   process.exit(BEKLENEN && kirmizi ? 1 : 0);

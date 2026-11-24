@@ -388,7 +388,12 @@ YARDIMCI = """-- G-25 (kaynağa işlendi): car_yaz'ın fiş dışı denetimi bu 
 def idempotent(x):
     x = x.replace("create table public.mes_bildirim (", "create table if not exists public.mes_bildirim (")
     x = x.replace("create unique index mes_bildirim_acik", "create unique index if not exists mes_bildirim_acik")
-    x = x.replace("create trigger g25_tanimlar_ucret_koruma", "drop trigger if exists g25_tanimlar_ucret_koruma on public.tanimlar;\ncreate trigger g25_tanimlar_ucret_koruma")
+    # Tetikleyici "yoksa kur": drop + create Editor'da AYRI ifadelerdir — arada (ya da create düşerse) maaş koruması kalkmış olurdu
+    # (24 Kasım, denetim noktası günlüğünde görüldü). create or replace trigger PG14 ister; canlının sürümüne güvenilmez.
+    if x.lstrip().startswith("create trigger g25_tanimlar_ucret_koruma") or "\ncreate trigger g25_tanimlar_ucret_koruma" in x:
+        i = x.index("create trigger g25_tanimlar_ucret_koruma")
+        x = (x[:i] + "do $$ begin\n  if not exists (select 1 from pg_trigger where tgname = 'g25_tanimlar_ucret_koruma' and tgrelid = 'public.tanimlar'::regclass) then\n    "
+             + x[i:].strip() + ";\n  end if;\nend $$")
     return x
 YENI_KURULUM = "\n-- ===== G-25 (kaynağa işlendi: stok-v2/guvenlik/25-kaynak/yeni.sql) =====\n" + "\n".join(idempotent(x) + ";" for x in ifadeler) + "\n"
 KAYNAKLAR = {"stok-v2/cari-v2.sql": ["car_yaz"], "stok-v2/editor/4-cari-kurulum.sql": ["car_yaz"], "stok-v2/editor/15-duzeltme.sql": ["car_yaz"],
