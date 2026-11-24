@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.744.35</title>
+<title>Atölye ERP 1.745.1</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2319,9 +2319,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.744.35";
-const SURUM_TARIHI = "2026-11-23";
-const SURUM_NOTU = "Cari virmanı Ödeme & Tahsilat'ta; kasa / banka formdaki + ile açılır";
+const SURUM = "1.745.1";
+const SURUM_TARIHI = "2026-11-25";
+const SURUM_NOTU = "Mesai saati Üretim'den bildirilir, tutarı cari / muhasebe onaylar; işçilik her iş için kişi, toplam miktar ve ücretle onaylanır; para işlemleri cari / muhasebe yetkisi ister (sunucu G-25 paketiyle birlikte)";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2351,6 +2351,9 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 }
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" }; // teklif: v1.723.0, Sipariş'in alt sekmesi
 const SURUM_GECMISI = [
+    { surum: "1.745.1", tarih: "25.11.2026", eklenen: ["Onaylar › Ücretler: \"Onaysızların tümünü seç\"; her satırda ödenen miktar."], degisen: ["İşçilik onayı İŞ düzeyinde: her iş (verilen iş + kısmi teslimden kalan parçaları) kişi, toplam miktar ve ücretle birlikte onaylanır; biri sonradan değişirse yeniden onay gerekir. Kısmi teslimler onaylanan toplam içinde ödenir. Ürün bazlı proses ücreti onayı ve \"bütün ürünlerin ücretleri\" seçeneği kalktı (ara proses onayı ürün başına sürüyor)."], duzeltilen: [] },
+    { surum: "1.745.0", tarih: "24.11.2026", eklenen: ["Üretim › Mesai bildirimi: bölüm personelinin aylık mesai SAATİ girilir (tutar gösterilmez); cari / muhasebe yetkilisi Onaylar › Mesai'den onaylar, tek MS fişi kesilir. Cari kartında yetkisi olmayan kullanıcı \"Mesaiyi onaya gönder\" görür.", "Onaylar penceresi (cari / muhasebe yetkilisine şerit): mesai bildirimleri ve işçilik ücretleri — ürünün proses ücreti, ara proses carisi / ücreti, numune ücreti, tamir ücreti (yetkili belirleyebilir) ve hem müşteri hem tedarikçi kartın işçilik alıcısı olması. Değer onaydan sonra değişirse yeniden onay gerekir.", "Üretim › Ücret onayları: onay bekleyen ücretler (teslimde işçilik neden yazılmadı sorusunun cevabı)."], degisen: ["Tahsilat, ödeme, cari virmanı, sipariş ödemesi, cari kartı hareketi, demirbaş alımı, maaş tahakkuku onayı, personel maaşı / aylık saati, mesai katları ve bölüm personel listesi cari ya da muhasebe kaydetme yetkisi ister; yetkisi olmayanda düğmeler kapalı ve gerekçeli.", "Teslimde tamir ücreti, yetkisi olmayan kullanıcı için öneridir; onaylanınca ödenir."], duzeltilen: ["Sunucunun yetki / bağlantı reddi \"giriş yapılmamış\" diye yanlış çevriliyordu; artık sunucunun iletisi olduğu gibi gösterilir. Maaş ve mesai reddi düğmenin yanında kalıcı yazılır."] },
+    { surum: "1.744.36", tarih: "23.11.2026", eklenen: ["Kasa & Banka › hesap › \"Hesaplar arası aktarım\": kasadan bankaya, bankadan kasaya, hesaptan hesaba para aktarımı yeniden arayüzde (cari virmanından ayrı işlem; kur çevirici ve aktarım sebebi aynen)."], degisen: ["Ödeme & Tahsilat'taki virman \"Cari virmanı (cariden cariye)\" adını aldı. Para birimi ilk carinin para birimidir; karşı cari başka para birimindeyse virman yapılmaz (kur dönüşümü yok). Aynı cari ve sıfır / eksi / boş tutar reddedilir."], duzeltilen: [] },
     { surum: "1.744.35", tarih: "23.11.2026", eklenen: ["Ödeme & Tahsilat › ödeme şekli \"Virman (cariden cariye)\": ilk cari ve karşı cari seçilir. Ödemede ilk cariye ödeme, karşı cariden tahsilat; tahsilatta ilk cariden tahsilat, karşı cariye ödeme. İki satır tek fişte (CVR-…), kasa / banka hareketi yok; geri alınca ikisi birden kalkar.", "Ödeme & Tahsilat › Kasa / Banka satırının yanında + düğmesi: yeni kasa ya da banka hesabı oradan açılır ve hemen seçilir."], degisen: ["Kasa & Banka ekranında Virman ve \"Yeni Kasa / Yeni Banka Hesabı\" düğmeleri kalktı (hesap düzenleme, arşivleme ve silme yerinde)."], duzeltilen: [] },
     { surum: "1.744.34", tarih: "20.11.2026", eklenen: [], degisen: [], duzeltilen: ["Ürün kartı › Reçete: \"Hammaddesiz proses ekle\" satırı yalnız reçetede hammadde satırı varken görünüyordu; reçetesi boş yeni üründe de görünür, ilk adım (ör. yalnız işçilikli Dikim) doğrudan eklenir."] },
     { surum: "1.744.33", tarih: "20.11.2026", eklenen: ["Sipariş başlığında \"Para Tipi\": cari seçilince carinin para birimi gelir; bu sipariş için değiştirilebilir (ör. USD müşteriye TL sipariş). Yeni kalemler bu para tipiyle eklenir; farklı para birimindeki kalem sayısı altında yazar. Düzenlemede kayıtlı para tipi korunur."], degisen: [], duzeltilen: [] },
@@ -5853,6 +5856,21 @@ async function supabaseIstek(yol, secenekler = {}, tekrarMi = false, islemDeneme
         const kuralMesaji = (metin.match(/"message"\s*:\s*"((?:Bu işlem için yetkiniz yok|[^"]*yalnız Yönetici)[^"]*)"/) || [])[1];
         if (kuralMesaji)
             throw new Error(kuralMesaji);
+        // G-25 (v1.745.0): sunucunun Türkçe yetki / bağlantı reddi (42501, ör. "Cari hareketi gerçek bir üretim işlemine bağlı değil (…)
+        // — bu kayıt için cari veya muhasebe kaydetme yetkisi gerekir") da OLDUĞU GİBİ gösterilir. 1.744.36 yalnız "Bu işlem için yetkiniz
+        // yok" ile başlayanı tanıyordu; ötekiler aşağıdaki "giriş yapılmamış" metnine düşüyor, kullanıcıyı yanlış yönlendiriyordu.
+        // Postgres'in kendi "permission denied for …" iletisi (gerçekten girişsiz) bu kapsamda değil.
+        const yetkiMesaji = /"code"\s*:\s*"42501"/.test(metin) ? (metin.match(/"message"\s*:\s*"((?:[^"\\]|\\.)*)"/) || [])[1] : null;
+        if (yetkiMesaji && !/^permission denied/i.test(yetkiMesaji)) {
+            let m = yetkiMesaji;
+            try {
+                m = JSON.parse(`"${yetkiMesaji}"`);
+            }
+            catch (x) { /* ham metin */ }
+            const e = new Error(m);
+            e.yetkiReddi = true;
+            throw e;
+        }
         if (/42501|permission denied/i.test(metin)) {
             const tablo = (metin.match(/for table (\w+)/) || [])[1] || "";
             throw new Error(`Buluta yazma yetkisi yok${tablo ? ` (${tablo})` : ""} — kimlik koruması açık ama giriş yapılmamış. `
@@ -17153,7 +17171,7 @@ function useUretimTeslim(d) {
             r = await fisKesGonder(yuk);
         }
         catch (e) {
-            showToast(`Teslim kaydedilemedi — hiçbir değişiklik yapılmadı (${String((e && e.message) || e).slice(0, 160)})`);
+            showToast(`Teslim kaydedilemedi — hiçbir değişiklik yapılmadı (${sunucuHataMetni(e).slice(0, 240)})`);
             gunlukYaz(`Üretim teslimi kaydedilemedi (${siparis.siparisNo}): ${String((e && e.message) || e).slice(0, 200)}`, "uretim", { uretimId: siparis.id, atamaId });
             return false;
         }
@@ -18278,7 +18296,7 @@ function useProsesVer(d) {
                     geriAlinamayan.push(y.no);
                 }
             }
-            showToast(`İş verilemedi — hiçbir değişiklik yapılmadı (${String((e && e.message) || e).slice(0, 160)})`
+            showToast(`İş verilemedi — hiçbir değişiklik yapılmadı (${sunucuHataMetni(e).slice(0, 240)})`
                 + (geriAlinamayan.length ? ` ⚠ ${geriAlinamayan.join(", ")} fişi sunucuda kaldı, iptal edilemedi — Fiş Defteri'nden kontrol edin` : ""));
             gunlukYaz(`İş verme kaydedilemedi (${siparis.siparisNo}): ${String((e && e.message) || e).slice(0, 200)}`, "uretim", { uretimId: siparis.id, yazilipIptalEdilen: yazilan.map((y) => y.no), iptalEdilemeyen: geriAlinamayan });
             return false;
@@ -24337,6 +24355,8 @@ function AtolyeUygulamasi() {
     function kullaniciYetkisiVar(modul, islemTipi) {
         return yetkiVarMi(tanimlar, aktifKullanici, modul, islemTipi);
     }
+    // G-25 (v1.745.0, 278): bileşenlerin yetki aynası bu kurala bağlı (paraYetkisiVar, mesaiBildirmeYetkisiVar).
+    g25YetkiBagla(kullaniciYetkisiVar);
     // SEKME YETKİ KAPISI (v1.569.0, denetim): modüller hep kurulu, yalnız gizleniyor; görüntüleme yetkisi yalnız MENÜYÜ
     // süzüyordu. Ürün/sipariş kartındaki "cariye git" gibi bağlantılar yetkisiz kullanıcıya Cari'yi, Üretim'i açıyordu.
     // Menüde yetkiye bağlı her sekme burada da bağlı; yetkisiz sekmeye geçilirse Anasayfa'ya dönülür.
@@ -26284,6 +26304,10 @@ function AtolyeUygulamasi() {
     // ("MAAS-2026-10-0007") satırda `maasAnahtari` alanında — sunucu numara verdiği için tekrar kontrolü onunla.
     const [maasBekleyen, setMaasBekleyen] = useState([]);
     const [maasErtelendi, setMaasErtelendi] = useState(false);
+    const [maasOnayHata, setMaasOnayHata] = useState("");
+    // G-25 Onaylar penceresi (278) ve onay şeridinin yeniden sayma tetiği
+    const [onayMerkeziAcik, setOnayMerkeziAcik] = useState(false);
+    const [onayYenile, setOnayYenile] = useState(0);
     // Adlı yazıcı (kapidenetim.js `IZINLI_YAZICILAR`): cari hareketini yalnız bu fonksiyon yazar; efekt yalnız çağırır.
     const maasTahakkukEt = useCallback(() => {
         const bolumler = tanimlar.bolumler || [];
@@ -26337,6 +26361,7 @@ function AtolyeUygulamasi() {
             return;
         maasOnaySuruyorRef.current = true;
         let yazilan = 0;
+        setMaasOnayHata("");
         try {
             for (const y of maasBekleyen) {
                 const r = await paraFisiKesRef.current({
@@ -26345,6 +26370,10 @@ function AtolyeUygulamasi() {
                 });
                 if (r)
                     yazilan++;
+                else {
+                    setMaasOnayHata(paraFisiSonHataRef.current || "Maaş tahakkuku kaydedilemedi");
+                    break;
+                }
             }
         }
         finally {
@@ -26875,7 +26904,21 @@ function AtolyeUygulamasi() {
     // sonraki adımda. Eskiden cari ve kasa ayağı AYRI yazılıyordu (cari kartında zarfsız): biri düşüp öteki kalabiliyordu.
     // Döner: { no, hareketIdler } ya da null (yazılamadı — ekranda hiçbir şey değişmez, kullanıcı uyarılır). `anahtar`la çift basış yok.
     const paraFisiSuruyorRef = useRef(new Set());
+    // Son para fişi reddinin metni (v1.745.0): ekranlar ret iletisini kısa bildirim yerine düğmenin yanında KALICI gösterir.
+    const paraFisiSonHataRef = useRef("");
     const paraFisiKes = useCallback(async ({ fis, cariId, hareketler, kasa, cekler, anahtar, hataEtiketi, ekCariler }) => {
+        paraFisiSonHataRef.current = "";
+        g25SonParaHatasiYaz(paraFisiSonHataRef.current);
+        // G-25 (K1 / K6): bu kapıdan geçen her fiş sunucuda PARA grubudur (cari satırı olan para fişi ya da kasa / çek satırı) — cari /
+        // muhasebe kaydetme ister. Yetkisiz kullanıcının isteği hiç gönderilmez; neden yapılamadığı söylenir. Cari satırı olmayan
+        // yalnız-kasa fişi (virman, gider / gelir kartı) kasa yazıcısının kuralına (muhasebe / fişler / cari) tabi — ona dokunulmaz.
+        const cariSatiriVar = (cariId && (hareketler || []).length) || (ekCariler || []).some((e) => e && (e.hareketler || []).length);
+        if (cariSatiriVar && !paraYetkisiVar()) {
+            paraFisiSonHataRef.current = `${hataEtiketi || "Kayıt"}: ${PARA_YETKI_METNI}`;
+            g25SonParaHatasiYaz(paraFisiSonHataRef.current);
+            showToast(`${hataEtiketi || "Kayıt"} kaydedilmedi — ${PARA_YETKI_METNI}`);
+            return null;
+        }
         const tarihler = [...(hareketler || []).map((h) => h && h.tarih), ...(Array.isArray(kasa) ? kasa : [kasa]).map((k) => k && k.hareket && k.hareket.tarih),
             ...(ekCariler || []).flatMap((e) => ((e && e.hareketler) || []).map((h) => h && h.tarih))];
         if (donemKilidiEngel(tarihler.filter(Boolean), showToast, hataEtiketi || "Kayıt"))
@@ -26893,7 +26936,9 @@ function AtolyeUygulamasi() {
             r = await fisKesGonder(h.yuk);
         }
         catch (e) {
-            showToast(`${hataEtiketi || "Kayıt"} kaydedilemedi — hiçbir değişiklik yapılmadı (${String((e && e.message) || e).slice(0, 160)})`);
+            paraFisiSonHataRef.current = `${hataEtiketi || "Kayıt"} kaydedilemedi: ${sunucuHataMetni(e)}`;
+            g25SonParaHatasiYaz(paraFisiSonHataRef.current);
+            showToast(`${hataEtiketi || "Kayıt"} kaydedilemedi — hiçbir değişiklik yapılmadı (${sunucuHataMetni(e).slice(0, 220)})`);
             gunlukYaz(`${hataEtiketi || "Para fişi"} kaydedilemedi: ${String((e && e.message) || e).slice(0, 200)}`, "cari", { cariId, tur: fis && fis.tur });
             return null;
         }
@@ -26944,6 +26989,7 @@ function AtolyeUygulamasi() {
         return { no, hareketIdler: tumCariHareketleri.map((x) => x.id), kasaHareketIdler: ayaklar.map((k) => k.hareket.id) };
     }, [cariler, muhasebe, aktifKullanici, showToast]);
     paraFisiKesRef.current = paraFisiKes;
+    const paraFisiSonHata = useCallback(() => paraFisiSonHataRef.current, []);
     // Geri al (bildirimden): sunucu fişi → fis_iptal (100 yetimFisTemizle, sunucu dalı).
     const paraFisiGeriAl = useCallback((sonuc) => () => fisGeriAlRef.current && fisGeriAlRef.current(sonuc.no, sonuc.hareketIdler), []);
     // Ekranlar için: kes + numarayla bildir (Geri al düğmeli). Döner: paraFisiKes sonucu.
@@ -28296,7 +28342,7 @@ function AtolyeUygulamasi() {
                         React.createElement("b", null, "Bulut oturumunuz kapand\u0131."),
                         " Yapt\u0131\u011F\u0131n\u0131z kay\u0131tlar bu cihazda duruyor ama buluta gitmiyor. Yeniden giri\u015F yap\u0131nca g\u00F6nderilir."),
                     React.createElement("button", { type: "button", className: "btn-primary", "data-yeniden-giris": "1", onClick: () => setBulutGirisGerekli({ sebep: "oturum-dustu" }), style: { padding: "6px 14px", fontSize: 13 } }, "Yeniden giri\u015F yap"))),
-                maasBekleyen.length > 0 && !maasErtelendi && (React.createElement("div", { "data-maas-bekliyor": maasBekleyen.length, style: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8,
+                maasBekleyen.length > 0 && !maasErtelendi && paraYetkisiVar() && (React.createElement("div", { "data-maas-bekliyor": maasBekleyen.length, style: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8,
                         background: "var(--erp-purple-bg, #F1ECF7)", border: "1.5px solid var(--erp-purple, #6B4E8A)", borderRadius: "var(--erp-r-md)", padding: "7px 12px", fontSize: 13 } },
                     React.createElement("span", { style: { flex: "1 1 260px" } },
                         React.createElement("b", null,
@@ -28314,7 +28360,10 @@ function AtolyeUygulamasi() {
                             maasBekleyen.map((y) => { const c = (cariler || []).find((x) => x.id === y.cariId); return c ? c.unvan : "?"; }).join(", "),
                             ")")),
                     React.createElement("button", { type: "button", className: "btn-primary", "data-maas-onayla": "1", onClick: maasTahakkukOnayla, style: { padding: "6px 14px", fontSize: 13 } }, "Onayla"),
-                    React.createElement("button", { type: "button", className: "btn-ghost", "data-maas-sonra": "1", onClick: () => setMaasErtelendi(true), style: { padding: "6px 12px", fontSize: 12 } }, "Sonra"))),
+                    React.createElement("button", { type: "button", className: "btn-ghost", "data-maas-sonra": "1", onClick: () => setMaasErtelendi(true), style: { padding: "6px 12px", fontSize: 12 } }, "Sonra"),
+                    maasOnayHata && React.createElement("div", { "data-maas-onay-hata": true, style: { flexBasis: "100%", fontSize: 12, color: "var(--erp-danger, #B42318)" } }, maasOnayHata))),
+                !loading && !baglantiYok && React.createElement(OnayBekleyenSeridi, { onAc: () => setOnayMerkeziAcik(true), yenile: onayYenile }),
+                onayMerkeziAcik && (React.createElement(OnayMerkezi, { tanimlar: tanimlar, cariler: cariler, kullaniciAd: (aktifKullanici && aktifKullanici.ad) || null, showToast: showToast, onCarilerTazele: carileriBuluttanTazele, onKapat: () => { setOnayMerkeziAcik(false); setOnayYenile((n) => n + 1); } })),
                 Object.keys(incelemeKayitlari).length > 0 && (React.createElement("div", { "data-inceleme-gerekiyor": Object.values(incelemeKayitlari).reduce((t, x) => t + Object.keys(x || {}).length, 0), style: { display: "flex", flexDirection: "column", gap: 6, marginBottom: 8, background: "var(--erp-void-tint)",
                         border: "1.5px solid var(--erp-void)", borderRadius: "var(--erp-r-md)", padding: "8px 12px", fontSize: 12, color: "var(--erp-void)" } },
                     React.createElement("b", null, "\u0130nceleme gerekiyor \u2014 sunucu bu de\u011Fi\u015Fiklikleri kural gere\u011Fi reddetti (kendili\u011Finden yeniden g\u00F6nderilmez):"),
@@ -32481,9 +32530,13 @@ function TanimlarModule({ onaylar, onYetimRezervasyonSil, onDefterFisIptal, onCa
                 React.createElement("p", { style: { fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px" } }, "Maa\u015Fl\u0131 personelle \u00E7al\u0131\u015Fan b\u00F6l\u00FCm (\u00F6r. Kesimhane). B\u00F6l\u00FCme ba\u011Fl\u0131 prosesin teslimi personel carisine par\u00E7a ba\u015F\u0131 alacak YAZMAZ; tutar b\u00F6l\u00FCm tahakkuku olur (\u00FCr\u00FCn maliyeti de\u011Fi\u015Fmez). Her ay ba\u015F\u0131 buradaki maa\u015F personel carisine \"Maa\u015F\" olarak tahakkuk eder, kasadan \u00F6deme kapat\u0131r. Finans \u203A K\u00E2r-Zarar'da b\u00F6l\u00FCm\u00FCn tahakkuk \u2212 maa\u015F fark\u0131 g\u00F6r\u00FCn\u00FCr."),
                 React.createElement("div", { "data-mesai-ayar": true, style: { display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 10, fontSize: 12 } },
                     React.createElement("b", null, "Mesai:"),
+                    !paraYetkisiVar() && React.createElement("span", { "data-mesai-ayar-kilitli": true, style: { color: "var(--erp-text-2)" } },
+                        "(",
+                        PARA_YETKI_METNI.toLocaleLowerCase("tr-TR"),
+                        ")"),
                     [["aylikSaat", "Aylık çalışma saati"], ["haftaIci", "Hafta içi kat"], ["cumartesi", "Cumartesi kat"], ["pazar", "Pazar kat"]].map(([k, et]) => (React.createElement("label", { key: k, style: { display: "flex", alignItems: "center", gap: 4 } },
                         et,
-                        React.createElement("input", { type: "number", step: "0.1", "data-mesai-ayar-alan": k, key: `${k}${mesaiAyari(tanimlar)[k]}`, defaultValue: mesaiAyari(tanimlar)[k], onBlur: (e) => { const v = parseFloat(e.target.value); if (v > 0 && v !== mesaiAyari(tanimlar)[k])
+                        React.createElement("input", { type: "number", step: "0.1", "data-mesai-ayar-alan": k, key: `${k}${mesaiAyari(tanimlar)[k]}`, defaultValue: mesaiAyari(tanimlar)[k], disabled: !paraYetkisiVar(), onBlur: (e) => { const v = parseFloat(e.target.value); if (v > 0 && v !== mesaiAyari(tanimlar)[k])
                                 onSave({ ...tanimlar, mesaiAyar: { ...(tanimlar.mesaiAyar || {}), [k]: v } }); }, style: { width: 64, padding: "3px 5px", fontSize: 12, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" } }))))),
                 React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" } },
                     React.createElement("input", { value: yeniBolum, "data-bolum-ad": "1", onChange: (e) => setYeniBolum(e.target.value), placeholder: "\u00D6rn. Kesimhane", style: inputStyle, onKeyDown: (e) => { if (e.key === "Enter") {
@@ -32499,7 +32552,7 @@ function TanimlarModule({ onaylar, onYetimRezervasyonSil, onDefterFisIptal, onCa
                     return (React.createElement("div", { key: b.id, "data-bolum": b.ad, style: { border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", background: "#fff", padding: 12, marginBottom: 10 } },
                         React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 8 } },
                             React.createElement("input", { value: b.ad, onChange: (e) => bolumGuncelle(b.id, { ad: e.target.value }), style: { fontSize: 14, fontWeight: 700, flex: 1, padding: "4px 8px", border: "1px solid var(--erp-border-2)", borderRadius: "var(--erp-r-sm)" } }),
-                            React.createElement(SilOnayButonu, { onConfirm: () => bolumSil(b.id), boyut: 14, baslikNormal: `"${b.ad}" bölümünü sil (tahakkuk kayıtları ve cari hareketleri kalır)`, baslikOnay: "Silinecek \u2014 tekrar dokunun" })),
+                            (paraYetkisiVar() || !uyeler.length) && React.createElement(SilOnayButonu, { onConfirm: () => bolumSil(b.id), boyut: 14, baslikNormal: `"${b.ad}" bölümünü sil (tahakkuk kayıtları ve cari hareketleri kalır)`, baslikOnay: "Silinecek \u2014 tekrar dokunun" })),
                         React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-2)", marginBottom: 4 } },
                             "Ba\u011Fl\u0131 prosesler ",
                             React.createElement("span", { style: { fontSize: 11 } }, "(bu proseslerin teslimi cariye yaz\u0131lmaz)")),
@@ -32517,12 +32570,12 @@ function TanimlarModule({ onaylar, onYetimRezervasyonSil, onDefterFisIptal, onCa
                             const c = (cariler || []).find((x) => x.id === p.cariId);
                             return (React.createElement("div", { key: p.cariId, "data-bolum-personel": c ? c.unvan : p.cariId, style: { display: "flex", alignItems: "center", gap: 8, padding: "4px 0" } },
                                 React.createElement("span", { style: { flex: 1, fontSize: 13 } }, c ? c.unvan : "silinmiş cari"),
-                                React.createElement("input", { type: "text", inputMode: "decimal", defaultValue: p.maas || "", "data-bolum-maas": c ? c.unvan : p.cariId, placeholder: "ayl\u0131k maa\u015F", className: "mono", onBlur: (e) => { const v = parseFloat(String(e.target.value).replace(",", ".")) || 0; if (v !== (p.maas || 0))
+                                React.createElement("input", { type: "text", inputMode: "decimal", defaultValue: p.maas || "", "data-bolum-maas": c ? c.unvan : p.cariId, placeholder: "ayl\u0131k maa\u015F", className: "mono", disabled: !paraYetkisiVar(), title: paraYetkisiVar() ? "" : PARA_YETKI_METNI, onBlur: (e) => { const v = parseFloat(String(e.target.value).replace(",", ".")) || 0; if (v !== (p.maas || 0))
                                         bolumGuncelle(b.id, { personel: uyeler.map((x) => (x.cariId === p.cariId ? { ...x, maas: v } : x)) }); }, style: { width: 110, padding: "4px 8px", fontSize: 13, textAlign: "right", border: "1px solid var(--erp-border-2)", borderRadius: "var(--erp-r-sm)" } }),
                                 React.createElement("span", { style: { fontSize: 12, color: "var(--erp-text-3)" } }, "\u20BA / ay"),
-                                React.createElement("button", { type: "button", className: "btn-ghost", style: { padding: "2px 8px", fontSize: 12 }, title: "B\u00F6l\u00FCmden \u00E7\u0131kar", onClick: () => bolumGuncelle(b.id, { personel: uyeler.filter((x) => x.cariId !== p.cariId) }) }, "\u00D7")));
+                                React.createElement("button", { type: "button", className: "btn-ghost", style: { padding: "2px 8px", fontSize: 12 }, title: paraYetkisiVar() ? "Bölümden çıkar" : PARA_YETKI_METNI, disabled: !paraYetkisiVar(), onClick: () => bolumGuncelle(b.id, { personel: uyeler.filter((x) => x.cariId !== p.cariId) }) }, "\u00D7")));
                         }),
-                        React.createElement("select", { value: "", "data-bolum-personel-ekle": b.ad, onChange: (e) => { const id = e.target.value; if (id)
+                        React.createElement("select", { value: "", "data-bolum-personel-ekle": b.ad, disabled: !paraYetkisiVar(), title: paraYetkisiVar() ? "" : PARA_YETKI_METNI, onChange: (e) => { const id = e.target.value; if (id)
                                 bolumGuncelle(b.id, { personel: [...uyeler, { cariId: id, maas: 0 }] }); }, style: { ...inputStyle, width: "auto", minWidth: 220, fontSize: 12, padding: "4px 8px", marginTop: 4 } },
                             React.createElement("option", { value: "" }, "+ personel ekle (Personel tipli cari)\u2026"),
                             personelCariler.filter((c) => !uyeler.some((x) => x.cariId === c.id)).map((c) => React.createElement("option", { key: c.id, value: c.id }, c.unvan)))));
@@ -43918,7 +43971,7 @@ function MuhasebeModule({ onParaFisiKes, onFisIptal, sunucuFisiMi, kapsam = "gen
                     defter: "Muhasebe", ek: { sebep: sebep || null } },
                 cariId: null, hareketler: [],
                 kasa: [{ hesapTur: kaynak.tur, hesapId: kaynak.id, hareket: cikis }, { hesapTur: hedef.tur, hesapId: hedef.id, hareket: giris }],
-                anahtar: `virman|${kaynak.id}`, hataEtiketi: "Virman",
+                anahtar: `virman|${kaynak.id}`, hataEtiketi: "Hesaplar arası aktarım",
             });
             if (!sonuc)
                 return false;
@@ -44724,14 +44777,14 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                                     React.createElement("button", { type: "button", className: "btn-ghost", "data-kart-eylem": "vazgec", title: "Vazge\u00E7 \u00B7 Esc", style: { fontSize: 12, padding: "5px 12px" }, onClick: () => setDuzenlenen(null) }, "Vazge\u00E7")))),
                             React.createElement(DuzenAlani, { ekran: birimAdi === "Kasa" ? "kasaDetay" : "bankaDetay", aralik: 0, acRef: hesapDuzenAcRef, disIkon: true, bloklar: [
                                     { id: "islem", ad: "İşlem düğmeleri ve formlar", icerik: (React.createElement(React.Fragment, null,
-                                            false && acik && (React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", padding: "10px 12px 0" } }, [
+                                            acik && (React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", padding: "10px 12px 0" } }, [
                                                 // RENKLER HAREKET_TIPI_RENK'TEN (v1.535.0 — kullanıcı: "Ödeme, tahsilat renkleri var, butonları o renge
                                                 // boyayalım"): satırdaki Tahsilat/Ödeme rozeti ve cari kartındaki fiş düğmeleriyle aynı renk.
                                                 // SİMGELİ (v1.618.0): HAREKET_TIPI_IKON — cari kartı ve sipariş kartıyla aynı simgeler.
                                                 // HAREKET GİRİŞİ KALDIRILDI (v1.674.0 — kullanıcı: "kasa banka ekranında hareket girmesin, ödeme ve
                                                 // tahsilatta giriliyor"). Tahsilat / ödeme / gelir-gider kartı girişi Ödeme & Tahsilat'ta; burada yalnız
                                                 // hesaplar arası VİRMAN kaldı (şirket içi para yer değiştirmesi, karşı tarafı yok).
-                                                { k: "virman", ad: "Virman", ikon: "Virman", ipucu: "Kasalar/bankalar arası aktarım", renk: "var(--erp-info)" },
+                                                { k: "virman", ad: "Hesaplar arası aktarım", ikon: "Virman", ipucu: "Kasa ↔ banka / hesaptan hesaba para aktarımı — cari etkilenmez (cariden cariye virman: Ödeme & Tahsilat › Cari virmanı)", renk: "var(--erp-info)" },
                                             ].map((x) => (React.createElement("button", { key: x.k, type: "button", "data-islem": x.k, title: x.ipucu, onClick: () => {
                                                     setIslem(islem === x.k ? null : x.k);
                                                     // Yön işleme göre kilitleniyor: kullanıcı ayrıca "Giriş/Çıkış" seçmesin.
@@ -44748,7 +44801,7 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                                                 React.createElement(HareketIkonu, { tip: x.ikon, size: 16 }),
                                                 " ",
                                                 x.ad))))),
-                                            false && acik && islem === "virman" && (React.createElement("div", { "data-virman-formu": "1", style: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end", padding: "10px 12px" } },
+                                            acik && islem === "virman" && (React.createElement("div", { "data-virman-formu": "1", style: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end", padding: "10px 12px" } },
                                                 React.createElement(Field, { label: "Nereye" },
                                                     React.createElement("select", { value: virman.hedef, "data-virman-hedef": "1", onChange: (e) => setVirman({ ...virman, hedef: e.target.value }), style: inputStyle },
                                                         React.createElement("option", { value: "" }, "Se\u00E7in\u2026"),
@@ -44841,7 +44894,7 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                                                             return;
                                                         setVirman({ hedef: "", tutar: "", aciklama: "", sebep: "" });
                                                         setIslem(null);
-                                                    }, style: { padding: "8px 14px", fontSize: 13 } }, "Virman\u0131 Kaydet"))),
+                                                    }, style: { padding: "8px 14px", fontSize: 13 } }, "Aktar\u0131m\u0131 Kaydet"))),
                                             acik && (React.createElement("div", { style: { padding: "6px 12px 0", fontSize: 11, color: "var(--erp-text-3)" } }, "Tahsilat, \u00F6deme ve gelir/gider kayd\u0131 \u00D6deme & Tahsilat \u203A Tahsilat / \u00D6deme gir ekran\u0131ndan girilir.")),
                                             false && acik && islem && islem !== "virman" && (React.createElement("div", { style: { padding: "0 12px 12px" } }, (() => {
                                                 // "P.Birimi" HER ZAMAN bu hesabın kendi para birimidir (sabit) — kasa/banka
@@ -53891,6 +53944,16 @@ function CariModule({ onParaFisi, onFisIptal, tanimlar, onTanimlarKaydet, onMuha
             showToast("Cari virmanı fiş defteri kurulu değilken yapılamaz");
             return false;
         }
+        // Kapıda da aynı kural (337 `cariVirmanDogrula`) + satırlar kuralla uyumlu mu: iki satır aynı tutar, ikisi de ilk carinin
+        // para biriminde, karşılıklı yön.
+        const ilkCari = (cariler || []).find((c) => c.id === ilkCariId), karsiCari = (cariler || []).find((c) => c.id === karsiCariId);
+        const hata = cariVirmanDogrula({ ilkCari, karsiCari, tutar: ilk && ilk.tutar })
+            || (!ilk || !karsi || ilk.tutar !== karsi.tutar || ilk.yon === karsi.yon
+                || ilk.paraBirimi !== ((ilkCari && ilkCari.paraBirimi) || "TRY") || karsi.paraBirimi !== ilk.paraBirimi ? "Virman satırları tutarsız — kaydedilmedi" : null);
+        if (hata) {
+            showToast(hata);
+            return false;
+        }
         const r = await onParaFisi({ fis: { tur: CARI_VIRMAN_TURU, onek: paraFisOneki(CARI_VIRMAN_TURU), kaynak: "Ödeme & Tahsilat", ek: { karsiCariId } },
             cariId: ilkCariId, hareketler: [ilk], ekCariler: [{ cariId: karsiCariId, hareketler: [karsi] }],
             anahtar: `cari-virman|${ilkCariId}|${karsiCariId}|${ilk.tutar}`, hataEtiketi: "Cari virmanı" });
@@ -54237,7 +54300,7 @@ function CariModule({ onParaFisi, onFisIptal, tanimlar, onTanimlarKaydet, onMuha
                     tipDugmesi("Tahsilat"),
                     tipDugmesi("Ödeme"),
                     React.createElement("span", { style: { fontSize: 12, color: "var(--erp-text-2)", marginLeft: 6 } }, odemeSekliSecim === "Virman"
-                        ? (odemeTip === "Tahsilat" ? "Virman: seçilen cariden tahsilat, karşı cariye ödeme (para el değiştirmez)" : "Virman: seçilen cariye ödeme, karşı cariden tahsilat (para el değiştirmez)")
+                        ? (odemeTip === "Tahsilat" ? "Cari virmanı: seçilen cariden tahsilat, karşı cariye ödeme (para el değiştirmez; kasa / banka aktarımı Kasa & Banka › Hesaplar arası aktarım)" : "Cari virmanı: seçilen cariye ödeme, karşı cariden tahsilat (para el değiştirmez; kasa / banka aktarımı Kasa & Banka › Hesaplar arası aktarım)")
                         : odemeTip === "Tahsilat" ? "Müşteriden / cariden para, çek ya da senet alındı" : "Tedarikçiye / cariye para, çek ya da senet verildi")),
                 React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" } },
                     React.createElement("span", { style: { fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)", minWidth: 90 } }, "\u00D6deme \u015Fekli"),
@@ -54247,7 +54310,7 @@ function CariModule({ onParaFisi, onFisIptal, tanimlar, onTanimlarKaydet, onMuha
                                 setOdemeKartId(""); if (odemeCariId)
                                 odemeFormunuAc(odemeCariId, odemeTip, o); }, style: { padding: "5px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer", borderRadius: "var(--erp-r-pill)",
                                 border: `1.5px solid ${aktif ? "var(--erp-purple)" : "var(--erp-line)"}`, background: aktif ? "var(--erp-purple)" : "#fff",
-                                color: aktif ? "#fff" : "var(--erp-text-2)" } }, o === "Nakit" ? "Nakit (kasa)" : o === "Havale/EFT" ? "Havale / EFT (banka)" : o === "Virman" ? "Virman (cariden cariye)" : o));
+                                color: aktif ? "#fff" : "var(--erp-text-2)" } }, o === "Nakit" ? "Nakit (kasa)" : o === "Havale/EFT" ? "Havale / EFT (banka)" : o === "Virman" ? "Cari virmanı (cariden cariye)" : o));
                     })),
                 kisaSekil && (React.createElement("div", { "data-odeme-hesaplar": odemeSekliSecim, style: { display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" } },
                     React.createElement("span", { style: { fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)", minWidth: 90 } }, odemeSekliSecim === "Nakit" ? "Kasa" : "Banka"),
@@ -56961,7 +57024,7 @@ function CariCard({ onParaFisi, siteYonetici = false, tanimlar, onTanimlarKaydet
                                         ? "Bakiye artacak — cari bize borçlanır"
                                         : "Bakiye azalacak — biz cariye borçlanırız"),
                                     React.createElement("span", { style: { marginLeft: "auto", display: "inline-flex", gap: 8 } },
-                                        React.createElement("button", { className: "btn-primary btn-save", onClick: submitHareket },
+                                        React.createElement("button", { className: "btn-primary btn-save", "data-cari-hareket-kaydet": true, disabled: !paraYetkisiVar(), title: paraYetkisiVar() ? undefined : PARA_YETKI_METNI, onClick: submitHareket },
                                             React.createElement(Save, { size: 14 }),
                                             " Kaydet"),
                                         React.createElement("button", { className: "btn-ghost", onClick: () => { setShowHareket(false); setHareketTipi(null); } },
@@ -59497,6 +59560,12 @@ function PersonelBilgileriPaneli({ cari, tanimlar, onTanimlarKaydet, onAddHareke
     // ("MESAI-2026-10-0007") satırda `mesaiAnahtari` alanında kalır. Eski kayıtlarda anahtar fiş numarasının kendisi.
     const mevcut = (cari.hareketler || []).find((x) => (x.mesaiAnahtari || x.fisNo) === fisNo);
     const [mesaiYaziliyor, setMesaiYaziliyor] = useState(false);
+    // G-25 (v1.745.0, 278): maaş / aylık saat ve mesai TUTARI cari / muhasebe kaydetme ister (sunucu da reddeder). Yetkisi olmayan ama
+    // üretim kaydetmeli kullanıcı saati BİLDİRİR (mesai_bildir — onaya gider, tutar gösterilmez). Ret iletisi düğmenin altında kalır.
+    const para = paraYetkisiVar();
+    const bildirebilir = !para && mesaiBildirmeYetkisiVar();
+    const [mesaiHata, setMesaiHata] = useState("");
+    const [mesaiBildirildi, setMesaiBildirildi] = useState("");
     const kutu = { ...inputStyle, width: 110, fontSize: 13 };
     return (React.createElement("div", { "data-personel-paneli": true, style: { border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 12, margin: "10px 0", background: "#fff" } },
         React.createElement("div", { style: { fontSize: 14, fontWeight: 700, marginBottom: 8 } },
@@ -59508,16 +59577,20 @@ function PersonelBilgileriPaneli({ cari, tanimlar, onTanimlarKaydet, onAddHareke
                     React.createElement("option", { value: "" }, "\u2014 se\u00E7in \u2014"),
                     bolumler.map((b) => React.createElement("option", { key: b.id, value: b.id }, b.ad)))),
             React.createElement(Field, { label: "Ayl\u0131k maa\u015F (\u20BA)" },
-                React.createElement("input", { "data-personel-maas": true, type: "text", inputMode: "decimal", key: `m${maas}`, defaultValue: maas || "", disabled: !bolum, onBlur: (e) => bolum && yaz(bolum.id, { maas: parseFloat(String(e.target.value).replace(",", ".")) || 0 }), style: kutu })),
+                React.createElement("input", { "data-personel-maas": true, type: "text", inputMode: "decimal", key: `m${maas}`, defaultValue: maas || "", disabled: !bolum || !para, title: para ? "" : PARA_YETKI_METNI, onBlur: (e) => bolum && yaz(bolum.id, { maas: parseFloat(String(e.target.value).replace(",", ".")) || 0 }), style: kutu })),
             React.createElement(Field, { label: "\u0130\u015Fe ba\u015Flang\u0131\u00E7" },
                 React.createElement("input", { "data-personel-baslangic": true, type: "date", value: (kayit && kayit.iseBaslangic) || "", disabled: !bolum, onChange: (e) => bolum && yaz(bolum.id, { iseBaslangic: e.target.value }), style: { ...kutu, width: 150 } })),
             React.createElement(Field, { label: "Ayl\u0131k \u00E7al\u0131\u015Fma saati" },
-                React.createElement("input", { "data-personel-saat": true, type: "number", key: `s${aylikSaat}`, defaultValue: (kayit && kayit.aylikSaat) || "", placeholder: String(ayar.aylikSaat), disabled: !bolum, onBlur: (e) => bolum && yaz(bolum.id, { aylikSaat: parseFloat(e.target.value) || undefined }), style: { ...kutu, width: 90 } })),
+                React.createElement("input", { "data-personel-saat": true, type: "number", key: `s${aylikSaat}`, defaultValue: (kayit && kayit.aylikSaat) || "", placeholder: String(ayar.aylikSaat), disabled: !bolum || !para, title: para ? "" : PARA_YETKI_METNI, onBlur: (e) => bolum && yaz(bolum.id, { aylikSaat: parseFloat(e.target.value) || undefined }), style: { ...kutu, width: 90 } })),
             React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-2)", paddingBottom: 8 } },
                 "Saat \u00FCcreti: ",
                 React.createElement("b", null,
                     h.saatUcreti.toLocaleString("tr-TR"),
                     " \u20BA"))),
+        !para && React.createElement("div", { "data-personel-ucret-kilitli": true, style: { fontSize: 11, color: "var(--erp-text-2)", marginTop: 4 } },
+            "Maa\u015F ve ayl\u0131k \u00E7al\u0131\u015Fma saati: ",
+            PARA_YETKI_METNI.toLocaleLowerCase("tr-TR"),
+            "."),
         bolum && maas > 0 && (React.createElement("div", { "data-mesai": true, style: { marginTop: 12, paddingTop: 10, borderTop: "1px solid var(--erp-line-soft)" } },
             React.createElement("div", { style: { fontSize: 13, fontWeight: 700, marginBottom: 6 } },
                 "Mesai ",
@@ -59534,12 +59607,30 @@ function PersonelBilgileriPaneli({ cari, tanimlar, onTanimlarKaydet, onAddHareke
                     React.createElement("input", { "data-mesai-ay": true, type: "month", value: ay, onChange: (e) => setAy(e.target.value), style: { ...kutu, width: 150 } })),
                 [["haftaIci", "Hafta içi (saat)"], ["cumartesi", "Cumartesi (saat)"], ["pazar", "Pazar (saat)"]].map(([k, et]) => (React.createElement(Field, { key: k, label: et },
                     React.createElement("input", { "data-mesai-saat": k, type: "number", min: "0", step: "0.5", value: saat[k], onChange: (e) => setSaat({ ...saat, [k]: e.target.value }), style: { ...kutu, width: 90 } })))),
-                React.createElement("div", { style: { fontSize: 13, paddingBottom: 8 } },
+                para && React.createElement("div", { style: { fontSize: 13, paddingBottom: 8 } },
                     "Tutar: ",
                     React.createElement("b", { "data-mesai-tutar": true },
                         h.tutar.toLocaleString("tr-TR"),
                         " \u20BA")),
-                React.createElement("button", { type: "button", className: "btn-primary", "data-mesai-yaz": true, disabled: !(h.tutar > 0) || !!mevcut || mesaiYaziliyor, style: { marginBottom: 4 }, title: mevcut ? `${mevcut.fisNo || fisNo} zaten yazılmış — değiştirmek için önce fişi silin` : "", onClick: async () => {
+                !para && (React.createElement("button", { type: "button", className: "btn-primary", "data-mesai-bildir-kart": true, disabled: !bildirebilir || mesaiYaziliyor || !!mevcut
+                        || !((Number(saat.haftaIci) || 0) + (Number(saat.cumartesi) || 0) + (Number(saat.pazar) || 0) > 0), title: bildirebilir ? "Saatler onaya gider; tutarı cari / muhasebe yetkilisi onaylar" : "Üretim kaydetme yetkisi gerekir", style: { marginBottom: 4 }, onClick: async () => {
+                        const bildirilenAy = ay; // bekleme öncesi (denetim 18)
+                        setMesaiYaziliyor(true);
+                        setMesaiHata("");
+                        setMesaiBildirildi("");
+                        try {
+                            await g25Rpc("mesai_bildir", { cariId: cari.id, ay: bildirilenAy, saatler: { haftaIci: Number(saat.haftaIci) || 0, cumartesi: Number(saat.cumartesi) || 0, pazar: Number(saat.pazar) || 0 } });
+                            setSaat({ haftaIci: "", cumartesi: "", pazar: "" });
+                            setMesaiBildirildi(`${ayAdi(bildirilenAy)} mesaisi bildirildi — cari / muhasebe yetkilisinin onayını bekliyor`);
+                        }
+                        catch (e) {
+                            setMesaiHata(`Bildirilemedi: ${sunucuHataMetni(e)}`);
+                        }
+                        finally {
+                            setMesaiYaziliyor(false);
+                        }
+                    } }, "Mesaiyi onaya g\u00F6nder")),
+                para && React.createElement("button", { type: "button", className: "btn-primary", "data-mesai-yaz": true, disabled: !(h.tutar > 0) || !!mevcut || mesaiYaziliyor, style: { marginBottom: 4 }, title: mevcut ? `${mevcut.fisNo || fisNo} zaten yazılmış — değiştirmek için önce fişi silin` : "", onClick: async () => {
                         const ayAdi = new Date(`${ay}-01T12:00:00`).toLocaleDateString("tr-TR", { month: "long", year: "numeric" });
                         const hareket = { tarih: `${ay}-${String(new Date(Number(ay.slice(0, 4)), Number(ay.slice(5, 7)), 0).getDate()).padStart(2, "0")}`,
                             islemTipi: "Mesai", yon: hareketYonu("Maaş"), tutar: h.tutar, paraBirimi: "TRY", odemeSekli: "Nakit", vade: "",
@@ -59560,6 +59651,8 @@ function PersonelBilgileriPaneli({ cari, tanimlar, onTanimlarKaydet, onAddHareke
                             }
                             if (r)
                                 setSaat({ haftaIci: "", cumartesi: "", pazar: "" });
+                            else
+                                setMesaiHata(g25SonParaHatasi() || "Mesai kaydedilemedi");
                             return;
                         }
                         const ok = onAddHareket(cari.id, hareket);
@@ -59570,7 +59663,9 @@ function PersonelBilgileriPaneli({ cari, tanimlar, onTanimlarKaydet, onAddHareke
                     mevcut.fisNo || fisNo,
                     " yaz\u0131lm\u0131\u015F (",
                     (mevcut.tutar || 0).toLocaleString("tr-TR"),
-                    " \u20BA)"))))));
+                    " \u20BA)"),
+                mesaiHata && React.createElement("div", { "data-mesai-hata": true, style: { flexBasis: "100%", fontSize: 12, color: "var(--erp-danger, #B42318)" } }, mesaiHata),
+                mesaiBildirildi && React.createElement("div", { "data-mesai-bildirildi": true, style: { flexBasis: "100%", fontSize: 12, color: "var(--erp-ok, #067647)" } }, mesaiBildirildi))))));
 }
 // KAPASİTE YÖNETİMİ (v1.703.0 — kullanıcı: "Kapasite yönetimi yapalım; tanımlara makine teçhizat, makinenin günlük
 // iş yapabilme hacmi, makineye bağlı kalıp ve kalıpların her beden için ayrı günlük kapasitesi, elemanların günlük
@@ -60074,7 +60169,7 @@ function DemirbasBolumu({ kayit, tur, tanimlar, cariler, stok, onGuncelle, onCar
                 React.createElement("select", { value: f.defter, onChange: (e) => setF({ ...f, defter: e.target.value }), style: { ...inputStyle, width: 90 } },
                     React.createElement("option", null, "Genel"),
                     React.createElement("option", null, "Resmi"))),
-            React.createElement("button", { type: "button", className: "btn-primary", "data-demirbas-kaydet": true, onClick: kaydet }, "Cariye yaz")))));
+            React.createElement("button", { type: "button", className: "btn-primary", "data-demirbas-kaydet": true, disabled: !paraYetkisiVar(), title: paraYetkisiVar() ? undefined : PARA_YETKI_METNI, onClick: kaydet }, "Cariye yaz")))));
 }
 // PROSES PLANLAMA (v1.704.0 — kullanıcı: "Planlamayı proses proses ayıralım, her prosesin planlaması ayrı olsun";
 // "çerçeve içine alıp aşağı kayan şekilde olsun, alta aynı şekilde planlananları atsın"; "planlamayı makine/kalıp
@@ -61675,6 +61770,342 @@ function FaturaPenceresi({ fisNo, faturalar, cariler, stok, tanimlar, muhasebe, 
             React.createElement("span", { style: { flex: 1 } }),
             kapat)));
 }
+// ================= G-25 — PARA YETKİSİ, MESAİ BİLDİRİMİ, ÜCRET / TAMİR ONAYI (v1.745.0) =================
+//
+// Sunucu kuralı (stok-v2/guvenlik/25-G25-TASARIM.md): cari hareketi yazan PARA fişleri (tahsilat, ödeme, cari virmanı, maaş / mesai
+// tahakkuku, ürünsüz alış / satış, demirbaş…) ve personel ücreti (maaş, aylık saat, mesai katı) CARİ veya MUHASEBE kaydetme yetkisi
+// ister. Üretim kullanıcısı MİKTARI girer (mesai saati, teslim, tamir talebi); PARAYI cari / muhasebe yetkilisi belirler ya da onaylar:
+//   • mesai: Üretim › Mesai bildirimi (mesai_bildir — saat; tutar gösterilmez) → yetkili Onaylar › Mesai (mesai_onayla — tek MS fişi)
+//   • işçilik: her İŞ (atama + kısmi teslimden doğan kalan parçaları) kişi(ler), TOPLAM miktar ve ücretle ONAYLANIR (ucret_onayla;
+//     tamirde yetkili ücreti belirleyebilir); ara proses carisi / ücreti ürün başına onaylanır. Kişi, miktar ya da ücret onaydan sonra
+//     değişirse onay geçersiz olur; kısmi teslimler onaylanan toplam içinde ödenir (1.745.1). Teslim işçiliği yalnız onaylı işle yazılır
+//     (sunucu reddeder — ret iletisi teslim ekranında görünür).
+// Bu dosya istemci aynasıdır (K6): yetkisiz düğme kapalı ve gerekçeli; asıl koruma sunucuda. Sunucu reddi KALICI olarak ilgili düğmenin
+// yanında yazılır (yalnız kısa süreli bildirim değil — 1.744.36'da ret iletisi birkaç saniyede kayboluyordu, ekran ölçümü).
+// YETKİ AYNASI — App her çizimde kendi `kullaniciYetkisiVar`ını bağlar (094 yetkiVarMi; giriş kapalıysa herkes yetkili, sunucu da öyle).
+let _g25YetkiKontrol = null;
+function g25YetkiBagla(f) { _g25YetkiKontrol = typeof f === "function" ? f : null; }
+function g25Yetki(modul, islem) { return !_g25YetkiKontrol || !!_g25YetkiKontrol(modul, islem); }
+// PARA grubu: cari VEYA muhasebe kaydetme (K1). Yalnız fişler kaydetme yetmez.
+function paraYetkisiVar() { return g25Yetki("cari", "kaydetme") || g25Yetki("muhasebe", "kaydetme"); }
+// Mesai saati bildirimi: üretim (ya da PARA) kaydetme — sunucu mesai_bildir ile aynı liste.
+function mesaiBildirmeYetkisiVar() { return g25Yetki("uretim", "kaydetme") || paraYetkisiVar(); }
+const PARA_YETKI_METNI = "Bu işlem için cari veya muhasebe kaydetme yetkisi gerekir";
+// Son para fişi reddinin metni — App paraFisiKes yazar; ekranlar (personel paneli…) kalıcı ret satırında gösterir.
+let _g25SonParaHata = "";
+function g25SonParaHatasiYaz(m) { _g25SonParaHata = m || ""; }
+function g25SonParaHatasi() { return _g25SonParaHata; }
+// SUNUCU İLETİSİ — "Supabase 400: {"code":"22023","message":"…"}" → "…". Ret kodu sonda (KR014 / KR015 / 42501 …) kalır.
+function sunucuHataMetni(e) {
+    let m = String((e && e.message) || e || "").replace(/^Supabase \d+:\s*/, "");
+    const j = m.match(/"message"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+    if (j) {
+        try {
+            m = JSON.parse(`"${j[1]}"`);
+        }
+        catch (x) {
+            m = j[1];
+        }
+    }
+    return m.replace(/\s+/g, " ").trim().slice(0, 300);
+}
+async function g25Rpc(ad, p) {
+    return supabaseIstek(`rpc/${ad}`, { method: "POST", body: JSON.stringify({ p: p || {} }) });
+}
+function buAy() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; }
+function ayAdi(ay) { try {
+    return new Date(`${ay}-01T12:00:00`).toLocaleDateString("tr-TR", { month: "long", year: "numeric" });
+}
+catch (e) {
+    return ay;
+} }
+function bolumPersonelleri(tanimlar) {
+    return ((tanimlar && tanimlar.bolumler) || []).flatMap((b) => (b.personel || []).filter((p) => p && p.cariId).map((p) => ({ cariId: p.cariId, bolum: b })));
+}
+const g25Kutu = { border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 12, margin: "10px 0", background: "#fff" };
+const g25Ret = { fontSize: 12, color: "var(--erp-danger, #B42318)", marginTop: 4 };
+// MESAİ HAREKETİ — 272 PersonelBilgileriPaneli'nin MS satırıyla aynı biçim; tutar SUNUCUNUN hesapladığı (bildirimdeki saatlerden).
+function mesaiHareketi(bildirim, tanimlar) {
+    const ay = bildirim.ay;
+    const kayit = personelBolumKaydi(tanimlar, bildirim.cariId);
+    const bolum = kayit && kayit.bolum;
+    const s = bildirim.saatler || {};
+    const sonGun = new Date(Number(ay.slice(0, 4)), Number(ay.slice(5, 7)), 0).getDate();
+    return { tarih: `${ay}-${String(sonGun).padStart(2, "0")}`, yon: hareketYonu("Maaş"), tutar: Number(bildirim.hesaplananTutar) || 0, paraBirimi: "TRY",
+        odemeSekli: "Nakit", vade: "", defter: iscilikDefteri(tanimlar && tanimlar.firmaBilgileri), mesaiAnahtari: bildirim.anahtar,
+        bolumId: bolum ? bolum.id : null, giderKartId: bolum ? (bolumGiderKarti(tanimlar, bolum) || {}).id : null,
+        aciklama: `${bolum ? bolum.ad : "Bölüm"} — ${ayAdi(ay)} mesaisi: hafta içi ${Number(s.haftaIci) || 0} s, Cmt ${Number(s.cumartesi) || 0} s, Pzr ${Number(s.pazar) || 0} s (bildirim onayı)`,
+        mesaiSaatleri: { haftaIci: Number(s.haftaIci) || 0, cumartesi: Number(s.cumartesi) || 0, pazar: Number(s.pazar) || 0 } };
+}
+// MESAİ ONAY YÜKÜ (adlı kapı — kapidenetim.js IZINLI_YAZICILAR): onaylanan bildirimin MS fiş yükü. Hareketi yerelde YAZMAZ;
+// sunucu (mesai_onayla) tutarı saatlerden yeniden hesaplar, anahtarı kendi koyar, fişi tek işlemde keser. Yerel kayıt cari tazelemeyle gelir.
+function mesaiOnayYukuKur(b, tanimlar, kullaniciAd) {
+    const h = paraFisiYuku({ fis: { tur: "Mesai", onek: paraFisOneki("Mesai"), kaynak: "Mesai", ek: { mesaiAnahtari: b.anahtar } },
+        cariId: b.cariId, hareketler: [mesaiHareketi(b, tanimlar)], istek: uid("fis"), zaman: new Date().toISOString(), kullaniciAd });
+    return { ...h.yuk, istemci: fisIstemciBilgisi() };
+}
+// ÜRETİM › MESAİ BİLDİRİMİ — bölüm personeline ay ay saat. Para yok; onaylanmış ay değişmez (sunucu KR014).
+function MesaiBildirimPaneli({ tanimlar, cariler }) {
+    const [ay, setAy] = useState(buAy());
+    const [liste, setListe] = useState(null);
+    const [saat, setSaat] = useState({});
+    const [hata, setHata] = useState({});
+    const [genelHata, setGenelHata] = useState("");
+    const [suruyor, setSuruyor] = useState(null);
+    const yetkili = mesaiBildirmeYetkisiVar();
+    const personel = bolumPersonelleri(tanimlar);
+    const yukle = useCallback(async () => {
+        setGenelHata("");
+        try {
+            const r = await g25Rpc("mesai_bildirimleri", { ay });
+            setListe(Array.isArray(r) ? r : []);
+        }
+        catch (e) {
+            setListe([]);
+            setGenelHata(sunucuHataMetni(e));
+        }
+    }, [ay]);
+    useEffect(() => { yukle(); }, [yukle]);
+    const bildirimi = (cariId) => (liste || []).find((b) => b.cariId === cariId && b.durum !== "iptal");
+    const bildir = async (cariId) => {
+        const g = saat[cariId] || {};
+        setSuruyor(cariId);
+        setHata((h) => ({ ...h, [cariId]: "" }));
+        try {
+            await g25Rpc("mesai_bildir", { cariId, ay, saatler: { haftaIci: Number(g.haftaIci) || 0, cumartesi: Number(g.cumartesi) || 0, pazar: Number(g.pazar) || 0 } });
+            setSaat((s) => ({ ...s, [cariId]: undefined }));
+            await yukle();
+        }
+        catch (e) {
+            setHata((h) => ({ ...h, [cariId]: `Bildirilemedi: ${sunucuHataMetni(e)}` }));
+        }
+        finally {
+            setSuruyor(null);
+        }
+    };
+    const kutu = { ...inputStyle, width: 80, fontSize: 13 };
+    return (React.createElement("div", { "data-mesai-bildirim-paneli": true, style: g25Kutu },
+        React.createElement("div", { style: { display: "flex", gap: 10, alignItems: "flex-end", flexWrap: "wrap", marginBottom: 8 } },
+            React.createElement("div", { style: { fontSize: 14, fontWeight: 700 } },
+                "Mesai bildirimi ",
+                React.createElement("span", { style: { fontSize: 11, fontWeight: 400, color: "var(--erp-text-2)" } }, "saat girilir \u2014 tutar\u0131 cari / muhasebe yetkilisi onaylar")),
+            React.createElement(Field, { label: "Ay" },
+                React.createElement("input", { "data-mesai-bildirim-ay": true, type: "month", value: ay, onChange: (e) => setAy(e.target.value), style: { ...kutu, width: 150 } }))),
+        !yetkili && React.createElement("div", { "data-mesai-bildirim-yetkisiz": true, style: g25Ret }, "Mesai bildirmek i\u00E7in \u00FCretim (ya da cari / muhasebe) kaydetme yetkisi gerekir."),
+        genelHata && React.createElement("div", { style: g25Ret }, genelHata),
+        personel.length === 0 && React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-2)" } }, "B\u00F6l\u00FCm personeli yok (Tan\u0131mlar \u203A At\u00F6lye \u0130\u00E7i B\u00F6l\u00FCmler)."),
+        personel.map(({ cariId, bolum }) => {
+            const c = (cariler || []).find((x) => x.id === cariId);
+            const b = bildirimi(cariId);
+            const kilitli = !yetkili || (b && b.durum === "onaylandi") || suruyor === cariId;
+            const g = saat[cariId] || (b ? b.saatler : {}) || {};
+            return (React.createElement("div", { key: cariId, "data-mesai-bildirim-satir": cariId, style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", padding: "6px 0", borderTop: "1px solid var(--erp-line-soft)" } },
+                React.createElement("div", { style: { minWidth: 170, fontSize: 13 } },
+                    React.createElement("b", null, c ? c.unvan : cariId),
+                    React.createElement("div", { style: { fontSize: 11, color: "var(--erp-text-2)" } }, bolum.ad)),
+                [["haftaIci", "Hafta içi"], ["cumartesi", "Cumartesi"], ["pazar", "Pazar"]].map(([k, et]) => (React.createElement("label", { key: k, style: { fontSize: 11, color: "var(--erp-text-2)" } },
+                    et,
+                    React.createElement("br", null),
+                    React.createElement("input", { "data-mesai-bildirim-saat": k, type: "number", min: "0", step: "0.5", disabled: kilitli, value: g[k] ?? "", style: kutu, onChange: (e) => setSaat((s) => ({ ...s, [cariId]: { ...(s[cariId] || (b ? b.saatler : {}) || {}), [k]: e.target.value } })) })))),
+                React.createElement("span", { "data-mesai-bildirim-durum": b ? b.durum : "yok", style: { fontSize: 12 } },
+                    b ? (b.durum === "onaylandi" ? `onaylandı${b.fisNo ? ` · ${b.fisNo}` : ""}` : "onay bekliyor") : "bildirilmedi",
+                    b && b.hesaplananTutar != null ? ` · ${Number(b.hesaplananTutar).toLocaleString("tr-TR")} ₺` : ""),
+                React.createElement("button", { type: "button", className: "btn-primary", "data-mesai-bildir": cariId, disabled: kilitli || !saat[cariId], title: !yetkili ? "Üretim kaydetme yetkisi gerekir" : (b && b.durum === "onaylandi" ? "Bu ayın mesaisi onaylandı — değiştirilemez" : ""), onClick: () => bildir(cariId) }, b && b.durum === "bekliyor" ? "Güncelle" : "Bildir"),
+                hata[cariId] && React.createElement("div", { "data-mesai-bildirim-hata": cariId, style: { ...g25Ret, flexBasis: "100%" } }, hata[cariId])));
+        })));
+}
+// ÜCRET ONAY DURUMU (salt okur, Üretim'de herkese): onay bekleyen ücretler — teslim neden reddedildi sorusunun cevabı.
+function UcretOnayDurumu({ yenile, cariler }) {
+    const unvan = (id) => { const c = (cariler || []).find((x) => x.id === id); return c ? c.unvan : id; };
+    const [liste, setListe] = useState(null);
+    const [hata, setHata] = useState("");
+    useEffect(() => {
+        (async () => {
+            try {
+                const r = await g25Rpc("ucret_onaylari", { kapsam: "acik" });
+                setListe((Array.isArray(r) ? r : []).filter((x) => !x.onayli));
+                setHata("");
+            }
+            catch (e) {
+                setListe([]);
+                setHata(sunucuHataMetni(e));
+            }
+        })();
+    }, [yenile]);
+    if (!liste)
+        return null;
+    return (React.createElement("div", { "data-ucret-onay-durumu": liste.length, style: g25Kutu },
+        React.createElement("div", { style: { fontSize: 14, fontWeight: 700, marginBottom: 6 } },
+            "Onay bekleyen \u00FCcretler ",
+            liste.length ? `(${liste.length})` : "",
+            React.createElement("span", { style: { fontSize: 11, fontWeight: 400, color: "var(--erp-text-2)" } }, " \u2014 onaylanmam\u0131\u015F \u00FCcretle teslimde i\u015F\u00E7ilik yaz\u0131lmaz; cari / muhasebe yetkilisi Onaylar'dan onaylar")),
+        hata && React.createElement("div", { style: g25Ret }, hata),
+        !liste.length && !hata && React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-2)" } }, "A\u00E7\u0131k \u00FCretimlerin b\u00FCt\u00FCn \u00FCcretleri onayl\u0131."),
+        liste.slice(0, 40).map((x) => React.createElement("div", { key: x.anahtar, "data-ucret-onay-bekleyen": x.anahtar, style: { fontSize: 12, padding: "2px 0" } }, ucretKalemiMetni(x, unvan)))));
+}
+function ucretKalemiMetni(x, unvan) {
+    const g = x.guncel || {};
+    const tl = (v) => `${Number(v || 0).toLocaleString("tr-TR")} ₺`;
+    const ad = (id) => (unvan ? unvan(id) : id);
+    // İŞ (atama zinciri — 25 Kasım): kişi(ler), TOPLAM miktar, ücret birlikte onaylanır; kısmi teslimler bu toplam içinde ödenir.
+    if (x.tur === "atama")
+        return `${x.siparisNo || x.uretimId} · ${x.proses}${g.tamir ? " TAMİR" : ""} · ${(g.personel || []).map(ad).join(", ")}`
+            + ` · ${g.miktar} adet × ${tl(g.ucret)}${Number(x.odenen) > 0 ? ` (ödenen ${x.odenen} adet)` : ""}${g.karisik ? " — TUTARSIZ (farklı proses / ücret)" : ""}`;
+    if (x.tur === "ara")
+        return `${x.urunAd || x.urunId} · ara proses ${x.proses}: ${ad(g.cari)} carisine ${tl(g.ucret)} / adet`;
+    return x.anahtar;
+}
+// ONAYLAR (cari / muhasebe kaydetme) — mesai bildirimleri + ücret / tamir onayları. Onay, EKRANDA görülen değerle gider; arada
+// değer değiştiyse sunucu reddeder (KR015) ve liste yenilenir.
+function OnayMerkezi({ tanimlar, cariler, onKapat, onCarilerTazele, kullaniciAd, showToast }) {
+    const [sekme, setSekme] = useState("mesai");
+    const [mesai, setMesai] = useState(null);
+    const [ucret, setUcret] = useState(null);
+    const kapsam = "acik"; // 1.745.1: onay iş (atama zinciri) düzeyinde — "bütün ürünler" kapsamı kalktı
+    const [secili, setSecili] = useState({});
+    const [tamirUcret, setTamirUcret] = useState({});
+    const [hata, setHata] = useState({});
+    const [suruyor, setSuruyor] = useState(false);
+    const yetkili = paraYetkisiVar();
+    const unvan = (id) => { const c = (cariler || []).find((x) => x.id === id); return c ? c.unvan : id; };
+    const yukle = useCallback(async () => {
+        const k = kapsam; // bekleme öncesi (denetim 18)
+        try {
+            const r = await g25Rpc("mesai_bildirimleri", { durum: "bekliyor" });
+            setMesai(Array.isArray(r) ? r : []);
+        }
+        catch (e) {
+            setMesai([]);
+            setHata((h) => ({ ...h, mesai: sunucuHataMetni(e) }));
+        }
+        try {
+            const r = await g25Rpc("ucret_onaylari", { kapsam: k });
+            setUcret(Array.isArray(r) ? r : []);
+        }
+        catch (e) {
+            setUcret([]);
+            setHata((h) => ({ ...h, ucret: sunucuHataMetni(e) }));
+        }
+    }, [kapsam]);
+    useEffect(() => { yukle(); }, [yukle]);
+    const mesaiOnayla = async (b) => {
+        setSuruyor(true);
+        setHata((h) => ({ ...h, [b.id]: "" }));
+        try {
+            const r = await g25Rpc("mesai_onayla", { bildirimId: b.id, fis: mesaiOnayYukuKur(b, tanimlar, kullaniciAd) });
+            if (showToast)
+                showToast(r && r.zatenVar ? `${unvan(b.cariId)} · ${ayAdi(b.ay)} mesaisi zaten onaylanmış (${r.fisNo})` : `Mesai onaylandı — ${r && r.fisNo}`);
+            if (onCarilerTazele)
+                onCarilerTazele();
+            await yukle();
+        }
+        catch (e) {
+            setHata((x) => ({ ...x, [b.id]: `Onaylanamadı: ${sunucuHataMetni(e)}` }));
+        }
+        finally {
+            setSuruyor(false);
+        }
+    };
+    const ucretOnayla = async () => {
+        const kalemler = (ucret || []).filter((x) => secili[x.anahtar]).map((x) => {
+            const yeni = x.tur === "atama" && (x.guncel || {}).tamir && tamirUcret[x.anahtar] !== undefined && tamirUcret[x.anahtar] !== "" ? Number(String(tamirUcret[x.anahtar]).replace(",", ".")) : undefined;
+            return { anahtar: x.anahtar, ozet: x.guncel, ...(yeni !== undefined ? { yeniUcret: yeni } : {}) };
+        });
+        if (!kalemler.length)
+            return;
+        setSuruyor(true);
+        setHata((h) => ({ ...h, ucret: "" }));
+        try {
+            const r = await g25Rpc("ucret_onayla", { kalemler });
+            if (showToast)
+                showToast(`${((r && r.onaylanan) || []).length} ücret onaylandı`);
+            setSecili({});
+            setTamirUcret({});
+            await yukle();
+        }
+        catch (e) {
+            setHata((h) => ({ ...h, ucret: `Onaylanamadı (hiçbiri kaydedilmedi): ${sunucuHataMetni(e)}` }));
+            await yukle();
+        }
+        finally {
+            setSuruyor(false);
+        }
+    };
+    const sekmeDugme = (k, et) => (React.createElement("button", { type: "button", "data-onay-sekme": k, className: sekme === k ? "btn-primary" : "btn-ghost", onClick: () => setSekme(k), style: { padding: "4px 12px", fontSize: 13 } }, et));
+    return (React.createElement("div", { "data-onay-merkezi": true, style: { position: "fixed", inset: 0, background: "rgba(0,0,0,.35)", zIndex: 900, display: "flex", alignItems: "flex-start", justifyContent: "center", overflowY: "auto", padding: 16 } },
+        React.createElement("div", { style: { ...g25Kutu, width: "min(900px, 100%)", margin: "40px 0" } },
+            React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", marginBottom: 10, flexWrap: "wrap" } },
+                React.createElement("b", { style: { fontSize: 15, flex: "1 1 auto" } }, "Onaylar"),
+                sekmeDugme("mesai", `Mesai${mesai ? ` (${mesai.length})` : ""}`),
+                sekmeDugme("ucret", `Ücretler${ucret ? ` (${ucret.filter((x) => !x.onayli).length})` : ""}`),
+                React.createElement("button", { type: "button", className: "btn-ghost", "data-onay-kapat": true, onClick: onKapat }, "Kapat")),
+            !yetkili && React.createElement("div", { style: g25Ret },
+                PARA_YETKI_METNI,
+                " \u2014 liste yaln\u0131z g\u00F6r\u00FCnt\u00FClenir."),
+            sekme === "mesai" && (React.createElement("div", null,
+                hata.mesai && React.createElement("div", { style: g25Ret }, hata.mesai),
+                mesai && !mesai.length && React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-2)" } }, "Onay bekleyen mesai bildirimi yok."),
+                (mesai || []).map((b) => (React.createElement("div", { key: b.id, "data-onay-mesai": b.id, style: { display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", padding: "6px 0", borderTop: "1px solid var(--erp-line-soft)" } },
+                    React.createElement("span", { style: { minWidth: 200 } },
+                        React.createElement("b", null, unvan(b.cariId)),
+                        " \u00B7 ",
+                        ayAdi(b.ay)),
+                    React.createElement("span", { style: { fontSize: 12 } },
+                        "hafta i\u00E7i ",
+                        b.saatler.haftaIci,
+                        " s \u00B7 Cmt ",
+                        b.saatler.cumartesi,
+                        " s \u00B7 Pzr ",
+                        b.saatler.pazar,
+                        " s"),
+                    React.createElement("b", { "data-onay-mesai-tutar": true }, b.hesaplananTutar != null ? `${Number(b.hesaplananTutar).toLocaleString("tr-TR")} ₺` : "tutar hesaplanamadı (maaş yok)"),
+                    React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-2)" } },
+                        "giren ",
+                        b.giren),
+                    React.createElement("button", { type: "button", className: "btn-primary", "data-onay-mesai-onayla": b.id, disabled: !yetkili || suruyor || b.hesaplananTutar == null, title: !yetkili ? PARA_YETKI_METNI : "", onClick: () => mesaiOnayla(b) }, "Onayla"),
+                    hata[b.id] && React.createElement("div", { "data-onay-mesai-hata": b.id, style: { ...g25Ret, flexBasis: "100%" } }, hata[b.id])))))),
+            sekme === "ucret" && (React.createElement("div", null,
+                React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-2)", marginBottom: 6 } },
+                    "Her i\u015F ki\u015Fi(ler), toplam miktar ve \u00FCcretle onaylan\u0131r; biri sonradan de\u011Fi\u015Firse yeniden onay gerekir. K\u0131smi teslimler onaylanan toplam i\u00E7inde \u00F6denir.",
+                    " ",
+                    React.createElement("button", { type: "button", className: "btn-ghost", "data-onay-tumunu-sec": true, disabled: !yetkili, style: { padding: "1px 8px", fontSize: 12 }, onClick: () => setSecili(Object.fromEntries((ucret || []).filter((x) => !x.onayli && !(x.guncel || {}).karisik).map((x) => [x.anahtar, true]))) }, "Onays\u0131zlar\u0131n t\u00FCm\u00FCn\u00FC se\u00E7")),
+                hata.ucret && React.createElement("div", { "data-onay-ucret-hata": true, style: g25Ret }, hata.ucret),
+                (ucret || []).map((x) => (React.createElement("div", { key: x.anahtar, "data-onay-ucret": x.anahtar, "data-onayli": x.onayli ? "1" : "0", style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", padding: "4px 0", borderTop: "1px solid var(--erp-line-soft)", opacity: x.onayli ? 0.6 : 1 } },
+                    React.createElement("input", { type: "checkbox", "data-onay-ucret-sec": x.anahtar, disabled: !yetkili || (x.guncel || {}).karisik || (x.onayli && !((x.guncel || {}).tamir && tamirUcret[x.anahtar])), checked: !!secili[x.anahtar], onChange: (e) => setSecili((s) => ({ ...s, [x.anahtar]: e.target.checked })) }),
+                    React.createElement("span", { style: { fontSize: 13, flex: "1 1 320px" } }, ucretKalemiMetni(x, unvan)),
+                    x.tur === "atama" && (x.guncel || {}).tamir && !(Number(x.odenen) > 0) && (React.createElement("input", { "data-onay-tamir-ucret": x.anahtar, type: "text", inputMode: "decimal", placeholder: "\u00FCcret belirle", disabled: !yetkili, value: tamirUcret[x.anahtar] ?? "", onChange: (e) => { setTamirUcret((t) => ({ ...t, [x.anahtar]: e.target.value })); setSecili((s) => ({ ...s, [x.anahtar]: true })); }, style: { ...inputStyle, width: 100, fontSize: 12 } })),
+                    React.createElement("span", { style: { fontSize: 11, color: x.onayli ? "var(--erp-text-2)" : "var(--erp-warn)" } }, x.onayli ? `onaylı (${x.onaylayan})` : (x.onaylanan ? "DEĞİŞTİ — yeniden onay gerekir" : "onay bekliyor"))))),
+                React.createElement("button", { type: "button", className: "btn-primary", "data-onay-ucret-onayla": true, disabled: !yetkili || suruyor || !Object.values(secili).some(Boolean), title: !yetkili ? PARA_YETKI_METNI : "", onClick: ucretOnayla, style: { marginTop: 10 } }, "Se\u00E7ilenleri onayla"))))));
+}
+// ONAY BEKLİYOR ŞERİDİ (yalnız cari / muhasebe kaydetme yetkilisi): açılışta ve Onaylar kapanınca sayar.
+function OnayBekleyenSeridi({ onAc, yenile }) {
+    const [sayi, setSayi] = useState(null);
+    useEffect(() => {
+        if (!paraYetkisiVar())
+            return;
+        (async () => {
+            try {
+                const [m, u] = await Promise.all([g25Rpc("mesai_bildirimleri", { durum: "bekliyor" }), g25Rpc("ucret_onaylari", { kapsam: "acik" })]);
+                setSayi({ mesai: (m || []).length, ucret: (u || []).filter((x) => !x.onayli).length });
+            }
+            catch (e) {
+                setSayi(null);
+            }
+        })();
+    }, [yenile]);
+    if (!paraYetkisiVar() || !sayi || (!sayi.mesai && !sayi.ucret))
+        return null;
+    return (React.createElement("div", { "data-onay-bekliyor": sayi.mesai + sayi.ucret, style: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8,
+            background: "var(--erp-purple-bg, #F1ECF7)", border: "1.5px solid var(--erp-purple, #6B4E8A)", borderRadius: "var(--erp-r-md)", padding: "7px 12px", fontSize: 13 } },
+        React.createElement("span", { style: { flex: "1 1 260px" } },
+            React.createElement("b", null, "Onay bekliyor:"),
+            " ",
+            sayi.mesai,
+            " mesai bildirimi \u00B7 ",
+            sayi.ucret,
+            " i\u015F\u00E7ilik \u00FCcreti"),
+        React.createElement("button", { type: "button", className: "btn-primary", "data-onay-ac": true, onClick: onAc, style: { padding: "6px 14px", fontSize: 13 } }, "Onaylar")));
+}
 function AtolyeEkrani({ cariler, orders, stok, siparisler, onProsesTamamla, onProsesVer, onClose }) {
     // PROSES NOTU (v1.476.0): siparişte bu prosese yazılan not ("deriyi iyi yerinden kes") iş kartında
     // ve iş alma/teslim ekranının başlığında. Siparişten canlı okunur (`uretimSiparisNotlari`).
@@ -62630,6 +63061,8 @@ function UretimModule({ panelKipi, orders, cop, onAtamaPersonelVer, onSave, show
     // düğmesi çalışmaz — cihaz o ekrana kilitli. Atölyedeki ortak tablet için: kalfa barkodunu
     // okutur, iş listesini görür; menüye, fişlere, cariye hiç ulaşmaz.
     const [atolyeEkraniAcik, setAtolyeEkraniAcik] = useState(panelKipi === "atolye");
+    // G-25 (v1.745.0, 278): Üretim'de mesai SAATİ bildirimi (tutarı cari / muhasebe onaylar) ve onay bekleyen işçilik ücretleri.
+    const [g25Panel, setG25Panel] = useState(null); // null | "mesai" | "ucret"
     const mamulUrunler = (stok || []).filter((p) => p.kategori === "Mamul");
     const seciliUrun = mamulUrunler.find((p) => p.id === urunId);
     const renkSecenekleri = seciliUrun ? Array.from(new Set(seciliUrun.variants.map((v) => v.renk))) : [];
@@ -62731,6 +63164,12 @@ function UretimModule({ panelKipi, orders, cop, onAtamaPersonelVer, onSave, show
             React.createElement("button", { className: "btn-ghost", onClick: () => setBarkodAtolyeAcik(true), style: { borderColor: "var(--erp-brown)", color: "var(--erp-brown)" } },
                 React.createElement(ScanLine, { size: 15 }),
                 " Barkod Okut"),
+            React.createElement("button", { type: "button", className: "btn-ghost", "data-uretim-mesai-bildirimi": true, onClick: () => setG25Panel((x) => (x === "mesai" ? null : "mesai")) },
+                React.createElement(ClipboardList, { size: 15 }),
+                " Mesai bildirimi"),
+            React.createElement("button", { type: "button", className: "btn-ghost", "data-uretim-ucret-onaylari": true, onClick: () => setG25Panel((x) => (x === "ucret" ? null : "ucret")) },
+                React.createElement(Check, { size: 15 }),
+                " \u00DCcret onaylar\u0131"),
             React.createElement("button", { "data-yeni-uretim": "1", className: "btn-primary", onClick: () => {
                     if (mamulUrunler.length === 0) {
                         showToast("Önce Stok ekranından Mamul bir ürün ekleyin");
@@ -62740,6 +63179,8 @@ function UretimModule({ panelKipi, orders, cop, onAtamaPersonelVer, onSave, show
                 } },
                 React.createElement(Plus, { size: 15 }),
                 " Yeni \u00DCretim Sipari\u015Fi")),
+        g25Panel === "mesai" && React.createElement(MesaiBildirimPaneli, { tanimlar: tanimlar, cariler: cariler }),
+        g25Panel === "ucret" && React.createElement(UcretOnayDurumu, { yenile: g25Panel, cariler: cariler }),
         atolyeEkraniAcik && (React.createElement(AtolyeEkrani, { cariler: cariler, orders: orders, stok: stok, siparisler: siparisler, onProsesTamamla: onProsesTamamla, onProsesVer: onProsesVer, onAtamaPersonelVer: onAtamaPersonelVer, onClose: () => setAtolyeEkraniAcik(false) })),
         barkodAtolyeAcik && (React.createElement(BarkodAtolyeEkrani, { cariler: cariler, uretim: orders, stok: stok, onProsesVer: onProsesVer, onAtamaPersonelVer: onAtamaPersonelVer, onProsesTamamla: onProsesTamamla, onClose: () => setBarkodAtolyeAcik(false) })),
         showForm && (React.createElement("div", { style: { background: "var(--erp-panel)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 16, marginBottom: 20 } },
@@ -63097,7 +63538,7 @@ function TeslimAlmaFormu({ atama, prosesler, buProses, hammaddeler, iadeAdaylari
         });
         onKaydet({ saglam, tamir, hurda, iadeler: iadeListesi, ekAlinanlar: ekAlinanListesi });
     }
-    const kutu = (b, alan, renk) => (React.createElement("input", { type: "number", min: "0", step: "1", value: satirlar[b][alan], onChange: (e) => setSatirlar({ ...satirlar, [b]: { ...satirlar[b], [alan]: e.target.value } }), style: {
+    const kutu = (b, alan, renk) => (React.createElement("input", { type: "number", min: "0", step: "1", "data-teslim-kutu": `${alan}|${b}`, value: satirlar[b][alan], onChange: (e) => setSatirlar({ ...satirlar, [b]: { ...satirlar[b], [alan]: e.target.value } }), style: {
             width: 58, padding: "4px 6px", fontSize: 12, textAlign: "center", fontWeight: 700,
             border: `1px solid ${alfaEkle(renk, "66")}`, borderRadius: "var(--erp-r-sm)", color: renk, background: "#fff",
         } }));
@@ -63159,7 +63600,7 @@ function TeslimAlmaFormu({ atama, prosesler, buProses, hammaddeler, iadeAdaylari
                                 c.unvan,
                                 c.id === atama.personelId ? " (işi yapan)" : ""))))),
                     React.createElement("label", { style: { display: "flex", flexDirection: "column", gap: 3 } },
-                        React.createElement("span", { style: { fontSize: 10, color: "var(--erp-text-2)" } }, "Tamir \u00FCcreti (\u20BA/adet)"),
+                        React.createElement("span", { style: { fontSize: 10, color: "var(--erp-text-2)" } }, paraYetkisiVar() ? "Tamir ücreti (₺/adet)" : "Önerilen tamir ücreti (₺/adet) — onaya gider"),
                         React.createElement("input", { type: "number", min: "0", step: "0.01", value: d.ucret || "", onChange: (e) => guncelle("ucret", e.target.value), placeholder: "0 = \u00FCcretsiz", title: "Bo\u015F ya da 0 b\u0131rak\u0131l\u0131rsa tamir i\u00E7in \u00F6deme yap\u0131lmaz", style: { ...inputStyle, width: 120, padding: "5px 7px", fontSize: 12 } }))),
                 hammaddeler.length > 0 && (React.createElement("div", { style: { marginTop: 7 } },
                     React.createElement("span", { style: { fontSize: 10, color: "var(--erp-text-2)" } }, "Tamirde yeniden \u00E7\u0131kacak hammaddeler (se\u00E7meli)"),
@@ -68522,9 +68963,30 @@ function PlanlamaSatiri({ grup, siparis, stok, cariler, tumSiparisler, uretimSip
 //
 // İki satır TEK sunucu fişinde (CVR-…, 078 `paraFisiYuku` `ekCariler`): biri yazılıp öteki düşemez; fiş iptali ikisini birden
 // kaldırır. Satırlar sıradan tahsilat / ödeme satırı (`islemTipi`), ödeme şekli "Virman" — ekstre, son tahsilat ve ödemeler
-// listesi ve raporlar onları ayrı kural yazmadan tanır. İki satır aynı tutar ve aynı para biriminde (kur yok: para hareket
-// etmiyor; carinin bakiyesi para birimi bazında tutulur).
+// listesi ve raporlar onları ayrı kural yazmadan tanır. İki satır aynı tutar ve aynı para biriminde.
+//
+// KUR DÖNÜŞÜMÜ YOK → FARKLI PARA BİRİMİ REDDEDİLİR (kullanıcı 23 Kasım: "kur dönüşümü yoksa farklı para birimlerini reddet").
+// Virmanın para birimi ilk carinin para birimidir (seçilemez); karşı cari başka para birimindeyse virman yazılmaz — USD
+// carinin bakiyesine TL satır düşmek, yapılmamış bir kur çevrimini yapılmış gibi gösterirdi. Kasalar / bankalar arası para
+// aktarımı AYRI işlem: Kasa & Banka › "Hesaplar arası aktarım" (210; orada kur çevirici var).
 const CARI_VIRMAN_TURU = "Cari virmanı";
+// Saf: virman yazılabilir mi? Döner: null (geçerli) ya da kullanıcıya gösterilecek neden. Form (kaydet) ve kayıt kapısı
+// (260 `cariVirmaniKaydet`) AYNI kuralı kullanır — form atlanıp kapı doğrudan çağrılsa da kural geçerli.
+function cariVirmanDogrula({ ilkCari, karsiCari, tutar }) {
+    if (!ilkCari)
+        return "İlk cariyi seçin";
+    if (!karsiCari)
+        return "Karşı cariyi seçin";
+    if (karsiCari.id === ilkCari.id)
+        return "Karşı cari ilk cariyle aynı olamaz";
+    const t = typeof tutar === "number" ? tutar : parseFloat(String(tutar == null ? "" : tutar).replace(",", "."));
+    if (!Number.isFinite(t) || t <= 0)
+        return "Geçerli bir tutar girin (sıfırdan büyük)";
+    const a = ilkCari.paraBirimi || "TRY", b = karsiCari.paraBirimi || "TRY";
+    if (a !== b)
+        return `Para birimleri farklı (${ilkCari.unvan}: ${a}, ${karsiCari.unvan}: ${b}) — cari virmanında kur dönüşümü yok; aynı para birimindeki cariler arasında yapılır`;
+    return null;
+}
 // Saf: iki carinin hareket satırları. Döner: { ilk, karsi } — ikisi de 035 cari hareketi biçiminde (fiş no'yu kapı verir).
 function cariVirmanHareketleri({ tip, ilkCari, karsiCari, tarih, tutar, paraBirimi, defter, aciklama }) {
     const ilkTip = tip === "Tahsilat" ? "Tahsilat" : "Ödeme";
@@ -68540,7 +69002,8 @@ function cariVirmanHareketleri({ tip, ilkCari, karsiCari, tarih, tutar, paraBiri
 // props: tip ("Tahsilat" | "Ödeme"), cari (ilk seçilen), cariler, showToast,
 //        onKaydet({ karsiCariId, ilk, karsi }) → true (kaydedildi) | false (yazılamadı, form dolu kalır)
 function CariVirmanSatiri({ tip, cari, cariler, showToast, onKaydet }) {
-    const [form, setForm] = useState(() => ({ karsiCariId: "", tarih: bugunYerel(), tutar: "", paraBirimi: cari.paraBirimi || "TRY", defter: "Genel", aciklama: "" }));
+    const pb = cari.paraBirimi || "TRY"; // virmanın para birimi = ilk carinin (seçilemez; yukarıdaki kural)
+    const [form, setForm] = useState(() => ({ karsiCariId: "", tarih: bugunYerel(), tutar: "", defter: "Genel", aciklama: "" }));
     const kaydediliyorRef = useRef(false);
     const karsiCari = (cariler || []).find((c) => c.id === form.karsiCariId) || null;
     const t = parseFloat(form.tutar);
@@ -68548,20 +69011,13 @@ function CariVirmanSatiri({ tip, cari, cariler, showToast, onKaydet }) {
     async function kaydet() {
         if (kaydediliyorRef.current)
             return;
-        if (!karsiCari) {
-            showToast("Karşı cariyi seçin");
-            return;
-        }
-        if (karsiCari.id === cari.id) {
-            showToast("Karşı cari ilk cariyle aynı olamaz");
-            return;
-        }
-        if (!(t > 0)) {
-            showToast("Tutar girin");
+        const hata = cariVirmanDogrula({ ilkCari: cari, karsiCari, tutar: form.tutar });
+        if (hata) {
+            showToast(hata);
             return;
         }
         const { ilk, karsi } = cariVirmanHareketleri({ tip, ilkCari: cari, karsiCari, tarih: form.tarih, tutar: t,
-            paraBirimi: form.paraBirimi, defter: form.defter, aciklama: form.aciklama });
+            paraBirimi: pb, defter: form.defter, aciklama: form.aciklama });
         kaydediliyorRef.current = true;
         let ok = false;
         try {
@@ -68586,7 +69042,7 @@ function CariVirmanSatiri({ tip, cari, cariler, showToast, onKaydet }) {
                 " \u00B7 Virman"),
             React.createElement("span", { style: { fontSize: 12, color: "var(--erp-text-2)" } }, cari.unvan),
             React.createElement("span", { style: { marginLeft: "auto" } },
-                React.createElement("button", { type: "button", className: "btn-primary btn-save", "data-cari-virman-kaydet": "1", onClick: kaydet },
+                React.createElement("button", { type: "button", className: "btn-primary btn-save", "data-cari-virman-kaydet": "1", disabled: !paraYetkisiVar(), title: paraYetkisiVar() ? undefined : PARA_YETKI_METNI, onClick: kaydet },
                     React.createElement(Save, { size: 14 }),
                     " Kaydet"))),
         React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 10 } },
@@ -68597,7 +69053,7 @@ function CariVirmanSatiri({ tip, cari, cariler, showToast, onKaydet }) {
             React.createElement(Field, { label: "Tutar" },
                 React.createElement("div", { style: { display: "flex", gap: 4 } },
                     React.createElement("input", { type: "number", step: "0.01", min: "0", "data-cari-virman-tutar": "1", value: form.tutar, onChange: (e) => setForm({ ...form, tutar: e.target.value }), style: { ...inputStyle, flex: 1 } }),
-                    React.createElement("select", { "data-cari-virman-pb": "1", value: form.paraBirimi, onChange: (e) => setForm({ ...form, paraBirimi: e.target.value }), style: { ...inputStyle, width: 68 } }, MUHASEBE_PARA_BIRIMLERI.map((pb) => React.createElement("option", { key: pb, value: pb }, pb))))),
+                    React.createElement("span", { "data-cari-virman-pb": pb, title: "Virman\u0131n para birimi ilk carinin para birimidir (kur d\u00F6n\u00FC\u015F\u00FCm\u00FC yok)", style: { ...inputStyle, width: 56, display: "inline-flex", alignItems: "center", justifyContent: "center", background: "var(--erp-panel)", fontWeight: 700 } }, pb))),
             React.createElement(Field, { label: "Defter" },
                 React.createElement("select", { value: form.defter, onChange: (e) => setForm({ ...form, defter: e.target.value }), style: inputStyle },
                     React.createElement("option", { value: "Genel" }, "Genel"),
@@ -68605,6 +69061,7 @@ function CariVirmanSatiri({ tip, cari, cariler, showToast, onKaydet }) {
                     React.createElement("option", { value: "Muhasebe" }, "Muhasebe (ikisine de)"))),
             React.createElement(Field, { label: "A\u00E7\u0131klama" },
                 React.createElement("input", { value: form.aciklama, "data-cari-virman-aciklama": "1", placeholder: "Opsiyonel", onChange: (e) => setForm({ ...form, aciklama: e.target.value }), style: inputStyle }))),
+        karsiCari && (karsiCari.paraBirimi || "TRY") !== pb && (React.createElement("div", { "data-cari-virman-pb-uyari": "1", style: { fontSize: 12, color: "var(--erp-warn)", marginTop: 8 } }, cariVirmanDogrula({ ilkCari: cari, karsiCari, tutar: 1 }))),
         ozet && React.createElement("div", { "data-cari-virman-ozet": "1", style: { fontSize: 12, color: "var(--erp-text-2)", marginTop: 8 } },
             "Kaydedilince: ",
             ozet,
@@ -68719,7 +69176,7 @@ function SiparisOdemeFormu({ siparis, cari, tip, tutar, paraBirimi, odemeSekli, 
                 cari.unvan,
                 sip.siparisNo ? ` · ${sip.siparisNo}` : ""),
             React.createElement("span", { style: { marginLeft: "auto", display: "inline-flex", gap: 8 } },
-                React.createElement("button", { type: "button", className: "btn-primary btn-save", "data-siparis-odeme-kaydet": "1", onClick: kaydet },
+                React.createElement("button", { type: "button", className: "btn-primary btn-save", "data-siparis-odeme-kaydet": "1", disabled: !paraYetkisiVar(), title: paraYetkisiVar() ? undefined : PARA_YETKI_METNI, onClick: kaydet },
                     React.createElement(Save, { size: 14 }),
                     " Kaydet"),
                 React.createElement("button", { type: "button", className: "btn-ghost", onClick: onVazgec },
@@ -68885,7 +69342,7 @@ function OdemeSatiri({ tip, odemeSekli, hesap, cari, kurlar, onKaydet, showToast
             muhasebeMi && React.createElement(ResmiTutarAlani, { defter: "Muhasebe", anaPB: hesapPB, anaTutar: t > 0 ? t : 0, kurlar: kurlar, deger: f.resmi || { pb: hesapPB }, onDegis: (v) => setF({ ...f, resmi: v }), ayniAd: "kasa ile" }))),
         alan("Açıklama", React.createElement("input", { value: f.aciklama, placeholder: "Opsiyonel", onChange: (e) => setF({ ...f, aciklama: e.target.value }), onKeyDown: (e) => { if (e.key === "Enter")
                 kaydet(); }, style: { ...kutu, width: "100%" } }), 160),
-        React.createElement("button", { type: "button", className: "btn-primary btn-save", "data-odeme-satiri-kaydet": "1", onClick: kaydet, style: { background: renk, borderColor: renk, padding: "8px 16px", whiteSpace: "nowrap" } },
+        React.createElement("button", { type: "button", className: "btn-primary btn-save", "data-odeme-satiri-kaydet": "1", disabled: !paraYetkisiVar(), title: paraYetkisiVar() ? undefined : PARA_YETKI_METNI, onClick: kaydet, style: { background: renk, borderColor: renk, padding: "8px 16px", whiteSpace: "nowrap" } },
             React.createElement(HareketIkonu, { tip: tip, size: 14 }),
             " ",
             tip,
@@ -74036,7 +74493,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.744.35)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.745.1)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

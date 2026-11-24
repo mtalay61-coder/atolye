@@ -492,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.745.0";
-const SURUM_TARIHI = "2026-11-24";
-const SURUM_NOTU = "Mesai saati Üretim'den bildirilir, tutarı cari / muhasebe onaylar; işçilik ve tamir ücretleri onaylıdır; para işlemleri cari / muhasebe yetkisi ister (sunucu G-25 paketiyle birlikte)";
+const SURUM = "1.745.1";
+const SURUM_TARIHI = "2026-11-25";
+const SURUM_NOTU = "Mesai saati Üretim'den bildirilir, tutarı cari / muhasebe onaylar; işçilik her iş için kişi, toplam miktar ve ücretle onaylanır; para işlemleri cari / muhasebe yetkisi ister (sunucu G-25 paketiyle birlikte)";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -525,6 +525,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" };   // teklif: v1.723.0, Sipariş'in alt sekmesi
 
 const SURUM_GECMISI = [
+  { surum: "1.745.1", tarih: "25.11.2026", eklenen: ["Onaylar › Ücretler: \"Onaysızların tümünü seç\"; her satırda ödenen miktar."], degisen: ["İşçilik onayı İŞ düzeyinde: her iş (verilen iş + kısmi teslimden kalan parçaları) kişi, toplam miktar ve ücretle birlikte onaylanır; biri sonradan değişirse yeniden onay gerekir. Kısmi teslimler onaylanan toplam içinde ödenir. Ürün bazlı proses ücreti onayı ve \"bütün ürünlerin ücretleri\" seçeneği kalktı (ara proses onayı ürün başına sürüyor)."], duzeltilen: [] },
   { surum: "1.745.0", tarih: "24.11.2026", eklenen: ["Üretim › Mesai bildirimi: bölüm personelinin aylık mesai SAATİ girilir (tutar gösterilmez); cari / muhasebe yetkilisi Onaylar › Mesai'den onaylar, tek MS fişi kesilir. Cari kartında yetkisi olmayan kullanıcı \"Mesaiyi onaya gönder\" görür.", "Onaylar penceresi (cari / muhasebe yetkilisine şerit): mesai bildirimleri ve işçilik ücretleri — ürünün proses ücreti, ara proses carisi / ücreti, numune ücreti, tamir ücreti (yetkili belirleyebilir) ve hem müşteri hem tedarikçi kartın işçilik alıcısı olması. Değer onaydan sonra değişirse yeniden onay gerekir.", "Üretim › Ücret onayları: onay bekleyen ücretler (teslimde işçilik neden yazılmadı sorusunun cevabı)."], degisen: ["Tahsilat, ödeme, cari virmanı, sipariş ödemesi, cari kartı hareketi, demirbaş alımı, maaş tahakkuku onayı, personel maaşı / aylık saati, mesai katları ve bölüm personel listesi cari ya da muhasebe kaydetme yetkisi ister; yetkisi olmayanda düğmeler kapalı ve gerekçeli.", "Teslimde tamir ücreti, yetkisi olmayan kullanıcı için öneridir; onaylanınca ödenir."], duzeltilen: ["Sunucunun yetki / bağlantı reddi \"giriş yapılmamış\" diye yanlış çevriliyordu; artık sunucunun iletisi olduğu gibi gösterilir. Maaş ve mesai reddi düğmenin yanında kalıcı yazılır."] },
   { surum: "1.744.36", tarih: "23.11.2026", eklenen: ["Kasa & Banka › hesap › \"Hesaplar arası aktarım\": kasadan bankaya, bankadan kasaya, hesaptan hesaba para aktarımı yeniden arayüzde (cari virmanından ayrı işlem; kur çevirici ve aktarım sebebi aynen)."], degisen: ["Ödeme & Tahsilat'taki virman \"Cari virmanı (cariden cariye)\" adını aldı. Para birimi ilk carinin para birimidir; karşı cari başka para birimindeyse virman yapılmaz (kur dönüşümü yok). Aynı cari ve sıfır / eksi / boş tutar reddedilir."], duzeltilen: [] },
   { surum: "1.744.35", tarih: "23.11.2026", eklenen: ["Ödeme & Tahsilat › ödeme şekli \"Virman (cariden cariye)\": ilk cari ve karşı cari seçilir. Ödemede ilk cariye ödeme, karşı cariden tahsilat; tahsilatta ilk cariden tahsilat, karşı cariye ödeme. İki satır tek fişte (CVR-…), kasa / banka hareketi yok; geri alınca ikisi birden kalkar.", "Ödeme & Tahsilat › Kasa / Banka satırının yanında + düğmesi: yeni kasa ya da banka hesabı oradan açılır ve hemen seçilir."], degisen: ["Kasa & Banka ekranında Virman ve \"Yeni Kasa / Yeni Banka Hesabı\" düğmeleri kalktı (hesap düzenleme, arşivleme ve silme yerinde)."], duzeltilen: [] },

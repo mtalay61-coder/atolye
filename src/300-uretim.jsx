@@ -206,7 +206,7 @@ function UretimModule({ panelKipi, orders, cop, onAtamaPersonelVer, onSave, show
       </div>
 
       {g25Panel === "mesai" && <MesaiBildirimPaneli tanimlar={tanimlar} cariler={cariler} />}
-      {g25Panel === "ucret" && <UcretOnayDurumu yenile={g25Panel} />}
+      {g25Panel === "ucret" && <UcretOnayDurumu yenile={g25Panel} cariler={cariler} />}
 
       {atolyeEkraniAcik && (
         <AtolyeEkrani

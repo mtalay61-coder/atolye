@@ -97,7 +97,7 @@ function TeslimAlmaFormu({ atama, prosesler, buProses, hammaddeler, iadeAdaylari
 
   const kutu = (b, alan, renk) => (
     <input
-      type="number" min="0" step="1"
+      type="number" min="0" step="1" data-teslim-kutu={`${alan}|${b}`}
       value={satirlar[b][alan]}
       onChange={(e) => setSatirlar({ ...satirlar, [b]: { ...satirlar[b], [alan]: e.target.value } })}
       style={{

@@ -38,7 +38,7 @@ begin
   if to_regclass('guvenlik.g25_yedek') is not null then
     raise exception 'G-25 zaten uygulanmış (guvenlik.g25_yedek var). Geri almak için 25-cari-yetki-geri-al.sql. Hiçbir şey değişmedi.';
   end if;
-  select string_agg(x, ', ') into v_eksik from unnest(array['public.g25_fis_cari_yetki(jsonb)', 'public.g25_fis_cari_yetki_tek(jsonb, jsonb, jsonb, jsonb, jsonb)', 'public.g25_fis_iptal_yetki(text)', 'public.g25_iscilik_carisi(text, text, boolean)', 'public.g25_mesai_anahtari(text, text)', 'public.g25_mesai_tahakkuku(text, text)', 'public.g25_mesai_tutari(text, jsonb)', 'public.g25_onayli(text)', 'public.g25_stok_bagi(jsonb, jsonb, jsonb, jsonb)', 'public.g25_tamir_onayli(text)', 'public.g25_tanimlar_ucret_koruma()', 'public.g25_ucret_guncel(text)', 'public.g25_ucret_ozeti(jsonb)', 'public.g25_uretim_bagi(jsonb, jsonb, jsonb, jsonb)', 'public.g25_yetki_iste(text[], text, text)', 'public.mesai_bildir(jsonb)', 'public.mesai_bildirim_iptal(jsonb)', 'public.mesai_bildirimleri(jsonb)', 'public.mesai_onayla(jsonb)', 'public.ucret_onayla(jsonb)', 'public.ucret_onaylari(jsonb)']) x where to_regprocedure(x) is not null;
+  select string_agg(x, ', ') into v_eksik from unnest(array['public.g25_atama_koku(text)', 'public.g25_fis_cari_yetki(jsonb)', 'public.g25_fis_cari_yetki_tek(jsonb, jsonb, jsonb, jsonb, jsonb)', 'public.g25_fis_iptal_yetki(text)', 'public.g25_iscilik_carisi(text, text, boolean)', 'public.g25_mesai_anahtari(text, text)', 'public.g25_mesai_tahakkuku(text, text)', 'public.g25_mesai_tutari(text, jsonb)', 'public.g25_onayli(text)', 'public.g25_stok_bagi(jsonb, jsonb, jsonb, jsonb)', 'public.g25_tanimlar_ucret_koruma()', 'public.g25_ucret_guncel(text)', 'public.g25_ucret_ozeti(jsonb)', 'public.g25_uretim_bagi(jsonb, jsonb, jsonb, jsonb)', 'public.g25_yetki_iste(text[], text, text)', 'public.mesai_bildir(jsonb)', 'public.mesai_bildirim_iptal(jsonb)', 'public.mesai_bildirimleri(jsonb)', 'public.mesai_onayla(jsonb)', 'public.ucret_onayla(jsonb)', 'public.ucret_onaylari(jsonb)']) x where to_regprocedure(x) is not null;
   if v_eksik is not null or to_regclass('public.mes_bildirim') is not null or to_regclass('public.ucr_onay') is not null or to_regclass('public.isc_odeme') is not null or exists (select 1 from pg_trigger where tgname = 'g25_tanimlar_ucret_koruma') then
     raise exception 'G-25''in oluşturacağı nesneler zaten var (%): sessizce değiştirilmez. Hiçbir şey değişmedi.', coalesce(v_eksik, 'mes_bildirim / ucr_onay / isc_odeme / tetikleyici');
   end if;
@@ -149,7 +149,7 @@ begin
   end ';
   create table public.ucr_onay (
     anahtar text primary key,
-    tur text not null check (tur in ('proses', 'numune', 'ara', 'tamir', 'cari')),
+    tur text not null check (tur in ('atama', 'ara')),
     ozet jsonb not null,
     onaylayan text not null,
     onay_zamani timestamptz not null default now(),
@@ -159,6 +159,7 @@ begin
   revoke all on public.ucr_onay from public, anon, authenticated;
   create table public.isc_odeme (
     id text primary key,                    -- 'atama:<id>' | 'ara:<üretim>:<ara proses>'
+    kok text,                               -- atama zincirinin kökü (ara proseste null)
     uretim_id text not null,
     proses text,
     tamir boolean not null default false,
@@ -170,25 +171,57 @@ begin
   );
   alter table public.isc_odeme enable row level security;
   revoke all on public.isc_odeme from public, anon, authenticated;
+  create or replace function public.g25_atama_koku(p_atama text) returns text
+  language plpgsql stable security definer set search_path = public as '
+  declare
+    v text := p_atama; v_ust text; n int := 0; v_uretim text;
+  begin
+    select uretim_id::text into v_uretim from public.uretim_atamalari where id::text = p_atama;
+    if v_uretim is null then return null; end if;
+    loop
+      select nullif(a.ek ->> ''kismiKalanKaynak'', '''') into v_ust from public.uretim_atamalari a where a.id::text = v;
+      exit when v_ust is null or n > 100
+        or not exists (select 1 from public.uretim_atamalari b where b.id::text = v_ust and b.uretim_id::text = v_uretim);
+      v := v_ust; n := n + 1;
+    end loop;
+    return v;
+  end ';
   create or replace function public.g25_ucret_guncel(p_anahtar text) returns jsonb
   language plpgsql stable security definer set search_path = public as '
   declare
     par text[] := string_to_array(p_anahtar, ''|'');
-    ur jsonb; ue jsonb; u jsonb; a jsonb; ap jsonb; c jsonb;
-    v numeric; v_cari text;
+    ur jsonb; ue jsonb; u jsonb; k jsonb; ap jsonb;
+    v numeric; v_cari text; z jsonb;
   begin
-    if par[1] = ''proses'' then
-      select to_jsonb(x) into ur from public.urunler x where x.id::text = par[2];
-      if ur is null then return null; end if;
-      ue := case when jsonb_typeof(ur -> ''ek'') = ''object'' then ur -> ''ek'' else ''{}''::jsonb end;
-      v := coalesce(public.stk_sayi(case when jsonb_typeof(ur -> ''proses_ucretleri'') = ''object'' then ur -> ''proses_ucretleri'' ->> par[3] end),
-                    public.stk_sayi(case when jsonb_typeof(ue -> ''prosesUcretleri'') = ''object'' then ue -> ''prosesUcretleri'' ->> par[3] end),
-                    public.stk_sayi(ur -> ''veri'' -> ''prosesUcretleri'' ->> par[3]));
-      return case when v is null then null else jsonb_build_object(''ucret'', v) end;
-    elsif par[1] = ''numune'' then
-      select to_jsonb(x) into u from public.uretim x where x.id::text = par[2];
-      v := public.stk_sayi(u -> ''ek'' -> ''prosesUcretleri'' ->> par[3]);
-      return case when v is null then null else jsonb_build_object(''ucret'', v) end;
+    if par[1] = ''atama'' then
+      select to_jsonb(x) into k from public.uretim_atamalari x where x.id::text = par[2];
+      if k is null then return null; end if;
+      with recursive zincir as (
+        select a.* from public.uretim_atamalari a where a.id::text = par[2]
+        union
+        select a.* from public.uretim_atamalari a join zincir z on a.ek ->> ''kismiKalanKaynak'' = z.id::text and a.uretim_id::text = z.uretim_id::text)
+      select jsonb_build_object(
+               ''personel'', coalesce(jsonb_agg(distinct personel_id::text) filter (where personel_id is not null), ''[]''::jsonb),
+               ''miktar'', coalesce(sum(public.stk_sayi(miktar::text)), 0),
+               ''prosesSayisi'', count(distinct proses), ''tamirSayisi'', count(distinct coalesce(tamir_mi, false)),
+               ''tamirUcretleri'', count(distinct coalesce(public.stk_sayi(tamir_ucret::text), 0)),
+               ''tamirUcret'', max(coalesce(public.stk_sayi(tamir_ucret::text), 0)))
+        into z from zincir;
+      if coalesce((k ->> ''tamir_mi'')::boolean, false) then
+        v := (z ->> ''tamirUcret'')::numeric;
+      else
+        select to_jsonb(x) into u from public.uretim x where x.id::text = k ->> ''uretim_id'';
+        select to_jsonb(x) into ur from public.urunler x where x.id::text = u ->> ''urun_id'';
+        ue := case when jsonb_typeof(ur -> ''ek'') = ''object'' then ur -> ''ek'' else ''{}''::jsonb end;
+        v := coalesce(public.stk_sayi(u -> ''ek'' -> ''prosesUcretleri'' ->> (k ->> ''proses'')),
+                      public.stk_sayi(case when jsonb_typeof(ur -> ''proses_ucretleri'') = ''object'' then ur -> ''proses_ucretleri'' ->> (k ->> ''proses'') end),
+                      public.stk_sayi(case when jsonb_typeof(ue -> ''prosesUcretleri'') = ''object'' then ue -> ''prosesUcretleri'' ->> (k ->> ''proses'') end),
+                      public.stk_sayi(ur -> ''veri'' -> ''prosesUcretleri'' ->> (k ->> ''proses'')));
+      end if;
+      return jsonb_build_object(''uretim'', k ->> ''uretim_id'', ''proses'', k ->> ''proses'', ''tamir'', coalesce((k ->> ''tamir_mi'')::boolean, false),
+        ''personel'', z -> ''personel'', ''miktar'', (z ->> ''miktar'')::numeric, ''ucret'', v)
+        || case when (z ->> ''prosesSayisi'')::int > 1 or (z ->> ''tamirSayisi'')::int > 1 or (z ->> ''tamirUcretleri'')::int > 1 or v is null
+                then jsonb_build_object(''karisik'', true) else ''{}''::jsonb end;
     elsif par[1] = ''ara'' then
       select to_jsonb(x) into ur from public.urunler x where x.id::text = par[2];
       select x into ap from public.tanimlar t, jsonb_array_elements(case when jsonb_typeof(t.veri -> ''araProsesler'') = ''array'' then t.veri -> ''araProsesler'' else ''[]''::jsonb end) x
@@ -198,36 +231,14 @@ begin
       v_cari := coalesce(nullif(ue -> ''araProsesCariOverride'' ->> par[3], ''''), nullif(ap ->> ''cariId'', ''''));
       v := coalesce(public.stk_sayi(ue -> ''araProsesUcretleri'' ->> par[3]), public.stk_sayi(ap ->> ''ucret''));
       return case when v is null or v_cari is null then null else jsonb_build_object(''cari'', v_cari, ''ucret'', v) end;
-    elsif par[1] = ''tamir'' then
-      select to_jsonb(x) into a from public.uretim_atamalari x where x.id::text = par[2];
-      if a is null or not coalesce((a ->> ''tamir_mi'')::boolean, false) then return null; end if;
-      return jsonb_build_object(''uretim'', a ->> ''uretim_id'', ''proses'', a ->> ''proses'', ''personel'', a ->> ''personel_id'',
-        ''miktar'', public.stk_sayi(a ->> ''miktar''), ''ucret'', coalesce(public.stk_sayi(a ->> ''tamir_ucret''), 0));
-    elsif par[1] = ''cari'' then
-      select to_jsonb(x) into c from public.cariler x where x.id::text = par[2];
-      return case when c is null then null else jsonb_build_object(''cari'', c ->> ''id'', ''tip'', c ->> ''tip'') end;
     end if;
     return null;
   end ';
   create or replace function public.g25_onayli(p_anahtar text) returns boolean
   language sql stable security definer set search_path = public as '
-    select exists (select 1 from public.ucr_onay o where o.anahtar = p_anahtar and o.ozet = public.g25_ucret_guncel(p_anahtar))
+    select exists (select 1 from public.ucr_onay o where o.anahtar = p_anahtar and o.ozet = public.g25_ucret_guncel(p_anahtar)
+                    and not coalesce((o.ozet ->> ''karisik'')::boolean, false))
   ';
-  create or replace function public.g25_tamir_onayli(p_atama text) returns boolean
-  language plpgsql stable security definer set search_path = public as '
-  declare
-    g jsonb := public.g25_ucret_guncel(''tamir|'' || p_atama);
-    v_kaynak text; k jsonb;
-  begin
-    if g is null then return false; end if;
-    if public.g25_onayli(''tamir|'' || p_atama) then return true; end if;
-    select nullif(x.ek ->> ''kismiKalanKaynak'', '''') into v_kaynak from public.uretim_atamalari x where x.id::text = p_atama;
-    if v_kaynak is null then return false; end if;
-    select o.ozet into k from public.ucr_onay o where o.anahtar = ''tamir|'' || v_kaynak;
-    return k is not null and k ->> ''personel'' is not distinct from g ->> ''personel'' and k ->> ''proses'' is not distinct from g ->> ''proses''
-       and k ->> ''uretim'' is not distinct from g ->> ''uretim'' and (k ->> ''ucret'')::numeric = (g ->> ''ucret'')::numeric
-       and (g ->> ''miktar'')::numeric <= (k ->> ''miktar'')::numeric;
-  end ';
   create or replace function public.g25_iscilik_carisi(p_cari text, p_proses text, p_onayda_cari boolean) returns text
   language plpgsql stable security definer set search_path = public as '
   declare
@@ -239,7 +250,7 @@ begin
     tip := coalesce(c ->> ''tip'', '''');
     fasoncu := coalesce(c -> ''ek'' ->> ''altTip'', '''') = ''Fasoncu'';
     if tip = ''Müşteri'' then return format(''cari %s müşteri — müşteriye işçilik alacağı yazılmaz'', p_cari); end if;
-    if tip = ''Her İkisi'' and not p_onayda_cari and not public.g25_onayli(''cari|'' || p_cari) then
+    if tip = ''Her İkisi'' and not p_onayda_cari then
       return format(''cari %s hem müşteri hem tedarikçi — işçilik alıcısı olarak cari / muhasebe onayı gerekir'', p_cari);
     end if;
     if tip not in (''Personel'', ''Tedarikçi'', ''Her İkisi'') then return format(''cari %s tipi (%s) işçilik alamaz'', p_cari, tip); end if;
@@ -262,8 +273,8 @@ begin
     uid_ text := nullif(f ->> ''uretimId'', '''');
     v_istek text := nullif(f ->> ''__istek'', '''');
     u jsonb; adet numeric; c jsonb; e jsonb; m numeric; b numeric; t numeric;
-    a jsonb; ap jsonb; v_ozet jsonb; v_anahtar text; v_hata text; v_id text; v_proses text;
-    kullanilan text[] := ''{}''; v_toplam numeric; v_numune boolean;
+    a jsonb; ap jsonb; v_ozet jsonb; v_anahtar text; v_hata text; v_id text; v_proses text; v_kok text;
+    kullanilan text[] := ''{}''; v_toplam numeric; v_tamir boolean;
   begin
     if jsonb_array_length(public.stk_dizi(p_kasa -> ''hareketler'')) > 0 or jsonb_array_length(public.stk_dizi(p_kasa -> ''cekler'')) > 0 then
       return ''üretim fişinde kasa / çek satırı var'';
@@ -282,56 +293,58 @@ begin
       if m is null or b is null or t is null or m <= 0 or b <= 0 then return format(''işçilik satırı %s miktar / ücret eksik'', c ->> ''id''); end if;
       if abs(m * b - t) > 0.011 then return format(''işçilik satırı %s tutarı miktar × ücretten farklı'', c ->> ''id''); end if;
       if adet is not null and m > adet + 0.000001 then return format(''işçilik satırı %s miktarı üretim adedinden (%s) büyük'', c ->> ''id'', adet); end if;
-      v_hata := null; v_id := null; a := null;
-      -- (a) Teslim edilen atama: alt''taki satır sunucuda KAYITLI, bu üretimin, tamamlanmamış ve istek onu tamamlıyor; kişi satırın carisi.
-      --     Değerler KAYITLI satırdan. Kilit atama başına: eşzamanlı iki teslimden ikincisi birincinin sonucunu görür.
+      v_hata := null; v_id := null;
+      -- (a) Teslim edilen atama (kayıtlı, bu üretimin, tamamlanmamış, istek onu tamamlıyor, kişisi satırın carisi). Değerler KAYITLI satırdan.
       for a in select to_jsonb(s) from public.uretim_atamalari s
                 where s.uretim_id::text = uid_ and s.personel_id::text = c ->> ''cari_id'' and not coalesce(s.tamamlandi_mi, false)
                   and s.id::text in (select x ->> ''id'' from jsonb_array_elements(public.stk_dizi(p_alt -> ''uretim_atamalari'' -> ''satirlar'')) x
                                       where coalesce((x ->> ''tamamlandi_mi'')::boolean, false))
                   and not (s.id::text = any (kullanilan))
                 order by s.id loop
-        perform pg_advisory_xact_lock(hashtextextended(''g25_isc:atama:'' || (a ->> ''id''), 0));
+        v_kok := public.g25_atama_koku(a ->> ''id'');
+        -- ZİNCİR KİLİDİ: aynı işin (kök + kalan parçalar) teslimleri sırayla — ikinci teslim birincinin ödemesini görür.
+        perform pg_advisory_xact_lock(hashtextextended(''g25_isc:zincir:'' || v_kok, 0));
         if exists (select 1 from public.isc_odeme o join public.stk_fis fs on fs.istek = o.istek
                     where o.id = ''atama:'' || (a ->> ''id'') and not fs.iptal) then
           v_hata := format(''atama %s için işçilik zaten ödenmiş'', a ->> ''id''); continue;
+        end if;
+        -- kilitten SONRA yeniden oku (bekleyen öteki teslim atamayı tamamlamış olabilir)
+        if coalesce((select tamamlandi_mi from public.uretim_atamalari where id::text = a ->> ''id''), false) then
+          v_hata := format(''atama %s başka bir teslimle tamamlanmış'', a ->> ''id''); continue;
         end if;
         if m > coalesce(public.stk_sayi(a ->> ''miktar''), 0) + 0.000001 then
           v_hata := format(''işçilik miktarı (%s) atamanın kayıtlı miktarından (%s) büyük'', m, a ->> ''miktar''); continue;
         end if;
         v_proses := a ->> ''proses'';
-        if coalesce((a ->> ''tamir_mi'')::boolean, false) then
-          v_anahtar := ''tamir|'' || (a ->> ''id'');
-          v_ozet := public.g25_ucret_guncel(v_anahtar);
-          if not public.g25_tamir_onayli(a ->> ''id'') then
-            v_hata := format(''tamir ücreti (%s ₺) cari / muhasebe onayı bekliyor ya da onaydan sonra değişti'', v_ozet ->> ''ucret''); continue;
-          end if;
-          if abs((v_ozet ->> ''ucret'')::numeric - b) > 0.000001 then
-            v_hata := format(''ücret %s onaylı tamir ücretinden (%s) farklı'', b, v_ozet ->> ''ucret''); continue;
-          end if;
-        else
-          v_numune := public.stk_sayi(u -> ''ek'' -> ''prosesUcretleri'' ->> v_proses) is not null;
-          v_anahtar := case when v_numune then ''numune|'' || uid_ || ''|'' || v_proses else ''proses|'' || (u ->> ''urun_id'') || ''|'' || v_proses end;
-          v_ozet := public.g25_ucret_guncel(v_anahtar);
-          if not public.g25_onayli(v_anahtar) then
-            v_hata := format(''%s ücreti (%s ₺) cari / muhasebe onayı bekliyor ya da onaydan sonra değişti'', v_proses, coalesce(v_ozet ->> ''ucret'', ''tanımsız'')); continue;
-          end if;
-          if abs((v_ozet ->> ''ucret'')::numeric - b) > 0.000001 then
-            v_hata := format(''ücret %s onaylı %s ücretinden (%s) farklı'', b, v_proses, v_ozet ->> ''ucret''); continue;
-          end if;
+        v_tamir := coalesce((a ->> ''tamir_mi'')::boolean, false);
+        v_anahtar := ''atama|'' || v_kok;
+        v_ozet := public.g25_ucret_guncel(v_anahtar);
+        if not public.g25_onayli(v_anahtar) then
+          v_hata := format(''%s%s işi (%s adet × %s ₺) cari / muhasebe onayı bekliyor ya da onaydan sonra miktar / kişi / ücret değişti'',
+            v_proses, case when v_tamir then '' tamir'' else '''' end, v_ozet ->> ''miktar'', coalesce(v_ozet ->> ''ucret'', ''tanımsız'')); continue;
+        end if;
+        if abs((v_ozet ->> ''ucret'')::numeric - b) > 0.000001 then
+          v_hata := format(''ücret %s onaylı ücretten (%s) farklı'', b, v_ozet ->> ''ucret''); continue;
+        end if;
+        select coalesce(sum(o.miktar), 0) into v_toplam from public.isc_odeme o join public.stk_fis fs on fs.istek = o.istek
+         where o.kok = v_kok and not fs.iptal;
+        if v_toplam + m > (v_ozet ->> ''miktar'')::numeric + 0.000001 then
+          v_hata := format(''bu iş için ödenen (%s + %s) onaylanan miktarı (%s) aşıyor'', v_toplam, m, v_ozet ->> ''miktar''); continue;
+        end if;
+        if not v_tamir then
           select coalesce(sum(o.miktar), 0) into v_toplam from public.isc_odeme o join public.stk_fis fs on fs.istek = o.istek
            where o.uretim_id = uid_ and o.proses = v_proses and not o.tamir and not fs.iptal;
           if adet is not null and v_toplam + m > adet + 0.000001 then
             v_hata := format(''%s için ödenen işçilik (%s + %s) üretim adedini (%s) aşıyor'', v_proses, v_toplam, m, adet); continue;
           end if;
         end if;
-        v_hata := public.g25_iscilik_carisi(c ->> ''cari_id'', v_proses, coalesce((a ->> ''tamir_mi'')::boolean, false));
+        v_hata := public.g25_iscilik_carisi(c ->> ''cari_id'', v_proses, true);
         if v_hata is not null then continue; end if;
         v_id := ''atama:'' || (a ->> ''id'');
         kullanilan := kullanilan || (a ->> ''id'');
         delete from public.isc_odeme where id = v_id;
-        insert into public.isc_odeme (id, uretim_id, proses, tamir, cari_id, miktar, ucret, istek)
-        values (v_id, uid_, v_proses, coalesce((a ->> ''tamir_mi'')::boolean, false), c ->> ''cari_id'', m, b, v_istek);
+        insert into public.isc_odeme (id, kok, uretim_id, proses, tamir, cari_id, miktar, ucret, istek)
+        values (v_id, v_kok, uid_, v_proses, v_tamir, c ->> ''cari_id'', m, b, v_istek);
         exit;
       end loop;
       if v_id is not null then continue; end if;
@@ -352,8 +365,8 @@ begin
           v_hata := format(''%s ara prosesinin işçiliği bu üretim için zaten ödenmiş'', ap ->> ''ad''); v_id := null; continue;
         end if;
         delete from public.isc_odeme where id = v_id;
-        insert into public.isc_odeme (id, uretim_id, proses, tamir, cari_id, miktar, ucret, istek)
-        values (v_id, uid_, ap ->> ''ad'', false, c ->> ''cari_id'', m, b, v_istek);
+        insert into public.isc_odeme (id, kok, uretim_id, proses, tamir, cari_id, miktar, ucret, istek)
+        values (v_id, null, uid_, ap ->> ''ad'', false, c ->> ''cari_id'', m, b, v_istek);
         exit;
       end loop;
       if v_id is null then
@@ -364,15 +377,11 @@ begin
   end ';
   create or replace function public.ucret_onaylari(p jsonb) returns jsonb
   language plpgsql stable security definer set search_path = public as '
-  declare
-    kapsam text := coalesce(p ->> ''kapsam'', ''acik'');
   begin
     perform public.g25_yetki_iste(array[''uretim'', ''stok'', ''fisler'', ''siparis'', ''cari'', ''muhasebe''], ''goruntuleme'', ''ücret onayları'');
     return coalesce((
       with acik as (
-        select distinct u.id::text as uid, u.urun_id::text as urun, u.siparis_no, a.id::text as aid, a.proses, a.personel_id::text as personel,
-               coalesce(a.tamir_mi, false) as tamir, coalesce(public.stk_sayi(a.tamir_ucret::text), 0) as tamir_ucret,
-               public.stk_sayi(u.ek -> ''prosesUcretleri'' ->> a.proses) as numune
+        select distinct u.id::text as uid, u.urun_id::text as urun, u.siparis_no, public.g25_atama_koku(a.id::text) as kok
           from public.uretim u join public.uretim_atamalari a on a.uretim_id::text = u.id::text
          where not coalesce(a.tamamlandi_mi, false)),
       araproses as (
@@ -380,31 +389,26 @@ begin
                jsonb_array_elements(case when jsonb_typeof(t.veri -> ''araProsesler'') = ''array'' then t.veri -> ''araProsesler'' else ''[]''::jsonb end) x
          where t.id = ''tekil''),
       anahtarlar as (
-        select distinct case when numune is not null then ''numune|'' || uid || ''|'' || proses else ''proses|'' || urun || ''|'' || proses end as anahtar,
-               case when numune is not null then ''numune'' else ''proses'' end as tur, urun, uid, siparis_no, proses
-          from acik where not tamir
-        union select ''tamir|'' || aid, ''tamir'', urun, uid, siparis_no, proses from acik where tamir and tamir_ucret > 0
-        union select distinct ''ara|'' || acik.urun || ''|'' || ap.id, ''ara'', acik.urun, null, null, ap.ad from acik cross join araproses ap
-        union select distinct ''cari|'' || c.id::text, ''cari'', null, null, null, null from acik join public.cariler c on c.id::text = acik.personel where c.tip = ''Her İkisi''
-        union select ''proses|'' || x.id::text || ''|'' || k.key, ''proses'', x.id::text, null, null, k.key
-          from public.urunler x, jsonb_each(case when jsonb_typeof(to_jsonb(x) -> ''proses_ucretleri'') = ''object'' then to_jsonb(x) -> ''proses_ucretleri'' else ''{}''::jsonb end) k
-         where kapsam = ''tum''
-        union select ''ara|'' || x.id::text || ''|'' || ap.id, ''ara'', x.id::text, null, null, ap.ad from public.urunler x cross join araproses ap
-         where kapsam = ''tum'' and (to_jsonb(x) -> ''ek'' -> ''araProsesEklentileri'')::text like ''%"'' || ap.id || ''"%'')
+        select distinct ''atama|'' || kok as anahtar, ''atama'' as tur, urun, uid, siparis_no from acik where kok is not null
+        union select distinct ''ara|'' || acik.urun || ''|'' || ap.id, ''ara'', acik.urun, null, null from acik cross join araproses ap)
       select jsonb_agg(jsonb_build_object(''anahtar'', k.anahtar, ''tur'', k.tur, ''urunId'', k.urun,
-               ''urunAd'', (select x.ad from public.urunler x where x.id::text = k.urun), ''uretimId'', k.uid, ''siparisNo'', k.siparis_no, ''proses'', k.proses,
-               ''guncel'', g.ozet, ''onayli'', case when k.tur = ''tamir'' then public.g25_tamir_onayli(split_part(k.anahtar, ''|'', 2)) else o.ozet is not null and o.ozet = g.ozet end, ''onaylanan'', o.ozet, ''onaylayan'', o.onaylayan, ''onayZamani'', o.onay_zamani)
-             order by (o.ozet is not null and o.ozet = g.ozet), k.tur, k.anahtar)
-        -- anahtar başına TEK satır (aynı ürünün birden çok açık üretimi aynı proses anahtarını üretir)
+               ''urunAd'', (select x.ad from public.urunler x where x.id::text = k.urun), ''uretimId'', k.uid, ''siparisNo'', k.siparis_no,
+               ''proses'', coalesce(g.ozet ->> ''proses'', (select x.ad from araproses x where k.tur = ''ara'' and x.id = split_part(k.anahtar, ''|'', 3))),
+               ''guncel'', g.ozet, ''onayli'', public.g25_onayli(k.anahtar), ''onaylanan'', o.ozet, ''onaylayan'', o.onaylayan, ''onayZamani'', o.onay_zamani,
+               ''odenen'', case when k.tur = ''atama'' then (select coalesce(sum(i.miktar), 0) from public.isc_odeme i join public.stk_fis fs on fs.istek = i.istek
+                                                         where i.kok = split_part(k.anahtar, ''|'', 2) and not fs.iptal) end)
+             order by public.g25_onayli(k.anahtar), k.tur, k.anahtar)
         from (select distinct on (anahtar) * from anahtarlar order by anahtar, uid nulls last) k
         cross join lateral (select public.g25_ucret_guncel(k.anahtar) as ozet) g
         left join public.ucr_onay o on o.anahtar = k.anahtar
-       where g.ozet is not null and (k.tur <> ''ara'' or (g.ozet ->> ''ucret'')::numeric > 0)), ''[]''::jsonb);
+       where g.ozet is not null and coalesce((g.ozet ->> ''ucret'')::numeric, 1) > 0
+         and (k.tur <> ''atama'' or exists (select 1 from jsonb_array_elements_text(g.ozet -> ''personel'') pe
+                                           where public.g25_iscilik_carisi(pe, g.ozet ->> ''proses'', true) is null))), ''[]''::jsonb);
   end ';
   create or replace function public.ucret_onayla(p jsonb) returns jsonb
   language plpgsql security definer set search_path = public as '
   declare
-    k jsonb; v_anahtar text; v_tur text; v_guncel jsonb; v_gorulen jsonb; v_yeni numeric; sonuc jsonb := ''[]''::jsonb;
+    k jsonb; v_anahtar text; v_tur text; v_guncel jsonb; v_gorulen jsonb; v_yeni numeric; sonuc jsonb := ''[]''::jsonb; v_kok text;
     eposta text := lower(coalesce(auth.jwt() ->> ''email'', ''yonetim''));
   begin
     perform public.g25_yetki_iste(array[''cari'', ''muhasebe''], ''kaydetme'', ''işçilik ücreti onayı'');
@@ -414,20 +418,37 @@ begin
     for k in select x from jsonb_array_elements(p -> ''kalemler'') x loop
       v_anahtar := coalesce(k ->> ''anahtar'', '''');
       v_tur := split_part(v_anahtar, ''|'', 1);
-      if v_tur not in (''proses'', ''numune'', ''ara'', ''tamir'', ''cari'') then raise exception ''Bilinmeyen onay anahtarı: %'', v_anahtar using errcode = ''22023''; end if;
-      perform pg_advisory_xact_lock(hashtextextended(''g25_onay:'' || v_anahtar, 0));
+      if v_tur not in (''atama'', ''ara'') then raise exception ''Bilinmeyen onay anahtarı: %'', v_anahtar using errcode = ''22023''; end if;
+      if v_tur = ''atama'' then
+        v_kok := split_part(v_anahtar, ''|'', 2);
+        if public.g25_atama_koku(v_kok) is distinct from v_kok then
+          raise exception ''Onay zincirin köküne verilir (%, kök %)'', v_anahtar, public.g25_atama_koku(v_kok) using errcode = ''22023'';
+        end if;
+        perform pg_advisory_xact_lock(hashtextextended(''g25_isc:zincir:'' || v_kok, 0));
+      else
+        perform pg_advisory_xact_lock(hashtextextended(''g25_onay:'' || v_anahtar, 0));
+      end if;
       v_gorulen := k -> ''ozet'';
       v_yeni := public.stk_sayi(k ->> ''yeniUcret'');
       if v_yeni is not null then
-        if v_tur <> ''tamir'' then raise exception ''Ücret burada yalnız tamirde belirlenir (%): ürün kartından / Tanımlar''''dan değiştirip onaylayın'', v_anahtar using errcode = ''22023''; end if;
+        if v_tur <> ''atama'' or not coalesce((public.g25_ucret_guncel(v_anahtar) ->> ''tamir'')::boolean, false) then
+          raise exception ''Ücret burada yalnız tamir işinde belirlenir (%): ürün kartından / Tanımlar''''dan değiştirip onaylayın'', v_anahtar using errcode = ''22023'';
+        end if;
         if v_yeni < 0 then raise exception ''Tamir ücreti eksi olamaz'' using errcode = ''22023''; end if;
-        update public.uretim_atamalari set tamir_ucret = v_yeni
-         where id::text = split_part(v_anahtar, ''|'', 2) and coalesce(tamir_mi, false) and not coalesce(tamamlandi_mi, false);
-        if not found then raise exception ''Tamir ataması yok ya da tamamlanmış: %'', v_anahtar using errcode = ''P0002''; end if;
+        if exists (select 1 from public.isc_odeme o join public.stk_fis fs on fs.istek = o.istek where o.kok = v_kok and not fs.iptal) then
+          raise exception ''Bu tamir işinde ödeme başlamış — ücret değiştirilemez (%)'', v_anahtar using errcode = ''KR015'';
+        end if;
+        with recursive zincir as (
+          select a.id from public.uretim_atamalari a where a.id::text = v_kok
+          union select a.id from public.uretim_atamalari a join zincir z on a.ek ->> ''kismiKalanKaynak'' = z.id::text)
+        update public.uretim_atamalari set tamir_ucret = v_yeni where id in (select id from zincir) and not coalesce(tamamlandi_mi, false);
         v_gorulen := jsonb_set(coalesce(v_gorulen, ''{}''::jsonb), ''{ucret}'', to_jsonb(v_yeni));
       end if;
       v_guncel := public.g25_ucret_guncel(v_anahtar);
       if v_guncel is null then raise exception ''Onaylanacak değer yok (kaynak silinmiş ya da ücret tanımsız): %'', v_anahtar using errcode = ''P0002''; end if;
+      if coalesce((v_guncel ->> ''karisik'')::boolean, false) then
+        raise exception ''İş zinciri tutarsız (farklı proses / tamir ücreti ya da ücret tanımsız): % — önce düzeltin'', v_anahtar using errcode = ''22023'';
+      end if;
       if v_gorulen is distinct from v_guncel then
         raise exception ''Onaylanan değer güncel değil (%): ekranda % — sunucuda %. Listeyi yenileyip yeniden onaylayın'', v_anahtar, v_gorulen, v_guncel using errcode = ''KR015'';
       end if;
@@ -441,7 +462,7 @@ begin
   end ';
   revoke all on function public.ucret_onaylari(jsonb), public.ucret_onayla(jsonb) from public, anon;
   grant execute on function public.ucret_onaylari(jsonb), public.ucret_onayla(jsonb) to authenticated;
-  revoke all on function public.g25_ucret_guncel(text), public.g25_onayli(text), public.g25_tamir_onayli(text), public.g25_iscilik_carisi(text, text, boolean) from public, anon, authenticated;
+  revoke all on function public.g25_ucret_guncel(text), public.g25_onayli(text), public.g25_atama_koku(text), public.g25_iscilik_carisi(text, text, boolean) from public, anon, authenticated;
   create or replace function public.g25_mesai_anahtari(p_cari text, p_ay text) returns text
   language sql stable security definer set search_path = public as '
     select ''MESAI-'' || p_ay || ''-'' || coalesce((

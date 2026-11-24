@@ -3,14 +3,15 @@
 // JWT'li authenticated — her kullanıcı giriş ekranından). Supabase'e bağlanmaz. Kullanıcı: "Yeni mesai ve tamir akışını ayrı istemci
 // sürümünde tamamla. Yetkisiz düğmeleri kapat, sunucu retlerini kullanıcıya açıkça göster." + "meşru üretim tesliminin çalıştığını sına".
 // Fikstür (bu dosya kurar): üretim g25-ek1 (ekr-bot, Siyah 40 × 10, tek adım Kesim), atama g25-ek1-a → g25-q (Personel, bölümde değil).
-// Kesim ücreti 35 ONAYSIZ başlar. Adımlar:
+// İş (10 × 35, g25-q) ONAYSIZ başlar. Adımlar:
 //   1 Uretimci: Üretim › Ücret onayları → Kesim 35 "onay bekliyor" görünür
 //   2 Uretimci: teslim al → sunucu reddeder; ekranda ret iletisi (ücret onay bekliyor), sunucuda fiş YOK, atama tamamlanmadı
 //   3 Uretimci: Üretim › Mesai bildirimi → g25-p hafta içi 10 s → bekleyen bildirim; ekranda TUTAR YOK
 //   4 Uretimci: cari kartı (g25-p) › maaş kutusu KAPALI; maaş şeridi YOK; Ödeme & Tahsilat cari virmanı Kaydet KAPALI (menüde varsa)
 //   5 Muhasip: "Onay bekliyor" şeridi → Onaylar › Ücretler › Kesim seç → onayla (ucr_onay); Mesai › Onayla → TEK MS fişi 2.000 ₺
 //      (30.000 / 225 × 10 × 1,5); ikinci kez onay düğmesi listede yok (bildirim onaylı); sunucuda MS sayısı 1
-//   6 Uretimci (yeni oturum): aynı teslim → GEÇER: tek ÜRT fişi, g25-q Alacak 350 (10 × 35), atama tamamlandı, isc_odeme 1 satır
+//   6 Uretimci (yeni oturum): KISMİ teslim 6 → geçer (210); istemci kalan 4'ü yeni parça yazar, iş onayı geçerli kalır; kalan 4 → geçer
+//     (140); zincirde ödenen 10 = onaylanan
 //   7 Uretimci: Mesai bildirimi › aynı ay → "onaylandı", Bildir kapalı
 const { ekranAc, toastlar, O } = require("./ortak-ekran.js");
 const DB = process.env.EKRAN_DB || "atolye_ekran";
@@ -31,7 +32,7 @@ const k_ = (ad, g, b) => { const ok = JSON.stringify(g) === JSON.stringify(b); i
   await q(`insert into public.uretim_atamalari (id, uretim_id, proses, personel_id, beden_miktarlari, miktar, verildi_mi, verilme_tarihi, tamamlandi_mi, tamir_mi, tamir_ucret, ek)
     values ('g25-ek1-a', 'g25-ek1', 'Kesim', 'g25-q', '{"40": 10}'::jsonb, 10, true, '2026-11-24T08:10:00.000Z', false, false, 0, '{}'::jsonb)`);
   await q(`update public.urunler set proses_ucretleri = '{"Kesim": 35}'::jsonb where id = 'ekr-bot'`);
-  await q(`delete from public.ucr_onay where anahtar like 'proses|ekr-bot|%'`);
+  await q(`delete from public.ucr_onay where anahtar like 'atama|g25-ek1-%'`);
   await q(`delete from public.mes_bildirim where cari_id = 'g25-p'`);
   const ay = new Date().toISOString().slice(0, 7);
   const sayi = async (s, p) => Number((await q(s, p))[0].n);
@@ -39,10 +40,12 @@ const k_ = (ad, g, b) => { const ok = JSON.stringify(g) === JSON.stringify(b); i
   const msSayisi = () => sayi(`select count(*) n from public.car_hareket h join public.stk_fis f on f.id = h.fis_no where h.cari_id = 'g25-p' and f.onek = 'MS' and not f.iptal and not h.iptal`);
   const gorunurMetin = (s) => s.evaluate(() => document.body.innerText.replace(/\s+/g, " "));
 
-  const teslimAl = async (s) => {
+  // saglam: verilirse 40 bedeninin SAĞLAM kutusuna yazılır (kısmi teslim — istemci kalan parçayı yeni atama yapar)
+  const teslimAl = async (s, saglam = null) => {
     await O.modulAc(s, "Üretim"); await s.waitForTimeout(800);
     await s.getByText("G25EK1", { exact: true }).last().click(); await s.waitForTimeout(1000);
     const n = await s.locator("[data-teslim-al]:visible").count();
+    if (n && saglam != null) { await s.locator('[data-teslim-kutu="saglam|40"]:visible').first().fill(String(saglam)); await s.waitForTimeout(300); }
     if (n) await s.locator("[data-teslim-al]:visible").first().click();
     await s.waitForTimeout(3000);
     return n > 0;
@@ -54,7 +57,7 @@ const k_ = (ad, g, b) => { const ok = JSON.stringify(g) === JSON.stringify(b); i
     sayfa.on("dialog", (d) => d.accept());
     await O.modulAc(sayfa, "Üretim"); await sayfa.waitForTimeout(800);
     await sayfa.locator("[data-uretim-ucret-onaylari]").first().click(); await sayfa.waitForTimeout(1500);
-    k_("1 ücret onay listesinde Kesim 35 bekliyor", await sayfa.locator('[data-ucret-onay-bekleyen="proses|ekr-bot|Kesim"]').count(), 1);
+    k_("1 onay listesinde iş (Kesim, 10 × 35) bekliyor", await sayfa.locator('[data-ucret-onay-bekleyen="atama|g25-ek1-a"]').count(), 1);
     await sayfa.locator("[data-uretim-ucret-onaylari]").first().click();
     const fis0 = await urtFis();
     const form = await teslimAl(sayfa);
@@ -62,7 +65,7 @@ const k_ = (ad, g, b) => { const ok = JSON.stringify(g) === JSON.stringify(b); i
     k_("2 teslim formu bulundu", form, true);
     k_("2 onaysız ücretle teslim: sunucuda fiş yok", (await urtFis()) - fis0, 0);
     k_("2 atama tamamlanmadı", (await q("select tamamlandi_mi t from public.uretim_atamalari where id = 'g25-ek1-a'"))[0].t, false);
-    k_("2 ekranda ret iletisi (ücret onay bekliyor)", /Teslim kaydedilemedi.*Kesim ücreti \(35 ₺\) cari \/ muhasebe onayı bekliyor/.test(metin), true);
+    k_("2 ekranda ret iletisi (ücret onay bekliyor)", /Teslim kaydedilemedi.*Kesim işi \(10 adet × 35 ₺\) cari \/ muhasebe onayı bekliyor/.test(metin), true);
     // 3 mesai bildirimi
     await O.modulAc(sayfa, "Üretim"); await sayfa.waitForTimeout(600);
     await sayfa.locator("[data-uretim-mesai-bildirimi]").first().click(); await sayfa.waitForTimeout(1500);
@@ -118,10 +121,10 @@ const k_ = (ad, g, b) => { const ok = JSON.stringify(g) === JSON.stringify(b); i
     k_("5 'Onay bekliyor' şeridi görünür", (await sayfa.locator("[data-onay-bekliyor]").count()) > 0, true);
     await sayfa.locator("[data-onay-ac]").first().click(); await sayfa.waitForTimeout(1500);
     await sayfa.locator('[data-onay-sekme="ucret"]').click(); await sayfa.waitForTimeout(800);
-    await sayfa.locator('[data-onay-ucret-sec="proses|ekr-bot|Kesim"]').check();
+    await sayfa.locator('[data-onay-ucret-sec="atama|g25-ek1-a"]').check();
     await sayfa.locator("[data-onay-ucret-onayla]").click(); await sayfa.waitForTimeout(2000);
-    const o = (await q(`select ozet from public.ucr_onay where anahtar = 'proses|ekr-bot|Kesim'`))[0];
-    k_("5 Kesim 35 onaylandı (sunucu)", o && Number(o.ozet.ucret), 35);
+    const o = (await q(`select ozet from public.ucr_onay where anahtar = 'atama|g25-ek1-a'`))[0];
+    k_("5 iş onaylandı (sunucu: 10 × 35, g25-q)", o && [Number(o.ozet.miktar), Number(o.ozet.ucret), o.ozet.personel], [10, 35, ["g25-q"]]);
     await sayfa.locator('[data-onay-sekme="mesai"]').click(); await sayfa.waitForTimeout(800);
     const bid = (await q(`select id from public.mes_bildirim where cari_id = 'g25-p' and ay = $1`, [ay]))[0].id;
     k_("5 mesai tutarı ekranda 2.000 ₺", (await sayfa.locator(`[data-onay-mesai="${bid}"] [data-onay-mesai-tutar]`).innerText()).replace(/\s/g, ""), "2.000₺");
@@ -138,27 +141,35 @@ const k_ = (ad, g, b) => { const ok = JSON.stringify(g) === JSON.stringify(b); i
     await sayfa.waitForTimeout(1500);
     await sayfa.locator("[data-onay-ac]").first().click(); await sayfa.waitForTimeout(1500);
     await sayfa.locator('[data-onay-sekme="ucret"]').click(); await sayfa.waitForTimeout(800);
-    k_("5b tamir talebi listede (onay bekliyor, 5.000)", (await sayfa.locator('[data-onay-ucret="tamir|g25-ek1-t"]').innerText()).includes("5.000"), true);
-    await sayfa.locator('[data-onay-tamir-ucret="tamir|g25-ek1-t"]').fill("40");
+    k_("5b tamir talebi listede (onay bekliyor, 5.000)", (await sayfa.locator('[data-onay-ucret="atama|g25-ek1-t"]').innerText()).includes("5.000"), true);
+    await sayfa.locator('[data-onay-tamir-ucret="atama|g25-ek1-t"]').fill("40");
     await sayfa.locator("[data-onay-ucret-onayla]").click(); await sayfa.waitForTimeout(2000);
-    const t = (await q(`select a.tamir_ucret::text u, o.ozet from public.uretim_atamalari a left join public.ucr_onay o on o.anahtar = 'tamir|g25-ek1-t' where a.id = 'g25-ek1-t'`))[0];
+    const t = (await q(`select a.tamir_ucret::text u, o.ozet from public.uretim_atamalari a left join public.ucr_onay o on o.anahtar = 'atama|g25-ek1-t' where a.id = 'g25-ek1-t'`))[0];
     k_("5b tamir ücreti 40 belirlendi ve onaylandı (atama + onay özeti)", [Number(t.u), t.ozet && Number(t.ozet.ucret), t.ozet && Number(t.ozet.miktar)], [40, 40, 2]);
     await q(`delete from public.uretim_atamalari where id = 'g25-ek1-t'`);   // teslim adımını etkilemesin (sunucu teslimi matriste)
     k_("sayfa hatası yok (Muhasip)", hatalar, []);
     await tarayici.close();
   }
-  // ── 6–7: Uretimci yeniden
+  // ── 6–7: Uretimci yeniden — GERÇEK KISMİ TESLİM: 6 sağlam (istemci kalan 4'ü yeni parça yapar, kismiKalanKaynak), sonra kalan 4
   {
     const { tarayici, sayfa, hatalar } = await ekranAc(DB, { kullanici: "Uretimci" });
     sayfa.on("dialog", (d) => d.accept());
     const fis0 = await urtFis();
-    await teslimAl(sayfa);
-    const yaz = await q(`select h.cari_id, h.yon, h.tutar::text t from public.car_hareket h join public.stk_fis f on f.id = h.fis_no
-      where f.uretim_id = 'g25-ek1' and not f.iptal and not h.iptal`);
-    k_("6 onaylı ücretle teslim: tek ÜRT fişi", (await urtFis()) - fis0, 1);
-    k_("6 işçilik g25-q Alacak 350", yaz.map((x) => [x.cari_id, x.yon, Number(x.t)]), [["g25-q", "Alacak", 350]]);
-    k_("6 atama tamamlandı + ödeme kaydı", [(await q("select tamamlandi_mi t from public.uretim_atamalari where id = 'g25-ek1-a'"))[0].t,
-      await sayi("select count(*) n from public.isc_odeme where id = 'atama:g25-ek1-a'")], [true, 1]);
+    const iscilik = async () => (await q(`select h.cari_id, h.yon, h.tutar::text t from public.car_hareket h join public.stk_fis f on f.id = h.fis_no
+      where f.uretim_id = 'g25-ek1' and not f.iptal and not h.iptal order by h.tutar`)).map((x) => [x.cari_id, x.yon, Number(x.t)]);
+    await teslimAl(sayfa, 6);
+    k_("6a kısmi teslim 6: tek ÜRT fişi, g25-q Alacak 210", [(await urtFis()) - fis0, await iscilik()], [1, [["g25-q", "Alacak", 210]]]);
+    const kalan = await q(`select id, miktar::text m, tamamlandi_mi t, ek ->> 'kismiKalanKaynak' k from public.uretim_atamalari where uretim_id = 'g25-ek1' and id <> 'g25-ek1-a' and not tamir_mi`);
+    k_("6a istemci kalan parçayı yazdı (4 adet, kaynak g25-ek1-a, açık)", kalan.map((x) => [Number(x.m), x.k, x.t]), [[4, "g25-ek1-a", false]]);
+    k_("6a iş onayı hâlâ geçerli (zincir toplamı 10)", (await q(`select public.g25_onayli('atama|g25-ek1-a') o`))[0].o, true);
+    // ikinci teslim: kart açık kalmış olabilir — üretim numarasına yeniden tıklamak kapatır; sayfa durumu ne olursa olsun formu bul
+    if (!(await sayfa.locator("[data-teslim-al]:visible").count())) await teslimAl(sayfa);
+    else { await sayfa.locator("[data-teslim-al]:visible").first().click(); await sayfa.waitForTimeout(3000); }
+    if ((await urtFis()) - fis0 < 2) { const m = await sayfa.evaluate(() => document.body.innerText.replace(/\s+/g, " "));
+      console.log("  · 6b ekran:", (m.match(/Teslim kaydedilemedi[^|]{0,300}/) || [m.slice(0, 300)])[0]); await sayfa.screenshot({ path: "/tmp/akis-6b.png" }); }
+    k_("6b kalan 4 teslim: ikinci ÜRT fişi, toplam 350", [(await urtFis()) - fis0, await iscilik()], [2, [["g25-q", "Alacak", 140], ["g25-q", "Alacak", 210]]]);
+    k_("6b zincirde ödenen = onaylanan 10; iki ödeme kaydı", [Number((await q(`select coalesce(sum(miktar), 0) n from public.isc_odeme o join public.stk_fis f on f.istek = o.istek where o.kok = 'g25-ek1-a' and not f.iptal`))[0].n),
+      await sayi(`select count(*) n from public.isc_odeme where kok = 'g25-ek1-a'`)], [10, 2]);
     await O.modulAc(sayfa, "Üretim"); await sayfa.waitForTimeout(600);
     await sayfa.locator("[data-uretim-mesai-bildirimi]").first().click(); await sayfa.waitForTimeout(1500);
     const satir = sayfa.locator('[data-mesai-bildirim-satir="g25-p"]');

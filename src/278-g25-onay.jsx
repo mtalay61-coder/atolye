@@ -4,9 +4,10 @@
 // tahakkuku, ürünsüz alış / satış, demirbaş…) ve personel ücreti (maaş, aylık saat, mesai katı) CARİ veya MUHASEBE kaydetme yetkisi
 // ister. Üretim kullanıcısı MİKTARI girer (mesai saati, teslim, tamir talebi); PARAYI cari / muhasebe yetkilisi belirler ya da onaylar:
 //   • mesai: Üretim › Mesai bildirimi (mesai_bildir — saat; tutar gösterilmez) → yetkili Onaylar › Mesai (mesai_onayla — tek MS fişi)
-//   • işçilik ücreti: ürünün proses ücreti, ara proses carisi / ücreti, numune ücreti, tamir ücreti ve "hem müşteri hem tedarikçi"
-//     kartın işçilik alıcısı olması ONAYLANIR (ucret_onayla). Değer onaydan sonra değişirse onay geçersiz olur; teslim işçiliği yalnız
-//     onaylı ücretle yazılır (sunucu reddeder — ret iletisi teslim ekranında görünür).
+//   • işçilik: her İŞ (atama + kısmi teslimden doğan kalan parçaları) kişi(ler), TOPLAM miktar ve ücretle ONAYLANIR (ucret_onayla;
+//     tamirde yetkili ücreti belirleyebilir); ara proses carisi / ücreti ürün başına onaylanır. Kişi, miktar ya da ücret onaydan sonra
+//     değişirse onay geçersiz olur; kısmi teslimler onaylanan toplam içinde ödenir (1.745.1). Teslim işçiliği yalnız onaylı işle yazılır
+//     (sunucu reddeder — ret iletisi teslim ekranında görünür).
 // Bu dosya istemci aynasıdır (K6): yetkisiz düğme kapalı ve gerekçeli; asıl koruma sunucuda. Sunucu reddi KALICI olarak ilgili düğmenin
 // yanında yazılır (yalnız kısa süreli bildirim değil — 1.744.36'da ret iletisi birkaç saniyede kayboluyordu, ekran ölçümü).
 
@@ -132,7 +133,8 @@ function MesaiBildirimPaneli({ tanimlar, cariler }) {
 }
 
 // ÜCRET ONAY DURUMU (salt okur, Üretim'de herkese): onay bekleyen ücretler — teslim neden reddedildi sorusunun cevabı.
-function UcretOnayDurumu({ yenile }) {
+function UcretOnayDurumu({ yenile, cariler }) {
+  const unvan = (id) => { const c = (cariler || []).find((x) => x.id === id); return c ? c.unvan : id; };
   const [liste, setListe] = useState(null);
   const [hata, setHata] = useState("");
   useEffect(() => { (async () => {
@@ -146,18 +148,18 @@ function UcretOnayDurumu({ yenile }) {
         <span style={{ fontSize: 11, fontWeight: 400, color: "var(--erp-text-2)" }}> — onaylanmamış ücretle teslimde işçilik yazılmaz; cari / muhasebe yetkilisi Onaylar'dan onaylar</span></div>
       {hata && <div style={g25Ret}>{hata}</div>}
       {!liste.length && !hata && <div style={{ fontSize: 12, color: "var(--erp-text-2)" }}>Açık üretimlerin bütün ücretleri onaylı.</div>}
-      {liste.slice(0, 40).map((x) => <div key={x.anahtar} data-ucret-onay-bekleyen={x.anahtar} style={{ fontSize: 12, padding: "2px 0" }}>{ucretKalemiMetni(x)}</div>)}
+      {liste.slice(0, 40).map((x) => <div key={x.anahtar} data-ucret-onay-bekleyen={x.anahtar} style={{ fontSize: 12, padding: "2px 0" }}>{ucretKalemiMetni(x, unvan)}</div>)}
     </div>
   );
 }
-function ucretKalemiMetni(x) {
+function ucretKalemiMetni(x, unvan) {
   const g = x.guncel || {};
   const tl = (v) => `${Number(v || 0).toLocaleString("tr-TR")} ₺`;
-  if (x.tur === "proses") return `${x.urunAd || x.urunId} · ${x.proses} ücreti ${tl(g.ucret)}`;
-  if (x.tur === "numune") return `Numune ${x.siparisNo || x.uretimId} · ${x.proses} ücreti ${tl(g.ucret)}`;
-  if (x.tur === "ara") return `${x.urunAd || x.urunId} · ara proses ${x.proses}: ${g.cari} carisine ${tl(g.ucret)}`;
-  if (x.tur === "tamir") return `Tamir · ${x.siparisNo || x.uretimId} · ${x.proses} · ${g.miktar} adet × ${tl(g.ucret)} (personel ${g.personel})`;
-  if (x.tur === "cari") return `İşçilik alıcısı: ${g.cari} (hem müşteri hem tedarikçi)`;
+  const ad = (id) => (unvan ? unvan(id) : id);
+  // İŞ (atama zinciri — 25 Kasım): kişi(ler), TOPLAM miktar, ücret birlikte onaylanır; kısmi teslimler bu toplam içinde ödenir.
+  if (x.tur === "atama") return `${x.siparisNo || x.uretimId} · ${x.proses}${g.tamir ? " TAMİR" : ""} · ${(g.personel || []).map(ad).join(", ")}`
+    + ` · ${g.miktar} adet × ${tl(g.ucret)}${Number(x.odenen) > 0 ? ` (ödenen ${x.odenen} adet)` : ""}${g.karisik ? " — TUTARSIZ (farklı proses / ücret)" : ""}`;
+  if (x.tur === "ara") return `${x.urunAd || x.urunId} · ara proses ${x.proses}: ${ad(g.cari)} carisine ${tl(g.ucret)} / adet`;
   return x.anahtar;
 }
 
@@ -167,7 +169,7 @@ function OnayMerkezi({ tanimlar, cariler, onKapat, onCarilerTazele, kullaniciAd,
   const [sekme, setSekme] = useState("mesai");
   const [mesai, setMesai] = useState(null);
   const [ucret, setUcret] = useState(null);
-  const [kapsam, setKapsam] = useState("acik");
+  const kapsam = "acik";   // 1.745.1: onay iş (atama zinciri) düzeyinde — "bütün ürünler" kapsamı kalktı
   const [secili, setSecili] = useState({});
   const [tamirUcret, setTamirUcret] = useState({});
   const [hata, setHata] = useState({});
@@ -194,7 +196,7 @@ function OnayMerkezi({ tanimlar, cariler, onKapat, onCarilerTazele, kullaniciAd,
   };
   const ucretOnayla = async () => {
     const kalemler = (ucret || []).filter((x) => secili[x.anahtar]).map((x) => {
-      const yeni = x.tur === "tamir" && tamirUcret[x.anahtar] !== undefined && tamirUcret[x.anahtar] !== "" ? Number(String(tamirUcret[x.anahtar]).replace(",", ".")) : undefined;
+      const yeni = x.tur === "atama" && (x.guncel || {}).tamir && tamirUcret[x.anahtar] !== undefined && tamirUcret[x.anahtar] !== "" ? Number(String(tamirUcret[x.anahtar]).replace(",", ".")) : undefined;
       return { anahtar: x.anahtar, ozet: x.guncel, ...(yeni !== undefined ? { yeniUcret: yeni } : {}) };
     });
     if (!kalemler.length) return;
@@ -238,16 +240,17 @@ function OnayMerkezi({ tanimlar, cariler, onKapat, onCarilerTazele, kullaniciAd,
         )}
         {sekme === "ucret" && (
           <div>
-            <label style={{ fontSize: 12 }}><input type="checkbox" data-onay-kapsam-tum checked={kapsam === "tum"} onChange={(e) => setKapsam(e.target.checked ? "tum" : "acik")} />
-              {" "}bütün ürünlerin ücretleri (ilk toplu onay için)</label>
+            <div style={{ fontSize: 12, color: "var(--erp-text-2)", marginBottom: 6 }}>Her iş kişi(ler), toplam miktar ve ücretle onaylanır; biri sonradan
+              değişirse yeniden onay gerekir. Kısmi teslimler onaylanan toplam içinde ödenir.{" "}
+              <button type="button" className="btn-ghost" data-onay-tumunu-sec disabled={!yetkili} style={{ padding: "1px 8px", fontSize: 12 }}
+                onClick={() => setSecili(Object.fromEntries((ucret || []).filter((x) => !x.onayli && !(x.guncel || {}).karisik).map((x) => [x.anahtar, true])))}>Onaysızların tümünü seç</button></div>
             {hata.ucret && <div data-onay-ucret-hata style={g25Ret}>{hata.ucret}</div>}
             {(ucret || []).map((x) => (
               <div key={x.anahtar} data-onay-ucret={x.anahtar} data-onayli={x.onayli ? "1" : "0"} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", padding: "4px 0", borderTop: "1px solid var(--erp-line-soft)", opacity: x.onayli ? 0.6 : 1 }}>
-                <input type="checkbox" data-onay-ucret-sec={x.anahtar} disabled={!yetkili || (x.onayli && !(x.tur === "tamir" && tamirUcret[x.anahtar]))} checked={!!secili[x.anahtar]}
+                <input type="checkbox" data-onay-ucret-sec={x.anahtar} disabled={!yetkili || (x.guncel || {}).karisik || (x.onayli && !((x.guncel || {}).tamir && tamirUcret[x.anahtar]))} checked={!!secili[x.anahtar]}
                   onChange={(e) => setSecili((s) => ({ ...s, [x.anahtar]: e.target.checked }))} />
-                <span style={{ fontSize: 13, flex: "1 1 320px" }}>{ucretKalemiMetni(x)}{x.tur === "cari" || x.tur === "ara" ? ` (${unvan((x.guncel || {}).cari)})` : ""}
-                  {x.tur === "tamir" ? ` (${unvan((x.guncel || {}).personel)})` : ""}</span>
-                {x.tur === "tamir" && (
+                <span style={{ fontSize: 13, flex: "1 1 320px" }}>{ucretKalemiMetni(x, unvan)}</span>
+                {x.tur === "atama" && (x.guncel || {}).tamir && !(Number(x.odenen) > 0) && (
                   <input data-onay-tamir-ucret={x.anahtar} type="text" inputMode="decimal" placeholder="ücret belirle" disabled={!yetkili} value={tamirUcret[x.anahtar] ?? ""}
                     onChange={(e) => { setTamirUcret((t) => ({ ...t, [x.anahtar]: e.target.value })); setSecili((s) => ({ ...s, [x.anahtar]: true })); }} style={{ ...inputStyle, width: 100, fontSize: 12 }} />
                 )}

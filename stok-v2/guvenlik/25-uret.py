@@ -87,7 +87,7 @@ YENI_FONK_IMZA = {
     "public.g25_ucret_ozeti": "(jsonb)", "public.g25_tanimlar_ucret_koruma": "()",
     "public.g25_mesai_anahtari": "(text, text)", "public.g25_mesai_tahakkuku": "(text, text)", "public.g25_mesai_tutari": "(text, jsonb)",
     # Ücret onay defteri (24 Kasım, K4 / P1–P3)
-    "public.g25_ucret_guncel": "(text)", "public.g25_onayli": "(text)", "public.g25_tamir_onayli": "(text)",
+    "public.g25_ucret_guncel": "(text)", "public.g25_onayli": "(text)", "public.g25_atama_koku": "(text)",
     "public.g25_iscilik_carisi": "(text, text, boolean)", "public.ucret_onaylari": "(jsonb)", "public.ucret_onayla": "(jsonb)",
 }
 # G-25'in oluşturduğu TABLOLAR (RLS açık, doğrudan erişim yok). Geri almada boşsa silinir, doluysa guvenlik şemasına arşivlenir.
