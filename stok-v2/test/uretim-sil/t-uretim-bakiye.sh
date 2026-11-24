@@ -14,7 +14,7 @@ dosya() { psql -X -q -At -v ON_ERROR_STOP=1 -d "$DB" -f "$1" > /dev/null 2> /tmp
 dogrula() { psql -X -q -At -F'|' -d "$DB" -f $G/12-sonra-dogrula.sql | awk -F'|' '{ printf "%s", $4 }'; }
 sayim() { q -c "select (select count(*) from public.stk_hareket) || '/' || (select count(*) from public.car_hareket) || '/' || (select count(*) from public.stk_fis) || '/' || (select count(*) from public.uretim) || '/' || (select count(*) filter (where iptal) from public.stk_fis)"; }
 
-psql -X -q -d postgres -c "drop database if exists $DB" -c "create database $DB template atolye_guvenlik"
+psql -X -q -d postgres -c "drop database if exists $DB" -c "create database $DB template ${GUVENLIK_DB:-atolye_guvenlik}"
 q -c "update public.stk_ayar set fis_aktif = false, min_istemci_surum = null where id = 'tekil'"
 echo "t-uretim-bakiye · $DB (atolye_guvenlik kopyası)"
 k "1.geri-al (canlı hâli)" "$(dosya $G/12-geri-al.sql)" 0

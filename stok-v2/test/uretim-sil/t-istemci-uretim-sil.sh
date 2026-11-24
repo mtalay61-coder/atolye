@@ -12,7 +12,7 @@ KOK=$(pwd); G=stok-v2/guvenlik; DB=atolye_istemci_sinama
 hata=0; k() { if [ "$2" = "$3" ]; then echo "  ✓ [$1] $2"; else echo "  ✗ [$1] $2 · beklenen $3"; hata=$((hata + 1)); fi; }
 dosya() { psql -X -q -At -v ON_ERROR_STOP=1 -d "$DB" -f "$1" > /dev/null 2> /tmp/istemci-uretim-hata.txt; echo $?; }
 dogrula() { psql -X -q -At -F'|' -d "$DB" -f $G/12-sonra-dogrula.sql | awk -F'|' '{ printf "%s", $4 }'; }
-psql -X -q -d postgres -c "drop database if exists $DB" -c "create database $DB template atolye_guvenlik"
+psql -X -q -d postgres -c "drop database if exists $DB" -c "create database $DB template ${GUVENLIK_DB:-atolye_guvenlik}"
 psql -X -q -At -d "$DB" -c "update public.stk_ayar set fis_aktif = false, min_istemci_surum = null where id = 'tekil'"
 k "12-geri-al (canlı hâli)" "$(dosya $G/12-geri-al.sql)" 0
 k "12-kur" "$(dosya $G/12-uretim-sil-kur.sql)" 0

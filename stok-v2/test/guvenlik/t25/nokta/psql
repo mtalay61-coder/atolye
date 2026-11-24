@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# G-25 DENETİM NOKTASI (24 Kasım) — PATH'in başına konan psql sarmalayıcısı. Sunucu / güvenlik takımları kendi kurulumlarını
+# değiştirmeden koşar; HER psql çağrısından sonra (Editor gibi parça parça verilenler dahil) hedef veritabanında üç fonksiyonun
+# ve yeni nesnelerin G-25 durumu okunur, DEĞİŞTİYSE $G25_NOKTA_LOG'a tetikleyen çağrıyla yazılır. "drop database" de yazılır:
+# böylece G-25'in kaybı (Y/G → E/F) ile veritabanının yeniden kurulması ayırt edilir. Durum harfleri:
+#   Y = paketteki G-25 gövdesi (md5 birebir)  G = G-25 satırı var, gövde başka bir aşamanın (ör. 15'ten önceki car_yaz)
+#   E = G-25 öncesi paket gövdesi (md5)      F = G-25'siz başka gövde            - = fonksiyon yok
+GERCEK=${G25_GERCEK_PSQL:-/usr/bin/psql}
+"$GERCEK" "$@"; rc=$?
+[ -n "${G25_NOKTA_LOG:-}" ] || exit $rc
+db=""; onceki=""; etiket=""
+for a in "$@"; do
+  [ "$onceki" = -d ] && db=$a; [ "$onceki" = -f ] && etiket="-f $a"; [ "$onceki" = -c ] && [ -z "$etiket" ] && etiket="-c $(printf '%s' "$a" | tr '\n' ' ' | tr -s ' ' | cut -c1-90)"
+  case $a in --dbname=*) db=${a#--dbname=};; esac; onceki=$a
+done
+[ -z "$etiket" ] && etiket="(stdin)"
+case "$db" in
+  postgres|template0|template1|"") if printf '%s' "$*" | grep -qi "drop database"; then
+      echo "$(date +%T) ── KURULUM: $(printf '%s' "$*" | grep -oi 'drop database if exists [a-z0-9_]*' | head -1)" >> "$G25_NOKTA_LOG"
+      rm -f "$G25_NOKTA_LOG.d".*; fi; exit $rc;;
+esac
+d=$("$GERCEK" -X -At -d "$db" -c "
+  with f(ad, y, e) as (values ('car_yaz', '$G25_Y_CAR', '$G25_E_CAR'), ('fis_kes', '$G25_Y_KES', '$G25_E_KES'), ('fis_iptal', '$G25_Y_IPT', '$G25_E_IPT'))
+  select string_agg(f.ad || '=' || coalesce((select case md5(btrim(regexp_replace(regexp_replace(p.prosrc, '--[^\n]*', '', 'g'), '\s+', ' ', 'g')))
+             when f.y then 'Y' when f.e then 'E' else case when p.prosrc like '%g25_%' then 'G' else 'F' end end
+           from pg_proc p where p.oid = to_regprocedure('public.' || f.ad || '(jsonb)')), '-'), ' ' order by f.ad)
+    || ' yeni=' || (select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                     where n.nspname = 'public' and (p.proname like 'g25\_%' or p.proname like 'mesai\_%'))
+    || '+' || (to_regclass('public.mes_bildirim') is not null)::int || '+' || (select count(*) from pg_trigger where tgname = 'g25_tanimlar_ucret_koruma')
+  from f" 2>/dev/null) || exit $rc
+son="$G25_NOKTA_LOG.d.$db"
+if [ "$(cat "$son" 2>/dev/null)" != "$d" ]; then
+  echo "$(date +%T) $db | $(cat "$son" 2>/dev/null || echo 'ilk') → $d | $etiket" >> "$G25_NOKTA_LOG"; printf '%s' "$d" > "$son"
+fi
+exit $rc

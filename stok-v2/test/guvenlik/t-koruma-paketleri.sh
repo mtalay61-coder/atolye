@@ -34,7 +34,7 @@ SQL
 }
 yuk() { echo "{\"istek\":\"$1\",\"fis\":{\"aile\":\"stok\",\"tur\":\"Alış\",\"onek\":\"AF\",\"kaynak\":\"Satınalma\",\"cariId\":\"c-yeni\",\"paraBirimi\":\"TRY\",\"tutar\":100,\"kalemler\":[{\"urunId\":\"u-yeni\",\"renk\":\"Siyah\",\"miktar\":1,\"birimFiyat\":100}]},\"stok\":{\"satirlar\":[{\"id\":\"$1-h\",\"urunId\":\"u-yeni\",\"renk\":\"Siyah\",\"miktar\":1,\"kaynak\":\"Satınalma\",\"cariId\":\"c-yeni\"}]},\"cari\":{\"satirlar\":[{\"id\":\"$1-c\",\"cari_id\":\"c-yeni\",\"tarih\":\"2026-11-04\",\"yon\":\"Alacak\",\"tutar\":100}]}}"; }
 
-psql -X -q -d postgres -c "drop database if exists $DB" -c "create database $DB template atolye_guvenlik"
+psql -X -q -d postgres -c "drop database if exists $DB" -c "create database $DB template ${GUVENLIK_DB:-atolye_guvenlik}"
 q -c "update public.stk_ayar set fis_aktif = false, min_istemci_surum = null where id = 'tekil'"
 # atolye_guvenlik'te F0 sınamasının bilerek bıraktığı sahipsiz hareket bağı var (canlıda ihlal 0 ve 6 uygulanmış) — yalnız bu
 # kopyada bağ boşaltılır (tetikleyiciler atlanır: test verisi), sonra 6 canlıdaki gibi uygulanır.

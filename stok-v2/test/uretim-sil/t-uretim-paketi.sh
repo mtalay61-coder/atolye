@@ -18,7 +18,7 @@ dosya() { psql -X -q -At -v ON_ERROR_STOP=1 -d "$DB" -f "$1" > /dev/null 2> /tmp
 tamam() { psql -X -q -At -F'|' -d "$DB" -f $G/12-sonra-dogrula.sql | awk -F'|' '{ n++; if ($4 == "t") t++ } END { print t "/" n }'; }
 sayim() { q -c "select (select count(*) from public.stk_hareket) || '/' || (select count(*) from public.car_hareket) || '/' || (select count(*) from public.stk_fis) || '/' || (select count(*) from public.uretim)"; }
 
-psql -X -q -d postgres -c "drop database if exists $DB" -c "create database $DB template atolye_guvenlik"
+psql -X -q -d postgres -c "drop database if exists $DB" -c "create database $DB template ${GUVENLIK_DB:-atolye_guvenlik}"
 q -c "update public.stk_ayar set fis_aktif = false, min_istemci_surum = null where id = 'tekil'"
 # atolye_guvenlik bugünkü kaynakla kurulur (uretim_sil içinde) — canlının bugünkü hâline indirmek için önce paket geri alınır.
 psql -X -q -v ON_ERROR_STOP=1 -d "$DB" -f $G/12-geri-al.sql > /dev/null 2>&1
