@@ -111,8 +111,8 @@ cari kartı hareket formu, demirbaş alımı, maaş "Onayla", mesai tutarı, ipt
   SQL'i tek başına canlıya önerme."** → SQL yalnız istemci 1.745.0 ile BİRLİKTE (1.745.0 yeni yolları getirir: Üretim'de saat bildirimi,
   Onaylar, ücret / tamir onayı; yetkisiz düğmeler kapalı ve gerekçeli). Önce deneme projesi: `25-DENEME-PAKETI.md`. 1.745.0 G-25'siz
   sunucuda yeni ekranlar "fonksiyon yok" der; PARA'sız kullanıcının para düğmeleri yine kapalıdır (istemci kuralı) — o yüzden istemci
-  de tek başına yayınlanmaz. Canlıya geçişte ilk iş: cari / muhasebe yetkilisinin Onaylar › Ücretler › "bütün ürünlerin ücretleri"
-  ile toplu onayı (yoksa PARA'sız kullanıcının teslim işçiliği yazılmaz).
+  de tek başına yayınlanmaz. Canlıya geçişte ilk iş: cari / muhasebe yetkilisinin Onaylar › Ücretler › "Onaysızların tümünü seç"
+  ile açık işleri toplu onayı (yoksa PARA'sız kullanıcının teslim işçiliği yazılmaz); sonra her yeni iş (atama) onay ister.
 - Hangisi seçilirse seçilsin: kaynak dosyalar (cari-v2, editor 4 / 15 / 18, fis-defteri.sql) G-25 işlenmiş hâliyle depoya AYNI ANDA
   girmeli (`25-uret.py --kaynaga-isle`). İşlenmemiş kaynak yeniden çalıştırılırsa fis_kes / fis_iptal sessizce G-25 öncesine döner
   (23 Kasım ölçüldü: editor/18 yeniden → önkoşul KARIŞIK). `geri-donus-*.sql` dosyaları bilerek işlenmez — onlar zaten bir geri dönüş;

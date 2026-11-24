@@ -1,8 +1,8 @@
 ── G-25 yetki matrisi · atolye_t25_once · ÖNCE
-C · onay listesinde Kesim 35 ₺ (onaysız) · Uretimci görür · ret listede yok
-C · ücret onayı · Uretimci · ret PGRST202
-C · eski görüntüyle onay (ekranda 30) · Muhasip · ret PGRST202
-C · ücret onayı Kesim 35 + Boya (g25-f, 2) · Muhasip · ret PGRST202
+C · onay listesinde iş (g25-q, 10 adet × 35 ₺, onaysız) · Uretimci görür · ret listede yok
+C · iş onayı · Uretimci · ret PGRST202
+C · eski görüntüyle onay (ekranda 9 adet) · Muhasip · ret PGRST202
+C · iş onayı + Boya ara prosesi (g25-f, 2) · Muhasip · ret PGRST202
 A · CVR · Ali · geçti
 A · CVR · Muhasip · geçti
 A · CVR · Carici · geçti
@@ -222,7 +222,7 @@ K4 · R1d kayıtlı atama müşteri carisinde, işçilik 10 × 35 · Uretimci ·
 K4 · R2a ürün proses ücreti 35 → 500 (öneri; yazma serbest) · Uretimci · geçti
 K4 · R2b işçilik 10 × 500 (onaysız yeni ücret) · Uretimci · geçti
 K4 · R2c işçilik 10 × 35 (onay artık geçersiz — ücret değişti) · Uretimci · geçti
-K4 · R2d ücret 35'e döndü, onay yeniden geçerli: 10 × 35 · Uretimci · geçti
+K4 · R2d ücret 35'e döndü, aynı işin onayı yeniden geçerli: 10 × 35 · Uretimci · geçti
 K4 · R3a ürüne özel ara proses carisi → müşteri, ücreti → 900 · Uretimci · geçti
 K4 · R3b ara proses işçiliği müşteri carisine 10 × 900 · Uretimci · geçti
 K4 · R4a Tanımlar ara proses ücreti 2 → 700 · Uretimci · geçti
@@ -239,15 +239,24 @@ K4 · aynı ara proses adımı: ilk · Uretimci · geçti
 K4 · aynı ara proses adımı: İKİNCİ · Uretimci · geçti
 K4 · EŞZAMANLI 5 teslim aynı atama · Uretimci [geçen 5, fiş 5] · ret çift ödeme
 K4 · iptal edilen teslimden sonra yeniden teslim (iptal tamam) · Uretimci · geçti
-K4 · Her İkisi kartına işçilik (cari onayı yok) · Uretimci · geçti
-K4 · Her İkisi kartını işçilik alıcısı olarak onaylama · Muhasip · ret PGRST202
-K4 · Her İkisi kartına işçilik (cari onaylı) · Uretimci · geçti
+K4 · Her İkisi kartına işçilik (iş onaysız) · Uretimci · geçti
+K4 · Her İkisi kartına işçilik (iş — kişi dahil — onaylı) · Uretimci · geçti
+K4 · M1 onaylı iş (10) miktarı 12'ye büyütüldü, 10 × 35 teslim (yeniden onay gerekir) · Uretimci · geçti
+K4 · M1b yetkili 12'yi onayladı, 12 değil 10 × 35 teslim · Uretimci · geçti
+K4 · M2 onaylı işin kişisi değişti (g25-q → g25-t), 10 × 35 · Uretimci · geçti
+K4 · M3a meşru kısmi teslim 6 (kalan 4 yeni parça; zincir toplamı 10) · Uretimci · geçti
+K4 · M3b kalan parçadan kısmi 3 (kalan 1) · Uretimci · geçti
+K4 · M3c son parça 1 (zincirde toplam 10 ödendi) · Uretimci · geçti
+K4 · M3 zincirde ödenen toplam = onaylanan 10 [-1] · ret ödenen -1
+K4 · M4 zincire sonradan eklenen 10'luk parça (toplam 20 ≠ onaylı 10) · Uretimci · geçti
+K4 · EŞZAMANLI 6 teslim, iki parça (5 + 5, onaylı 10) · Uretimci [geçen 6, fiş 6, ödenen -1] · ret toplam aşıldı
 K4 · tamir talebi onay listesinde (onaysız, önerilen 5.000) · Muhasip görür · ret listede yok
 K4 · tamir ücretini belirleme · Uretimci · ret PGRST202
-K4 · tamir ücretini 40 belirleyip onaylama, EŞZAMANLI iki kez · Muhasip [PGRST202/PGRST202, atama ücreti 5000] · ret onay
+K4 · tamir ücretini 40 belirleyip onaylama, EŞZAMANLI iki kez · Muhasip [PGRST202/PGRST202, atama ücreti 5000, onay kaydı -1] · ret onay
 K4 · tamir: onaylanmamış eski ücretle (5.000) teslim · Uretimci · geçti
 K4 · tamir: onaydan sonra miktar 10 → 12, 10 × 40 teslim (eski onay geçersiz) · Uretimci · geçti
 K4 · tamir: onaylı 10 × 40 teslim · Uretimci · geçti
-K4 · kısmi teslimden kalan tamir (4 × 40, kaynak onaylı) · Uretimci · geçti
-K4 · kısmi kalan tamir ücreti 40 → 90 (kaynak onayı geçmez) · Uretimci · geçti
-── 251 satır ──
+K4 · tamir kısmi teslim 6 × 40 (kalan 4) · Uretimci · geçti
+K4 · tamir kalan parçanın ücreti 40 → 90 (zincir tutarsız) 4 × 90 · Uretimci · geçti
+K4 · tamir kalan 4 × 40 (zincir yeniden tutarlı, onay geçerli) · Uretimci · geçti
+── 260 satır ──
