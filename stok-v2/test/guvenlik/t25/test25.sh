@@ -72,7 +72,7 @@ g=$(q atolye_t25_a -f $G/25-sonra-dogrula-salt-okur.sql | tee "$CIK/sonra-dogrul
 [ "$g" = TAMAM ] && yesil "sonra doğrula TAMAM" || { kirmizi "sonra doğrula $g"; cat "$CIK/sonra-dogrula.txt"; }
 g=$(q atolye_t25_a -f $G/25-onkosul-salt-okur.sql | awk -F' [|] ' '$1=="99"{print $3}'); [ "$g" = UYGULANMIŞ ] && yesil "önkoşul şimdi UYGULANMIŞ" || kirmizi "önkoşul $g"
 diff "$CIK/env-taban.txt" "$CIK/env-sonra.txt" | grep '^[<>]' | cut -d'|' -f1,2 | sort -u > "$CIK/env-fark.txt"
-BEKLENEN_FARK=$(printf '%s\n' "< F|fis_kes(p jsonb)" "> F|fis_kes(p jsonb)" "> F|g25_tanimlar_ucret_koruma()" "> R|mes_bildirim" "> T|tanimlar.g25_tanimlar_ucret_koruma" | sort)
+BEKLENEN_FARK=$(printf '%s\n' "< F|fis_kes(p jsonb)" "> F|fis_kes(p jsonb)" "> F|g25_tanimlar_ucret_koruma()" "> R|isc_odeme" "> R|mes_bildirim" "> R|ucr_onay" "> T|tanimlar.g25_tanimlar_ucret_koruma" | sort)
 [ "$(cat "$CIK/env-fark.txt")" = "$BEKLENEN_FARK" ] && yesil "Faz 0.4 envanterinde YALNIZ beklenen fark: $(tr '\n' ' ' < "$CIK/env-fark.txt")" \
   || { kirmizi "envanter farkı beklenenden farklı"; cat "$CIK/env-fark.txt"; }
 

@@ -72,7 +72,7 @@ JS
 k=$(sed -n 's/^KAYIP //p' "$CIK/cozum.txt")
 [ "$k" = 0 ] && yesil "hiçbir adımda G-25 kaldırılmadı (arada yeniden kurulum olmadan Y/G → E/F/- geçişi yok)" || { kirmizi "G-25 $k kez KALDIRILDI:"; sed -n '2,40p' "$CIK/cozum.txt"; }
 while read -r _ db d; do
-  case "$d" in "car_yaz=Y fis_iptal=Y fis_kes=Y yeni=15+1+1") yesil "son durum $db: $d";;
+  case "$d" in "car_yaz=Y fis_iptal=Y fis_kes=Y yeni=21+3+1") yesil "son durum $db: $d";;
     *) echo "   • son durum $db: $d (tam G-25 değil — aşağıda açıklanır)";; esac
 done < <(grep '^SON ' "$CIK/cozum.txt")
 echo "   günlük: $G25_NOKTA_LOG"

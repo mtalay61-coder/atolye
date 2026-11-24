@@ -8,7 +8,7 @@
 --  maaş / mesai tahakkuku yazabilir ve cari / kasa satırlı fişleri stok silme yetkisiyle iptal edebilir; personel maaşı / mesai katı
 --  yine her oturumdan değiştirilebilir. Yalnız G-25 uygulamasının bir soruna yol açtığı kanıtlanırsa kullanın.
 --  Ne yapar: car_yaz / fis_kes / fis_iptal'ı yedekteki (G-25 öncesi) tanıma döndürür; G-25'in oluşturduğu fonksiyonları ve tanimlar
---  tetikleyicisini kaldırır; mes_bildirim boşsa siler, DOLUYSA silmez — guvenlik.g25_mes_bildirim_arsiv olarak taşır (uygulama
+--  tetikleyicisini kaldırır; mes_bildirim / ucr_onay / isc_odeme boşsa siler, DOLUYSA silmez — guvenlik.g25_<tablo>_arsiv_<zaman> olarak taşır (uygulama
 --  erişemez; veri kaybı yok); yedeği siler. Kesilmiş fişlere, cari / stok / kasa satırlarına DOKUNMAZ.
 --  ÖNKOŞUL (biri tutmazsa HATA, hiçbir şey değişmez): postgres rolü; yedek eksiksiz; üç fonksiyon UYGULANDIĞI HÂLDE (gövde md5),
 --  yetkileri / sahipleri yedektekiyle aynı; G-25 nesnelerinin hepsi var. Biri sonradan değiştiyse o değişikliği EZMEDEN durur.
@@ -22,6 +22,8 @@ declare
   v_eksik text;
   v_r record;
   v_dolu bigint;
+  v_tablo text;
+  v_arsiv text;
 begin
   if current_user <> 'postgres' then
     raise exception 'Bu dosya postgres rolüyle çalıştırılmalı (şu an: %). Hiçbir şey değişmedi.', current_user;
@@ -48,10 +50,10 @@ begin
       raise exception '% yetkisi / sahibi uygulamadan sonra değişmiş (şimdi %, yedek %). Hiçbir şey değişmedi.', v_r.ad, v_r.simdi, v_r.yetki;
     end if;
   end loop;
-  select string_agg(x, ', ') into v_eksik from unnest(array['public.g25_fis_cari_yetki(jsonb)', 'public.g25_fis_cari_yetki_tek(jsonb, jsonb, jsonb, jsonb, jsonb)', 'public.g25_fis_iptal_yetki(text)', 'public.g25_mesai_anahtari(text, text)', 'public.g25_mesai_tahakkuku(text, text)', 'public.g25_mesai_tutari(text, jsonb)', 'public.g25_stok_bagi(jsonb, jsonb, jsonb, jsonb)', 'public.g25_tanimlar_ucret_koruma()', 'public.g25_ucret_ozeti(jsonb)', 'public.g25_uretim_bagi(jsonb, jsonb, jsonb, jsonb)', 'public.g25_yetki_iste(text[], text, text)', 'public.mesai_bildir(jsonb)', 'public.mesai_bildirim_iptal(jsonb)', 'public.mesai_bildirimleri(jsonb)', 'public.mesai_onayla(jsonb)']) x where to_regprocedure(x) is null;
-  if v_eksik is not null or to_regclass('public.mes_bildirim') is null
+  select string_agg(x, ', ') into v_eksik from unnest(array['public.g25_fis_cari_yetki(jsonb)', 'public.g25_fis_cari_yetki_tek(jsonb, jsonb, jsonb, jsonb, jsonb)', 'public.g25_fis_iptal_yetki(text)', 'public.g25_iscilik_carisi(text, text, boolean)', 'public.g25_mesai_anahtari(text, text)', 'public.g25_mesai_tahakkuku(text, text)', 'public.g25_mesai_tutari(text, jsonb)', 'public.g25_onayli(text)', 'public.g25_stok_bagi(jsonb, jsonb, jsonb, jsonb)', 'public.g25_tamir_onayli(text)', 'public.g25_tanimlar_ucret_koruma()', 'public.g25_ucret_guncel(text)', 'public.g25_ucret_ozeti(jsonb)', 'public.g25_uretim_bagi(jsonb, jsonb, jsonb, jsonb)', 'public.g25_yetki_iste(text[], text, text)', 'public.mesai_bildir(jsonb)', 'public.mesai_bildirim_iptal(jsonb)', 'public.mesai_bildirimleri(jsonb)', 'public.mesai_onayla(jsonb)', 'public.ucret_onayla(jsonb)', 'public.ucret_onaylari(jsonb)']) x where to_regprocedure(x) is null;
+  if v_eksik is not null or to_regclass('public.mes_bildirim') is null or to_regclass('public.ucr_onay') is null or to_regclass('public.isc_odeme') is null
      or not exists (select 1 from pg_trigger where tgname = 'g25_tanimlar_ucret_koruma' and tgrelid = 'public.tanimlar'::regclass) then
-    raise exception 'G-25 nesneleri eksik (%) — karışık durum. Hiçbir şey değişmedi.', coalesce(v_eksik, 'mes_bildirim / tetikleyici');
+    raise exception 'G-25 nesneleri eksik (%) — karışık durum. Hiçbir şey değişmedi.', coalesce(v_eksik, 'mes_bildirim / ucr_onay / isc_odeme / tetikleyici');
   end if;
 
   -- ÜÇ FONKSİYON G-25 ÖNCESİ HÂLE (yedekteki tam tanım; create or replace yetkileri korur)
@@ -67,24 +69,35 @@ begin
   drop function public.mesai_bildirimleri(jsonb);
   drop function public.mesai_bildirim_iptal(jsonb);
   drop function public.mesai_onayla(jsonb);
-  drop function public.g25_tanimlar_ucret_koruma();
-  drop function public.g25_ucret_ozeti(jsonb);
-  drop function public.g25_fis_iptal_yetki(text);
+  drop function public.ucret_onaylari(jsonb);
+  drop function public.ucret_onayla(jsonb);
   drop function public.g25_fis_cari_yetki(jsonb);
   drop function public.g25_fis_cari_yetki_tek(jsonb, jsonb, jsonb, jsonb, jsonb);
-  drop function public.g25_mesai_tutari(text, jsonb);
-  drop function public.g25_mesai_tahakkuku(text, text);
+  drop function public.g25_fis_iptal_yetki(text);
+  drop function public.g25_iscilik_carisi(text, text, boolean);
   drop function public.g25_mesai_anahtari(text, text);
-  drop function public.g25_uretim_bagi(jsonb, jsonb, jsonb, jsonb);
+  drop function public.g25_mesai_tahakkuku(text, text);
+  drop function public.g25_mesai_tutari(text, jsonb);
+  drop function public.g25_onayli(text);
   drop function public.g25_stok_bagi(jsonb, jsonb, jsonb, jsonb);
+  drop function public.g25_tamir_onayli(text);
+  drop function public.g25_tanimlar_ucret_koruma();
+  drop function public.g25_ucret_guncel(text);
+  drop function public.g25_ucret_ozeti(jsonb);
+  drop function public.g25_uretim_bagi(jsonb, jsonb, jsonb, jsonb);
   drop function public.g25_yetki_iste(text[], text, text);
-  select count(*) into v_dolu from public.mes_bildirim;
-  if v_dolu = 0 then
-    drop table public.mes_bildirim;
-  else
-    alter table public.mes_bildirim set schema guvenlik;
-    alter table guvenlik.mes_bildirim rename to g25_mes_bildirim_arsiv;
-  end if;
+  -- Tablolar: boşsa silinir; DOLUYSA silinmez — guvenlik.g25_<tablo>_arsiv_<zaman> olarak taşınır (uygulama erişemez; veri kaybı yok).
+  v_arsiv := '';
+  foreach v_tablo in array array['mes_bildirim', 'ucr_onay', 'isc_odeme'] loop
+    execute format('select count(*) from public.%I', v_tablo) into v_dolu;
+    if v_dolu = 0 then
+      execute format('drop table public.%I', v_tablo);
+    else
+      execute format('alter table public.%I set schema guvenlik', v_tablo);
+      execute format('alter table guvenlik.%I rename to %I', v_tablo, 'g25_' || v_tablo || '_arsiv_' || to_char(clock_timestamp(), 'YYYYMMDDHH24MISS'));
+      v_arsiv := v_arsiv || v_tablo || ' (' || v_dolu || ' satır) ';
+    end if;
+  end loop;
 
   drop table guvenlik.g25_yedek;
   drop table if exists guvenlik.g25_sonuc;
@@ -94,7 +107,7 @@ begin
   insert into guvenlik.g25_geri_sonuc values
     (1, 'car_yaz / fis_kes / fis_iptal', 'G-25 öncesi hâle döndü'),
     (2, 'G-25 fonksiyonları ve tanimlar tetikleyicisi', 'kaldırıldı'),
-    (3, 'mes_bildirim', case when v_dolu = 0 then 'boştu, silindi' else v_dolu || ' bildirim guvenlik.g25_mes_bildirim_arsiv''e taşındı' end),
+    (3, 'tablolar (mes_bildirim, ucr_onay, isc_odeme)', case when v_arsiv = '' then 'boştu, silindi' else 'dolu olanlar guvenlik şemasına arşivlendi: ' || v_arsiv end),
     (98, 'UYARI', 'G-25 yetki açığı YENİDEN AÇIK (tasarım § 7)'),
     (99, 'GENEL', 'GERİ ALINDI');
 end $$;

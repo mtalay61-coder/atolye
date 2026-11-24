@@ -5,7 +5,8 @@
 --   Stokcu     = stok g/k/s         Uretsil = uretim g/k/s
 --   Carici     = yalnız cari g/k    Muhasebeci = yalnız muhasebe g/k    Fisci = yalnız fisler g/k
 --   Deniz      = cari / muhasebe yalnız görüntüleme
--- Cariler: g25-m (Müşteri), g25-t (Tedarikçi), g25-p (Personel, bölümde maaşlı), g25-f (fasoncu — ara proses carisi).
+-- Cariler: g25-m (Müşteri), g25-t (Tedarikçi), g25-p (Personel, bölümde maaşlı), g25-f (fasoncu — ara proses carisi),
+--   g25-q (Personel, parça başı — bölümde değil), g25-h (Her İkisi).
 -- Üretim g25-u1: ürün ekr-bot (Kesim ücreti 35), adet 10; atama g25-a1 (Kesim, g25-p, 10). Ara proses ap-g25 (Boya, g25-f, 2 ₺).
 update public.tanimlar set veri = jsonb_set(veri, '{kullanicilar}',
   coalesce((select jsonb_agg(x) from jsonb_array_elements(veri -> 'kullanicilar') x
@@ -29,7 +30,9 @@ update public.tanimlar set veri = jsonb_set(jsonb_set(veri,
  where id = 'tekil';
 insert into public.cariler (id, unvan, tip, para_birimi) values
   ('g25-m', 'G25 Müşteri', 'Müşteri', 'TRY'), ('g25-t', 'G25 Tedarikçi', 'Tedarikçi', 'TRY'),
-  ('g25-p', 'G25 Personel', 'Personel', 'TRY'), ('g25-f', 'G25 Fasoncu', 'Tedarikçi', 'TRY')
+  ('g25-p', 'G25 Personel', 'Personel', 'TRY'), ('g25-f', 'G25 Fasoncu', 'Tedarikçi', 'TRY'),
+  -- 24 Kasım (K4): g25-q parça başı çalışan personel (bölümde DEĞİL — işçiliği cariye yazılır); g25-h hem müşteri hem tedarikçi
+  ('g25-q', 'G25 Usta', 'Personel', 'TRY'), ('g25-h', 'G25 Karma', 'Her İkisi', 'TRY')
 on conflict (id) do nothing;
 update public.urunler set proses_ucretleri = '{"Kesim": 35}'::jsonb where id = 'ekr-bot';
 insert into public.uretim (id, siparis_no, urun_id, asama, ek, renk, adet, model)

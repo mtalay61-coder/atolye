@@ -86,10 +86,16 @@ YENI_FONK_IMZA = {
     "public.mesai_bildirimleri": "(jsonb)", "public.mesai_bildirim_iptal": "(jsonb)", "public.mesai_onayla": "(jsonb)",
     "public.g25_ucret_ozeti": "(jsonb)", "public.g25_tanimlar_ucret_koruma": "()",
     "public.g25_mesai_anahtari": "(text, text)", "public.g25_mesai_tahakkuku": "(text, text)", "public.g25_mesai_tutari": "(text, jsonb)",
+    # Ücret onay defteri (24 Kasım, K4 / P1–P3)
+    "public.g25_ucret_guncel": "(text)", "public.g25_onayli": "(text)", "public.g25_tamir_onayli": "(text)",
+    "public.g25_iscilik_carisi": "(text, text, boolean)", "public.ucret_onaylari": "(jsonb)", "public.ucret_onayla": "(jsonb)",
 }
+# G-25'in oluşturduğu TABLOLAR (RLS açık, doğrudan erişim yok). Geri almada boşsa silinir, doluysa guvenlik şemasına arşivlenir.
+TABLOLAR = ["mes_bildirim", "ucr_onay", "isc_odeme"]
 if sorted(YENI_FONK_IMZA) != YENI_FONK:
     sys.exit(f"yeni fonksiyon listesi imza tablosuyla uyuşmuyor: {YENI_FONK}")
-RPC = ["public.mesai_bildir", "public.mesai_bildirimleri", "public.mesai_bildirim_iptal", "public.mesai_onayla"]
+RPC = ["public.mesai_bildir", "public.mesai_bildirimleri", "public.mesai_bildirim_iptal", "public.mesai_onayla",
+       "public.ucret_onaylari", "public.ucret_onayla"]
 regp = lambda ad: f"'{ad}{YENI_FONK_IMZA[ad]}'::regprocedure"
 sq = lambda s: "'" + s.replace("'", "''") + "'"
 
@@ -107,7 +113,7 @@ def durum_sql(ad):
             f"when null then 'YOK' else 'FARKLI: ' || coalesce({md5_sql(ad, IMZA[ad])}, 'yok') end")
 
 YENI_NESNE_SAYISI = (" + ".join(f"(to_regprocedure('{a}{YENI_FONK_IMZA[a]}') is not null)::int" for a in YENI_FONK)
-    + " + (to_regclass('public.mes_bildirim') is not null)::int"
+    + "".join(f" + (to_regclass('public.{t}') is not null)::int" for t in TABLOLAR)
     + " + (select count(*) from pg_trigger where tgname = 'g25_tanimlar_ucret_koruma')::int")
 
 onkosul = f"""-- =====================================================================================================================
@@ -135,7 +141,7 @@ select sira, kontrol, deger from (
   union all select 3, 'fis_kes gövdesi', fis_kes from v
   union all select 4, 'fis_iptal gövdesi', fis_iptal from v
   union all select 5, 'A6 (yetki_var_mi gövdesi = canlı A6)', case when a6 = '{CANLI_YETKI_VAR_MI}' then 'UYGULANMIŞ' else 'FARKLI: ' || coalesce(a6, 'yok') end from v
-  union all select 6, 'G-25''in oluşturacağı nesneler (önce 0, sonra {len(YENI_FONK) + 2})', yeni::text from v
+  union all select 6, 'G-25''in oluşturacağı nesneler (önce 0, sonra {len(YENI_FONK) + len(TABLOLAR) + 1})', yeni::text from v
   union all select 7, 'fiş kuralları / sürüm kapısı', 'kurallar ' || case when public.fis_kural_aktif() then 'AÇIK' else 'KAPALI' end
          || ' · min_istemci_surum ' || coalesce((select min_istemci_surum from public.stk_ayar where id = 'tekil'), 'boş')
   union all select 8, 'kullanıcılar (sayı): Yönetici · cari/muhasebe kaydetmeli · PARA''sız stok/üretim/sipariş kaydetmeli · yalnız fisler kaydetmeli · diğer',
@@ -143,7 +149,7 @@ select sira, kontrol, deger from (
                 || ' · ' || count(*) filter (where not yon and not para and not stok and fis) || ' · ' || count(*) filter (where not yon and not para and not stok and not fis) from kul)
   union all select 99, 'GENEL', case
       when not yedek and yeni = 0 and car_yaz like 'eski%' and fis_kes like 'eski%' and fis_iptal like 'eski%' and a6 = '{CANLI_YETKI_VAR_MI}' then 'HAZIR'
-      when yedek and yeni = {len(YENI_FONK) + 2} and car_yaz like 'G-25%' and fis_kes like 'G-25%' and fis_iptal like 'G-25%' then 'UYGULANMIŞ'
+      when yedek and yeni = {len(YENI_FONK) + len(TABLOLAR) + 1} and car_yaz like 'G-25%' and fis_kes like 'G-25%' and fis_iptal like 'G-25%' then 'UYGULANMIŞ'
       else 'KARIŞIK — dur, satırları incele' end from v
 ) s order by sira;
 """
@@ -174,6 +180,9 @@ uygula = f"""-- ================================================================
 --   - car_yaz: fiş dışından (kapı kapalı) satır / iptal yalnız cari / muhasebe kaydetme ile.
 --   - fis_iptal (fis_iptal_toplu onu çağırır): kayıtlı içeriğe göre grubun SİLME yetkisi (kasa / çek → muhasebe, fisler, cari; cari
 --     → cari / muhasebe; stoklu AF / SF → stok grubu; ÜRT işçilik → üretim grubu). Ana + bağlı fiş birlikte, bugünkü gibi.
+--   - Ücret onayı (K4 / P1–P3): ÜRT işçiliği yalnız sunucudaki teslim edilen atamaya / ara prosese ve cari / muhasebe yetkilisinin
+--     ONAYLADIĞI ücrete bağlıysa (ucr_onay; değer değişince onay geçersiz); müşteri carisine işçilik yok; her atama bir kez (isc_odeme).
+--     ucret_onaylari (liste) / ucret_onayla (cari / muhasebe; tamirde ücreti de belirler).
 --   - Mesai (K2): mes_bildirim tablosu (saat, para değil) + mesai_bildir / mesai_bildirimleri / mesai_bildirim_iptal (üretim yetkisi)
 --     + mesai_onayla (cari / muhasebe; MS fişi ve onay tek işlem). tanimlar tetikleyicisi: maaş / aylık saat / mesai katı değişimi
 --     cari / muhasebe kaydetme ister.
@@ -199,11 +208,11 @@ begin
     raise exception 'G-25 zaten uygulanmış (guvenlik.g25_yedek var). Geri almak için 25-cari-yetki-geri-al.sql. Hiçbir şey değişmedi.';
   end if;
   select string_agg(x, ', ') into v_eksik from unnest(array[{', '.join(sq(a + YENI_FONK_IMZA[a]) for a in YENI_FONK)}]) x where to_regprocedure(x) is not null;
-  if v_eksik is not null or to_regclass('public.mes_bildirim') is not null or exists (select 1 from pg_trigger where tgname = 'g25_tanimlar_ucret_koruma') then
-    raise exception 'G-25''in oluşturacağı nesneler zaten var (%): sessizce değiştirilmez. Hiçbir şey değişmedi.', coalesce(v_eksik, 'mes_bildirim / tetikleyici');
+  if v_eksik is not null or {" or ".join(f"to_regclass('public.{t}') is not null" for t in TABLOLAR)} or exists (select 1 from pg_trigger where tgname = 'g25_tanimlar_ucret_koruma') then
+    raise exception 'G-25''in oluşturacağı nesneler zaten var (%): sessizce değiştirilmez. Hiçbir şey değişmedi.', coalesce(v_eksik, '{" / ".join(TABLOLAR)} / tetikleyici');
   end if;
   select string_agg(x, ', ') into v_eksik from unnest(array['public.stk_fis', 'public.stk_hareket', 'public.car_hareket', 'public.kas_hareket',
-      'public.fis_cek_iz', 'public.uretim', 'public.uretim_atamalari', 'public.urunler', 'public.tanimlar', 'public.stk_ayar']) x where to_regclass(x) is null;
+      'public.fis_cek_iz', 'public.uretim', 'public.uretim_atamalari', 'public.urunler', 'public.tanimlar', 'public.stk_ayar', 'public.cariler']) x where to_regclass(x) is null;
   if v_eksik is not null then raise exception 'Tablo yok: %. Hiçbir şey değişmedi.', v_eksik; end if;
   select string_agg(x, ', ') into v_eksik from unnest(array['public.yetki_var_mi(text[], text)', 'public.stk_dizi(jsonb)', 'public.stk_sayi(text)',
       'public.fis_kapi_acik()', 'public.fis_iptal_toplu(jsonb)', 'public.fis_kalem_durumlari(text[])', 'gen_random_uuid()']) x where to_regprocedure(x) is null;
@@ -244,7 +253,7 @@ begin
   insert into guvenlik.g25_sonuc values
     (1, 'car_yaz / fis_kes / fis_iptal', 'G-25 hâlinde ({', '.join(O_YENI[a][:8] for a in YENI)})'),
     (2, 'yeni fonksiyonlar', '{len(YENI_FONK)}'),
-    (3, 'mes_bildirim tablosu (RLS açık, doğrudan erişim yok)', 'kuruldu'),
+    (3, '{", ".join(TABLOLAR)} tabloları (RLS açık, doğrudan erişim yok)', 'kuruldu'),
     (4, 'tanimlar ücret tetikleyicisi', 'kuruldu, etkin'),
     (5, 'yedek', 'guvenlik.g25_yedek (3 fonksiyon)'),
     (99, 'GENEL', 'UYGULANDI — 25-sonra-dogrula-salt-okur.sql ile doğrulayın');
@@ -263,10 +272,9 @@ sonra = f"""-- =================================================================
 with k(sira, kontrol, tamam) as (
 {(chr(10) + "  union all ").join(f"  select {i + 1}, '{a} G-25 hâlinde', {md5_sql(a, IMZA[a])} = '{O_YENI[a]}'" for i, a in enumerate(YENI))}
   union all select 4, 'yeni fonksiyonların hepsi var ({len(YENI_FONK)})', ({" + ".join(f"(to_regprocedure('{a}{YENI_FONK_IMZA[a]}') is not null)::int" for a in YENI_FONK)}) = {len(YENI_FONK)}
-  union all select 5, 'RPC (mesai_*) yalnız authenticated çalıştırır, anon çalıştıramaz', {" and ".join(f"has_function_privilege('authenticated', {regp(a)}, 'execute') and not has_function_privilege('anon', {regp(a)}, 'execute')" for a in RPC)}
+  union all select 5, 'RPC (mesai_*, ucret_onay*) yalnız authenticated çalıştırır, anon çalıştıramaz', {" and ".join(f"has_function_privilege('authenticated', {regp(a)}, 'execute') and not has_function_privilege('anon', {regp(a)}, 'execute')" for a in RPC)}
   union all select 6, 'iç fonksiyonları (g25_*) authenticated / anon çalıştıramaz', {" and ".join(f"not has_function_privilege('authenticated', {regp(a)}, 'execute') and not has_function_privilege('anon', {regp(a)}, 'execute')" for a in YENI_FONK if a not in RPC)}
-  union all select 7, 'mes_bildirim RLS açık, authenticated / anon yetkisi yok', coalesce((select c.relrowsecurity from pg_class c where c.oid = to_regclass('public.mes_bildirim')), false)
-       and not has_table_privilege('authenticated', 'public.mes_bildirim', 'select,insert,update,delete') and not has_table_privilege('anon', 'public.mes_bildirim', 'select,insert,update,delete')
+  union all select 7, '{", ".join(TABLOLAR)}: RLS açık, authenticated / anon yetkisi yok', {" and ".join(f"coalesce((select c.relrowsecurity from pg_class c where c.oid = to_regclass('public.{t}')), false) and not has_table_privilege('authenticated', 'public.{t}', 'select,insert,update,delete') and not has_table_privilege('anon', 'public.{t}', 'select,insert,update,delete')" for t in TABLOLAR)}
   union all select 8, 'tanimlar ücret tetikleyicisi etkin', exists (select 1 from pg_trigger where tgname = 'g25_tanimlar_ucret_koruma' and tgrelid = 'public.tanimlar'::regclass and tgenabled = 'O')
   union all select 9, 'yedek var (3 fonksiyon)', coalesce((select count(*) = 3 from guvenlik.g25_yedek), false)
   union all select 10, 'üç fonksiyonun yetkisi / sahibi yedektekiyle aynı', coalesce((select bool_and(p.proacl::text is not distinct from y.yetki and pg_get_userbyid(p.proowner) = y.sahip)
@@ -286,7 +294,7 @@ geri = f"""-- ==================================================================
 --  maaş / mesai tahakkuku yazabilir ve cari / kasa satırlı fişleri stok silme yetkisiyle iptal edebilir; personel maaşı / mesai katı
 --  yine her oturumdan değiştirilebilir. Yalnız G-25 uygulamasının bir soruna yol açtığı kanıtlanırsa kullanın.
 --  Ne yapar: car_yaz / fis_kes / fis_iptal'ı yedekteki (G-25 öncesi) tanıma döndürür; G-25'in oluşturduğu fonksiyonları ve tanimlar
---  tetikleyicisini kaldırır; mes_bildirim boşsa siler, DOLUYSA silmez — guvenlik.g25_mes_bildirim_arsiv olarak taşır (uygulama
+--  tetikleyicisini kaldırır; mes_bildirim / ucr_onay / isc_odeme boşsa siler, DOLUYSA silmez — guvenlik.g25_<tablo>_arsiv_<zaman> olarak taşır (uygulama
 --  erişemez; veri kaybı yok); yedeği siler. Kesilmiş fişlere, cari / stok / kasa satırlarına DOKUNMAZ.
 --  ÖNKOŞUL (biri tutmazsa HATA, hiçbir şey değişmez): postgres rolü; yedek eksiksiz; üç fonksiyon UYGULANDIĞI HÂLDE (gövde md5),
 --  yetkileri / sahipleri yedektekiyle aynı; G-25 nesnelerinin hepsi var. Biri sonradan değiştiyse o değişikliği EZMEDEN durur.
@@ -300,6 +308,8 @@ declare
   v_eksik text;
   v_r record;
   v_dolu bigint;
+  v_tablo text;
+  v_arsiv text;
 begin
   if current_user <> 'postgres' then
     raise exception 'Bu dosya postgres rolüyle çalıştırılmalı (şu an: %). Hiçbir şey değişmedi.', current_user;
@@ -321,9 +331,9 @@ begin
     end if;
   end loop;
   select string_agg(x, ', ') into v_eksik from unnest(array[{', '.join(sq(a + YENI_FONK_IMZA[a]) for a in YENI_FONK)}]) x where to_regprocedure(x) is null;
-  if v_eksik is not null or to_regclass('public.mes_bildirim') is null
+  if v_eksik is not null or {" or ".join(f"to_regclass('public.{t}') is null" for t in TABLOLAR)}
      or not exists (select 1 from pg_trigger where tgname = 'g25_tanimlar_ucret_koruma' and tgrelid = 'public.tanimlar'::regclass) then
-    raise exception 'G-25 nesneleri eksik (%) — karışık durum. Hiçbir şey değişmedi.', coalesce(v_eksik, 'mes_bildirim / tetikleyici');
+    raise exception 'G-25 nesneleri eksik (%) — karışık durum. Hiçbir şey değişmedi.', coalesce(v_eksik, '{" / ".join(TABLOLAR)} / tetikleyici');
   end if;
 
   -- ÜÇ FONKSİYON G-25 ÖNCESİ HÂLE (yedekteki tam tanım; create or replace yetkileri korur)
@@ -334,16 +344,19 @@ begin
 
   drop trigger g25_tanimlar_ucret_koruma on public.tanimlar;
 {chr(10).join(f"  drop function {a}{YENI_FONK_IMZA[a]};" for a in RPC)}
-{chr(10).join(f"  drop function {a}{YENI_FONK_IMZA[a]};" for a in ["public.g25_tanimlar_ucret_koruma", "public.g25_ucret_ozeti", "public.g25_fis_iptal_yetki",
-      "public.g25_fis_cari_yetki", "public.g25_fis_cari_yetki_tek", "public.g25_mesai_tutari", "public.g25_mesai_tahakkuku", "public.g25_mesai_anahtari",
-      "public.g25_uretim_bagi", "public.g25_stok_bagi", "public.g25_yetki_iste"])}
-  select count(*) into v_dolu from public.mes_bildirim;
-  if v_dolu = 0 then
-    drop table public.mes_bildirim;
-  else
-    alter table public.mes_bildirim set schema guvenlik;
-    alter table guvenlik.mes_bildirim rename to g25_mes_bildirim_arsiv;
-  end if;
+{chr(10).join(f"  drop function {a}{YENI_FONK_IMZA[a]};" for a in YENI_FONK if a not in RPC)}
+  -- Tablolar: boşsa silinir; DOLUYSA silinmez — guvenlik.g25_<tablo>_arsiv_<zaman> olarak taşınır (uygulama erişemez; veri kaybı yok).
+  v_arsiv := '';
+  foreach v_tablo in array array[{", ".join(sq(t) for t in TABLOLAR)}] loop
+    execute format('select count(*) from public.%I', v_tablo) into v_dolu;
+    if v_dolu = 0 then
+      execute format('drop table public.%I', v_tablo);
+    else
+      execute format('alter table public.%I set schema guvenlik', v_tablo);
+      execute format('alter table guvenlik.%I rename to %I', v_tablo, 'g25_' || v_tablo || '_arsiv_' || to_char(clock_timestamp(), 'YYYYMMDDHH24MISS'));
+      v_arsiv := v_arsiv || v_tablo || ' (' || v_dolu || ' satır) ';
+    end if;
+  end loop;
 
   drop table guvenlik.g25_yedek;
   drop table if exists guvenlik.g25_sonuc;
@@ -353,7 +366,7 @@ begin
   insert into guvenlik.g25_geri_sonuc values
     (1, 'car_yaz / fis_kes / fis_iptal', 'G-25 öncesi hâle döndü'),
     (2, 'G-25 fonksiyonları ve tanimlar tetikleyicisi', 'kaldırıldı'),
-    (3, 'mes_bildirim', case when v_dolu = 0 then 'boştu, silindi' else v_dolu || ' bildirim guvenlik.g25_mes_bildirim_arsiv''e taşındı' end),
+    (3, 'tablolar ({", ".join(TABLOLAR)})', case when v_arsiv = '' then 'boştu, silindi' else 'dolu olanlar guvenlik şemasına arşivlendi: ' || v_arsiv end),
     (98, 'UYARI', 'G-25 yetki açığı YENİDEN AÇIK (tasarım § 7)'),
     (99, 'GENEL', 'GERİ ALINDI');
 end $$;
@@ -386,7 +399,8 @@ def isle_blok(metin, ad):
 YARDIMCI = """-- G-25 (kaynağa işlendi): car_yaz'ın fiş dışı denetimi bu yardımcıyı çağırır; fis-defteri.sql'den önce kurulan dosyada da bulunsun.
 """ + [x[x.index("create or replace function public.g25_yetki_iste("):] for x in ifadeler if "create or replace function public.g25_yetki_iste(" in x][0] + ";\nrevoke all on function public.g25_yetki_iste(text[], text, text) from public, anon, authenticated;\n"
 def idempotent(x):
-    x = x.replace("create table public.mes_bildirim (", "create table if not exists public.mes_bildirim (")
+    for t in TABLOLAR:
+        x = x.replace(f"create table public.{t} (", f"create table if not exists public.{t} (")
     x = x.replace("create unique index mes_bildirim_acik", "create unique index if not exists mes_bildirim_acik")
     # Tetikleyici "yoksa kur": drop + create Editor'da AYRI ifadelerdir — arada (ya da create düşerse) maaş koruması kalkmış olurdu
     # (24 Kasım, denetim noktası günlüğünde görüldü). create or replace trigger PG14 ister; canlının sürümüne güvenilmez.

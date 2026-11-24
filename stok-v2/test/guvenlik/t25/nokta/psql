@@ -25,8 +25,9 @@ d=$("$GERCEK" -X -At -d "$db" -c "
              when f.y then 'Y' when f.e then 'E' else case when p.prosrc like '%g25_%' then 'G' else 'F' end end
            from pg_proc p where p.oid = to_regprocedure('public.' || f.ad || '(jsonb)')), '-'), ' ' order by f.ad)
     || ' yeni=' || (select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-                     where n.nspname = 'public' and (p.proname like 'g25\_%' or p.proname like 'mesai\_%'))
-    || '+' || (to_regclass('public.mes_bildirim') is not null)::int || '+' || (select count(*) from pg_trigger where tgname = 'g25_tanimlar_ucret_koruma')
+                     where n.nspname = 'public' and (p.proname like 'g25\_%' or p.proname like 'mesai\_%' or p.proname like 'ucret\_onay%'))
+    || '+' || ((to_regclass('public.mes_bildirim') is not null)::int + (to_regclass('public.ucr_onay') is not null)::int + (to_regclass('public.isc_odeme') is not null)::int)
+    || '+' || (select count(*) from pg_trigger where tgname = 'g25_tanimlar_ucret_koruma')
   from f" 2>/dev/null) || exit $rc
 son="$G25_NOKTA_LOG.d.$db"
 if [ "$(cat "$son" 2>/dev/null)" != "$d" ]; then
