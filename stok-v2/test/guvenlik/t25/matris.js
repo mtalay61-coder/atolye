@@ -421,18 +421,43 @@ const SAHTE = {
       await k.sorgu(`insert into public.uretim_atamalari (id, uretim_id, proses, personel_id, beden_miktarlari, miktar, verildi_mi, tamamlandi_mi, tamir_mi, tamir_ucret, ek)
         values ($1, $2, 'Kesim', 'g25-q', '{"40": 10}'::jsonb, 10, true, false, false, 0, jsonb_build_object('kismiKalanKaynak', $3::text))`, [sahte, a.uid, a.aid]);
       await K4("M4 zincire sonradan eklenen 10'luk parça (toplam 20 ≠ onaylı 10) · Uretimci", await fisKes("Uretimci", urtYuk("g25-q", 10, 35, a.uid, await teslimAlt(sahte))), "ret 42501"); }
-    // EŞZAMANLI: aynı işin iki AÇIK parçası (kök 5 + kalan 5, toplam 10 onaylı) — 3'er teslim aynı anda: her parça bir kez, toplam ≤ 10
+    // İSTENEN / KAYDEDİLEN (26 Kasım; kullanıcı: "Miktarı sessizce kırpma; sınırı aşan isteği açıkça reddet ve testte istenen / kaydedilen
+    // miktarları ayrı göster"). Sunucu işçilik miktarını DEĞİŞTİRMEZ: satır olduğu gibi yazılır ya da istek bütünüyle 42501 ile düşer.
+    // Kaydedilen = o fişin cari satırındaki miktar (ek.miktar); ret → 0. Her istek ayrı satır (sıralı — eşzamanlı sırası değişse de çıktı aynı).
+    const kaydedilen = async (r) => (r.ok && r.govde && r.govde.fisNo) ? Number((await k.sorgu(`select coalesce(sum((h.ek ->> 'miktar')::numeric), 0) n
+      from public.car_hareket h where h.fis_no = $1 and not h.iptal`, [r.govde.fisNo]))[0].n) : 0;
+    const istekSatiri = async (on, parca, istenen, r) => `${on} · ${parca} · istenen ${istenen} · ${r.ok ? "kabul" : `ret ${r.kod}`} · kaydedilen ${await kaydedilen(r)}`
+      + (!r.ok && r.mesaj ? `  [${String(r.mesaj).replace(/^Cari hareketi gerçek bir üretim işlemine bağlı değil \(/, "").replace(/\) — bu kayıt için.*$/, "")}]` : "");
+    // O1: onaylı iş 10, kısmi 6 teslim edildi (kalan parça 4) — kalan parçaya 5 isteniyor → AÇIK ret, hiçbir şey yazılmaz; 4 → kabul, 4 yazılır
+    { const a = await yeniAtama();
+      const k1 = await kismiAlt(a.aid, 6);
+      const r0 = await istek("Uretimci", "rpc/fis_kes", { p: urtYuk("g25-q", 6, 35, a.uid, k1.alt) });
+      const r1 = await dene("Uretimci", "rpc/fis_kes", { p: urtYuk("g25-q", 5, 35, a.uid, await teslimAlt(k1.kalanId)) });
+      const r2 = await istek("Uretimci", "rpc/fis_kes", { p: urtYuk("g25-q", 4, 35, a.uid, await teslimAlt(k1.kalanId)) });
+      for (const [parca, ist, r] of [["kök (10 → kısmi)", 6, r0], ["kalan parça (4)", 5, r1], ["kalan parça (4)", 4, r2]]) {
+        const sat = await istekSatiri("K4 · O1 istek", parca, ist, r); satirlar.push(sat); console.log(sat);
+      }
+      yaz("K4 · O1 kalan parçaya fazla istek (5 > 4) açıkça reddedildi, iz yok · Uretimci", r1, "ret 42501");
+      const odenen = Number((await k.sorgu(`select coalesce(sum(miktar), 0) n from public.isc_odeme o join public.stk_fis f on f.istek = o.istek where o.kok = $1 and not f.iptal`, [a.aid]).catch(() => [{ n: -1 }]))[0].n);
+      yaz(`K4 · O1 işte ödenen = 6 + 4 = 10 (kırpma yok) [${odenen}]`, { ok: odenen === 10 && r0.ok && r2.ok, kod: `ödenen ${odenen}` }, "geçti"); }
+    // EŞZAMANLI: aynı işin iki AÇIK parçası (kök 5 + kalan 5, onaylı toplam 10) — 6 istek AYNI ANDA: kök için 5, 5, 6; kalan için 5, 5, 6.
+    // Beklenen: her parçadan tam bir "5" kabul (5 yazılır), öteki "5"ler (zaten ödenmiş / tamamlanmış) ve "6"lar (parçadan büyük) AÇIK ret.
     { const a = await yeniAtama({ miktar: 5, onay: false });
       const p2 = yeniId("a");
       await k.sorgu(`insert into public.uretim_atamalari (id, uretim_id, proses, personel_id, beden_miktarlari, miktar, verildi_mi, tamamlandi_mi, tamir_mi, tamir_ucret, ek)
         values ($1, $2, 'Kesim', 'g25-q', '{"40": 5}'::jsonb, 5, true, false, false, 0, jsonb_build_object('kismiKalanKaynak', $3::text))`, [p2, a.uid, a.aid]);
       await isiOnayla(a.aid);
       const [alt1, alt2] = [await teslimAlt(a.aid), await teslimAlt(p2)];
-      const rr = await Promise.all([alt1, alt2, alt1, alt2, alt1, alt2].map((alt) => istek("Uretimci", "rpc/fis_kes", { p: urtYuk("g25-q", 5, 35, a.uid, alt) })));
+      const plan = [["kök parça (5)", alt1, 5], ["kök parça (5)", alt1, 5], ["kök parça (5)", alt1, 6], ["kalan parça (5)", alt2, 5], ["kalan parça (5)", alt2, 5], ["kalan parça (5)", alt2, 6]];
+      const rr = await Promise.all(plan.map(([, alt, m]) => istek("Uretimci", "rpc/fis_kes", { p: urtYuk("g25-q", m, 35, a.uid, alt) })));
+      const sat = []; for (let x = 0; x < plan.length; x++) sat.push(await istekSatiri("K4 · EŞZAMANLI istek", plan[x][0], plan[x][2], rr[x]));
+      sat.sort(); sat.forEach((x) => { satirlar.push(x); console.log(x); });
       const odenen = Number((await k.sorgu(`select coalesce(sum(miktar), 0) n from public.isc_odeme o join public.stk_fis f on f.istek = o.istek where o.kok = $1 and not f.iptal`, [a.aid]).catch(() => [{ n: -1 }]))[0].n);
       const fis = Number((await k.sorgu(`select count(*) n from public.stk_fis where uretim_id = $1 and not iptal`, [a.uid]))[0].n);
-      yaz(`K4 · EŞZAMANLI 6 teslim, iki parça (5 + 5, onaylı 10) · Uretimci [geçen ${rr.filter((r) => r.ok).length}, fiş ${fis}, ödenen ${odenen}]`,
-        { ok: rr.filter((r) => r.ok).length === 2 && fis === 2 && odenen === 10, kod: "toplam aşıldı" }, "geçti"); }
+      let topKayit = 0; for (const r of rr) topKayit += await kaydedilen(r);
+      const kabul = rr.map((r, x) => r.ok ? plan[x][2] : null).filter((x) => x != null).sort();
+      yaz(`K4 · EŞZAMANLI 6 istek, iki parça (onaylı 10) · Uretimci [kabul edilen istekler ${JSON.stringify(kabul)}, fiş ${fis}, kaydedilen ${topKayit}, ödeme kaydı ${odenen}]`,
+        { ok: JSON.stringify(kabul) === "[5,5]" && fis === 2 && topKayit === 10 && odenen === 10, kod: "toplam / kırpma" }, "geçti"); }
     // TAMİR TALEBİ → ONAY: Üretim talep eder (önerilen 5.000); yetkili ücreti 40 BELİRLER; 40 ile teslim geçer; onaydan sonra miktar
     // değişirse eski onay kullanılamaz; eşzamanlı iki onay tek onay kaydı
     { const a = await yeniAtama({ tamir: true, tamirUcret: 5000, onay: false });

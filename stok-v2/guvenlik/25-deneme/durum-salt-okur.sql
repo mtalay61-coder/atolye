@@ -7,7 +7,7 @@ with t as (select coalesce((select veri from public.tanimlar where id = 'tekil')
 kul as (select x from t, jsonb_array_elements(case when jsonb_typeof(t.v -> 'kullanicilar') = 'array' then t.v -> 'kullanicilar' else '[]'::jsonb end) x),
 bol as (select b from t, jsonb_array_elements(case when jsonb_typeof(t.v -> 'bolumler') = 'array' then t.v -> 'bolumler' else '[]'::jsonb end) b)
 select sira, kontrol, deger from (
-  select 1 as sira, 'proje kimliği (adres çubuğuyla karşılaştırın)' as kontrol, current_database() || ' · ' || coalesce(current_setting('request.jwt.claim.iss', true), '-') as deger
+  select 1 as sira, 'veritabanı (Supabase''te postgres — PROJE KİMLİĞİNİ adres çubuğundan doğrulayın: drtmnovafswzcmpacubl)' as kontrol, current_database() || ' · ' || current_user as deger
   union all select 2, 'surum tablosu (yayındaki istemci kaydı)', coalesce((select string_agg(coalesce(surum, '?'), ', ') from public.surum), 'yok')
   union all select 3, 'giriş sistemi açık mı (tanimlar.girisAktifMi)', coalesce((select v ->> 'girisAktifMi' from t), 'yok')
   union all select 4, 'kullanıcı sayısı: toplam · Yönetici · cari/muhasebe kaydetmeli · üretim kaydetmeli (PARA yok)',
