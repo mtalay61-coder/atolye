@@ -141,3 +141,4 @@ Veri silinmedi / sıfırlanmadı. Kullanıcı / veri eklemeleri (EKLEMELER.md) h
   DURUYOR — tasarım gereği: ödeme kaydı fişe istek kimliğiyle bağlı, fiş iptal olunca sayılmaz (yeni.sql 239, 278–306, 539), yeniden
   teslimde satır silinip yenisi yazılır. Beklentim ("satır silinir") yanlıştı; durum sorgusu 5. satırı fişin geçerli / İPTAL durumunu
   gösterecek biçimde düzeltildi.
+- Güncel sorgu (iptal sonrası): 5 `… 6 · 35 · geçerli | atama:atama-mww8e1p5-q8bf · 4 · 35 · İPTAL` → iptal edilen ödeme sayılmıyor (DOĞRULANDI). Yeniden teslim henüz sunucuda yok (4'lük parça açık, yeni fiş yok).
