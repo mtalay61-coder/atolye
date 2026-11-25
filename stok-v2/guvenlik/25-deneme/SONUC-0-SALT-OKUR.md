@@ -163,3 +163,4 @@ Dosya `25b-onay-muhru-uygula.sql` SHA-256 `5ba5620a1914279dc835f989c2feb55a2e1b5
 - 25b sonrası `25-onkosul-salt-okur.sql` (1be58205…): 1 VAR · 2–4 G-25 uygulanmış · 5 A6 · 6 **30** (22+3+5) · 7 kurallar AÇIK · 99 **UYGULANMIŞ**. 25b uygulaması TAMAM.
 - Anlık görüntü (kullanıcı; hangi adımda alındığı soruldu): car_hareket 9 0de77f81… · Usta bakiye 1050 · isc_odeme 2 27a9389d… · kas_hareket 1 591c1ff7… · stk_fis 11 d7e2043e… · stk_hareket 13 1e6c98dd… · ucr_onay 2 8f25b49a… · uretim 4 ac49f562… · uretim_atamalari 5 fc356893…
 - Anlık görüntü 2: yalnız ucr_onay özeti değişti (8f25b49a… → 1eba16b4…); diğer 8 satır birebir aynı — mühür basılması ile tutarlı (gecersiz sütunu doldu); fiş / hareket / ödeme / bakiye değişmedi.
+- **Test 12 (2. döngü) ücret 40:** 10003 ve 10004 su_an_gecerli false · muhurlu true · kaynak urunler · mühürdeki ücret 40 · ürün 40.
