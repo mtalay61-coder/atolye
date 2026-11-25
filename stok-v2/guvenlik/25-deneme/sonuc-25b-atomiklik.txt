@@ -1,0 +1,3 @@
+ÖNCE : 0 sütun · 0 tetik · false fonk · onayli=2460b0e007f5a5cb6880ed48e9f34a03 · onayla=e7c7b770d9fc483680202dea0131d7e4
+SONRA: 0 sütun · 0 tetik · false fonk · onayli=2460b0e007f5a5cb6880ed48e9f34a03 · onayla=e7c7b770d9fc483680202dea0131d7e4
+zorla düşürülen son adım: ERROR: INSERT has more expressions than target columns (guvenlik.g25b_sonuc önceden x int ile kuruldu)
