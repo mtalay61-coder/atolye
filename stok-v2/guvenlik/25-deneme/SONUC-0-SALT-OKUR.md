@@ -170,3 +170,4 @@ Dosya `25b-onay-muhru-uygula.sql` SHA-256 `5ba5620a1914279dc835f989c2feb55a2e1b5
 - 10004 iz (salt okur): fiş ÜRT 350, iptalsiz, oluşturan deneme@atolye.local (Yönetici) 17:56:48 · onay geçerli false / mühürlü true (teslim onayı kullanmadı) · isc_odeme YOK (PARA yolu) · atama tamamlandı. Yönetici teyidiyle tutarlı.
 - 10005 üretimi açıldı ve Kesim Deneme Usta'ya verildi — DenemeUretim kullanıcısıyla (kullanıcı). Üçüncü ücret döngüsü için onay henüz verilmedi.
 - Kullanıcı onayı (25 Kasım): "yol 1 onaylıyorum" — yalnız deneme projesinde Kesim ücreti ÜÇÜNCÜ kez 35 → 40 → 35 (10005 üzerinde Test 12'nin ret / anlık görüntü / yeniden onay + tek ödeme adımları), ardından Test 7.
+- **Test 12 (3. döngü, 10005):** 35 → 40 → 35 sonrası 10005 (onay 18:00:36) su_an_gecerli **false** · güncel 35 = onaylanan 35 · mühürlü (urunler, 40) → eski onay canlanmadı ✓.
