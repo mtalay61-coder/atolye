@@ -94,3 +94,4 @@ Veri silinmedi / sıfırlanmadı. Kullanıcı / veri eklemeleri (EKLEMELER.md) h
   — plan "bağlı proses seçilmez" idi. Bölüme bağlı prosesin teslimi cariye yazılmaz (130-tanimlar: "bu proseslerin teslimi cariye
   yazılmaz") → Deneme Usta'nın Kesim işçiliği / ücret onayı sınaması geçersiz olur. Aşama B durduruldu; bağın kaldırılması için
   kullanıcıya bildirildi (yeni eklenen kaydı değiştirmek).
+- Bölüm–Kesim bağı kullanıcı tarafından kaldırıldı; doğrulama: 2 `Deneme Bölüm · Deneme Maaşlı Personel=30000 · prosesler: -`, diğer satırlar aynı (1·1·1·1 · 30000·false · 35 · 0 · yok). Aşama A TAMAM.
