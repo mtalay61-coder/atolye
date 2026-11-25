@@ -98,3 +98,8 @@ Veri silinmedi / sıfırlanmadı. Kullanıcı / veri eklemeleri (EKLEMELER.md) h
 - Aşama B: Yeni Üretim Siparişi reddedildi — "Deneme Bot G25: reçete tamamlanmadan üretim açılamaz — Reçetede hiç hammadde yok". Hiçbir şey yazılmadı. Rutin bağımlılık: deneme hammaddesi + reçete satırı + reçete onayı (EKLEMELER 4b).
 - Aşama B sonrası: 7 `1 · 10` · 8 `Kesim · Deneme Usta · 10 · true · **true**` — atama TAMAMLANMIŞ görünüyor (beklenen false). İz için salt okur `deneme-uretim-iz-salt-okur.sql`.
 - Teslim YÖNETİCİ ile alındı (kullanıcı). Kaynak: g25_fis_cari_yetki_tek'te PARA yetkilisi (Yönetici dahil) onay aranmadan geçer — tasarım gereği; ret yalnız PARA'sız kullanıcıya. Bu iş tamamlandı; testler için aynı biçimde ikinci üretim + iş açılacak (iptal YOK). Yan gözlem (ölçülecek): PARA yolunda isc_odeme yazılmıyor olabilir.
+- İz (`deneme-uretim-iz-salt-okur.sql`): 1 `10001 · Tamamlandı · 10 | 10002 · Planlandı · 10` · 2 ilk atama tamamlandı (sağlam 40=10),
+  ikinci `atama-mww74ght-09dp · Kesim · 10 · true · false` (AÇIK — test işi) · 3 tek ÜRT fişi 350, iptalsiz, Yönetici · 4 Deneme Usta
+  Alacak 350 "Kesim işçilik ücreti — Deneme Bot G25 · 10 adet × 35 ₺" · 5 ucr_onay **yok** · 6 isc_odeme **yok** → PARA yolu ödeme
+  kaydı yazmıyor (yan gözlem DOĞRULANDI; etkisi ayrıca değerlendirilecek, bu işte değil). Ekranda hammadde stoğu −10 (beklenen −20)
+  → `deneme-hammadde-salt-okur.sql` ile bakılacak.
