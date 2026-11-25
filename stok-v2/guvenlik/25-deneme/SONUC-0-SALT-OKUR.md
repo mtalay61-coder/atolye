@@ -109,3 +109,4 @@ Veri silinmedi / sıfırlanmadı. Kullanıcı / veri eklemeleri (EKLEMELER.md) h
 - **Test 1 — GEÇERSİZ (Yönetici ile girilmişti; kullanıcı teyidi). Gözlem olarak:** Üretim Takibi › Ücret onayları → "Onay bekleyen ücretler (1) — onaylanmamış ücretle teslimde
   işçilik yazılmaz; cari / muhasebe yetkilisi Onaylar'dan onaylar" · `10002 · Kesim · Deneme Usta · 10 adet × 35 ₺`; şeritte onayla düğmesi
   yok (Yönetici ekranında da). DenemeUretim ile YENİDEN yapılacak.
+- 10002 de YÖNETİCİ ile teslim alındı (kullanıcı): önce 0 adetle teslim, sonra adet düzeltilip yeniden; kullanıcıya göre stok düşümü olmadı. Test işi tükendi → ölçüm (iz + hammadde sorguları) bekleniyor; sonra üçüncü üretim.
