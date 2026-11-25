@@ -70,3 +70,6 @@ Veri silinmedi / sıfırlanmadı. Kullanıcı / veri eklemeleri (EKLEMELER.md) h
   yetkiler **boş** (şablon eklemede uygulanmamış; 403 sınaması bu hâlde yapıldı — rol Kullanıcı olduğu için geçerli) ·
   denemeuretim yok · 0 · denemesef yok · 0. Şablon, satırdaki "Yetkiler" › "Rol şablonu" seçimiyle uygulanır (rol alanı da şablon
   adına döner: Muhasebe / Üretim; G-25 sunucusu PARA'yı yetki kutularından okur, rol adından değil — yalnız "Yönetici" özel).
+- Eklemeler sonrası (kullanıcı "OLDU"): denememuhasebe var · Muhasebe · auth 1 · para **true** · cari=gdks fisler=gdk muhasebe=gdks
+  siparis=g (beklenen) · denemeuretim **yok · auth 0** (beklenen: var) · denemesef var · Üretim · auth 1 · para false · yetkiler
+  fisler=g siparis=g stok=gdk uretim=gdk (beklenen elle eklenecek cari=g ve fisler=dk YOK). Durduruldu; tekrar ekleme yapılmadı.
