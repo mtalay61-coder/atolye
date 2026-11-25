@@ -73,3 +73,5 @@ Veri silinmedi / sıfırlanmadı. Kullanıcı / veri eklemeleri (EKLEMELER.md) h
 - Eklemeler sonrası (kullanıcı "OLDU"): denememuhasebe var · Muhasebe · auth 1 · para **true** · cari=gdks fisler=gdk muhasebe=gdks
   siparis=g (beklenen) · denemeuretim **yok · auth 0** (beklenen: var) · denemesef var · Üretim · auth 1 · para false · yetkiler
   fisler=g siparis=g stok=gdk uretim=gdk (beklenen elle eklenecek cari=g ve fisler=dk YOK). Durduruldu; tekrar ekleme yapılmadı.
+- "deneme%" taraması (salt okur): liste deneme (Yönetici) · DenemeMuhasebe (Muhasebe) · DenemeSef (Üretim); auth deneme ·
+  denememuhasebe · denemesef. Üretim kullanıcısı başka adla da AÇILMAMIŞ → DenemeUretim bir kez eklenecek; yarım kayıt yok.
