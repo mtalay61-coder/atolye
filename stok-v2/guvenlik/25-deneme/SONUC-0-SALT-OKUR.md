@@ -119,3 +119,4 @@ Veri silinmedi / sıfırlanmadı. Kullanıcı / veri eklemeleri (EKLEMELER.md) h
   bırakıldı (düzeltmek iptal + yeniden teslim = mevcut kaydı değiştirmek). Olası arayüz sorunu (düzeltmede eski değer taşınıyor mu)
   ÖLÇÜLMEDİ — ayrı madde.
 - Üçüncü üretim 10003 açıldı, Kesim Deneme Usta'ya verildi. Test 1 (yeniden): "Onay bekleyen ücretler (1)" · `10003 · Kesim · Deneme Usta · 10 adet × 35 ₺` — kullanıcının DenemeUretim olduğu teyit bekleniyor.
+- **Test 1 — GEÇTİ:** oturum "Deneme Uretim · Üretim · v1.745.1" (ekrandan teyit); "Onay bekleyen ücretler (1)" · 10003 · Kesim · Deneme Usta · 10 adet × 35 ₺; onayla düğmesi yok; kartta "10 / 10 adet dağıtıldı". Not (test 4 için): üst menüde Cari yok ama "Finans" menüsü ve önceki oturumdan kalan "Cari" sekmesi görünüyor — test 4'te bakılacak.
