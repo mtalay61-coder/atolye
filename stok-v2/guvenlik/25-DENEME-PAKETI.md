@@ -50,12 +50,13 @@ düşerse HİÇBİR ŞEY değişmez (yerelde son adım bilerek düşürülerek s
 | Şef | cari GÖRÜNTÜLEME + üretim / stok / fişler kaydetme | cari kartında "Mesaiyi onaya gönder"; maaş kutusu ve para düğmeleri kapalı |
 
 Veri: bir bölüm (ör. Kesimhane) ve maaşlı bir personeli; bölümde OLMAYAN parça başı bir personel (Personel tipi); proses ücreti
-olan bir mamul (ör. Kesim 35); o ürünle bir üretim ve parça başı personele verilmiş bir iş.
+olan bir mamul (`Deneme Bot G25`, Kesim 35 ₺ — deneme projesindeki eski `Deneme Bot`'a dokunulmaz); o ürünle 10 adetlik bir
+üretim ve parça başı personele (`Deneme Usta`) verilmiş Kesim işi. Ayrıntı: `25-deneme/EKLEMELER.md`.
 
 ## 4. Kontrol listesi (yerel ekran sınaması `test/ekran/ekran-g25-akis.js` 33 / 33 ile aynı adımlar)
 
 0. **Salt okur:** `25-onkosul-salt-okur.sql` (GENEL HAZIR beklenir) + `25-deneme/durum-salt-okur.sql` (yalnız sayılar).
-1. **Üretim** kullanıcısı: Üretim › Ücret onayları → iş (ör. "Kesim · personel · 10 adet × 35 ₺") onay bekliyor.
+1. **Üretim** kullanıcısı: Üretim › Ücret onayları → iş (`Deneme Bot G25` · "Kesim · Deneme Usta · 10 adet × 35 ₺") onay bekliyor.
 2. Üretim: işi teslim al → **reddedilir**: "… Kesim işi (10 adet × 35 ₺) cari / muhasebe onayı bekliyor …"; fiş yok, iş ustada.
 3. Üretim: Üretim › Mesai bildirimi → maaşlı personele hafta içi 10 s → "onay bekliyor"; TUTAR YOK.
 4. Üretim: maaş şeridi yok; Cari menüsü yok (cari görüntüleme yoksa).

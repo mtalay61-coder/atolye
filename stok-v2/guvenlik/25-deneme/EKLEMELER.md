@@ -29,13 +29,18 @@ AÇILMAZ).
 
 ## 4. Mamul — Stok › Yeni ürün (Mamul)
 
-`Deneme Bot` · renk `Siyah` · beden `40` · reçetede proses `Kesim` (hammaddesiz proses olabilir) · proses ücreti **Kesim 35 ₺**.
+`Deneme Bot G25` · renk `Siyah` · beden `40` · reçetede proses `Kesim` (hammaddesiz proses olabilir) · proses ücreti **Kesim 35 ₺**.
+Ad neden "G25": deneme projesinde proses ücreti boş bir `Deneme Bot` önceden vardı (25 Kasım ölçümü); ona DOKUNULMAZ
+(kullanıcı kararı, 25 Kasım) — deneme bu ayrı mamulle yürür.
 
 ## 5. Üretim — Üretim › Yeni Üretim Siparişi
 
-`Deneme Bot` · Siyah · 40 × **10** → Kesim adımında **iş ver**: `Deneme Usta`, 10 adet.
+`Deneme Bot G25` · Siyah · 40 × **10** → Kesim adımında **iş ver**: `Deneme Usta`, 10 adet.
 (Kontrol listesinin teslim / kısmi teslim / tamir / iptal adımları bu iş üzerinde; gerekirse ikinci bir üretim aynı biçimde.)
 
-## Beklenen sonrası (salt okur `durum-salt-okur.sql` ile ölçülür)
+## Beklenen sonrası (salt okur `durum-salt-okur.sql` ve `deneme-verisi-salt-okur.sql` ile ölçülür)
+
+`deneme-verisi-salt-okur.sql`: 4. satır `1 · 1 · 1 · 1` · 5. satır `30000 · false` · 6. satır `35` · 7. satır `1 · 10` · 8. satır `Kesim · Deneme Usta · 10 · true · false`.
+
 4. satır: toplam 5 · Yönetici 1 · cari/muhasebe ≥ 1 · üretim ≥ 1 · 6. satır auth hesabı ≥ 6 · 7. satır 1 · 1 · 1 · 8. satır Personel 2 ·
 9. satır ≥ 1 · 10. satır üretim 1 · açık atama 1.

@@ -81,3 +81,6 @@ Veri silinmedi / sıfırlanmadı. Kullanıcı / veri eklemeleri (EKLEMELER.md) h
 - Deneme verisi ÖNCESİ (`deneme-verisi-salt-okur.sql`): 1 cariler: `Deneme Müşteri · Müşteri` (önceden var; planlananlar yok) ·
   2 bölüm yok · 3 ürün: **`Deneme Bot · {}`** (önceden VAR, proses ücreti boş — EKLEMELER'deki adla çakışıyor) · 4 üretim 0 · 5 atama yok.
   Karar bekleniyor: var olan `Deneme Bot`'a dokunmadan ayrı adlı yeni mamul mü, yoksa var olana Kesim 35 eklemek mi.
+- Kullanıcı kararı (25 Kasım): deneme mamulü **`Deneme Bot G25`** (eski `Deneme Bot`'a dokunulmaz); iki Personel carisi, `Deneme Bölüm`
+  (maaş 30.000; Deneme Usta bölüme BAĞLANMAZ) ve yeni mamul eklenir. EKLEMELER.md ve deneme paketindeki mamul adı güncellendi.
+  `deneme-verisi-salt-okur.sql` adet / maaş / Kesim ücreti / ön koşul satırlarıyla genişletildi (yerelde boş ve dolu kopyada sınandı).
