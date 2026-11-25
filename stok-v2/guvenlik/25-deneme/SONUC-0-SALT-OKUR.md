@@ -110,3 +110,6 @@ Veri silinmedi / sıfırlanmadı. Kullanıcı / veri eklemeleri (EKLEMELER.md) h
   işçilik yazılmaz; cari / muhasebe yetkilisi Onaylar'dan onaylar" · `10002 · Kesim · Deneme Usta · 10 adet × 35 ₺`; şeritte onayla düğmesi
   yok (Yönetici ekranında da). DenemeUretim ile YENİDEN yapılacak.
 - 10002 de YÖNETİCİ ile teslim alındı (kullanıcı): önce 0 adetle teslim, sonra adet düzeltilip yeniden; kullanıcıya göre stok düşümü olmadı. Test işi tükendi → ölçüm (iz + hammadde sorguları) bekleniyor; sonra üçüncü üretim.
+- İz (10002 Yönetici teslimi sonrası): iki üretim de Tamamlandı; ikinci atama sağlam 40=10, 14:08:48. Fişler: 10001 ÜRT 350 (geçerli) ·
+  10002 ÜRT 350 **iptal** 14:08:32 · 10002 ÜRT 350 geçerli 14:08:47. Deneme Usta: 350 geçerli · 350 iptal · 350 geçerli → net 700 = 2 × 10 × 35;
+  ÇİFT İŞÇİLİK YOK (düzeltme eski fişi iptal edip yenisini kesmiş). ucr_onay yok · isc_odeme yok (PARA yolu). Hammadde hareketleri bekleniyor.
