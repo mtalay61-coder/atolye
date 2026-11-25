@@ -1,0 +1,39 @@
+══ 0) taban
+   ✓ atolye_t25_taban hazır (canlı hizalı + tohum), envanter 197 satır
+══ 1) önkoşul
+   ✓ önkoşul GENEL HAZIR
+══ 2) ÖNCE matrisi
+   (açık) A · CVR · Uretimci · geçti
+   (açık) A · CVR · Ayse · geçti
+   (açık) A6 · iptal CVR · Stokcu · geçti
+   (açık) A8 · maaş değiştirme · Uretimci · geçti
+══ 3a) ATOMİKLİK: uygulama son adımda düşerse hiçbir şey kalmaz
+NOTICE:  schema "guvenlik" already exists, skipping
+   ✓ uygulama son adımda (g25_sonuc) düştü — önceki tüm adımlar çalışmıştı
+   ✓ düşen uygulamadan sonra önkoşul HAZIR, yedek yok, envanter tabanla birebir (yarım nesne yok)
+══ 3) uygulama
+   ✓ uygulandı
+   ✓ ikinci uygulama reddedildi
+   ✓ ikinci uygulama hiçbir şey değiştirmedi (envanter aynı)
+   ✓ sonra doğrula TAMAM
+   ✓ önkoşul şimdi UYGULANMIŞ
+   ✓ Faz 0.4 envanterinde YALNIZ beklenen fark: < F|fis_kes(p jsonb) > F|fis_kes(p jsonb) > F|g25_onay_degisim() > F|g25_tanimlar_ucret_koruma() > R|isc_odeme > R|mes_bildirim > R|ucr_onay > T|tanimlar.g25_onay_degisim_tanimlar > T|tanimlar.g25_tanimlar_ucret_koruma > T|uretim.g25_onay_degisim_uretim > T|uretim_atamalari.g25_onay_degisim_atama > T|urunler.g25_onay_degisim_urunler 
+══ 4) SONRA matrisi (beklentiler A1–A8)
+   ✓ ── 288 satır · hepsi beklenen ──
+══ 5) GERİ ALMA
+   ✓ geri alındı · 98 | UYARI | G-25 yetki açığı YENİDEN AÇIK (tasarım § 7)
+   ✓ geri almadan sonra önkoşul HAZIR
+   ✓ envanter tabanla birebir aynı
+   ✓ geri almadan sonra matris ÖNCE ile birebir (açık YENİDEN AÇIK)
+   ✓ ikinci geri alma reddedildi
+══ 6) TEKRAR (uygula → geri al → uygula)
+   ✓ yeniden uygulamanın matrisi ilk uygulamayla birebir
+══ 7) üretici
+   ✓ üretilen dosyalar diskteki ile aynı
+══ 8) regresyon — uygulanmış kopyada ekran testleri (güncel istemci, Yönetici)
+   ✓ ekran-cari-virman: ── ekran-cari-virman: 29 ✓ / 0 ✗ ──
+   ✓ ekran-stok: ── ekran-stok: 24 geçti, 0 kaldı ──
+   ✓ ekran-kasa: ── ekran-kasa: 29 geçti, 0 kaldı ──
+   (G-25 sonrası) GÖZLEM Ayşe: durum 403 · kod 42501 · fiş - · yazılan satır 0 · Bu işlem için yetkiniz yok: Cari virmanı (cari hareketi) (cari / muhasebe kaydetme yetkisi gerekir)
+── test25: TEMİZ (çıktılar /tmp/claude-0/-home-user/6fb38da4-0d40-53c4-8348-d529c722ab74/scratchpad/t25n) ──
+CIKIS 0
