@@ -159,3 +159,4 @@ Veri silinmedi / sıfırlanmadı. Kullanıcı / veri eklemeleri (EKLEMELER.md) h
 Dosya `25b-onay-muhru-uygula.sql` SHA-256 `5ba5620a1914279dc835f989c2feb55a2e1b501384c6d286c85f926ec9bc6246` (atomiklik: sonuc-25b-atomiklik.txt).
 Çıktı: 1 gecersiz sütunu eklendi · 2 g25_onayli / ucret_onayla mührü dikkate alıyor · 3 mühür tetikleyicileri (4) kuruldu, etkin ·
 4 şu an geçerli onay sayısı **2** (10003 + 10004 — uygulamadan önce de 2'ydi; değişmedi) · 99 **UYGULANDI**. Salt okur doğrulamalar bekleniyor.
+- 25b sonrası `25-sonra-dogrula-salt-okur.sql` (be4141ee…): 1–10 tamam (4: 22 fonksiyon · 8: 5 tetikleyici etkin) · 99 **TAMAM**. Önkoşul bekleniyor.
