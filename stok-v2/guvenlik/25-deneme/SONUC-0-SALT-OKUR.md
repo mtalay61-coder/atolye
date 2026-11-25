@@ -43,3 +43,9 @@ Veri silinmedi / sıfırlanmadı. Kullanıcı / veri eklemeleri (EKLEMELER.md) h
   OPTIONS → **200** · jetonsuz POST → **401** "Oturum jetonu yok — bulut kimliğiyle giriş yapılmalı" ·
   sahte jetonlu POST → **401** "Oturum geçersiz ya da süresi dolmuş — çıkıp yeniden girin".
 - Sınanmadı (sıradaki): gerçek oturumlu, Yönetici OLMAYAN çağrının 403 alması (DenemeMuhasebe açıldıktan sonra, yetki verilmeden).
+- Gerçek kullanıcı açma (`DenemeMuhasebe`, Yönetici oturumuyla): "Kullanıcı EKLENMEDİ: bulut hesabı açılamadı. Tanımlar okunamadı:
+  permission denied for table tanimlar". Oturum doğrulaması geçti (401 değil); fonksiyon 2. aşamada düştü, hesap açan koddan önce.
+  Durduruldu. Salt okur teşhis (`teshis-tanimlar-yetki-salt-okur.sql`): 1 service_role SELECT **false** · 2 USAGE true ·
+  3 bypassrls true · 4 anon false · 5 authenticated true · 6 RLS true · false · 7 `postgres=arwdDxtm/postgres authenticated=arwdxt/postgres`
+  · 8 kullanıcı 2 · 9 auth 3 → neden H1 (service_role'ün tanimlar okuma yetkisi yok); deneme hiçbir şey yazmadı.
+  Önerilen düzeltme: `tanimlar-service-role-okuma.sql` (yalnız SELECT, yalnız deneme) — kullanıcı onayı bekleniyor.
