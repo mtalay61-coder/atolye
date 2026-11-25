@@ -60,3 +60,6 @@ Veri silinmedi / sıfırlanmadı. Kullanıcı / veri eklemeleri (EKLEMELER.md) h
   5 ilk 15: cariler, cek_gorselleri, cop, degisiklik, fis_cek_iz, fis_karsilanan_iz, fis_sayac, gorevler, gunluk, hesap_hareketleri,
   isc_odeme, mes_bildirim, modeller, onaylar, platform_firmalar · 6 postgres varsayılan yetkileri `postgres=arwdDxtm/postgres
   authenticated=arwdDxt/postgres` (service_role YOK). Yetki verilmedi; yalnız ölçüm.
+- `DenemeMuhasebe` yeniden denendi (bir kez): "Deneme Muhasebe eklendi · bulut hesabı: denememuhasebe@atolye.local"; listede rol
+  Kullanıcı, "bulut" etiketli. Ardından konteynerden `islem: "ekle"` ile hesap açma denemeleri: OPTIONS 200 · jetonsuz **401**
+  "Oturum jetonu yok" · sahte jeton **401** "Oturum geçersiz" → girişsiz kullanıcı oluşturamıyor (ölçüldü).
