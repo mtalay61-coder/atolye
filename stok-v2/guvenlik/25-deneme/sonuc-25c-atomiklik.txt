@@ -1,0 +1,10 @@
+25c atomiklik (eski paket fcc5429c + 25b 5ba5620a üstüne; son adım guvenlik.g25c_sonuc önceden (x int) ile kurularak düşürüldü)
+ÖNCE : false butunluk · false gecmis · tek=f5c66e5b · bagi=5e7ebc87
+25c çıkış 1 · ERROR:  INSERT has more expressions than target columns
+SONRA: false butunluk · false gecmis · tek=f5c66e5b · bagi=5e7ebc87
+99|GENEL|UYGULANDI — 25-sonra-dogrula-salt-okur.sql ve 25-onkosul-salt-okur.sql ile doğrulayın
+TEMİZ: true butunluk · true gecmis · tek=98b23c2d · bagi=31a580d3
+25c zaten uygulanmış — sessizce değiştirilmez. Hiçbir şey değişmedi.
+99|GENEL|TAMAM
+6|G-25'in oluşturacağı nesneler (önce 0, sonra 32)|32
+99|GENEL|UYGULANMIŞ
