@@ -1,6 +1,31 @@
 # G-25 deneme — SABİTLENMİŞ COMMIT VE ÖZETLER
 
-## GÜNCEL (25 Kasım akşam — 25b onay geçersizlik mührü dahil)
+## GÜNCEL-2 (25 Kasım gece — 25c + 25d + 1.745.2; DENEME ONAYINA SUNULAN)
+
+**Commit:** `63f732d25aa963a600252def669f30030fa057af` (dal `claude/g25-sql`). Aşağıdaki dosyalar bu commit'te birebir bu özetlerle durur.
+Deneme projesi ŞU AN (son ölçüm): eski paket + 25b + tanimlar okuma yetkisi. Uygulanacak sıra: **25c → 25d** (`PAKET-25C-25D-DENEME.md`).
+
+| SHA-256 | Dosya | Ne |
+|---|---|---|
+| `8d222633ce4c24358d4f5621d5d175181bee7bb20c9c0900abfb5dab03c82112` | `stok-v2/guvenlik/25c-para-teslim-odeme-uygula.sql` | YAZAR — 25c (DONDURULDU) |
+| `493c58d01d83ae529b63203767dea92d014c3dca1102672464120fd6fb1efc97` | `stok-v2/guvenlik/25d-tamir-ilk-iscilik-uygula.sql` | YAZAR — 25d (B kuralı) |
+| `5418c0c29adfeda850a3149b4491816e2731c6868055748053818914a5d2811f` | `stok-v2/guvenlik/25-cari-yetki-uygula.sql` | YAZAR — TAM PAKET (25b + 25c + 25d dahil; yeni kurulum için — denemede KULLANILMAZ) |
+| `5ba5620a1914279dc835f989c2feb55a2e1b501384c6d286c85f926ec9bc6246` | `stok-v2/guvenlik/25b-onay-muhru-uygula.sql` | YAZAR — 25b (denemede UYGULANDI; değişmedi) |
+| `3f9c6e56187c0d2e3ab1a642adc70eeeb62a5e0acc75f50d6081a99ead0969e0` | `stok-v2/guvenlik/25-sonra-dogrula-salt-okur.sql` | salt okur — 10 kontrol |
+| `fcdc0c32adf71678e8ddea441092e3468813c7b5a942e643c5476466f3f0701e` | `stok-v2/guvenlik/25-onkosul-salt-okur.sql` | salt okur — önkoşul (6. satır 34) |
+| `0ca435dd34c58787bac77d42360966c2277e86c484f50a41f34608ab77e3c36a` | `stok-v2/guvenlik/25-cari-yetki-geri-al.sql` | YAZAR — geri alma (ayrı onay) |
+| `63aa5ad734a8f94e5c7f1d723ae508ec218f2d45bc7596b40ed33982dd8b0af7` | `stok-v2/guvenlik/25-deneme/deneme-paket-durumu-salt-okur.sql` | salt okur — gerçekte uygulanmış aşama |
+| `524e01505c6ed8dfe4516d469f0c9863d27b8009d0297b9a422734bfcc30d522` | `stok-v2/guvenlik/25-deneme/deneme-is-defteri-salt-okur.sql` | salt okur — üretim başı dört defter |
+| `502b9ac06fa45f9c10db180eee635460e80d4a55e2972c038280e381d6080ddb` | `stok-v2/guvenlik/25-deneme/deneme-anlik-goruntu-salt-okur.sql` | salt okur — anlık görüntü |
+| `bea508d4137187c57eab2e14bcb3d013d7be45ce3b7a93f91369fb8463c52ce5` | `atolye-erp-v1.745.2.html` | istemci 1.745.2 (yayınlanmadı) — 25d ile ZORUNLU |
+| `e931a6814d77c9bb2c630d3dd3e3498dc7e1e58241e8db0489706dcbf495a219` | `stok-v2/guvenlik/25-deneme/korumali-sunucu.js` | korumalı sunucu (değişmedi) |
+
+Doğrulama (bu commit, yerel): test25 TEMİZ (tam paket, matris 340 / 340, atomiklik, geri alma, tekrar, ekran regresyonu cari virman 29 / stok 24 /
+kasa 29) · deneme durumu kopyası (eski paket + 25b + 25c + 25d) matris 340 / 340 · 25c atomikliği · işlenmiş kaynaklarla sunucu + güvenlik takımları
+TEMİZ (14 yeniden kurulum, son durum 26 + 3 + 5 + mühür) · istemci `test/kosu.sh` 275 senaryo AYNI · ekran-g25-tamir-b 15 / 15 (iki koşu) ·
+ekran-g25-akis 33 / 33 · paket durumu sorgusu dört aşamada + tam pakette doğru aşamayı verdi (tam paket = adım adım uygulamayla aynı gövdeler).
+
+## GÜNCEL-1 (25 Kasım akşam — 25b onay geçersizlik mührü dahil; ESKİ)
 
 **Commit:** `caeb7fffd9a94b363b878edc8e4645e0c931cc8c` (dal `claude/g25-sql`). Aşağıdaki dosyalar bu commit'te birebir bu özetlerle durur.
 Deneme projesi ŞU AN: eski paket (`fcc5429c…`, aşağıdaki ilk sabitleme) + `25b` + `tanimlar-service-role-okuma.sql` uygulanmış hâlde.
