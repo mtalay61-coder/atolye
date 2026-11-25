@@ -89,3 +89,8 @@ Veri silinmedi / sıfırlanmadı. Kullanıcı / veri eklemeleri (EKLEMELER.md) h
   değildi); cariler ve bölüm etkilenmez.
 - Proses listesi (salt okur): **boş** (deneme projesinde hiç proses tanımlı değil) → benzer adlı proses yok.
 - Kullanıcı onayı (25 Kasım): yalnız deneme projesinde Kesim prosesi bir kez; onaylı test verisinin rutin bağımlılıkları (var olanlar kontrol edilerek) aynı kapsamda — mevcut kaydı değiştirme / silme veya yeni yetki gerekirse önce bildirilir.
+- Aşama A sonrası (salt okur): 0 true·true·true · 1 iki Personel carisi + eski Deneme Müşteri · 3 eski `Deneme Bot · {}` değişmedi,
+  `Deneme Bot G25 · {"Kesim": 35}` · 4 **1·1·1·1** · 5 **30000 · false** · 6 **35** · 7 0 · 8 yok. SAPMA: 2 `Deneme Bölüm … prosesler: **Kesim**`
+  — plan "bağlı proses seçilmez" idi. Bölüme bağlı prosesin teslimi cariye yazılmaz (130-tanimlar: "bu proseslerin teslimi cariye
+  yazılmaz") → Deneme Usta'nın Kesim işçiliği / ücret onayı sınaması geçersiz olur. Aşama B durduruldu; bağın kaldırılması için
+  kullanıcıya bildirildi (yeni eklenen kaydı değiştirmek).
