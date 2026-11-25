@@ -84,3 +84,6 @@ Veri silinmedi / sıfırlanmadı. Kullanıcı / veri eklemeleri (EKLEMELER.md) h
 - Kullanıcı kararı (25 Kasım): deneme mamulü **`Deneme Bot G25`** (eski `Deneme Bot`'a dokunulmaz); iki Personel carisi, `Deneme Bölüm`
   (maaş 30.000; Deneme Usta bölüme BAĞLANMAZ) ve yeni mamul eklenir. EKLEMELER.md ve deneme paketindeki mamul adı güncellendi.
   `deneme-verisi-salt-okur.sql` adet / maaş / Kesim ücreti / ön koşul satırlarıyla genişletildi (yerelde boş ve dolu kopyada sınandı).
+- Genişletilmiş `deneme-verisi-salt-okur.sql` (ekleme öncesi): 0 ön koşul **Kesim false** · Siyah true · 40 true · 4 adet 0·0·0·0 ·
+  6 ürün yok · 7 0 · 8 yok. Kesim prosesi Tanımlar'da YOK → mamul eklemesi durduruldu (Tanımlar'a proses eklemek onay listesinde
+  değildi); cariler ve bölüm etkilenmez.
