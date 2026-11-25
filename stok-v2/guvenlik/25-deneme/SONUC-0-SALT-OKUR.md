@@ -27,3 +27,19 @@ Dosyalar kullanıcının bilgisayarında SHA-256 ile doğrulandı (dördü `SABI
 - `25-onkosul-salt-okur.sql` (yeniden) → 1 VAR · 2–4 G-25 uygulanmış · 5 A6 UYGULANMIŞ · 6 25 · 7 kurallar AÇIK · min_istemci_surum boş ·
   8 1 · 0 · 0 · 0 · 1 · 99 **UYGULANMIŞ**
 Veri silinmedi / sıfırlanmadı. Kullanıcı / veri eklemeleri (EKLEMELER.md) henüz YAPILMADI.
+
+# 2. adım — korumalı sunucu + `kullanici` sunucu fonksiyonu (deneme projesi, 25 Kasım)
+
+- Korumalı sunucu kullanıcının bilgisayarında açıldı: `ANA PROJE: ENGELLENDİ · DENEME: ulaştı (401)`; Yönetici girişi tamam.
+- İlk `DenemeMuhasebe` ekleme denemesi: "Kullanıcı EKLENMEDİ: bulut hesabı açılamadı. Fonksiyona ulaşılamadı…" — deneme projesinde
+  `kullanici` fonksiyonu YOKTU. Hiçbir şey yazılmadı; durduruldu.
+- Kullanıcı onayıyla `supabase-kullanici-fonksiyonu.ts` (SHA-256 `e3a0291e…ca5ea`, kullanıcıda doğrulandı) yalnız deneme projesine
+  `kullanici` olarak kuruldu. Kurulumdan önce kaynak incelendi: jeton `auth.getUser` ile sunucuda doğrulanır; rol, doğrulanmış
+  e-postayla `tanimlar.veri.kullanicilar`'dan okunur (istemcinin gönderdiği rol kullanılmaz); rol denetimi gövde okunmadan önce.
+  Listeyi yalnız Yönetici değiştirebilir: `tanimlar_kullanici_koruma` deneme projesinde etkin (`O · true · 1`).
+- Ağ geçidi JWT denetimi ("Verify JWT with legacy secret") açıkken jetonsuz POST geçidin kendi 401'ini aldı
+  (`UNAUTHORIZED_NO_AUTH_HEADER`); kullanıcı yalnız bu fonksiyon için kapattı (genel Auth ayarlarına dokunulmadı).
+- Kapattıktan sonra konteynerden ölçüldü (hiçbiri yazmaz):
+  OPTIONS → **200** · jetonsuz POST → **401** "Oturum jetonu yok — bulut kimliğiyle giriş yapılmalı" ·
+  sahte jetonlu POST → **401** "Oturum geçersiz ya da süresi dolmuş — çıkıp yeniden girin".
+- Sınanmadı (sıradaki): gerçek oturumlu, Yönetici OLMAYAN çağrının 403 alması (DenemeMuhasebe açıldıktan sonra, yetki verilmeden).
