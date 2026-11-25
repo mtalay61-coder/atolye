@@ -49,3 +49,7 @@ Veri silinmedi / sıfırlanmadı. Kullanıcı / veri eklemeleri (EKLEMELER.md) h
   3 bypassrls true · 4 anon false · 5 authenticated true · 6 RLS true · false · 7 `postgres=arwdDxtm/postgres authenticated=arwdxt/postgres`
   · 8 kullanıcı 2 · 9 auth 3 → neden H1 (service_role'ün tanimlar okuma yetkisi yok); deneme hiçbir şey yazmadı.
   Önerilen düzeltme: `tanimlar-service-role-okuma.sql` (yalnız SELECT, yalnız deneme) — kullanıcı onayı bekleniyor.
+- Kullanıcı onayı (25 Kasım): yalnız deneme projesinde `grant select on public.tanimlar to service_role`; diğer yetkilere dokunulmaz.
+  Dosya `tanimlar-service-role-okuma.sql` (doğrulama sütunları: service_role_okur, anon_okur, yetki_listesi, authenticated_ayni).
+  Neden eksik kaldığı: `KURULUM-SERVICE-ROLE.md` (kurulum_betigi 8. adımı service_role'ü taşımıyor). Yerel kopyada iki dosya sınandı
+  (geçici veritabanı, sonra silindi): grant sonrası `t · f · … service_role=r/postgres · t`.
