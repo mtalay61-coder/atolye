@@ -192,3 +192,5 @@ Dosya `25b-onay-muhru-uygula.sql` SHA-256 `5ba5620a1914279dc835f989c2feb55a2e1b5
 - **Test 7 (tamamlayıcı, 10006) — GEÇTİ:** muhasebe önerilen 10 ₺'yi **15 ₺** yaptı ve onayladı → tamir ataması `atama-mwwh9cv0-qxtz · 2 · tamir · ücret 15`,
   onay özeti `15 ₺ × 2 · tamir` (denememuhasebe) · DU tamir teslimi: TEK ÜRT fişi **30 ₺** (18:50:26) · TEK ödeme `2 × 15 · tamir` · TEK cari Alacak 30
   ("Kesim tamir ücreti — … 2 adet × 15 ₺"). Normal iş: 350 ₺ / 10 × 35 / tek ödeme. Ödenen = muhasebenin belirlediği ücret ✓.
+
+# 25c + 25d DENEME UYGULAMASI (onay 25 Kasım: yalnız drtmnovafswzcmpacubl; commit 63f732d; 25c 8d222633 → 25d 493c58d0; korumalı sunucu yalnız 1.745.2 bea508d4; 10007 / 10008 sınamaları; tam paket KULLANILMAZ; 10001 / 10002 / 10004 değişmez; geri alma ayrı onay)
