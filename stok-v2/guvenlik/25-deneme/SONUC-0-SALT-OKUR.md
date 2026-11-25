@@ -17,3 +17,13 @@ Proje: `drtmnovafswzcmpacubl` (kullanıcı adres çubuğunda doğruladı). Hiçb
   kurala bağlandı), ekran akışı 33 / 33 (`sonuc-matris-sonra-kurallar-acik.txt`, `test/ekran/sonuc-ekran-g25-akis-kurallar-acik.txt`).
 - Deneme projesi neredeyse boş: Muhasebe / Üretim / Şef kullanıcısı, Personel carisi, bölüm, proses ücretli ürün, üretim YOK.
   Kontrol listesi için bunların açılması gerekir — deneme projesine YAZMA; ayrı onay.
+
+# 1. adım — G-25 UYGULANDI (deneme projesi, kullanıcı SQL Editor'de, 25 Kasım)
+
+Dosyalar kullanıcının bilgisayarında SHA-256 ile doğrulandı (dördü `SABIT.md` ile birebir; commit 2a9295e).
+- `25-cari-yetki-uygula.sql` → 1 "G-25 hâlinde (f83e760f, c071d802, 2ea9f6ce)" · 2 yeni fonksiyonlar 21 · 3 tablolar kuruldu ·
+  4 tetikleyici kuruldu, etkin · 5 yedek (3 fonksiyon) · 99 **UYGULANDI**
+- `25-sonra-dogrula-salt-okur.sql` → 1–10 hepsi `tamam` · 99 **TAMAM**
+- `25-onkosul-salt-okur.sql` (yeniden) → 1 VAR · 2–4 G-25 uygulanmış · 5 A6 UYGULANMIŞ · 6 25 · 7 kurallar AÇIK · min_istemci_surum boş ·
+  8 1 · 0 · 0 · 0 · 1 · 99 **UYGULANMIŞ**
+Veri silinmedi / sıfırlanmadı. Kullanıcı / veri eklemeleri (EKLEMELER.md) henüz YAPILMADI.
