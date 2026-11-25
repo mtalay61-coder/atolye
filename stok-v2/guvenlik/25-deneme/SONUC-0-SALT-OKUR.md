@@ -53,3 +53,5 @@ Veri silinmedi / sıfırlanmadı. Kullanıcı / veri eklemeleri (EKLEMELER.md) h
   Dosya `tanimlar-service-role-okuma.sql` (doğrulama sütunları: service_role_okur, anon_okur, yetki_listesi, authenticated_ayni).
   Neden eksik kaldığı: `KURULUM-SERVICE-ROLE.md` (kurulum_betigi 8. adımı service_role'ü taşımıyor). Yerel kopyada iki dosya sınandı
   (geçici veritabanı, sonra silindi): grant sonrası `t · f · … service_role=r/postgres · t`.
+- Deneme projesinde UYGULANDI (kullanıcı, SQL Editor, 25 Kasım): service_role_okur **true** · anon_okur **false** · yetki listesi
+  `postgres=arwdDxtm/postgres authenticated=arwdxt/postgres service_role=r/postgres` · authenticated_ayni **true** (değişmedi).
