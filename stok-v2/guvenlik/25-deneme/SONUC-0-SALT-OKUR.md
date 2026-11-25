@@ -88,3 +88,4 @@ Veri silinmedi / sıfırlanmadı. Kullanıcı / veri eklemeleri (EKLEMELER.md) h
   6 ürün yok · 7 0 · 8 yok. Kesim prosesi Tanımlar'da YOK → mamul eklemesi durduruldu (Tanımlar'a proses eklemek onay listesinde
   değildi); cariler ve bölüm etkilenmez.
 - Proses listesi (salt okur): **boş** (deneme projesinde hiç proses tanımlı değil) → benzer adlı proses yok.
+- Kullanıcı onayı (25 Kasım): yalnız deneme projesinde Kesim prosesi bir kez; onaylı test verisinin rutin bağımlılıkları (var olanlar kontrol edilerek) aynı kapsamda — mevcut kaydı değiştirme / silme veya yeni yetki gerekirse önce bildirilir.

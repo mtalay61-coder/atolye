@@ -27,6 +27,11 @@ AÇILMAZ).
 
 `Deneme Bölüm` → personel: `Deneme Maaşlı Personel`, aylık maaş **30.000**. Bağlı proses SEÇİLMEZ (Kesim işçiliği cariye yazılsın).
 
+## 3b. Proses — Tanımlar › Üretim › Prosesler (kullanıcı onayı 25 Kasım: yalnız deneme, bir kez)
+
+`Kesim` (deneme projesinde hiç proses yoktu). Uygulama yeni prosese "Kesim işçiliği" gider kartını kendiliğinden açıp bağlar
+(v1.693) — rutin bağımlılık, aynı kapsamda.
+
 ## 4. Mamul — Stok › Yeni ürün (Mamul)
 
 `Deneme Bot G25` · renk `Siyah` · beden `40` · reçetede proses `Kesim` (hammaddesiz proses olabilir) · proses ücreti **Kesim 35 ₺**.
