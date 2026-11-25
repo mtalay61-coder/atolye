@@ -78,3 +78,6 @@ Veri silinmedi / sıfırlanmadı. Kullanıcı / veri eklemeleri (EKLEMELER.md) h
 - Kullanıcılar TAMAM (salt okur doğrulama): denememuhasebe Muhasebe · auth 1 · para true · cari=gdks fisler=gdk muhasebe=gdks siparis=g ·
   denemeuretim Üretim · auth 1 · para false · fisler=g siparis=g stok=gdk uretim=gdk · denemesef Üretim · auth 1 · para false ·
   cari=g fisler=gdk siparis=g stok=gdk uretim=gdk. Üçü de kimlikli. Her biri bir kez açıldı.
+- Deneme verisi ÖNCESİ (`deneme-verisi-salt-okur.sql`): 1 cariler: `Deneme Müşteri · Müşteri` (önceden var; planlananlar yok) ·
+  2 bölüm yok · 3 ürün: **`Deneme Bot · {}`** (önceden VAR, proses ücreti boş — EKLEMELER'deki adla çakışıyor) · 4 üretim 0 · 5 atama yok.
+  Karar bekleniyor: var olan `Deneme Bot`'a dokunmadan ayrı adlı yeni mamul mü, yoksa var olana Kesim 35 eklemek mi.
