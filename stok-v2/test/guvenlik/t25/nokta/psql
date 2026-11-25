@@ -27,7 +27,9 @@ d=$("$GERCEK" -X -At -d "$db" -c "
     || ' yeni=' || (select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
                      where n.nspname = 'public' and (p.proname like 'g25\_%' or p.proname like 'mesai\_%' or p.proname like 'ucret\_onay%'))
     || '+' || ((to_regclass('public.mes_bildirim') is not null)::int + (to_regclass('public.ucr_onay') is not null)::int + (to_regclass('public.isc_odeme') is not null)::int)
-    || '+' || (select count(*) from pg_trigger where tgname = 'g25_tanimlar_ucret_koruma')
+    || '+' || (select count(*) from pg_trigger where tgname = 'g25_tanimlar_ucret_koruma' or tgname like 'g25\\_onay\\_degisim\\_%')
+    || '+M' || (case when exists (select 1 from pg_proc where proname = 'g25_onayli' and prosrc like '%gecersiz is null%')
+                      and exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'ucr_onay' and column_name = 'gecersiz') then 1 else 0 end)
   from f" 2>/dev/null) || exit $rc
 son="$G25_NOKTA_LOG.d.$db"
 if [ "$(cat "$son" 2>/dev/null)" != "$d" ]; then

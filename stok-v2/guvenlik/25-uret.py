@@ -412,6 +412,10 @@ def idempotent(x):
     for t in TABLOLAR:
         x = x.replace(f"create table public.{t} (", f"create table if not exists public.{t} (")
     x = x.replace("create unique index mes_bildirim_acik", "create unique index if not exists mes_bildirim_acik")
+    # MÜHÜR SÜTUNU (25 Kasım): tablo önceden (mühürsüz G-25 ile) kurulmuşsa "if not exists" tabloyu atlar; sütun ayrıca eklenir —
+    # yoksa g25_onayli (gecersiz'e bakar) kurulamaz ya da eski tabloda çalışmaz.
+    if x.startswith("create table if not exists public.ucr_onay ("):
+        x = x + ";\nalter table public.ucr_onay add column if not exists gecersiz jsonb"
     # Tetikleyici "yoksa kur": drop + create Editor'da AYRI ifadelerdir — arada (ya da create düşerse) maaş koruması kalkmış olurdu
     # (24 Kasım, denetim noktası günlüğünde görüldü). create or replace trigger PG14 ister; canlının sürümüne güvenilmez.
     for t, tb in TETIKLER.items():

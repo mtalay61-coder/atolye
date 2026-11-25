@@ -63,7 +63,9 @@ for (const s of satirlar) {
   const [, saat, db, once, sonra, etiket] = m;
   if (once !== "ilk") { const a = harf(once), b = harf(sonra);
     for (const f of ["car_yaz", "fis_iptal", "fis_kes"]) if (/[YG]/.test(a[f]) && !/[YG]/.test(b[f])) kayip.push(`${saat} ${db}: ${f} ${a[f]} → ${b[f]} · ${etiket}`);
-    const ya = +a.yeni.split("+")[0], yb = +b.yeni.split("+")[0]; if (yb < ya) kayip.push(`${saat} ${db}: yeni nesne ${a.yeni} → ${b.yeni} · ${etiket}`); }
+    // yeni = fonksiyon + tablo + tetikleyici + mühür (M1/M0): herhangi biri azalırsa koruma kalkmıştır (25 Kasım: mühür tetikleyicileri)
+    const pa = a.yeni.split("+").map((x) => parseInt(x.replace("M", ""), 10) || 0), pb = b.yeni.split("+").map((x) => parseInt(x.replace("M", ""), 10) || 0);
+    if (pa.some((x, i) => (pb[i] || 0) < x)) kayip.push(`${saat} ${db}: yeni nesne ${a.yeni} → ${b.yeni} · ${etiket}`); }
   son[db] = sonra;
 }
 console.log(`KAYIP ${kayip.length}`); kayip.forEach((x) => console.log("  " + x));
@@ -72,7 +74,7 @@ JS
 k=$(sed -n 's/^KAYIP //p' "$CIK/cozum.txt")
 [ "$k" = 0 ] && yesil "hiçbir adımda G-25 kaldırılmadı (arada yeniden kurulum olmadan Y/G → E/F/- geçişi yok)" || { kirmizi "G-25 $k kez KALDIRILDI:"; sed -n '2,40p' "$CIK/cozum.txt"; }
 while read -r _ db d; do
-  case "$d" in "car_yaz=Y fis_iptal=Y fis_kes=Y yeni=21+3+1") yesil "son durum $db: $d";;
+  case "$d" in "car_yaz=Y fis_iptal=Y fis_kes=Y yeni=22+3+5+M1") yesil "son durum $db: $d";;
     *) echo "   • son durum $db: $d (tam G-25 değil — aşağıda açıklanır)";; esac
 done < <(grep '^SON ' "$CIK/cozum.txt")
 echo "   günlük: $G25_NOKTA_LOG"
