@@ -147,3 +147,4 @@ Veri silinmedi / sıfırlanmadı. Kullanıcı / veri eklemeleri (EKLEMELER.md) h
   geçersiz + teslim ret; 35'e dönünce de YENİ muhasebe onayı olmadan teslim geçmez; yeniden onayla teslim geçer, tek ödeme.
   Kaynak okuması (ölçümden önce): `g25_onayli` = "onaylanan özet == güncel özet" → 35'e dönünce eski onay KENDİLİĞİNDEN CANLANIR
   (ABA). Deneme projesinde ölçülecek (`deneme-onay-gecerlilik-salt-okur.sql`); düzeltme yerelde sınanacak.
+- **Test 12 D (ücret 40):** onay geçerlilik sorgusu: 10003 ve 10004 onayları `su_an_gecerli false` (onaylanan 35, güncel 40) — eski onay düştü ✓. (10003 zaten tamamlanmıştı; etkisiz.)
