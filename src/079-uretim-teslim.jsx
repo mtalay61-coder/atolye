@@ -335,6 +335,31 @@ const uretimProsesAtamaTeslimAl = useCallback((uretimId, prosesAdi, atamaId, son
   const ucret = atama.tamirMi
     ? (atama.tamirUcret || 0)
     : (urun && urun.prosesUcretleri ? (urun.prosesUcretleri[prosesAdi] || 0) : 0);
+  // İLK İŞÇİLİK HER ÇİFT İÇİN BİR KEZ, YALNIZ SAĞLAM ÇİFTE (v1.745.2 — kullanıcı, 25 Kasım: "8 çift sağlam 2 çift tamir var, 8 çift ücret
+  // ödeyeceğine 10 çift ücret ödüyor … B seçeneğini uygulayalım. İlk işçilik her çift için yalnız bir kez ödensin; tamire ayrılan çiftlerin
+  // ilk işçiliği sağlam dönüşe kadar beklesin. Tamiri başka usta yaparsa ilk işçilik ve tamir ücretinin alıcıları doğru ayrılsın").
+  // ESKİ: ödenen = sağlam + tamir (yorum: "iş yapıldı, kusur tamirde giderilecek"); tamir ücreti ayrıca → kusurlu çift iki kez ödeniyordu
+  // (deneme 10006: 350 + 30). YENİ: bu teslimde YALNIZ SAĞLAM ödenir. Tamire ayrılan çiftin İLK işçiliği, tamir işi SAĞLAM teslim alınınca
+  // ilk işi yapan ustaya (kaynak atamanın kişisi, kaynak prosesin ücretiyle) ödenir; tamir ücreti ayrıca, tamiri yapana (onaylı tamir
+  // ücretiyle). Tamirde yeniden tamire ayrılan çiftin ilk işçiliği yine bekler; hurda çıkarsa hiç ödenmez. Sunucu (G-25 25d) aynı kuralı
+  // uygular: işçilik ≤ sağlam; ilk işçilik kaynak işin onayına ve ödeme defterine bağlı, her çift için bir kez.
+  const saglamAdet = bedenToplami(saglamHarita);
+  // Tamir işinde: ilk işi yapan ve ilk işin ücreti. Kısmi kalan tamir parçası köke (kismiKalanKaynak), tamir de kaynak atamaya
+  // (tamirKaynakAtamaId) bağlıdır; tamirin tamiri olabilir — tamir olmayan ilk atamaya kadar geri yürünür.
+  const ilkIs = atama.tamirMi ? (() => {
+    const tum = (siparis.prosesIlerleme || []).flatMap((x) => (x.atamalar || []).map((y) => ({ ...y, _proses: x.proses })));
+    const bul = (id) => tum.find((y) => y.id === id);
+    let a = atama; const gorulen = new Set();
+    while (a && !gorulen.has(a.id)) {
+      gorulen.add(a.id);
+      if (!a.tamirMi) break;
+      a = a.kismiKalanKaynak && !a.tamirKaynakAtamaId ? bul(a.kismiKalanKaynak) : bul(a.tamirKaynakAtamaId);
+    }
+    if (!a || a.tamirMi || !a.personelId) return null;
+    const ilkProses = a._proses || atama.tamirKaynakProses;
+    return { atamaId: a.id, personelId: a.personelId, proses: ilkProses,
+      ucret: urun && urun.prosesUcretleri ? (urun.prosesUcretleri[ilkProses] || 0) : 0 };
+  })() : null;
   let nextCariler = cariler;
   // ATÖLYE İÇİ BÖLÜM (v1.585.0, bkz. 015 `prosesBolumu`): proses bir bölüme (Kesimhane) bağlıysa parça başı tutar
   // CARİYE YAZILMAZ — maaşlı personelin carisi alacaklanmaz; tutar üretim kaydına bölüm tahakkuku olarak gider.
@@ -344,12 +369,10 @@ const uretimProsesAtamaTeslimAl = useCallback((uretimId, prosesAdi, atamaId, son
     const ucretliAdet = Math.max(0, sonucToplam - hurdaAdet);
     if (ucretliAdet > 0) bolumTahakkuku = bolumTahakkukKaydi(bolum, { proses: prosesAdi, atamaId: atama.id, fisNo: `${fisNo}-İşçilik`,
       adet: ucretliAdet, ucret, personelId: atama.personelId, model: siparis.model, renk: siparis.renk });
-  } else if (atama.personelId && ucret > 0) {
-    // HURDA ÜCRETİ ÖDENMEZ: hurdanın çıktığı aşama bu aşamadır ve o adetler için işçilik
-    // hak edilmemiştir. Önceki aşamalarda ödenmiş ücretlere dokunulmaz — o işler yapılmıştı.
-    // Tamir edilen çiftler için ücret ÖDENİR: iş yapıldı, kusur tamirde giderilecek.
-    // Ücret de teslim edilen üzerinden; hurda yine düşülür.
-    const ucretliAdet = Math.max(0, sonucToplam - hurdaAdet);
+  } else if (atama.personelId && ucret > 0 && saglamAdet > 0) {
+    // HURDA ÜCRETİ ÖDENMEZ: hurdanın çıktığı aşama bu aşamadır ve o adetler için işçilik hak edilmemiştir. TAMİRE AYRILAN çiftin
+    // işçiliği de BU teslimde ödenmez (v1.745.2, yukarıdaki not): tamir sağlam dönünce ilk işi yapana ödenir. Ödenen = sağlam.
+    const ucretliAdet = saglamAdet;
     const tutar = ucretliAdet * ucret;
     nextCariler = cariler.map((c) =>
       c.id === atama.personelId
@@ -378,13 +401,39 @@ const uretimProsesAtamaTeslimAl = useCallback((uretimId, prosesAdi, atamaId, son
               // ve adet göstermeli, sonuçta var bu"). Bilgi açıklama metninde vardı ama fiş
               // listesi ALANLARI okuyor; metinden ayrıştırmak kırılgan olurdu.
               miktar: ucretliAdet, birimFiyat: ucret, birim: "adet",
+              // TESLİM SONUCU SATIRDA (v1.745.2): fiş ekranı "sağlam · tamir · hurda · ödenen" gösterir; sunucu ödeneni sağlamla sınar.
+              saglamAdet, tamirAdet, hurdaAdet, ...(atama.tamirMi ? { tamirIscilik: true } : {}),
               // Açıklama, fişin NE İÇİN kesildiğini kendi başına anlatmalı: cari ekstresine
               // bakan kişi sipariş numarasını açıp bakmak zorunda kalmasın.
               // "Üretim (Kesim)" ne olduğunu söylemiyordu; "Kesim işçilik ücreti" söylüyor.
               aciklama: (atama.tamirMi ? `${prosesAdi} tamir ücreti` : `${prosesAdi} işçilik ücreti`) +
                 ` — ${siparis.model} · ${ucretliAdet} adet × ${ucret} ₺` +
                 (atama.tamirMi && atama.tamirKaynakProses ? ` — ${atama.tamirKaynakProses} kaynaklı` : "") +
+                (tamirAdet > 0 ? ` (${tamirAdet} tamire ayrıldı — ilk işçiliği sağlam dönünce)` : "") +
                 (hurdaAdet > 0 ? ` (${hurdaAdet} hurda ödenmedi)` : ""),
+            }, ...(c.hareketler || [])],
+          }
+        : c
+    );
+  }
+  // TAMİRDEN SAĞLAM DÖNEN ÇİFTİN İLK İŞÇİLİĞİ (v1.745.2): ilk işi yapan ustaya, ilk prosesin ücretiyle — tamiri başka usta yaptıysa
+  // tamir ücreti ona (yukarıda), ilk işçilik ilk ustaya; aynı ustaysa iki ayrı satır. Sunucu bunu ilk işin onayına ve ödeme defterine
+  // bağlar (her çift bir kez; önceki kuralla tamir çifti zaten ödenmişse — eski teslim — proses tavanı reddeder).
+  if (ilkIs && ilkIs.ucret > 0 && saglamAdet > 0 && !iscilikBolumu(tanimlar, cariler, ilkIs.proses, ilkIs.personelId)) {
+    const ilkTutar = saglamAdet * ilkIs.ucret;
+    nextCariler = nextCariler.map((c) =>
+      c.id === ilkIs.personelId
+        ? {
+            ...c,
+            hareketler: [{
+              id: uid("hrk"), tarih: bugunYerel(), zaman: new Date().toISOString(),
+              islemTipi: "İşçilik", yon: hareketYonu("İşçilik"), tutar: ilkTutar, odemeSekli: "Nakit", vade: "",
+              defter: iscilikDefteri(tanimlar && tanimlar.firmaBilgileri),
+              siparisNo: siparis.siparisNo, fisNo: satirFisNo(`${fisNo}-İşçilik`), ...satirTuru(`${fisNo}-İşçilik`), uretimId: siparis.id,
+              urunAd: siparis.model, renk: siparis.renk,
+              miktar: saglamAdet, birimFiyat: ilkIs.ucret, birim: "adet",
+              saglamAdet, tamirAdet, hurdaAdet, ilkIscilik: true, ilkAtamaId: ilkIs.atamaId,
+              aciklama: `${ilkIs.proses} işçilik ücreti (tamirden sağlam dönen) — ${siparis.model} · ${saglamAdet} adet × ${ilkIs.ucret} ₺`,
             }, ...(c.hareketler || [])],
           }
         : c
@@ -416,7 +465,7 @@ const uretimProsesAtamaTeslimAl = useCallback((uretimId, prosesAdi, atamaId, son
         return parcaBarkoduUret(anaKod, kodlar);
       })(),
       tamamlandiMi: false, tamamlanmaTarihi: null,
-      ...(atama.tamirMi ? { tamirMi: true, tamirKaynakProses: atama.tamirKaynakProses, tamirSebep: atama.tamirSebep, tamirUcret: atama.tamirUcret, tamirHammaddeler: [] } : {}),
+      ...(atama.tamirMi ? { tamirMi: true, tamirKaynakProses: atama.tamirKaynakProses, tamirKaynakAtamaId: atama.tamirKaynakAtamaId || null, tamirSebep: atama.tamirSebep, tamirUcret: atama.tamirUcret, tamirHammaddeler: [] } : {}),
       kismiKalanKaynak: atama.id,
     } : null;
     const yeniAtamalar = [...(p.atamalar || []).map((a) =>
