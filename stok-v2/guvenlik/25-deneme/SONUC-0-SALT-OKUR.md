@@ -95,3 +95,4 @@ Veri silinmedi / sıfırlanmadı. Kullanıcı / veri eklemeleri (EKLEMELER.md) h
   yazılmaz") → Deneme Usta'nın Kesim işçiliği / ücret onayı sınaması geçersiz olur. Aşama B durduruldu; bağın kaldırılması için
   kullanıcıya bildirildi (yeni eklenen kaydı değiştirmek).
 - Bölüm–Kesim bağı kullanıcı tarafından kaldırıldı; doğrulama: 2 `Deneme Bölüm · Deneme Maaşlı Personel=30000 · prosesler: -`, diğer satırlar aynı (1·1·1·1 · 30000·false · 35 · 0 · yok). Aşama A TAMAM.
+- Aşama B: Yeni Üretim Siparişi reddedildi — "Deneme Bot G25: reçete tamamlanmadan üretim açılamaz — Reçetede hiç hammadde yok". Hiçbir şey yazılmadı. Rutin bağımlılık: deneme hammaddesi + reçete satırı + reçete onayı (EKLEMELER 4b).

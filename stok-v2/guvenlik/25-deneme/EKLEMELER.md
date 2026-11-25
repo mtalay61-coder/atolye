@@ -38,6 +38,14 @@ AÇILMAZ).
 Ad neden "G25": deneme projesinde proses ücreti boş bir `Deneme Bot` önceden vardı (25 Kasım ölçümü); ona DOKUNULMAZ
 (kullanıcı kararı, 25 Kasım) — deneme bu ayrı mamulle yürür.
 
+## 4b. Reçete kapısı (25 Kasım, ekranda görüldü — rutin bağımlılık)
+
+Yeni üretim "reçete tamamlanmadan üretim açılamaz — Reçetede hiç hammadde yok" ile reddedildi (055 `receteEksikleri`: en az bir
+hammadde satırı, model renklerini kapsama, miktar > 0; ve reçete ONAYI). Hammaddesiz reçete üretim açamaz. Bu yüzden:
+`Deneme Hammadde G25` (Stok › Yeni ürün, kategori Hammadde, birim adet, renksiz / ölçüsüz) → `Deneme Bot G25` reçetesinde Kesim
+altında, Siyah için 1 adet / çift → "Reçeteyi onayla". İş verilince bu hammadde stoktan 10 düşer; stok 0 olduğu için −10 olur
+(proje kuralı: eksi stok kırpılmaz). Yalnız bu deneme hammaddesini etkiler; G-25 akışına etkisi yok (işçilik ücret / teslim).
+
 ## 5. Üretim — Üretim › Yeni Üretim Siparişi
 
 `Deneme Bot G25` · Siyah · 40 × **10** → Kesim adımında **iş ver**: `Deneme Usta`, 10 adet.
