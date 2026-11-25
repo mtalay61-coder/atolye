@@ -528,6 +528,38 @@ const SAHTE = {
         await k.sorgu("update public.uretim_atamalari set tamamlandi_mi = false where id = $1", [a.aid]);
         await K4("L5 geçmiş fiş iptalinden sonra yeniden teslim · Uretimci", await fisKes("Uretimci", urtYuk("g25-q", 10, 35, a.uid, await teslimAlt(a.aid))), "geçti");
         await Pdef("L5 tek geçerli fiş / tek ödeme", a.uid, "fiş 1 · cari 350 · ödeme 10 · stok 0"); } }
+    // D — GEÇMİŞ + DEFTER ÇİFT SAYILMAZ; KISMİ VE İPTAL DOĞRU (25 Kasım; kullanıcı: "Geçmiş işçilik ile ödeme defterinde bulunan aynı
+    // hareketin iki kez sayılmadığını, kısmi teslim ve iptallerin doğru hesaplandığını da doğrula"). gecmis = g25_gecmis_iscilik (defter
+    // dışı), defter = isc_odeme (geçerli fişli). Bir hareket ya birinde ya ötekinde sayılmalı; toplamı geçerli cari işçilik miktarına eşit.
+    const sayim = async (uid) => { const r = (await k.sorgu(`select public.g25_gecmis_iscilik($1, 'Kesim') g,
+        (select coalesce(sum(o.miktar), 0) from public.isc_odeme o join public.stk_fis f on f.istek = o.istek where o.uretim_id = $1 and not o.tamir and not f.iptal) d,
+        (select coalesce(sum((h.ek ->> 'miktar')::numeric), 0) from public.car_hareket h join public.stk_fis f on f.id = h.fis_id
+          where h.uretim_id::text = $1 and f.onek = 'ÜRT' and not f.iptal and not coalesce(h.iptal, false) and h.ek ->> 'islemTipi' = 'İşçilik') c`, [uid]).catch((e) => [{ g: "?", d: "?", c: e.message.slice(0, 30) }]))[0];
+      return `geçmiş ${Number(r.g)} · defter ${Number(r.d)} · cari miktar ${Number(r.c)}`; };
+    const Dsay = async (ad, uid, bek) => { const x = await sayim(uid); yaz(`K4 · ${ad} [${x}]`, { ok: x === bek, kod: x }, "geçti"); };
+    { const a = await yeniAtama();
+      await K4("D1 normal teslim 10 (deftere girer) · Uretimci", await fisKes("Uretimci", urtYuk("g25-q", 10, 35, a.uid, await teslimAlt(a.aid))), "geçti");
+      await Dsay("D1 defterdeki hareket geçmişe SAYILMAZ", a.uid, "geçmiş 0 · defter 10 · cari miktar 10"); }
+    { const a = await yeniAtama();
+      // geçmiş KISMİ teslim 6 (sistem yolu, deftere girmez; kalan 4 açık parça) → Üretim kalan 4'ü teslim eder → toplam 10
+      const k1 = await kismiAlt(a.aid, 6); const p6 = urtYuk("g25-q", 6, 35, a.uid, k1.alt); p6.fis.ek = { proses: "Kesim" };
+      await k.sorgu("select public.fis_kes($1::jsonb)", [JSON.stringify(p6)]);
+      await Dsay("D2 geçmiş kısmi 6", a.uid, "geçmiş 6 · defter 0 · cari miktar 6");
+      await K4("D2b kalan 4 (geçmiş 6 + 4 = 10 ≤ adet) · Uretimci", await fisKes("Uretimci", urtYuk("g25-q", 4, 35, a.uid, await teslimAlt(k1.kalanId))), "geçti");
+      await Dsay("D2b geçmiş 6 + defter 4, hiçbiri iki kez sayılmadı", a.uid, "geçmiş 6 · defter 4 · cari miktar 10");
+      // kalan parça alt_yaz ile yeniden açılıp tekrar teslim edilirse: 6 + 4 + 4 > 10 → ret
+      const sat = (await k.sorgu("select to_jsonb(a) j from public.uretim_atamalari a where id = $1", [k1.kalanId]))[0].j;
+      await istek("Uretimci", "rpc/alt_yaz", { p: { uretim_atamalari: { satirlar: [{ ...sat, tamamlandi_mi: false }] } } });
+      await K4("D2c kalan parça yeniden açılıp tekrar 4 (6 + 4 + 4 > 10) · Uretimci", await fisKes("Uretimci", urtYuk("g25-q", 4, 35, a.uid, await teslimAlt(k1.kalanId))), "ret 42501");
+      // geçmiş 6'lık fiş İPTAL → geçmiş 0; kök parça yeniden açılıp 6 teslim edilebilir → toplam yine 10
+      const no6 = (await k.sorgu("select f.id from public.stk_fis f join public.car_hareket h on h.fis_id = f.id where f.uretim_id::text = $1 and not f.iptal and (h.ek ->> 'miktar')::numeric = 6 limit 1", [a.uid]))[0].id;
+      yaz("K4 · D3 geçmiş 6'lık fişin iptali · Ali", await istek("Ali", "rpc/fis_iptal", { p: { no: no6, sebep: "G-25 D sınaması" } }), "geçti");
+      await Dsay("D3 iptalden sonra geçmiş düştü", a.uid, "geçmiş 0 · defter 4 · cari miktar 4");
+      const kok = (await k.sorgu("select to_jsonb(a) j from public.uretim_atamalari a where id = $1", [a.aid]))[0].j;
+      await istek("Uretimci", "rpc/alt_yaz", { p: { uretim_atamalari: { satirlar: [{ ...kok, tamamlandi_mi: false }] } } });
+      await K4("D3b kök parça (6) yeniden teslim · Uretimci", await fisKes("Uretimci", urtYuk("g25-q", 6, 35, a.uid, await teslimAlt(a.aid))), "geçti");
+      await Dsay("D3b toplam yine 10 (defter 4 + 6)", a.uid, "geçmiş 0 · defter 10 · cari miktar 10");
+      await Pdef("D3b dört defter", a.uid, "fiş 2 · cari 350 · ödeme 10 · stok 0"); }
     // P7: Yönetici ÇİFT BASIŞ — aynı atamaya iki istek AYNI ANDA (farklı istek kimliği): biri geçer, öteki KR016; tek ödeme
     { const a = await yeniAtama(); const alt = await teslimAlt(a.aid);
       const [r1, r2] = await Promise.all([1, 2].map(() => istek("Ali", "rpc/fis_kes", { p: urtYuk("g25-q", 10, 35, a.uid, alt) })));
