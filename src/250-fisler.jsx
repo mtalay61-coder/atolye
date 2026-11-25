@@ -346,7 +346,14 @@ function FislerModule({ tanimlar, kapsam, muhasebe, cariler, stok, siparisler, u
             const cariHareketleri = f.hareketler.filter((h) => h.kaynakTip === "cari");
             // Birim fiyat yalnızca cari hareketinde duruyor; stok satırına oradan taşınır.
             const fiyatIndeksi = {};
+            // ÜRETİM İŞÇİLİĞİ AYRI SATIR (v1.745.2 — kullanıcı, 25 Kasım: "ÜRT fişinde stok ve işçilik ayrı satırlarda gösterilsin; sağlam,
+            // tamir, hurda adetleri ile ödenen işçilik adedi, birim ücret ve toplam açık olsun"). Önce: stok satırı varsa ayrıntı yalnız
+            // stoktan kuruluyordu; işçilik satırı ürün adlı olduğu için "yapısız"a da girmiyor → fişte HİÇ görünmüyordu, birim fiyat
+            // `ürün|renk|beden` anahtarıyla taşınmaya çalışılıp (işçilikte beden yok) BR. FİYAT boş kalıyordu. İşçilik fiyatı mamul stok
+            // satırına TAŞINMAZ (mamulün fiyatı değil); işçilik kendi tablosunda.
+            const iscilikSatirlari = stokHareketleri.length > 0 ? cariHareketleri.filter((h) => h.islemTipi === "İşçilik") : [];
             cariHareketleri.forEach((h) => {
+              if (h.islemTipi === "İşçilik" && stokHareketleri.length > 0) return;
               if (!h.urunAd || h.birimFiyat == null) return;
               fiyatIndeksi[`${h.urunAd}|${h.renk}|${h.beden}`] = {
                 // `birim` de buradan taşınır: stok hareketinde birim alanı yok, "Top: 15" diye
@@ -481,6 +488,33 @@ function FislerModule({ tanimlar, kapsam, muhasebe, cariler, stok, siparisler, u
                       <div style={{ marginBottom: yapisizHareketler.length > 0 ? 8 : 0 }}>
                         <FisKalemMatrisi urunGruplari={urunGruplari} stok={stok} />
                       </div>
+                    )}
+                    {iscilikSatirlari.length > 0 && (
+                      <table data-fis-iscilik="1" style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, margin: "6px 0 8px" }}>
+                        <thead>
+                          <tr style={{ color: "var(--erp-text-2)", textAlign: "left" }}>
+                            {["İşçilik", "Kime", "Sağlam", "Tamir", "Hurda", "Ödenen adet", "Br. ücret", "Tutar"].map((b, i) => (
+                              <th key={b} style={{ padding: "3px 6px", fontWeight: 700, textAlign: i >= 2 ? "right" : "left", borderBottom: "1px solid var(--erp-line-soft)" }}>{b}</th>))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {iscilikSatirlari.map((h) => {
+                            const ad = String(h.aciklama || "").split(" — ")[0] || "İşçilik";
+                            const sy = (x) => (x == null || x === "" ? "—" : Number(x).toLocaleString("tr-TR"));
+                            return (
+                              <tr key={h.id} data-fis-iscilik-satir={h.cariId}>
+                                <td style={{ padding: "3px 6px" }}>{ad}</td>
+                                <td style={{ padding: "3px 6px" }}>{h.cariAd || h.cariId}</td>
+                                <td className="mono" style={{ padding: "3px 6px", textAlign: "right" }}>{sy(h.saglamAdet)}</td>
+                                <td className="mono" style={{ padding: "3px 6px", textAlign: "right" }}>{sy(h.tamirAdet)}</td>
+                                <td className="mono" style={{ padding: "3px 6px", textAlign: "right" }}>{sy(h.hurdaAdet)}</td>
+                                <td className="mono" data-fis-iscilik-adet="1" style={{ padding: "3px 6px", textAlign: "right", fontWeight: 700 }}>{sy(h.miktar)}</td>
+                                <td className="mono" style={{ padding: "3px 6px", textAlign: "right" }}>{h.birimFiyat == null ? "—" : `${Number(h.birimFiyat).toLocaleString("tr-TR")} ₺`}</td>
+                                <td className="mono" style={{ padding: "3px 6px", textAlign: "right", fontWeight: 700 }}>{`${(Number(h.tutar) || 0).toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ₺`}</td>
+                              </tr>);
+                          })}
+                        </tbody>
+                      </table>
                     )}
                     {yapisizHareketler.map((h) => (
                       <div key={h.id} style={{ fontSize: 12, color: "var(--erp-text-2)" }}>{h.aciklama || "—"}
