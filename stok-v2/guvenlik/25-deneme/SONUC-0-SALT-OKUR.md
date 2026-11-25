@@ -149,3 +149,4 @@ Veri silinmedi / sıfırlanmadı. Kullanıcı / veri eklemeleri (EKLEMELER.md) h
   (ABA). Deneme projesinde ölçülecek (`deneme-onay-gecerlilik-salt-okur.sql`); düzeltme yerelde sınanacak.
 - **Test 12 D (ücret 40):** onay geçerlilik sorgusu: 10003 ve 10004 onayları `su_an_gecerli false` (onaylanan 35, güncel 40) — eski onay düştü ✓. (10003 zaten tamamlanmıştı; etkisiz.)
 - **Test 12 F (ücret 40, DenemeUretim, 10004 teslim):** "Teslim kaydedilemedi — hiçbir değişiklik yapılmadı (… Kesim işi (10 adet × 40 ₺) cari / muhasebe onayı bekliyor ya da onaydan sonra miktar / kişi / ücret değişti) …" → ret ✓ (E ekranı ayrıca bekleniyor).
+- Bilgisayar değişti (kullanıcı): yeni PC'de Node v26.13.1 kuruldu; korumalı sunucu HTML özetiyle başladı (0957fa0d2972…, connect-src yalnız deneme + esm.sh); konsol: "ANA PROJE: ENGELLENDİ · DENEME: ulaştı (401)".
