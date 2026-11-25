@@ -75,3 +75,6 @@ Veri silinmedi / sıfırlanmadı. Kullanıcı / veri eklemeleri (EKLEMELER.md) h
   fisler=g siparis=g stok=gdk uretim=gdk (beklenen elle eklenecek cari=g ve fisler=dk YOK). Durduruldu; tekrar ekleme yapılmadı.
 - "deneme%" taraması (salt okur): liste deneme (Yönetici) · DenemeMuhasebe (Muhasebe) · DenemeSef (Üretim); auth deneme ·
   denememuhasebe · denemesef. Üretim kullanıcısı başka adla da AÇILMAMIŞ → DenemeUretim bir kez eklenecek; yarım kayıt yok.
+- Kullanıcılar TAMAM (salt okur doğrulama): denememuhasebe Muhasebe · auth 1 · para true · cari=gdks fisler=gdk muhasebe=gdks siparis=g ·
+  denemeuretim Üretim · auth 1 · para false · fisler=g siparis=g stok=gdk uretim=gdk · denemesef Üretim · auth 1 · para false ·
+  cari=g fisler=gdk siparis=g stok=gdk uretim=gdk. Üçü de kimlikli. Her biri bir kez açıldı.
