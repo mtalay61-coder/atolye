@@ -154,3 +154,8 @@ Veri silinmedi / sıfırlanmadı. Kullanıcı / veri eklemeleri (EKLEMELER.md) h
   (onaylanan 35 = güncel 35, onay saati 15:15:53 — YENİ onay verilmedi); 10003 de true. → **BULGU DENEME PROJESİNDE DOĞRULANDI:** eski onay
   kendiliğinden canlandı; bu hâlde teslim yeni muhasebe onayı olmadan geçerdi. **Test 12 bu pakette BAŞARISIZ.** Teslim denenmedi.
   Düzeltme: `25b-onay-muhru-uygula.sql` (yerelde eski paket + 25b 288/288; mühürsüz eski paket 12 ✗). Deneme projesine uygulanması ayrı onay bekliyor.
+
+# 25b — onay geçersizlik mührü DENEME PROJESİNE UYGULANDI (kullanıcı, SQL Editor, 25 Kasım; onay: yalnız drtmnovafswzcmpacubl)
+Dosya `25b-onay-muhru-uygula.sql` SHA-256 `5ba5620a1914279dc835f989c2feb55a2e1b501384c6d286c85f926ec9bc6246` (atomiklik: sonuc-25b-atomiklik.txt).
+Çıktı: 1 gecersiz sütunu eklendi · 2 g25_onayli / ucret_onayla mührü dikkate alıyor · 3 mühür tetikleyicileri (4) kuruldu, etkin ·
+4 şu an geçerli onay sayısı **2** (10003 + 10004 — uygulamadan önce de 2'ydi; değişmedi) · 99 **UYGULANDI**. Salt okur doğrulamalar bekleniyor.
