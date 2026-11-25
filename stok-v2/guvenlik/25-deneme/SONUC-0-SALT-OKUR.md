@@ -182,3 +182,4 @@ Dosya `25b-onay-muhru-uygula.sql` SHA-256 `5ba5620a1914279dc835f989c2feb55a2e1b5
   GÖZLEM (G-25 dışı, mevcut iş kuralı): sağlam 8 + tamir 2 teslimde işçilik 10 adet üzerinden ödendi (tamire giden 2 de teslim sayılır;
   079: tamir bedenleri teslimBedenleri'ne eklenir) — tamir ayrıca tamir ücretiyle ödenir. Benim "280 ₺" beklentim yanlıştı.
   Tamir ataması açıldı: `atama-mwwg03vh-ns6e · 2 · tamir · önerilen 10 ₺` (Test 7 başlangıcı).
+- **Test 7 adım 1 (DU, onaysız tamir teslimi):** "Teslim kaydedilemedi — hiçbir değişiklik yapılmadı (… Kesim tamir işi (2 adet × 10 ₺) cari / muhasebe onayı bekliyor …)" → RET ✓.
