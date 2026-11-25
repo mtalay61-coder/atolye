@@ -32,7 +32,8 @@ begin
       from public.car_hareket h join public.stk_fis fs on fs.id = h.fis_id
      where h.uretim_id::text = p_uretim and fs.onek = ''ÜRT'' and not coalesce(fs.iptal, false) and not coalesce(h.iptal, false)
        and coalesce(h.yon, '''') = ''Alacak'' and coalesce(h.ek ->> ''islemTipi'', '''') = ''İşçilik'' and coalesce(h.aciklama, '''') not ilike ''%tamir ücreti%''
-       and coalesce(nullif(fs.ek ->> ''proses'', ''''), split_part(coalesce(h.aciklama, ''''), '' '', 1)) = p_proses
+       and (coalesce(fs.ek ->> ''proses'', '''') = p_proses
+            or (coalesce(fs.ek ->> ''proses'', '''') = '''' and coalesce(h.aciklama, '''') like replace(replace(p_proses, ''%'', ''\%''), ''_'', ''\_'') || '' %''))
        and not exists (select 1 from public.isc_odeme o where o.istek = fs.istek)
   ';
   create or replace function public.g25_uretim_bagi(f jsonb, p_cari jsonb, p_kasa jsonb, p_alt jsonb) returns text

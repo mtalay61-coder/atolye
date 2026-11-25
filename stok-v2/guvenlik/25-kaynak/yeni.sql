@@ -276,14 +276,16 @@ end $$;
 -- işçilik satırı var. Bunlar yok sayılırsa atama fiş iptal edilmeden yeniden açıldığında (alt_yaz) aynı iş İKİNCİ kez ödenebiliyordu
 -- (yerel ölçüm: fiş 2, cari 700). Bu fonksiyon bir üretim + proses için defterde KARŞILIĞI OLMAYAN geçerli işçilik miktarını verir:
 -- geçerli ÜRT fişindeki (iptal değil) geçerli Alacak işçilik satırı, fişin istek kimliği ödeme defterinde yoksa. Tamir ücreti satırları
--- ("… tamir ücreti") sayılmaz (tamir ayrı iştir). Proses: fişin ek.proses'i, yoksa açıklamanın ilk sözcüğü.
+-- ("… tamir ücreti") sayılmaz (tamir ayrı iştir). Proses: fişin ek.proses'i; eski fişte yoksa açıklama "<proses> işçilik ücreti …" ile
+-- başlıyorsa (çok sözcüklü proses adı da tutar).
 create or replace function public.g25_gecmis_iscilik(p_uretim text, p_proses text) returns numeric
 language sql stable security definer set search_path = public as $$
   select coalesce(sum(public.stk_sayi(h.ek ->> 'miktar')), 0)
     from public.car_hareket h join public.stk_fis fs on fs.id = h.fis_id
    where h.uretim_id::text = p_uretim and fs.onek = 'ÜRT' and not coalesce(fs.iptal, false) and not coalesce(h.iptal, false)
      and coalesce(h.yon, '') = 'Alacak' and coalesce(h.ek ->> 'islemTipi', '') = 'İşçilik' and coalesce(h.aciklama, '') not ilike '%tamir ücreti%'
-     and coalesce(nullif(fs.ek ->> 'proses', ''), split_part(coalesce(h.aciklama, ''), ' ', 1)) = p_proses
+     and (coalesce(fs.ek ->> 'proses', '') = p_proses
+          or (coalesce(fs.ek ->> 'proses', '') = '' and coalesce(h.aciklama, '') like replace(replace(p_proses, '%', '\%'), '_', '\_') || ' %'))
      and not exists (select 1 from public.isc_odeme o where o.istek = fs.istek)
 $$
 -- @@
