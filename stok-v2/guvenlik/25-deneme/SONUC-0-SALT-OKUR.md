@@ -136,3 +136,8 @@ Veri silinmedi / sıfırlanmadı. Kullanıcı / veri eklemeleri (EKLEMELER.md) h
 - **Test 9 — GEÇTİ (sunucu):** kalan 4 teslim → iki parça da tamamlandı, üçüncü parça YOK · ÜRT 140 (14:42:07) · Deneme Usta `5 · 1050` · isc_odeme 6 + 4 = 10 = onaylanan miktar. **Test 10 (çift basış):** tek 140 fişi, tek ödeme satırı → ikinci fiş açılmadı (kullanıcı: "2 kez bastım hızlıca" — teyit edildi; tarayıcı düzeyinde mi sunucu istek kimliğiyle mi engellendiği bu ölçümden ayrılamaz, sonuç aynı).
 - **Test 13 — GEÇTİ (ekran, DenemeUretim):** Mesai bildirimi Kasım 2026 · Deneme Maaşlı Personel: "onaylandı · MS-261125001", Bildir düğmesi kapalı (soluk). Not: saat kutuları düzenlenebilir görünüyor; düğme kapalı olduğu için gönderilemez — sunucuda da onaylı ay için bildirim reddedilir (bu ekrandan ayrıca sınanmadı).
 - Test 11: Fişler ekranında ÜRT fişi iptali KAPALI — "Üretimden geri alınır" (250-fisler: üretim fişi yalnız üretim kartındaki 'teslim almayı geri al' ile iptal edilir; 1.733.0: geri alma fişi iptal eder, satırlar iz olarak kalır). Beklenen tasarım; iptal yolu üretim kartına yönlendirildi (Yönetici).
+- **Test 11 — GEÇTİ (sunucu, Yönetici, üretim kartı › 4'lük parça "Geri Al"):** 4'lük parça yeniden açık (tamamlandı false) · ÜRT 140
+  fişi **iptal true** · Deneme Usta \`5 · 910\` (hareket iptal işaretli, geçerli toplamdan düştü) · isc_odeme satırı `atama:atama-mww8e1p5-q8bf · 4`
+  DURUYOR — tasarım gereği: ödeme kaydı fişe istek kimliğiyle bağlı, fiş iptal olunca sayılmaz (yeni.sql 239, 278–306, 539), yeniden
+  teslimde satır silinip yenisi yazılır. Beklentim ("satır silinir") yanlıştı; durum sorgusu 5. satırı fişin geçerli / İPTAL durumunu
+  gösterecek biçimde düzeltildi.

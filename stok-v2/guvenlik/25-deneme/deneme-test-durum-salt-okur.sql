@@ -13,7 +13,8 @@ select sira, kontrol, deger from (
       from public.stk_fis f join ure u on u.id::text = f.uretim_id::text), 'yok')
   union all select 3, 'Deneme Usta: hareket sayısı · geçerli toplam (₺)', (select count(*) || ' · ' || coalesce(sum(tutar) filter (where not coalesce(iptal, false)), 0) from public.car_hareket h join usta on usta.id::text = h.cari_id::text)
   union all select 4, 'ücret onayları (anahtar · onaylayan)', coalesce((select string_agg(o.anahtar || ' · ' || o.onaylayan, ' | ') from public.ucr_onay o where exists (select 1 from ata where o.anahtar like '%' || ata.id::text || '%')), 'yok')
-  union all select 5, 'işçilik ödemeleri (id · miktar · ücret)', coalesce((select string_agg(i.id || ' · ' || i.miktar || ' · ' || i.ucret, ' | ') from public.isc_odeme i join ure on ure.id::text = i.uretim_id), 'yok')
+  union all select 5, 'işçilik ödemeleri (id · miktar · ücret · fişi: geçerli / İPTAL — iptal fişli ödeme sayılmaz)', coalesce((select string_agg(i.id || ' · ' || i.miktar || ' · ' || i.ucret || ' · '
+      || coalesce((select case when fs.iptal then 'İPTAL' else 'geçerli' end from public.stk_fis fs where fs.istek = i.istek limit 1), 'fiş yok'), ' | ') from public.isc_odeme i join ure on ure.id::text = i.uretim_id), 'yok')
   union all select 6, 'mesai bildirimleri (ay · saatler · durum · fiş)', coalesce((select string_agg(b.ay || ' · ' || b.saatler::text || ' · ' || b.durum || ' · ' || coalesce(b.fis_no, '-'), ' | ' order by b.giris_zamani) from public.mes_bildirim b join mp on mp.id::text = b.cari_id), 'yok')
   union all select 7, 'Deneme Maaşlı Personel: hareket sayısı · geçerli toplam (₺)', (select count(*) || ' · ' || coalesce(sum(tutar) filter (where not coalesce(iptal, false)), 0) from public.car_hareket h join mp on mp.id::text = h.cari_id::text)
 ) s order by sira;
