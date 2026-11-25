@@ -184,3 +184,8 @@ Dosya `25b-onay-muhru-uygula.sql` SHA-256 `5ba5620a1914279dc835f989c2feb55a2e1b5
   Tamir ataması açıldı: `atama-mwwg03vh-ns6e · 2 · tamir · önerilen 10 ₺` (Test 7 başlangıcı).
 - **Test 7 adım 1 (DU, onaysız tamir teslimi):** "Teslim kaydedilemedi — hiçbir değişiklik yapılmadı (… Kesim tamir işi (2 adet × 10 ₺) cari / muhasebe onayı bekliyor …)" → RET ✓.
 - Test 7 adım 3 (DU tamir teslimi, muhasebe ücret belirledikten sonra): "ÜRT-261125009 · 10005 tüm prosesler tamamlandı — mamul stoğa eklendi" → GEÇTİ. Tutar / ödeme sorguyla doğrulanacak.
+- **Test 7 — GEÇTİ (deneme projesinde):** onaysız tamir teslimi (2 × 10) RET · DenemeMuhasebe tamir işini onayladı (önerilen **10 ₺** ile —
+  ücret kutusuna 15 yazılmadı / uygulanmadı; onay özeti 10 ₺ × 2, tamir true) · DU tamir teslimi GEÇTİ: ÜRT 20 ₺ (2 × 10, 18:17:52) ·
+  TEK tamir ödemesi `atama:atama-mwwg03vh-ns6e · 2 × 10 · tamir`. Ödenen ücret = onaylanan ücret ✓.
+  SINANMADI (deneme projesinde): muhasebenin tamir ücretini KENDİSİNİN belirlemesi (yeniUcret 10 → 15). Yerelde ölçüldü
+  (matris "tamir ücretini 40 belirleyip onaylama, EŞZAMANLI iki kez" + "onaylanmamış eski ücretle (5.000) teslim → ret"; ekran 5b 40).
