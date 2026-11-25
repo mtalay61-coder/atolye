@@ -166,3 +166,4 @@ Dosya `25b-onay-muhru-uygula.sql` SHA-256 `5ba5620a1914279dc835f989c2feb55a2e1b5
 - **Test 12 (2. döngü) ücret 40:** 10003 ve 10004 su_an_gecerli false · muhurlu true · kaynak urunler · mühürdeki ücret 40 · ürün 40.
 - **Test 12 (2. döngü) ücret 35'e GERİ:** 10004 `su_an_gecerli FALSE` · onaylanan 35 = güncel 35 · muhurlu true (kaynak urunler, mühürdeki 40) → **eski onay CANLANMADI** (1. döngüde aynı durumda true idi). Düzeltme deneme projesinde çalışıyor.
 - **DİKKAT:** 10004 teslimi GEÇTİ: "ÜRT-261125007 · 10004 tüm prosesler tamamlandı — mamul stoğa eklendi". Hangi kullanıcıyla yapıldığı soruldu (Yönetici ise PARA yolu — tasarım; DenemeUretim ise BULGU). Ölçüm bekleniyor.
+- 10004 teslimi YÖNETİCİ (DY) ile yapıldı (kullanıcı) → PARA yolu, onay aranmaz (tasarım; bulgu değil). Test 12'nin "Üretim hesabı reddedilmeli / anlık görüntü aynı / yeniden onay + tek ödeme" adımları bu işte YAPILAMADI (iş tükendi). Yeni iş + 3. ücret döngüsü için onay istendi.
