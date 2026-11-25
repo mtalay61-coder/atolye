@@ -204,7 +204,7 @@ function TeslimAlmaFormu({ atama, prosesler, buProses, hammaddeler, iadeAdaylari
                     yaptırılıp ücret ona ödenir. Bu yüzden personel burada serbestçe seçilir —
                     varsayılan olarak işi yapan kişi gelir ama değiştirilebilir. */}
                 <span style={{ fontSize: 10, color: "var(--erp-text-2)" }}>Tamiri kim yapacak</span>
-                <select
+                <select data-teslim-tamir-kisi={b}
                   value={d.personelId === undefined ? (atama.personelId || "") : d.personelId}
                   onChange={(e) => guncelle("personelId", e.target.value)}
                   style={{ ...inputStyle, width: 150, padding: "5px 7px", fontSize: 12 }}
@@ -223,7 +223,7 @@ function TeslimAlmaFormu({ atama, prosesler, buProses, hammaddeler, iadeAdaylari
                 {/* G-25 (v1.745.0): cari / muhasebe yetkisi yoksa girilen tutar ÖNERİDİR — tamir talebi onaya düşer, yetkili ücreti
                     onaylar ya da belirler (Onaylar › Ücretler); onaysız tamirin teslimi işçilik yazamaz. */}
                 <span style={{ fontSize: 10, color: "var(--erp-text-2)" }}>{paraYetkisiVar() ? "Tamir ücreti (₺/adet)" : "Önerilen tamir ücreti (₺/adet) — onaya gider"}</span>
-                <input
+                <input data-teslim-tamir-ucret={b}
                   type="number" min="0" step="0.01"
                   value={d.ucret || ""}
                   onChange={(e) => guncelle("ucret", e.target.value)}

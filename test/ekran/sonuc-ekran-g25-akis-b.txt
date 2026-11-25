@@ -1,0 +1,34 @@
+  ✓ [1 onay listesinde iş (Kesim, 10 × 35) bekliyor] 1
+  ✓ [2 teslim formu bulundu] true
+  ✓ [2 onaysız ücretle teslim: sunucuda fiş yok] 0
+  ✓ [2 atama tamamlanmadı] false
+  ✓ [2 ekranda ret iletisi (ücret onay bekliyor)] true
+  ✓ [3 bölüm personeli satırı var] 1
+  ✓ [3 sunucuda bekleyen bildirim (10 s)] ["bekliyor",10]
+  ✓ [3 ekranda durum 'onay bekliyor', TUTAR YOK] ["onay bekliyor",false]
+  ✓ [3 cari / MS değişmedi] 0
+  ✓ [4 maaş şeridi yok] 0
+  ✓ [4 Uretimci'de Cari menüsü yok] 0
+  ✓ [sayfa hatası yok (Uretimci)] []
+  ✓ [4b Sefci: maaş şeridi yok] 0
+  ✓ [4b Sefci: maaş ve aylık saat kutusu kapalı] [true,true]
+  ✓ [4b Sefci: 'Mesaiyi yaz' yok, 'onaya gönder' var, tutar yok] [0,1,0]
+  ✓ [4b Sefci: kartından bildirim gitti (bekliyor, MS yok)] ["bekliyor",1,0]
+  ✓ [sayfa hatası yok (Sefci)] []
+  ✓ [5 'Onay bekliyor' şeridi görünür] true
+  ✓ [5 iş onaylandı (sunucu: 10 × 35, g25-q)] [10,35,["g25-q"]]
+  ✓ [5 mesai tutarı ekranda 2.000 ₺] "2.000₺"
+  ✓ [5 tek MS fişi 2.000 ₺] [2000]
+  ✓ [5 bildirim onaylı, listeden düştü] ["onaylandi",0]
+  ✓ [5b tamir talebi listede (onay bekliyor, 5.000)] true
+  ✓ [5b tamir ücreti 40 belirlendi ve onaylandı (atama + onay özeti)] [40,40,2]
+  ✓ [sayfa hatası yok (Muhasip)] []
+  ✓ [6a kısmi teslim 6: tek ÜRT fişi, g25-q Alacak 210] [1,[["g25-q","Alacak",210]]]
+  ✓ [6a istemci kalan parçayı yazdı (4 adet, kaynak g25-ek1-a, açık)] [[4,"g25-ek1-a",false]]
+  ✓ [6a iş onayı hâlâ geçerli (zincir toplamı 10)] true
+  ✓ [6b kalan 4 teslim: ikinci ÜRT fişi, toplam 350] [2,[["g25-q","Alacak",140],["g25-q","Alacak",210]]]
+  ✓ [6b zincirde ödenen = onaylanan 10; iki ödeme kaydı] [10,2]
+  ✓ [7 bildirim 'onaylandı', Bildir kapalı] [true,true]
+  ✓ [7 MS hâlâ tek] 1
+  ✓ [sayfa hatası yok (Uretimci 2)] []
+── ekran-g25-akis: 33 ✓ / 0 ✗ ──
