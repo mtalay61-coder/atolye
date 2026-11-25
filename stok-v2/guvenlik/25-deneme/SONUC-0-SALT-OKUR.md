@@ -87,3 +87,4 @@ Veri silinmedi / sıfırlanmadı. Kullanıcı / veri eklemeleri (EKLEMELER.md) h
 - Genişletilmiş `deneme-verisi-salt-okur.sql` (ekleme öncesi): 0 ön koşul **Kesim false** · Siyah true · 40 true · 4 adet 0·0·0·0 ·
   6 ürün yok · 7 0 · 8 yok. Kesim prosesi Tanımlar'da YOK → mamul eklemesi durduruldu (Tanımlar'a proses eklemek onay listesinde
   değildi); cariler ve bölüm etkilenmez.
+- Proses listesi (salt okur): **boş** (deneme projesinde hiç proses tanımlı değil) → benzer adlı proses yok.
