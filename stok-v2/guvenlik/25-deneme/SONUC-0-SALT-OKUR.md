@@ -189,3 +189,6 @@ Dosya `25b-onay-muhru-uygula.sql` SHA-256 `5ba5620a1914279dc835f989c2feb55a2e1b5
   TEK tamir ödemesi `atama:atama-mwwg03vh-ns6e · 2 × 10 · tamir`. Ödenen ücret = onaylanan ücret ✓.
   SINANMADI (deneme projesinde): muhasebenin tamir ücretini KENDİSİNİN belirlemesi (yeniUcret 10 → 15). Yerelde ölçüldü
   (matris "tamir ücretini 40 belirleyip onaylama, EŞZAMANLI iki kez" + "onaylanmamış eski ücretle (5.000) teslim → ret"; ekran 5b 40).
+- **Test 7 (tamamlayıcı, 10006) — GEÇTİ:** muhasebe önerilen 10 ₺'yi **15 ₺** yaptı ve onayladı → tamir ataması `atama-mwwh9cv0-qxtz · 2 · tamir · ücret 15`,
+  onay özeti `15 ₺ × 2 · tamir` (denememuhasebe) · DU tamir teslimi: TEK ÜRT fişi **30 ₺** (18:50:26) · TEK ödeme `2 × 15 · tamir` · TEK cari Alacak 30
+  ("Kesim tamir ücreti — … 2 adet × 15 ₺"). Normal iş: 350 ₺ / 10 × 35 / tek ödeme. Ödenen = muhasebenin belirlediği ücret ✓.
