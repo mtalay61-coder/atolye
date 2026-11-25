@@ -165,3 +165,4 @@ Dosya `25b-onay-muhru-uygula.sql` SHA-256 `5ba5620a1914279dc835f989c2feb55a2e1b5
 - Anlık görüntü 2: yalnız ucr_onay özeti değişti (8f25b49a… → 1eba16b4…); diğer 8 satır birebir aynı — mühür basılması ile tutarlı (gecersiz sütunu doldu); fiş / hareket / ödeme / bakiye değişmedi.
 - **Test 12 (2. döngü) ücret 40:** 10003 ve 10004 su_an_gecerli false · muhurlu true · kaynak urunler · mühürdeki ücret 40 · ürün 40.
 - **Test 12 (2. döngü) ücret 35'e GERİ:** 10004 `su_an_gecerli FALSE` · onaylanan 35 = güncel 35 · muhurlu true (kaynak urunler, mühürdeki 40) → **eski onay CANLANMADI** (1. döngüde aynı durumda true idi). Düzeltme deneme projesinde çalışıyor.
+- **DİKKAT:** 10004 teslimi GEÇTİ: "ÜRT-261125007 · 10004 tüm prosesler tamamlandı — mamul stoğa eklendi". Hangi kullanıcıyla yapıldığı soruldu (Yönetici ise PARA yolu — tasarım; DenemeUretim ise BULGU). Ölçüm bekleniyor.
