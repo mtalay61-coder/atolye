@@ -1,0 +1,14 @@
+<!-- @dsCard group="Listeler" height=110 subtitle="Tek · çok renkli · resimli · görsel yok" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="padding:16px;background:var(--erp-page)">
+<div id="k" style="display:grid;gap:10px;font-size:13px"></div>
+<script>
+  var A = window.Atolye, k = document.getElementById("k");
+  var r = [[["#1d1d1d"], "1000", "Siyah", "1 renkli"], [["#1d1d1d", "#f4f1ea"], "1007", "Siyah-Beyaz", "2 renkli"], [["#8a5a33", "#1d1d1d", "#f4f1ea"], "1024", "Taba-Siyah-Beyaz", "3 renkli"], [[], "004", "Krem Napa", "görsel yok"]];
+  k.innerHTML = '<div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">' + r.map(function (x) { return '<span style="display:inline-flex;gap:8px;align-items:center">' + A.renkKutusu(x[0]) + "<b>" + x[1] + "</b> " + x[2] + ' <span style="color:var(--erp-text-2);font-size:12px">' + x[3] + "</span></span>"; }).join("") + "</div>"
+    + '<div style="display:flex;gap:12px">' + A.renkKutusu(["#1d1d1d"], { buyuk: true }) + A.renkKutusu(["#1d1d1d", "#f4f1ea"], { buyuk: true }) + A.renkKutusu(["#8a5a33", "#1d1d1d", "#f4f1ea"], { buyuk: true }) + A.renkKutusu([], { buyuk: true }) + "</div>";
+</script>
+</body>
+</html>
