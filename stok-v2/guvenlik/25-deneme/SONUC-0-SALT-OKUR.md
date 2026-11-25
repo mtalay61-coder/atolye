@@ -66,3 +66,7 @@ Veri silinmedi / sıfırlanmadı. Kullanıcı / veri eklemeleri (EKLEMELER.md) h
 - Yönetici OLMAYAN çağrı (DenemeMuhasebe oturumu, tarayıcı konsolu, `islem: "yok"`): **HTTP 403** "Bu işlem için Yönetici rolü gerekli"
   → gerçek oturumlu, Yönetici olmayan kullanıcı fonksiyonda hiçbir işlem yapamıyor (rol denetimi gövdeden önce; ölçüldü).
   Konsoldaki `surum.json` CSP satırı beklenen (korumalı sunucu yayın sürüm dosyasını vermez; uygulama null sayar).
+- `deneme-kullanicilari-salt-okur.sql` (ekleme öncesi): denememuhasebe var · Kullanıcı · kimlik var · auth 1 · para false ·
+  yetkiler **boş** (şablon eklemede uygulanmamış; 403 sınaması bu hâlde yapıldı — rol Kullanıcı olduğu için geçerli) ·
+  denemeuretim yok · 0 · denemesef yok · 0. Şablon, satırdaki "Yetkiler" › "Rol şablonu" seçimiyle uygulanır (rol alanı da şablon
+  adına döner: Muhasebe / Üretim; G-25 sunucusu PARA'yı yetki kutularından okur, rol adından değil — yalnız "Yönetici" özel).
