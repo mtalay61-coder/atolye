@@ -560,6 +560,69 @@ const SAHTE = {
       await K4("D3b kök parça (6) yeniden teslim · Uretimci", await fisKes("Uretimci", urtYuk("g25-q", 6, 35, a.uid, await teslimAlt(a.aid))), "geçti");
       await Dsay("D3b toplam yine 10 (defter 4 + 6)", a.uid, "geçmiş 0 · defter 10 · cari miktar 10");
       await Pdef("D3b dört defter", a.uid, "fiş 2 · cari 350 · ödeme 10 · stok 0"); }
+    // T — B KURALI (25 Kasım; kullanıcı: "8 çift sağlam 2 çift tamir var, 8 çift ücret ödeyeceğine 10 çift ücret ödüyor … B seçeneğini
+    // uygulayalım. İlk işçilik her çift için yalnız bir kez ödensin; tamire ayrılan çiftlerin ilk işçiliği sağlam dönüşe kadar beklesin.
+    // Tamiri başka usta yaparsa ilk işçilik ve tamir ücretinin alıcıları doğru ayrılsın. Tamir ücreti ayrıca ve açıkça onaylansın").
+    // İstemci 079 gibi: teslim satırında sonuç (sağlam / tamir / hurda), tamir işi AYNI istekte yeni atama (ek.tamirKaynakAtamaId).
+    const teslimSonuclu = async (aid, saglam, tamir, hurda, tamirKisi, tamirUcret = 10) => {
+      const r = (await k.sorgu("select to_jsonb(a) j from public.uretim_atamalari a where id = $1", [aid]))[0].j;
+      const tid = yeniId("t");
+      const satirlar = [{ ...r, tamamlandi_mi: true, tamamlanma_tarihi: new Date().toISOString(),
+        sonuc: { saglam: saglam ? { 40: saglam } : {}, tamir: tamir ? [{ beden: "40", miktar: tamir, hedefProses: "Kesim" }] : [], hurda: hurda ? [{ beden: "40", miktar: hurda }] : [] } }];
+      if (tamir) satirlar.push({ id: tid, uretim_id: r.uretim_id, proses: "Kesim", personel_id: tamirKisi, beden_miktarlari: { 40: tamir }, miktar: tamir,
+        verildi_mi: true, tamamlandi_mi: false, tamir_mi: true, tamir_kaynak_proses: "Kesim", tamir_ucret: tamirUcret, ek: { tamirKaynakAtamaId: aid } });
+      return { tid, alt: { uretim_atamalari: { satirlar } } }; };
+    const ilkSatir = (cari, n, ucret, uid) => cariSatir(cari, "Alacak", n * ucret, { islemTipi: "İşçilik", miktar: n, birimFiyat: ucret, ilkIscilik: true }, { uretim_id: uid });
+    const iscSatir = (cari, n, ucret, uid) => cariSatir(cari, "Alacak", n * ucret, { islemTipi: "İşçilik", miktar: n, birimFiyat: ucret }, { uretim_id: uid });
+    const tYuk = (uid, satirlar, alt) => yuk(fis("ÜRT", "para", "Üretim", { cariId: satirlar[0].cari_id, uretimId: uid }), { cari: satirlar, alt });
+    const cariTop = async (uid, cari) => Number((await k.sorgu("select coalesce(sum(tutar), 0) n from public.car_hareket where uretim_id::text = $1 and cari_id = $2 and not coalesce(iptal, false)", [uid, cari]))[0].n);
+    // T1–T5: ilk iş g25-q, tamiri BAŞKA usta (g25-t)
+    { const a = await yeniAtama();
+      let t = await teslimSonuclu(a.aid, 8, 2, 0, "g25-t");
+      await K4("T1 8 sağlam + 2 tamir, işçilik 10 × 35 (eski kural) · Uretimci", await fisKes("Uretimci", tYuk(a.uid, [iscSatir("g25-q", 10, 35, a.uid)], t.alt)), "ret 42501");
+      t = await teslimSonuclu(a.aid, 8, 2, 0, "g25-t");
+      await K4("T2 8 sağlam + 2 tamir, işçilik 8 × 35 · Uretimci", await fisKes("Uretimci", tYuk(a.uid, [iscSatir("g25-q", 8, 35, a.uid)], t.alt)), "geçti");
+      await Pdef("T2 ilk teslim: yalnız 8 ödendi", a.uid, "fiş 1 · cari 280 · ödeme 8 · stok 0");
+      const tid = t.tid;
+      await K4("T3a tamir onaysız: tamir 2 × 10 + ilk 2 × 35 · Uretimci", await fisKes("Uretimci", tYuk(a.uid, [iscSatir("g25-t", 2, 10, a.uid), ilkSatir("g25-q", 2, 35, a.uid)], (await teslimSonuclu(tid, 2, 0, 0)).alt)), "ret 42501");
+      const g = (await onayListesi("Muhasip")).find((x) => x.anahtar === `atama|${tid}`);
+      yaz("K4 · T3b muhasebe tamir ücretini 10 → 15 belirleyip onaylar · Muhasip", await dene("Muhasip", "rpc/ucret_onayla", { p: { kalemler: [{ anahtar: `atama|${tid}`, ozet: g && g.guncel, yeniUcret: 15 }] } }), "geçti");
+      await K4("T3c tamir eski önerilen ücretle (2 × 10) · Uretimci", await fisKes("Uretimci", tYuk(a.uid, [iscSatir("g25-t", 2, 10, a.uid), ilkSatir("g25-q", 2, 35, a.uid)], (await teslimSonuclu(tid, 2, 0, 0)).alt)), "ret 42501");
+      await K4("T3d ilk işçilik YANLIŞ alıcıya (tamir ustası g25-t) · Uretimci", await fisKes("Uretimci", tYuk(a.uid, [iscSatir("g25-t", 2, 15, a.uid), ilkSatir("g25-t", 2, 35, a.uid)], (await teslimSonuclu(tid, 2, 0, 0)).alt)), "ret 42501");
+      await K4("T3 tamir sağlam 2: tamir 2 × 15 → g25-t, ilk 2 × 35 → g25-q · Uretimci", await fisKes("Uretimci", tYuk(a.uid, [iscSatir("g25-t", 2, 15, a.uid), ilkSatir("g25-q", 2, 35, a.uid)], (await teslimSonuclu(tid, 2, 0, 0)).alt)), "geçti");
+      const q = await cariTop(a.uid, "g25-q"), u = await cariTop(a.uid, "g25-t");
+      yaz(`K4 · T3 alıcılar ayrı: ilk usta 8 + 2 = 10 çift (350), tamir ustası 2 × 15 (30) [g25-q ${q} · g25-t ${u}]`, { ok: q === 350 && u === 30, kod: `${q}/${u}` }, "geçti");
+      await Pdef("T3 dört defter (ilk 8 + ilk 2 + tamir 2)", a.uid, "fiş 2 · cari 380 · ödeme 12 · stok 0");
+      // T4: tamir alt_yaz ile yeniden açılıp ilk işçilik ikinci kez
+      const sat = (await k.sorgu("select to_jsonb(a) j from public.uretim_atamalari a where id = $1", [tid]))[0].j;
+      await istek("Uretimci", "rpc/alt_yaz", { p: { uretim_atamalari: { satirlar: [{ ...sat, tamamlandi_mi: false }] } } });
+      await K4("T4 aynı tamirin ilk işçiliği İKİNCİ kez (yeniden açılmış) · Uretimci", await fisKes("Uretimci", tYuk(a.uid, [ilkSatir("g25-q", 2, 35, a.uid)], (await teslimSonuclu(tid, 2, 0, 0)).alt)), "ret 42501");
+      await K4("T4b aynı işe Yönetici ile ilk işçilik ikinci kez · Ali", await fisKes("Ali", tYuk(a.uid, [ilkSatir("g25-q", 2, 35, a.uid)], (await teslimSonuclu(tid, 2, 0, 0)).alt)), "ret KR016"); }
+    // T5: tamir HURDA çıkarsa ilk işçilik hiç ödenmez
+    { const a = await yeniAtama(); const t = await teslimSonuclu(a.aid, 8, 2, 0, "g25-q");
+      await K4("T5a 8 sağlam + 2 tamir (tamir aynı usta) · Uretimci", await fisKes("Uretimci", tYuk(a.uid, [iscSatir("g25-q", 8, 35, a.uid)], t.alt)), "geçti");
+      const g = (await onayListesi("Muhasip")).find((x) => x.anahtar === `atama|${t.tid}`);
+      await dene("Muhasip", "rpc/ucret_onayla", { p: { kalemler: [{ anahtar: `atama|${t.tid}`, ozet: g && g.guncel, yeniUcret: 0 }] } });
+      await K4("T5b tamir HURDA 2, ilk işçilik 2 × 35 · Uretimci", await fisKes("Uretimci", tYuk(a.uid, [ilkSatir("g25-q", 2, 35, a.uid)], (await teslimSonuclu(t.tid, 0, 0, 2)).alt)), "ret 42501");
+      await Pdef("T5 hurda: yalnız ilk 8", a.uid, "fiş 1 · cari 280 · ödeme 8 · stok 0"); }
+    // T6: AYNI usta tamir eder (iki satır aynı cariye: tamir ücreti + ilk işçilik)
+    { const a = await yeniAtama(); const t = await teslimSonuclu(a.aid, 8, 2, 0, "g25-q");
+      await fisKes("Uretimci", tYuk(a.uid, [iscSatir("g25-q", 8, 35, a.uid)], t.alt));
+      const g = (await onayListesi("Muhasip")).find((x) => x.anahtar === `atama|${t.tid}`);
+      await dene("Muhasip", "rpc/ucret_onayla", { p: { kalemler: [{ anahtar: `atama|${t.tid}`, ozet: g && g.guncel, yeniUcret: 15 }] } });
+      await K4("T6 aynı usta: tamir 2 × 15 + ilk 2 × 35 · Uretimci", await fisKes("Uretimci", tYuk(a.uid, [iscSatir("g25-q", 2, 15, a.uid), ilkSatir("g25-q", 2, 35, a.uid)], (await teslimSonuclu(t.tid, 2, 0, 0)).alt)), "geçti");
+      await Pdef("T6 g25-q: 280 + 30 + 70", a.uid, "fiş 2 · cari 380 · ödeme 12 · stok 0"); }
+    // T7: PARA yetkilisi de sağlamdan fazlasını ödeyemez
+    { const a = await yeniAtama(); const t = await teslimSonuclu(a.aid, 8, 2, 0, "g25-q");
+      await K4("T7 Yönetici 8 sağlam + 2 tamir, işçilik 10 × 35 · Ali", await fisKes("Ali", tYuk(a.uid, [iscSatir("g25-q", 10, 35, a.uid)], t.alt)), "ret KR016"); }
+    // T8: ESKİ kuralla (geçmiş, defter dışı) 10 ödenmiş tamirli iş — tamir sağlam dönünce ilk işçilik İKİNCİ kez ödenmez
+    { const a = await yeniAtama(); const t = await teslimSonuclu(a.aid, 8, 2, 0, "g25-q");
+      const p = tYuk(a.uid, [iscSatir("g25-q", 10, 35, a.uid)], t.alt); p.fis.ek = { proses: "Kesim" };
+      await k.sorgu("select public.fis_kes($1::jsonb)", [JSON.stringify(p)]);
+      const g = (await onayListesi("Muhasip")).find((x) => x.anahtar === `atama|${t.tid}`);
+      await dene("Muhasip", "rpc/ucret_onayla", { p: { kalemler: [{ anahtar: `atama|${t.tid}`, ozet: g && g.guncel, yeniUcret: 15 }] } });
+      await K4("T8 eski kuralla 10 ödenmiş iş: tamir 2 × 15 + ilk 2 × 35 · Uretimci", await fisKes("Uretimci", tYuk(a.uid, [iscSatir("g25-q", 2, 15, a.uid), ilkSatir("g25-q", 2, 35, a.uid)], (await teslimSonuclu(t.tid, 2, 0, 0)).alt)), "ret 42501");
+      await K4("T8b yalnız tamir ücreti 2 × 15 (ilk işçilik zaten eski kuralla ödenmiş) · Uretimci", await fisKes("Uretimci", tYuk(a.uid, [iscSatir("g25-q", 2, 15, a.uid)], (await teslimSonuclu(t.tid, 2, 0, 0)).alt)), "geçti"); }
     // P7: Yönetici ÇİFT BASIŞ — aynı atamaya iki istek AYNI ANDA (farklı istek kimliği): biri geçer, öteki KR016; tek ödeme
     { const a = await yeniAtama(); const alt = await teslimAlt(a.aid);
       const [r1, r2] = await Promise.all([1, 2].map(() => istek("Ali", "rpc/fis_kes", { p: urtYuk("g25-q", 10, 35, a.uid, alt) })));

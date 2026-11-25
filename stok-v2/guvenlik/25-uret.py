@@ -95,6 +95,8 @@ YENI_FONK_IMZA = {
     "public.g25_uretim_butunluk": "(jsonb, jsonb, jsonb)",
     # Defter dışı (geçmiş) işçilik: G-25 / 25c öncesi teslimler ikinci ödemeyi engeller (25 Kasım, deneme)
     "public.g25_gecmis_iscilik": "(text, text)",
+    # B kuralı (25 Kasım): işçilik ≤ sağlam; tamirden sağlam dönen çiftin ilk işçiliği ilk ustaya, bir kez
+    "public.g25_alt_saglam": "(jsonb, text)", "public.g25_ilk_atama": "(text)",
 }
 # G-25'in oluşturduğu TABLOLAR (RLS açık, doğrudan erişim yok). Geri almada boşsa silinir, doluysa guvenlik şemasına arşivlenir.
 TABLOLAR = ["mes_bildirim", "ucr_onay", "isc_odeme"]
@@ -510,21 +512,23 @@ select sira, kontrol, deger from guvenlik.g25b_sonuc order by sira;
 
 commit;
 """
-# --- 25c: PARA YETKİLİSİNİN TESLİMİ ÖDEME DEFTERİNE — G-25 + 25b UYGULANMIŞ veritabanı için ek (25 Kasım, deneme) ---------------------
-C_PARCALARI = [x for x in ifadeler if any(t in x for t in ("function public.g25_gecmis_iscilik(", "function public.g25_uretim_bagi(",
-               "function public.g25_uretim_butunluk(", "function public.g25_fis_cari_yetki_tek("))]
-assert len(C_PARCALARI) == 4, len(C_PARCALARI)
-ek25c = f"""-- =====================================================================================================================
---  25c-para-teslim-odeme-uygula.sql — G-25 EK: PARA YETKİLİSİNİN TESLİMİ ÇİFT ÖDEME KORUMASINA GİRER (YAZAR; G-25 + 25b uygulanmış vt.)
+# --- 25c DONDURULDU (25 Kasım): 25c-para-teslim-odeme-uygula.sql deneme onayına sunulan hâliyle SABİT (b830a779…); kaynak değiştikçe
+# yeniden üretilmez — yoksa onaya sunulan dosya sessizce değişirdi. Sonraki değişiklik ayrı ek (25d). Tam paket hepsini içerir.
+# --- 25d: B KURALI — işçilik ≤ sağlam; tamirden sağlam dönen çiftin İLK işçiliği ilk ustaya, bir kez (G-25 + 25b + 25c uygulanmış vt.) ---
+D_PARCALARI = [x for x in ifadeler if any(t in x for t in ("function public.g25_alt_saglam(", "function public.g25_ilk_atama(",
+               "function public.g25_uretim_bagi(", "function public.g25_uretim_butunluk("))]
+assert len(D_PARCALARI) == 4, len(D_PARCALARI)
+ek25d = f"""-- =====================================================================================================================
+--  25d-tamir-ilk-iscilik-uygula.sql — G-25 EK: B KURALI (YAZAR; G-25 + 25b + 25c uygulanmış veritabanı için)
 {BASLIK_ORTAK}
---  NEDEN (deneme projesi, 25 Kasım): cari / muhasebe kaydetme yetkilisinin (Yönetici dahil) ÜRT teslimi onaydan muaf olduğu için ödeme
---  defterini (isc_odeme) de tamamen atlıyordu: Yönetici teslimleri deftere girmiyor, aynı işe ikinci (ör. eşzamanlı çift basış) Yönetici
---  teslimi sunucuda durdurulmuyordu. Kullanıcı: "Yetki nedeniyle onaydan muaf olmak, çift ödemeyi önleyen kaydı atlamak anlamına gelmemeli".
---  NE YAPAR: g25_uretim_butunluk (yeni) + g25_fis_cari_yetki_tek (PARA dalı bütünlüğü çağırır) + g25_gecmis_iscilik (yeni: ödeme
---  defterinde karşılığı olmayan GEÇMİŞ geçerli işçilik — G-25 / 25c öncesi teslimler) + g25_uretim_bagi (proses tavanı geçmişi de sayar). Onay / ücret denetimi PARA için yine YOK;
---  teslim edilen atama sunucuda tamamlanmamış ve ödenmemiş olmalı, işçilik satırı ödeme defterine girer. Veri silmez; geçmiş Yönetici
---  teslimlerine (deftere girmemiş) dokunmaz.
---  ÖNKOŞUL: postgres; G-25 + 25b uygulanmış (ucr_onay.gecersiz var); g25_uretim_butunluk henüz yok. Tam paket bunu ZATEN içerir.
+--  NEDEN (deneme 10005 / 10006, kullanıcı 25 Kasım): "8 çift sağlam 2 çift tamir var, 8 çift ücret ödeyeceğine 10 çift ücret ödüyor …
+--  B seçeneğini uygulayalım. İlk işçilik her çift için yalnız bir kez ödensin; tamire ayrılan çiftlerin ilk işçiliği sağlam dönüşe kadar
+--  beklesin. Tamiri başka usta yaparsa ilk işçilik ve tamir ücretinin alıcıları doğru ayrılsın. Tamir ücreti ayrıca ve açıkça onaylansın."
+--  NE YAPAR: g25_alt_saglam + g25_ilk_atama (yeni); g25_uretim_bagi ve g25_uretim_butunluk: teslimde işçilik ≤ SAĞLAM adet (tamire ayrılan /
+--  hurda ödenmez); ek.ilkIscilik satırı (tamirden sağlam dönen) tamirin İLK işini yapana, ilk işin onaylı ücretiyle, her tamir parçası bir kez
+--  (isc_odeme 'ilk:<tamir>'), ilk işin zincir ve proses tavanları (defter dışı geçmiş dahil). Tamir ücreti tamir işinin kendi onayıyla.
+--  İSTEMCİ: 1.745.2 ile birlikte (1.745.1 tamirli teslimde 10'u öder → bu sunucu REDDEDER). Veri silmez; geçmiş kayıtlara dokunmaz.
+--  ÖNKOŞUL: postgres; G-25 + 25b + 25c uygulanmış (g25_gecmis_iscilik var); g25_alt_saglam henüz yok. Tam paket bunu ZATEN içerir.
 --  Çalıştırma: Supabase › SQL Editor (postgres) › dosyanın TAMAMI › Run. Tek do bloğu (ya hepsi ya hiçbiri).
 -- =====================================================================================================================
 begin;
@@ -534,39 +538,35 @@ begin
   if current_user <> 'postgres' then
     raise exception 'Bu dosya postgres rolüyle çalıştırılmalı (şu an: %). Hiçbir şey değişmedi.', current_user;
   end if;
-  if to_regclass('guvenlik.g25_yedek') is null or not exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'ucr_onay' and column_name = 'gecersiz') then
-    raise exception 'G-25 + 25b uygulanmamış — önce onlar (tam paket bunu zaten içerir). Hiçbir şey değişmedi.';
+  if to_regprocedure('public.g25_gecmis_iscilik(text, text)') is null or to_regprocedure('public.g25_uretim_butunluk(jsonb, jsonb, jsonb)') is null then
+    raise exception 'G-25 + 25b + 25c uygulanmamış — önce onlar (tam paket bunu zaten içerir). Hiçbir şey değişmedi.';
   end if;
-  if to_regprocedure('public.g25_uretim_butunluk(jsonb, jsonb, jsonb)') is not null then
-    raise exception '25c zaten uygulanmış — sessizce değiştirilmez. Hiçbir şey değişmedi.';
+  if to_regprocedure('public.g25_alt_saglam(jsonb, text)') is not null then
+    raise exception '25d zaten uygulanmış — sessizce değiştirilmez. Hiçbir şey değişmedi.';
   end if;
-{chr(10).join(ex(x) for x in C_PARCALARI)}
-  revoke all on function public.g25_uretim_butunluk(jsonb, jsonb, jsonb), public.g25_gecmis_iscilik(text, text) from public, anon, authenticated;
-  revoke all on function public.g25_uretim_bagi(jsonb, jsonb, jsonb, jsonb) from public, anon, authenticated;
-  revoke all on function public.g25_fis_cari_yetki_tek(jsonb, jsonb, jsonb, jsonb, jsonb) from public, anon, authenticated;
-  if has_function_privilege('authenticated', 'public.g25_uretim_butunluk(jsonb, jsonb, jsonb)', 'execute')
-     or has_function_privilege('authenticated', 'public.g25_fis_cari_yetki_tek(jsonb, jsonb, jsonb, jsonb, jsonb)', 'execute')
-     or has_function_privilege('authenticated', 'public.g25_gecmis_iscilik(text, text)', 'execute')
+{chr(10).join(ex(x) for x in D_PARCALARI)}
+  revoke all on function public.g25_alt_saglam(jsonb, text), public.g25_ilk_atama(text), public.g25_uretim_bagi(jsonb, jsonb, jsonb, jsonb),
+    public.g25_uretim_butunluk(jsonb, jsonb, jsonb) from public, anon, authenticated;
+  if has_function_privilege('authenticated', 'public.g25_ilk_atama(text)', 'execute') or has_function_privilege('authenticated', 'public.g25_alt_saglam(jsonb, text)', 'execute')
      or has_function_privilege('authenticated', 'public.g25_uretim_bagi(jsonb, jsonb, jsonb, jsonb)', 'execute') then
     raise exception 'iç fonksiyon dışarıya açık kaldı';
   end if;
-  create table if not exists guvenlik.g25c_sonuc (sira int primary key, kontrol text not null, deger text not null);
-  revoke all on guvenlik.g25c_sonuc from public, anon, authenticated;
-  delete from guvenlik.g25c_sonuc;
-  insert into guvenlik.g25c_sonuc values
-    (1, 'g25_uretim_butunluk', 'kuruldu (dışarıya kapalı)'),
-    (2, 'g25_fis_cari_yetki_tek', 'PARA dalı ödeme defterine yazıyor'),
-    (3, 'g25_gecmis_iscilik + g25_uretim_bagi', 'defter dışı geçmiş işçilik proses tavanında sayılıyor'),
+  create table if not exists guvenlik.g25d_sonuc (sira int primary key, kontrol text not null, deger text not null);
+  revoke all on guvenlik.g25d_sonuc from public, anon, authenticated;
+  delete from guvenlik.g25d_sonuc;
+  insert into guvenlik.g25d_sonuc values
+    (1, 'g25_alt_saglam + g25_ilk_atama', 'kuruldu (dışarıya kapalı)'),
+    (2, 'g25_uretim_bagi + g25_uretim_butunluk', 'işçilik ≤ sağlam; ilk işçilik ilk ustaya, bir kez'),
     (99, 'GENEL', 'UYGULANDI — 25-sonra-dogrula-salt-okur.sql ve 25-onkosul-salt-okur.sql ile doğrulayın');
 end $$;
 
-select sira, kontrol, deger from guvenlik.g25c_sonuc order by sira;
+select sira, kontrol, deger from guvenlik.g25d_sonuc order by sira;
 
 commit;
 """
 dosyalar = {"25-onkosul-salt-okur.sql": onkosul, "25-cari-yetki-uygula.sql": uygula,
             "25-sonra-dogrula-salt-okur.sql": sonra, "25-cari-yetki-geri-al.sql": geri,
-            "25b-onay-muhru-uygula.sql": muhur, "25c-para-teslim-odeme-uygula.sql": ek25c}
+            "25b-onay-muhru-uygula.sql": muhur, "25d-tamir-ilk-iscilik-uygula.sql": ek25d}
 for ad, metin in dosyalar.items():   # Editor kuralı (editor-icin.py denetle): $$ çift sayıda, başka dolar yok
     if metin.count("$$") % 2 or metin.replace("$$", "").count("$"):
         sys.exit(f"{ad}: Supabase SQL Editor için uygun değil (dolar işareti)")
