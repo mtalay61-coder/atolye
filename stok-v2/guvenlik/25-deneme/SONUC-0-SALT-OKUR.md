@@ -142,3 +142,4 @@ Veri silinmedi / sıfırlanmadı. Kullanıcı / veri eklemeleri (EKLEMELER.md) h
   teslimde satır silinip yenisi yazılır. Beklentim ("satır silinir") yanlıştı; durum sorgusu 5. satırı fişin geçerli / İPTAL durumunu
   gösterecek biçimde düzeltildi.
 - Güncel sorgu (iptal sonrası): 5 `… 6 · 35 · geçerli | atama:atama-mww8e1p5-q8bf · 4 · 35 · İPTAL` → iptal edilen ödeme sayılmıyor (DOĞRULANDI). Yeniden teslim henüz sunucuda yok (4'lük parça açık, yeni fiş yok).
+- **Test 11 (yeniden teslim) — GEÇTİ (sunucu, DenemeUretim):** 4'lük parça tamamlandı · TEK yeni ÜRT 140 (15:06:56) · iptal edilen 140 iptal kaldı · Deneme Usta `6 · 1050` · ödemeler 6 geçerli + 4 geçerli (yeniden yazıldı) = 10 = onaylanan; yeni onay istenmedi.
