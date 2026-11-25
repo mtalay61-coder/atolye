@@ -63,3 +63,6 @@ Veri silinmedi / sıfırlanmadı. Kullanıcı / veri eklemeleri (EKLEMELER.md) h
 - `DenemeMuhasebe` yeniden denendi (bir kez): "Deneme Muhasebe eklendi · bulut hesabı: denememuhasebe@atolye.local"; listede rol
   Kullanıcı, "bulut" etiketli. Ardından konteynerden `islem: "ekle"` ile hesap açma denemeleri: OPTIONS 200 · jetonsuz **401**
   "Oturum jetonu yok" · sahte jeton **401** "Oturum geçersiz" → girişsiz kullanıcı oluşturamıyor (ölçüldü).
+- Yönetici OLMAYAN çağrı (DenemeMuhasebe oturumu, tarayıcı konsolu, `islem: "yok"`): **HTTP 403** "Bu işlem için Yönetici rolü gerekli"
+  → gerçek oturumlu, Yönetici olmayan kullanıcı fonksiyonda hiçbir işlem yapamıyor (rol denetimi gövdeden önce; ölçüldü).
+  Konsoldaki `surum.json` CSP satırı beklenen (korumalı sunucu yayın sürüm dosyasını vermez; uygulama null sayar).
