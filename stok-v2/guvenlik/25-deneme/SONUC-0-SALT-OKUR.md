@@ -183,3 +183,4 @@ Dosya `25b-onay-muhru-uygula.sql` SHA-256 `5ba5620a1914279dc835f989c2feb55a2e1b5
   079: tamir bedenleri teslimBedenleri'ne eklenir) — tamir ayrıca tamir ücretiyle ödenir. Benim "280 ₺" beklentim yanlıştı.
   Tamir ataması açıldı: `atama-mwwg03vh-ns6e · 2 · tamir · önerilen 10 ₺` (Test 7 başlangıcı).
 - **Test 7 adım 1 (DU, onaysız tamir teslimi):** "Teslim kaydedilemedi — hiçbir değişiklik yapılmadı (… Kesim tamir işi (2 adet × 10 ₺) cari / muhasebe onayı bekliyor …)" → RET ✓.
+- Test 7 adım 3 (DU tamir teslimi, muhasebe ücret belirledikten sonra): "ÜRT-261125009 · 10005 tüm prosesler tamamlandı — mamul stoğa eklendi" → GEÇTİ. Tutar / ödeme sorguyla doğrulanacak.
