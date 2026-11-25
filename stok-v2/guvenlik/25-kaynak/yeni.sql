@@ -95,7 +95,11 @@ create table public.ucr_onay (
   ozet jsonb not null,
   onaylayan text not null,
   onay_zamani timestamptz not null default now(),
-  onceki jsonb
+  onceki jsonb,
+  -- GEÇERSİZLİK MÜHRÜ (25 Kasım, deneme projesi Test 12): onaylanan özet bir kez bile güncel özetten ayrılırsa (ücret / miktar / kişi
+  -- değişti) bu sütun dolar ve onay KALICI olarak düşer. Değer sonradan eski hâline dönse de (35 → 40 → 35) onay kendiliğinden
+  -- canlanmaz: yeni muhasebe onayı (ucret_onayla) gerekir. Mühür tetikleyicilerle (g25_onay_degisim_*) işlemin SONUNDA basılır.
+  gecersiz jsonb
 )
 -- @@
 alter table public.ucr_onay enable row level security
@@ -190,12 +194,51 @@ begin
   return null;
 end $$;
 -- @@
--- Onay GEÇERLİ mi: onaylanan özet şu anki özetle birebir aynı (jsonb sayı karşılaştırması sayısaldır: 35 = 35.0) ve tutarsız değil.
+-- Onay GEÇERLİ mi: onaylanan özet şu anki özetle birebir aynı (jsonb sayı karşılaştırması sayısaldır: 35 = 35.0), tutarsız değil ve
+-- onaydan bu yana HİÇ değişmemiş (gecersiz boş). Yalnız eşitlik yetmez: değer geri alınınca eski onay canlanırdı (deneme, Test 12).
 create or replace function public.g25_onayli(p_anahtar text) returns boolean
 language sql stable security definer set search_path = public as $$
-  select exists (select 1 from public.ucr_onay o where o.anahtar = p_anahtar and o.ozet = public.g25_ucret_guncel(p_anahtar)
+  select exists (select 1 from public.ucr_onay o where o.anahtar = p_anahtar and o.gecersiz is null and o.ozet = public.g25_ucret_guncel(p_anahtar)
                   and not coalesce((o.ozet ->> 'karisik')::boolean, false))
 $$;
+-- @@
+-- GEÇERSİZLİK MÜHRÜ — ertelenmiş (işlem sonu) kısıt tetikleyicisi. Ücretin / işin kaynağı (ürün proses ücreti, üretimin numune ücreti, iş
+-- zincirinin kişi / miktar / tamir ücreti, Tanımlar'daki ara proses ücreti / carisi) değişen işlem BİTERKEN, ilgili onaylardan özeti
+-- artık güncel özetle aynı olmayanları kalıcı olarak düşürür. Neden işlem sonunda: meşru kısmi teslim aynı işlemde atamayı 10 → 6
+-- yapıp kalan 4'ü ekler; satır anında bakılsa zincir toplamı bir an 6 görünür ve geçerli onay yanlışlıkla düşerdi. İşlem sonunda
+-- toplam yine 10'dur — mühür basılmaz.
+create or replace function public.g25_onay_degisim() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare
+  v_uretimler text[];
+  v_urun text;
+begin
+  if TG_TABLE_NAME = 'uretim_atamalari' then
+    v_uretimler := array_remove(array[case when TG_OP <> 'DELETE' then NEW.uretim_id::text end, case when TG_OP <> 'INSERT' then OLD.uretim_id::text end], null);
+  elsif TG_TABLE_NAME = 'uretim' then
+    v_uretimler := array[case when TG_OP = 'DELETE' then OLD.id::text else NEW.id::text end];
+  elsif TG_TABLE_NAME = 'urunler' then
+    v_urun := case when TG_OP = 'DELETE' then OLD.id::text else NEW.id::text end;
+    select coalesce(array_agg(u.id::text), '{}') into v_uretimler from public.uretim u where u.urun_id::text = v_urun;
+  end if;
+  update public.ucr_onay o
+     set gecersiz = jsonb_build_object('zaman', now(), 'kaynak', TG_TABLE_NAME, 'guncel', public.g25_ucret_guncel(o.anahtar))
+   where o.gecersiz is null
+     and ((o.tur = 'atama' and o.ozet ->> 'uretim' = any (coalesce(v_uretimler, '{}')))
+          or (o.tur = 'ara' and (TG_TABLE_NAME = 'tanimlar' or (v_urun is not null and split_part(o.anahtar, '|', 2) = v_urun))))
+     and o.ozet is distinct from public.g25_ucret_guncel(o.anahtar);
+  return null;
+end $$;
+-- @@
+revoke all on function public.g25_onay_degisim() from public, anon, authenticated
+-- @@
+create constraint trigger g25_onay_degisim_urunler after update or delete on public.urunler deferrable initially deferred for each row execute function public.g25_onay_degisim()
+-- @@
+create constraint trigger g25_onay_degisim_uretim after update or delete on public.uretim deferrable initially deferred for each row execute function public.g25_onay_degisim()
+-- @@
+create constraint trigger g25_onay_degisim_atama after insert or update or delete on public.uretim_atamalari deferrable initially deferred for each row execute function public.g25_onay_degisim()
+-- @@
+create constraint trigger g25_onay_degisim_tanimlar after update on public.tanimlar deferrable initially deferred for each row execute function public.g25_onay_degisim()
 -- @@
 -- İŞÇİLİK CARİSİ (madde 2): sunucudaki cari kartından. Müşteri ASLA (alacak, müşterinin borcunu düşürür); "Her İkisi" yalnız açık
 -- onayla (onaylanan iş / ara proses özetinde bu cari varsa); tipsiz / bilinmeyen tip ret; atölye içi bölüm personeli (maaşlı, Fasoncu
@@ -436,7 +479,7 @@ begin
     insert into public.ucr_onay (anahtar, tur, ozet, onaylayan, onay_zamani)
     values (v_anahtar, v_tur, v_guncel, eposta, now())
     on conflict (anahtar) do update set onceki = jsonb_build_object('ozet', ucr_onay.ozet, 'onaylayan', ucr_onay.onaylayan, 'zaman', ucr_onay.onay_zamani),
-      ozet = excluded.ozet, onaylayan = excluded.onaylayan, onay_zamani = excluded.onay_zamani;
+      ozet = excluded.ozet, onaylayan = excluded.onaylayan, onay_zamani = excluded.onay_zamani, gecersiz = null;   -- yeni onay mührü kaldırır
     sonuc := sonuc || jsonb_build_object('anahtar', v_anahtar, 'ozet', v_guncel);
   end loop;
   return jsonb_build_object('onaylanan', sonuc);

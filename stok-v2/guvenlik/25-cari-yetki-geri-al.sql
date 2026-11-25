@@ -50,9 +50,9 @@ begin
       raise exception '% yetkisi / sahibi uygulamadan sonra değişmiş (şimdi %, yedek %). Hiçbir şey değişmedi.', v_r.ad, v_r.simdi, v_r.yetki;
     end if;
   end loop;
-  select string_agg(x, ', ') into v_eksik from unnest(array['public.g25_atama_koku(text)', 'public.g25_fis_cari_yetki(jsonb)', 'public.g25_fis_cari_yetki_tek(jsonb, jsonb, jsonb, jsonb, jsonb)', 'public.g25_fis_iptal_yetki(text)', 'public.g25_iscilik_carisi(text, text, boolean)', 'public.g25_mesai_anahtari(text, text)', 'public.g25_mesai_tahakkuku(text, text)', 'public.g25_mesai_tutari(text, jsonb)', 'public.g25_onayli(text)', 'public.g25_stok_bagi(jsonb, jsonb, jsonb, jsonb)', 'public.g25_tanimlar_ucret_koruma()', 'public.g25_ucret_guncel(text)', 'public.g25_ucret_ozeti(jsonb)', 'public.g25_uretim_bagi(jsonb, jsonb, jsonb, jsonb)', 'public.g25_yetki_iste(text[], text, text)', 'public.mesai_bildir(jsonb)', 'public.mesai_bildirim_iptal(jsonb)', 'public.mesai_bildirimleri(jsonb)', 'public.mesai_onayla(jsonb)', 'public.ucret_onayla(jsonb)', 'public.ucret_onaylari(jsonb)']) x where to_regprocedure(x) is null;
+  select string_agg(x, ', ') into v_eksik from unnest(array['public.g25_atama_koku(text)', 'public.g25_fis_cari_yetki(jsonb)', 'public.g25_fis_cari_yetki_tek(jsonb, jsonb, jsonb, jsonb, jsonb)', 'public.g25_fis_iptal_yetki(text)', 'public.g25_iscilik_carisi(text, text, boolean)', 'public.g25_mesai_anahtari(text, text)', 'public.g25_mesai_tahakkuku(text, text)', 'public.g25_mesai_tutari(text, jsonb)', 'public.g25_onay_degisim()', 'public.g25_onayli(text)', 'public.g25_stok_bagi(jsonb, jsonb, jsonb, jsonb)', 'public.g25_tanimlar_ucret_koruma()', 'public.g25_ucret_guncel(text)', 'public.g25_ucret_ozeti(jsonb)', 'public.g25_uretim_bagi(jsonb, jsonb, jsonb, jsonb)', 'public.g25_yetki_iste(text[], text, text)', 'public.mesai_bildir(jsonb)', 'public.mesai_bildirim_iptal(jsonb)', 'public.mesai_bildirimleri(jsonb)', 'public.mesai_onayla(jsonb)', 'public.ucret_onayla(jsonb)', 'public.ucret_onaylari(jsonb)']) x where to_regprocedure(x) is null;
   if v_eksik is not null or to_regclass('public.mes_bildirim') is null or to_regclass('public.ucr_onay') is null or to_regclass('public.isc_odeme') is null
-     or not exists (select 1 from pg_trigger where tgname = 'g25_tanimlar_ucret_koruma' and tgrelid = 'public.tanimlar'::regclass) then
+     or not exists (select 1 from pg_trigger where tgname = 'g25_tanimlar_ucret_koruma' and tgrelid = 'public.tanimlar'::regclass) or not exists (select 1 from pg_trigger where tgname = 'g25_onay_degisim_urunler' and tgrelid = 'public.urunler'::regclass) or not exists (select 1 from pg_trigger where tgname = 'g25_onay_degisim_uretim' and tgrelid = 'public.uretim'::regclass) or not exists (select 1 from pg_trigger where tgname = 'g25_onay_degisim_atama' and tgrelid = 'public.uretim_atamalari'::regclass) or not exists (select 1 from pg_trigger where tgname = 'g25_onay_degisim_tanimlar' and tgrelid = 'public.tanimlar'::regclass) then
     raise exception 'G-25 nesneleri eksik (%) — karışık durum. Hiçbir şey değişmedi.', coalesce(v_eksik, 'mes_bildirim / ucr_onay / isc_odeme / tetikleyici');
   end if;
 
@@ -65,6 +65,10 @@ begin
   if (select md5(btrim(regexp_replace(regexp_replace(p.prosrc, '--[^\n]*', '', 'g'), '\s+', ' ', 'g'))) from pg_proc p where p.oid = to_regprocedure('public.fis_iptal(jsonb)')) is distinct from 'c514ade3ebe55cd52ea9c6a26b0bfc7a' then raise exception 'fis_iptal yedekteki hâle dönmedi'; end if;
 
   drop trigger g25_tanimlar_ucret_koruma on public.tanimlar;
+  drop trigger g25_onay_degisim_urunler on public.urunler;
+  drop trigger g25_onay_degisim_uretim on public.uretim;
+  drop trigger g25_onay_degisim_atama on public.uretim_atamalari;
+  drop trigger g25_onay_degisim_tanimlar on public.tanimlar;
   drop function public.mesai_bildir(jsonb);
   drop function public.mesai_bildirimleri(jsonb);
   drop function public.mesai_bildirim_iptal(jsonb);
@@ -79,6 +83,7 @@ begin
   drop function public.g25_mesai_anahtari(text, text);
   drop function public.g25_mesai_tahakkuku(text, text);
   drop function public.g25_mesai_tutari(text, jsonb);
+  drop function public.g25_onay_degisim();
   drop function public.g25_onayli(text);
   drop function public.g25_stok_bagi(jsonb, jsonb, jsonb, jsonb);
   drop function public.g25_tanimlar_ucret_koruma();
@@ -106,7 +111,7 @@ begin
   delete from guvenlik.g25_geri_sonuc;
   insert into guvenlik.g25_geri_sonuc values
     (1, 'car_yaz / fis_kes / fis_iptal', 'G-25 öncesi hâle döndü'),
-    (2, 'G-25 fonksiyonları ve tanimlar tetikleyicisi', 'kaldırıldı'),
+    (2, 'G-25 fonksiyonları ve tetikleyicileri', 'kaldırıldı'),
     (3, 'tablolar (mes_bildirim, ucr_onay, isc_odeme)', case when v_arsiv = '' then 'boştu, silindi' else 'dolu olanlar guvenlik şemasına arşivlendi: ' || v_arsiv end),
     (98, 'UYARI', 'G-25 yetki açığı YENİDEN AÇIK (tasarım § 7)'),
     (99, 'GENEL', 'GERİ ALINDI');

@@ -38,8 +38,8 @@ begin
   if to_regclass('guvenlik.g25_yedek') is not null then
     raise exception 'G-25 zaten uygulanmış (guvenlik.g25_yedek var). Geri almak için 25-cari-yetki-geri-al.sql. Hiçbir şey değişmedi.';
   end if;
-  select string_agg(x, ', ') into v_eksik from unnest(array['public.g25_atama_koku(text)', 'public.g25_fis_cari_yetki(jsonb)', 'public.g25_fis_cari_yetki_tek(jsonb, jsonb, jsonb, jsonb, jsonb)', 'public.g25_fis_iptal_yetki(text)', 'public.g25_iscilik_carisi(text, text, boolean)', 'public.g25_mesai_anahtari(text, text)', 'public.g25_mesai_tahakkuku(text, text)', 'public.g25_mesai_tutari(text, jsonb)', 'public.g25_onayli(text)', 'public.g25_stok_bagi(jsonb, jsonb, jsonb, jsonb)', 'public.g25_tanimlar_ucret_koruma()', 'public.g25_ucret_guncel(text)', 'public.g25_ucret_ozeti(jsonb)', 'public.g25_uretim_bagi(jsonb, jsonb, jsonb, jsonb)', 'public.g25_yetki_iste(text[], text, text)', 'public.mesai_bildir(jsonb)', 'public.mesai_bildirim_iptal(jsonb)', 'public.mesai_bildirimleri(jsonb)', 'public.mesai_onayla(jsonb)', 'public.ucret_onayla(jsonb)', 'public.ucret_onaylari(jsonb)']) x where to_regprocedure(x) is not null;
-  if v_eksik is not null or to_regclass('public.mes_bildirim') is not null or to_regclass('public.ucr_onay') is not null or to_regclass('public.isc_odeme') is not null or exists (select 1 from pg_trigger where tgname = 'g25_tanimlar_ucret_koruma') then
+  select string_agg(x, ', ') into v_eksik from unnest(array['public.g25_atama_koku(text)', 'public.g25_fis_cari_yetki(jsonb)', 'public.g25_fis_cari_yetki_tek(jsonb, jsonb, jsonb, jsonb, jsonb)', 'public.g25_fis_iptal_yetki(text)', 'public.g25_iscilik_carisi(text, text, boolean)', 'public.g25_mesai_anahtari(text, text)', 'public.g25_mesai_tahakkuku(text, text)', 'public.g25_mesai_tutari(text, jsonb)', 'public.g25_onay_degisim()', 'public.g25_onayli(text)', 'public.g25_stok_bagi(jsonb, jsonb, jsonb, jsonb)', 'public.g25_tanimlar_ucret_koruma()', 'public.g25_ucret_guncel(text)', 'public.g25_ucret_ozeti(jsonb)', 'public.g25_uretim_bagi(jsonb, jsonb, jsonb, jsonb)', 'public.g25_yetki_iste(text[], text, text)', 'public.mesai_bildir(jsonb)', 'public.mesai_bildirim_iptal(jsonb)', 'public.mesai_bildirimleri(jsonb)', 'public.mesai_onayla(jsonb)', 'public.ucret_onayla(jsonb)', 'public.ucret_onaylari(jsonb)']) x where to_regprocedure(x) is not null;
+  if v_eksik is not null or to_regclass('public.mes_bildirim') is not null or to_regclass('public.ucr_onay') is not null or to_regclass('public.isc_odeme') is not null or exists (select 1 from pg_trigger where tgname = 'g25_tanimlar_ucret_koruma') or exists (select 1 from pg_trigger where tgname = 'g25_onay_degisim_urunler') or exists (select 1 from pg_trigger where tgname = 'g25_onay_degisim_uretim') or exists (select 1 from pg_trigger where tgname = 'g25_onay_degisim_atama') or exists (select 1 from pg_trigger where tgname = 'g25_onay_degisim_tanimlar') then
     raise exception 'G-25''in oluşturacağı nesneler zaten var (%): sessizce değiştirilmez. Hiçbir şey değişmedi.', coalesce(v_eksik, 'mes_bildirim / ucr_onay / isc_odeme / tetikleyici');
   end if;
   select string_agg(x, ', ') into v_eksik from unnest(array['public.stk_fis', 'public.stk_hareket', 'public.car_hareket', 'public.kas_hareket',
@@ -153,7 +153,11 @@ begin
     ozet jsonb not null,
     onaylayan text not null,
     onay_zamani timestamptz not null default now(),
-    onceki jsonb
+    onceki jsonb,
+    -- GEÇERSİZLİK MÜHRÜ (25 Kasım, deneme projesi Test 12): onaylanan özet bir kez bile güncel özetten ayrılırsa (ücret / miktar / kişi
+    -- değişti) bu sütun dolar ve onay KALICI olarak düşer. Değer sonradan eski hâline dönse de (35 → 40 → 35) onay kendiliğinden
+    -- canlanmaz: yeni muhasebe onayı (ucret_onayla) gerekir. Mühür tetikleyicilerle (g25_onay_degisim_*) işlemin SONUNDA basılır.
+    gecersiz jsonb
   );
   alter table public.ucr_onay enable row level security;
   revoke all on public.ucr_onay from public, anon, authenticated;
@@ -236,9 +240,36 @@ begin
   end ';
   create or replace function public.g25_onayli(p_anahtar text) returns boolean
   language sql stable security definer set search_path = public as '
-    select exists (select 1 from public.ucr_onay o where o.anahtar = p_anahtar and o.ozet = public.g25_ucret_guncel(p_anahtar)
+    select exists (select 1 from public.ucr_onay o where o.anahtar = p_anahtar and o.gecersiz is null and o.ozet = public.g25_ucret_guncel(p_anahtar)
                     and not coalesce((o.ozet ->> ''karisik'')::boolean, false))
   ';
+  create or replace function public.g25_onay_degisim() returns trigger
+  language plpgsql security definer set search_path = public as '
+  declare
+    v_uretimler text[];
+    v_urun text;
+  begin
+    if TG_TABLE_NAME = ''uretim_atamalari'' then
+      v_uretimler := array_remove(array[case when TG_OP <> ''DELETE'' then NEW.uretim_id::text end, case when TG_OP <> ''INSERT'' then OLD.uretim_id::text end], null);
+    elsif TG_TABLE_NAME = ''uretim'' then
+      v_uretimler := array[case when TG_OP = ''DELETE'' then OLD.id::text else NEW.id::text end];
+    elsif TG_TABLE_NAME = ''urunler'' then
+      v_urun := case when TG_OP = ''DELETE'' then OLD.id::text else NEW.id::text end;
+      select coalesce(array_agg(u.id::text), ''{}'') into v_uretimler from public.uretim u where u.urun_id::text = v_urun;
+    end if;
+    update public.ucr_onay o
+       set gecersiz = jsonb_build_object(''zaman'', now(), ''kaynak'', TG_TABLE_NAME, ''guncel'', public.g25_ucret_guncel(o.anahtar))
+     where o.gecersiz is null
+       and ((o.tur = ''atama'' and o.ozet ->> ''uretim'' = any (coalesce(v_uretimler, ''{}'')))
+            or (o.tur = ''ara'' and (TG_TABLE_NAME = ''tanimlar'' or (v_urun is not null and split_part(o.anahtar, ''|'', 2) = v_urun))))
+       and o.ozet is distinct from public.g25_ucret_guncel(o.anahtar);
+    return null;
+  end ';
+  revoke all on function public.g25_onay_degisim() from public, anon, authenticated;
+  create constraint trigger g25_onay_degisim_urunler after update or delete on public.urunler deferrable initially deferred for each row execute function public.g25_onay_degisim();
+  create constraint trigger g25_onay_degisim_uretim after update or delete on public.uretim deferrable initially deferred for each row execute function public.g25_onay_degisim();
+  create constraint trigger g25_onay_degisim_atama after insert or update or delete on public.uretim_atamalari deferrable initially deferred for each row execute function public.g25_onay_degisim();
+  create constraint trigger g25_onay_degisim_tanimlar after update on public.tanimlar deferrable initially deferred for each row execute function public.g25_onay_degisim();
   create or replace function public.g25_iscilik_carisi(p_cari text, p_proses text, p_onayda_cari boolean) returns text
   language plpgsql stable security definer set search_path = public as '
   declare
@@ -455,7 +486,7 @@ begin
       insert into public.ucr_onay (anahtar, tur, ozet, onaylayan, onay_zamani)
       values (v_anahtar, v_tur, v_guncel, eposta, now())
       on conflict (anahtar) do update set onceki = jsonb_build_object(''ozet'', ucr_onay.ozet, ''onaylayan'', ucr_onay.onaylayan, ''zaman'', ucr_onay.onay_zamani),
-        ozet = excluded.ozet, onaylayan = excluded.onaylayan, onay_zamani = excluded.onay_zamani;
+        ozet = excluded.ozet, onaylayan = excluded.onaylayan, onay_zamani = excluded.onay_zamani, gecersiz = null;   -- yeni onay mührü kaldırır
       sonuc := sonuc || jsonb_build_object(''anahtar'', v_anahtar, ''ozet'', v_guncel);
     end loop;
     return jsonb_build_object(''onaylanan'', sonuc);
@@ -960,17 +991,17 @@ begin
                from guvenlik.g25_yedek y join pg_proc p on p.oid = ('public.' || y.ad || '(jsonb)')::regprocedure loop
     if v_r.simdi is distinct from v_r.yetki or v_r.sahip_simdi <> v_r.sahip then raise exception '% yetkisi / sahibi değişti', v_r.ad; end if;
   end loop;
-  if not exists (select 1 from pg_trigger where tgname = 'g25_tanimlar_ucret_koruma' and tgrelid = 'public.tanimlar'::regclass and tgenabled = 'O') then
-    raise exception 'ücret tetikleyicisi kurulmadı';
+  if not (exists (select 1 from pg_trigger where tgname = 'g25_tanimlar_ucret_koruma' and tgrelid = 'public.tanimlar'::regclass and tgenabled = 'O') and exists (select 1 from pg_trigger where tgname = 'g25_onay_degisim_urunler' and tgrelid = 'public.urunler'::regclass and tgenabled = 'O') and exists (select 1 from pg_trigger where tgname = 'g25_onay_degisim_uretim' and tgrelid = 'public.uretim'::regclass and tgenabled = 'O') and exists (select 1 from pg_trigger where tgname = 'g25_onay_degisim_atama' and tgrelid = 'public.uretim_atamalari'::regclass and tgenabled = 'O') and exists (select 1 from pg_trigger where tgname = 'g25_onay_degisim_tanimlar' and tgrelid = 'public.tanimlar'::regclass and tgenabled = 'O')) then
+    raise exception 'tetikleyiciler kurulmadı';
   end if;
 
   create table guvenlik.g25_sonuc (sira int primary key, kontrol text not null, deger text not null);
   revoke all on guvenlik.g25_sonuc from public, anon, authenticated;
   insert into guvenlik.g25_sonuc values
     (1, 'car_yaz / fis_kes / fis_iptal', 'G-25 hâlinde (f83e760f, c071d802, 2ea9f6ce)'),
-    (2, 'yeni fonksiyonlar', '21'),
+    (2, 'yeni fonksiyonlar', '22'),
     (3, 'mes_bildirim, ucr_onay, isc_odeme tabloları (RLS açık, doğrudan erişim yok)', 'kuruldu'),
-    (4, 'tanimlar ücret tetikleyicisi', 'kuruldu, etkin'),
+    (4, 'tetikleyiciler (5: tanimlar ücret koruması + onay geçersizlik mührü)', 'kuruldu, etkin'),
     (5, 'yedek', 'guvenlik.g25_yedek (3 fonksiyon)'),
     (99, 'GENEL', 'UYGULANDI — 25-sonra-dogrula-salt-okur.sql ile doğrulayın');
 end $$;

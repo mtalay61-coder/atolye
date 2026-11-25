@@ -350,14 +350,16 @@ const SAHTE = {
     { const a = await yeniAtama({ personel: "g25-m" });
       await K4("R1d kayıtlı atama müşteri carisinde, işçilik 10 × 35 · Uretimci", await fisKes("Uretimci", urtYuk("g25-m", 10, 35, a.uid, await teslimAlt(a.aid))), "ret 42501"); }
     // R2: iş 35'ten ONAYLI; ürün proses ücreti 35 → 500 (yazma serbest — öneri): 500 ile de, onaylı 35 ile de ret (iş özeti değişti);
-    // ücret 35'e dönünce aynı iş yeniden geçerli
+    // ücret 35'e dönünce eski onay CANLANMAZ (25 Kasım, deneme Test 12 — eskiden "yeniden geçerli" beklenirdi); yeni onayla geçer
     { const a = await yeniAtama();
       const u = await istek("Uretimci", "urunler?id=eq.ekr-bot", { proses_ucretleri: { Kesim: 500 } }, "PATCH", { prefer: "return=minimal" });
       yaz("K4 · R2a ürün proses ücreti 35 → 500 (öneri; yazma serbest) · Uretimci", u, "geçti");
       await K4("R2b işçilik 10 × 500 (onaysız yeni ücret) · Uretimci", await fisKes("Uretimci", urtYuk("g25-q", 10, 500, a.uid, await teslimAlt(a.aid))), "ret 42501");
       await K4("R2c işçilik 10 × 35 (onay artık geçersiz — ücret değişti) · Uretimci", await fisKes("Uretimci", urtYuk("g25-q", 10, 35, a.uid, await teslimAlt(a.aid))), "ret 42501");
       await k.sorgu(`update public.urunler set proses_ucretleri = '{"Kesim": 35}'::jsonb where id = 'ekr-bot'`);
-      await K4("R2d ücret 35'e döndü, aynı işin onayı yeniden geçerli: 10 × 35 · Uretimci", await fisKes("Uretimci", urtYuk("g25-q", 10, 35, a.uid, await teslimAlt(a.aid))), "geçti"); }
+      await K4("R2d ücret 35'e döndü, YENİ onay yok — eski onay canlanmaz: 10 × 35 · Uretimci", await fisKes("Uretimci", urtYuk("g25-q", 10, 35, a.uid, await teslimAlt(a.aid))), "ret 42501");
+      await isiOnayla(a.aid);
+      await K4("R2e yetkili yeniden onayladı: 10 × 35 · Uretimci", await fisKes("Uretimci", urtYuk("g25-q", 10, 35, a.uid, await teslimAlt(a.aid))), "geçti"); }
     // R3: ürüne özel ara proses carisi → müşteri, ücreti → 900
     { const ek = ((await k.sorgu("select ek from public.urunler where id = 'ekr-bot'"))[0] || {}).ek || {};
       yaz("K4 · R3a ürüne özel ara proses carisi → müşteri, ücreti → 900 · Uretimci", await istek("Uretimci", "urunler?id=eq.ekr-bot",
@@ -368,7 +370,11 @@ const SAHTE = {
     { yaz("K4 · R4a Tanımlar ara proses ücreti 2 → 700 · Uretimci", await tanimYaz("Uretimci", (v) => { v.araProsesler.find((a) => a.id === "ap-g25").ucret = 700; }), "geçti");
       await K4("R4b ara proses işçiliği 10 × 700 · Uretimci", await fisKes("Uretimci", await urtAra("g25-f", 10, 700)), "ret 42501");
       await k.sorgu(`update public.tanimlar set veri = jsonb_set(veri, '{araProsesler}', (select jsonb_agg(case when a ->> 'id' = 'ap-g25' then jsonb_set(a, '{ucret}', '2') else a end)
-        from jsonb_array_elements(veri -> 'araProsesler') a)) where id = 'tekil'`); }
+        from jsonb_array_elements(veri -> 'araProsesler') a)) where id = 'tekil'`);
+      // R3 / R4 değerleri geri alındı; ara prosesin ESKİ onayı canlanmaz — yeniden onay gerekir (25 Kasım, deneme Test 12)
+      await K4("R4c ara ücret / carisi eski hâline döndü, YENİ onay yok: 10 × 2 · Uretimci", await fisKes("Uretimci", await urtAra("g25-f", 10, 2)), "ret 42501");
+      const araK = await onayKalemi("ara|ekr-bot|ap-g25");
+      yaz("K4 · R4d ara prosesi (g25-f, 2) yeniden onay · Muhasip", await dene("Muhasip", "rpc/ucret_onayla", { p: { kalemler: [{ anahtar: "ara|ekr-bot|ap-g25", ozet: araK && araK.guncel }] } }), "geçti"); }
     // R5: üretim kaydında numune ücreti → 800
     { const a = await yeniAtama();
       yaz("K4 · R5a üretim kaydında proses ücreti → 800 · Uretimci", await istek("Uretimci", `uretim?id=eq.${a.uid}`, { ek: { prosesUcretleri: { Kesim: 800 } } }, "PATCH", { prefer: "return=minimal" }), "geçti");
@@ -424,6 +430,38 @@ const SAHTE = {
       await k.sorgu(`insert into public.uretim_atamalari (id, uretim_id, proses, personel_id, beden_miktarlari, miktar, verildi_mi, tamamlandi_mi, tamir_mi, tamir_ucret, ek)
         values ($1, $2, 'Kesim', 'g25-q', '{"40": 10}'::jsonb, 10, true, false, false, 0, jsonb_build_object('kismiKalanKaynak', $3::text))`, [sahte, a.uid, a.aid]);
       await K4("M4 zincire sonradan eklenen 10'luk parça (toplam 20 ≠ onaylı 10) · Uretimci", await fisKes("Uretimci", urtYuk("g25-q", 10, 35, a.uid, await teslimAlt(sahte))), "ret 42501"); }
+    // M5 / M6 — DEĞER GERİ ALININCA ONAY CANLANMAZ (25 Kasım, deneme projesi Test 12; kullanıcı: "40'a çıkınca eski onay geçersizleşsin
+    // ve teslim reddedilsin. 35'e geri dönünce de yeni muhasebe onayı verilmeden teslim geçmesin … Sistem eski onayı otomatik
+    // canlandırıyorsa bunu başarılı sayma"). İlk sürümde onay = "onaylanan özet == güncel özet" idi: 35 → 40 → 35 eski onayı canlandırıyordu.
+    // M5: üretimin kendi (numune) ücreti — yalnız bu işi etkiler. M6: ÜRÜNÜN proses ücreti (deneme projesindeki gerçek yol; ekr-bot'un
+    // açık onaylarını düşürür — bu yüzden bölümün sonunda değil, yalnız kendi işiyle ölçülür ve ücret 35'e döner).
+    const odemeSay = async (uid) => Number((await k.sorgu(`select count(*) n from public.isc_odeme o join public.stk_fis f on f.istek = o.istek where o.uretim_id = $1 and not f.iptal`, [uid]).catch(() => [{ n: -1 }]))[0].n);
+    { const a = await yeniAtama();
+      await k.sorgu(`update public.uretim set ek = jsonb_set(coalesce(ek, '{}'::jsonb), '{prosesUcretleri}', '{"Kesim": 40}'::jsonb) where id = $1`, [a.uid]);
+      await K4("M5a onaydan sonra üretimin ücreti 35 → 40, 10 × 40 teslim (eski onay geçersiz) · Uretimci", await fisKes("Uretimci", urtYuk("g25-q", 10, 40, a.uid, await teslimAlt(a.aid))), "ret 42501");
+      await K4("M5a' aynı işte eski ücretle 10 × 35 teslim · Uretimci", await fisKes("Uretimci", urtYuk("g25-q", 10, 35, a.uid, await teslimAlt(a.aid))), "ret 42501");
+      await k.sorgu(`update public.uretim set ek = ek - 'prosesUcretleri' where id = $1`, [a.uid]);
+      await K4("M5b ücret 35'e GERİ döndü, YENİ onay yok, 10 × 35 teslim (eski onay canlanmaz) · Uretimci", await fisKes("Uretimci", urtYuk("g25-q", 10, 35, a.uid, await teslimAlt(a.aid))), "ret 42501");
+      await isiOnayla(a.aid);
+      await K4("M5c yetkili 35'i YENİDEN onayladı, 10 × 35 teslim · Uretimci", await fisKes("Uretimci", urtYuk("g25-q", 10, 35, a.uid, await teslimAlt(a.aid))), "geçti");
+      const n = await odemeSay(a.uid);
+      yaz(`K4 · M5 yeniden onaydan sonra geçerli ödeme TEK [${n}]`, { ok: n === 1, kod: `ödeme ${n}` }, "geçti"); }
+    { const a = await yeniAtama();
+      await k.sorgu(`update public.urunler set proses_ucretleri = '{"Kesim": 40}'::jsonb where id = 'ekr-bot'`);
+      await K4("M6a ÜRÜNÜN ücreti 35 → 40, 10 × 40 teslim · Uretimci", await fisKes("Uretimci", urtYuk("g25-q", 10, 40, a.uid, await teslimAlt(a.aid))), "ret 42501");
+      await k.sorgu(`update public.urunler set proses_ucretleri = '{"Kesim": 35}'::jsonb where id = 'ekr-bot'`);
+      await K4("M6b ürün ücreti 35'e GERİ döndü, YENİ onay yok, 10 × 35 teslim · Uretimci", await fisKes("Uretimci", urtYuk("g25-q", 10, 35, a.uid, await teslimAlt(a.aid))), "ret 42501");
+      await isiOnayla(a.aid);
+      await K4("M6c yeniden onay, 10 × 35 teslim · Uretimci", await fisKes("Uretimci", urtYuk("g25-q", 10, 35, a.uid, await teslimAlt(a.aid))), "geçti");
+      const n = await odemeSay(a.uid);
+      yaz(`K4 · M6 yeniden onaydan sonra geçerli ödeme TEK [${n}]`, { ok: n === 1, kod: `ödeme ${n}` }, "geçti"); }
+    // M7 — MEŞRU KISMİ TESLİM MÜHÜR BASMAZ: teslim (10 → 6 + kalan 4) aynı işlemde; işlem sonunda zincir toplamı yine 10. Kalan 4 geçer.
+    { const a = await yeniAtama();
+      const k1 = await kismiAlt(a.aid, 6);
+      await K4("M7a kısmi 6 · Uretimci", await fisKes("Uretimci", urtYuk("g25-q", 6, 35, a.uid, k1.alt)), "geçti");
+      const muhur = (await k.sorgu(`select gecersiz is not null m from public.ucr_onay where anahtar = $1`, [`atama|${a.aid}`]).catch(() => [{ m: null }]))[0];
+      yaz(`K4 · M7 kısmi teslimden sonra onay mühürsüz [${muhur ? muhur.m : "satır yok"}]`, { ok: !!muhur && muhur.m === false, kod: `mühür ${muhur ? muhur.m : "yok"}` }, "geçti");
+      await K4("M7b kalan 4 (onay geçerli) · Uretimci", await fisKes("Uretimci", urtYuk("g25-q", 4, 35, a.uid, await teslimAlt(k1.kalanId))), "geçti"); }
     // İSTENEN / KAYDEDİLEN (26 Kasım; kullanıcı: "Miktarı sessizce kırpma; sınırı aşan isteği açıkça reddet ve testte istenen / kaydedilen
     // miktarları ayrı göster"). Sunucu işçilik miktarını DEĞİŞTİRMEZ: satır olduğu gibi yazılır ya da istek bütünüyle 42501 ile düşer.
     // Kaydedilen = o fişin cari satırındaki miktar (ek.miktar); ret → 0. Her istek ayrı satır (sıralı — eşzamanlı sırası değişse de çıktı aynı).
@@ -475,7 +513,9 @@ const SAHTE = {
       await k.sorgu("update public.uretim_atamalari set miktar = 12 where id = $1", [a.aid]);
       await K4("tamir: onaydan sonra miktar 10 → 12, 10 × 40 teslim (eski onay geçersiz) · Uretimci", await fisKes("Uretimci", urtYuk("g25-q", 10, 40, a.uid, await teslimAlt(a.aid))), "ret 42501");
       await k.sorgu("update public.uretim_atamalari set miktar = 10 where id = $1", [a.aid]);
-      await K4("tamir: onaylı 10 × 40 teslim · Uretimci", await fisKes("Uretimci", urtYuk("g25-q", 10, 40, a.uid, await teslimAlt(a.aid))), "geçti"); }
+      await K4("tamir: miktar 10'a döndü, YENİ onay yok — eski onay canlanmaz: 10 × 40 · Uretimci", await fisKes("Uretimci", urtYuk("g25-q", 10, 40, a.uid, await teslimAlt(a.aid))), "ret 42501");
+      await isiOnayla(a.aid);
+      await K4("tamir: yeniden onaylı 10 × 40 teslim · Uretimci", await fisKes("Uretimci", urtYuk("g25-q", 10, 40, a.uid, await teslimAlt(a.aid))), "geçti"); }
     // Tamirde kısmi teslim: onaylı 10 × 40 → 6 teslim (kalan 4) → kalan 4; kalan parçanın ücreti 90'a çekilirse geçmez
     { const a = await yeniAtama({ tamir: true, tamirUcret: 40 });
       const k1 = await kismiAlt(a.aid, 6);
@@ -483,7 +523,9 @@ const SAHTE = {
       await k.sorgu("update public.uretim_atamalari set tamir_ucret = 90 where id = $1", [k1.kalanId]);
       await K4("tamir kalan parçanın ücreti 40 → 90 (zincir tutarsız) 4 × 90 · Uretimci", await fisKes("Uretimci", urtYuk("g25-q", 4, 90, a.uid, await teslimAlt(k1.kalanId))), "ret 42501");
       await k.sorgu("update public.uretim_atamalari set tamir_ucret = 40 where id = $1", [k1.kalanId]);
-      await K4("tamir kalan 4 × 40 (zincir yeniden tutarlı, onay geçerli) · Uretimci", await fisKes("Uretimci", urtYuk("g25-q", 4, 40, a.uid, await teslimAlt(k1.kalanId))), "geçti"); }
+      await K4("tamir kalan ücret 40'a döndü (zincir tutarlı), YENİ onay yok: 4 × 40 · Uretimci", await fisKes("Uretimci", urtYuk("g25-q", 4, 40, a.uid, await teslimAlt(k1.kalanId))), "ret 42501");
+      await isiOnayla(a.aid);
+      await K4("tamir kalan 4 × 40 yeniden onaydan sonra · Uretimci", await fisKes("Uretimci", urtYuk("g25-q", 4, 40, a.uid, await teslimAlt(k1.kalanId))), "geçti"); }
   }
 
   console.log(`── ${satirlar.length} satır${BEKLENEN ? ` · ${kirmizi ? kirmizi + " ✗" : "hepsi beklenen"}` : ""} ──`);
