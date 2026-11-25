@@ -161,3 +161,4 @@ Dosya `25b-onay-muhru-uygula.sql` SHA-256 `5ba5620a1914279dc835f989c2feb55a2e1b5
 4 şu an geçerli onay sayısı **2** (10003 + 10004 — uygulamadan önce de 2'ydi; değişmedi) · 99 **UYGULANDI**. Salt okur doğrulamalar bekleniyor.
 - 25b sonrası `25-sonra-dogrula-salt-okur.sql` (be4141ee…): 1–10 tamam (4: 22 fonksiyon · 8: 5 tetikleyici etkin) · 99 **TAMAM**. Önkoşul bekleniyor.
 - 25b sonrası `25-onkosul-salt-okur.sql` (1be58205…): 1 VAR · 2–4 G-25 uygulanmış · 5 A6 · 6 **30** (22+3+5) · 7 kurallar AÇIK · 99 **UYGULANMIŞ**. 25b uygulaması TAMAM.
+- Anlık görüntü (kullanıcı; hangi adımda alındığı soruldu): car_hareket 9 0de77f81… · Usta bakiye 1050 · isc_odeme 2 27a9389d… · kas_hareket 1 591c1ff7… · stk_fis 11 d7e2043e… · stk_hareket 13 1e6c98dd… · ucr_onay 2 8f25b49a… · uretim 4 ac49f562… · uretim_atamalari 5 fc356893…
