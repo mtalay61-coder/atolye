@@ -55,3 +55,8 @@ Veri silinmedi / sıfırlanmadı. Kullanıcı / veri eklemeleri (EKLEMELER.md) h
   (geçici veritabanı, sonra silindi): grant sonrası `t · f · … service_role=r/postgres · t`.
 - Deneme projesinde UYGULANDI (kullanıcı, SQL Editor, 25 Kasım): service_role_okur **true** · anon_okur **false** · yetki listesi
   `postgres=arwdDxtm/postgres authenticated=arwdxt/postgres service_role=r/postgres` · authenticated_ayni **true** (değişmedi).
+- `sonra-kullanici-ve-kapsam-salt-okur.sql` (25 Kasım): 1 uygulama listesinde DenemeMuhasebe **0** · 2 Auth hesabı **0** →
+  yeniden deneme serbest. 3 public tablolar 49 · service_role SELECT YOK **35** · 4 fonksiyonlar 140 · service_role EXECUTE YOK **0** ·
+  5 ilk 15: cariler, cek_gorselleri, cop, degisiklik, fis_cek_iz, fis_karsilanan_iz, fis_sayac, gorevler, gunluk, hesap_hareketleri,
+  isc_odeme, mes_bildirim, modeller, onaylar, platform_firmalar · 6 postgres varsayılan yetkileri `postgres=arwdDxtm/postgres
+  authenticated=arwdDxt/postgres` (service_role YOK). Yetki verilmedi; yalnız ölçüm.

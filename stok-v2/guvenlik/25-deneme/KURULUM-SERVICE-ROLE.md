@@ -54,3 +54,16 @@ Kapsamı deneme projesinde ölçen salt okur sorgu: `sonra-kullanici-ve-kapsam-s
 
 Deneme projesinde yalnız `tanimlar` SELECT verildi (kullanıcı onayı, 25 Kasım); diğer tablolar / fonksiyonlar ölçülür ama
 yetki verilmez.
+
+## Deneme projesinde ölçülen kapsam (25 Kasım, salt okur)
+
+- Tablolar: 49'un **35**'inde service_role SELECT yok. Olan 14 tablo, stok-v2 kurulum SQL'lerinin service_role'e AÇIKÇA
+  `grant select` verdikleri (ör. 1-kurulum, 4-cari, 9-kasa, 18-fis-defteri) — yani yetki yalnız elle verildiği yerde var.
+- Varsayılan yetkiler: postgres'in public tablo varsayılanında service_role **yok** (`postgres=arwdDxtm authenticated=arwdDxt`).
+  Bu yüzden sonradan açılan tablolar da (G-25'in `isc_odeme`, `mes_bildirim`'i dahil) service_role'e kapalı doğuyor. Betiğin 8b'si
+  service_role varsayılanını ne kaldırıyor ne ekliyor; yokluğu projenin kendi başlangıç varsayılanından geliyor (hangi Supabase
+  ayarı olduğu ölçülmedi).
+- Fonksiyonlar: 140'ın **0**'ında service_role EXECUTE eksik → fonksiyon tarafı bu projede SORUN DEĞİL (yukarıdaki fonksiyon
+  uyarısı yalnız olasılıktı; deneme projesinde gerçekleşmemiş).
+- Sunucu fonksiyonlarına etkisi: `tanimlar` artık okunuyor (onaylı tek yetki). `gun-sonu` (`muhasebe`, `gun_sonu_gonderim`) ve
+  `site-bildirim` (`site_*`) tablolarının durumu ilk 15'te görünmüyor; bu deneme işinin kapsamında değiller, ölçülmedi.
