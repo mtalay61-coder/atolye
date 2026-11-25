@@ -118,3 +118,4 @@ Veri silinmedi / sıfırlanmadı. Kullanıcı / veri eklemeleri (EKLEMELER.md) h
   düzeltilmiş teslimde artan hammadde 10 girilmiş / kalmış (kullanıcı ilk denemede bir kutuya 0 girmişti). G-25 dışı; veri olduğu gibi
   bırakıldı (düzeltmek iptal + yeniden teslim = mevcut kaydı değiştirmek). Olası arayüz sorunu (düzeltmede eski değer taşınıyor mu)
   ÖLÇÜLMEDİ — ayrı madde.
+- Üçüncü üretim 10003 açıldı, Kesim Deneme Usta'ya verildi. Test 1 (yeniden): "Onay bekleyen ücretler (1)" · `10003 · Kesim · Deneme Usta · 10 adet × 35 ₺` — kullanıcının DenemeUretim olduğu teyit bekleniyor.
