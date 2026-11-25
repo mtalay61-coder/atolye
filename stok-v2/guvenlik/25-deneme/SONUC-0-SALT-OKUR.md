@@ -124,3 +124,4 @@ Veri silinmedi / sıfırlanmadı. Kullanıcı / veri eklemeleri (EKLEMELER.md) h
 - Test 4 (kısmi): DenemeUretim'de Finans menüsünde yalnız "Fişler" (yetki fisler=g — beklenen; cari / kasa / muhasebe maddeleri yok). Cari sekmesi, maaş şeridi bekleniyor.
 - Test 4: kalan "Cari" sekmesine tıklanınca ekran bir an açılır gibi olup Anasayfa'ya yönleniyor (yetkisiz modül kapısı; cari verisi gösterilmedi — kullanıcı gözlemi). Maaş şeridi bekleniyor.
 - **Test 4 — GEÇTİ:** Finans'ta yalnız Fişler; Cari sekmesi yetki kapısıyla Anasayfa'ya döndürüyor (100-app 1262–1268); Anasayfa'da maaş şeridi YOK.
+- **Test 3 — GEÇTİ (ekran):** DenemeUretim, Mesai bildirimi Kasım 2026 · Deneme Maaşlı Personel (Deneme Bölüm) · hafta içi 10 · cmt 0 · pazar 0 → "onay bekliyor"; TL tutarı yok.
