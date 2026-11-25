@@ -176,3 +176,9 @@ Dosya `25b-onay-muhru-uygula.sql` SHA-256 `5ba5620a1914279dc835f989c2feb55a2e1b5
 - Test 12 (3. döngü) anlık görüntü SONRA: 9 satırın 9'u ÖNCE ile BİREBİR aynı (car_hareket 10 5565de2c… · Usta 1400 · stk_fis 12 708f17a0… · stk_hareket 15 66f6aeb8… · ucr_onay 3 3dfdfbee… · atama 6 15cc50c0… · isc_odeme 2 · kas 1 · uretim 5) → reddedilen teslim HİÇBİR kayıt / bakiye değiştirmedi ✓.
 - Test 12 (3. döngü) DenemeMuhasebe yeniden onay: "1 ücret onaylandı".
 - Test 12 (3. döngü) DU teslimi yeniden onaydan sonra (sağlam 8 + tamir 2, önerilen 10): "ÜRT-261125008 · 10005 tüm prosesler tamamlandı — mamul stoğa eklendi — 2 çift TAMİRE gönderildi (Kesim)" → GEÇTİ. Ödeme sayısı sorguyla doğrulanacak.
+- **Test 12 — GEÇTİ (deneme projesinde, 25b ile, 10005):** 40'ta onay düştü · 35'e dönüşte eski onay CANLANMADI (mühür) · DU teslimi RET ·
+  ret öncesi / sonrası anlık görüntü 9 / 9 BİREBİR · yeni muhasebe onayından sonra DU teslimi GEÇTİ · 10005: TEK ÜRT fişi (350 ₺, denemeuretim, 18:14:00),
+  TEK ödeme `atama:atama-mwwfibpa-2nbq · 10 × 35 · geçerli`, onay geçerli / mühürsüz (yeni onay mührü kaldırdı).
+  GÖZLEM (G-25 dışı, mevcut iş kuralı): sağlam 8 + tamir 2 teslimde işçilik 10 adet üzerinden ödendi (tamire giden 2 de teslim sayılır;
+  079: tamir bedenleri teslimBedenleri'ne eklenir) — tamir ayrıca tamir ücretiyle ödenir. Benim "280 ₺" beklentim yanlıştı.
+  Tamir ataması açıldı: `atama-mwwg03vh-ns6e · 2 · tamir · önerilen 10 ₺` (Test 7 başlangıcı).
