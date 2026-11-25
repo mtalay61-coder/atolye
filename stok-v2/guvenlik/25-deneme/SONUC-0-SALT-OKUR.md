@@ -160,3 +160,4 @@ Dosya `25b-onay-muhru-uygula.sql` SHA-256 `5ba5620a1914279dc835f989c2feb55a2e1b5
 Çıktı: 1 gecersiz sütunu eklendi · 2 g25_onayli / ucret_onayla mührü dikkate alıyor · 3 mühür tetikleyicileri (4) kuruldu, etkin ·
 4 şu an geçerli onay sayısı **2** (10003 + 10004 — uygulamadan önce de 2'ydi; değişmedi) · 99 **UYGULANDI**. Salt okur doğrulamalar bekleniyor.
 - 25b sonrası `25-sonra-dogrula-salt-okur.sql` (be4141ee…): 1–10 tamam (4: 22 fonksiyon · 8: 5 tetikleyici etkin) · 99 **TAMAM**. Önkoşul bekleniyor.
+- 25b sonrası `25-onkosul-salt-okur.sql` (1be58205…): 1 VAR · 2–4 G-25 uygulanmış · 5 A6 · 6 **30** (22+3+5) · 7 kurallar AÇIK · 99 **UYGULANMIŞ**. 25b uygulaması TAMAM.
