@@ -150,3 +150,7 @@ Veri silinmedi / sıfırlanmadı. Kullanıcı / veri eklemeleri (EKLEMELER.md) h
 - **Test 12 D (ücret 40):** onay geçerlilik sorgusu: 10003 ve 10004 onayları `su_an_gecerli false` (onaylanan 35, güncel 40) — eski onay düştü ✓. (10003 zaten tamamlanmıştı; etkisiz.)
 - **Test 12 F (ücret 40, DenemeUretim, 10004 teslim):** "Teslim kaydedilemedi — hiçbir değişiklik yapılmadı (… Kesim işi (10 adet × 40 ₺) cari / muhasebe onayı bekliyor ya da onaydan sonra miktar / kişi / ücret değişti) …" → ret ✓ (E ekranı ayrıca bekleniyor).
 - Bilgisayar değişti (kullanıcı): yeni PC'de Node v26.13.1 kuruldu; korumalı sunucu HTML özetiyle başladı (0957fa0d2972…, connect-src yalnız deneme + esm.sh); konsol: "ANA PROJE: ENGELLENDİ · DENEME: ulaştı (401)".
+- **Test 12 H (ücret 35'e geri, yeni onay YOK):** onay geçerlilik sorgusu: 10004 `atama|atama-mww9mkke-8hua` **su_an_gecerli TRUE**
+  (onaylanan 35 = güncel 35, onay saati 15:15:53 — YENİ onay verilmedi); 10003 de true. → **BULGU DENEME PROJESİNDE DOĞRULANDI:** eski onay
+  kendiliğinden canlandı; bu hâlde teslim yeni muhasebe onayı olmadan geçerdi. **Test 12 bu pakette BAŞARISIZ.** Teslim denenmedi.
+  Düzeltme: `25b-onay-muhru-uygula.sql` (yerelde eski paket + 25b 288/288; mühürsüz eski paket 12 ✗). Deneme projesine uygulanması ayrı onay bekliyor.
