@@ -103,3 +103,9 @@ Veri silinmedi / sıfırlanmadı. Kullanıcı / veri eklemeleri (EKLEMELER.md) h
   Alacak 350 "Kesim işçilik ücreti — Deneme Bot G25 · 10 adet × 35 ₺" · 5 ucr_onay **yok** · 6 isc_odeme **yok** → PARA yolu ödeme
   kaydı yazmıyor (yan gözlem DOĞRULANDI; etkisi ayrıca değerlendirilecek, bu işte değil). Ekranda hammadde stoğu −10 (beklenen −20)
   → `deneme-hammadde-salt-okur.sql` ile bakılacak.
+
+# Kontrol listesi (deneme projesi, korumalı sunucu, 25 Kasım)
+
+- **Test 1 — GEÇTİ (ekrandan):** Üretim Takibi › Ücret onayları → "Onay bekleyen ücretler (1) — onaylanmamış ücretle teslimde
+  işçilik yazılmaz; cari / muhasebe yetkilisi Onaylar'dan onaylar" · `10002 · Kesim · Deneme Usta · 10 adet × 35 ₺`; onayla düğmesi YOK
+  (kullanıcı DenemeUretim varsayıldı — doğrulama istendi).
