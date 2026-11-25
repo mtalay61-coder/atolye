@@ -38,7 +38,7 @@ begin
   if to_regclass('guvenlik.g25_yedek') is not null then
     raise exception 'G-25 zaten uygulanmış (guvenlik.g25_yedek var). Geri almak için 25-cari-yetki-geri-al.sql. Hiçbir şey değişmedi.';
   end if;
-  select string_agg(x, ', ') into v_eksik from unnest(array['public.g25_atama_koku(text)', 'public.g25_fis_cari_yetki(jsonb)', 'public.g25_fis_cari_yetki_tek(jsonb, jsonb, jsonb, jsonb, jsonb)', 'public.g25_fis_iptal_yetki(text)', 'public.g25_iscilik_carisi(text, text, boolean)', 'public.g25_mesai_anahtari(text, text)', 'public.g25_mesai_tahakkuku(text, text)', 'public.g25_mesai_tutari(text, jsonb)', 'public.g25_onay_degisim()', 'public.g25_onayli(text)', 'public.g25_stok_bagi(jsonb, jsonb, jsonb, jsonb)', 'public.g25_tanimlar_ucret_koruma()', 'public.g25_ucret_guncel(text)', 'public.g25_ucret_ozeti(jsonb)', 'public.g25_uretim_bagi(jsonb, jsonb, jsonb, jsonb)', 'public.g25_uretim_butunluk(jsonb, jsonb, jsonb)', 'public.g25_yetki_iste(text[], text, text)', 'public.mesai_bildir(jsonb)', 'public.mesai_bildirim_iptal(jsonb)', 'public.mesai_bildirimleri(jsonb)', 'public.mesai_onayla(jsonb)', 'public.ucret_onayla(jsonb)', 'public.ucret_onaylari(jsonb)']) x where to_regprocedure(x) is not null;
+  select string_agg(x, ', ') into v_eksik from unnest(array['public.g25_atama_koku(text)', 'public.g25_fis_cari_yetki(jsonb)', 'public.g25_fis_cari_yetki_tek(jsonb, jsonb, jsonb, jsonb, jsonb)', 'public.g25_fis_iptal_yetki(text)', 'public.g25_gecmis_iscilik(text, text)', 'public.g25_iscilik_carisi(text, text, boolean)', 'public.g25_mesai_anahtari(text, text)', 'public.g25_mesai_tahakkuku(text, text)', 'public.g25_mesai_tutari(text, jsonb)', 'public.g25_onay_degisim()', 'public.g25_onayli(text)', 'public.g25_stok_bagi(jsonb, jsonb, jsonb, jsonb)', 'public.g25_tanimlar_ucret_koruma()', 'public.g25_ucret_guncel(text)', 'public.g25_ucret_ozeti(jsonb)', 'public.g25_uretim_bagi(jsonb, jsonb, jsonb, jsonb)', 'public.g25_uretim_butunluk(jsonb, jsonb, jsonb)', 'public.g25_yetki_iste(text[], text, text)', 'public.mesai_bildir(jsonb)', 'public.mesai_bildirim_iptal(jsonb)', 'public.mesai_bildirimleri(jsonb)', 'public.mesai_onayla(jsonb)', 'public.ucret_onayla(jsonb)', 'public.ucret_onaylari(jsonb)']) x where to_regprocedure(x) is not null;
   if v_eksik is not null or to_regclass('public.mes_bildirim') is not null or to_regclass('public.ucr_onay') is not null or to_regclass('public.isc_odeme') is not null or exists (select 1 from pg_trigger where tgname = 'g25_tanimlar_ucret_koruma') or exists (select 1 from pg_trigger where tgname = 'g25_onay_degisim_urunler') or exists (select 1 from pg_trigger where tgname = 'g25_onay_degisim_uretim') or exists (select 1 from pg_trigger where tgname = 'g25_onay_degisim_atama') or exists (select 1 from pg_trigger where tgname = 'g25_onay_degisim_tanimlar') then
     raise exception 'G-25''in oluşturacağı nesneler zaten var (%): sessizce değiştirilmez. Hiçbir şey değişmedi.', coalesce(v_eksik, 'mes_bildirim / ucr_onay / isc_odeme / tetikleyici');
   end if;
@@ -297,6 +297,15 @@ begin
     end if;
     return null;
   end ';
+  create or replace function public.g25_gecmis_iscilik(p_uretim text, p_proses text) returns numeric
+  language sql stable security definer set search_path = public as '
+    select coalesce(sum(public.stk_sayi(h.ek ->> ''miktar'')), 0)
+      from public.car_hareket h join public.stk_fis fs on fs.id = h.fis_id
+     where h.uretim_id::text = p_uretim and fs.onek = ''ÜRT'' and not coalesce(fs.iptal, false) and not coalesce(h.iptal, false)
+       and coalesce(h.yon, '''') = ''Alacak'' and coalesce(h.ek ->> ''islemTipi'', '''') = ''İşçilik'' and coalesce(h.aciklama, '''') not ilike ''%tamir ücreti%''
+       and coalesce(nullif(fs.ek ->> ''proses'', ''''), split_part(coalesce(h.aciklama, ''''), '' '', 1)) = p_proses
+       and not exists (select 1 from public.isc_odeme o where o.istek = fs.istek)
+  ';
   create or replace function public.g25_uretim_bagi(f jsonb, p_cari jsonb, p_kasa jsonb, p_alt jsonb) returns text
   language plpgsql volatile security definer set search_path = public as '
   declare
@@ -363,10 +372,10 @@ begin
           v_hata := format(''bu iş için ödenen (%s + %s) onaylanan miktarı (%s) aşıyor'', v_toplam, m, v_ozet ->> ''miktar''); continue;
         end if;
         if not v_tamir then
-          select coalesce(sum(o.miktar), 0) into v_toplam from public.isc_odeme o join public.stk_fis fs on fs.istek = o.istek
+          select coalesce(sum(o.miktar), 0) + public.g25_gecmis_iscilik(uid_, v_proses) into v_toplam from public.isc_odeme o join public.stk_fis fs on fs.istek = o.istek
            where o.uretim_id = uid_ and o.proses = v_proses and not o.tamir and not fs.iptal;
           if adet is not null and v_toplam + m > adet + 0.000001 then
-            v_hata := format(''%s için ödenen işçilik (%s + %s) üretim adedini (%s) aşıyor'', v_proses, v_toplam, m, adet); continue;
+            v_hata := format(''%s için ödenen işçilik (%s + %s; defter dışı geçmiş teslimler dahil) üretim adedini (%s) aşıyor'', v_proses, v_toplam, m, adet); continue;
           end if;
         end if;
         v_hata := public.g25_iscilik_carisi(c ->> ''cari_id'', v_proses, true);
@@ -451,10 +460,10 @@ begin
         return format(''bu iş için ödenen (%s + %s) işin toplam miktarını (%s) aşıyor'', v_toplam, m, v_zincir);
       end if;
       if not v_tamir then
-        select coalesce(sum(o.miktar), 0) into v_toplam from public.isc_odeme o join public.stk_fis fs on fs.istek = o.istek
+        select coalesce(sum(o.miktar), 0) + public.g25_gecmis_iscilik(uid_, a ->> ''proses'') into v_toplam from public.isc_odeme o join public.stk_fis fs on fs.istek = o.istek
          where o.uretim_id = uid_ and o.proses = a ->> ''proses'' and not o.tamir and not fs.iptal;
         if adet is not null and v_toplam + m > adet + 0.000001 then
-          return format(''%s için ödenen işçilik (%s + %s) üretim adedini (%s) aşıyor'', a ->> ''proses'', v_toplam, m, adet);
+          return format(''%s için ödenen işçilik (%s + %s; defter dışı geçmiş teslimler dahil) üretim adedini (%s) aşıyor'', a ->> ''proses'', v_toplam, m, adet);
         end if;
       end if;
       kullanilan := kullanilan || (c ->> ''id'');
@@ -826,7 +835,7 @@ begin
   revoke all on function public.mesai_bildir(jsonb), public.mesai_bildirimleri(jsonb), public.mesai_bildirim_iptal(jsonb), public.mesai_onayla(jsonb) from public, anon;
   grant execute on function public.mesai_bildir(jsonb), public.mesai_bildirimleri(jsonb), public.mesai_bildirim_iptal(jsonb), public.mesai_onayla(jsonb) to authenticated;
   revoke all on function public.g25_yetki_iste(text[], text, text), public.g25_stok_bagi(jsonb, jsonb, jsonb, jsonb),
-    public.g25_uretim_bagi(jsonb, jsonb, jsonb, jsonb), public.g25_uretim_butunluk(jsonb, jsonb, jsonb), public.g25_fis_cari_yetki_tek(jsonb, jsonb, jsonb, jsonb, jsonb),
+    public.g25_uretim_bagi(jsonb, jsonb, jsonb, jsonb), public.g25_uretim_butunluk(jsonb, jsonb, jsonb), public.g25_gecmis_iscilik(text, text), public.g25_fis_cari_yetki_tek(jsonb, jsonb, jsonb, jsonb, jsonb),
     public.g25_fis_cari_yetki(jsonb), public.g25_fis_iptal_yetki(text), public.g25_mesai_anahtari(text, text),
     public.g25_mesai_tahakkuku(text, text), public.g25_mesai_tutari(text, jsonb) from public, anon, authenticated;
   create or replace function public.g25_ucret_ozeti(t jsonb) returns jsonb
@@ -1087,7 +1096,7 @@ begin
   revoke all on guvenlik.g25_sonuc from public, anon, authenticated;
   insert into guvenlik.g25_sonuc values
     (1, 'car_yaz / fis_kes / fis_iptal', 'G-25 hâlinde (f83e760f, c071d802, 2ea9f6ce)'),
-    (2, 'yeni fonksiyonlar', '23'),
+    (2, 'yeni fonksiyonlar', '24'),
     (3, 'mes_bildirim, ucr_onay, isc_odeme tabloları (RLS açık, doğrudan erişim yok)', 'kuruldu'),
     (4, 'tetikleyiciler (5: tanimlar ücret koruması + onay geçersizlik mührü)', 'kuruldu, etkin'),
     (5, 'yedek', 'guvenlik.g25_yedek (3 fonksiyon)'),

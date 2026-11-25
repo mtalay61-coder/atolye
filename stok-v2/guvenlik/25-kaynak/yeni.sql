@@ -271,6 +271,22 @@ begin
   return null;
 end $$;
 -- @@
+-- DEFTER DIŞI (GEÇMİŞ) İŞÇİLİK (25 Kasım, deneme; kullanıcı: "geçmişteki tüm teslimleri kayıtsız varsayma"). Ödeme defteri (isc_odeme)
+-- G-25 ile başladı; ondan önceki teslimler (ve 25c'den önce PARA yetkilisinin teslimleri) defterde YOK, ama geçerli ÜRT fişi ve cari
+-- işçilik satırı var. Bunlar yok sayılırsa atama fiş iptal edilmeden yeniden açıldığında (alt_yaz) aynı iş İKİNCİ kez ödenebiliyordu
+-- (yerel ölçüm: fiş 2, cari 700). Bu fonksiyon bir üretim + proses için defterde KARŞILIĞI OLMAYAN geçerli işçilik miktarını verir:
+-- geçerli ÜRT fişindeki (iptal değil) geçerli Alacak işçilik satırı, fişin istek kimliği ödeme defterinde yoksa. Tamir ücreti satırları
+-- ("… tamir ücreti") sayılmaz (tamir ayrı iştir). Proses: fişin ek.proses'i, yoksa açıklamanın ilk sözcüğü.
+create or replace function public.g25_gecmis_iscilik(p_uretim text, p_proses text) returns numeric
+language sql stable security definer set search_path = public as $$
+  select coalesce(sum(public.stk_sayi(h.ek ->> 'miktar')), 0)
+    from public.car_hareket h join public.stk_fis fs on fs.id = h.fis_id
+   where h.uretim_id::text = p_uretim and fs.onek = 'ÜRT' and not coalesce(fs.iptal, false) and not coalesce(h.iptal, false)
+     and coalesce(h.yon, '') = 'Alacak' and coalesce(h.ek ->> 'islemTipi', '') = 'İşçilik' and coalesce(h.aciklama, '') not ilike '%tamir ücreti%'
+     and coalesce(nullif(fs.ek ->> 'proses', ''), split_part(coalesce(h.aciklama, ''), ' ', 1)) = p_proses
+     and not exists (select 1 from public.isc_odeme o where o.istek = fs.istek)
+$$
+-- @@
 -- ÜRETİM BAĞLANTISI (K4, 24 / 25 Kasım). İstekten YALNIZ hangi atamanın teslim edildiği alınır (alt'ta sunucuda kayıtlı, tamamlanmamış
 -- bir atama "tamamlandı" yapılıyor); kişi, miktar, ücret SUNUCUDAKİ kayıttan ve ONAY DEFTERİNDEN okunur. Aynı istekte gelen atama /
 -- ücret hiçbir şeyin dayanağı değildir (R1). Her satır için:
@@ -346,10 +362,10 @@ begin
         v_hata := format('bu iş için ödenen (%s + %s) onaylanan miktarı (%s) aşıyor', v_toplam, m, v_ozet ->> 'miktar'); continue;
       end if;
       if not v_tamir then
-        select coalesce(sum(o.miktar), 0) into v_toplam from public.isc_odeme o join public.stk_fis fs on fs.istek = o.istek
+        select coalesce(sum(o.miktar), 0) + public.g25_gecmis_iscilik(uid_, v_proses) into v_toplam from public.isc_odeme o join public.stk_fis fs on fs.istek = o.istek
          where o.uretim_id = uid_ and o.proses = v_proses and not o.tamir and not fs.iptal;
         if adet is not null and v_toplam + m > adet + 0.000001 then
-          v_hata := format('%s için ödenen işçilik (%s + %s) üretim adedini (%s) aşıyor', v_proses, v_toplam, m, adet); continue;
+          v_hata := format('%s için ödenen işçilik (%s + %s; defter dışı geçmiş teslimler dahil) üretim adedini (%s) aşıyor', v_proses, v_toplam, m, adet); continue;
         end if;
       end if;
       v_hata := public.g25_iscilik_carisi(c ->> 'cari_id', v_proses, true);
@@ -444,10 +460,10 @@ begin
       return format('bu iş için ödenen (%s + %s) işin toplam miktarını (%s) aşıyor', v_toplam, m, v_zincir);
     end if;
     if not v_tamir then
-      select coalesce(sum(o.miktar), 0) into v_toplam from public.isc_odeme o join public.stk_fis fs on fs.istek = o.istek
+      select coalesce(sum(o.miktar), 0) + public.g25_gecmis_iscilik(uid_, a ->> 'proses') into v_toplam from public.isc_odeme o join public.stk_fis fs on fs.istek = o.istek
        where o.uretim_id = uid_ and o.proses = a ->> 'proses' and not o.tamir and not fs.iptal;
       if adet is not null and v_toplam + m > adet + 0.000001 then
-        return format('%s için ödenen işçilik (%s + %s) üretim adedini (%s) aşıyor', a ->> 'proses', v_toplam, m, adet);
+        return format('%s için ödenen işçilik (%s + %s; defter dışı geçmiş teslimler dahil) üretim adedini (%s) aşıyor', a ->> 'proses', v_toplam, m, adet);
       end if;
     end if;
     kullanilan := kullanilan || (c ->> 'id');
@@ -858,7 +874,7 @@ revoke all on function public.mesai_bildir(jsonb), public.mesai_bildirimleri(jso
 grant execute on function public.mesai_bildir(jsonb), public.mesai_bildirimleri(jsonb), public.mesai_bildirim_iptal(jsonb), public.mesai_onayla(jsonb) to authenticated
 -- @@
 revoke all on function public.g25_yetki_iste(text[], text, text), public.g25_stok_bagi(jsonb, jsonb, jsonb, jsonb),
-  public.g25_uretim_bagi(jsonb, jsonb, jsonb, jsonb), public.g25_uretim_butunluk(jsonb, jsonb, jsonb), public.g25_fis_cari_yetki_tek(jsonb, jsonb, jsonb, jsonb, jsonb),
+  public.g25_uretim_bagi(jsonb, jsonb, jsonb, jsonb), public.g25_uretim_butunluk(jsonb, jsonb, jsonb), public.g25_gecmis_iscilik(text, text), public.g25_fis_cari_yetki_tek(jsonb, jsonb, jsonb, jsonb, jsonb),
   public.g25_fis_cari_yetki(jsonb), public.g25_fis_iptal_yetki(text), public.g25_mesai_anahtari(text, text),
   public.g25_mesai_tahakkuku(text, text), public.g25_mesai_tutari(text, jsonb) from public, anon, authenticated
 -- @@

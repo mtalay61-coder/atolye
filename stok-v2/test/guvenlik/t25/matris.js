@@ -498,6 +498,36 @@ const SAHTE = {
       await K4("P6b kalan 4 · Uretimci", await fisKes("Uretimci", urtYuk("g25-q", 4, 35, a.uid, await teslimAlt(k1.kalanId))), "geçti");
       const d6 = await defter(a.uid);
       yaz(`K4 · P6 karışık zincir: ödenen 6 + 4 = 10 [${d6}]`, { ok: /^fiş 2 · cari 350 · ödeme 10 /.test(d6), kod: d6 }, "geçti"); }
+    // L — GEÇMİŞ (G-25 ÖNCESİ / ödeme defterine girmemiş) TESLİM (25 Kasım, deneme: 10001 / 10002 / 10004 Yönetici teslimleri defterde yok;
+    // kullanıcı: "tekrar ödenmesini neyin engellediğini yerel kopyada sına … geçmişteki tüm teslimleri kayıtsız varsayma"). Geçmiş teslim
+    // sistem yoluyla (SQL Editor gibi: jwt yok → G-25 bağ denetimi ve defter YOK) kesilir: geçerli ÜRT fişi + işçilik 10 × 35, atama tamamlandı.
+    // Sonra atama, fiş İPTAL EDİLMEDEN yeniden "tamamlanmadı" yapılır (uretim_atamalari'na üretim yetkisiyle REST yazımı — istemci de böyle
+    // yazar) ve iş yeniden teslim edilir. Beklenen: ikinci ödeme YOK (geçmiş işçilik sayılır).
+    const gecmisTeslim = async (a) => {
+      const p = urtYuk("g25-q", 10, 35, a.uid, await teslimAlt(a.aid)); p.fis.ek = { proses: "Kesim" };
+      await k.sorgu("select public.fis_kes($1::jsonb)", [JSON.stringify(p)]);
+      return (await k.sorgu("select count(*) n from public.isc_odeme where uretim_id = $1", [a.uid]))[0].n; };
+    { const a = await yeniAtama();
+      const n0 = await gecmisTeslim(a).catch((e) => `HATA ${e.message.slice(0, 60)}`);
+      const d0 = await defter(a.uid);
+      yaz(`K4 · L0 geçmiş teslim (sistem yolu, deftere girmez) [ödeme kaydı ${n0} · ${d0}]`, { ok: String(n0) === "0" && /^fiş 1 · cari 350 · ödeme 0 /.test(d0), kod: d0 }, "geçti");
+      // tabloya doğrudan yazım authenticated'a kapalı (alt geçişi); istemcinin alt kayıt yolu alt_yaz (üretim kaydetme yetkisi) — fiş
+      // iptal edilmeden atamayı yeniden "tamamlanmadı" yapabiliyor mu?
+      const satir = (await k.sorgu("select to_jsonb(a) j from public.uretim_atamalari a where id = $1", [a.aid]))[0].j;
+      const ac = await istek("Uretimci", "rpc/alt_yaz", { p: { uretim_atamalari: { satirlar: [{ ...satir, tamamlandi_mi: false, tamamlanma_tarihi: null }] } } });
+      yaz("K4 · L1 tamamlanmış atamayı fiş iptal edilmeden yeniden açma (rpc/alt_yaz) · Uretimci", ac, ac.ok ? "geçti" : `ret ${ac.kod}`);
+      if (ac.ok) {
+        await isiOnayla(a.aid);
+        await K4("L2 geçmişte ödenmiş işe Üretim kullanıcısıyla yeniden teslim · Uretimci", await fisKes("Uretimci", urtYuk("g25-q", 10, 35, a.uid, await teslimAlt(a.aid))), "ret 42501");
+        await k.sorgu("update public.uretim_atamalari set tamamlandi_mi = false where id = $1", [a.aid]);
+        await K4("L3 aynı işe Yönetici ile yeniden teslim · Ali", await fisKes("Ali", urtYuk("g25-q", 10, 35, a.uid, await teslimAlt(a.aid))), "ret KR016");
+        await Pdef("L3 geçmiş teslimden sonra defterler (tek geçerli ödeme: geçmiş fiş)", a.uid, d0);
+        // geçmiş fiş İPTAL edilirse (Geri Al) iş yeniden ödenebilir — tek geçerli fiş
+        const no = (await k.sorgu("select id from public.stk_fis where uretim_id::text = $1 and onek = 'ÜRT' and not iptal", [a.uid]))[0].id;
+        yaz("K4 · L4 geçmiş fişin iptali · Ali", await istek("Ali", "rpc/fis_iptal", { p: { no, sebep: "G-25 L sınaması" } }), "geçti");
+        await k.sorgu("update public.uretim_atamalari set tamamlandi_mi = false where id = $1", [a.aid]);
+        await K4("L5 geçmiş fiş iptalinden sonra yeniden teslim · Uretimci", await fisKes("Uretimci", urtYuk("g25-q", 10, 35, a.uid, await teslimAlt(a.aid))), "geçti");
+        await Pdef("L5 tek geçerli fiş / tek ödeme", a.uid, "fiş 1 · cari 350 · ödeme 10 · stok 0"); } }
     // P7: Yönetici ÇİFT BASIŞ — aynı atamaya iki istek AYNI ANDA (farklı istek kimliği): biri geçer, öteki KR016; tek ödeme
     { const a = await yeniAtama(); const alt = await teslimAlt(a.aid);
       const [r1, r2] = await Promise.all([1, 2].map(() => istek("Ali", "rpc/fis_kes", { p: urtYuk("g25-q", 10, 35, a.uid, alt) })));

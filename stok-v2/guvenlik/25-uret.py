@@ -93,6 +93,8 @@ YENI_FONK_IMZA = {
     "public.g25_onay_degisim": "()",
     # PARA yetkilisinin teslimi de ödeme defterine (25 Kasım, deneme: Yönetici teslimi isc_odeme'ye yazılmıyordu)
     "public.g25_uretim_butunluk": "(jsonb, jsonb, jsonb)",
+    # Defter dışı (geçmiş) işçilik: G-25 / 25c öncesi teslimler ikinci ödemeyi engeller (25 Kasım, deneme)
+    "public.g25_gecmis_iscilik": "(text, text)",
 }
 # G-25'in oluşturduğu TABLOLAR (RLS açık, doğrudan erişim yok). Geri almada boşsa silinir, doluysa guvenlik şemasına arşivlenir.
 TABLOLAR = ["mes_bildirim", "ucr_onay", "isc_odeme"]
@@ -509,15 +511,17 @@ select sira, kontrol, deger from guvenlik.g25b_sonuc order by sira;
 commit;
 """
 # --- 25c: PARA YETKİLİSİNİN TESLİMİ ÖDEME DEFTERİNE — G-25 + 25b UYGULANMIŞ veritabanı için ek (25 Kasım, deneme) ---------------------
-C_PARCALARI = [x for x in ifadeler if any(t in x for t in ("function public.g25_uretim_butunluk(", "function public.g25_fis_cari_yetki_tek("))]
-assert len(C_PARCALARI) == 2, len(C_PARCALARI)
+C_PARCALARI = [x for x in ifadeler if any(t in x for t in ("function public.g25_gecmis_iscilik(", "function public.g25_uretim_bagi(",
+               "function public.g25_uretim_butunluk(", "function public.g25_fis_cari_yetki_tek("))]
+assert len(C_PARCALARI) == 4, len(C_PARCALARI)
 ek25c = f"""-- =====================================================================================================================
 --  25c-para-teslim-odeme-uygula.sql — G-25 EK: PARA YETKİLİSİNİN TESLİMİ ÇİFT ÖDEME KORUMASINA GİRER (YAZAR; G-25 + 25b uygulanmış vt.)
 {BASLIK_ORTAK}
 --  NEDEN (deneme projesi, 25 Kasım): cari / muhasebe kaydetme yetkilisinin (Yönetici dahil) ÜRT teslimi onaydan muaf olduğu için ödeme
 --  defterini (isc_odeme) de tamamen atlıyordu: Yönetici teslimleri deftere girmiyor, aynı işe ikinci (ör. eşzamanlı çift basış) Yönetici
 --  teslimi sunucuda durdurulmuyordu. Kullanıcı: "Yetki nedeniyle onaydan muaf olmak, çift ödemeyi önleyen kaydı atlamak anlamına gelmemeli".
---  NE YAPAR: g25_uretim_butunluk (yeni) + g25_fis_cari_yetki_tek (PARA dalı bütünlüğü çağırır). Onay / ücret denetimi PARA için yine YOK;
+--  NE YAPAR: g25_uretim_butunluk (yeni) + g25_fis_cari_yetki_tek (PARA dalı bütünlüğü çağırır) + g25_gecmis_iscilik (yeni: ödeme
+--  defterinde karşılığı olmayan GEÇMİŞ geçerli işçilik — G-25 / 25c öncesi teslimler) + g25_uretim_bagi (proses tavanı geçmişi de sayar). Onay / ücret denetimi PARA için yine YOK;
 --  teslim edilen atama sunucuda tamamlanmamış ve ödenmemiş olmalı, işçilik satırı ödeme defterine girer. Veri silmez; geçmiş Yönetici
 --  teslimlerine (deftere girmemiş) dokunmaz.
 --  ÖNKOŞUL: postgres; G-25 + 25b uygulanmış (ucr_onay.gecersiz var); g25_uretim_butunluk henüz yok. Tam paket bunu ZATEN içerir.
@@ -537,10 +541,13 @@ begin
     raise exception '25c zaten uygulanmış — sessizce değiştirilmez. Hiçbir şey değişmedi.';
   end if;
 {chr(10).join(ex(x) for x in C_PARCALARI)}
-  revoke all on function public.g25_uretim_butunluk(jsonb, jsonb, jsonb) from public, anon, authenticated;
+  revoke all on function public.g25_uretim_butunluk(jsonb, jsonb, jsonb), public.g25_gecmis_iscilik(text, text) from public, anon, authenticated;
+  revoke all on function public.g25_uretim_bagi(jsonb, jsonb, jsonb, jsonb) from public, anon, authenticated;
   revoke all on function public.g25_fis_cari_yetki_tek(jsonb, jsonb, jsonb, jsonb, jsonb) from public, anon, authenticated;
   if has_function_privilege('authenticated', 'public.g25_uretim_butunluk(jsonb, jsonb, jsonb)', 'execute')
-     or has_function_privilege('authenticated', 'public.g25_fis_cari_yetki_tek(jsonb, jsonb, jsonb, jsonb, jsonb)', 'execute') then
+     or has_function_privilege('authenticated', 'public.g25_fis_cari_yetki_tek(jsonb, jsonb, jsonb, jsonb, jsonb)', 'execute')
+     or has_function_privilege('authenticated', 'public.g25_gecmis_iscilik(text, text)', 'execute')
+     or has_function_privilege('authenticated', 'public.g25_uretim_bagi(jsonb, jsonb, jsonb, jsonb)', 'execute') then
     raise exception 'iç fonksiyon dışarıya açık kaldı';
   end if;
   create table if not exists guvenlik.g25c_sonuc (sira int primary key, kontrol text not null, deger text not null);
@@ -549,6 +556,7 @@ begin
   insert into guvenlik.g25c_sonuc values
     (1, 'g25_uretim_butunluk', 'kuruldu (dışarıya kapalı)'),
     (2, 'g25_fis_cari_yetki_tek', 'PARA dalı ödeme defterine yazıyor'),
+    (3, 'g25_gecmis_iscilik + g25_uretim_bagi', 'defter dışı geçmiş işçilik proses tavanında sayılıyor'),
     (99, 'GENEL', 'UYGULANDI — 25-sonra-dogrula-salt-okur.sql ve 25-onkosul-salt-okur.sql ile doğrulayın');
 end $$;
 
