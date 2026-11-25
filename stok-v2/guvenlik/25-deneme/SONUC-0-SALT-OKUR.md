@@ -143,3 +143,7 @@ Veri silinmedi / sıfırlanmadı. Kullanıcı / veri eklemeleri (EKLEMELER.md) h
   gösterecek biçimde düzeltildi.
 - Güncel sorgu (iptal sonrası): 5 `… 6 · 35 · geçerli | atama:atama-mww8e1p5-q8bf · 4 · 35 · İPTAL` → iptal edilen ödeme sayılmıyor (DOĞRULANDI). Yeniden teslim henüz sunucuda yok (4'lük parça açık, yeni fiş yok).
 - **Test 11 (yeniden teslim) — GEÇTİ (sunucu, DenemeUretim):** 4'lük parça tamamlandı · TEK yeni ÜRT 140 (15:06:56) · iptal edilen 140 iptal kaldı · Deneme Usta `6 · 1050` · ödemeler 6 geçerli + 4 geçerli (yeniden yazıldı) = 10 = onaylanan; yeni onay istenmedi.
+- Kullanıcı onayı (25 Kasım): yalnız deneme, Deneme Bot G25 Kesim ücreti 35 → 40 → 35 (Test 12). Düzeltilmiş beklenti: 40'ta eski onay
+  geçersiz + teslim ret; 35'e dönünce de YENİ muhasebe onayı olmadan teslim geçmez; yeniden onayla teslim geçer, tek ödeme.
+  Kaynak okuması (ölçümden önce): `g25_onayli` = "onaylanan özet == güncel özet" → 35'e dönünce eski onay KENDİLİĞİNDEN CANLANIR
+  (ABA). Deneme projesinde ölçülecek (`deneme-onay-gecerlilik-salt-okur.sql`); düzeltme yerelde sınanacak.
