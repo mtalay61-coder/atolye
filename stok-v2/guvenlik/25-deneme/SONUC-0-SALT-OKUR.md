@@ -113,3 +113,8 @@ Veri silinmedi / sıfırlanmadı. Kullanıcı / veri eklemeleri (EKLEMELER.md) h
 - İz (10002 Yönetici teslimi sonrası): iki üretim de Tamamlandı; ikinci atama sağlam 40=10, 14:08:48. Fişler: 10001 ÜRT 350 (geçerli) ·
   10002 ÜRT 350 **iptal** 14:08:32 · 10002 ÜRT 350 geçerli 14:08:47. Deneme Usta: 350 geçerli · 350 iptal · 350 geçerli → net 700 = 2 × 10 × 35;
   ÇİFT İŞÇİLİK YOK (düzeltme eski fişi iptal edip yenisini kesmiş). ucr_onay yok · isc_odeme yok (PARA yolu). Hammadde hareketleri bekleniyor.
+- Hammadde (`deneme-hammadde-salt-okur.sql`): hammadde düşümü İŞ VERMEDE değil TESLİMDE (ÜRT fişinde) yazılıyor. 10001 −10 · 10002 ilk fiş −10
+  (iptal) · 10002 geçerli fiş −10 ve **+10 "Artan iade (Kesim)"** → 10002 net 0; toplam −10. Ekrandaki −10 sunucuyla tutarlı. Neden:
+  düzeltilmiş teslimde artan hammadde 10 girilmiş / kalmış (kullanıcı ilk denemede bir kutuya 0 girmişti). G-25 dışı; veri olduğu gibi
+  bırakıldı (düzeltmek iptal + yeniden teslim = mevcut kaydı değiştirmek). Olası arayüz sorunu (düzeltmede eski değer taşınıyor mu)
+  ÖLÇÜLMEDİ — ayrı madde.
