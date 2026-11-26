@@ -141,8 +141,16 @@ K=$(kopya kopyabozuk); rm -rf "$S/korunan-kb"; mkdir -p "$S/korunan-kb"; cp -a "
 printf 'X' | dd of="$S/korunan-kb/2026-11-25-1137/envanter-kaynak.csv" bs=1 seek=10 conv=notrunc status=none
 touch -r "$K/envanter-kaynak.csv" "$S/korunan-kb/2026-11-25-1137/envanter-kaynak.csv"
 bash "$BETIK/yedek-ac-onedrive.sh" "$S/uzak-kopyabozuk" "$S/korunan-kb" 2026-11-25-1137 "$S/indir-kb" > "$S/kb.log" 2>&1 && r=TAMAM || r=DUR
-echo "J. koruma kopyası içerik farkı (boyut ve zaman aynı):"; grep -E 'FARKLI|DUR' "$S/kb.log" | sed 's/^/     /'
-sonuc "$r" DUR "boyutu aynı ama içeriği farklı kopya → DUR"; grep -q "özeti FARKLI: envanter-kaynak.csv" "$S/kb.log" && sonuc 1 1 "farklı dosya adıyla yakalandı" || sonuc 0 1 "farklı dosya adıyla yakalandı"
+echo "J. önceki koşudan kalmış doğrulanmamış kopya: aynı boyut + aynı zaman, farklı içerik (rclone copy yeniden yüklemez):"; grep -E 'FARKLI|DUR' "$S/kb.log" | sed 's/^/     /'
+sonuc "$r" DUR "boyutu aynı ama içeriği farklı kopya → DUR"; grep -q "envanter-kaynak.csv: FARKLI" "$S/kb.log" && sonuc 1 1 "farklı dosya adıyla, tam sha256 karşılaştırmasıyla yakalandı" || sonuc 0 1 "farklı dosya adıyla yakalandı"
+[ -f "$S/korunan-kb/2026-11-25-1137/envanter-kaynak.csv" ] && ! cmp -s "$S/korunan-kb/2026-11-25-1137/envanter-kaynak.csv" "$K/envanter-kaynak.csv" \
+  && sonuc 1 1 "doğrulanmamış kopya silinmedi ve üzerine güvenilir diye yazılmadı (bozuk içerik yerinde)" || sonuc 0 1 "doğrulanmamış kopya yerinde"
+
+# J2. kopyada FAZLA dosya (dosya listesi kaynakla aynı değil)
+K=$(kopya fazla); rm -rf "$S/korunan-fz"; mkdir -p "$S/korunan-fz/2026-11-25-1137"; echo fazla > "$S/korunan-fz/2026-11-25-1137/yabanci.txt"
+bash "$BETIK/yedek-ac-onedrive.sh" "$S/uzak-fazla" "$S/korunan-fz" 2026-11-25-1137 "$S/indir-fz" > "$S/fz.log" 2>&1 && r=TAMAM || r=DUR
+echo "J2. koruma kopyasında fazla dosya:"; grep -E 'fazla:|DUR' "$S/fz.log" | sed 's/^/     /'
+sonuc "$r" DUR "fazla dosyalı kopya → DUR"; grep -q "kopyada fazla: yabanci.txt" "$S/fz.log" && sonuc 1 1 "fazla dosya adıyla yakalandı" || sonuc 0 1 "fazla dosya adıyla yakalandı"
 
 # K. sınanmamış klasör (BASARISIZ.txt) ve eksik dosya
 K=$(kopya basarisiz); echo x > "$K/BASARISIZ.txt"; bozuk basarisiz "SINANMAMIŞ" "K. BASARISIZ.txt olan klasör"
@@ -165,6 +173,25 @@ sonuc "$r" TAMAM "iş akışı adımı iki klasörde TAMAM"
 sonuc "$(ls "$OD/AtolyeYedek-KORUNAN/renk-hatasi" 2>/dev/null | tr '\n' ' ')" "2026-11-25-1137 2026-11-25-1137-yedek-dokum.csv 2026-11-26-1121 2026-11-26-1121-yedek-dokum.csv " "koruma klasöründe iki kopya + iki CSV"
 sonuc "$(diff -rq "$OD/AtolyeYedek/2026-11-25-1137" "$OD/AtolyeYedek-KORUNAN/renk-hatasi/2026-11-25-1137" >/dev/null && echo ayni)" ayni "koruma kopyası kaynakla bayt bayt aynı (diff -r)"
 sonuc "$(ls "$OD/AtolyeYedek" | tr '\n' ' ')" "2026-11-25-1137 2026-11-26-1121 " "kaynak klasörlere dokunulmadı"
+
+# N. ÖZET VERMEYEN ARKA UÇ: "onedrive" adı rclone'un ŞİFRELİ (crypt) arka ucuna bağlanır — crypt hiçbir özet vermez (gerçek
+#    koşudaki "özet alınamadı" durumunun yerel karşılığı). İş akışı adımı yine uçtan uca TAMAM olmalı (uzak özete dayanmıyor).
+OD2="$S/od2"; mkdir -p "$OD2"
+printf '[ham]\ntype = alias\nremote = %s\n[onedrive]\ntype = crypt\nremote = ham:\nfilename_encryption = off\ndirectory_name_encryption = false\npassword = %s\n' \
+  "$OD2" "$(rclone obscure sina-parola)" > "$S/rclone-crypt.conf"
+RCLONE_CONFIG="$S/rclone-crypt.conf" rclone copy "$S/uzak/2026-11-25-1137" onedrive:AtolyeYedek/2026-11-25-1137 2>/dev/null
+RCLONE_CONFIG="$S/rclone-crypt.conf" rclone copy "$S/uzak/2026-11-25-1137" onedrive:AtolyeYedek/2026-11-26-1121 2>/dev/null
+RCLONE_CONFIG="$S/rclone-crypt.conf" rclone hashsum sha256 onedrive:AtolyeYedek/2026-11-25-1137 > "$S/crypt-ozet.txt" 2>&1 && oz=VAR || oz=YOK
+RCLONE_CONFIG="$S/rclone-crypt.conf" rclone hashsum quickxor onedrive:AtolyeYedek/2026-11-25-1137 >> "$S/crypt-ozet.txt" 2>&1 && oz2=VAR || oz2=YOK
+echo "N. özet vermeyen arka uç (crypt) üzerinde iş akışı adımı:"
+sonuc "$oz/$oz2" "YOK/YOK" "bu arka uç sha256 ve quickxor özetini VERMİYOR (rclone hashsum hata)"
+for d in yedek_2026_11_25_1137 yedek_2026_11_26_1121; do dropdb --if-exists "$d" 2>/dev/null; done
+( cd "$KOK" && KLASORLER="2026-11-25-1137 2026-11-26-1121" KORUMA=onedrive:AtolyeYedek-KORUNAN/renk-hatasi RCLONE_CONFIG="$S/rclone-crypt.conf" \
+    RUNNER_TEMP="$S/runner2" bash -c 'mkdir -p "$RUNNER_TEMP"; bash "$0"' "$S/adim.sh" ) > "$S/adim2.log" 2>&1 && r=TAMAM || r=DUR
+grep -E '^──|koruma kopyası:|tamlık|CSV OneDrive|DUR|error' "$S/adim2.log" | sed 's/^/     /'
+sonuc "$r" TAMAM "özet olmadan da iki klasörde TAMAM (indirme + tam sha256)"
+sonuc "$(RCLONE_CONFIG="$S/rclone-crypt.conf" rclone lsf onedrive:AtolyeYedek-KORUNAN/renk-hatasi 2>/dev/null | sort | tr '\n' ' ')" \
+  "2026-11-25-1137-yedek-dokum.csv 2026-11-25-1137/ 2026-11-26-1121-yedek-dokum.csv 2026-11-26-1121/ " "koruma alanında iki kopya + iki CSV"
 
 for d in kaynak_saglam kaynak_yapi kaynak_auth ac_saglam ac_bayt ac_kesik ac_veri ac_eksik ac_sayi ac_yapi ac_auth ac_dolu ac_basarisiz ac_authyok; do dropdb --if-exists "$d"; done
 echo "── sınama: $gecen geçti, $kalan kaldı ──"
