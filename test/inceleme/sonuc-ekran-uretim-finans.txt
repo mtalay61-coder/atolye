@@ -1,0 +1,61 @@
+ekran-uretim-finans · inc_fin · istemci ERP test · kurallar KAPALI · G-25 nesnesi 0
+
+■ S1–S3 · FIN1 · tam teslim → Geri Al → yeniden teslim
+  ✓ [S0 başlangıç] {"stok":0,"usta":0,"tamirci":0,"fis":"0 geçerli / 0 iptal"}
+  ✓ [S1 tam teslim 10 → stok 10, usta −350, 1 fiş] {"stok":10,"usta":-350,"tamirci":0,"fis":"1 geçerli / 0 iptal"}
+  ✓ [S1 atama teslim alındı] ["a:10:fin-usta:teslim"]
+  ✓ [S2 Geri Al → stok 0, usta 0, fiş iptal] {"stok":0,"usta":0,"tamirci":0,"fis":"0 geçerli / 1 iptal"}
+  ✓ [S2 atama yeniden bekliyor] ["a:10:fin-usta:bekliyor"]
+  ✓ [S3 yeniden teslim → stok 10, usta −350 (çift ödeme yok)] {"stok":10,"usta":-350,"tamirci":0,"fis":"1 geçerli / 1 iptal"}
+  ✓ [S3 sayfa yenileme sonrası sunucu değişmedi (yeniden gönderim yok)] {"stok":10,"usta":-350,"tamirci":0,"fis":"1 geçerli / 1 iptal"}
+     fin-1: {"stok":10,"usta":-350,"tamirci":0,"fis":"1 geçerli / 1 iptal"} · atamalar ["a:10:fin-usta:teslim"]
+
+■ S4 · FIN2 · kısmi 6 + 4, ikinci parçayı Geri Al, yeniden 4 (son teslimde çift tık)
+  ✓ [S4a kısmi 6 → stok 6, usta −210] {"stok":16,"usta":-560,"tamirci":0,"fis":"1 geçerli / 0 iptal"}
+  ✓ [S4a kalan 4 ustada (yeni atama)] ["4:fin-usta:bekliyor","6:fin-usta:teslim"]
+     fin-2: {"stok":16,"usta":-560,"tamirci":0,"fis":"1 geçerli / 0 iptal"} · atamalar ["atama-mwxygrx6-rb5w:4:fin-usta:bekliyor","a:6:fin-usta:teslim"]
+  ✓ [S4b kalan 4 → stok 10, usta −350 (FIN2 payı)] {"stok":20,"usta":-700,"tamirci":0,"fis":"2 geçerli / 0 iptal"}
+     fin-2: {"stok":20,"usta":-700,"tamirci":0,"fis":"2 geçerli / 0 iptal"} · atamalar ["atama-mwxygrx6-rb5w:4:fin-usta:teslim","a:6:fin-usta:teslim"]
+  ✓ [S4c ikinci parça Geri Al → FIN2 6 / −210] {"stok":16,"usta":-560,"tamirci":0,"fis":"1 geçerli / 1 iptal"}
+     fin-2: {"stok":16,"usta":-560,"tamirci":0,"fis":"1 geçerli / 1 iptal"} · atamalar ["atama-mwxygrx6-rb5w:4:fin-usta:bekliyor","a:6:fin-usta:teslim"]
+  ✓ [S4d yeniden 4 (çift tık) → FIN2 10 / −350, tek yeni fiş] {"stok":20,"usta":-700,"tamirci":0,"fis":"2 geçerli / 1 iptal"}
+     fin-2: {"stok":20,"usta":-700,"tamirci":0,"fis":"2 geçerli / 1 iptal"} · atamalar ["atama-mwxygrx6-rb5w:4:fin-usta:teslim","a:6:fin-usta:teslim"]
+
+■ S5 · FIN3 · sağlam 7 + tamir 3 (Fin Tamirci, 5 ₺) → tamir teslimi → Geri Al → yeniden
+  ✓ [S5a stok +7 (tamirdeki girmez), usta +10 çift ödendi] {"stok":27,"usta":-1050,"tamirci":0,"fis":"1 geçerli / 0 iptal"}
+     fin-3: {"stok":27,"usta":-1050,"tamirci":0,"fis":"1 geçerli / 0 iptal"} · atamalar ["atama-mwxyh68x-kgpq:3T:fin-tamirci:bekliyor","a:10:fin-usta:teslim"]
+  ✓ [S5a tamir ataması 3 çift Fin Tamirci'de] ["3T:fin-tamirci:bekliyor"]
+  ✓ [S5b tamir teslimi → stok +3, tamirci −15, usta değişmedi] {"stok":30,"usta":-1050,"tamirci":-15,"fis":"2 geçerli / 0 iptal"}
+     fin-3: {"stok":30,"usta":-1050,"tamirci":-15,"fis":"2 geçerli / 0 iptal"} · atamalar ["atama-mwxyh68x-kgpq:3T:fin-tamirci:teslim","a:10:fin-usta:teslim"]
+     toast: ÜRT-261126007 · FIN3 tüm prosesler tamamlandı — mamul stoğa eklendi
+  ✓ [S5c tamir teslimini Geri Al → stok −3, tamirci 0, usta değişmedi] {"stok":27,"usta":-1050,"tamirci":0,"fis":"1 geçerli / 1 iptal"}
+     fin-3: {"stok":27,"usta":-1050,"tamirci":0,"fis":"1 geçerli / 1 iptal"} · atamalar ["atama-mwxyh68x-kgpq:3T:fin-tamirci:bekliyor","a:10:fin-usta:teslim"]
+     toast: "Kesim" için 3 adetlik teslim alma işlemi geri alındı — hammadde ve işçilik geri alındı
+  ✓ [S5d tamiri yeniden teslim → stok +3, tamirci −15 (çift değil)] {"stok":30,"usta":-1050,"tamirci":-15,"fis":"2 geçerli / 1 iptal"}
+     fin-3: {"stok":30,"usta":-1050,"tamirci":-15,"fis":"2 geçerli / 1 iptal"} · atamalar ["atama-mwxyh68x-kgpq:3T:fin-tamirci:teslim","a:10:fin-usta:teslim"]
+
+■ S6 · FIN4 · iki cihaz: A teslim alır, B (kartı önceden açık, bayat) aynı atamayı teslim almaya çalışır
+  ✓ [S6a A teslim aldı → stok +10, usta −350] [10,-350]
+     B cihazında teslim formu hâlâ görünüyor: true
+  ✗ [S6b bayat B'nin teslimi stok / ödemeyi İKİNCİ KEZ yazmadı] [20,-700,"2 geçerli / 0 iptal"] · beklenen [10,-350,"1 geçerli / 0 iptal"]
+     B toast: ÜRT-261126010 · FIN4 tüm prosesler tamamlandı — mamul stoğa eklendi
+     B bekleyen yazma: []
+     fin-4: {"stok":50,"usta":-1750,"tamirci":-15,"fis":"2 geçerli / 0 iptal"} · atamalar ["a:10:fin-usta:teslim"]
+
+■ S7 · FIN5 · iki cihaz, yoklama AÇIK, B 0 sn sonra basar
+     B cihazında teslim formu 0 sn sonra: GÖRÜNÜYOR
+     B bastı
+  ✗ [S7 ikinci cihaz stok / ödemeyi İKİNCİ KEZ yazmadı] [20,-700,"2 geçerli / 0 iptal"] · beklenen [10,-350,"1 geçerli / 0 iptal"]
+     B toast: Başka cihazdan güncellendi: Stok, Cariler
+  ✓ [sayfa hatası yok (S7 B)] []
+
+■ S8 · FIN6 · iki cihaz, yoklama AÇIK, B 12 sn sonra basar
+     B cihazında teslim formu 12 sn sonra: yok (tazelendi)
+     form yok
+  ✓ [S8 ikinci cihaz stok / ödemeyi İKİNCİ KEZ yazmadı] [10,-350,"1 geçerli / 0 iptal"]
+     B toast: 
+  ✓ [sayfa hatası yok (S8 B)] []
+  ✓ [sayfa hatası yok (A)] []
+  ✓ [sayfa hatası yok (B)] []
+
+── ekran-uretim-finans: 23 geçti · 2 kaldı ──
