@@ -144,10 +144,10 @@ işlemiyle değişir; B2'nin çakışma şeridi bu yolda devreye GİRMEZ. Koruma
 için **KR021** ile reddedilir (sessiz ezme yok, ikinci cihaza açık ileti; ikinci cihazın değişikliği BEKLETİLMEZ, kullanıcı yeniden yapar).
 Ton kodu gibi öbür alanlar B2 yolundan gider. Birleşik sınama: b1-sina 69/69 · ekran-ad-bag bayat 4/4, kontrol 4/4, kurulumsuz 3/3 ·
 ekran-tanim-yaris ekle 5/5, ad_yaris 4/4 (köprü günlüğünde A'nın isteği 400 KR021), cakisma (kod) 6/6, karar_ucuncu (kod) 7/7,
-karar_degisti (kod) 6/6. Birleşik dalın TAM regresyonu henüz koşturulmadı (B2 regresyonundan sonra).
+karar_degisti (kod) 6/6. Birleşik dalın tam regresyonu (`af8c2a2`) 275/275 AYNI, birim testleri temiz.
 
 **Regresyon (kosu.sh):** B1 2. tur öncesi temiz · B2 2. tur 275/275 AYNI (iki altın gerekçeyle: `bekleyen-yazma` adres uzunluğu 32 → 38;
-`tanim-birlestir` sahte sunucusu artık yazılanı saklıyor — eski yolla da aynı altın) · B2 3. tur ve birleşik dal: koşuyor / sırada.
+`tanim-birlestir` sahte sunucusu artık yazılanı saklıyor — eski yolla da aynı altın) · B2 3. tur (`34377d7`) 275/275 AYNI · birleşik dal 275/275 AYNI.
 
 ### AÇIK KAPSAM (bilerek kapatılmadı)
 - **Beden adı değişikliği** (082 `olcuAdDegistir`, `tanimsizOlcuCevir`): B1 ile aynı hata sınıfı — hâlâ istemci belleğinden, 5–6 ayrı
