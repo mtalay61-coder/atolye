@@ -109,6 +109,28 @@ listesinde HERHANGİ biri yeter).
 | Ş3 | Bekleyen yazması olan alan değişiklik yoklamasıyla hiç tazelenmez (047: "yerel kazanır") → uzun süre bayat; B1 penceresini büyütür | 047, 100 | B1 / B2 olasılığı artar |
 | Ş4 | Fiş / kasa / cari tek işlem (`fis_kes`, `kas_yaz`, `car_yaz`) — yarım kayıt ve tekrar koruması önceki F0–F8 ve ekran testlerinde sınanmış; canlı gövdeleri gelmeden bu incelemede yeniden koşturulmadı | stok-v2 | doğrulanacak |
 
+## 3b. Düzeltmeler (27 Kasım; ayrı dallar, yalnız yerel — canlı SQL / birleştirme / yayın YOK)
+
+| Bulgu | Dal | İçerik | Sınama |
+|---|---|---|---|
+| **B1** | `claude/b1-ad-degistir-sunucu` (1.744.38) | `26-b1-renk-ad-degistir.sql`: `tanim_renk_ad_degistir` — Tanımlar satırı FOR UPDATE + adın geçtiği tablolar EXCLUSIVE kilit; Tanımlar, sipariş kalemi (+ sipariş sürümü), üretim, rezervasyon, koli (lst_kayit), reçete, renk resmi, harici barkod TEK işlemde; `tanim_ad_gecmisi` + tetikleyici: ad değişikliğinden SONRA bayat cihazın eski adla yazdığı kayıt güncel ada çevrilir. Yetki: listede + Tanımlar düzenleme. KR020–024. İstemci 082 sunucuyu çağırır, sonucu tazeler; fonksiyon yoksa (PGRST202) eski yol; bekleyen yazma varken ad değiştirmez | `b1-sina.js` 50/50 (tam güncelleme, bayat yazma, eşzamanlı iki sıra + kilitte bekleme, sonda hata → tam geri alma, yetki, bayat istek / aynı ad / boş ad, istek tekrarı); bozma: tetikleyici kaldırılınca ve tablo kilidi kaldırılınca kırmızı · `ekran-ad-bag.js` bayat 2/4 → **4/4** · fonksiyonsuz eski yol 4/4 · `kosu.sh` temiz |
+| **B2** | `claude/b2-tanim-surum-kosullu` (1.744.39) | 030 `tekilYaz` (tanımlar): sürümle oku → üç yönlü birleştir → `surum=eq.N` PATCH; 0 satır → yeniden oku-birleştir (6 deneme). 089 `tanimCakismalari`: iki taraf AYNI öğeyi farklı değiştirdiyse (ya da biri sildi, öbürü değiştirdi) yazma durur, değişiklik bekleyen defterde "inceleme" (yoklama ezmez), şeritte öğe öğe çakışma + "Benimkini uygula" / "Sunucudakini al". Sayaçlar (kodSayaclari) büyüğüyle birleşir. Sunucu değişikliği yok | `birim-tanim-cakisma` 12/12 · `ekran-tanim-yaris` ekle 4/4, çakışma 12/12 (yarış + kontrol) · bozma: `tanimlar_surum` kaldırılınca kayıp geri geliyor, sınama kırmızı |
+
+B1 ile istemcideki 046 kuralı arasında BİLEREK fark: sunucu reçete satırında renk kimliği ile adın İKİSİNİ de arar; kimliği bu renk ama
+adı başka olan satıra (26 Kasım E: yanlış damgalı 8 satır) dokunmaz, sayısını `celiskili_recete_satiri` olarak döndürür. İstemci kuralı
+bu satırları kimliğe güvenip yeniden adlandırıyordu.
+
+Kapsam dışı kalan (B1 sonrası): beden adı değişikliği (082 `olcuAdDegistir`) aynı sınıf — aynı kalıpla ayrı iş; teklifler (082 de
+çevirmiyordu); diğer tek parça tablolar (muhasebe, koliler v1…) üç yönlü birleştirmede aynı "yerel sessizce kazanır" kuralını taşıyor
+(B2 yalnız Tanımlar) — liste v2 / kasa v2'ye geçmiş kurulumda bu tablolar satır satır sunucu işlemiyle yazıldığı için etkisi sınırlı,
+canlı `stk_ayar` gelince belirlenecek.
+
+### Yan bulgu Y1 — `degisiklik` sayacı bütün yazmaları tek satırda sıraya sokuyor (KANITLANDI, B1 sınamasında)
+`degisiklik_bump` (deyim düzeyi, her ERP tablosunda) tek `degisiklik.tekil` satırını günceller: açık bir yazma işlemi bitmeden başka HİÇBİR
+tabloya yazma tamamlanamaz (b1-sina B-2 ilk denemesi: kilit zaman aşımı `while locking tuple … in relation "degisiklik"`). Veri bozmaz ama
+uzun işlemde (ör. büyük `stk_yaz`, ad değişikliği) bütün cihazların yazması bekler; kilitlenme (deadlock) ihtimalini artırır. Öneri: tablo
+başına satır ya da sayacı işlem sonunda tek seferde (ayrı karar; canlıda ölçülmedi).
+
 ## 4. Sıradaki adımlar
 1. 25 / 25b CSV'leri → tam canlı yapı (`yapi-hizala.py` bütün nesnelere genişletilecek) → `inc_taban` yeniden; `yerel-uyum.sql` kalkar.
 2. K1–K3 canlı yapısıyla tekrar; Ş1–Ş4 için senaryolar: renk silme kullanım denetimi; ad değişikliğinde yazma düşmesi; `fis_kes` / `kas_yaz` /
