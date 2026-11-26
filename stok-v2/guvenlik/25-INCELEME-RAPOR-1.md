@@ -125,6 +125,43 @@ Kapsam dışı kalan (B1 sonrası): beden adı değişikliği (082 `olcuAdDegist
 (B2 yalnız Tanımlar) — liste v2 / kasa v2'ye geçmiş kurulumda bu tablolar satır satır sunucu işlemiyle yazıldığı için etkisi sınırlı,
 canlı `stk_ayar` gelince belirlenecek.
 
+### 2. ve 3. tur (27 Kasım) — kullanıcının dört kontrolü
+
+| # | Kontrol | Sonuç | Kanıt |
+|---|---|---|---|
+| 1 | B1 eski yola dönmesin | Sunucu fonksiyonu yoksa (PGRST202) ad değiştirme **açık iletiyle durur**, hiçbir kayıt değişmez; eski yöntem yalnız bulut hiç kapalıyken (tek cihaz). Sunucu kurulumu YAYIN ÖNKOŞULU: `26-b1-onkosul-salt-okur.sql` "KURULU" demeden yayın yok | ekran-ad-bag kurulumsuz 3/3 (ad değişmedi, kalemler aynı, ileti) · önkoşul sorgusu kurulu tabanda KURULU, kurulumsuzda KURULU DEĞİL |
+| 2 | Eski ad defteri | A→B→C: iki eski ad da C'ye · A→B→A: A yeniden güncel ad, B ile gelen A'ya · eski adı başka renge vermek **KR026** (ad değişikliğiyle de, Tanımlar'da yeni renkle de; Yönetici `tanim_eski_ad_serbest` ile bırakır) · geçmişten kalan belirsizlik (eski ad başka etkin rengin adı / iki rengin eski adı) **KR025**, rengi silinmiş eski ad **KR027** — sessiz eşleme yok · eski adla DURAN kaydın başka alanı düzeltilebilir (yalnız yeni / değişen metne bakılır) · KR kodları gerçek SQLSTATE (istemci kalıcı ret olarak tanır) | b1-sina 69/69 (D7–D11) · bozma B-3: eşleme ilk (sessiz) sürüme + koruma kaldırılınca bayat kalem sessizce yazıldı → kırmızı |
+| 3 | B2'de karar verilirken üçüncü yazma | "Benimkini uygula" yalnız şeritte GÖRÜLEN çakışmaları onaylar (aynı yol + aynı iki değer); her denemede sürüm ve çakışmalar yeniden hesaplanır. Bu arada başka cihazın eklediği kayıt korunur; aynı alan yeniden değiştiyse onay geçersiz, sunucunun son değeri korunur, yeniden sorulur | ekran-tanim-yaris karar_ucuncu 7/7 (Mor korundu), karar_degisti 6/6 · bozma: önceki istemci (aa605be) karar_degisti'de A'nın son değerini EZDİ → 2 kırmızı |
+| 4 | Sayaçlar / kodlar | ÖLÇÜLDÜ: eşzamanlı iki yeni renk ikisi de ton kodu **101** aldı (barkod kodu sonradan onarılıyordu, ton kodu hiç). Düzeltme: birleştirmede BU cihazın henüz yazılmamış yeni öğesi sunucudakiyle aynı kodu taşıyorsa yalnız o yeni öğe sıradaki boş koda geçer (sunucudakine dokunulmaz, bildirilir); kombinasyon kodu etikette göründüğü için sessizce değişmez → açık çakışma | ekle (yarış + kontrol) 5/5: ton kodları 101 / 102, barkod kodları tekil, iki renk de kodlu · birim 9–11 |
+
+**3. turda bulunan B2 hatası (kanıtlandı, düzeltildi):** çakışma bulucu, tabanda OLMAYAN bir alanı (iki cihazın aynı anda ilk kez verdiği
+ton kodu) "taban bilinmiyor" sanıp çakışma saymıyordu → yerel sessizce kazanıyor, öbür cihazın değeri eziliyordu (ALAN=kod: 1/4 → 6/6).
+"Bilinmiyor" artık yalnız en üstte; ayrıca yazmanın tabanı çağrı anında yakalanıyor (yazma yoldayken açılış / tazeleme / yoklama tabanı
+değiştirse de). Birim 8b.
+
+**Birleşik dal (`claude/b1-b2-birlesik`, 1.744.40) — etkileşim bulgusu:** B1 kuruluyken renk ADI Tanımlar yazmasıyla değil sunucu
+işlemiyle değişir; B2'nin çakışma şeridi bu yolda devreye GİRMEZ. Koruma sunucuda: ilk gelen uygulanır, ikinci istek eski ad tutmadığı
+için **KR021** ile reddedilir (sessiz ezme yok, ikinci cihaza açık ileti; ikinci cihazın değişikliği BEKLETİLMEZ, kullanıcı yeniden yapar).
+Ton kodu gibi öbür alanlar B2 yolundan gider. Birleşik sınama: b1-sina 69/69 · ekran-ad-bag bayat 4/4, kontrol 4/4, kurulumsuz 3/3 ·
+ekran-tanim-yaris ekle 5/5, ad_yaris 4/4 (köprü günlüğünde A'nın isteği 400 KR021), cakisma (kod) 6/6, karar_ucuncu (kod) 7/7,
+karar_degisti (kod) 6/6. Birleşik dalın TAM regresyonu henüz koşturulmadı (B2 regresyonundan sonra).
+
+**Regresyon (kosu.sh):** B1 2. tur öncesi temiz · B2 2. tur 275/275 AYNI (iki altın gerekçeyle: `bekleyen-yazma` adres uzunluğu 32 → 38;
+`tanim-birlestir` sahte sunucusu artık yazılanı saklıyor — eski yolla da aynı altın) · B2 3. tur ve birleşik dal: koşuyor / sırada.
+
+### AÇIK KAPSAM (bilerek kapatılmadı)
+- **Beden adı değişikliği** (082 `olcuAdDegistir`, `tanimsizOlcuCevir`): B1 ile aynı hata sınıfı — hâlâ istemci belleğinden, 5–6 ayrı
+  yazma. Aynı kalıpla (sunucu işlemi + eski ad defteri) ayrı iş.
+- **Diğer tek satırlık tablolar** (muhasebe, koliler v1, teklifler, faturalar, görevler, modeller…): 030 üç yönlü birleştirme aynı
+  "iki taraf da değiştiyse yerel sessizce kazanır" kuralını taşıyor; B2 yalnız Tanımlar. Liste v2 / kasa v2'ye geçmiş kurulumda bunlar
+  satır satır sunucu işlemiyle yazıldığı için etki sınırlı — hangilerinin geçtiği canlı `stk_ayar.liste_tablolari` ile belirlenecek.
+- **B3** (yetki): geçici yetki varsayımları (`test/inceleme/yerel-uyum.sql`) kaldırılıp CANLI yetkilerle yeniden ölçülecek; "listede mi"
+  ve "işlem yetkisi var mı" ayrı ayrı. Canlı yapı CSV'leri (25 / 25b 2. sürüm) HENÜZ GELMEDİ — taban hizalaması ve B1 / B2 yeniden
+  koşusu ona bağlı.
+- **Gizli değer tarayıcısı** (`gizli-tara.py`) YARDIMCI kontroldür: bilinen biçimleri (anahtar, jeton, parola ataması, yüksek entropili
+  dize, e-posta) yakalar; biçimi tanınmayan bir sır kaçabilir. "Temiz" çıkması "kesinlikle sır yok" demek DEĞİLDİR; canlı metin depoya
+  girmeden önce elle de bakılır, ham canlı CSV depoya konmaz.
+
 ### Yan bulgu Y1 — `degisiklik` sayacı bütün yazmaları tek satırda sıraya sokuyor (KANITLANDI, B1 sınamasında)
 `degisiklik_bump` (deyim düzeyi, her ERP tablosunda) tek `degisiklik.tekil` satırını günceller: açık bir yazma işlemi bitmeden başka HİÇBİR
 tabloya yazma tamamlanamaz (b1-sina B-2 ilk denemesi: kilit zaman aşımı `while locking tuple … in relation "degisiklik"`). Veri bozmaz ama
