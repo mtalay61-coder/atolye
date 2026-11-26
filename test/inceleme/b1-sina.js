@@ -32,6 +32,10 @@ async function baglan(db, eposta) {
   return c;
 }
 const RPC = (c, p) => c.query("select public.tanim_renk_ad_degistir($1::jsonb) as r", [JSON.stringify(p)]).then((x) => x.rows[0].r);
+// KALEM YAZMA (27 Kasım, canlı yetkileriyle): canlıda authenticated `siparis_kalemleri`'ne DOĞRUDAN yazamaz (yalnız select) — uygulama
+// kalemi `alt_yaz` sunucu işlemiyle yazar. Bayat cihazın yazması da bu yoldan sınanır (tetikleyici tablo düzeyinde, yine çalışır).
+const kalemYaz = (c, id, renk, beden, miktar, sira) => c.query("select public.alt_yaz($1::jsonb)", [JSON.stringify({ siparis_kalemleri: { satirlar: [
+  { id, siparis_id: "sp-inc-1", urun_id: "inc-bot", urun_ad: "İnceleme Bot", renk, beden, miktar, sira }] } })]);
 const DEGIS = { renk_id: "r-vizon", yeni_ad: "Vizon Deri", eski_ad: "Vizon Yılan" };
 const ESKI = "1054 - Siyah/Vizon Yılan", YENI = "1054 - Siyah/Vizon Deri";
 
@@ -75,10 +79,10 @@ const SONRA = (ilk) => ({
 (async () => {
   // ŞABLON tohumu (inc_taban'a ek): üretim, rezervasyon, koli (lst_kayit), ürün reçetesi / resim / barkod
   if (process.env.SABLON_KUR) {
-    psql("postgres", `drop database if exists ${SABLON}`); psql("postgres", `create database ${SABLON} template inc_taban`);
+    psql("postgres", `drop database if exists ${SABLON}`); psql("postgres", `create database ${SABLON} template ${process.env.TABAN || "inc_taban"}`);   // TABAN: canlıyla hizalı taban (inc_tam, canli-tam-hizala.py)
     execFileSync("psql", ["-X", "-q", "-v", "ON_ERROR_STOP=1", "-d", SABLON, "-f", process.env.SABLON_KUR], { stdio: "inherit" });
     psql(SABLON, `
-      insert into public.uretim (id, urun_id, renk, surum) values ('ur-1', 'inc-bot', '${ESKI}', 1), ('ur-2', 'inc-bot', 'Siyah', 1), ('ur-3', 'inc-bot', 'vizon  yılan', 1);
+      insert into public.uretim (id, siparis_no, urun_id, renk, surum) values ('ur-1', 'URT-ur-1', 'inc-bot', '${ESKI}', 1), ('ur-2', 'URT-ur-2', 'inc-bot', 'Siyah', 1), ('ur-3', 'URT-ur-3', 'inc-bot', 'vizon  yılan', 1);
       insert into public.stok_rezervasyonlari (id, urun_id, renk, beden, miktar, surum) values ('rz-1', 'inc-bot', 'VİZON YILAN', '40', 1, 4);
       insert into public.lst_kayit (tablo, id, sira, veri) values ('koliler', 'ko-1', 1, '{"id":"ko-1","kalemler":[{"renk":"${ESKI}","beden":"40","miktar":2},{"renk":"Siyah","beden":"41","miktar":1}]}');
       update public.urunler set
@@ -102,8 +106,8 @@ const SONRA = (ilk) => ({
   { const db = await yeniDb(); const a = await baglan(db, "ali@atolye.local"); const b = await baglan(db, "ali@atolye.local");
     await a.olarak((c) => RPC(c, DEGIS));
     await b.olarak(async (c) => {
-      await c.query(`insert into public.siparis_kalemleri (id, siparis_id, urun_id, urun_ad, renk, beden, miktar, sira) values ('kl-bayat', 'sp-inc-1', 'inc-bot', 'İnceleme Bot', $1, '40', 7, 9)`, [ESKI]);
-      await c.query(`insert into public.uretim (id, urun_id, renk, surum) values ('ur-bayat', 'inc-bot', 'Vizon Yılan', 1)`);
+      await kalemYaz(c, "kl-bayat", ESKI, "40", 7, 9);
+      await c.query(`insert into public.uretim (id, siparis_no, urun_id, renk, surum) values ('ur-bayat', 'URT-ur-bayat', 'inc-bot', 'Vizon Yılan', 1)`);
     });
     const f = await foto(a);
     k_("D2 bayat kalem yeni adda", f.kalem.includes(`kl-bayat:${YENI}:7`), true);
@@ -114,7 +118,7 @@ const SONRA = (ilk) => ({
   for (const sira of ["önce kalem (açık işlem), sonra ad değişikliği", "önce ad değişikliği (açık işlem), sonra kalem"]) {
     console.log(`\n■ D3 — eşzamanlı: ${sira}`);
     const db = await yeniDb(); const a = await baglan(db, "ali@atolye.local"); const b = await baglan(db, "ali@atolye.local");
-    const kalemEkle = (c) => c.query(`insert into public.siparis_kalemleri (id, siparis_id, urun_id, urun_ad, renk, beden, miktar, sira) values ('kl-es', 'sp-inc-1', 'inc-bot', 'İnceleme Bot', $1, '41', 6, 8)`, [ESKI]);
+    const kalemEkle = (c) => kalemYaz(c, "kl-es", ESKI, "41", 6, 8);
     await b.query("begin"); await a.query("begin");
     await a.query(`select set_config('request.jwt.claims', '{"role":"authenticated","email":"ali@atolye.local"}', true)`); await a.query("set local role authenticated");
     let bekledi = false;
@@ -175,7 +179,7 @@ const SONRA = (ilk) => ({
     await a.end(); }
 
   // ESKİ AD DEFTERİ (2. sürüm, 27 Kasım): zincir, geri dönüş, eski adın başka renge verilmesi, belirsizlik, silinmiş renk.
-  const bayatKalem = (c, id, renk) => c.query(`insert into public.siparis_kalemleri (id, siparis_id, urun_id, urun_ad, renk, beden, miktar, sira) values ($1, 'sp-inc-1', 'inc-bot', 'İnceleme Bot', $2, '40', 1, 9)`, [id, renk]);
+  const bayatKalem = (c, id, renk) => kalemYaz(c, id, renk, "40", 1, 9);
   const kalemRengi = async (c, id) => ((await c.query("select renk from public.siparis_kalemleri where id = $1", [id])).rows[0] || {}).renk || null;
   const hataKodu = async (fn) => { try { await fn(); return "geçti"; } catch (e) { return `${e.code} ${String(e.message).split(" — ")[0]}`; } };
 
@@ -183,7 +187,7 @@ const SONRA = (ilk) => ({
   { const db = await yeniDb(); const a = await baglan(db, "ali@atolye.local");
     await a.olarak((c) => RPC(c, DEGIS));
     await a.olarak((c) => RPC(c, { renk_id: "r-vizon", yeni_ad: "Vizon Rugan", eski_ad: "Vizon Deri" }));
-    await a.olarak(async (c) => { await bayatKalem(c, "kl-a", ESKI); await bayatKalem(c, "kl-b", YENI); await c.query(`insert into public.uretim (id, urun_id, renk, surum) values ('ur-a', 'inc-bot', 'Vizon Yılan', 1), ('ur-b', 'inc-bot', 'vizon deri', 1)`); });
+    await a.olarak(async (c) => { await bayatKalem(c, "kl-a", ESKI); await bayatKalem(c, "kl-b", YENI); await c.query(`insert into public.uretim (id, siparis_no, urun_id, renk, surum) values ('ur-a', 'URT-ur-a', 'inc-bot', 'Vizon Yılan', 1), ('ur-b', 'URT-ur-b', 'inc-bot', 'vizon deri', 1)`); });
     k_("D7 kalem A (en eski etiket) → C", await kalemRengi(a, "kl-a"), "1054 - Siyah/Vizon Rugan");
     k_("D7 kalem B (ara etiket) → C", await kalemRengi(a, "kl-b"), "1054 - Siyah/Vizon Rugan");
     k_("D7 üretim düz adlar → C", psql(db, "select string_agg(renk, ',' order by id) from public.uretim where id in ('ur-a','ur-b')").trim(), "Vizon Rugan,Vizon Rugan");
@@ -241,14 +245,14 @@ const SONRA = (ilk) => ({
     psql(db, `set session_replication_role = replica; update public.siparis_kalemleri set renk = 'Vizon Yılan' where id = 'kl-eski'`);
     k_("D11 silinmiş rengin eski adıyla yeni kayıt → KR027", await hataKodu(() => a.olarak((c) => bayatKalem(c, "kl-s", "Vizon Yılan"))),
       'KR027 KR027: "Vizon Yılan" silinmiş ya da pasif bir rengin eski adı');
-    k_("D11 eski adla duran kaydın miktarı düzeltilebilir (renk aynı → bakılmaz)", await hataKodu(() => a.olarak((c) => c.query(`update public.siparis_kalemleri set miktar = 9, renk = 'Vizon Yılan' where id = 'kl-eski'`))), "geçti");
+    k_("D11 eski adla duran kaydın miktarı düzeltilebilir (renk aynı → bakılmaz)", await hataKodu(() => a.olarak((c) => kalemYaz(c, "kl-eski", "Vizon Yılan", "40", 9, 9))), "geçti");
     await a.end(); }
 
   // BOZMA PROVASI — korumalar kaldırılınca aynı sınamalar kırmızıya döner mi?
   console.log("\n■ B-1 — BOZMA: eski ad tetikleyicisi kaldırıldı → D2 yakalamalı");
   { const db = await yeniDb(); psql(db, "drop trigger tanim_ad_guncelle on public.siparis_kalemleri");
     const a = await baglan(db, "ali@atolye.local"); await a.olarak((c) => RPC(c, DEGIS));
-    await a.olarak((c) => c.query(`insert into public.siparis_kalemleri (id, siparis_id, urun_id, urun_ad, renk, beden, miktar, sira) values ('kl-bayat', 'sp-inc-1', 'inc-bot', 'İnceleme Bot', $1, '40', 7, 9)`, [ESKI]));
+    await a.olarak((c) => kalemYaz(c, "kl-bayat", ESKI, "40", 7, 9));
     const f = await foto(a);
     k_("B-1 (bozuk) bağsız kalem VAR — sınama yakaladı", f.bagsiz > 0, true); await a.end(); }
 
@@ -268,7 +272,7 @@ const SONRA = (ilk) => ({
     await RPC(a, DEGIS);                                   // a'nın işlemi AÇIK
     await b.query("begin");
     // kilit yok → b'nin eklemesi beklemez; tetikleyici a'nın işlenmemiş eski ad defterini göremez. b yalnız sayaç satırında a'yı bekler.
-    const p = b.query(`insert into public.siparis_kalemleri (id, siparis_id, urun_id, urun_ad, renk, beden, miktar, sira) values ('kl-es', 'sp-inc-1', 'inc-bot', 'İnceleme Bot', $1, '41', 6, 8)`, [ESKI]);
+    const p = kalemYaz(b, "kl-es", ESKI, "41", 6, 8);
     await new Promise((r) => setTimeout(r, 700));
     await a.query("commit"); await p; await b.query("commit");
     const f = await foto(a);
