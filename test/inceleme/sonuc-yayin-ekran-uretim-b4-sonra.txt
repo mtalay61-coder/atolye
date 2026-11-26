@@ -1,0 +1,48 @@
+ekran-uretim-b4 · inc_b4y · kurallar KAPALI · G-25 nesnesi 0 · B4 kurulu EVET
+
+■ T1 · B4T1 · iki cihaz AYNI ANDA tam teslim
+  ✓ [T1 tek teslim: mamul +10, taban −10, usta −350] {"mamul":10,"usta":-350}
+  ✓ [T1 tek geçerli ÜRT fişi] "1 geçerli / 0 iptal"
+     A: Başka cihazdan güncellendi: Üretim, Stok, Cariler
+     B: ÜRT-261127001 · B4T1 tüm prosesler tamamlandı — mamul stoğa eklendi
+     B4T1: fiş 1 geçerli / 0 iptal · atamalar ["Dikim:10:fin-usta:teslim"]
+
+■ T2 · B4T2 · iki cihaz AYNI ANDA kısmi teslim (6 / 6), sonra kalan 4
+  ✓ [T2a tek kısmi: +6 / −6 / −210] {"mamul":6,"usta":-210}
+  ✓ [T2a atamalar: 6 teslim + kalan 4 bekliyor (tek kalan)] ["Dikim:4:fin-usta:bekliyor","Dikim:6:fin-usta:teslim"]
+     A: ÜRT-261127002 · 10 adetlik atama teslim alındı — bu kısım mamul stoğa eklendi — 4 çift ustada kaldı; aynı ustada açık iş olarak duruyor, sonra teslim alınabilir.
+     B: Başka cihazdan güncellendi: Üretim, Stok, Cariler
+  ✓ [T2b kalan 4 → toplam +10 / −10 / −350] {"mamul":10,"usta":-350}
+  ✓ [T2b iki geçerli fiş] "2 geçerli / 0 iptal"
+     B4T2: fiş 2 geçerli / 0 iptal · atamalar ["Dikim:4:fin-usta:teslim","Dikim:6:fin-usta:teslim"]
+
+■ T3 · B4T3 · A kısmi 6, bayat B tam 10
+  ✓ [T3 yalnız A'nın kısmi teslimi: +6 / −6 / −210] {"mamul":6,"usta":-210}
+  ✓ [T3 tek geçerli fiş, kalan 4 bekliyor] ["1 geçerli / 0 iptal",["Dikim:4:fin-usta:bekliyor","Dikim:6:fin-usta:teslim"]]
+     B: Teslim kaydedilemedi — hiçbir değişiklik yapılmadı (Bu iş başka cihazda zaten teslim alınmış (atama b4-b4t3-a) — ekranı yenileyin. Hiçbir şey kaydedilmedi. [KR030])
+
+■ T4 · B4T4 · A teslim → A Geri Al → A yeniden teslim → bayat B Geri Al
+  ✓ [T4a A'nın zinciri: +10 / −10 / −350, 1 geçerli + 1 iptal] [{"mamul":10,"usta":-350},"1 geçerli / 1 iptal"]
+  ✓ [T4b bayat B'nin Geri Al'ı defterleri DEĞİŞTİRMEDİ] {}
+  ✓ [T4b atama teslim, 1 geçerli fiş (tutarlı)] [["Dikim:10:fin-usta:teslim"],"1 geçerli / 1 iptal"]
+     B: "Dikim" için 10 adetlik teslim alma işlemi geri alındı — hammadde ve işçilik geri alındı
+
+■ T5 · B4T5 · A kısmi 6 → bayat B açık → A kalan 4'ü teslim → B ilk parçayı Geri Al
+  ✓ [T5a A: 6 + 4 → +10 / −10 / −350, 2 geçerli] [{"mamul":10,"usta":-350},"2 geçerli / 0 iptal"]
+     B: "Dikim" için 6 adetlik teslim alma işlemi geri alındı — hammadde ve işçilik geri alındı
+     B4T5: fiş 1 geçerli / 1 iptal · atamalar ["Dikim:4:fin-usta:teslim","Dikim:6:fin-usta:bekliyor"]
+  ✓ [T5b kalan parçanın teslimi bozulmadı (ret ya da yalnız ilk parça)] true
+
+■ T6 · B4T6 · yanıt kaybı → yeniden Teslim Al; aynı istek iki kez; Geri Al yanıt kaybı → yeniden Geri Al
+     yanıt kaybı sonrası B: Teslim kaydedilemedi — hiçbir değişiklik yapılmadı (Failed to fetch — POST rpc/fis_kes · gövde 2 KB · adres 11 karakter)
+  ✓ [T6a sunucu ilk teslimi yazdı (yanıt kayboldu)] [{"mamul":10,"usta":-350},"1 geçerli / 0 iptal"]
+     B'de teslim formu hâlâ açık (kullanıcı yeniden basabilir): false
+  ✓ [T6b kullanıcı yeniden Teslim Al (yeni istek) → ikinci fiş YOK] [{"mamul":10,"usta":-350},"1 geçerli / 0 iptal"]
+     yeniden Teslim Al sonrası B: Teslim kaydedilemedi — hiçbir değişiklik yapılmadı (Failed to fetch — POST rpc/fis_kes · gövde 2 KB · adres 11 karakter)
+     Geri Al yanıt kaybı sonrası B: Geri alınamadı — hiçbir değişiklik yapılmadı (Failed to fetch — POST rpc/fis_iptal_toplu · gövde 1 KB · adres 19 karakter)
+  ✓ [T6c Geri Al sunucuda yapıldı (yanıt kayboldu): defterler başlangıçta] [{},"0 geçerli / 1 iptal",["Dikim:10:fin-usta:bekliyor"]]
+     B'de Geri Al hâlâ var: false
+  ✓ [T6d yeniden Geri Al → değişiklik yok, atama tutarlı] [{},"0 geçerli / 1 iptal",["Dikim:10:fin-usta:bekliyor"]]
+  ✓ [T6e aynı istek ağda iki kez → tek fiş] [{"mamul":10,"usta":-350},"1 geçerli / 1 iptal"]
+
+■ T7 · B4T7 · sağlam 7 + tamir 3 → iki cihaz AYNI ANDA tamiri teslim alır

@@ -1,0 +1,37 @@
+ekran-uretim-b4-ver · inc_b4v · G-25 nesnesi 0 · B4 kurulu HAYIR · adım adı denetimi YOK / KAPALI
+
+■ V1 · B4V1 · düz İşi Ver, iki cihaz AYNI ANDA
+     A: 10 adet (40:10) Fin Usta'a verildi
+     B: 10 adet (40:10) Fin Usta'a verildi
+  ✓ [V1 verilen toplam üretim adedini (10) aşmadı] ["Dikim:10:fin-usta:bekliyor"]
+     75 sn sonra: atamalar ["Dikim:10:fin-usta:bekliyor"] · A {"bekleyen":[],"inceleme":[]} · B {"bekleyen":[],"inceleme":[]}
+     B ekranı: B4V1 10 çift Prosesler Hammadde İhtiyacı 1. Dikim 10 / 10 adet dağıtıldı B4V1 Fin Usta 10 adet (40:10) Rezerve Geri Al Teslim Al · 10 adet verilmişti BEDEN 40 Σ VER
+  ✓ [V1 75 sn sonra da tek atama (gecikmeli ikinci atama yok)] ["Dikim:10:fin-usta:bekliyor"]
+     teslim 1: ÜRT-261127001 · B4V1 tüm prosesler tamamlandı — mamul stoğa eklendi
+  ✓ [V1 bütün teslimlerden sonra mamul / işçilik üretim adediyle sınırlı (10 / −350)] {"mamul":10,"usta":-350}
+     B4V1: fiş 1 geçerli / 0 iptal · atamalar ["Dikim:10:fin-usta:teslim"]
+
+■ V2 · B4V2 · düz İşi Ver, iki cihaz (B bayat, A'dan sonra)
+     A: 
+     B: 10 adet (40:10) Fin Usta'a verildi
+  ✓ [V2 verilen toplam üretim adedini (10) aşmadı] ["Dikim:10:fin-usta:bekliyor"]
+     75 sn sonra: atamalar ["Dikim:10:fin-usta:bekliyor"] · A {"bekleyen":[],"inceleme":[]} · B {"bekleyen":[],"inceleme":[]}
+     B ekranı: B4V1 — Ekran Bot Siyah 10 çift Tamamlandı · stokta Ekran Bot B4V2 10 çift Prosesler Hammadde İhtiyacı 1. Dikim 10 / 10 adet dağıtıldı B4V2 Fin Usta 10 adet (40:10) 
+  ✓ [V2 75 sn sonra da tek atama (gecikmeli ikinci atama yok)] ["Dikim:10:fin-usta:bekliyor"]
+     teslim 1: ÜRT-261127002 · B4V2 tüm prosesler tamamlandı — mamul stoğa eklendi
+  ✓ [V2 bütün teslimlerden sonra mamul / işçilik üretim adediyle sınırlı (10 / −350)] {"mamul":10,"usta":-350}
+     B4V2: fiş 1 geçerli / 0 iptal · atamalar ["Dikim:10:fin-usta:teslim"]
+
+■ V3 · B4V3 · atamasız ara proses (Yıkama) — iki cihaz AYNI ANDA Saya'yı verir
+     A: Başka cihazdan güncellendi: Cariler
+     B: Başka cihazdan güncellendi: Cariler
+  ✗ [V3 tek Yıkama fişi: fason −40 (80 değil)] [{"fason":-80},"2 geçerli / 0 iptal"] · beklenen [{"fason":-40},"1 geçerli / 0 iptal"]
+  ✗ [V3 tek Saya ataması (10)] ["Saya:10:fin-usta2:bekliyor","Saya:10:fin-usta2:bekliyor"] · beklenen ["Saya:10:fin-usta2:bekliyor"]
+     teslim 1: ÜRT-261127005 · 10 adetlik atama teslim alındı — bu kısım mamul stoğa eklendi
+     teslim 2: ÜRT-261127006 · B4V3 tüm prosesler tamamlandı — mamul stoğa eklendi
+  ✗ [V3 Saya teslimlerinden sonra: mamul +10, usta2 −200, fason −40] {"mamul":20,"usta2":-400,"fason":-80} · beklenen {"mamul":10,"usta2":-200,"fason":-40}
+     B4V3: fiş 4 geçerli / 0 iptal · atamalar ["Kesim:10:fin-usta:teslim","Saya:10:fin-usta2:teslim","Saya:10:fin-usta2:teslim"]
+  ✓ [sayfa hatası yok (A)] []
+  ✓ [sayfa hatası yok (B)] []
+
+── ekran-uretim-b4-ver: 8 geçti · 3 kaldı ──

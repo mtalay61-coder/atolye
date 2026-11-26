@@ -21,7 +21,11 @@
 //      ver → iki cihaz AYNI ANDA Saya teslimi → tek: mamul +10, usta2 −200
 //   T9 son adımda hata: teslimde son yazılan tabloda (car_hareket) hata → bütün defterler DEĞİŞMEDİ; geri almada atama yazımında hata →
 //      fiş geçerli, defterler değişmedi
-const { ekranAc, girisYap, toastlar, O } = require("../ekran/ortak-ekran.js");
+const ORTAK = require("../ekran/ortak-ekran.js");
+const { toastlar, O } = ORTAK;
+// YAYIN_HTML verilirse sınama test derlemesiyle değil YAYINLANMIŞ paketin kendisiyle koşar (yayin-ekran.js; SHA-256 denetimli).
+const YAYIN = process.env.YAYIN_HTML ? require("./yayin-ekran.js") : null;
+const { ekranAc, girisYap } = YAYIN || ORTAK;
 const DB = process.env.EKRAN_DB || "inc_b4";
 let gecen = 0, kalan = 0;
 const k_ = (ad, g, b) => { const ok = JSON.stringify(g) === JSON.stringify(b); if (ok) gecen += 1; else kalan += 1;
@@ -83,6 +87,7 @@ const k_ = (ad, g, b) => { const ok = JSON.stringify(g) === JSON.stringify(b); i
     await O.modulAc(s, "Üretim"); await s.waitForTimeout(900); await s.getByText(no, { exact: true }).last().click(); await s.waitForTimeout(1200); };
   const dondur = async (c) => { await c.sayfa.route("**/rest/v1/degisiklik**", (r) => r.fulfill({ status: 200, contentType: "application/json", body: "[]" })); };
   const yenile = async (c) => {
+    if (YAYIN) return YAYIN.yenile(c);
     await c.sayfa.reload(); await c.sayfa.waitForTimeout(500);
     await c.sayfa.evaluate(() => { const kok = window.__ReactDOMClient.createRoot(document.getElementById("kok")); kok.render(window.__React.createElement(window.__App)); });
     // menü ([data-nav="Üretim"]) görünene kadar: giriş ekranı çıkarsa giriş yapılır (en çok 40 sn)
@@ -306,6 +311,8 @@ const k_ = (ad, g, b) => { const ok = JSON.stringify(g) === JSON.stringify(b); i
     k_("T9c geri alma son adımda düştü → bütün defterler AYNI, fiş geçerli", [(await defter()) === d1, await fisler(u), fark(o1, await foto())], [true, "1 geçerli / 0 iptal", {}]);
     await q(`drop trigger b4_sinama_boz on public.uretim_atamalari`); await q(`drop function public.b4_sinama_boz()`); }
 
+  if (YAYIN) { console.log(`\n■ yayın paketi ${require("path").basename(process.env.YAYIN_HTML)} · sha256 ${process.env.YAYIN_SHA}`);
+    k_("canlı / G-25 deneme projesine giden istek ya da WebSocket YOK", YAYIN.disIstekler, []); }
   k_("sayfa hatası yok (A)", A.hatalar, []);
   k_("sayfa hatası yok (B)", B.hatalar, []);
   await A.tarayici.close(); await B.tarayici.close();
