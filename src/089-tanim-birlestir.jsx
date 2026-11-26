@@ -121,6 +121,119 @@ function tanimlarUzlastir(yerel, bulut, taban, silinenler) {
   ].filter(Boolean).join("; ") || "fark yok";
   return { tanimlar: sonuc, eklenen, cikarilan, degisen, toplam: te + tc + td, metin };
 }
+// GERÇEK ÇAKIŞMALAR (v1.744.38, inceleme 25 B2 — kanıt test/inceleme/ekran-tanim-yaris.js). `ucYonluBirlestir` iki taraf da
+// değiştirdiğinde düz değerde YEREL'i seçiyordu: başka cihazın aynı alana yaptığı değişiklik SESSİZCE eziliyordu (kullanıcı, 27 Kasım:
+// "çakışma sessizce ezilmesin; kullanıcının bekleyen değişikliği korunsun; güncel veriyle güvenli birleştirme veya açık çakışma
+// bildirimi"). Bu işlev, üç yönlü birleştirmenin "ikisi de değişti ve farklı" dediği YAPRAKLARI listeler — birleştirme ancak liste boşsa
+// sessiz yapılır; doluysa yazma durur, kullanıcıya hangi öğede ne çakıştığı gösterilir (030, 100 inceleme şeridi).
+// Çakışma sayılan: (a) aynı yaprakta iki farklı yeni değer, (b) bir tarafın sildiği öğeyi öbür tarafın değiştirmesi. Taban yoksa
+// (bulut hiç okunamamıştı) çakışma bilinemez → boş liste (eski birleşim davranışı). Otomatik çözülenler ÇAKIŞMA SAYILMAZ:
+// `kodSayaclari` (iki cihazın sayacı → büyüğü), `__silinenler` (birleşim). Saf; birim testi `birim-tanim-cakisma`.
+// Döner: [{ yol: "renkler › Vizon Yılan › ad", yerel, bulut, tur: "deger" | "silindi-yerel" | "silindi-bulut" }]
+const TANIM_OTOMATIK_ALANLAR = new Set(["kodSayaclari", "__silinenler"]);
+function tanimCakismalari(yerel, bulut, taban, yol) {
+  const es = (a, b) => a === b || JSON.stringify(a) === JSON.stringify(b);
+  const yolu = yol || [];
+  if (taban === undefined) return [];
+  if (es(yerel, taban) || es(bulut, taban) || es(yerel, bulut)) return [];
+  if (yolu.length === 1 && TANIM_OTOMATIK_ALANLAR.has(yolu[0])) return [];
+  const ad = (x) => (x && typeof x === "object" && (x.ad || x.kod || x.kullaniciAdi)) ? `${x.ad || x.kod || x.kullaniciAdi}` : (x && x.id) || "?";
+  if (yerel === undefined) return [{ yol: yolu.join(" › "), yerel: "(bu cihazda silindi)", bulut, tur: "silindi-yerel" }];
+  if (bulut === undefined || bulut === null) return [{ yol: yolu.join(" › "), yerel, bulut: "(başka cihazda silindi)", tur: "silindi-bulut" }];
+  const kimlikliDizi = (d) => Array.isArray(d) && d.every((x) => x && typeof x === "object" && !Array.isArray(x) && x.id !== undefined);
+  if (kimlikliDizi(yerel) && kimlikliDizi(bulut)) {
+    const tH = new Map(kimlikliDizi(taban) ? taban.map((x) => [x.id, x]) : []);
+    const bH = new Map(bulut.map((x) => [x.id, x]));
+    const yH = new Map(yerel.map((x) => [x.id, x]));
+    const sonuc = [];
+    yerel.forEach((x) => {
+      const etiket = [...yolu, ad(x)];
+      if (bH.has(x.id)) sonuc.push(...tanimCakismalari(x, bH.get(x.id), tH.get(x.id), etiket));
+      else if (tH.has(x.id) && !es(x, tH.get(x.id))) sonuc.push({ yol: etiket.join(" › "), yerel: x, bulut: "(başka cihazda silindi)", tur: "silindi-bulut" });
+    });
+    bulut.forEach((y) => {
+      if (yH.has(y.id)) return;
+      if (tH.has(y.id) && !es(y, tH.get(y.id))) sonuc.push({ yol: [...yolu, ad(y)].join(" › "), yerel: "(bu cihazda silindi)", bulut: y, tur: "silindi-yerel" });
+    });
+    return sonuc;
+  }
+  const duzNesne = (o) => o && typeof o === "object" && !Array.isArray(o);
+  if (duzNesne(yerel) && duzNesne(bulut)) {
+    const t = duzNesne(taban) ? taban : {};
+    const sonuc = [];
+    new Set([...Object.keys(bulut), ...Object.keys(yerel)]).forEach((k) => {
+      sonuc.push(...tanimCakismalari(yerel[k], bulut[k], duzNesne(taban) ? t[k] : undefined, [...yolu, yolu.length === 0 ? tanimAlanOkunurAdi(k) : k]));
+    });
+    return sonuc;
+  }
+  return [{ yol: yolu.join(" › "), yerel, bulut, tur: "deger" }];
+}
+// Otomatik alanların birleşimi: sayaçlarda büyük olan (iki cihaz aynı sayacı ilerletti → ikisinin de verdiği kod korunsun).
+function tanimOtomatikBirlestir(birlesik, yerel, bulut) {
+  const ys = (yerel && yerel.kodSayaclari) || {}; const bs = (bulut && bulut.kodSayaclari) || {};
+  if (!Object.keys(ys).length && !Object.keys(bs).length) return birlesik;
+  const s = { ...bs, ...ys };
+  Object.keys(s).forEach((k) => { const a = Number(ys[k]); const b = Number(bs[k]); if (Number.isFinite(a) || Number.isFinite(b)) s[k] = Math.max(Number.isFinite(a) ? a : -Infinity, Number.isFinite(b) ? b : -Infinity); });
+  return { ...birlesik, kodSayaclari: s };
+}
+// YENİ ÖĞENİN KODU ÇAKIŞIRSA (v1.744.39, B2 — kullanıcı, 27 Kasım: "büyük sayacı almak iki cihazın aynı kodu üretmesini tek başına
+// engellemez"). İki cihaz aynı sayaçtan aynı kodu verir (ölçüldü: iki yeni renk de ton kodu 101). Birleştirme anında, BU CİHAZIN henüz
+// sunucuya gitmemiş yeni öğesi (bulutta kimliği yok) sunucudaki başka bir öğenin koduyla çakışıyorsa yalnız O yeni öğeye sıradaki boş kod
+// verilir — sunucudaki öğenin (etiketi basılmış olabilir) koduna DOKUNULMAZ. Aileler: renk ton kodu `kod` (renk + kombinasyon numaraları
+// atlanır), renk / beden / asorti `barkodKodu` (077 kodSayacIlerlet; renk ailesinde kombinasyon kodları da dolu sayılır).
+// KOMBİNASYON kodu etikette görünür ("1003 - Siyah/Taba") ve varyantlara metin olarak geçmiş olabilir → sessizce değiştirilmez:
+// `kombiCakismalari` olarak döner, çağıran açık çakışma bildirir. Saf. Döner: { tanimlar, degisenler: [{ aile, ad, alan, eski, yeni }],
+// kombiCakismalari: [{ yol, yerel, bulut, tur: "kod" }] }.
+function tanimYeniKodlariAyir(birlesik, bulut) {
+  const t = birlesik || {}; const b = bulut || {};
+  const degisenler = []; const kombiCakismalari = [];
+  const sayaclar = { ...(t.kodSayaclari || {}) };
+  const sonuc = { ...t };
+  const bulutIdleri = (alan) => new Set(((b[alan]) || []).map((x) => x && x.id).filter(Boolean));
+  const kombiNo = new Set((t.renkKombinasyonlari || []).map((k) => Number(k.kod)).filter((v) => v > 0));
+  // Kombinasyon: bu cihazın yeni kombinasyonu sunucudaki başka bir kombinasyonla aynı kodda
+  { const bIds = bulutIdleri("renkKombinasyonlari");
+    const bKod = new Map((b.renkKombinasyonlari || []).map((k) => [String(k.kod), k]));
+    (t.renkKombinasyonlari || []).forEach((k) => {
+      if (bIds.has(k.id)) return;
+      const d = bKod.get(String(k.kod));
+      if (d && d.id !== k.id) kombiCakismalari.push({ yol: `kombinasyonlar › kod ${k.kod}`, yerel: k, bulut: d, tur: "kod" });
+    });
+  }
+  const ayir = (alan, kodAlani, aile) => {
+    const liste = sonuc[alan] || [];   // önceki ayırmanın sonucu (renkte önce ton kodu, sonra barkod kodu)
+    if (!liste.length) return;
+    const bIds = bulutIdleri(alan);
+    const sunucuKodlari = new Set(liste.filter((x) => bIds.has(x.id)).map((x) => String(x[kodAlani] == null ? "" : x[kodAlani])).filter((v) => v !== ""));
+    const kullanilan = new Set(liste.map((x) => Number(x[kodAlani])).filter((v) => v > 0));
+    if (aile === "renk" || kodAlani === "kod") kombiNo.forEach((v) => kullanilan.add(v));
+    let degisti = false;
+    const yeni = liste.map((x) => {
+      if (bIds.has(x.id)) return x;
+      const v = x[kodAlani] == null ? "" : String(x[kodAlani]);
+      if (v === "" || !sunucuKodlari.has(v)) return x;
+      let n;
+      if (kodAlani === "barkodKodu") { n = kodSayacIlerlet(sayaclar, aile, kullanilan); if (n === null) return x; }
+      else { n = Math.max(100, ...[...kullanilan].filter((z) => z < 1000)) + 1; while (kullanilan.has(n)) n += 1; kullanilan.add(n); n = String(n); }
+      degisti = true;
+      degisenler.push({ aile: alan, ad: x.ad, alan: kodAlani, eski: v, yeni: n });
+      return { ...x, [kodAlani]: n };
+    });
+    if (degisti) sonuc[alan] = yeni;
+  };
+  ayir("renkler", "kod", "renk");
+  ayir("renkler", "barkodKodu", "renk");
+  ayir("bedenler", "barkodKodu", "beden");
+  ayir("asortiler", "barkodKodu", "asorti");
+  if (degisenler.length) sonuc.kodSayaclari = sayaclar;
+  return { tanimlar: degisenler.length ? sonuc : birlesik, degisenler, kombiCakismalari };
+}
+function tanimCakismaMetni(liste) {
+  const kisa = (v) => { const m = typeof v === "string" ? v : JSON.stringify(v); return m && m.length > 60 ? `${m.slice(0, 57)}…` : m; };
+  return (liste || []).slice(0, 8).map((c) => `${c.yol}: bu cihazda ${kisa(c.yerel)} · sunucuda ${kisa(c.bulut)}`).join(" | ")
+    + ((liste || []).length > 8 ? ` | … +${liste.length - 8}` : "");
+}
+
 const TANIM_ALAN_OKUNUR = {
   renkler: "renkler", bedenler: "ölçüler", birimler: "birimler", prosesler: "prosesler", araProsesler: "ara prosesler",
   kullanicilar: "kullanıcılar", asortiler: "asortiler", fiyatGruplari: "fiyat grupları", ozelKodAlanlari: "özel kod alanları",

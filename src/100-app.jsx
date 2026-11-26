@@ -3214,6 +3214,13 @@ function AtolyeUygulamasi() {
     });
   }, [loading, baglantiYok, tanimlar, saveTanimlar, showToast, yazmaOturumu, tanimBayatDalgasi]);
 
+  // YENİ ÖĞE KODU AYRILDI (v1.744.39, B2 — 030 / 089 `tanimYeniKodlariAyir`): iki cihaz aynı kodu vermişti; bu cihazın henüz yazılmamış
+  // yeni öğesi sıradaki koda geçti (sunucudakine dokunulmadı) — söylenir.
+  useEffect(() => {
+    window.__tanimKodlariAyrildi = (liste) => showToast(`Kod çakışması önlendi — başka cihaz aynı kodu az önce vermişti: ${(liste || []).map((d) => `${d.ad} ${d.alan === "kod" ? "renk kodu" : "barkod kodu"} ${d.eski} → ${d.yeni}`).join(" · ")}`);
+    return () => { window.__tanimKodlariAyrildi = null; };
+  }, [showToast]);
+
   // KOD ÇAKIŞMASI KENDİLİĞİNDEN ONARILIR (v1.556.0, 089 `tanimKodlariniOnar`). Kullanıcı: "Renk kodları
   // çakışıyor, burayı düzeltmiştik daha önce!" — iki cihazın aynı anda verdiği barkod kodları tanım
   // birleştirmesiyle yan yana geldi. Tanımlar her değiştiğinde (açılış, bulutla birleştirme, kayıt) denetlenir;
@@ -5278,6 +5285,39 @@ function AtolyeUygulamasi() {
               <div key={`${tablo}:${sid}`} data-inceleme-satir={sid} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", color: "var(--erp-text)" }}>
                 <span style={{ flex: "1 1 320px" }}><b>{tabloAciklamasi(tablo).ad}</b> · {String(v.sebep || "").replace(/^Supabase \d+:\s*/, "")}</span>
                 <span className="mono" style={{ fontSize: 10, color: "var(--erp-text-2)" }}>{v.zaman ? tarihYaz(v.zaman) : ""}</span>
+                {/* TANIM ÇAKIŞMASI (v1.744.38, B2): iki cihaz aynı öğeyi farklı değiştirdi; hiçbiri sessizce seçilmedi. Bu cihazın değişikliği
+                    yerelde duruyor. Kullanıcı açıkça seçer: kendi değerleri (yazma yine sürüm koşullu) ya da sunucudaki hâl (yerel kopya
+                    günlüğe yedeklenir). Herkes seçebilir — kendi bekleyen değişikliği. */}
+                {tablo === "tanimlar" && v.kod === "CAKISMA" && (
+                  <span data-tanim-cakisma="1" style={{ flexBasis: "100%", display: "flex", flexDirection: "column", gap: 4 }}>
+                    {(v.cakismalar || []).map((c, i) => (
+                      <span key={i} data-tanim-cakisma-satir={c.yol} style={{ fontSize: 11, color: "var(--erp-text)" }}>
+                        <b>{c.yol}</b>: bu cihazda <span className="mono">{typeof c.yerel === "string" ? c.yerel : JSON.stringify(c.yerel)}</span> · sunucuda <span className="mono">{typeof c.bulut === "string" ? c.bulut : JSON.stringify(c.bulut)}</span>
+                      </span>
+                    ))}
+                    <span style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                      <button type="button" className="btn-primary" data-tanim-cakisma-benim="1" style={{ padding: "3px 8px", fontSize: 11 }}
+                        onClick={() => {
+                          if ((v.cakismalar || []).some((c) => c.tur === "kod")) { showToast("Kombinasyon kodu çakışması 'Benimkini uygula' ile çözülmez (kod etikette görünür) — 'Sunucudakini al' deyip kombinasyonu yeniden açın"); return; }
+                          if (!window.confirm("Yukarıda listelenen çakışan öğelerde BU CİHAZDAKİ değerler yazılacak; başka cihazın yalnız bu öğelerdeki değişikliği geri alınır, öbür değişiklikleri korunur. Bu arada yeni bir çakışma olduysa yeniden sorulur. Devam?")) return;
+                          gunlukYaz("Tanım çakışması: bu cihazın değerleri uygulandı", "tanimlar", { cakismalar: v.cakismalar || [] });
+                          incelemeSil(tablo, sid);
+                          // Yalnız GÖRÜLEN çakışmalar onaylanır; arada yenisi doğduysa yazma yine durur ve şerit yeniden sorar (030).
+                          yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", tanimlar, { onaylananCakismalar: v.cakismalar || [], tetikleyen: "çakışma kararı" }), "Tanımlar", tanimlar);
+                        }}>Benimkini uygula</button>
+                      <button type="button" className="btn-ghost" data-tanim-cakisma-sunucu="1" style={{ padding: "3px 8px", fontSize: 11 }}
+                        onClick={() => {
+                          if (!window.confirm("Bu cihazın gönderilmemiş Tanımlar değişiklikleri BIRAKILACAK; sunucudaki hâl geçerli olur (yerel kopya günlüğe yedeklenir). Devam?")) return;
+                          gunlukYaz("Tanım çakışması: sunucudaki hâl alındı, yerel değişiklik bırakıldı", "tanimlar", { cakismalar: v.cakismalar || [], yerelYedek: tanimlar });
+                          try { window.localStorage.setItem(`inceleme-yedek:tanimlar:${Date.now()}`, JSON.stringify(tanimlar)); } catch (e) { /* */ }
+                          incelemeSil(tablo, sid);
+                          if (v.anahtar) bekleyenYazmaSil(v.anahtar);
+                          tanimBekleyenTabanSil();
+                          bulutDegisikligiUygula(["tanimlar"]).then(() => showToast("Sunucudaki Tanımlar alındı")).catch((e) => showToast(`Tanımlar alınamadı: ${e && e.message}`));
+                        }}>Sunucudakini al</button>
+                    </span>
+                  </span>
+                )}
                 <button type="button" className="btn-ghost" data-inceleme-yeniden={sid} style={{ padding: "3px 8px", fontSize: 11 }}
                   onClick={() => {
                     incelemeSil(tablo, sid);

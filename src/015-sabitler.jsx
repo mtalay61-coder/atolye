@@ -492,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.744.38";
+const SURUM = "1.744.40";
 const SURUM_TARIHI = "2026-11-27";
-const SURUM_NOTU = "Renk adı değişikliği sunucuda tek işlemde yapılıyor: başka cihazın siparişi de yeni adla bağlı kalıyor";
+const SURUM_NOTU = "Birleşik sınama: renk adı sunucuda tek işlem (B1) + Tanımlar sürüm koşullu yazma (B2)";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -525,6 +525,8 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" };   // teklif: v1.723.0, Sipariş'in alt sekmesi
 
 const SURUM_GECMISI = [
+  { surum: "1.744.40", tarih: "27.11.2026", eklenen: [], degisen: [], duzeltilen: ["Birleşik sınama sürümü: 1.744.38 (renk adı sunucuda tek işlem) ve 1.744.39 (Tanımlar sürüm koşullu yazma) birlikte."] },
+  { surum: "1.744.39", tarih: "27.11.2026", eklenen: [], degisen: [], duzeltilen: ["Tanımlar iki cihazdan aynı anda kaydedilince birinin eklediği (ör. yeni renk) artık kaybolmuyor: kayıt sunucudaki sürümle koşullu yazılıyor, arada başka cihaz yazdıysa güncel hâl yeniden okunup birleştiriliyor. İki cihaz AYNI öğeyi farklı değiştirdiyse hiçbiri sessizce seçilmiyor: bu cihazın değişikliği bekletiliyor, üstteki \"İnceleme gerekiyor\" şeridinde hangi öğede ne çakıştığı yazıyor; \"Benimkini uygula\" ya da \"Sunucudakini al\" seçilir. (1.744.38 numarası renk adı düzeltmesinin ayrı dalında.)"] },
   { surum: "1.744.38", tarih: "27.11.2026", eklenen: [], degisen: [], duzeltilen: ["Tanımlar › renk adı değiştirme artık sunucuda TEK işlem (stok-v2/guvenlik/26-b1-renk-ad-degistir.sql kurulu ise): Tanımlar, sipariş kalemleri, üretim, rezervasyon, koliler, reçete, renk resimleri ve harici barkodlar aynı anda güncellenir; değişiklik sırasında bu kayıtlara başka yazma araya giremez. Eskiden bu cihazın henüz görmediği, başka cihazdan az önce girilmiş sipariş kalemi eski adda kalıyor ve varyant bağı kopuyordu. Değişiklikten sonra eski bir sekmenin eski adla gönderdiği kayıt da sunucuda yeni ada çevrilir. Buluta gönderilmeyi bekleyen kayıt varken ad değiştirilmez. Sunucu kurulumu yoksa ad değiştirilmez ve bunu açıkça söyler (eski, hatalı yönteme dönülmez). Bir rengin eski adı başka bir renge verilemez (Yönetici serbest bırakmadıkça); eski adı belirsiz ya da rengi silinmiş kayıt sessizce bağlanmaz, açık uyarıyla reddedilir."] },
   { surum: "1.744.37", tarih: "26.11.2026", eklenen: [], degisen: [], duzeltilen: ["Tanımlar › renk adı değiştirme: rengin geçtiği model kombinasyonları (ör. \"1054 - KAHVE SÜET/VİZON YILAN\" ve \"1055 - BEJ SÜET/VİZON YILAN\") ayrı kalıyor, yalnız yazımları değişiyor. Önceden rengin adı değişince (büyük/küçük harf dahil) modelin bütün kombinasyon renkleri rengin düz adına (\"Vizon Yılan\") dönüp tek renk gibi görünüyordu; reçetenin model rengi de aynı şekilde çöküyordu. Önceden çökmüş kayıtları bu sürüm geri getirmez (ayrı onarım)."] },
   { surum: "1.744.36", tarih: "23.11.2026", eklenen: ["Kasa & Banka › hesap › \"Hesaplar arası aktarım\": kasadan bankaya, bankadan kasaya, hesaptan hesaba para aktarımı yeniden arayüzde (cari virmanından ayrı işlem; kur çevirici ve aktarım sebebi aynen)."], degisen: ["Ödeme & Tahsilat'taki virman \"Cari virmanı (cariden cariye)\" adını aldı. Para birimi ilk carinin para birimidir; karşı cari başka para birimindeyse virman yapılmaz (kur dönüşümü yok). Aynı cari ve sıfır / eksi / boş tutar reddedilir."], duzeltilen: [] },
