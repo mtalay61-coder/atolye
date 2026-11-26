@@ -30,7 +30,10 @@ farklı olabilir — envantere eklenecek tek satırlık sorgu, aşağıda § 6),
 Gece yedeği içeriği koddan doğrulandı (`stok-v2/yedek/dokum-al.sh`: `pg_dump --format=custom --schema=public`); yalıtılmış
 açma akışı yerelde uçtan uca sınandı (taklit veride hata öncesi üç kombinasyon varyantı kimlikleriyle, iki kombinasyon,
 renk tanımları geldi; açılan veritabanında tetikleyici 0). Gerçek yedeğin içeriği sizin çıktınızla doğrulanacak.
-Adımlar ve korunacak klasörler: **`YEDEKTEN-ACMA.md`** (OneDrive'da `AtolyeYedek` dışına kopyalama).
+Açma yolu: önerilen **`is-akisi/yedek-ac.yml`** (GitHub Actions, canlıya bağlanmaz; koruma kopyasını da kendisi alır); elle yol `YEDEKTEN-ACMA.md`.
+Kullanılacak yedek: 03:17 VARSAYILMAZ. Klasör adı betik başlarken İstanbul saatiyle konur (`gece-yedek.sh` AD=…%H%M) ve zamanlanmış iş gecikebilir;
+dökümün bittiği an `ozet.txt` "döküm tarihi" (UTC) satırındadır. Hata öncesi olduğu asıl olarak İÇERİKLE doğrulanır: yedekte 27162 D'nin
+kombinasyon varyantları etkin ve rengin adı eski yazımda olmalı.
 
 ## 3. "Gece yedeğinden geri getirebilir miyiz?"
 
@@ -59,21 +62,35 @@ Envanterdeki her eşleşme önce **onarım adayı**dır. KESİN sayılması içi
 - **ŞÜPHELİ / KAPSAM DIŞI**: Y'de de aynı durum (hata öncesinden beri düz renkli mamul ya da artık kayıt) → bu hatayla ilgisiz;
   ayrı listelenir, dokunulmaz.
 
-## 5. Onarım planının biçimi (veriler gelince, AYRI ONAY)
+## 5. Onarım planının biçimi — YALNIZ KANITLANAN HASARLI ALANLAR (veriler gelince, AYRI ONAY)
 
-Her model için: varyant kimliği (yedekteki = korunacak) · renk / ölçü · aktif önce → sonra · stok · hareket · bağlı sipariş /
-üretim / barkod / reçete / resim · işlem · geri dönüş.
+İlke: **yedekten bütün satır / bütün ürün kopyalanmaz.** Yedek yalnız "hata öncesi değer neydi" kanıtıdır. Canlıdaki güncel
+sağlam alanlar (ürün adı, fiyat, stok no, görseller, diğer renkler, sonradan girilmiş her şey), BÜTÜN stok hareketleri ve
+barkod tanımları korunur. Her değişiklik tek alan, tek kayıt; önce/sonra değeri ve kanıtı (Y/İ/B) yanında yazılır.
 
-1. Canlıda PASİF duran kombinasyon varyantı (kimlik yedekteyle aynı) → `aktif=true`. Geri dönüş: `aktif=false`.
-2. Canlıda OLMAYAN kombinasyon varyantı → yedekteki satır AYNI kimlikle geri eklenir (yeni kimlik üretilmez). Geri dönüş:
-   o kimlik hareketsizse kaldırılır.
-3. Çöken düz-ad varyantı → **silinecek varsayılmaz.** Stok, hareket, ona basılmış etiket (0018 kodlu barkod) ya da başka
-   bağlantı varsa DOKUNULMAZ ve nasıl korunacağı ayrıca sorulur (stok varsa kombinasyonlara FİŞLE aktarım; fişsiz hareket
-   olmaz). Hiçbir bağı yoksa en fazla pasife alınır (silme yok). Geri dönüş: `aktif=true`.
-4. Reçete: `urunler.recete`'nin mamulRenk / mamulRenkId'si yedekteki hâline (adlar yeni yazımla). Geri dönüş: işlem öncesi
-   tam döküm saklanır, aynen geri yazılır.
-5. Uygulama tarafı: yenilenen istemci stok kartını buluttan okur; reçete urunler'den. Onarım öncesi / sonrası 27162 D ekrandan
-   karşılaştırılır.
+Bu hatanın dokunabildiği alanlar (082 kodundan) ve onarım biçimi:
+
+| Kayıt | Alan | Hasar | Onarım | Korunan |
+|---|---|---|---|---|
+| `stk_varyant` (kombinasyon, canlıda VAR, pasif) | `aktif` | true → false | `aktif=true` — yedekte etkinse ve kimlik aynıysa | kimlik, renk_id, olcu_id, min_stok, hareketler |
+| `stk_varyant` (kombinasyon, canlıda YOK) | satırın kendisi | silindi | yedekteki `id, urun_id, renk_id, olcu_id, min_stok` ile AYNI kimlikle eklenir — yalnız canlıda o (ürün, renk_id, olcu_id) yoksa | — |
+| `stk_varyant` (çöken düz-ad) | `aktif` | yeni açıldı | stok 0, hareket 0, etiket / harici barkod bağı yoksa `aktif=false`; varsa DOKUNULMAZ, size sorulur | kimlik, hareketler, satır silinmez |
+| `urunler.recete[n]` | `mamulRenk` | kombinasyon adı → düz ad | kombinasyonun GÜNCEL adı (yeni yazım) | satırın diğer bütün alanları |
+| `urunler.recete[n]` | `mamulRenkId` | kombinasyonsuz → renk kimliği | yedekteki değer (çoğunlukla boş) | — |
+
+Hasarlı olmadığı koddan görülen (ADLA eşleşir; onarıma GİRMEZ, yalnız doğrulanır): `renk_resimleri` anahtarları, `harici_barkodlar`,
+stok hareketleri, sipariş kalemleri, üretim, koliler, rezervasyonlar, Tanımlar.
+
+Reçete satırının kalıcı kimliği yok: yedekteki satır canlıdakiyle **sıra + hammaddeUrunId + mamulBeden + renk + beden + proses +
+eklemeId** ile eşlenir. Eşleşme tek ve kesin değilse o satıra DOKUNULMAZ, size gösterilir (ör. sonradan reçete değiştiyse).
+
+Uygulama biçimi: her işlem `where` koşulunda canlıdaki BEKLENEN önceki değeri de taşır (ör. `aktif = false and renk_id = ...`);
+değer beklenenden farklıysa satır değişmez ve rapor edilir (araya giren değişikliği ezmez). Tek işlemde, önce salt okur
+"önce" dökümü, sonra değişiklik, sonra "sonra" dökümü.
+
+Geri dönüş: "önce" dökümündeki değerler aynı alan / kayıt düzeyinde geri yazılır; eklenen varyantlar hareketsizse kaldırılır.
+
+Önkoşul: 1.744.37 yayında ve açık uygulamalar yenilenmiş olmalı; onarım sırasında renk adı değiştirilmez.
 
 Barkod notu: barkod kombinasyonun `barkodKodu`'ndan kurulur (`077 varyantinBarkodu`). Eski 1054 / 1055 kodlu etiketler
 kombinasyon varyantı geri gelince yeniden tanınmalı — onarım sonrası bir eski etiketle okutma sınaması plana girer.

@@ -1,4 +1,6 @@
-# Gece yedeğini YALITILMIŞ yerel veritabanına açma (yalnız okuma için)
+# Gece yedeğini YALITILMIŞ yerel veritabanına açma (yalnız okuma için) — ELLE YOL
+
+Önerilen daha kısa yol: `is-akisi/yedek-ac.yml` (GitHub Actions; kurulum gerektirmez). Bu belge, o yol kullanılamazsa.
 
 Amaç: hata öncesi varyant kimliklerini, kombinasyonları ve reçeteleri görmek. **Canlıya hiçbir şey yüklenmez.** Supabase
 bağlantısı, parola ya da anahtar GEREKMEZ — her şey sizin bilgisayarınızda, yalnız `localhost`'ta.
@@ -9,9 +11,10 @@ Gece yedeği OneDrive'da `AtolyeYedek/<YYYY-AA-GG-SSDD>` klasörlerine yazılır
 silinir (en yeni 7 klasöre hiç dokunulmaz). Temizlik yalnız `AtolyeYedek`'in içindeki, adı tarihle başlayan klasörlere bakar.
 
 Korunacaklar (adı `-SINANMADI` ile BİTMEYEN = sınanmış olanlar):
-1. Hatadan ÖNCEKİ son sınanmış yedek — büyük olasılıkla `2026-11-26-03xx` (bu sabahki gece koşusu, sabahki ad değişikliğinden önce).
-2. Ondan bir önceki gece — `2026-11-25-03xx` (yedek karşılaştırma için).
-3. Hatadan SONRAKİ ilk gece yedeği (`2026-11-27-03xx`, yarın gece oluşacak) — "hata sonrası" durumun kanıtı.
+1. Hatadan ÖNCEKİ son sınanmış yedek — 26 Kasım gece koşusu. TAM adı varsayılmaz: GitHub › Actions › "Gece yedeği (OneDrive)" ›
+   26 Kasım koşusu › "Yedek al, sına, OneDrive'a yükle" adımında `SINAMA TAMAM` ve `3/4 OneDrive'a yükleme: <ad>` satırları.
+2. Ondan bir önceki gecenin sınanmış klasörü (karşılaştırma için).
+3. Hatadan SONRAKİ ilk gece yedeği (27 Kasım gecesi oluşacak) — "hata sonrası" durumun kanıtı.
 
 Yapılacak: bu klasörleri OneDrive'da **`AtolyeYedek` DIŞINDA** yeni bir klasöre KOPYALAYIN, ör. `AtolyeYedek-KORUNAN/renk-hatasi/`.
 (Taşımayın, adını değiştirmeyin — gece işi kendi klasörlerini sayıp düzenliyor; kopya yeterli ve güvenli.)

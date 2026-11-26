@@ -43,8 +43,8 @@ uret as (
   from (select to_jsonb(u) as j from public.uretim u) x where coalesce(x.j ->> 'renk', '') <> ''
 ),
 recete as (
-  select u.id as urun_id, x as j, public.stk_nrm(x ->> 'mamulRenk') as nrm
-  from urun u, jsonb_array_elements(case when jsonb_typeof(u.j -> 'recete') = 'array' then u.j -> 'recete' else '[]'::jsonb end) x
+  select u.id as urun_id, x as j, n as sira, public.stk_nrm(x ->> 'mamulRenk') as nrm
+  from urun u, jsonb_array_elements(case when jsonb_typeof(u.j -> 'recete') = 'array' then u.j -> 'recete' else '[]'::jsonb end) with ordinality as e(x, n)
 ),
 resim as (
   select u.id as urun_id, key as anahtar, public.stk_nrm(key) as nrm
@@ -104,9 +104,12 @@ select * from (
   from uret k join s on s.urun_id = k.urun_id join urun u on u.id = k.urun_id
   union all
   -- 5) REÇETE SATIRLARI (model rengi + hammadde rengi, kimlikleriyle)
-  select '5-recete', u.ad, u.id, jsonb_build_object('mamulRenk', k.j ->> 'mamulRenk', 'mamulRenkId', k.j ->> 'mamulRenkId',
-           'hammadde', coalesce(k.j ->> 'malzemeAd', k.j ->> 'malzemeId', k.j ->> 'malzeme'), 'renk', k.j ->> 'renk', 'renkId', k.j ->> 'renkId',
-           'miktar', k.j -> 'miktar', 'etkin_varyanta_bagli', exists (select 1 from etkin e where e.urun_id = k.urun_id and e.nrm = k.nrm))
+  -- Reçete satırının kalıcı kimliği yok: sıra + hammadde + beden + proses + eklemeId ile eşlenir (yedekle karşılaştırma için).
+  select '5-recete', u.ad, u.id, jsonb_build_object('sira', k.sira, 'mamulRenk', k.j ->> 'mamulRenk', 'mamulRenkId', k.j ->> 'mamulRenkId',
+           'mamulBeden', k.j ->> 'mamulBeden', 'hammaddeUrunId', k.j ->> 'hammaddeUrunId', 'hammaddeAd', k.j ->> 'hammaddeAd',
+           'renk', k.j ->> 'renk', 'renkId', k.j ->> 'renkId', 'beden', k.j ->> 'beden', 'proses', k.j ->> 'proses',
+           'eklemeId', k.j ->> 'eklemeId', 'miktar', k.j -> 'miktar',
+           'etkin_varyanta_bagli', exists (select 1 from etkin e where e.urun_id = k.urun_id and e.nrm = k.nrm))
   from recete k join s on s.urun_id = k.urun_id join urun u on u.id = k.urun_id
   union all
   -- 6) RENK RESMİ ANAHTARLARI ve HARİCİ BARKODLAR

@@ -2,13 +2,14 @@
 -- (SINIR) sonra hangi tabloya kaç satır yazılmış / güncellenmiş.
 --
 -- YALNIZ SELECT; hiçbir şey yazmaz. Kişisel veri döndürmez: yalnız tablo adı, sütun adı, sayı ve en son zaman.
--- SINIR: OneDrive'daki kullanılacak yedek klasörünün adındaki zaman (ör. 2026-11-26-0317 → '2026-11-26 03:17+03').
---        Klasör adınız farklıysa aşağıdaki tek satırı değiştirin.
+-- SINIR: kullanılacak yedek klasörünün ADINDAKİ zaman (İstanbul; betiğin BAŞLADIĞI an, dökümün anlık görüntüsünden biraz önce)
+--        ör. klasör 2026-11-26-0331 → '2026-11-26 03:31:00+03'. 03:17 VARSAYMAYIN — gerçek klasör adını yazın. Başlangıç anı
+--        seçildiği için arada (başlangıç → anlık görüntü) yazılan satırlar da sayılır: fazla sayar, eksik saymaz.
 -- Bakılan sütunlar: public tablolarında adı olusturma / guncelleme / tarih / zaman / created_at / updated_at olan
 -- timestamp(tz) sütunları ve aynı adlı METİN sütunlar (ISO biçimli eski tablolar, ör. stok_hareketleri.tarih).
 -- SINIR'dan sonra satırı olmayan tablolar listelenmez. Zaman damgası olmayan tablolar (ör. tanimlar, urunler'in kimi
 -- sürümleri) bu sorguyla ÖLÇÜLEMEZ — en altta ayrıca listelenir; onlar yedekle içerik karşılaştırmasıyla doğrulanır.
-with sinir as (select timestamptz '2026-11-26 03:17:00+03' as t),
+with sinir as (select timestamptz 'DOLDURULACAK' as t),   -- ör. '2026-11-26 03:31:00+03'
 sut as (
   select c.table_name, c.column_name, c.data_type
   from information_schema.columns c

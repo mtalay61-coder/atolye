@@ -45,10 +45,11 @@ select * from (
            'hareket', coalesce(h.adet, 0), 'net_miktar', coalesce(h.net, 0), 'ilk_hareket', h.ilk, 'son_hareket', h.son)
   from vry v left join public.urunler u on u.id = v.urun_id left join hrk h on h.varyant_id = v.id
   union all
-  select '4-recete', u.id, u.ad, jsonb_build_object('mamulRenk', x ->> 'mamulRenk', 'mamulRenkId', x ->> 'mamulRenkId',
-           'renk', x ->> 'renk', 'renkId', x ->> 'renkId', 'hammadde', coalesce(x ->> 'malzemeAd', x ->> 'malzemeId', x ->> 'malzeme'),
-           'miktar', x -> 'miktar')
-  from urun_s u, jsonb_array_elements(case when jsonb_typeof(u.j -> 'recete') = 'array' then u.j -> 'recete' else '[]'::jsonb end) x
+  select '4-recete', u.id, u.ad, jsonb_build_object('sira', n, 'mamulRenk', x ->> 'mamulRenk', 'mamulRenkId', x ->> 'mamulRenkId',
+           'mamulBeden', x ->> 'mamulBeden', 'hammaddeUrunId', x ->> 'hammaddeUrunId', 'hammaddeAd', x ->> 'hammaddeAd',
+           'renk', x ->> 'renk', 'renkId', x ->> 'renkId', 'beden', x ->> 'beden', 'proses', x ->> 'proses',
+           'eklemeId', x ->> 'eklemeId', 'miktar', x -> 'miktar')
+  from urun_s u, jsonb_array_elements(case when jsonb_typeof(u.j -> 'recete') = 'array' then u.j -> 'recete' else '[]'::jsonb end) with ordinality as e(x, n)
   union all
   select '5-resim', u.id, u.ad, jsonb_build_object('anahtar', k)
   from urun_s u, jsonb_object_keys(case when jsonb_typeof(u.j -> 'renk_resimleri') = 'object' then u.j -> 'renk_resimleri' else '{}'::jsonb end) k
