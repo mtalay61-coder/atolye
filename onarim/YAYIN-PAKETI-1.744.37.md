@@ -46,6 +46,20 @@ yayına çıkar. Yani 1. adımdan 1-2 dk sonra `https://erp.newdiamond.com.tr/at
 açık uygulamalar `surum.json`'a baktıkları için 1.744.36'da kalır; yeni sürüme yalnız adresi bilen / yazan geçer.
 Sonuç: 1. adım da bir yayın kararıdır; ayrı onay olmadan birleştirilmez. Kullanıcıları geçiren 2. adımdır.
 
+## Sekmeler gerçekten düzeltilmiş sürümde mi (veri onarımından ÖNCE zorunlu)
+
+Yenilemek yetmez: eski bir sekme hâlâ 1.744.36 kodunu çalıştırıyor olabilir ve bir renk adı değiştirirse çökmeyi yeniden üretir
+ya da onarılmış ürünlerin üstüne eski reçeteyi yazabilir. Yayından sonra, onarımdan önce:
+1. Uygulamayı kullanan HER cihazda / tarayıcıda: kullanıcı menüsünün altında **`v1.744.37 · 2026-11-26`** görünmeli
+   (görünmüyorsa sayfayı kapatıp açın; uygulama açılışta yeni sürüme kendiliğinden geçer). Görülmeyen cihaz kapalı tutulur.
+2. Onarım bitene kadar Tanımlar'da renk adı DEĞİŞTİRİLMEZ, ürün kartlarında reçete düzenlenmez.
+
+İsteğe bağlı, daha güçlü (AYRI KARAR): sunucu sürüm kapısı `stk_ayar.min_istemci_surum = '1.744.37'` (guvenlik/10 düzeni) —
+1.744.37'den eski her sekmenin ERP tablolarına yazmasını sunucuda reddeder (AT001). DİKKAT: kapı doluyken fiş kuralları da
+etkin olur (`fis_kural_aktif = fis_aktif VEYA min_istemci_surum dolu`); 17 Kasım kaydına göre ikisi de kapalı. Bu yüzden önerilmez
+saymıyorum ama tek başına bir karar: önce salt okur `select fis_aktif, min_istemci_surum from public.stk_ayar;` ile bugünkü
+değer görülür.
+
 ## Taslak PR
 
 **https://github.com/mtalay61-coder/atolye/pull/370** (TASLAK). Depo `mtalay61-coder/atolye`.
