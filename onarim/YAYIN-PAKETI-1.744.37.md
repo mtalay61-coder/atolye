@@ -56,9 +56,8 @@ ya da onarılmış ürünlerin üstüne eski reçeteyi yazabilir. Yayından sonr
 
 İsteğe bağlı, daha güçlü (AYRI KARAR): sunucu sürüm kapısı `stk_ayar.min_istemci_surum = '1.744.37'` (guvenlik/10 düzeni) —
 1.744.37'den eski her sekmenin ERP tablolarına yazmasını sunucuda reddeder (AT001). DİKKAT: kapı doluyken fiş kuralları da
-etkin olur (`fis_kural_aktif = fis_aktif VEYA min_istemci_surum dolu`); 17 Kasım kaydına göre ikisi de kapalı. Bu yüzden önerilmez
-saymıyorum ama tek başına bir karar: önce salt okur `select fis_aktif, min_istemci_surum from public.stk_ayar;` ile bugünkü
-değer görülür.
+etkin olur (`fis_kural_aktif = fis_aktif VEYA min_istemci_surum dolu`); 17 Kasım kaydına göre ikisi de kapalı. Bu yüzden kapı
+ayrı bir karardır; önce salt okur `select fis_aktif, min_istemci_surum from public.stk_ayar;` ile bugünkü değer görülür.
 
 ## Taslak PR
 
