@@ -1860,6 +1860,7 @@ function AtolyeUygulamasi() {
     // değişmez. İptal edilen satırlar fark tabanından çıkar (eski yoldan bir daha "silinmesin"); kalan iş (üretimin ana satırı,
     // sipariş rezervasyonu, eski usul satırlar) bugünkü yoldan.
     const sunucuSatirlari = fisKesYolu() ? uretimSunucuFisSatirlari(sonuc.silinenStokKayitlari, sonuc.silinenCariKayitlari) : null;
+    let zatenGeriAlinmis = false;   // v1.744.41: sunucu "fişler zaten iptal" dedi (aşağıda)
     if (fisKesYolu() && (!sunucuSatirlari || !sunucuSatirlari.fisler.length) && (sonuc.silinenStokKayitlari.length || sonuc.silinenCariKayitlari.length)) {
       showToast("Üretim tesliminin fişleri doğrulanamadı — kayıtlar korunuyor. Listeyi yenileyip tekrar deneyin.");
       return;
@@ -1868,14 +1869,39 @@ function AtolyeUygulamasi() {
       const etkU = fisKesEtkilenen(uretim, sonuc.uretim, [uretimId]);
       const atamaFarki = fisKesAltFarki("uretim", "uretim_atamalari", etkU.eskiler[0], etkU.yeniler[0]);
       const alt = atamaFarki.satirlar.length || atamaFarki.sil.length ? { uretim_atamalari: atamaFarki } : null;
+      let iptalYaniti = null;
       try {
-        await supabaseIstek("rpc/fis_iptal_toplu", { method: "POST", body: JSON.stringify({p:{
+        iptalYaniti = await supabaseIstek("rpc/fis_iptal_toplu", { method: "POST", body: JSON.stringify({p:{
           fisler:sunucuSatirlari.fisler,sebep:`Üretim teslimi geri alındı (${siparis.siparisNo} · ${prosesAdi})`,alt
         }}) });
       } catch (e) {
         showToast(`Geri alınamadı — hiçbir değişiklik yapılmadı (${String((e && e.message) || e).slice(0, 160)})`);
         gunlukYaz(`Üretim teslimi geri alınamadı (${siparis.siparisNo} · ${prosesAdi}): ${String((e && e.message) || e).slice(0, 200)}`, "uretim", { uretimId, atamaId });
         return;
+      }
+      // BAYAT GERİ AL (v1.744.41, inceleme 25 B5): sunucu bütün fişler için "zaten iptal" dediyse bu çağrı fişlerde HİÇBİR şeyi
+      // değiştirmedi — teslim başka cihazda ya da yanıtı kaybolan önceki denemede geri alınmıştı. İki durum sunucudaki ATAMAYA bakılarak
+      // ayrılır (ana satırı istemci sonradan yazdığı için yalnız tazelemek yetmez):
+      //   • atama sunucuda TESLİM ALINMIŞ (iş arada yeniden teslim alınmış) ya da okunamadı → bu cihazın bayat hesabı UYGULANMAZ; ekran
+      //     sunucudaki hâle getirilir, kullanıcıya "yeni bir değişiklik yapmadı" denir. Eskiden "geri alındı" deniyordu.
+      //   • atama sunucuda BEKLİYOR (geri alma gerçekten yapılmış; yanıt kaybı tekrarı) → olağan yol sürer: üretimin ana satırı (aşama,
+      //     adım tamamlandı) da geri yazılır; ileti geri almanın önceden yapıldığını söyler.
+      // Ara proses (ataması yok) olağan yoldan devam eder — sunucuda bakılacak atama satırı yok.
+      if (fisIptalHepsiZatenIptal(iptalYaniti)) {
+        zatenGeriAlinmis = true;
+        let sunucudaTeslim = null;
+        if (!araProsesMi) {
+          try {
+            const r = await supabaseIstek(`uretim_atamalari?id=eq.${encodeURIComponent(atamaId)}&select=tamamlandi_mi`);
+            sunucudaTeslim = Array.isArray(r) && r[0] ? !!r[0].tamamlandi_mi : null;
+          } catch (e) { sunucudaTeslim = null; }
+        }
+        if (!araProsesMi && sunucudaTeslim !== false) {
+          gunlukYaz(`Üretim teslimi geri alma: fişler zaten iptal, değişiklik yapılmadı (${sunucuSatirlari.fisler.join(", ")} · ${siparis.siparisNo} · ${prosesAdi})`, "uretim", { uretimId, atamaId });
+          try { await bulutDegisikligiUygula(["uretim", "stok", "cariler", "siparisler", "stokRezervasyonlari", "fisDefteri"]); } catch (e) { /* yoklama birazdan tazeler */ }
+          showToast(`"${prosesAdi}" teslimi zaten geri alınmıştı (başka cihazdan ya da önceki denemede)${sunucudaTeslim ? " ve iş yeniden teslim alınmış" : ""} — bu işlem yeni bir değişiklik yapmadı. Ekran güncel duruma getirildi; işin şimdiki durumunu kontrol edin.`);
+          return;
+        }
       }
       fisKesTabandanCikar("urunler", "stok_hareketleri", sunucuSatirlari.stokIdler);
       fisKesTabandanCikar("cariler", "cari_hareketleri", sunucuSatirlari.cariIdler);
@@ -1907,10 +1933,12 @@ function AtolyeUygulamasi() {
       araProsesMi
         ? `"${prosesAdi}" ara prosesinin otomatik tamamlanması geri alındı — hammadde ve işçilik geri alındı` +
           (iadeEdilenRez > 0 ? " · rezervasyon payları serbest bırakıldı" : "")
-        : `"${prosesAdi}" için ${atama.miktar} adetlik teslim alma işlemi geri alındı — hammadde ve işçilik geri alındı` +
+        : (zatenGeriAlinmis
+            ? `"${prosesAdi}" için ${atama.miktar} adetlik teslim zaten geri alınmıştı (önceki denemede ya da başka cihazdan) — kayıtlar geri alınmış durumda, iş yeniden teslim alınabilir`
+            : `"${prosesAdi}" için ${atama.miktar} adetlik teslim alma işlemi geri alındı — hammadde ve işçilik geri alındı`) +
           (iadeEdilenRez > 0 ? " · rezervasyon payları serbest bırakıldı" : "")
     );
-  }, [faturalar, uretim, stok, cariler, siparisler, stokRezervasyonlari, showToast, muhasebe, koliler, fisDefterindeIptal]);
+  }, [faturalar, uretim, stok, cariler, siparisler, stokRezervasyonlari, showToast, muhasebe, koliler, fisDefterindeIptal, bulutDegisikligiUygula]);
 
   // Bir üretim siparişini siler; bu üretime bağlı (Tedarik Planlama ile oluşmuş) bir satış kalemi varsa
   // o kalemin planlama referansını temizleyerek yeniden planlanabilir hale getirir.
@@ -4067,7 +4095,9 @@ function AtolyeUygulamasi() {
     sonuc.silinenCariKayitlari.forEach(({ cari: c, hareket: h }) => gunlukYaz(`Fiş iptal — cari satırı: ${c.unvan} ${h.yon || ""} ${h.tutar || 0}`, "cari", { fisNo: sunucuFisi.fisNo }));
     gunlukYaz(`Fiş iptal edildi: ${sunucuFisi.fisNo}${sunucuFisi.bagliFis ? ` + ${sunucuFisi.bagliFis}` : ""}`, "stok",
       { fisNo: sunucuFisi.fisNo, bagliFisNo: sunucuFisi.bagliFis || null, stokHareketi: sonuc.silinenStok, cariHareketi: sonuc.silinenCari, kasaHareketi: kasaSilinen.length });
-    showToast(`"${sunucuFisi.fisNo}" iptal edildi${sunucuFisi.bagliFis ? ` (bağlı ${sunucuFisi.bagliFis} de)` : ""} — `
+    // v1.744.41: sunucu "zaten iptal" dediyse bu işlem yeni bir şey değiştirmedi — ileti bunu söyler (satırlar ekrandan yine kalkar:
+    // sunucuda da iptaller).
+    showToast(`"${sunucuFisi.fisNo}" ${iptalYaniti && iptalYaniti.zatenIptal ? "zaten iptal edilmişti (başka cihazdan ya da önceki denemede) — ekran güncellendi" : "iptal edildi"}${sunucuFisi.bagliFis ? ` (bağlı ${sunucuFisi.bagliFis} de)` : ""} — `
       + [sonuc.silinenStok ? `${sonuc.silinenStok} stok` : "", sonuc.silinenCari ? `${sonuc.silinenCari} cari` : "", kasaSilinen.length ? `${kasaSilinen.length} kasa` : ""].filter(Boolean).join(", ") + " satırı");
     return true;
   }, [faturalar, stok, cariler, siparisler, uretim, muhasebe, koliler, showToast, aktifKullanici]);

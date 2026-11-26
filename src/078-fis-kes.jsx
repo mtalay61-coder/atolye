@@ -143,6 +143,13 @@ async function fisKesGonder(yuk) {
   fisKarsilananDuzeltmeBildir(r, "fis_kes");
   return r;
 }
+// TOPLU İPTAL YANITI "HİÇBİR ŞEY DEĞİŞMEDİ" Mİ (v1.744.41, saf): `fis_iptal_toplu` → { fisler: [{ fisNo, zatenIptal, … }] }. Bütün
+// fişler çağrıdan ÖNCE iptaldiyse true (boş / tanınmayan yanıt → false: eski sunucu, olağan yol).
+function fisIptalHepsiZatenIptal(yanit) {
+  const f = yanit && Array.isArray(yanit.fisler) ? yanit.fisler : null;
+  return !!f && f.length > 0 && f.every((x) => x && x.zatenIptal === true);
+}
+
 async function fisIptalGonder(no, sebep, alt) {
   const r = await supabaseIstek("rpc/fis_iptal", { method: "POST", body: JSON.stringify({ p: { no, sebep: sebep || null, ...(alt ? { alt } : {}), istemci: fisIstemciBilgisi() } }) });
   fisKarsilananDuzeltmeBildir(r, "fis_iptal");
