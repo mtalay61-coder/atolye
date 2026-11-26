@@ -202,12 +202,12 @@ Kaynak: ekran sınamalarının (stok, kasa, cari virman) gerçekten gönderdiği
 | T | yanıt alındıktan sonra aynı istek | 15/15 `zatenVar`, aynı fiş no, sıfır yeni satır |
 | Y | **yanıt kaybı**: ilk işlem sunucuda COMMIT, yanıt atılır; aynı istek kimliğiyle yeniden | 15/15 `zatenVar`; fiş/hareket sayısı ilk gönderimdekiyle aynı (ikinci fiş yok) |
 | E | aynı isteğin iki eşzamanlı kopyası | 15/15 tek fiş |
-| İ | iptal (Yönetici) → stok, cari bakiye, **kasa Giriş−Çıkış bakiyesi** ve kasa özeti (md5) başlangıçta; ikinci iptal etkisiz | 15/15 |
-| İ' | fişi kesen silme yetkisiz personel (yük 15, Ayşe) iptal edemez | 42501 "yetkiniz yok (stok: silme)", bakiye değişmedi |
+| İ | Yönetici iptali kabul; stok, cari bakiye, **kasa Giriş−Çıkış bakiyesi** ve kasa özeti (md5) başlangıçta; ikinci iptal hiçbir kaydı değiştirmez (tam satır özeti) | 15/15 (ör. kasa başlangıç boş → fişli K1=1000 → iptal sonrası boş; stok Siyah/40=5, /41=3 → 0) |
+| İ' | fişi kesen silme yetkisiz personel (yük 15, Ayşe) iptal edemez | 42501 "yetkiniz yok (stok: silme)"; 7 tablonun tam satır özeti ve satır sayıları red öncesiyle AYNI; bakiye fişli hâlinde |
 | H | yazılan her tabloya AFTER INSERT hata → hiçbir satır kalmamalı | tüm yüklerde tam geri alma |
 
-Toplam: **normal 199 geçti · 0 kaldı · 0 atlandı.** (İlk koşuda 1 kalan vardı: iptal fişi kesen personelle denenmişti — iptal ayrı yetki;
-düzeltme test beklentisinde, kod değişmedi.)
+Toplam: **normal 231 geçti · 0 kaldı · 0 yük atlandı** (`729540b`). (İlk koşuda 1 kalan: iptal fişi kesen personelle denenmişti — iptal ayrı
+yetki; düzeltme test beklentisinde, uygulama kodu değişmedi.)
 
 **Bozma kipi** (`BOZMA=1`, yalnız atılabilir kopyalarda): `fis_kes`'in istek kimliği araması (`… where f.istek = v_istek`) `where false`
 yapıldı. Sonuç 105 geçti · 31 kaldı — T ve Y'nin `zatenVar` denetimleri beklendiği gibi KIRMIZI (test bozmayı görüyor). İkinci katman: tekil
@@ -215,7 +215,19 @@ dizin `stk_fis_istek (istek) WHERE istek IS NOT NULL` ikinci fişi yine engelled
 **Normal taban değişmedi:** şablonun `fis_kes` md5'i koşu başında ve sonunda `d5615b1136ec5b7d8cdd475c2a59543e` (= canlı 25 CSV'deki md5);
 normal kipte her kopyanın md5'i şablonla aynı denetlendi; bozuk kopyalar silindi.
 
+İki koruma AYRI değerlendirilir: (1) **istek kimliği araması** — aynı istek önceki sonucu (`zatenVar`, aynı fiş no) hatasız döndürür; istemci
+bekleyen yazmayı başarılı sayıp siler. (2) **tekil dizin** — yalnız son savunma: ikinci fişi engeller ama 23505 hatasıyla; arama bozulsaydı
+istemci bunu başarısızlık görür, yazma bekleyende kalır ve tekrar dener (veri bozulmaz, kullanıcı hata görür). Normal tabanda (1) çalışıyor.
+
+**Ekran sınamaları (birleşik istemci 1.744.40):** ekran-stok 24/24, ekran-kasa 29/29, ekran-cari-virman 29/29. **ekran-geri-donus-cvr
+ATLANDI** — eski istemci (1.744.34) ile yazılmış bir geri dönüş uyumluluğu sınaması; yeni istemciyle koşunca 2 geçti / 7 kaldı, bu sonuç
+geçerli sayılmadı. Geri dönüş uyumluluğu yayın paketinde dayanak yapılacaksa 1.744.34 istemcisiyle ayrıca koşulmalı.
+
 **B3b kanıtı (yan sonuç):** yalnız stok yetkili Ayşe Cari virmanı fişi KESEBİLDİ (`fis_kes` "herhangi bir modül" kuralı, G-25 sınıfı).
+
+## 6. Regresyon (kosu.sh, 275 senaryo)
+B1 ucu `b282463`: paralel koşuda 274 AYNI + `recete-genis` FARKLI (yalnız `zoom 1.1 → 1`, zamanlama); tek başına yeniden koşunca AYNI → 275/275.
+B2 ucu `34377d7` 275/275 · birleşik `af8c2a2` 275/275 (sonraki `a764abb`/`3174e76` yalnız test ve senaryo ekledi, tam regresyon yeniden koşulmadı).
 
 ## 4. Sıradaki adımlar
 1. 25 / 25b CSV'leri → tam canlı yapı (`yapi-hizala.py` bütün nesnelere genişletilecek) → `inc_taban` yeniden; `yerel-uyum.sql` kalkar.
