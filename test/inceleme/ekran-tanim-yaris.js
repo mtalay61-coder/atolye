@@ -41,6 +41,7 @@ const renkAdi = async (sayfa, eski, yeni) => { const kutu = sayfa.locator(`input
   const A = await ekranAc(DB, {});
   const B = await ekranAc(DB, { mudahale: mudahaleB });
   B.sayfa.on("dialog", (d) => d.accept());
+  if (process.env.AYIKLA) B.sayfa.on("console", (m) => { const x = m.text(); if (/Tanımlar|çakışma/i.test(x)) console.log("  B konsol:", x.slice(0, 300)); });
   const surum = await A.sayfa.evaluate(() => (document.body.innerText.match(/v1\.\d+\.\d+/) || [""])[0]);
   console.log(`ekran-tanim-yaris · ${DB} · ${SENARYO} · ${YARIS ? "YARIŞ (B'nin yazması A'dan sonra varır)" : "KONTROL (sıralı)"} · istemci ${surum}`);
   await renkSekmesi(A.sayfa); await renkSekmesi(B.sayfa);
@@ -67,33 +68,67 @@ const renkAdi = async (sayfa, eski, yeni) => { const kutu = sayfa.locator(`input
     k_("renk kodları (kod) tekil", tekil("kod"), true);
     k_("barkod kodları (barkodKodu) tekil", tekil("bk"), true);
     k_("iki yeni rengin ikisi de kodlu", kodlar.filter((x) => ["Kırmızı", "Lacivert"].includes(x.ad)).every((x) => x.kod && x.bk), true);
+  } else if (SENARYO === "ad_yaris") {
+    // B1 + B2 BİRLİKTE (1.744.40): renk ADI artık Tanımlar yazmasıyla değil sunucu işlemiyle (tanim_renk_ad_degistir) değişir — B2'nin
+    // çakışma şeridi bu yolda devreye girmez; koruma sunucuda: ilk gelen uygulanır, ikinci istek "eski ad" tutmadığı için KR021 ile
+    // REDDEDİLİR (sessiz ezme yok, ikinci cihaza açık ileti). B önce, A sonra değiştirir (bekletme yalnız Tanımlar yazmasında; RPC beklemez).
+    await renkAdi(B.sayfa, "Vizon Yılan", "Vizon Rugan"); await B.sayfa.waitForTimeout(3000);
+    await renkAdi(A.sayfa, "Vizon Yılan", "Vizon Deri"); await A.sayfa.waitForTimeout(1200);
+    const toastA = await toastlar(A.sayfa);
+    const retA = (A.k.gunluk || []).filter((x) => /tanim_renk_ad_degistir/.test(x.yol)).map((x) => `${x.durum}:${x.kod || ""}`);
+    console.log(`  A'nın ad isteği: ${retA.join(",")} · A bildirimi: ${toastA.slice(0, 200)}`);
+    k_("A'nın isteği sunucuda KR021 ile reddedildi", retA.some((x) => /KR021/.test(x)), true);
+    k_("ilk gelen (B) uygulandı, ikinci (A) EZMEDİ", await sunucuRenkleri(), ["Siyah", "Vizon Rugan"]);
+    k_("A'ya açık ret iletisi (KR021)", /bu arada değişmiş/.test(toastA), true);
+    k_("kalem / bağ kontrolü: sipariş kalemleri yeni adda", (await k.sorgu(`select array(select distinct renk from public.siparis_kalemleri order by 1) as a`))[0].a, ["1054 - Siyah/Vizon Rugan"]);
   } else {
-    await isle(() => renkAdi(B.sayfa, "Vizon Yılan", "Vizon Rugan"), () => renkAdi(A.sayfa, "Vizon Yılan", "Vizon Deri"));
-    console.log(`  B'nin bekletilen yazması: ${tutulan.join(",") || "yok"}`);
+    // ALAN=ad (B2 tek başına: renk adı Tanımlar yazmasıyla) · ALAN=kod (renk ton kodu — B1 kuruluyken de Tanımlar yazmasıyla gider)
+    const tonKodu = async (sayfa, ad, kod) => {
+      const ok = await sayfa.evaluate(([a, kd]) => {
+        let el = [...document.querySelectorAll("input")].find((e) => e.offsetParent && e.value === a);
+        while (el && !el.querySelector('input[placeholder="örn. 101"]')) el = el.parentElement;
+        const t = el && el.querySelector('input[placeholder="örn. 101"]');
+        if (!t) return false;
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(t, kd);
+        t.dispatchEvent(new Event("input", { bubbles: true }));
+        return true;
+      }, [ad, kod]);
+      if (!ok) throw new Error(`ton kodu kutusu yok: ${ad}`);
+    };
+    const KOD = (process.env.ALAN || "ad") === "kod";
+    const vizonKodu = async () => (await k.sorgu(`select r ->> 'kod' as k from public.tanimlar, jsonb_array_elements(veri -> 'renkler') r where id = 'tekil' and r ->> 'id' = 'r-vizon'`))[0].k;
+    const D = KOD ? {
+      b: () => tonKodu(B.sayfa, "Vizon Yılan", "202"), a: () => tonKodu(A.sayfa, "Vizon Yılan", "201"),
+      sunucu: vizonKodu, aDeger: "201", bDeger: "202", yol: "renkler › Vizon Yılan › kod",
+      degis: () => tonKodu(A.sayfa, "Vizon Yılan", "203"), sonDeger: "203", yerelB: () => B.sayfa.evaluate(() => [...document.querySelectorAll("input")].some((i) => i.value === "202")),
+    } : {
+      b: () => renkAdi(B.sayfa, "Vizon Yılan", "Vizon Rugan"), a: () => renkAdi(A.sayfa, "Vizon Yılan", "Vizon Deri"),
+      sunucu: async () => (await sunucuRenkleri()).filter((x) => x !== "Siyah" && x !== "Mor").join(","), aDeger: "Vizon Deri", bDeger: "Vizon Rugan", yol: "renkler › Vizon Rugan › ad",
+      degis: () => renkAdi(A.sayfa, "Vizon Deri", "Vizon Saten"), sonDeger: "Vizon Saten", yerelB: () => B.sayfa.evaluate(() => [...document.querySelectorAll("input")].some((i) => i.value === "Vizon Rugan")),
+    };
+    await isle(D.b, D.a);
+    console.log(`  B'nin bekletilen yazması: ${tutulan.join(",") || "yok"} · alan ${KOD ? "kod" : "ad"}`);
     const seritB = await B.sayfa.evaluate(() => [...document.querySelectorAll("[data-tanim-cakisma-satir]")].map((x) => x.getAttribute("data-tanim-cakisma-satir")));
     const bekleyenB = await B.sayfa.evaluate(() => { try { return Object.keys(JSON.parse(localStorage.getItem("bekleyen:yazma") || "{}")); } catch (e) { return []; } });
-    // Yerel kopya IndexedDB'de (guvenliYaz); ekrandaki Tanımlar listesi bellekteki hâli gösterir.
-    const yerelB = await B.sayfa.evaluate(() => ["Siyah", "Vizon Rugan", "Vizon Deri", "Vizon Yılan"].filter((a) => [...document.querySelectorAll("input")].some((i) => i.value === a)));
-    k_("sunucuda A'nın değeri (B sessizce ezmedi)", await sunucuRenkleri(), ["Siyah", "Vizon Deri"]);
-    k_("B'de çakışma şeridi: hangi öğe", seritB, ["renkler › Vizon Rugan › ad"]);
+    k_("sunucuda A'nın değeri (B sessizce ezmedi)", await D.sunucu(), D.aDeger);
+    k_("B'de çakışma şeridi: hangi öğe", seritB, [D.yol]);
     k_("B'nin değişikliği bekleyen defterde (kaybolmadı)", bekleyenB.includes("tanimlar:data"), true);
-    k_("B'nin yerel Tanımlar'ı kendi değerini koruyor", yerelB, ["Siyah", "Vizon Rugan"]);
+    k_("B'nin yerel Tanımlar'ı kendi değerini koruyor", await D.yerelB(), true);
     // KARAR VERİLİRKEN ÜÇÜNCÜ YAZMA (kullanıcı, 27 Kasım): onay yalnız GÖRÜLEN çakışmayı çözer.
-    //   karar_ucuncu  — A bu arada başka bir renk ("Mor") ekler → B onaylayınca Mor KALIR, yalnız çakışan ad B'nin olur.
-    //   karar_degisti — A bu arada AYNI alanı yeniden değiştirir ("Vizon Saten") → B'nin onayı geçersiz: sunucu A'nın son değerini
-    //                   korur, B'ye YENİDEN sorulur (şeritte sunucu değeri "Vizon Saten").
+    //   karar_ucuncu  — A bu arada başka bir renk ("Mor") ekler → B onaylayınca Mor KALIR, yalnız çakışan alan B'nin olur.
+    //   karar_degisti — A bu arada AYNI alanı yeniden değiştirir → B'nin onayı geçersiz: sunucu A'nın son değerini korur, B'ye YENİDEN sorulur.
     if (SENARYO === "karar_ucuncu") { await renkEkle(A.sayfa, "Mor"); await A.sayfa.waitForTimeout(5000); }
-    if (SENARYO === "karar_degisti") { await renkAdi(A.sayfa, "Vizon Deri", "Vizon Saten"); await A.sayfa.waitForTimeout(5000); }
+    if (SENARYO === "karar_degisti") { await D.degis(); await A.sayfa.waitForTimeout(5000); }
     if (seritB.length) {
       await B.sayfa.locator("[data-tanim-cakisma-benim]").first().click();
       await B.sayfa.waitForTimeout(8000);
       if (SENARYO === "karar_degisti") {
-        k_("karar sırasında aynı alan yeniden değişti → sunucuda A'nın SON değeri korundu", await sunucuRenkleri(), ["Siyah", "Vizon Saten"]);
+        k_("karar sırasında aynı alan yeniden değişti → sunucuda A'nın SON değeri korundu", await D.sunucu(), D.sonDeger);
         const yeniden = await B.sayfa.evaluate(() => [...document.querySelectorAll("[data-tanim-cakisma-satir]")].map((x) => x.innerText.replace(/\s+/g, " ")));
-        k_("B'ye yeniden soruldu (şeritte yeni sunucu değeri)", yeniden.length === 1 && /Vizon Saten/.test(yeniden[0]), true);
+        k_("B'ye yeniden soruldu (şeritte yeni sunucu değeri)", yeniden.length === 1 && yeniden[0].includes(D.sonDeger), true);
       } else {
-        k_("'Benimkini uygula' → sunucuda B'nin değeri" + (SENARYO === "karar_ucuncu" ? ", A'nın bu arada eklediği Mor KORUNDU" : ""), await sunucuRenkleri(),
-          SENARYO === "karar_ucuncu" ? ["Mor", "Siyah", "Vizon Rugan"] : ["Siyah", "Vizon Rugan"]);
+        k_("'Benimkini uygula' → sunucuda B'nin değeri", await D.sunucu(), D.bDeger);
+        if (SENARYO === "karar_ucuncu") k_("A'nın bu arada eklediği Mor KORUNDU", (await sunucuRenkleri()).includes("Mor"), true);
         k_("çakışma şeridi kapandı", await B.sayfa.locator("[data-tanim-cakisma-satir]").count(), 0);
       }
     }
