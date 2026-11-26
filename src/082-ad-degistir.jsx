@@ -201,7 +201,9 @@ const hammaddeRenkAdDegistir = useCallback((renkId, yeniAdHam) => {
   // var olmaya başlıyordu — eşleşme kurulamadığı için üretim malzemeyi bulamıyor.
   //
   // Kombinasyonu olmayan bir rengi yeniden adlandırmak, hiçbir şeyi güncellemiyordu.
-  const tumEslesmeler = [...etiketEslesmeleri, { eskiEtiket: eskiAd, yeniEtiket: yeniAd }];
+  // `duz`: rengin KENDİ adı (kimlikle eşleşir, kimlik damgalanır). Kombinasyon etiketleri ("1054 - KAHVE SÜET/VİZON YILAN") YALNIZ
+  // ADLA eşleşir ve renk kimliğiyle DAMGALANMAZ — bkz. aşağıdaki not (v1.744.37).
+  const tumEslesmeler = [...etiketEslesmeleri.map((e) => ({ ...e, duz: false })), { eskiEtiket: eskiAd, yeniEtiket: yeniAd, duz: true }];
 
   // Eşleştirme BÜYÜK/KÜÇÜK HARF ve BOŞLUK farkını yok sayar.
   //
@@ -232,7 +234,7 @@ const hammaddeRenkAdDegistir = useCallback((renkId, yeniAdHam) => {
       let nextRecete = p.recete;
       let nextHareketler = p.hareketler;
       let nextHarici = p.hariciBarkodlar;
-      tumEslesmeler.forEach(({ eskiEtiket, yeniEtiket }) => {
+      tumEslesmeler.forEach(({ eskiEtiket, yeniEtiket, duz }) => {
         // KİMLİK ÖNCELİKLİ EŞLEŞTİRME.
         //
         // Kayıt damgalanmışsa kimlikle bulunur: ad ne kadar bozuk olursa olsun doğru kaydı
@@ -241,36 +243,15 @@ const hammaddeRenkAdDegistir = useCallback((renkId, yeniAdHam) => {
         // Bu, "tanımda T-283 ama stokta t-28" gibi kopuklukların bir daha oluşmamasını sağlar:
         // kimlik metinden bağımsızdır.
         const es = (deger) => normalize(deger) === normalize(eskiEtiket);
-        const kimlikEs = (v) => (v.renkId ? v.renkId === renkId : es(v.renk));
-
-        if (nextVariants.some((v) => kimlikEs(v))) {
-          degisti = true;
-          nextVariants = nextVariants.map((v) =>
-            kimlikEs(v) ? { ...v, renk: yeniEtiket, renkId: renkId } : v
-          );
-        }
+        // Varyant ve reçete eşleşmesi saf yardımcıda (046-renk-ad-eslesme.jsx), birim testi oradan sınar.
+        const vr = renkAdVaryantReceteUygula(nextVariants, nextRecete, { eskiEtiket, yeniEtiket, duz }, renkId);
+        if (vr.degisti) { degisti = true; nextVariants = vr.variants; nextRecete = vr.recete; }
         // Görsel anahtarı da farklı yazımda olabilir; tam eşleşme yerine tarayarak bulunur.
         const gorselAnahtar = Object.keys(nextRenkResimleri || {}).find((k) => es(k));
         if (gorselAnahtar) {
           degisti = true;
           const { [gorselAnahtar]: gorsel, ...kalan } = nextRenkResimleri;
           nextRenkResimleri = { ...kalan, [yeniEtiket]: gorsel };
-        }
-        // Reçetede renk İKİ ALANDA geçiyor: mamulRenk (hangi model rengi için) ve
-        // renk (hangi hammadde rengi kullanılacak). İkincisi atlanınca üretim, adı
-        // değişmiş hammaddeyi bulamıyordu.
-        // Reçetede iki ayrı renk alanı var; her biri kendi kimliğiyle eşleştirilir.
-        const receteHamEs = (r) => (r.renkId ? r.renkId === renkId : es(r.renk));
-        const receteMamulEs = (r) => (r.mamulRenkId ? r.mamulRenkId === renkId : es(r.mamulRenk));
-        if ((nextRecete || []).some((r) => receteMamulEs(r) || receteHamEs(r))) {
-          degisti = true;
-          nextRecete = nextRecete.map((r) => ({
-            ...r,
-            mamulRenk: receteMamulEs(r) ? yeniEtiket : r.mamulRenk,
-            mamulRenkId: receteMamulEs(r) ? renkId : r.mamulRenkId,
-            renk: receteHamEs(r) ? yeniEtiket : r.renk,
-            renkId: receteHamEs(r) ? renkId : r.renkId,
-          }));
         }
         // Stok hareketleri de güncellenmeli: aksi halde geçmiş, artık var olmayan bir
         // renk adına bakar ve varyant eşleşmesi kurulamaz (defter tutmaz).
