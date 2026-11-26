@@ -124,7 +124,7 @@ Beklenen:
 **T2 — İki cihaz aynı rengin adını birlikte değiştirir:**
 1. A ve B Tanımlar'da "DENEME Lacivert" düzenleme kutusunu açar.
 2. A "DENEME Gece" yapar ve kaydeder.
-3. B, sayfayı yenilemeden "DENEME Koyu" yapar ve kaydeder.
+3. B, sayfayı yenilemeden "DENEME Koyu" yapar ve A'dan sonraki 8 saniye içinde kaydeder (8 sn'lik yoklama B'nin kutusunu tazelerse sınama "sınanamadı" sayılır; yerelde `ad_yaris` 4/4).
 
 Beklenen:
 - B'de "ad bu arada değişmiş" (KR021) iletisi çıkar, hiçbir şey değişmez;
