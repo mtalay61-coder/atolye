@@ -190,7 +190,7 @@ tabloya yazma tamamlanamaz (b1-sina B-2 ilk denemesi: kilit zaman aşımı `whil
 uzun işlemde (ör. büyük `stk_yaz`, ad değişikliği) bütün cihazların yazması bekler; kilitlenme (deadlock) ihtimalini artırır. Öneri: tablo
 başına satır ya da sayacı işlem sonunda tek seferde (ayrı karar; canlıda ölçülmedi).
 
-## 5. Atomiklik / tekrar / yanıt kaybı / iptal (28 Kasım; yalnız YEREL, canlıyla hizalı taban `inc_ekran_taban`)
+## 5. Atomiklik / tekrar / yanıt kaybı / iptal (yalnız YEREL, canlıyla hizalı taban `inc_ekran_taban`)
 Kaynak: ekran sınamalarının (stok, kasa, cari virman) gerçekten gönderdiği 19 `fis_kes` isteği (`KOPRU_KAYIT`) → 15 tekil istek kimliği
 (Giriş×5, Çıkış, Gelir×3, Gider×2, Tahsilat, Cari virmanı×3). Her yük atılabilir kopyada (`inc_atom_*`) koşar, iş bitince silinir.
 İstemci gerçek kullanıcı yetkisiyle bağlanır: LOGIN rolü `inc_istemci` (süper kullanıcı değil, NOINHERIT) → `SET LOCAL ROLE authenticated`
