@@ -556,7 +556,7 @@ async function supabaseIstek(yol, secenekler = {}, tekrarMi = false, islemDeneme
     let islemKodu = null;
     try { islemKodu = JSON.parse(metin).code; } catch (e) { /* geçersiz yanıt: normal hata */ }
     // Bu SQLSTATE'lerde transaction tamamen geri alınmıştır. Aynı istek kimliğiyle sınırlı tekrar güvenlidir.
-    const atomikRpc = /^rpc\/(?:fis_(?:kes|iptal|iptal_toplu|bag_coz)|kas_yaz|alt_yaz|stk_yaz)(?:\?|$)/.test(yol);
+    const atomikRpc = /^rpc\/(?:fis_(?:kes|iptal|iptal_toplu|bag_coz)|kas_yaz|alt_yaz|stk_yaz|tanim_renk_ad_degistir)(?:\?|$)/.test(yol);
     if (atomikRpc && (islemKodu === "40P01" || islemKodu === "40001") && islemDenemesi < 2) {
       await new Promise((r) => setTimeout(r, 40 * (islemDenemesi + 1)));
       return supabaseIstek(yol, secenekler, tekrarMi, islemDenemesi + 1);

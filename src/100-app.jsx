@@ -3014,7 +3014,7 @@ function AtolyeUygulamasi() {
     tanimsizOlcuCevir,
   } = useAdDegistirme({
     tanimlar, stok, siparisler, uretim, koliler, stokRezervasyonlari, showToast, setStok, setSiparisler, setUretim, saveTanimlar, saveKoliler,
-    setTanimlar, setKoliler, setStokRezervasyonlari, cariler,
+    setTanimlar, setKoliler, setStokRezervasyonlari, cariler, buluttanTazele: bulutDegisikligiUygula,
   });
 
   // TANIMLARI KODLU YAZ (26 Eylül, v1.467.0 — kullanıcı: "renk kodunu otomatik veriyor, burada
