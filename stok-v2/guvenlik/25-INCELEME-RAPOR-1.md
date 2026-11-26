@@ -176,9 +176,10 @@ karar_degisti (kod) 6/6. Birleşik dalın tam regresyonu (`af8c2a2`) 275/275 AYN
 - **Diğer tek satırlık tablolar** (muhasebe, koliler v1, teklifler, faturalar, görevler, modeller…): 030 üç yönlü birleştirme aynı
   "iki taraf da değiştiyse yerel sessizce kazanır" kuralını taşıyor; B2 yalnız Tanımlar. Liste v2 / kasa v2'ye geçmiş kurulumda bunlar
   satır satır sunucu işlemiyle yazıldığı için etki sınırlı — hangilerinin geçtiği canlı `stk_ayar.liste_tablolari` ile belirlenecek.
-- **B3** (yetki): geçici yetki varsayımları (`test/inceleme/yerel-uyum.sql`) kaldırılıp CANLI yetkilerle yeniden ölçülecek; "listede mi"
-  ve "işlem yetkisi var mı" ayrı ayrı. Canlı yapı CSV'leri (25 / 25b 2. sürüm) HENÜZ GELMEDİ — taban hizalaması ve B1 / B2 yeniden
-  koşusu ona bağlı.
+- **B3** (yetki) ÖLÇÜLDÜ, DÜZELTİLMEDİ: geçici varsayımlar kaldırıldı, canlı yetki/politika/tetikle hizalı tabanda (`inc_tam`) ölçüldü —
+  §5'te B3a (doğrudan tablo) ve B3b (RPC genişliği) ayrı bulgular.
+- **Sınanmayan**: iptal → yeniden teslim, kısmi teslim, tamirde çift stok / çift ödeme; eski sekme (sürüm kapısı kapalı) bayat kayıt;
+  site portalı (`portal_giris` konumsal insert); depolama kovalarının herkese açık olması (Uygulama, gorseller); Y1'in canlı ölçümü.
 - **Gizli değer tarayıcısı** (`gizli-tara.py`) YARDIMCI kontroldür: bilinen biçimleri (anahtar, jeton, parola ataması, yüksek entropili
   dize, e-posta) yakalar; biçimi tanınmayan bir sır kaçabilir. "Temiz" çıkması "kesinlikle sır yok" demek DEĞİLDİR; canlı metin depoya
   girmeden önce elle de bakılır, ham canlı CSV depoya konmaz.
@@ -188,6 +189,33 @@ karar_degisti (kod) 6/6. Birleşik dalın tam regresyonu (`af8c2a2`) 275/275 AYN
 tabloya yazma tamamlanamaz (b1-sina B-2 ilk denemesi: kilit zaman aşımı `while locking tuple … in relation "degisiklik"`). Veri bozmaz ama
 uzun işlemde (ör. büyük `stk_yaz`, ad değişikliği) bütün cihazların yazması bekler; kilitlenme (deadlock) ihtimalini artırır. Öneri: tablo
 başına satır ya da sayacı işlem sonunda tek seferde (ayrı karar; canlıda ölçülmedi).
+
+## 5. Atomiklik / tekrar / yanıt kaybı / iptal (28 Kasım; yalnız YEREL, canlıyla hizalı taban `inc_ekran_taban`)
+Kaynak: ekran sınamalarının (stok, kasa, cari virman) gerçekten gönderdiği 19 `fis_kes` isteği (`KOPRU_KAYIT`) → 15 tekil istek kimliği
+(Giriş×5, Çıkış, Gelir×3, Gider×2, Tahsilat, Cari virmanı×3). Her yük atılabilir kopyada (`inc_atom_*`) koşar, iş bitince silinir.
+İstemci gerçek kullanıcı yetkisiyle bağlanır: LOGIN rolü `inc_istemci` (süper kullanıcı değil, NOINHERIT) → `SET LOCAL ROLE authenticated`
++ JWT talepleri; her çağrıda `current_user=authenticated`, süper kullanıcı değil denetlenir. Ölçüm ayrı gözlemci bağlantısından.
+
+| Adım | Ne | Sonuç (normal kip) |
+|---|---|---|
+| N | fişi kes; satır sayıları + bakiye değişti mi | 15/15 — her yükte bakiye gerçekten değişti (ör. kasa K1=1000 / −250 / 400; cari alıcı=33 satıcı=−33) |
+| T | yanıt alındıktan sonra aynı istek | 15/15 `zatenVar`, aynı fiş no, sıfır yeni satır |
+| Y | **yanıt kaybı**: ilk işlem sunucuda COMMIT, yanıt atılır; aynı istek kimliğiyle yeniden | 15/15 `zatenVar`; fiş/hareket sayısı ilk gönderimdekiyle aynı (ikinci fiş yok) |
+| E | aynı isteğin iki eşzamanlı kopyası | 15/15 tek fiş |
+| İ | iptal (Yönetici) → stok, cari bakiye, **kasa Giriş−Çıkış bakiyesi** ve kasa özeti (md5) başlangıçta; ikinci iptal etkisiz | 15/15 |
+| İ' | fişi kesen silme yetkisiz personel (yük 15, Ayşe) iptal edemez | 42501 "yetkiniz yok (stok: silme)", bakiye değişmedi |
+| H | yazılan her tabloya AFTER INSERT hata → hiçbir satır kalmamalı | tüm yüklerde tam geri alma |
+
+Toplam: **normal 199 geçti · 0 kaldı · 0 atlandı.** (İlk koşuda 1 kalan vardı: iptal fişi kesen personelle denenmişti — iptal ayrı yetki;
+düzeltme test beklentisinde, kod değişmedi.)
+
+**Bozma kipi** (`BOZMA=1`, yalnız atılabilir kopyalarda): `fis_kes`'in istek kimliği araması (`… where f.istek = v_istek`) `where false`
+yapıldı. Sonuç 105 geçti · 31 kaldı — T ve Y'nin `zatenVar` denetimleri beklendiği gibi KIRMIZI (test bozmayı görüyor). İkinci katman: tekil
+dizin `stk_fis_istek (istek) WHERE istek IS NOT NULL` ikinci fişi yine engelledi (`duplicate key … "stk_fis_istek"`, fiş sayısı 1); E yeşil.
+**Normal taban değişmedi:** şablonun `fis_kes` md5'i koşu başında ve sonunda `d5615b1136ec5b7d8cdd475c2a59543e` (= canlı 25 CSV'deki md5);
+normal kipte her kopyanın md5'i şablonla aynı denetlendi; bozuk kopyalar silindi.
+
+**B3b kanıtı (yan sonuç):** yalnız stok yetkili Ayşe Cari virmanı fişi KESEBİLDİ (`fis_kes` "herhangi bir modül" kuralı, G-25 sınıfı).
 
 ## 4. Sıradaki adımlar
 1. 25 / 25b CSV'leri → tam canlı yapı (`yapi-hizala.py` bütün nesnelere genişletilecek) → `inc_taban` yeniden; `yerel-uyum.sql` kalkar.
