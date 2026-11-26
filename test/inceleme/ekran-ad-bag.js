@@ -66,7 +66,8 @@ const k_ = (ad, g, b) => { const ok = JSON.stringify(g) === JSON.stringify(b); i
   if (!(await kutu.count())) throw new Error("Vizon Yılan kutusu bulunamadı");
   await kutu.fill("Vizon Deri"); await kutu.press("Enter");
   await sayfa.waitForTimeout(1500);
-  console.log("  bildirim:", (await toastlar(sayfa)).slice(0, 200));
+  const sonBildirim = await toastlar(sayfa);
+  console.log("  bildirim:", sonBildirim.slice(0, 200));
   await sayfa.waitForTimeout(3000);
   dondur = false;
   await sayfa.waitForTimeout(20000);
@@ -74,6 +75,15 @@ const k_ = (ad, g, b) => { const ok = JSON.stringify(g) === JSON.stringify(b); i
   await sayfa.waitForTimeout(3000);
 
   const sonra = await bag();
+  // KURULUMSUZ (1.744.38, B1 2. tur): sunucuda tanim_renk_ad_degistir yok → istemci eski yola DÖNMEZ; hiçbir şey değişmez, açık ileti.
+  if (process.env.KURULUMSUZ === "1") {
+    const renkler = (await k.sorgu(`select id, ad from public.stk_renk where id in ('r-vizon', 'k-1054') order by id`)).map((x) => `${x.id}=${x.ad}`);
+    k_("kurulumsuz: Tanımlar adı DEĞİŞMEDİ", renkler, ["k-1054=1054 - Siyah/Vizon Yılan", "r-vizon=Vizon Yılan"]);
+    k_("kurulumsuz: kalemler değişmedi", sonra.map((x) => `${x.kalem}:${x.renk}:${x.bagli}`), ["SAT-9001/40:1054 - Siyah/Vizon Yılan:true", "SAT-9001/41:1054 - Siyah/Vizon Yılan:true", "SAT-9002/40:1054 - Siyah/Vizon Yılan:true"]);
+    k_("kurulumsuz: açık ileti", /kurulumu yok/.test(sonBildirim), true);
+    console.log(`── ekran-ad-bag (kurulumsuz): ${gecen} geçti · ${kalan} kaldı ──`);
+    await e.tarayici.close(); process.exit(kalan ? 1 : 0);
+  }
   console.log("  sonra:", JSON.stringify(sonra));
   const renkler = (await k.sorgu(`select id, ad from public.stk_renk where id in ('r-vizon', 'k-1054') order by id`)).map((x) => `${x.id}=${x.ad}`);
   k_("Tanımlar adı değişti (stk_renk)", renkler, ["k-1054=1054 - Siyah/Vizon Deri", "r-vizon=Vizon Deri"]);

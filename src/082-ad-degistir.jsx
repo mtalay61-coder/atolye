@@ -184,7 +184,10 @@ const hammaddeRenkAdDegistir = useCallback((renkId, yeniAdHam) => {
   // tazelemek de çözmez — tazelemeden hemen sonra başka cihaz yazabilir. Şimdi değişikliği sunucu yapar (`tanim_renk_ad_degistir`,
   // stok-v2/guvenlik/26-b1-renk-ad-degistir.sql): Tanımlar + bütün bağlar aynı işlemde, ilgili tablolar kilitli; sonra eski adla gelen
   // bayat yazmayı sunucu tetikleyicisi güncel ada çevirir. Bu cihaz yalnız sonucu buluttan TAZELER.
-  // · Sunucuda fonksiyon yoksa (SQL henüz çalıştırılmamış: PGRST202) eski yol aynen çalışır — sürüm SQL'den önce yayınlanabilir.
+  // · Sunucuda fonksiyon yoksa (SQL henüz çalıştırılmamış: PGRST202) ESKİ YOLA DÖNÜLMEZ (kullanıcı, 27 Kasım: "güvenlik düzeltmesi
+  //   yayınlandığında sunucu fonksiyonu yoksa hatalı eski yöntemle ad değiştirmeye devam etmesin"): işlem açık iletiyle durur, hiçbir
+  //   kayıt değişmez. Sunucu kurulumu (26-b1-renk-ad-degistir.sql, doğrulama 26-b1-onkosul-salt-okur.sql) YAYIN ÖNKOŞULU.
+  // · Bulut kapalıysa (yalnız yerel çalışma, tek cihaz) eski yol — orada başka cihaz yok.
   // · Bu alanlarda buluta GİTMEMİŞ yazma varsa değişiklik yapılmaz: tazeleme bekleyen yerel değişikliği ezerdi.
   if (typeof supabaseAcikMi === "function" && supabaseAcikMi() && typeof buluttanTazele === "function") {
     const bekleyen = bekleyenYazmalariOku();
@@ -199,9 +202,12 @@ const hammaddeRenkAdDegistir = useCallback((renkId, yeniAdHam) => {
         r = await supabaseIstek("rpc/tanim_renk_ad_degistir", { method: "POST", body: JSON.stringify({ p: { renk_id: renkId, yeni_ad: yeniAd, eski_ad: eskiAd } }) });
       } catch (e) {
         const m = String((e && e.message) || e);
-        // Yalnız "fonksiyon yok" eski yola düşer; ağ hatası, kural reddi (KRnnn) ya da yetki reddi DÜŞMEZ (hata iletisi istek yolunu
-        // da içerdiği için fonksiyon adına bakılmaz).
-        if (/PGRST202|Could not find the function/i.test(m) && !/KR0\d\d|yetkiniz yok/.test(m)) { eskiYol(); return; }
+        if (/PGRST202|Could not find the function/i.test(m)) {
+          showToast("Renk adı değiştirilemedi — sunucuda güvenli ad değiştirme kurulumu yok (26-b1-renk-ad-degistir.sql). "
+            + "Yönetici kurulumu yapana kadar renk adı değiştirilemez. Hiçbir kayıt değişmedi.");
+          gunlukYaz(`Renk adı değiştirilemedi (sunucu kurulumu yok): ${eskiAd} → ${yeniAd}`, "tanimlar", { renkId });
+          return;
+        }
         showToast(`Renk adı değiştirilemedi — hiçbir kayıt değişmedi. ${m.slice(0, 200)}`);
         return;
       }

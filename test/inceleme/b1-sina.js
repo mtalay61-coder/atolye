@@ -174,6 +174,76 @@ const SONRA = (ilk) => ({
     k_("D6 tekrar: ikinci istek hiçbir şeyi değiştirmedi (sürümler dahil)", JSON.stringify(f2) === JSON.stringify(f1), true);
     await a.end(); }
 
+  // ESKİ AD DEFTERİ (2. sürüm, 27 Kasım): zincir, geri dönüş, eski adın başka renge verilmesi, belirsizlik, silinmiş renk.
+  const bayatKalem = (c, id, renk) => c.query(`insert into public.siparis_kalemleri (id, siparis_id, urun_id, urun_ad, renk, beden, miktar, sira) values ($1, 'sp-inc-1', 'inc-bot', 'İnceleme Bot', $2, '40', 1, 9)`, [id, renk]);
+  const kalemRengi = async (c, id) => ((await c.query("select renk from public.siparis_kalemleri where id = $1", [id])).rows[0] || {}).renk || null;
+  const hataKodu = async (fn) => { try { await fn(); return "geçti"; } catch (e) { return `${e.code} ${String(e.message).split(" — ")[0]}`; } };
+
+  console.log("\n■ D7 — A → B → C: iki eski ad da (düz + kombinasyon) güncel C'ye bağlanır");
+  { const db = await yeniDb(); const a = await baglan(db, "ali@atolye.local");
+    await a.olarak((c) => RPC(c, DEGIS));
+    await a.olarak((c) => RPC(c, { renk_id: "r-vizon", yeni_ad: "Vizon Rugan", eski_ad: "Vizon Deri" }));
+    await a.olarak(async (c) => { await bayatKalem(c, "kl-a", ESKI); await bayatKalem(c, "kl-b", YENI); await c.query(`insert into public.uretim (id, urun_id, renk, surum) values ('ur-a', 'inc-bot', 'Vizon Yılan', 1), ('ur-b', 'inc-bot', 'vizon deri', 1)`); });
+    k_("D7 kalem A (en eski etiket) → C", await kalemRengi(a, "kl-a"), "1054 - Siyah/Vizon Rugan");
+    k_("D7 kalem B (ara etiket) → C", await kalemRengi(a, "kl-b"), "1054 - Siyah/Vizon Rugan");
+    k_("D7 üretim düz adlar → C", psql(db, "select string_agg(renk, ',' order by id) from public.uretim where id in ('ur-a','ur-b')").trim(), "Vizon Rugan,Vizon Rugan");
+    k_("D7 bağsız kalem", (await foto(a)).bagsiz, 0); await a.end(); }
+
+  console.log("\n■ D8 — A → B → A: A yeniden aynı rengin güncel adı; B ile gelen bayat kayıt A'ya bağlanır");
+  { const db = await yeniDb(); const a = await baglan(db, "ali@atolye.local");
+    await a.olarak((c) => RPC(c, DEGIS));
+    await a.olarak((c) => RPC(c, { renk_id: "r-vizon", yeni_ad: "Vizon Yılan", eski_ad: "Vizon Deri" }));
+    await a.olarak(async (c) => { await bayatKalem(c, "kl-a", ESKI); await bayatKalem(c, "kl-b", YENI); });
+    k_("D8 güncel adla gelen kalem değişmez", await kalemRengi(a, "kl-a"), ESKI);
+    k_("D8 ara adla (B) gelen bayat kalem → A", await kalemRengi(a, "kl-b"), ESKI);
+    k_("D8 bağsız kalem", (await foto(a)).bagsiz, 0); await a.end(); }
+
+  console.log("\n■ D9 — eski ad BAŞKA renge verilemez (KR026): ad değişikliğiyle de, Tanımlar'da yeni renkle de; Yönetici serbest bırakınca verilir");
+  { const db = await yeniDb(); const a = await baglan(db, "ali@atolye.local"); const ay = await baglan(db, "ayse@atolye.local");
+    await a.olarak((c) => RPC(c, DEGIS));
+    const once = await foto(a);
+    k_("D9 Siyah → 'Vizon Yılan' (sunucu fonksiyonu)", await hataKodu(() => a.olarak((c) => RPC(c, { renk_id: "r-siyah", yeni_ad: "Vizon Yılan", eski_ad: "Siyah" }))),
+      'KR026 KR026: "Vizon Yılan" başka bir rengin eski adı');
+    k_("D9 Tanımlar'a yeni renk 'vizon yılan'", await hataKodu(() => a.olarak((c) => c.query(`update public.tanimlar set veri = jsonb_set(veri, '{renkler}', (veri -> 'renkler') || '[{"id":"r-yeni","ad":"vizon yılan"}]') where id = 'tekil'`))),
+      'KR026 KR026: "vizon yılan" başka bir rengin eski adı');
+    k_("D9 retlerden sonra değişiklik yok", JSON.stringify(await foto(a)) === JSON.stringify(once), true);
+    k_("D9 personel serbest bırakamaz", await hataKodu(() => ay.olarak((c) => c.query("select public.tanim_eski_ad_serbest($1::jsonb)", [JSON.stringify({ eski_ad: "Vizon Yılan" })]))),
+      "42501 Eski renk adını yalnız Yönetici serbest bırakabilir");
+    await a.olarak((c) => c.query("select public.tanim_eski_ad_serbest($1::jsonb)", [JSON.stringify({ eski_ad: "Vizon Yılan" })]));
+    k_("D9 Yönetici serbest bıraktı → yeni renk verilebilir", await hataKodu(() => a.olarak((c) => c.query(`update public.tanimlar set veri = jsonb_set(veri, '{renkler}', (veri -> 'renkler') || '[{"id":"r-yeni","ad":"Vizon Yılan"}]') where id = 'tekil'`))), "geçti");
+    await a.olarak((c) => bayatKalem(c, "kl-y", "Vizon Yılan"));
+    k_("D9 serbest bırakılan adla gelen kayıt eski renge ÇEVRİLMEZ (yeni rengin adı)", await kalemRengi(a, "kl-y"), "Vizon Yılan");
+    await a.end(); await ay.end(); }
+
+  console.log("\n■ D10 — geçmişten kalan belirsizlik: eski ad hem başka etkin rengin adı (koruma öncesi) → KR025, sessiz eşleme YOK");
+  { const db = await yeniDb(); const a = await baglan(db, "ali@atolye.local");
+    await a.olarak((c) => RPC(c, DEGIS));
+    // koruma öncesi durumu kur: başka renge eski adı ver (jetonsuz bağlantı = yönetim; tetikleyici bakmaz)
+    psql(db, `update public.tanimlar set veri = jsonb_set(veri, '{renkler}', (veri -> 'renkler') || '[{"id":"r-yeni","ad":"Vizon Yılan"}]') where id = 'tekil'`);
+    const kalemOnce = psql(db, "select count(*) from public.siparis_kalemleri").trim();
+    k_("D10 bayat kalem reddedildi", await hataKodu(() => a.olarak((c) => bayatKalem(c, "kl-z", "Vizon Yılan"))),
+      'KR025 KR025: "Vizon Yılan" hem etkin bir rengin adı hem başka bir rengin eski adı');
+    k_("D10 kalem yazılmadı", psql(db, "select count(*) from public.siparis_kalemleri").trim(), kalemOnce);
+    // iki rengin eski adı (koruma öncesi): defteri elle kur
+    psql(db, `insert into public.tanim_ad_gecmisi (renk_id, eski_ad, eski_nrm, yeni_ad) values ('r-siyah', 'Eski Ortak', 'eski ortak', 'Siyah'), ('r-vizon', 'Eski Ortak', 'eski ortak', 'Vizon Deri')`);
+    k_("D10 iki rengin eski adı → KR025", await hataKodu(() => a.olarak((c) => bayatKalem(c, "kl-o", "Eski Ortak"))),
+      'KR025 KR025: "Eski Ortak" birden çok rengin eski adı');
+    await a.end(); }
+
+  console.log("\n■ D11 — eski adın rengi silinmiş → KR027; eski adla DURAN kaydın başka alanı (miktar) düzeltilebilir");
+  { const db = await yeniDb(); const a = await baglan(db, "ali@atolye.local");
+    psql(db, `insert into public.siparis_kalemleri (id, siparis_id, urun_id, urun_ad, renk, beden, miktar, sira) values ('kl-eski', 'sp-inc-1', 'inc-bot', 'İnceleme Bot', 'Vizon Yılan', '40', 1, 9)`);
+    psql(db, `update public.siparis_kalemleri set renk = 'Vizon Yılan' where id = 'kl-eski'`);
+    // Vizon Yılan → Deri; kl-eski düz adla, RPC onu da çevirir. Sonra rengi sil (kombinasyonuyla).
+    await a.olarak((c) => RPC(c, DEGIS));
+    psql(db, `update public.tanimlar set veri = jsonb_set(jsonb_set(veri, '{renkler}', (select jsonb_agg(r) from jsonb_array_elements(veri -> 'renkler') r where r ->> 'id' <> 'r-vizon')), '{renkKombinasyonlari}', '[]') where id = 'tekil'`);
+    // eski adla DURAN geçmiş kayıt (tetikleyicisiz kurulur — koruma öncesinden kalmış gibi)
+    psql(db, `set session_replication_role = replica; update public.siparis_kalemleri set renk = 'Vizon Yılan' where id = 'kl-eski'`);
+    k_("D11 silinmiş rengin eski adıyla yeni kayıt → KR027", await hataKodu(() => a.olarak((c) => bayatKalem(c, "kl-s", "Vizon Yılan"))),
+      'KR027 KR027: "Vizon Yılan" silinmiş ya da pasif bir rengin eski adı');
+    k_("D11 eski adla duran kaydın miktarı düzeltilebilir (renk aynı → bakılmaz)", await hataKodu(() => a.olarak((c) => c.query(`update public.siparis_kalemleri set miktar = 9, renk = 'Vizon Yılan' where id = 'kl-eski'`))), "geçti");
+    await a.end(); }
+
   // BOZMA PROVASI — korumalar kaldırılınca aynı sınamalar kırmızıya döner mi?
   console.log("\n■ B-1 — BOZMA: eski ad tetikleyicisi kaldırıldı → D2 yakalamalı");
   { const db = await yeniDb(); psql(db, "drop trigger tanim_ad_guncelle on public.siparis_kalemleri");
@@ -205,6 +275,24 @@ const SONRA = (ilk) => ({
     k_("B-2 (bozuk) eşzamanlı kalem ESKİ adda — sınama yakaladı", f.kalem.includes(`kl-es:${ESKI}:6`), true);
     k_("B-2 (bozuk) bağsız kalem VAR", f.bagsiz > 0, true);
     await a.end(); await b.end(); }
+
+  console.log("\n■ B-3 — BOZMA: eşleme ilk (sessiz) sürüme döndürüldü + eski ad koruması kaldırıldı → D10 yakalamalı");
+  { const db = await yeniDb();
+    psql(db, `drop trigger tanim_ad_gecmisi_koru on public.tanimlar;
+      create or replace function public.tanim_ad_guncel(x text) returns text language plpgsql stable security definer set search_path = public as '
+      declare n text := public.stk_nrm(x); g text;
+      begin
+        if n is null then return x; end if;
+        if exists (select 1 from public.stk_renk s where s.aktif and public.stk_nrm(s.ad) = n) then return x; end if;
+        select s.ad into g from public.tanim_ad_gecmisi h join public.stk_renk s on s.id = h.renk_id and s.aktif where h.eski_nrm = n order by h.zaman desc, h.id desc limit 1;
+        return coalesce(g, x);
+      end';`);
+    const a = await baglan(db, "ali@atolye.local");
+    await a.olarak((c) => RPC(c, DEGIS));
+    await a.olarak((c) => c.query(`update public.tanimlar set veri = jsonb_set(veri, '{renkler}', (veri -> 'renkler') || '[{"id":"r-yeni","ad":"Vizon Yılan"}]') where id = 'tekil'`));
+    const r = await hataKodu(() => a.olarak((c) => bayatKalem(c, "kl-z", "Vizon Yılan")));
+    k_("B-3 (bozuk) eski ad başka renge verildi VE bayat kalem SESSİZCE yazıldı — sınama yakaladı", r === "geçti", true);
+    await a.end(); }
 
   console.log(`\n── b1-sina: ${gecen} geçti · ${kalan} kaldı ──`);
   for (let i = 1; i <= sayac; i++) psql("postgres", `drop database if exists inc_b1_${process.pid}_${i}`);

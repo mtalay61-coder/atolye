@@ -39,7 +39,16 @@ grant select on public.tanim_ad_gecmisi to authenticated;
 drop policy if exists tanim_ad_gecmisi_okuma on public.tanim_ad_gecmisi;
 create policy tanim_ad_gecmisi_okuma on public.tanim_ad_gecmisi for select to authenticated using (true);
 
--- Bir renk metninin GÜNCEL karşılığı: etkin bir rengin adıysa kendisi; değilse en son eski adı olduğu rengin bugünkü adı; yoksa kendisi.
+-- Serbest bırakılan eski ad (Yönetici, tanim_eski_ad_serbest) artık eşlenmez ve başka renge verilebilir.
+alter table public.tanim_ad_gecmisi add column if not exists serbest boolean not null default false;
+
+-- Bir renk metninin GÜNCEL karşılığı (27 Kasım, 2. sürüm — kullanıcı: "Bayat kayıt yanlış renk kimliğine bağlanmamalı; belirsizlikte
+-- sessiz eşleme yapılmamalı"):
+--   · eski ad defterinde yoksa → kendisi (bugünkü davranış, hiçbir şey değişmez)
+--   · tek bir rengin eski adıysa ve o renk etkinse → o rengin BUGÜNKÜ adı (A → B → C: A ve B, C'ye)
+--   · aynı zamanda AYNI rengin bugünkü adıysa (A → B → A) → kendisi
+--   · başka bir etkin rengin adıysa ya da birden çok rengin eski adıysa → KR025 (belirsiz; sessizce birine bağlanmaz)
+--   · tek rengin eski adı ama o renk silinmiş / pasif → KR027 (bağlanacak renk yok)
 create or replace function public.tanim_ad_guncel(x text)
 returns text
 language plpgsql
@@ -49,16 +58,26 @@ set search_path = public
 as $$
 declare
   n text := public.stk_nrm(x);
+  v_ids text[];
+  v_aktif text[];
   g text;
 begin
   if n is null then return x; end if;
-  if exists (select 1 from public.stk_renk s where s.aktif and public.stk_nrm(s.ad) = n) then return x; end if;
-  select s.ad into g
-    from public.tanim_ad_gecmisi h join public.stk_renk s on s.id = h.renk_id and s.aktif
-   where h.eski_nrm = n
-   order by h.zaman desc, h.id desc
-   limit 1;
-  return coalesce(g, x);
+  select array_agg(distinct h.renk_id) into v_ids from public.tanim_ad_gecmisi h where h.eski_nrm = n and not h.serbest;
+  if v_ids is null then return x; end if;
+  select array_agg(distinct s.id) into v_aktif from public.stk_renk s where s.aktif and public.stk_nrm(s.ad) = n;
+  if v_aktif is not null then
+    if v_aktif <@ v_ids and array_length(v_ids, 1) = 1 then return x; end if;
+    raise exception 'KR025: "%" hem etkin bir rengin adı hem başka bir rengin eski adı — hangi renk olduğu belirsiz, kayıt yazılmadı; ekranı yenileyip rengi yeniden seçin', x using errcode = 'KR025';
+  end if;
+  if array_length(v_ids, 1) > 1 then
+    raise exception 'KR025: "%" birden çok rengin eski adı — hangi renk olduğu belirsiz, kayıt yazılmadı; ekranı yenileyip rengi yeniden seçin', x using errcode = 'KR025';
+  end if;
+  select s.ad into g from public.stk_renk s where s.id = v_ids[1] and s.aktif;
+  if g is null then
+    raise exception 'KR027: "%" silinmiş ya da pasif bir rengin eski adı — bağlanacak renk yok, kayıt yazılmadı; rengi yeniden seçin', x using errcode = 'KR027';
+  end if;
+  return g;
 end $$;
 
 create or replace function public.tanim_ad_guncelle_tetik()
@@ -66,13 +85,20 @@ returns trigger
 language plpgsql
 security definer
 set search_path = public
+-- YALNIZ YENİ YA DA DEĞİŞEN renk metnine bakılır: satırdaki renk eskisiyle aynıysa (istemci bütün satırı gönderir) dokunulmaz — eski adla
+-- duran geçmiş bir kaydın miktarı / durumu düzeltilirken KR025 / KR027 ile engellenmesin. Kolide: eski hâlde aynı renk metni varsa dokunulmaz.
 as $$
+declare
+  v_eski text[];
 begin
   -- Liste v2 (lst_kayit): her koli ayrı satır, veri = koli nesnesi.
   if tg_table_name = 'lst_kayit' then
     if new.tablo = 'koliler' and jsonb_typeof(new.veri -> 'kalemler') = 'array' then
+      if tg_op = 'UPDATE' and jsonb_typeof(old.veri -> 'kalemler') = 'array' then
+        select array_agg(x ->> 'renk') into v_eski from jsonb_array_elements(old.veri -> 'kalemler') x;
+      end if;
       new.veri := jsonb_set(new.veri, '{kalemler}', (
-        select coalesce(jsonb_agg(case when x ? 'renk' and jsonb_typeof(x -> 'renk') = 'string'
+        select coalesce(jsonb_agg(case when x ? 'renk' and jsonb_typeof(x -> 'renk') = 'string' and not ((x ->> 'renk') = any (coalesce(v_eski, '{}'::text[])))
                                        then jsonb_set(x, '{renk}', to_jsonb(public.tanim_ad_guncel(x ->> 'renk'))) else x end
                                   order by o), '[]'::jsonb)
           from jsonb_array_elements(new.veri -> 'kalemler') with ordinality as kk(x, o)));
@@ -82,11 +108,15 @@ begin
   -- Liste v2'ye geçmemiş kurulum: koliler TABLOSU, veri = koli dizisi.
   if tg_table_name = 'koliler' then
     if jsonb_typeof(new.veri) = 'array' then
+      if tg_op = 'UPDATE' and jsonb_typeof(old.veri) = 'array' then
+        select array_agg(x ->> 'renk') into v_eski
+          from jsonb_array_elements(old.veri) k, jsonb_array_elements(case when jsonb_typeof(k -> 'kalemler') = 'array' then k -> 'kalemler' else '[]'::jsonb end) x;
+      end if;
       new.veri := (
         select coalesce(jsonb_agg(
                  case when jsonb_typeof(k -> 'kalemler') = 'array' then
                    jsonb_set(k, '{kalemler}', (
-                     select coalesce(jsonb_agg(case when x ? 'renk' and jsonb_typeof(x -> 'renk') = 'string'
+                     select coalesce(jsonb_agg(case when x ? 'renk' and jsonb_typeof(x -> 'renk') = 'string' and not ((x ->> 'renk') = any (coalesce(v_eski, '{}'::text[])))
                                                     then jsonb_set(x, '{renk}', to_jsonb(public.tanim_ad_guncel(x ->> 'renk'))) else x end
                                                order by o), '[]'::jsonb)
                        from jsonb_array_elements(k -> 'kalemler') with ordinality as kk(x, o)))
@@ -95,10 +125,59 @@ begin
     end if;
     return new;
   end if;
-  if new.renk is not null then
+  if new.renk is not null and (tg_op = 'INSERT' or new.renk is distinct from old.renk) then
     new.renk := public.tanim_ad_guncel(new.renk);
   end if;
   return new;
+end $$;
+
+-- ESKİ AD BAŞKA RENGE VERİLEMEZ (KR026): defterde bir rengin eski adı olan ad, başka bir renge (yeni renk ya da ad değişikliği) verilirse
+-- bayat cihazın o adla gönderdiği kayıt hangi renge ait? — belirsizlik doğmadan önlenir. Aynı rengin eski adına dönüş (A → B → A) serbest.
+-- Yönetici eski adı açıkça serbest bırakabilir (tanim_eski_ad_serbest). Jetonsuz (SQL Editor) yönetim işi serbest.
+create or replace function public.tanim_ad_gecmisi_koru()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  r jsonb;
+  v_cakisan text;
+begin
+  if auth.jwt() is null then return new; end if;
+  for r in select x from jsonb_array_elements(case when jsonb_typeof(new.veri -> 'renkler') = 'array' then new.veri -> 'renkler' else '[]'::jsonb end) x loop
+    continue when coalesce(r ->> 'id', '') = '' or public.stk_nrm(r ->> 'ad') is null;
+    -- adı değişmeyen renge bakılmaz
+    continue when tg_op = 'UPDATE' and exists (
+      select 1 from jsonb_array_elements(case when jsonb_typeof(old.veri -> 'renkler') = 'array' then old.veri -> 'renkler' else '[]'::jsonb end) o
+       where o ->> 'id' = r ->> 'id' and public.stk_nrm(o ->> 'ad') = public.stk_nrm(r ->> 'ad'));
+    select h.renk_id into v_cakisan from public.tanim_ad_gecmisi h
+     where h.eski_nrm = public.stk_nrm(r ->> 'ad') and h.renk_id <> r ->> 'id' and not h.serbest limit 1;
+    if v_cakisan is not null then
+      raise exception 'KR026: "%" başka bir rengin eski adı — bu ada eski kayıtlar bağlı olabilir; Yönetici eski adı serbest bırakmadan bu ad verilemez', r ->> 'ad' using errcode = 'KR026';
+    end if;
+  end loop;
+  return new;
+end $$;
+drop trigger if exists tanim_ad_gecmisi_koru on public.tanimlar;
+create trigger tanim_ad_gecmisi_koru before insert or update of veri on public.tanimlar
+  for each row execute function public.tanim_ad_gecmisi_koru();
+
+create or replace function public.tanim_eski_ad_serbest(p jsonb)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  n int;
+begin
+  if auth.jwt() is not null and not public.yonetici_mi() then
+    raise exception 'Eski renk adını yalnız Yönetici serbest bırakabilir' using errcode = '42501';
+  end if;
+  update public.tanim_ad_gecmisi set serbest = true where eski_nrm = public.stk_nrm(p ->> 'eski_ad') and not serbest;
+  get diagnostics n = row_count;
+  return jsonb_build_object('serbest', n);
 end $$;
 
 drop trigger if exists tanim_ad_guncelle on public.siparis_kalemleri;
@@ -143,12 +222,12 @@ begin
   if auth.jwt() is not null and not public.yetki_var_mi(array['tanimlar'], 'duzenleme') then
     raise exception 'Bu işlem için yetkiniz yok (tanimlar: duzenleme)' using errcode = '42501';
   end if;
-  if v_id is null or v_id = '' then raise exception 'KR020: renk kimliği yok' using errcode = 'P0001'; end if;
-  if v_yeni = '' then raise exception 'KR023: yeni ad boş olamaz' using errcode = 'P0001'; end if;
+  if v_id is null or v_id = '' then raise exception 'KR020: renk kimliği yok' using errcode = 'KR020'; end if;
+  if v_yeni = '' then raise exception 'KR023: yeni ad boş olamaz' using errcode = 'KR023'; end if;
   perform set_config('lock_timeout', '10s', true);
 
   select veri into t from public.tanimlar where id = 'tekil' for update;
-  if t is null then raise exception 'KR020: Tanımlar satırı yok' using errcode = 'P0001'; end if;
+  if t is null then raise exception 'KR020: Tanımlar satırı yok' using errcode = 'KR020'; end if;
   lock table public.siparis_kalemleri, public.siparisler, public.uretim, public.stok_rezervasyonlari, public.urunler in exclusive mode;
   if to_regclass('public.lst_kayit') is not null then execute 'lock table public.lst_kayit in exclusive mode'; end if;
   if exists (select 1 from pg_class where oid = to_regclass('public.koliler') and relkind = 'r') then
@@ -158,18 +237,22 @@ begin
   select (o - 1)::int, r ->> 'ad' into v_sira, v_eski
     from jsonb_array_elements(coalesce(t -> 'renkler', '[]'::jsonb)) with ordinality as e(r, o)
    where r ->> 'id' = v_id;
-  if v_sira is null then raise exception 'KR020: renk Tanımlar''da yok (%)', v_id using errcode = 'P0001'; end if;
+  if v_sira is null then raise exception 'KR020: renk Tanımlar''da yok (%)', v_id using errcode = 'KR020'; end if;
 
   -- İstek tekrarı / bayat istek
   if v_eski = v_yeni then
     return jsonb_build_object('zaten', true, 'renk_id', v_id, 'ad', v_eski);
   end if;
   if v_beklenen is not null and v_beklenen <> v_eski then
-    raise exception 'KR021: renk adı bu arada değişmiş (şimdi "%", istekte "%") — ekranı yenileyip tekrar deneyin', v_eski, v_beklenen using errcode = 'P0001';
+    raise exception 'KR021: renk adı bu arada değişmiş (şimdi "%", istekte "%") — ekranı yenileyip tekrar deneyin', v_eski, v_beklenen using errcode = 'KR021';
   end if;
   if exists (select 1 from jsonb_array_elements(coalesce(t -> 'renkler', '[]'::jsonb)) r
               where r ->> 'id' <> v_id and public.stk_nrm(r ->> 'ad') = public.stk_nrm(v_yeni)) then
-    raise exception 'KR022: "%" adında bir renk zaten var — iki rengi birleştirmek ad değiştirmekle yapılmaz', v_yeni using errcode = 'P0001';
+    raise exception 'KR022: "%" adında bir renk zaten var — iki rengi birleştirmek ad değiştirmekle yapılmaz', v_yeni using errcode = 'KR022';
+  end if;
+
+  if exists (select 1 from public.tanim_ad_gecmisi h where h.eski_nrm = public.stk_nrm(v_yeni) and h.renk_id <> v_id and not h.serbest) then
+    raise exception 'KR026: "%" başka bir rengin eski adı — bu ada eski kayıtlar bağlı olabilir; Yönetici eski adı serbest bırakmadan bu ad verilemez', v_yeni using errcode = 'KR026';
   end if;
 
   -- Eşleşmeler: rengin kendi adı (duz) + bu rengi içeren her kombinasyonun eski / yeni etiketi.
@@ -187,7 +270,7 @@ begin
   end loop;
   update _esl set eski_nrm = public.stk_nrm(eski) where eski_nrm is null;
   if exists (select 1 from _esl e join public.stk_renk s on s.aktif and s.id <> e.kid and public.stk_nrm(s.ad) = public.stk_nrm(e.yeni)) then
-    raise exception 'KR024: yeni ad bir kombinasyon etiketini başka bir renkle aynı yapıyor' using errcode = 'P0001';
+    raise exception 'KR024: yeni ad bir kombinasyon etiketini başka bir renkle aynı yapıyor' using errcode = 'KR024';
   end if;
 
   -- 1. Tanımlar (tetikleyici stk_renk'i aynı işlemde günceller)
@@ -214,15 +297,26 @@ begin
     from _esl e where public.stk_nrm(r.renk) = e.eski_nrm and r.renk is distinct from e.yeni;
   get diagnostics n_rez = row_count;
 
-  -- 4. Koliler (tetikleyici kalem renklerini güncel ada çevirir — tanim_ad_gecmisi az önce yazıldı)
+  -- 4. Koliler — açık eşleme (tetikleyici yalnız YENİ / DEĞİŞEN metne bakar; buradaki eşleme eski etiketleri _esl'den çevirir)
   if to_regclass('public.lst_kayit') is not null then
-    update public.lst_kayit l set veri = l.veri
+    update public.lst_kayit l
+       set veri = jsonb_set(l.veri, '{kalemler}', (
+         select coalesce(jsonb_agg(case when e.yeni is not null then x || jsonb_build_object('renk', e.yeni) else x end order by o), '[]'::jsonb)
+           from jsonb_array_elements(l.veri -> 'kalemler') with ordinality as kk(x, o)
+           left join _esl e on e.eski_nrm = public.stk_nrm(x ->> 'renk')))
      where l.tablo = 'koliler' and jsonb_typeof(l.veri -> 'kalemler') = 'array'
        and exists (select 1 from jsonb_array_elements(l.veri -> 'kalemler') x join _esl e on e.eski_nrm = public.stk_nrm(x ->> 'renk'));
     get diagnostics n_koli = row_count;
   end if;
   if exists (select 1 from pg_class where oid = to_regclass('public.koliler') and relkind = 'r') then
-    execute 'update public.koliler set veri = veri where jsonb_typeof(veri) = ''array''';
+    update public.koliler k
+       set veri = (
+         select coalesce(jsonb_agg(case when jsonb_typeof(ko -> 'kalemler') = 'array' then jsonb_set(ko, '{kalemler}', (
+                    select coalesce(jsonb_agg(case when e.yeni is not null then x || jsonb_build_object('renk', e.yeni) else x end order by o), '[]'::jsonb)
+                      from jsonb_array_elements(ko -> 'kalemler') with ordinality as kk(x, o)
+                      left join _esl e on e.eski_nrm = public.stk_nrm(x ->> 'renk'))) else ko end order by i), '[]'::jsonb)
+           from jsonb_array_elements(k.veri) with ordinality as kv(ko, i))
+     where jsonb_typeof(k.veri) = 'array';
   end if;
 
   -- 5. Ürünler: reçete (046 kuralı), renk resmi anahtarı, harici barkod
@@ -278,3 +372,6 @@ grant execute on function public.tanim_renk_ad_degistir(jsonb) to authenticated;
 revoke all on function public.tanim_ad_guncel(text) from public, anon;
 grant execute on function public.tanim_ad_guncel(text) to authenticated;
 revoke all on function public.tanim_ad_guncelle_tetik() from public, anon, authenticated;
+revoke all on function public.tanim_ad_gecmisi_koru() from public, anon, authenticated;
+revoke all on function public.tanim_eski_ad_serbest(jsonb) from public, anon;
+grant execute on function public.tanim_eski_ad_serbest(jsonb) to authenticated;
