@@ -227,7 +227,7 @@ geçerli sayılmadı. Geri dönüş uyumluluğu yayın paketinde dayanak yapıla
 
 ## 6. Regresyon (kosu.sh, 275 senaryo)
 B1 ucu `b282463`: paralel koşuda 274 AYNI + `recete-genis` FARKLI (yalnız `zoom 1.1 → 1`, zamanlama); tek başına yeniden koşunca AYNI → 275/275.
-B2 ucu `34377d7` 275/275 · birleşik `af8c2a2` 275/275 (sonraki `a764abb`/`3174e76` yalnız test ve senaryo ekledi, tam regresyon yeniden koşulmadı).
+B2 ucu `34377d7` 275/275 · birleşik `af8c2a2` 275/275 (sonraki `a764abb`/`3174e76` yalnız 26-b1 SQL upsert düzeltmesi + b1-sina; istemci kodu değişmedi, kosu.sh yeniden koşulmadı — SQL b1-sina 78/78 ile sınandı).
 
 ## 4. Sıradaki adımlar
 1. 25 / 25b CSV'leri → tam canlı yapı (`yapi-hizala.py` bütün nesnelere genişletilecek) → `inc_taban` yeniden; `yerel-uyum.sql` kalkar.
