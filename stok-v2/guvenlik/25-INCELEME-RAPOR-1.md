@@ -1,5 +1,8 @@
 # 25 — Kapsamlı güvenlik ve veri bütünlüğü incelemesi · 1. rapor (26 Kasım 2026)
 
+> **DURUM: İLK İNCELEME TAMAMLANDI — KAPSAMLI İNCELEME SÜRÜYOR.** Bu rapor ara rapordur; açık bulgular (B3a, B3b, B4, B5, Y1) ve
+> sınanmamış kapsam aşağıda. İlk güvenlik paketi (B1 + B2) deneme projesi için sabitlendi, onay bekliyor (§9); canlıya geçilmedi.
+
 Esas: yayındaki **1.744.37** (main `526167e`). Canlıda yalnız salt okur inceleme; canlı veri, SQL, birleştirme, yayın YOK.
 Yeni özellikler ve G-25 yayını bekletiliyor (kullanıcı kararı).
 
@@ -178,8 +181,10 @@ karar_degisti (kod) 6/6. Birleşik dalın tam regresyonu (`af8c2a2`) 275/275 AYN
   satır satır sunucu işlemiyle yazıldığı için etki sınırlı — hangilerinin geçtiği canlı `stk_ayar.liste_tablolari` ile belirlenecek.
 - **B3** (yetki) ÖLÇÜLDÜ, DÜZELTİLMEDİ: geçici varsayımlar kaldırıldı, canlı yetki/politika/tetikle hizalı tabanda (`inc_tam`) ölçüldü —
   §5'te B3a (doğrudan tablo) ve B3b (RPC genişliği) ayrı bulgular.
-- **Sınanmayan**: iptal → yeniden teslim, kısmi teslim, tamirde çift stok / çift ödeme; eski sekme (sürüm kapısı kapalı) bayat kayıt;
-  site portalı (`portal_giris` konumsal insert); depolama kovalarının herkese açık olması (Uygulama, gorseller); Y1'in canlı ölçümü.
+- **Sınanmayan**: eski sekme (sürüm kapısı kapalı) bayat kayıt; site portalı (`portal_giris` konumsal insert); depolama kovalarının
+  herkese açık olması (Uygulama, gorseller); Y1'in canlı ölçümü; çok adımlı üretimde ara proses teslimi / hammaddeli reçete ile teslim
+  (§7 tek adımlı, reçetesiz ürünle sınandı); tamirde hammadde yeniden çıkışı. (Teslim → geri al → yeniden teslim, kısmi teslim ve tamir
+  §7'de sınandı.)
 - **Gizli değer tarayıcısı** (`gizli-tara.py`) YARDIMCI kontroldür: bilinen biçimleri (anahtar, jeton, parola ataması, yüksek entropili
   dize, e-posta) yakalar; biçimi tanınmayan bir sır kaçabilir. "Temiz" çıkması "kesinlikle sır yok" demek DEĞİLDİR; canlı metin depoya
   girmeden önce elle de bakılır, ham canlı CSV depoya konmaz.
@@ -229,10 +234,81 @@ geçerli sayılmadı. Geri dönüş uyumluluğu yayın paketinde dayanak yapıla
 B1 ucu `b282463`: paralel koşuda 274 AYNI + `recete-genis` FARKLI (yalnız `zoom 1.1 → 1`, zamanlama); tek başına yeniden koşunca AYNI → 275/275.
 B2 ucu `34377d7` 275/275 · birleşik `af8c2a2` 275/275 (sonraki `a764abb`/`3174e76` yalnız 26-b1 SQL upsert düzeltmesi + b1-sina; istemci kodu değişmedi, kosu.sh yeniden koşulmadı — SQL b1-sina 78/78 ile sınandı).
 
-## 4. Sıradaki adımlar
-1. 25 / 25b CSV'leri → tam canlı yapı (`yapi-hizala.py` bütün nesnelere genişletilecek) → `inc_taban` yeniden; `yerel-uyum.sql` kalkar.
-2. K1–K3 canlı yapısıyla tekrar; Ş1–Ş4 için senaryolar: renk silme kullanım denetimi; ad değişikliğinde yazma düşmesi; `fis_kes` / `kas_yaz` /
-   `car_yaz` sonda bilerek hata (yarım kayıt yok mu), aynı istek iki kez, yanıt kaybı, çift tık, iki cihaz aynı kalemi teslim; iptal → yeniden
-   teslim, kısmi teslim, tamirde çift stok / çift ödeme; eski sekme (sürüm kapısı kapalı) bayat ürün kaydı.
-3. Her kritik test için bozma provası (K1-B gibi).
-4. Düzeltmeler ayrı dallarda, hizalanmış kopyada; canlı uygulama yok.
+## 7. Üretim teslimi: geri al, yeniden teslim, kısmi teslim, tamir — çift stok / çift ödeme (yalnız YEREL)
+Taban: `inc_ekran_taban` kopyası (canlı 25 yapısı + ekran tohumu), **G-25 nesnesi 0** (sınama başında sayıldı); önceki G-25 sonuçları
+KULLANILMADI. İstemci 1.744.40 (birleşik dal), ekrandan (Playwright), gerçek JWT'li `authenticated` (gercek-pg-kopru); ölçüm sunucudan
+(mamul stoğu `stk_stok`, personel cari bakiyesi — geçerli satır + geçerli fiş, üretim başına geçerli / iptal ÜRT fişi, atama satırları).
+Sınama: `test/inceleme/ekran-uretim-finans.js` · çıktı `test/inceleme/sonuc-ekran-uretim-finans.txt` (`4f1f73f`). Proses ücreti Kesim 35 ₺.
+**25 geçti · 4 kaldı** — kalanların hepsi gerçek bulgu (B4, B5); test hatası değil.
+
+| Senaryo | Sonuç |
+|---|---|
+| S1 tam teslim 10 | ✓ stok 10, usta −350, 1 ÜRT fişi, atama teslim |
+| S2 Geri Al | ✓ stok 0, usta 0, fiş iptal, atama yeniden bekliyor |
+| S3 yeniden teslim + sayfa yenileme | ✓ stok 10, usta −350 (700 değil), 1 geçerli + 1 iptal; yenilemeden sonra yeniden gönderim yok |
+| S4 kısmi 6 + 4 → ikinci parçayı Geri Al → yeniden 4 (çift tıkla) | ✓ her adımda stok / ödeme doğru; kalan 4 yeni atama; çift tık tek fiş |
+| S5 sağlam 7 + tamir 3 (başka usta, 5 ₺) → tamir teslimi → Geri Al → yeniden | ✓ tamirdeki 3 stoğa girmedi; tamir teslimiyle girdi; tamirci −15, geri alınca 0, yeniden −15; ilk usta hep −350 (tamir çifti de ödenir — 079 kuralı, işletme kararı; çift ödeme DEĞİL) |
+| **S6** iki cihaz, B bayat (yoklama donuk), A teslim aldı, B aynı atamayı teslim aldı | **✗ stok +20, usta −700, 2 geçerli ÜRT fişi** (10'luk iş için) |
+| **S7** iki cihaz, yoklama AÇIK, B A'dan hemen sonra basar | **✗ aynı: stok +20, −700, 2 fiş** (8 sn'lik yoklama penceresi) |
+| S8 iki cihaz, B 12 sn sonra | ✓ B'nin formu yoklamayla kalktı; ikinci teslim yok |
+| **S9** A teslim → B bayat → A Geri Al + yeniden teslim → B eski teslimi Geri Al | **✗ atama satırı "bekliyor"a döndü, üretim "Tamamlandı" ve geçerli ÜRT fişi (stok +10, 350 ₺) kaldı; B'ye "geri alındı" iletisi** — tutarsız |
+
+**B4 — Aynı üretim ataması iki cihazdan teslim alınırsa stok ve işçilik İKİ KEZ yazılır (KANITLANDI, canlıda da oluşabilir).** Öncelik: YÜKSEK.
+- Neden: `uretim_atamalari`'nda sürüm sütunu yok; `fis_kes` atamayı `alt_yaz` ile koşulsuz günceller (`tamamlandi_mi` zaten true ise de),
+  ÜRT fişinde aynı atamaya ikinci teslimi engelleyen denetim yok. İstemci yalnız kendi belleğine bakıyor; yoklama 8 sn.
+- Etki: mamul stoğu fazla görünür, personele iki kez işçilik borçlanılır (cari bakiye), iki ÜRT fişi. Hangisinin yanlış olduğu kayıttan anlaşılmaz.
+- Canlıda: `fis_kes` / `alt_yaz` gövdeleri canlıyla aynı (25b md5), atama tablosu aynı → canlıda da açık. G-25'in `isc_odeme` ("her
+  atama bir kez") ödemeyi kapatabilir; stoğu kapatıp kapatmadığı ÖLÇÜLMEDİ (G-25 kapsam dışı tutuldu).
+**B5 — Bayat cihazın "Geri Al"ı yeni teslimi değil eski (zaten iptal) fişi hedefler, atamayı geri döndürür (KANITLANDI).** Öncelik: ORTA–YÜKSEK.
+- `fis_iptal` zaten iptal fişte `zatenIptal` döner (doğru), ama aynı istekteki atama farkı (`tamamlandi_mi=false`) yine yazılır → atama
+  "bekliyor", üretim "Tamamlandı", geçerli fiş duruyor. Yeni oturum yeniden teslim SUNMUYOR (kart tamamlandı) — bu yoldan çift stok açılmadı,
+  ama kayıtlar tutarsız ve kullanıcıya yanlış "geri alındı" denir.
+
+## 8. B3 — yetki (ÖLÇÜLDÜ, DÜZELTİLMEDİ; açık güvenlik bulguları)
+Mevcut üç hesabın üçünün de Yönetici olması bu bulguları KAPATMAZ: B3a jetonu olan listede olmayan HER hesap için geçerli (kayıt yeniden
+açılırsa, eski çalışan hesabı, Supabase panelinden açılan hesap); B3b ilk personel hesabı açıldığı an geçerli olur.
+
+**B3a — Doğrudan tablo yazma (REST, RPC'siz).** Canlı yetki / politika / tetikleyicileriyle hizalı tabanda (`inc_tam`) ölçüldü:
+- listede OLMAYAN hesap: `urunler` (ad, sürüm), `cariler` (unvan), `tanimlar` (renk adlarını değiştirme ve BÜTÜN renkleri silme) yazabiliyor;
+- yalnız stok yetkili personel: `cariler`, `tanimlar` yazabiliyor;
+- korunanlar: silme (ürün, sipariş, cari — `silme_koruma`), kullanıcı listesi ve giriş ayarı (`tanimlar_kullanici_koruma`), `siparis_kalemleri`
+  (yalnız SELECT yetkisi).
+**B3b — RPC yetki genişliği.**
+- listede olmayan hesap bütün yazma RPC'lerinde 42501 alıyor (doğru);
+- yalnız stok yetkili personel `alt_yaz` ile sipariş kalemi miktarını (999) ve `car_yaz` ile cari hareketini yazabiliyor; `fis_kes` ile Cari
+  virmanı fişi KESEBİLDİ (§5, yük 15), iptal edemedi (silme yetkisi yok, 42501 — doğru);
+- neden: `stk_yetki` "listelenen modüllerden HERHANGİ birinde kaydetme" kuralı (G-25 sınıfı); ret iletisi her zaman "stok" diyor.
+
+## 9. İlk güvenlik paketi (B1 + B2) — deneme projesi paketi (ONAY BEKLİYOR)
+Dal `claude/b1-b2-birlesik`. Sabit commit `c6ee52a`, belge `stok-v2/guvenlik/26-deneme/PAKET-B1-B2-DENEME.md` (son hâli `65afc2f`).
+- Deneme projesi ana projenin kopyası sayılmadı. Son ölçülen hâli (G-25 deneme kayıtları): eski G-25 paketi + 25b + tanimlar okuma.
+  Yerelde aynı ekler canlıya hizalı tabana kuruldu (`inc_g25`; G-25'in aşama sorgusu "G-25 + 25b"). B1 orada 78/78; ekran B1 / B2 akışları
+  geçti. G-25 ücret onayı ad değişikliğinden sonra geçerli kaldı. Kurulumdan önce deneme projesinde salt okur uyum sorgusu
+  (`26-deneme-durum-salt-okur.sql`) + G-25 aşama sorgusu çalıştırılacak; "UYUMLU" ve "G-25 + 25b" değilse durulur.
+- Kurulum tek ifade (`26-b1-uygula.sql`, üretici `26-b1-uret.py`): Editor parçalasa da atomik; bozma provasında hiçbir şey kalmadı;
+  kurulum var olan 18 tablonun hiçbir satırını değiştirmedi (anlık görüntü). Geri alma ayrı dosya, ayrı onay; ad defteri satırları kalır.
+- Önceki raporda B2 ekranında sayılan `cakisma ad` birleşik istemcide UYGULANAMAZ (ad değişikliği B1 yolundan gider; karşılığı `ad_yaris`).
+
+## 10. Sonraki düzeltme paketi önerisi (B3 + B4 / B5) — tasarım, henüz kod YOK
+Sıra önerisi: **B4/B5 ve B3a birlikte (yalnız sunucu, istemci değişmez), B3b G-25 kararına bağlı.**
+1. **B4 / B5 — üretim atamasında durum koşullu yazma (sunucu):** `fis_kes`'te ÜRT fişinin `alt.uretim_atamalari` satırı atamayı
+   teslim ALIYORSA (false → true) sunucudaki satır `tamamlandi_mi = false` olmalı; değilse yeni kural kodu ile ret ("bu iş başka cihazdan
+   teslim alınmış — ekranı yenileyin"), hiçbir satır yazılmaz. `fis_iptal`'de atama geri döndürme yalnız iptal edilen fiş GEÇERLİYKEN
+   (zatenIptal'de atama farkı yazılmaz). İstemci ret iletisini zaten gösterir (kalıcı ret, KR); bekleyen defter tekrar denemez.
+   Deneme: `ekran-uretim-finans.js` S6 / S7 / S9 kırmızıdan yeşile (29/0), S1–S5 / S8 değişmeden; bozma provası (koşul kaldırılınca S6
+   yeniden kırmızı); `kosu.sh`; atomik sınama (yanıt kaybı / tekrar) ÜRT yükleriyle.
+2. **B3a — doğrudan tablo yazmasında liste + modül yetkisi:** `urunler`, `cariler`, `tanimlar` (ve aynı politikayı taşıyan diğer ERP
+   tabloları) için yazma politikası `giris_yapmis_hersey` yerine `yetki_var_mi(<modül>, 'kaydetme')`; Tanımlar'da kullanıcı listesi dışındaki
+   alanlar `tanimlar` düzenleme. Uygulamanın meşru doğrudan yazmaları (ör. ürün kaydı, Tanımlar PATCH) hangi modül yetkisiyle yapılıyor
+   önce envanterlenir — yoksa yetkili personelin işi durur. Deneme: `yetki-api.js` matrisi canlı yetkilerle (listede olmayan → hepsi ret;
+   yetkili → bugünkü gibi; yetkisiz modül → ret), ekran sınamaları, `kosu.sh`.
+3. **B3b — RPC'de tablo / fiş türüne göre yetki:** "herhangi bir modül" yerine işlem başına modül (sipariş kalemi → sipariş, cari hareketi →
+   cari / muhasebe, cari virmanı → cari / muhasebe). G-25 bunun cari / ücret kısmını tasarlıyor; çakışmasın diye G-25 kararından sonra.
+   Ret iletisinde gerçek modül adı.
+4. Her biri ayrı dal, ayrı deneme paketi (SABİT + önkoşul / sonuç sorgusu + geri alma), önce deneme projesi.
+
+## 4. Sıradaki adımlar (güncel)
+1. Kullanıcı onayıyla B1 / B2 deneme paketi (§9) — deneme projesinde salt okur adım 0, sonra kurulum ve elle sınamalar.
+2. Sonraki düzeltme paketi (§10) için tasarım onayı: B4 / B5 + B3a; B3b G-25 kararından sonra.
+3. Sınanmayan kapsam (§ AÇIK KAPSAM): beden adı değişikliği, diğer tek satırlık tablolar, eski sekme, site portalı, depolama kovaları,
+   çok adımlı / hammaddeli teslim.
