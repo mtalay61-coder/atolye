@@ -39,6 +39,12 @@ bekle("6 taban yok: liste boş", tanimCakismalari({ a: 1 }, { a: 2 }, undefined)
   bekle("7 tek taraflı değişiklik: çakışma yok", tanimCakismalari(y, kopya(taban), taban), []); }
 // 8. düz alan (girisAktifMi gibi) iki farklı değer → çakışma
 bekle("8 düz alan", tanimCakismalari({ ...taban, x: 1 }, { ...taban, x: 2 }, { ...taban, x: 0 }).map((c) => c.yol), ["x"]);
+// 8b. alan TABANDA YOK, iki taraf farklı değerle ekledi (renk ton kodu) → çakışma; aynı değerle → yok; yalnız biri ekledi → yok
+{ const y = kopya(taban); y.renkler[1].tonKodu = "202"; const b = kopya(taban); b.renkler[1].tonKodu = "201";
+  bekle("8b tabanda olmayan alana iki farklı değer: çakışma", tanimCakismalari(y, b, taban).map((c) => [c.yol, c.yerel, c.bulut]), [["renkler › Vizon Yılan › tonKodu", "202", "201"]]);
+  const y2 = kopya(taban); y2.renkler[1].tonKodu = "201";
+  bekle("8b aynı değer: çakışma yok", tanimCakismalari(y2, b, taban), []);
+  bekle("8b yalnız bir taraf ekledi: çakışma yok", tanimCakismalari(y, kopya(taban), taban), []); }
 // 9. KOD AYRIMI: iki cihaz aynı sayaçtan aynı kodu verdi (ton kodu 101, barkod kodu 13). Sunucudaki öğe kodunu KORUR, bu cihazın
 //    yeni öğesi sıradaki boş koda geçer; ikisi de kalır.
 { const bulut = { renkler: [{ id: "r1", ad: "Siyah", kod: "100", barkodKodu: 11 }, { id: "r4", ad: "Lacivert", kod: "101", barkodKodu: 13 }], renkKombinasyonlari: [{ id: "k1", kod: "1001", renkIdler: ["r1"] }], kodSayaclari: { renk: 13 } };

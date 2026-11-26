@@ -744,6 +744,11 @@ function tekilYaz(anahtar, tablo, veri, secenek = {}) {
   // DE DÜŞMEZ — eksik hâl sonraki açılışta "yerel esas" sayılıp buluttakini ezmesin. Kullanıcıyı guvenliYaz uyardı.
   if (typeof VERI_KILIDI !== "undefined" && VERI_KILIDI.aktif) return yerel;
   bulutYazmaBasladi(tablo);
+  // TABAN YAZMA ÇAĞRILDIĞI AN YAKALANIR (v1.744.39, B2 3. tur — ölçüldü: ekran-tanim-yaris ALAN=kod). `veri` bu cihazın O ANKİ bildiği
+  // sunucu hâline (taban) göre yapılmış değişikliktir. Yazma yoldayken açılış / tazeleme / yoklama tabanı başka cihazın yeni hâline
+  // çekebiliyordu (045, 091, 100); yeniden denemede o hâl "bu cihazın bildiği" sanılıyor, çakışma görünmüyor ve bu cihaz öbürünü
+  // SESSİZCE eziyordu. Artık her deneme çağrı anındaki tabanla üç yönlü karşılaştırır.
+  const tabanCagri = tekilTabanOku(tablo);
   const benimSiram = (_tekilSayac[anahtar] = (_tekilSayac[anahtar] || 0) + 1);
   // TANIMLAR BULUTLA BİRLEŞEREK YAZILIR (v1.552.0, 089). Tanımlar tek satır; bütün hâli yazılınca başka
   // cihazda açılmış model renkleri/renkler bu cihazın eski listesiyle siliniyordu (kullanıcı: Paketleme'de
@@ -784,7 +789,7 @@ function tekilYaz(anahtar, tablo, veri, secenek = {}) {
       const bulut = satir ? satir.veri : null;
       const surum = satir ? Number(satir.surum) : NaN;
       if (typeof tanimlarOkundu === "function") tanimlarOkundu();
-      const taban = tekilTabanOku("tanimlar");
+      const taban = tabanCagri;
       // ONAY YALNIZ GÖRÜLEN ÇAKIŞMAYI ÇÖZER (kullanıcı, 27 Kasım: "'Benimkini uygula' seçildiğinde sürümü yeniden denetle; bu sırada
       // başka cihazın eklediği kayıt silinmemeli; yalnız onaylanan çatışma çözülmeli"). Kullanıcı şeritte gördüğü listeyi onaylar
       // (`secenek.onaylananCakismalar`); her denemede çakışmalar YENİDEN hesaplanır, onaylanan sayılan yalnız aynı yol + aynı iki değer.

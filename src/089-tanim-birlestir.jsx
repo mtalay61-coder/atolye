@@ -134,7 +134,9 @@ const TANIM_OTOMATIK_ALANLAR = new Set(["kodSayaclari", "__silinenler"]);
 function tanimCakismalari(yerel, bulut, taban, yol) {
   const es = (a, b) => a === b || JSON.stringify(a) === JSON.stringify(b);
   const yolu = yol || [];
-  if (taban === undefined) return [];
+  // "Taban bilinmiyor" YALNIZ EN ÜSTTE: içeride `undefined` = alan tabanda YOK (iki taraf da sonradan ekledi) — karıştırılınca iki cihazın
+  // aynı alana (ör. renk ton kodu) verdiği farklı değerler çakışma sayılmıyor, yerel sessizce kazanıyordu (ekran-tanim-yaris ALAN=kod).
+  if (taban === undefined && yolu.length === 0) return [];
   if (es(yerel, taban) || es(bulut, taban) || es(yerel, bulut)) return [];
   if (yolu.length === 1 && TANIM_OTOMATIK_ALANLAR.has(yolu[0])) return [];
   const ad = (x) => (x && typeof x === "object" && (x.ad || x.kod || x.kullaniciAdi)) ? `${x.ad || x.kod || x.kullaniciAdi}` : (x && x.id) || "?";
