@@ -30,10 +30,28 @@ farklı olabilir — envantere eklenecek tek satırlık sorgu, aşağıda § 6),
 Gece yedeği içeriği koddan doğrulandı (`stok-v2/yedek/dokum-al.sh`: `pg_dump --format=custom --schema=public`); yalıtılmış
 açma akışı yerelde uçtan uca sınandı (taklit veride hata öncesi üç kombinasyon varyantı kimlikleriyle, iki kombinasyon,
 renk tanımları geldi; açılan veritabanında tetikleyici 0). Gerçek yedeğin içeriği sizin çıktınızla doğrulanacak.
-Açma yolu: önerilen **`is-akisi/yedek-ac.yml`** (GitHub Actions, canlıya bağlanmaz; koruma kopyasını da kendisi alır); elle yol `YEDEKTEN-ACMA.md`.
+Açma yolu: önerilen **`is-akisi/yedek-ac.yml`** (GitHub Actions, canlıya bağlanmaz; koruma kopyasını da kendisi alır; ETKİN DEĞİL, ayrı onay); elle yol `YEDEKTEN-ACMA.md`.
 Kullanılacak yedek: 03:17 VARSAYILMAZ. Klasör adı betik başlarken İstanbul saatiyle konur (`gece-yedek.sh` AD=…%H%M) ve zamanlanmış iş gecikebilir;
 dökümün bittiği an `ozet.txt` "döküm tarihi" (UTC) satırındadır. Hata öncesi olduğu asıl olarak İÇERİKLE doğrulanır: yedekte 27162 D'nin
 kombinasyon varyantları etkin ve rengin adı eski yazımda olmalı.
+
+## 2a. Gerçek gece koşuları (GitHub Actions kaydından, 26 Kasım)
+
+Zamanlama 00:17 UTC ama GitHub işi her gün SAATLERCE geç başlatıyor. Kayıttan (yalnız adım satırları; veri yok):
+
+| Klasör | Koşu (UTC) | İstanbul | Döküm | Sınama | Yükleme | Jeton |
+|---|---|---|---|---|---|---|
+| `2026-11-25-1137` | 08:37:13 → 08:39:34 | 25 Kas 11:37–11:39 | 08:37:47–08:39:09, 82 sn, public.dump **1839 KB**, 44 tablo | **SINAMA TAMAM** (44 tablo canlıyla aynı) | 12 dosya, bayt bayt doğrulandı | yenilendi, saklandı |
+| `2026-11-26-1121` | 08:20:50 → 08:23:02 | 26 Kas 11:21–11:23 | 08:21:22–08:22:40, 78 sn, public.dump **2285 KB**, 44 tablo | **SINAMA TAMAM** | 12 dosya, bayt bayt doğrulandı | yenilendi, saklandı |
+
+Sonuçlar:
+- 26 Kasım yedeği 11:21'de alındı. Sorun SABAH oluştuysa bu yedek **hatadan SONRA**dır (hasarlı durumu gösterir) — ad
+  değişikliğinin saati canlı envanterden (`2-varyant.olusturma`, `7-renk-tanimi.guncelleme`) okunup kesinleşecek.
+- Hatadan önceki kesin yedek: `2026-11-25-1137`. Ama 25 Kasım 11:39'dan SONRA girilen kayıtları İÇERMEZ.
+- Döküm bir günde 1839 → 2285 KB büyüdü: 25 Kasım öğleden sonra / 26 Kasım sabahı canlıya veri yazılmış. "Dünden bugüne veri
+  girilmedi" bu yüzden ölçülmeden kabul edilemez; bütün veritabanını yedeğe döndürmek bu kayıtları SİLERDİ → hedefli onarım.
+- İki yedek de açılıp karşılaştırılacak (yedek-ac iş akışı ikisini birden işler): 25-1137 hata öncesi değer, 26-1121 hatanın
+  o saatteki durumu.
 
 ## 3. "Gece yedeğinden geri getirebilir miyiz?"
 

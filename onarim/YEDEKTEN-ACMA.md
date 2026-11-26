@@ -11,9 +11,9 @@ Gece yedeği OneDrive'da `AtolyeYedek/<YYYY-AA-GG-SSDD>` klasörlerine yazılır
 silinir (en yeni 7 klasöre hiç dokunulmaz). Temizlik yalnız `AtolyeYedek`'in içindeki, adı tarihle başlayan klasörlere bakar.
 
 Korunacaklar (adı `-SINANMADI` ile BİTMEYEN = sınanmış olanlar):
-1. Hatadan ÖNCEKİ son sınanmış yedek — 26 Kasım gece koşusu. TAM adı varsayılmaz: GitHub › Actions › "Gece yedeği (OneDrive)" ›
-   26 Kasım koşusu › "Yedek al, sına, OneDrive'a yükle" adımında `SINAMA TAMAM` ve `3/4 OneDrive'a yükleme: <ad>` satırları.
-2. Ondan bir önceki gecenin sınanmış klasörü (karşılaştırma için).
+1. `2026-11-25-1137` — hata gününden önceki son sınanmış yedek (Actions kaydı: SINAMA TAMAM).
+   `2026-11-26-1121` — 26 Kasım 11:21'de alınmış (SINAMA TAMAM); sorun sabahsa hatadan SONRAdır.
+2. Bir önceki gecenin sınanmış klasörü (karşılaştırma için).
 3. Hatadan SONRAKİ ilk gece yedeği (27 Kasım gecesi oluşacak) — "hata sonrası" durumun kanıtı.
 
 Yapılacak: bu klasörleri OneDrive'da **`AtolyeYedek` DIŞINDA** yeni bir klasöre KOPYALAYIN, ör. `AtolyeYedek-KORUNAN/renk-hatasi/`.
@@ -23,11 +23,11 @@ Her klasörde şu dosyalar olmalı: `public.dump`, `auth-storage.sql`, `envanter
 
 ## 1. Bilgisayarınıza indirin ve doğrulayın
 
-Klasörü OneDrive'dan yerel bir yere indirin (bir git deposunun İÇİNE değil), ör. `C:\AtolyeYedekAc\2026-11-26-0317`.
+Klasörü OneDrive'dan yerel bir yere indirin (bir git deposunun İÇİNE değil), ör. `C:\AtolyeYedekAc\2026-11-25-1137`.
 `ozet.txt` her dosyanın sha256'sının ilk 16 hanesini yazar. PowerShell'de:
 
 ```powershell
-cd C:\AtolyeYedekAc\2026-11-26-0317
+cd C:\AtolyeYedekAc\2026-11-25-1137
 (Get-FileHash .\public.dump -Algorithm SHA256).Hash.Substring(0,16).ToLower()
 Get-Content .\ozet.txt
 ```

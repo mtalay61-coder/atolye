@@ -7,7 +7,7 @@ DIŞINDA (ayrı onay; `renk-cokmesi-envanteri-salt-okur.sql` sonucu bekleniyor).
 
 | | |
 |---|---|
-| Dal | `claude/renk-ad-kombinasyon` |
+| Dal | `claude/renk-ad-kombinasyon` (depo `mtalay61-coder/atolye`, taslak PR #370) |
 | Taban | main `3f175bc` (1.744.36 yayında). Main'de dalda olmayan commit: 0 → birleştirme fast-forward |
 | Uygulama kodu commit'i | `dabe939` (src + HTML). Sonrakiler yalnız `onarim/` belgeleri (uygulamayı değiştirmez) |
 | HTML | `atolye-erp-v1.744.37.html` — sha256 `bc6912c22a062d1c7e0b012257839dac3e2b86aab0e9f5eb1b7ab5052fbe458a` |
@@ -46,20 +46,13 @@ yayına çıkar. Yani 1. adımdan 1-2 dk sonra `https://erp.newdiamond.com.tr/at
 açık uygulamalar `surum.json`'a baktıkları için 1.744.36'da kalır; yeni sürüme yalnız adresi bilen / yazan geçer.
 Sonuç: 1. adım da bir yayın kararıdır; ayrı onay olmadan birleştirilmez. Kullanıcıları geçiren 2. adımdır.
 
-## PR açma izni (bu oturumda hata)
+## Taslak PR
 
-Taslak PR açma isteği `403 Resource not accessible by integration` ile reddedildi; aynı oturumda dala gönderim (push) çalışıyor.
-Bu, Claude GitHub uygulamasının depo İÇERİĞİNE yazabildiğini ama **Pull requests** iznine sahip olmadığını (ya da yeni izin
-isteğinin onaylanmadığını) gösteriyor.
-
-En dar düzeltme: GitHub › Settings › Applications › Installed GitHub Apps › **Claude** › Configure:
-- Repository access: **Only select repositories** → yalnız `NewDiamond` (başka depo eklemeyin).
-- İzinler: **Pull requests: Read and write** (bekleyen bir "permission update" isteği görünüyorsa onu kabul edin).
-  Contents / Actions / Pages / Administration izinlerini GENİŞLETMEYİN.
-Gerekirse claude.ai/connect-github üzerinden hesabı yeniden bağlayın. Branch koruması / main'e doğrudan gönderim bu
-düzeltmenin parçası DEĞİL — PR'sız main'e gönderim yapılmayacak.
-Alternatif (izin değiştirmeden): GitHub'da `claude/renk-ad-kombinasyon` dalından PR'ı kendiniz **taslak** olarak açın;
-açıklama metni hazır (sohbette).
+**https://github.com/mtalay61-coder/atolye/pull/370** (TASLAK). Depo `mtalay61-coder/atolye`.
+Düzeltme: önceki "403 Resource not accessible by integration" hatası izin eksikliği DEĞİLDİ — istek yanlış depo adına
+(`NewDiamond`) gönderilmişti (benim hatam). Doğru depoda PR açıldı; GitHub izinlerinde değişiklik GEREKMİYOR. Aynı yanlış ad
+Actions sorgusunda da kullanılmıştı; boş liste de bu yüzdendi (doğru depoda 21 gece koşusu görünüyor).
+Taslak PR birleştirilmez; birleştirme = yayın kararı (yukarıda), ayrı onay.
 
 ## Geri dönüş
 
