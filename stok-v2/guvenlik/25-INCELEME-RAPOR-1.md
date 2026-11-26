@@ -321,6 +321,15 @@ Sıra önerisi: **B4/B5 ve B3a birlikte (yalnız sunucu, istemci değişmez), B3
   - Geri alma matrisi birebir eski hâline döndürüyor.
   - Uygulama regresyonu: stok 24/24 · kasa 29/29 · cari virman 29/29 · B4 + B3a birlikte 34/34 ve 40/40.
 
+## 12. Canlı öncesi ek işler (29 Kasım; canlı / deneme / main / yayın YOK)
+- **B4 / B5 öncelikli paket, SQL sabit** (`27-b4-uygula.sql` `f49078f2…`); dal ucu `4e74ce3`.
+  - Yayın paketinin kendisiyle (1.744.37, sha `bc6912c2…`): düzeltmesiz 21/14 ve 9/3 → B4 ile **35/35** ve **12/12**; canlıya / G-25 denemesine giden istek 0.
+  - İki cihazdan düz "İşi Ver": çift atama oluşmadı (düzeltmesiz de). Atamasız ara proses üzerinden: düzeltmesiz çift fason ödemesi + çift atama; B4 ile kapalı.
+  - Adım adı denetimi kapatılınca ara proses senaryosu yeniden kırmızı — denetimin koruduğu durum.
+  - Yalıtılmış gerçek-Supabase denemesi: `27-b4-deneme/PAKET-B4-YALITILMIS-DENEME.md`; yapı kaynağı kararı bekliyor (`kurulum_betigi` canlıda yok).
+- **İstemci 1.744.41** (dal `claude/geri-al-ileti`): bayat "Geri Al" iletisi; önkoşul B4. Ekran 12/12, kosu 275 AYNI.
+- **B3a KISMİ KORUMA**: 3 açık kapanmadı. Alan / işlem yetki haritası `28-b3a-YETKI-HARITASI.md` (dal `claude/b3a-tablo-yazma-yetki`, `8faa4f5`); kararlar bekliyor.
+
 ## 4. Sıradaki adımlar (güncel)
 1. Kullanıcı onayıyla B1 / B2 deneme paketi (§9) — deneme projesinde salt okur adım 0, sonra kurulum ve elle sınamalar.
 2. Sonraki düzeltme paketi (§10) için tasarım onayı: B4 / B5 + B3a; B3b G-25 kararından sonra.
