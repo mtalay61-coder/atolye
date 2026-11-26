@@ -30,7 +30,7 @@ const k_ = (ad, g, b) => { const ok = JSON.stringify(g) === JSON.stringify(b); i
   await q(`insert into public.cariler (id, unvan, tip) values ('fin-usta', 'Fin Usta', 'Personel'), ('fin-tamirci', 'Fin Tamirci', 'Personel')
            on conflict (id) do nothing`);
   await q(`update public.urunler set proses_ucretleri = '{"Kesim": 35}'::jsonb where id = 'ekr-bot'`);
-  for (const n of [1, 2, 3, 4, 5, 6]) {
+  for (const n of [1, 2, 3, 4, 5, 6, 7]) {
     await q(`insert into public.uretim (id, siparis_no, takip_kodu, urun_id, asama, ek, renk, adet, model, beden_miktarlari, proses_ilerleme, olusturuldu)
       values ($1, $2, $2, 'ekr-bot', 'Kesim', '{}'::jsonb, 'Siyah', 10, 'Ekran Bot', '[{"beden": "40", "miktar": 10}]'::jsonb,
         '[{"proses": "Kesim", "sira": 1, "verildiMi": true, "tamamlandiMi": false, "personelId": "fin-usta"}]'::jsonb, '2026-11-26T08:00:00.000Z')
@@ -211,6 +211,38 @@ const k_ = (ad, g, b) => { const ok = JSON.stringify(g) === JSON.stringify(b); i
     console.log(`     B toast: ${await toast(C.sayfa)}`);
     k_(`sayfa hatası yok (${ad} B)`, C.hatalar, []);
     await C.tarayici.close();
+  }
+  // S9: teslim → (B kartı açık, bayat) → A Geri Al + yeniden teslim → B eski teslimi Geri Al'a basar. Beklenen: geçerli teslim
+  // ile atama durumu tutarlı kalmalı (ya B reddedilir ya da yeni fiş de iptal olur ve atama bekler) — "atama bekliyor ama stok / ödeme
+  // yazılı" olmamalı; ardından yeniden teslim stoğu ikiler.
+  {
+    console.log("\n■ S9 · FIN7 · A teslim → B bayat açık → A Geri Al + yeniden teslim → B eski teslimi Geri Al");
+    await kartAc(sayfa, "FIN7");
+    await teslim(sayfa, { no: "FIN7", saglam: 10 });
+    const D = await ekranAc(DB); D.sayfa.on("dialog", (d) => d.accept());
+    await kartAc(D.sayfa, "FIN7");
+    await D.sayfa.route("**/rest/v1/degisiklik**", (r) => r.fulfill({ status: 200, contentType: "application/json", body: "[]" }));
+    const once = await durum("fin-7");
+    await geriAl(sayfa, "FIN7"); await teslim(sayfa, { no: "FIN7", saglam: 10 });
+    const ara = await durum("fin-7");
+    k_("S9a A: Geri Al + yeniden teslim → 1 geçerli + 1 iptal, stok / ödeme bir kez", [ara.stok - once.stok, ara.usta - once.usta, ara.fis], [0, 0, "1 geçerli / 1 iptal"]);
+    await geriAl(D.sayfa, "FIN7");
+    const son = await durum("fin-7");
+    const at = await atamalar("fin-7");
+    console.log(`     B toast: ${await toast(D.sayfa)}`);
+    console.log(`     sonra: ${JSON.stringify(son)} · atamalar ${JSON.stringify(at)}`);
+    const tutarli = (at[0].endsWith("teslim") && son.fis.startsWith("1 geçerli")) || (at[0].endsWith("bekliyor") && son.fis.startsWith("0 geçerli"));
+    k_("S9b B'nin bayat Geri Al'ı sonrası atama ile geçerli fiş TUTARLI", tutarli, true);
+    // S9c: B'nin yazması atama SATIRINI "bekliyor"a döndürdü; üretim kaydı (aşama, proses ilerleme) ise "Tamamlandı" kaldı. Yeni bir
+    // oturum (tazelenmiş ekran) ne görüyor, yeniden teslim sunuyor mu?
+    await D.tarayici.close();
+    const F = await ekranAc(DB); await kartAc(F.sayfa, "FIN7");
+    const metin = await F.sayfa.evaluate(() => document.body.innerText.replace(/\s+/g, " "));
+    const ur = (await q("select asama, (proses_ilerleme -> 0 ->> 'tamamlandiMi') pt, stoga_eklendi_mi s from public.uretim where id = 'fin-7'"))[0];
+    console.log(`     S9c üretim kaydı: aşama ${ur.asama} · proses tamamlandı ${ur.pt} · stoğa eklendi ${ur.s} · atama satırı ${JSON.stringify(await atamalar("fin-7"))}`);
+    k_("S9c yeni oturum: kart 'Tamamlandı', yeniden teslim formu YOK (çift stok bu yoldan açılmıyor)", [/FIN7.{0,80}Tamamlandı/.test(metin), await F.sayfa.locator("[data-teslim-al]:visible").count()], [true, 0]);
+    k_("S9c uretim ↔ uretim_atamalari ↔ fiş TUTARLI", [ur.pt, (await atamalar("fin-7"))[0].endsWith("teslim"), (await durum("fin-7")).fis], ["true", true, "1 geçerli / 1 iptal"]);
+    await F.tarayici.close();
   }
   k_("sayfa hatası yok (A)", e.hatalar, []);
   k_("sayfa hatası yok (B)", B.hatalar, []);
