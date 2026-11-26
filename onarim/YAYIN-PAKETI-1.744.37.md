@@ -39,8 +39,27 @@ damgalanmaz; rengin kendi adı eskisi gibi kimlikle eşleşir ve damgalanır. Re
 3. GitHub Pages 1-2 dk; açık uygulamalar açılışta / 10 dk arka plandan dönüşte geçer, çalışırken şerit gösterir.
 4. Doğrulama: yayındaki HTML'in özeti = yukarıdaki; uygulamada sürüm 1.744.37.
 
-Not: 1. adım `surum.json`'suz yapılırsa yayındaki sürüm DEĞİŞMEZ (başlatıcı 1.744.36'ya yönlendirmeye devam eder);
-yayını başlatan 2. adımdır.
+**DİKKAT — birleştirme = dağıtım.** Depoda ayrı bir Pages iş akışı yok; GitHub Pages `main` dalından yayın yapıyor
+(alan adı erp.newdiamond.com.tr). `main`'e her birleştirme Pages dağıtımını TETİKLER ve `main`'deki bütün dosyalar
+yayına çıkar. Yani 1. adımdan 1-2 dk sonra `https://erp.newdiamond.com.tr/atolye-erp-v1.744.37.html` adresi
+**doğrudan açılabilir olur** — `surum.json` değişmese bile. Değişmeyen tek şey yönlendirme: başlatıcı (`index.html`) ve
+açık uygulamalar `surum.json`'a baktıkları için 1.744.36'da kalır; yeni sürüme yalnız adresi bilen / yazan geçer.
+Sonuç: 1. adım da bir yayın kararıdır; ayrı onay olmadan birleştirilmez. Kullanıcıları geçiren 2. adımdır.
+
+## PR açma izni (bu oturumda hata)
+
+Taslak PR açma isteği `403 Resource not accessible by integration` ile reddedildi; aynı oturumda dala gönderim (push) çalışıyor.
+Bu, Claude GitHub uygulamasının depo İÇERİĞİNE yazabildiğini ama **Pull requests** iznine sahip olmadığını (ya da yeni izin
+isteğinin onaylanmadığını) gösteriyor.
+
+En dar düzeltme: GitHub › Settings › Applications › Installed GitHub Apps › **Claude** › Configure:
+- Repository access: **Only select repositories** → yalnız `NewDiamond` (başka depo eklemeyin).
+- İzinler: **Pull requests: Read and write** (bekleyen bir "permission update" isteği görünüyorsa onu kabul edin).
+  Contents / Actions / Pages / Administration izinlerini GENİŞLETMEYİN.
+Gerekirse claude.ai/connect-github üzerinden hesabı yeniden bağlayın. Branch koruması / main'e doğrudan gönderim bu
+düzeltmenin parçası DEĞİL — PR'sız main'e gönderim yapılmayacak.
+Alternatif (izin değiştirmeden): GitHub'da `claude/renk-ad-kombinasyon` dalından PR'ı kendiniz **taslak** olarak açın;
+açıklama metni hazır (sohbette).
 
 ## Geri dönüş
 
