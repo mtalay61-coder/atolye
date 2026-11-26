@@ -92,14 +92,16 @@ sonuc(all({a for a in ov[k] if ov[k][a] != sv[k][a]} == {"aktif"} and ov[k]["akt
 ou, su = satirlar(once, "urunler"), satirlar(sonra, "urunler")
 oge = kural = 0
 for u in ou:
-    if {k for k in ou[u] if ou[u][k] != su[u][k]} - {"recete"}: kural += 1000
+    if {k for k in ou[u] if ou[u][k] != su[u][k]} - {"recete", "surum"}: kural += 1000
+    beklenen_surum = (ou[u].get("surum") or 0) + (1 if any(x["u"] == u for x in D.values()) else 0) if ou[u].get("surum") is not None else None
+    if su[u].get("surum") != beklenen_surum: kural += 1000
     ra, rb = ou[u].get("recete") or [], su[u].get("recete") or []
     if len(ra) != len(rb): kural += 1000; continue
     for i, (ea, eb) in enumerate(zip(ra, rb), 1):
         if ea == eb: continue
         oge += 1; x = D.get((u, i))
         if not x or {k for k in set(ea) | set(eb) if ea.get(k) != eb.get(k)} - {"mamulRenk", "mamulRenkId"} or eb["mamulRenk"] != x["sonra"] or "mamulRenkId" in eb: kural += 1
-sonuc(oge == 149 and kural == 0, f"reçetede tam 149 öğe, yalnız mamulRenk / mamulRenkId; ürünlerin diğer bütün sütunları ve kapsam dışı ürünün reçetesi aynı (öğe {oge}, kural dışı {kural})")
+sonuc(oge == 149 and kural == 0, f"reçetede tam 149 öğe, yalnız mamulRenk / mamulRenkId; surum yalnız 2 üründe tam +1 (urunler_surum); diğer bütün sütunlar ve kapsam dışı ürün aynı (öğe {oge}, kural dışı {kural})")
 dg_o, dg_s = json.loads(once["degisiklik"][0]), json.loads(sonra["degisiklik"][0])
 sonuc(dg_s["sayaclar"].get("stk_varyant", 0) - dg_o["sayaclar"].get("stk_varyant", 0) == 3 and dg_s["sayaclar"].get("urunler", 0) - dg_o["sayaclar"].get("urunler", 0) == 1
       and {k: v for k, v in dg_s["sayaclar"].items() if k not in ("stk_varyant", "urunler")} == {k: v for k, v in dg_o["sayaclar"].items() if k not in ("stk_varyant", "urunler")},
@@ -121,7 +123,11 @@ print("2. Geri alma — Editor gibi")
 ok3, np3, out3 = editor_gibi("onarim_sina", GERI); print("   ", ileti(out3))
 geri = dokum("onarim_sina")
 sonuc(ok3 and np3 == 2 and "GERİ AL TAMAM" in out3, f"{np3} parça, GERİ AL TAMAM")
-sonuc(all(geri[t] == once[t] for t in once if t not in ("degisiklik", "silinen_arsiv")), "geri almadan sonra degisiklik / arşiv dışındaki BÜTÜN tablolar onarım öncesiyle birebir aynı")
+gu = satirlar(geri, "urunler")
+sonuc(all(geri[t] == once[t] for t in once if t not in ("degisiklik", "silinen_arsiv", "urunler"))
+      and all({k: v for k, v in gu[u].items() if k != "surum"} == {k: v for k, v in ou[u].items() if k != "surum"} for u in ou)
+      and all(gu[u].get("surum") == (None if ou[u].get("surum") is None else ou[u]["surum"] + (2 if any(x["u"] == u for x in D.values()) else 0)) for u in ou),
+      "geri almadan sonra degisiklik / arşiv dışındaki BÜTÜN tablolar onarım öncesiyle aynı; ürünlerde yalnız surum (2 üründe +2: onarım + geri alma)")
 yeni_arsiv = [json.loads(x) for x in geri["silinen_arsiv"] if x not in once["silinen_arsiv"]]
 sonuc(len(yeni_arsiv) == 135 and {a["satir_id"] for a in yeni_arsiv} == set(A) | set(B) and set(once["silinen_arsiv"]) <= set(geri["silinen_arsiv"]),
       "arşive tam 135 silme kaydı düştü (kimlikleri onarımın eklediği varyantlar); önceki arşiv satırı kaybolmadı")

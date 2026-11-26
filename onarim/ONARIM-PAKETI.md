@@ -3,15 +3,26 @@
 Yayından (1.744.37) AYRI onaylanır ve YALNIZ yayından + "Sekmeler gerçekten düzeltilmiş sürümde" denetiminden SONRA uygulanır
 (YAYIN-PAKETI-1.744.37.md). Kayıt kimlikleri depo herkese açık olduğu için BURADA YOK; yalnız kullanıcıya verilen dosyalarda.
 
-## Dosyalar (kullanıcıya verildi; depoda değil) — 2. sürüm
-- `onarim-uygula.sql` (sha256 `1f90b157eb339cc975b6deb7a8e24e6d70fe43539c1a94531c31344c75ea0b15`) ve
-  `onarim-geri-al.sql` (`726f097b4bd44a565930cdb85a88e59030fd8e8d8eaad64652e5a0a6f7c7cae6`): projenin `stok-v2/editor-icin.py`
-  çıktısı — yalnız düz `$$` gövde, gövde dışında dolar yok, yorumlar ayıklanmış. Editor 2 isteğe böler: (1) tek DO bloğu, (2) salt
-  okur sonuç tablosu. Blok, tek bir beklenti tutmazsa `ONARIM DUR: …` ile durur ve bütünüyle geri alınır (kısmi onarım yok).
-- `onarim-plani.csv` (`5b60d433…`) — kayıt bazında plan, güncel adlarla ("Siyah Yılan" — kullanıcı: ad değişikliği bilerek).
-- `canli-yapi-salt-okur.sql` (depoda) — canlıda salt okur; OZET satırı yerel provanın şemasıyla karşılaştırılır
-  (beklenen: `241 satır · 0e94709f7a31ae2175e09cab83f9179a`, canlının 18 Kasım yapısı).
-- Üretici `onarim/onarim-sql-uret.py`, yerel sınama `onarim/onarim-sina.py`.
+## Dosyalar (kullanıcıya verildi; depoda değil) — 3. sürüm (canlı yapısıyla hizalı prova)
+- `onarim-uygula.sql` sha256 `d5fec6e5b0fac7a76eac7fbe2f3fe04f6c51e4184436edd384e211f0070c32b1`
+- `onarim-geri-al.sql` sha256 `47fa3cb4f6bf248686ed4ce1acfec2df76bbaafb702f7d825e783bf332cb2cc3`
+- `onarim-plani.csv` sha256 `5b60d43397d3f3d8e45ede2b2a8cdf42e968af8534dab899ea50d686c0e985be` (değişmedi)
+Projenin `stok-v2/editor-icin.py` çıktısı: yalnız düz `$$` gövde, gövde dışında dolar yok, yorum yok; Editor 2 isteğe böler.
+2. sürüm (`1f90b157…`) canlı yapıda DURURDU ("ürünlerin reçete dışındaki bir alanı değişti" — canlıdaki `urunler_surum`
+tetikleyicisi): yerelde hizalı şemada gösterildi, hiçbir kayıt değişmedi.
+
+## Canlı yapı ile yerel prova (yalnız sorgunun kapsadığı 13 tablo)
+`canli-yapi-salt-okur.sql` (2. sürüm, `1a61a6a2…`): canlıdan CSV 299 satır · `fb6bf396d7e518d267e56c40039f79c5` — CSV'den
+yeniden hesaplanan özet aynı (dosya tam). 18 Kasım kurulum şemasından farklar: 5 tetikleyici (urunler_surum, siparisler_surum,
+tanimlar_surum, iki silme_koruma), 2 fonksiyon (surum_arttir, yazma_yetkisi_koruma), 2 fonksiyon gövdesi (arsive_kopyala_silinen:
+yorum satırı; tanimlar_kullanici_koruma: kimlik değişikliği denetimi), 14 fonksiyonda \r\n satır sonu, 5 kısıt + 2 doğrulanmamış
+kısıt, 15 eksik / 1 fazla sütun, 39 sütunda tür / varsayılan / boş olamaz. `onarim/yapi-hizala.py` hepsini yerelde uygular →
+yerel OZET = canlı OZET (299 · fb6bf396…). BU EŞLEŞME YALNIZ BU 13 TABLONUN yapısını, tetikleyicilerini ve tetikleyici
+fonksiyonlarının gövdelerini doğrular; canlı şemanın tamamının eşit olduğunu GÖSTERMEZ (tetikleyici fonksiyonlarının çağırdığı
+fonksiyonlar — ör. fis_kural_aktif, siparis_durum_hesap —, diğer tablolar, görünümler ve yetkiler kapsam dışı).
+Onarımın yazdığı tablolardaki tetikleyicilerin yan etkileri (gövdelerden): stk_istemci_koru — SQL Editor'da jeton yok, hemen
+çıkar; degisiklik_bump — degisiklik.sayaclar stk_varyant +3 / urunler +1; urunler_surum — reçetesi düzeltilen 2 üründe surum TAM +1
+(onarım bunu ayrıca denetler, alan dışlanmaz); arsiv_silinen — yalnız geri almada (135 arşiv kaydı).
 
 ## Kapsam
 | | Kayıt | Değişen |
@@ -37,7 +48,7 @@ yalnız sayaç / zaman damgası olarak bilinen `degisiklik.zaman` karşılaştı
 bir tabloya yazarsa denetim bunu yan etki sayar ve DURUR (güvenli yön: hiçbir şey değişmez) — bu yüzden onarım kimse çalışmıyorken.
 Sürüm kapısına (`min_istemci_surum`) DOKUNMAZ.
 
-## Yerel sınama — 29/29 (canlının 18 Kasım yapısı: 97 tetikleyici, 90 kısıt; tetikleyiciler AÇIK)
+## Yerel sınama — 29/29 (canlıya hizalanmış yapı: 102 tetikleyici, 95 kısıt; tetikleyiciler AÇIK)
 Şablon `atolye-kurulum-2026-11-18.sql` ile kuruldu (kurulumun kendi doğrulaması 17/17 tamam); veri canlı envanterden. Dosyalar
 Editor gibi parçalanıp her parça ayrı psql bağlantısıyla gönderildi. Sonuç: ONARIM TAMAM; 135 / 130 / 149 bağımsız döküm
 karşılaştırmasıyla; degisiklik +3 / +1; diğer 43 tablonun hepsi satır satır aynı; 436 eski varyantın stoğu aynı; 115 sipariş

@@ -211,7 +211,8 @@ do $$
   v_eski := array(select z.id from public.stk_varyant z where z.urun_id = any(v_urunler));
 """ + TUM_IZ.format(hedef="tum_once") + DG_ONCE + r"""
   select md5(coalesce(string_agg(z::text, '|' order by z::text), '')) into vr_dis_once from public.stk_varyant z where z.urun_id <> all(v_urunler);
-  select md5(coalesce(string_agg((to_jsonb(z) - 'recete')::text, '|' order by z.id), '')) into ur_once from public.urunler z;
+  select md5(coalesce(string_agg((to_jsonb(z) - 'recete' - 'surum')::text, '|' order by z.id), '')) into ur_once from public.urunler z;
+  create temp table urun_surum_once on commit drop as select z.id, to_jsonb(z)->>'surum' as surum from public.urunler z;
   select md5(coalesce(string_agg(z.id || '=' || coalesce(z.recete::text, '-'), '|' order by z.id), '')) into rec_dis_once
     from public.urunler z where z.id not in (select distinct x2->>'u' from jsonb_array_elements(d->'D') x2);
   create temp table onarim_once on commit drop as select z.* from public.stk_varyant z where z.urun_id = any(v_urunler);
@@ -266,7 +267,15 @@ do $$
     raise exception 'ONARIM DUR: reçete uzunluğu değişti'; end if;
   select md5(coalesce(string_agg(z::text, '|' order by z::text), '')) into vr_dis_sonra from public.stk_varyant z where z.urun_id <> all(v_urunler);
   if vr_dis_sonra is distinct from vr_dis_once then raise exception 'ONARIM DUR: 23 model dışındaki bir varyant değişti'; end if;
-  select md5(coalesce(string_agg((to_jsonb(z) - 'recete')::text, '|' order by z.id), '')) into ur_sonra from public.urunler z;
+  select md5(coalesce(string_agg((to_jsonb(z) - 'recete' - 'surum')::text, '|' order by z.id), '')) into ur_sonra from public.urunler z;
+  -- urunler_surum tetikleyicisi (surum_arttir): güncellenen her ürünün surum'u +1. Yalnız reçetesi düzeltilen ürünlerde TAM +1,
+  -- diğer bütün ürünlerde aynı; surum sütunu yoksa (null) iki taraf da null olmalı.
+  if exists (select 1 from urun_surum_once o join public.urunler z on z.id = o.id
+             where (to_jsonb(z)->>'surum') is distinct from
+                   case when o.surum is null then null
+                        when o.id in (select distinct x2->>'u' from jsonb_array_elements(d->'D') x2) then ((o.surum)::bigint + 1)::text
+                        else o.surum end) then
+    raise exception 'ONARIM DUR: ürün surum alanı beklenmeyen (yalnız reçetesi düzeltilen ürünlerde tam +1 olmalı)'; end if;
   if ur_sonra is distinct from ur_once then raise exception 'ONARIM DUR: ürünlerin reçete dışındaki bir alanı değişti'; end if;
   select md5(coalesce(string_agg(z.id || '=' || coalesce(z.recete::text, '-'), '|' order by z.id), '')) into rec_dis_sonra
     from public.urunler z where z.id not in (select distinct x2->>'u' from jsonb_array_elements(d->'D') x2);
@@ -315,7 +324,8 @@ do $$
 """ + TUM_IZ.format(hedef="tum_once") + DG_ONCE + r"""
   create temp table geri_once on commit drop as select z.* from public.stk_varyant z where z.urun_id = any(v_urunler);
   select md5(coalesce(string_agg(z::text, '|' order by z::text), '')) into vr_dis_once from public.stk_varyant z where z.urun_id <> all(v_urunler);
-  select md5(coalesce(string_agg((to_jsonb(z) - 'recete')::text, '|' order by z.id), '')) into ur_once from public.urunler z;
+  select md5(coalesce(string_agg((to_jsonb(z) - 'recete' - 'surum')::text, '|' order by z.id), '')) into ur_once from public.urunler z;
+  create temp table urun_surum_once on commit drop as select z.id, to_jsonb(z)->>'surum' as surum from public.urunler z;
   select md5(coalesce(string_agg(z.id || '=' || coalesce(z.recete::text, '-'), '|' order by z.id), '')) into rec_dis_once
     from public.urunler z where z.id not in (select distinct x2->>'u' from jsonb_array_elements(d->'D') x2);
   if to_regclass('public.silinen_arsiv') is not null then
@@ -345,7 +355,15 @@ do $$
   end loop;
   select md5(coalesce(string_agg(z::text, '|' order by z::text), '')) into vr_dis_sonra from public.stk_varyant z where z.urun_id <> all(v_urunler);
   if vr_dis_sonra is distinct from vr_dis_once then raise exception 'GERİ AL DUR: 23 model dışındaki bir varyant değişti'; end if;
-  select md5(coalesce(string_agg((to_jsonb(z) - 'recete')::text, '|' order by z.id), '')) into ur_sonra from public.urunler z;
+  select md5(coalesce(string_agg((to_jsonb(z) - 'recete' - 'surum')::text, '|' order by z.id), '')) into ur_sonra from public.urunler z;
+  -- urunler_surum tetikleyicisi (surum_arttir): güncellenen her ürünün surum'u +1. Yalnız reçetesi düzeltilen ürünlerde TAM +1,
+  -- diğer bütün ürünlerde aynı; surum sütunu yoksa (null) iki taraf da null olmalı.
+  if exists (select 1 from urun_surum_once o join public.urunler z on z.id = o.id
+             where (to_jsonb(z)->>'surum') is distinct from
+                   case when o.surum is null then null
+                        when o.id in (select distinct x2->>'u' from jsonb_array_elements(d->'D') x2) then ((o.surum)::bigint + 1)::text
+                        else o.surum end) then
+    raise exception 'GERİ AL DUR: ürün surum alanı beklenmeyen (yalnız reçetesi düzeltilen ürünlerde tam +1 olmalı)'; end if;
   if ur_sonra is distinct from ur_once then raise exception 'GERİ AL DUR: ürünlerin reçete dışındaki bir alanı değişti'; end if;
   select md5(coalesce(string_agg(z.id || '=' || coalesce(z.recete::text, '-'), '|' order by z.id), '')) into rec_dis_sonra
     from public.urunler z where z.id not in (select distinct x2->>'u' from jsonb_array_elements(d->'D') x2);
@@ -398,8 +416,8 @@ def yerel_kopya(C, vc, cr, U, hareketli):
             e["birim"] = "adet"; e["aciklama"] = f"korunacak-{a['sira']}"     # envanterde olmayan alanlar: değişmediği sınanır
             els.append(e)
         s.append(f"insert into public.urunler (id, ad, kategori, recete, renk_resimleri, harici_barkodlar, stok_no) values ({lit(u)}, {lit(adlar[u])}, 'Mamul', "
-                 f"{lit(json.dumps(els, ensure_ascii=False)) + '::jsonb' if els else 'null'}, {lit(json.dumps({k: 'gorsel' for k in res[u]}, ensure_ascii=False))}::jsonb, null, {lit('SN-' + u[-4:])});")
-    s.append("insert into public.urunler (id, ad, kategori, recete) values ('u-disarida', 'Kapsam dışı model', 'Mamul', '[{\"mamulRenk\":\"1001 - Siyah\",\"miktar\":1}]');")
+                 f"{lit(json.dumps(els, ensure_ascii=False)) + '::jsonb' if els else 'null'}, {lit(json.dumps({k: 'gorsel' for k in res[u]}, ensure_ascii=False))}::jsonb, '[]'::jsonb, {27000 + U.index(u)});")
+    s.append("insert into public.urunler (id, ad, kategori, recete, harici_barkodlar) values ('u-disarida', 'Kapsam dışı model', 'Mamul', '[{\"mamulRenk\":\"1001 - Siyah\",\"miktar\":1}]', '[]');")
     s.append("insert into public.stk_varyant (id, urun_id, renk_id, olcu_id) values ('vry-disarida', 'u-disarida', 'renk-mwbu0vhu-6lad', null);")
     for k, x in sorted(vc.items()):
         s.append(f"insert into public.stk_varyant (id, urun_id, renk_id, olcu_id, min_stok, aktif, olusturma) values ({lit(k)}, {lit(x['u'])}, {lit(x['renk_id'])}, "
