@@ -3214,6 +3214,13 @@ function AtolyeUygulamasi() {
     });
   }, [loading, baglantiYok, tanimlar, saveTanimlar, showToast, yazmaOturumu, tanimBayatDalgasi]);
 
+  // YENİ ÖĞE KODU AYRILDI (v1.744.39, B2 — 030 / 089 `tanimYeniKodlariAyir`): iki cihaz aynı kodu vermişti; bu cihazın henüz yazılmamış
+  // yeni öğesi sıradaki koda geçti (sunucudakine dokunulmadı) — söylenir.
+  useEffect(() => {
+    window.__tanimKodlariAyrildi = (liste) => showToast(`Kod çakışması önlendi — başka cihaz aynı kodu az önce vermişti: ${(liste || []).map((d) => `${d.ad} ${d.alan === "kod" ? "renk kodu" : "barkod kodu"} ${d.eski} → ${d.yeni}`).join(" · ")}`);
+    return () => { window.__tanimKodlariAyrildi = null; };
+  }, [showToast]);
+
   // KOD ÇAKIŞMASI KENDİLİĞİNDEN ONARILIR (v1.556.0, 089 `tanimKodlariniOnar`). Kullanıcı: "Renk kodları
   // çakışıyor, burayı düzeltmiştik daha önce!" — iki cihazın aynı anda verdiği barkod kodları tanım
   // birleştirmesiyle yan yana geldi. Tanımlar her değiştiğinde (açılış, bulutla birleştirme, kayıt) denetlenir;
@@ -5291,10 +5298,12 @@ function AtolyeUygulamasi() {
                     <span style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                       <button type="button" className="btn-primary" data-tanim-cakisma-benim="1" style={{ padding: "3px 8px", fontSize: 11 }}
                         onClick={() => {
-                          if (!window.confirm("Çakışan öğelerde BU CİHAZDAKİ değerler yazılacak; başka cihazın bu öğelerdeki değişikliği geri alınır. Öbür değişiklikleri korunur. Devam?")) return;
+                          if ((v.cakismalar || []).some((c) => c.tur === "kod")) { showToast("Kombinasyon kodu çakışması 'Benimkini uygula' ile çözülmez (kod etikette görünür) — 'Sunucudakini al' deyip kombinasyonu yeniden açın"); return; }
+                          if (!window.confirm("Yukarıda listelenen çakışan öğelerde BU CİHAZDAKİ değerler yazılacak; başka cihazın yalnız bu öğelerdeki değişikliği geri alınır, öbür değişiklikleri korunur. Bu arada yeni bir çakışma olduysa yeniden sorulur. Devam?")) return;
                           gunlukYaz("Tanım çakışması: bu cihazın değerleri uygulandı", "tanimlar", { cakismalar: v.cakismalar || [] });
                           incelemeSil(tablo, sid);
-                          yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", tanimlar, { cakismaKarari: "yerel", tetikleyen: "çakışma kararı" }), "Tanımlar", tanimlar);
+                          // Yalnız GÖRÜLEN çakışmalar onaylanır; arada yenisi doğduysa yazma yine durur ve şerit yeniden sorar (030).
+                          yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", tanimlar, { onaylananCakismalar: v.cakismalar || [], tetikleyen: "çakışma kararı" }), "Tanımlar", tanimlar);
                         }}>Benimkini uygula</button>
                       <button type="button" className="btn-ghost" data-tanim-cakisma-sunucu="1" style={{ padding: "3px 8px", fontSize: 11 }}
                         onClick={() => {

@@ -785,14 +785,29 @@ function tekilYaz(anahtar, tablo, veri, secenek = {}) {
       const surum = satir ? Number(satir.surum) : NaN;
       if (typeof tanimlarOkundu === "function") tanimlarOkundu();
       const taban = tekilTabanOku("tanimlar");
+      // ONAY YALNIZ GÖRÜLEN ÇAKIŞMAYI ÇÖZER (kullanıcı, 27 Kasım: "'Benimkini uygula' seçildiğinde sürümü yeniden denetle; bu sırada
+      // başka cihazın eklediği kayıt silinmemeli; yalnız onaylanan çatışma çözülmeli"). Kullanıcı şeritte gördüğü listeyi onaylar
+      // (`secenek.onaylananCakismalar`); her denemede çakışmalar YENİDEN hesaplanır, onaylanan sayılan yalnız aynı yol + aynı iki değer.
+      // Karar verilirken başka cihaz o öğeyi yeniden değiştirdiyse ya da yeni bir çakışma doğduysa yazma yine durur ve yeniden sorulur;
+      // çakışmayan değişiklikler (başka cihazın eklediği kayıt dahil) her zamanki gibi birleşir.
+      const onay = Array.isArray(secenek.onaylananCakismalar) ? secenek.onaylananCakismalar : [];
+      const ayni = (a, c) => a.yol === c.yol && JSON.stringify(a.bulut) === JSON.stringify(c.bulut) && JSON.stringify(a.yerel) === JSON.stringify(c.yerel);
       const cak = bulut ? tanimCakismalari(veri, bulut, taban) : [];
-      if (cak.length && secenek.cakismaKarari !== "yerel") {
-        const e = new Error(`Tanımlar çakışması — başka cihaz aynı öğeleri değiştirdi; bu cihazın değişikliği BEKLETİLİYOR (gönderilmedi): ${tanimCakismaMetni(cak)}`);
-        e.kaliciRet = true; e.kod = "CAKISMA"; e.cakismalar = cak;
+      const kalan = cak.filter((c) => !onay.some((a) => ayni(a, c)));
+      const u = tanimlarUzlastir(veri, bulut, taban, tanimSilinenleriOku());
+      // Yeni öğenin kodu sunucudakiyle çakışıyorsa yalnız yeni öğe sıradaki koda geçer; kombinasyon kodu çakışması açık çakışma.
+      const ka = tanimYeniKodlariAyir(tanimOtomatikBirlestir(u.tanimlar, veri, bulut), bulut);
+      kalan.push(...ka.kombiCakismalari);
+      if (kalan.length) {
+        const e = new Error(`Tanımlar çakışması — başka cihaz aynı öğeleri değiştirdi; bu cihazın değişikliği BEKLETİLİYOR (gönderilmedi): ${tanimCakismaMetni(kalan)}`);
+        e.kaliciRet = true; e.kod = "CAKISMA"; e.cakismalar = kalan;
         throw e;
       }
-      const u = tanimlarUzlastir(veri, bulut, taban, tanimSilinenleriOku());
-      const v = tanimOtomatikBirlestir(u.tanimlar, veri, bulut);
+      const v = ka.tanimlar;
+      if (ka.degisenler.length) {
+        console.info(`Tanımlar: yeni öğenin kodu sunucudakiyle çakıştı, sıradaki koda geçti: ${ka.degisenler.map((d) => `${d.ad} ${d.alan} ${d.eski}→${d.yeni}`).join(", ")}`);
+        if (typeof window !== "undefined" && window.__tanimKodlariAyrildi) window.__tanimKodlariAyrildi(ka.degisenler);
+      }
       if (satir && Number.isFinite(surum)) {
         const yazilan = await supabaseIstek(`tanimlar?id=eq.tekil&surum=eq.${surum}`, {
           method: "PATCH", headers: { Prefer: "return=representation" }, body: JSON.stringify({ veri: v }),

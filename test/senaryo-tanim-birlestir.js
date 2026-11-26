@@ -22,7 +22,10 @@ async function calistir() {
   t["stok:items"] = JSON.stringify(st);
 
   // Buluttaki tanımlar (başka cihazın yazdığı): Gri hâlâ var (bu cihaz siler), Lacivert yeni.
-  const bulutTanim = { ...tan, renkler: [...tan.renkler, { id: "renk-lacivert", ad: "Lacivert", tip: "Hammadde" }] };
+  // SAHTE SUNUCU YAZMAYI SAKLAR (v1.744.39, B2): eskiden POST'u kaydedip bulutu HİÇ değiştirmiyordu — bu cihazın az önce yazdığı hâl
+  // sonraki okumada eski görünüyor, yani "başka cihaz geri aldı" gibi duruyordu. Sürüm koşullu yazma (030) bunu doğru olarak ÇAKIŞMA
+  // saydı (Gri: bu cihazda silindi · sunucuda değişmiş). Gerçek sunucu yazılanı saklar; sahte sunucu da artık saklar.
+  let bulutTanim = { ...tan, renkler: [...tan.renkler, { id: "renk-lacivert", ad: "Lacivert", tip: "Hammadde" }] };
   const giden = [];
   const onceRota = async (sayfa) => {
     await sayfa.route("**/rest/v1/tanimlar*", async (r) => {
@@ -31,7 +34,7 @@ async function calistir() {
         return r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([{ veri: bulutTanim }]) });
       }
       if (req.method() === "POST") {
-        try { giden.push(JSON.parse(req.postData())[0].veri); } catch (e) { /* */ }
+        try { giden.push(JSON.parse(req.postData())[0].veri); bulutTanim = JSON.parse(req.postData())[0].veri; } catch (e) { /* */ }
         return r.fulfill({ status: 201, body: "" });
       }
       return r.continue();

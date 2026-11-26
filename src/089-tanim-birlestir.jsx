@@ -176,6 +176,58 @@ function tanimOtomatikBirlestir(birlesik, yerel, bulut) {
   Object.keys(s).forEach((k) => { const a = Number(ys[k]); const b = Number(bs[k]); if (Number.isFinite(a) || Number.isFinite(b)) s[k] = Math.max(Number.isFinite(a) ? a : -Infinity, Number.isFinite(b) ? b : -Infinity); });
   return { ...birlesik, kodSayaclari: s };
 }
+// YENİ ÖĞENİN KODU ÇAKIŞIRSA (v1.744.39, B2 — kullanıcı, 27 Kasım: "büyük sayacı almak iki cihazın aynı kodu üretmesini tek başına
+// engellemez"). İki cihaz aynı sayaçtan aynı kodu verir (ölçüldü: iki yeni renk de ton kodu 101). Birleştirme anında, BU CİHAZIN henüz
+// sunucuya gitmemiş yeni öğesi (bulutta kimliği yok) sunucudaki başka bir öğenin koduyla çakışıyorsa yalnız O yeni öğeye sıradaki boş kod
+// verilir — sunucudaki öğenin (etiketi basılmış olabilir) koduna DOKUNULMAZ. Aileler: renk ton kodu `kod` (renk + kombinasyon numaraları
+// atlanır), renk / beden / asorti `barkodKodu` (077 kodSayacIlerlet; renk ailesinde kombinasyon kodları da dolu sayılır).
+// KOMBİNASYON kodu etikette görünür ("1003 - Siyah/Taba") ve varyantlara metin olarak geçmiş olabilir → sessizce değiştirilmez:
+// `kombiCakismalari` olarak döner, çağıran açık çakışma bildirir. Saf. Döner: { tanimlar, degisenler: [{ aile, ad, alan, eski, yeni }],
+// kombiCakismalari: [{ yol, yerel, bulut, tur: "kod" }] }.
+function tanimYeniKodlariAyir(birlesik, bulut) {
+  const t = birlesik || {}; const b = bulut || {};
+  const degisenler = []; const kombiCakismalari = [];
+  const sayaclar = { ...(t.kodSayaclari || {}) };
+  const sonuc = { ...t };
+  const bulutIdleri = (alan) => new Set(((b[alan]) || []).map((x) => x && x.id).filter(Boolean));
+  const kombiNo = new Set((t.renkKombinasyonlari || []).map((k) => Number(k.kod)).filter((v) => v > 0));
+  // Kombinasyon: bu cihazın yeni kombinasyonu sunucudaki başka bir kombinasyonla aynı kodda
+  { const bIds = bulutIdleri("renkKombinasyonlari");
+    const bKod = new Map((b.renkKombinasyonlari || []).map((k) => [String(k.kod), k]));
+    (t.renkKombinasyonlari || []).forEach((k) => {
+      if (bIds.has(k.id)) return;
+      const d = bKod.get(String(k.kod));
+      if (d && d.id !== k.id) kombiCakismalari.push({ yol: `kombinasyonlar › kod ${k.kod}`, yerel: k, bulut: d, tur: "kod" });
+    });
+  }
+  const ayir = (alan, kodAlani, aile) => {
+    const liste = sonuc[alan] || [];   // önceki ayırmanın sonucu (renkte önce ton kodu, sonra barkod kodu)
+    if (!liste.length) return;
+    const bIds = bulutIdleri(alan);
+    const sunucuKodlari = new Set(liste.filter((x) => bIds.has(x.id)).map((x) => String(x[kodAlani] == null ? "" : x[kodAlani])).filter((v) => v !== ""));
+    const kullanilan = new Set(liste.map((x) => Number(x[kodAlani])).filter((v) => v > 0));
+    if (aile === "renk" || kodAlani === "kod") kombiNo.forEach((v) => kullanilan.add(v));
+    let degisti = false;
+    const yeni = liste.map((x) => {
+      if (bIds.has(x.id)) return x;
+      const v = x[kodAlani] == null ? "" : String(x[kodAlani]);
+      if (v === "" || !sunucuKodlari.has(v)) return x;
+      let n;
+      if (kodAlani === "barkodKodu") { n = kodSayacIlerlet(sayaclar, aile, kullanilan); if (n === null) return x; }
+      else { n = Math.max(100, ...[...kullanilan].filter((z) => z < 1000)) + 1; while (kullanilan.has(n)) n += 1; kullanilan.add(n); n = String(n); }
+      degisti = true;
+      degisenler.push({ aile: alan, ad: x.ad, alan: kodAlani, eski: v, yeni: n });
+      return { ...x, [kodAlani]: n };
+    });
+    if (degisti) sonuc[alan] = yeni;
+  };
+  ayir("renkler", "kod", "renk");
+  ayir("renkler", "barkodKodu", "renk");
+  ayir("bedenler", "barkodKodu", "beden");
+  ayir("asortiler", "barkodKodu", "asorti");
+  if (degisenler.length) sonuc.kodSayaclari = sayaclar;
+  return { tanimlar: degisenler.length ? sonuc : birlesik, degisenler, kombiCakismalari };
+}
 function tanimCakismaMetni(liste) {
   const kisa = (v) => { const m = typeof v === "string" ? v : JSON.stringify(v); return m && m.length > 60 ? `${m.slice(0, 57)}…` : m; };
   return (liste || []).slice(0, 8).map((c) => `${c.yol}: bu cihazda ${kisa(c.yerel)} · sunucuda ${kisa(c.bulut)}`).join(" | ")
