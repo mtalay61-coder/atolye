@@ -75,6 +75,10 @@ async function foto(g) {
   // kasa İÇERİK ÖZETİ: geçerli satır kümesi
   f.kasaOzet = (await g.query(`select coalesce(md5(string_agg(h.hesap_id || ':' || md5(h.veri::text), ',' order by h.hesap_id, md5(h.veri::text))), '') as s
       from public.kas_hareket h left join public.stk_fis f on f.id = h.fis_id where not h.iptal and (h.fis_id is null or not f.iptal)`)).rows[0].s;
+  // TAM KAYIT ÖZETİ: yazılan her tablonun bütün satırları (iptal bayrakları dahil) — "hiçbir kayıt değişmedi" denetimi için
+  const parca = [];
+  for (const t of TABLOLAR) parca.push((await g.query(`select coalesce(md5(string_agg(md5(x::text), ',' order by md5(x::text))), '-') as s from public.${t} x`).catch(() => ({ rows: [{ s: "yok" }] }))).rows[0].s);
+  f.kayitOzet = parca.join("|");
   return f;
 }
 const fark = (a, b) => Object.fromEntries(TABLOLAR.map((t) => [t, b[t] - a[t]]).filter(([, v]) => v));
@@ -106,14 +110,22 @@ const bakiye = (f) => ({ stok: f.stok, cari: f.cari, kasaBakiye: f.kasaBakiye, k
     let ip1, ip2;
     if (eposta !== "ali@atolye.local") {
       let ipP; try { ipP = await c.iptal(r.fisNo); } catch (e) { ipP = { hata: `${e.code} ${String(e.message).slice(0, 80)}` }; }
-      k_(`İ  fişi kesen ${eposta} iptal edemez (silme yetkisi yok) — bakiye değişmedi`, [String(ipP.hata || "").slice(0, 5), JSON.stringify(bakiye(await foto(g))) === JSON.stringify(bakiye(sonra))], ["42501", true]);
+      const red = await foto(g);
+      k_(`İ' fişi kesen ${eposta} iptal edemez (silme yetkisi yok) → 42501`, String(ipP.hata || "").slice(0, 5), "42501");
+      k_(`İ' red sonrası HİÇBİR kayıt değişmedi (7 tablonun tam satır özeti + satır sayıları)`, [red.kayitOzet === sonra.kayitOzet, JSON.stringify(fark(sonra, red))], [true, "{}"]);
+      k_(`İ' red sonrası bakiye fişli hâlinde kaldı (stok / cari / kasa)`, JSON.stringify(bakiye(red)) === JSON.stringify(bakiye(sonra)), true);
     }
     await c.end(); c = await istemci(db, "ali@atolye.local");
     try { ip1 = await c.iptal(r.fisNo); } catch (e) { ip1 = { hata: `${e.code} ${String(e.message).slice(0, 80)}` }; }
     const iptalSonra = await foto(g);
+    k_("İ  Yönetici iptali kabul edildi (hata yok)", ip1.hata || "yok", "yok");
+    const goster = (f) => JSON.stringify({ cari: f.cari, kasa: f.kasaBakiye, stokSifirDisi: f.stok.split(" ").filter((x) => x && !x.endsWith("=0")).join(" ") });
+    console.log(`     başlangıç ${goster(once)} · fişli ${goster(sonra)} · iptal sonrası ${goster(iptalSonra)}`);
     k_("İ  iptal → stok / cari / kasa bakiyesi + kasa özeti başlangıçta", bakiye(iptalSonra), bakiye(once));
     try { ip2 = await c.iptal(r.fisNo); } catch (e) { ip2 = { hata: `${e.code} ${String(e.message).slice(0, 80)}` }; }
-    k_("İ  ikinci iptal bakiyeyi değiştirmedi", bakiye(await foto(g)), bakiye(iptalSonra));
+    const ikinci = await foto(g);
+    k_("İ  ikinci iptal bakiyeyi değiştirmedi", bakiye(ikinci), bakiye(iptalSonra));
+    k_("İ  ikinci iptal hiçbir kaydı değiştirmedi (tam satır özeti)", ikinci.kayitOzet === iptalSonra.kayitOzet, true);
     console.log(`     1. iptal ${JSON.stringify(ip1).slice(0, 80)} · 2. iptal ${JSON.stringify(ip2).slice(0, 80)}`);
     await c.end(); await g.end();
     // Y: yanıt kaybı — ilk istek sunucuda tamamlanır, yanıt OKUNMAZ, aynı istek yeniden
