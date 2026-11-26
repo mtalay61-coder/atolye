@@ -764,24 +764,61 @@ function tekilYaz(anahtar, tablo, veri, secenek = {}) {
   // (2) ÜÇ YÖNLÜ (089 `tanimlarUzlastir`): bu cihazın bildiği son sunucu hâli (taban) varsa başka cihazın DEĞİŞTİRDİĞİ öğe
   // de korunur (eskiden aynı kimlikte bu cihaz kazanıyordu); eklenen / silinen koruması (`tanimlariBirlestir`) aynen sürer.
   const tetikleyen = secenek.tetikleyen || "kayıt";
-  const isi = () => (birlestir
-    ? supabaseIstek("tanimlar?id=eq.tekil&select=veri").catch((e) => {
+  // TANIMLAR SÜRÜM KOŞULLU (v1.744.38, inceleme 25 B2 — kanıt test/inceleme/ekran-tanim-yaris.js). Oku → birleştir → KOŞULSUZ yaz
+  // yolunda, okuma ile yazma arasında başka cihaz yazarsa onun eklediği SESSİZCE siliniyordu (son yazan kazanır; tanimlar_surum
+  // tetikleyicisi sürümü artırıyordu ama yazma koşul göndermiyordu). Şimdi: sürümle birlikte okunur, üç yönlü birleştirilir ve
+  // `surum=eq.N` koşuluyla yazılır; 0 satır = arada başka yazma oldu → YENİDEN okunur ve birleştirilir (taban aynı kalır: bu cihazın
+  // dayandığı hâl). İki taraf AYNI öğeyi farklı değiştirdiyse (089 `tanimCakismalari`) sessizce seçilmez: yazma durur, değişiklik
+  // bekleyen deftere "inceleme" olarak düşer (kendiliğinden yeniden gönderilmez, yoklama ekranı ezmez), şerit hangi öğede ne çakıştığını
+  // gösterir; kullanıcı "Benimkini uygula" (`secenek.cakismaKarari = "yerel"`) ya da "Sunucudakini al" der (100).
+  const tanimSurumlu = async () => {
+    for (let deneme = 0; deneme < 6; deneme++) {
+      let r;
+      try { r = await supabaseIstek("tanimlar?id=eq.tekil&select=veri,surum"); }
+      catch (e) {
         const h = new Error(`Tanımlar sunucudan okunamadı — eski kopya gönderilmedi (${String((e && e.message) || e).slice(0, 120)})`);
         if (e && e.yazmaKapisi) h.yazmaKapisi = e.yazmaKapisi;
         throw h;
-      }).then((r) => {
-        const bulut = Array.isArray(r) && r[0] ? r[0].veri : null;
-        if (typeof tanimlarOkundu === "function") tanimlarOkundu();
-        const u = tanimlarUzlastir(veri, bulut, tekilTabanOku("tanimlar"), tanimSilinenleriOku());
-        // Ortak silinenler (`__silinenler`) her yazmada buluta taşınır; yerel/ekran yalnız öğe eklendi/çıkarıldı/değiştiyse.
-        if (u.toplam === 0) return u.tanimlar;
+      }
+      const satir = Array.isArray(r) && r[0] ? r[0] : null;
+      const bulut = satir ? satir.veri : null;
+      const surum = satir ? Number(satir.surum) : NaN;
+      if (typeof tanimlarOkundu === "function") tanimlarOkundu();
+      const taban = tekilTabanOku("tanimlar");
+      const cak = bulut ? tanimCakismalari(veri, bulut, taban) : [];
+      if (cak.length && secenek.cakismaKarari !== "yerel") {
+        const e = new Error(`Tanımlar çakışması — başka cihaz aynı öğeleri değiştirdi; bu cihazın değişikliği BEKLETİLİYOR (gönderilmedi): ${tanimCakismaMetni(cak)}`);
+        e.kaliciRet = true; e.kod = "CAKISMA"; e.cakismalar = cak;
+        throw e;
+      }
+      const u = tanimlarUzlastir(veri, bulut, taban, tanimSilinenleriOku());
+      const v = tanimOtomatikBirlestir(u.tanimlar, veri, bulut);
+      if (satir && Number.isFinite(surum)) {
+        const yazilan = await supabaseIstek(`tanimlar?id=eq.tekil&surum=eq.${surum}`, {
+          method: "PATCH", headers: { Prefer: "return=representation" }, body: JSON.stringify({ veri: v }),
+        });
+        if (!Array.isArray(yazilan) || yazilan.length === 0) {   // arada başka yazma → yeniden oku-birleştir
+          await new Promise((ok) => setTimeout(ok, 60 * (deneme + 1)));
+          continue;
+        }
+      } else {
+        // Satır hiç yok (ilk kurulum) ya da sürüm sütunu yok: tek satırı ilk kez yazan.
+        await supabaseIstek("tanimlar", { method: "POST", headers: { Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify([{ id: "tekil", veri: v }]) });
+      }
+      if (u.toplam !== 0 || v !== u.tanimlar) {
         // katman-muaf: tekilYaz'ın kendi gövdesi — birleşik hâl yerele de yazılır (arada daha yeni kayıt yoksa).
-        if (_tekilSayac[anahtar] === benimSiram) guvenliYaz(anahtar, JSON.stringify(u.tanimlar), true);
-        console.info(`Tanımlar bulutla birleştirildi (${tetikleyen}): ${u.metin}`);
-        if (typeof window !== "undefined" && window.__tanimlarBirlesti) window.__tanimlarBirlesti({ birlesik: u.tanimlar, gonderilen: veri, ozet: u, tetikleyen });
-        return u.tanimlar;
-      })
-    : ucYonlu
+        if (_tekilSayac[anahtar] === benimSiram) guvenliYaz(anahtar, JSON.stringify(v), true);
+        console.info(`Tanımlar bulutla birleştirildi (${tetikleyen}${deneme ? `, ${deneme + 1}. deneme` : ""}): ${u.metin}`);
+        if (typeof window !== "undefined" && window.__tanimlarBirlesti) window.__tanimlarBirlesti({ birlesik: v, gonderilen: veri, ozet: u, tetikleyen });
+      }
+      return v;
+    }
+    throw new Error("Tanımlar art arda başka cihazlarca değiştirildi — bu cihazın değişikliği yazılamadı, yeniden denenecek");
+  };
+  const isi = () => (birlestir
+    ? tanimSurumlu()
+    // Öbür tek parça tablolar: üç yönlü birleştir → yaz (tanımlar bu yoldan GİTMEZ — yukarıda kendi koşullu yazması var).
+    : (ucYonlu
       ? supabaseIstek(`${tablo}?id=eq.tekil&select=veri`).then((r) => {
           const bulut = Array.isArray(r) && r[0] ? r[0].veri : null;
           if (bulut === null || bulut === undefined) return veri;
@@ -797,13 +834,13 @@ function tekilYaz(anahtar, tablo, veri, secenek = {}) {
       method: "POST",
       headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
       body: JSON.stringify([{ id: "tekil", veri: v }]),
-    }).then(() => {
+    }).then(() => v))).then((v) => {
       // Taban = bu cihazın ekranındaki hâl (gönderdiği), birleşik hâl değil: ekran henüz birleşiği göstermiyorsa bir sonraki
       // yazmada buluttan gelen kayıtlar "bu cihaz sildi" sayılmasın. Ekran birleşiğe geçince (yoklama) taban da güncellenir.
       // TANIMLAR (v1.744.16): ekran birleşik hâle hemen geçer (100 `__tanimlarBirlesti`) — taban sunucuya giden birleşik hâl.
       tekilTabanAyarla(tablo, birlestir ? v : gonderilen);
       if (tablo === "tanimlar") tanimBekleyenTabanSil();
-    }));
+    });
   // KASA & BANKA v2 (v1.729.0, 038 `kasaV2Yuku`): geçiş yapıldıysa (`stk_ayar.kasa_aktif`) belge YAZILMAZ — `muhasebe` artık
   // salt-okur görünüm. Bu cihazın tabanla yeni hâl arasındaki farkı satır olarak `kas_yaz`a gider: başka cihazın kaydına
   // dokunulmaz, bayat ya da boş liste hiçbir şeyi silemez, silme iptaldir. Fark kuyrukta SIRASI GELİNCE hesaplanır (önceki
@@ -839,13 +876,17 @@ function tekilYaz(anahtar, tablo, veri, secenek = {}) {
   gidecek.then(() => bulutYazmaBitti(tablo), () => bulutYazmaBitti(tablo));
   return Promise.all([
     yerel,
-    gidecek.then(() => { bekleyenYazmaSil(anahtar); if (typeof window !== "undefined" && window.__supabaseBasariBildir) window.__supabaseBasariBildir(tablo); }).catch((e) => {
+    gidecek.then(() => { bekleyenYazmaSil(anahtar); if (tablo === "tanimlar" && typeof incelemeSil === "function" && incelemeOku().tanimlar) incelemeSil("tanimlar", "tekil"); if (typeof window !== "undefined" && window.__supabaseBasariBildir) window.__supabaseBasariBildir(tablo); }).catch((e) => {
       console.error("Supabase yazma hatası:", tablo, e);
       // Toplu silme engeli (Kasa & Banka / liste v2, 038) bekleyen yazma DEĞİLDİR — 040 tabloYaz ile aynı kural.
       // Kalıcı ret (v1.744.0, KRnnn): tek parça belgede satır ayrılamaz — kayıt "inceleme" işaretlenir, kendiliğinden denenmez.
       // Eksik yükleme kilidi (kapı, v1.744.16) bekleyen DEĞİLDİR: eksik hâl sonraki açılışta "yerel esas" sayılmasın.
       if (e && e.yazmaKapisi === "eksik-yukleme") return;
       if (tablo === "tanimlar") tanimBekleyenTabanSakla(_tekilTaban.tanimlar);
+      // TANIM ÇAKIŞMASI (B2): şeritte (100) hangi öğede ne çakıştığı ve iki seçenek — kendiliğinden yeniden gönderilmez.
+      if (tablo === "tanimlar" && e && e.kod === "CAKISMA" && typeof incelemeEkle === "function") {
+        incelemeEkle("tanimlar", "tekil", { kod: "CAKISMA", sebep: e.message, anahtar, cakismalar: (e.cakismalar || []).slice(0, 30) });
+      }
       if (!(e && e.topluSilmeEngeli) || bekleyenYazmalariOku()[anahtar]) bekleyenYazmaEkle(anahtar, tablo, e && e.message, e && e.kaliciRet ? { inceleme: true, kod: e.kod } : undefined);
       if (typeof window !== "undefined" && window.__supabaseHataBildir) {
         window.__supabaseHataBildir(tablo, String(e && e.message || e));
