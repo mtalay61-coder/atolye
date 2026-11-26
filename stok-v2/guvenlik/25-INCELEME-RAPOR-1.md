@@ -307,6 +307,20 @@ Sıra önerisi: **B4/B5 ve B3a birlikte (yalnız sunucu, istemci değişmez), B3
    Ret iletisinde gerçek modül adı.
 4. Her biri ayrı dal, ayrı deneme paketi (SABİT + önkoşul / sonuç sorgusu + geri alma), önce deneme projesi.
 
+## 11. B4 / B5 ve B3a düzeltmeleri (hazırlık; canlı / deneme / main / yayın YOK)
+- **B4 / B5** — dal `claude/b4-uretim-teslim-koruma` (`b3e94ac`; main 1.744.37'den), yalnız sunucu.
+  - Belge: `stok-v2/guvenlik/27-b4-PAKET.md`.
+  - `fis_kes` içinde: üretim + atama kilidi, atama durumu, kısmi / kalan / tamir miktarı ve adım adı tekilliği denetlenir.
+  - `fis_iptal`: zaten iptal fişte fark yazılmaz; bayat geri alma denetlenir. `fis_iptal_toplu` da düzeltildi.
+  - Ekran (iki cihaz, istemci 1.744.37): düzeltmesiz 20/14 → düzeltmeyle **34/34**.
+  - Sunucu (gerçek yükler, deterministik eşzamanlılık, yanıt kaybı, son adım hatası): düzeltmesiz 22/18 → **40/40**.
+  - Bozma: kilit kalkınca 7 kırmızı, denetim kalkınca 13, iptal koruması kalkınca 4; adım adı katmanı tek başına kalkınca yeşil (iki katman bağımsız).
+  - G-25'li deneme projesine KURULMAZ: önkoşul FARKLI der.
+- **B3a** — dal `claude/b3a-tablo-yazma-yetki` (`b6bb61f`), B4'ten bağımsız. Belge: `stok-v2/guvenlik/28-b3a-PAKET.md`.
+  - Yetki matrisi: önce 17 AÇIK → sonra 3. Kalan 3 = B3a-2 (stok personelinin cari / Tanımlar yazması; alan düzeyi kural, ayrı karar).
+  - Geri alma matrisi birebir eski hâline döndürüyor.
+  - Uygulama regresyonu: stok 24/24 · kasa 29/29 · cari virman 29/29 · B4 + B3a birlikte 34/34 ve 40/40.
+
 ## 4. Sıradaki adımlar (güncel)
 1. Kullanıcı onayıyla B1 / B2 deneme paketi (§9) — deneme projesinde salt okur adım 0, sonra kurulum ve elle sınamalar.
 2. Sonraki düzeltme paketi (§10) için tasarım onayı: B4 / B5 + B3a; B3b G-25 kararından sonra.
