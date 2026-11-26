@@ -1,0 +1,11 @@
+### B3a ekran-stok
+── ekran-stok: 24 geçti, 0 kaldı ──
+### B3a ekran-kasa
+── ekran-kasa: 29 geçti, 0 kaldı ──
+### B3a ekran-cari-virman
+── ekran-cari-virman: 29 ✓ / 0 ✗ ──
+### B4+B3a ekran-uretim-b4
+── ekran-uretim-b4: 34 geçti · 0 kaldı ──
+### B4+B3a b4-sunucu-sina
+── b4-sunucu-sina (normal): 40 geçti · 0 kaldı ──
+BITTI
