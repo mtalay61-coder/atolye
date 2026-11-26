@@ -97,10 +97,18 @@ const bakiye = (f) => ({ stok: f.stok, cari: f.cari, kasaBakiye: f.kasaBakiye, k
     let r; try { r = await c.cagir(p); } catch (e) { atlanan++; console.log(`  ⊘ ATLANDI — yük bu tabanda uygulanamadı: ${e.code} ${String(e.message).slice(0, 100)}`); await c.end(); await g.end(); continue; }
     const sonra = await foto(g); const delta = fark(once, sonra);
     console.log(`  N  fiş ${r.fisNo}${r.bagliFisNo ? ` + ${r.bagliFisNo}` : ""} · yazılan ${JSON.stringify(delta)}`);
+    const degisen = Object.keys(bakiye(once)).filter((k) => bakiye(once)[k] !== bakiye(sonra)[k]);
+    console.log(`     bakiye değişti: ${degisen.join(",") || "(yok)"} · önce ${JSON.stringify({ cari: once.cari, kasa: once.kasaBakiye })} · sonra ${JSON.stringify({ cari: sonra.cari, kasa: sonra.kasaBakiye })}`);
     let r2; try { r2 = await c.cagir(p); } catch (e) { r2 = { hata: `${e.code} ${e.message}` }; }
     k_("T  yanıt alındıktan sonra aynı istek → zatenVar, aynı fiş", [r2.zatenVar, r2.fisNo], [true, r.fisNo]);
     k_("T  ikinci istek hiçbir şey yazmadı", JSON.stringify(await foto(g)) === JSON.stringify(sonra), true);
+    // İptal YÖNETİCİYLE (iptal ayrı bir yetkidir: stok / … silme). Fişi kesen hesap Yönetici değilse onun iptal girişimi ayrıca kaydedilir.
     let ip1, ip2;
+    if (eposta !== "ali@atolye.local") {
+      let ipP; try { ipP = await c.iptal(r.fisNo); } catch (e) { ipP = { hata: `${e.code} ${String(e.message).slice(0, 80)}` }; }
+      k_(`İ  fişi kesen ${eposta} iptal edemez (silme yetkisi yok) — bakiye değişmedi`, [String(ipP.hata || "").slice(0, 5), JSON.stringify(bakiye(await foto(g))) === JSON.stringify(bakiye(sonra))], ["42501", true]);
+    }
+    await c.end(); c = await istemci(db, "ali@atolye.local");
     try { ip1 = await c.iptal(r.fisNo); } catch (e) { ip1 = { hata: `${e.code} ${String(e.message).slice(0, 80)}` }; }
     const iptalSonra = await foto(g);
     k_("İ  iptal → stok / cari / kasa bakiyesi + kasa özeti başlangıçta", bakiye(iptalSonra), bakiye(once));
