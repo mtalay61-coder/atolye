@@ -7,18 +7,19 @@
 #   onarim/is-akisi/yedek-ac-dogrula.sh      (özet, seçili tablolarla katı açma, tamlık, döküm)
 #   onarim/yedek-varyant-dokumu-salt-okur.sql
 # Tetikleyici YALNIZ o dala gönderim → bir kez çalışır. main'e GİRMEZ, zamanlanmış değildir. İş bitince dal silinir.
-# İki betik yerelde onarim/is-akisi/sina.sh ile sağlam ve bilerek bozulmuş dökümlerle sınandı (37/37).
+# İki betik ve bu dosyanın ana adımı yerelde onarim/is-akisi/sina.sh ile sınanır (sonuç: commit mesajı / DEVAM-NOTU).
 #
 # NE YAPAR — canlı Supabase'e HİÇ bağlanmaz (veritabanı secret'ları YEDEK_DB_* kullanılmaz). Her klasör için:
 #   1. yedek-ac-onedrive.sh: gerekli 4 dosya var, BASARISIZ.txt yok; klasör AtolyeYedek-KORUNAN/renk-hatasi/<ad> altına
-#      kopyalanır; kopya HER DOSYANIN quickxor özetiyle (OneDrive'ın kendi özeti) doğrulanır — özet yoksa yalnız boyuta düşülmez,
-#      DURUR; dosyalar KORUMA KOPYASINDAN indirilir.
+#      kopyalanır; KAYNAKTAKİ ve KOPYADAKİ her dosya indirilir, dosya listeleri birebir, her dosyanın bayt boyutu ve TAM sha256'sı
+#      eşit olmalı (uzak özete dayanılmaz — 1. koşu rclone 1.60'ın kişisel OneDrive'da quickxor vermemesi yüzünden durmuştu).
+#      Önceki koşudan kalan doğrulanmamış kopya da aynı denetimden geçer; tutmazsa DURUR (silinmez).
 #   2. yedek-ac-dogrula.sh: indirilen her dosyanın bayt boyutu + sha256'sı ozet.txt'yle aynı (korunan kopya bayt düzeyinde
 #      doğrulanır); içindekilerden yalnız 10 tablonun TABLE + TABLE DATA girdileri (ve public dizileri) seçilir, geri kalan HİÇ
 #      denenmez (türüne göre sayılır); Supabase'in auth.uid() / extensions.* varsayılanları varsa saplaması AÇIKÇA kurulur;
 #      pg_restore --exit-on-error --single-transaction: ilk hatada ya da tek uyarıda DURUR, hiçbir şey yüklenmez; CSV'den ÖNCE
 #      10 tablonun hepsi var ve satır sayıları envanter-kaynak.csv ile (döküm ile aynı anlık görüntü) EŞİT, tetikleyici 0.
-#   3. CSV OneDrive'a (KORUNAN klasörüne) yüklenir ve yüklenen dosya yereldekiyle quickxor özetiyle karşılaştırılır.
+#   3. CSV OneDrive'a (KORUNAN klasörüne) yüklenir, GERİ İNDİRİLİR ve yereldekiyle tam sha256 + bayt boyutuyla karşılaştırılır.
 #   4. Jeton: rclone OneDrive erişim jetonunu yenilediyse yenisi ONEDRIVE_TOKEN secret'ına yazılır (gece yedeğiyle aynı adım).
 #
 # YETKİLER:
@@ -106,10 +107,12 @@ jobs:
             createdb "$DB"
             bash onarim/is-akisi/yedek-ac-dogrula.sh "$A" "$DB" onarim/yedek-varyant-dokumu-salt-okur.sql "$A/yedek-dokum.csv"
             rclone copyto "$A/yedek-dokum.csv" "$KORUMA/$K-yedek-dokum.csv" 2>/dev/null || { echo "::error::$K: CSV yüklenemedi"; exit 1; }
-            yerel=$(rclone hashsum quickxor "$A/yedek-dokum.csv" 2>/dev/null | cut -d' ' -f1)
-            uzak=$(rclone hashsum quickxor "$KORUMA/$K-yedek-dokum.csv" 2>/dev/null | cut -d' ' -f1)
-            [ -n "$yerel" ] && [ "$yerel" = "$uzak" ] || { echo "::error::$K: yüklenen CSV özeti yereldekiyle aynı değil"; exit 1; }
-            echo "   CSV OneDrive'da ve özetle doğrulandı: AtolyeYedek-KORUNAN/renk-hatasi/$K-yedek-dokum.csv (quickxor ${yerel:0:12}…)"
+            # Yüklenen CSV GERİ İNDİRİLİR ve tam sha256 + bayt boyutuyla karşılaştırılır (uzak özete dayanılmaz).
+            rclone copyto "$KORUMA/$K-yedek-dokum.csv" "$A/geri-inen.csv" 2>/dev/null || { echo "::error::$K: yüklenen CSV geri indirilemedi"; exit 1; }
+            yerel=$(sha256sum "$A/yedek-dokum.csv" | cut -d' ' -f1); uzak=$(sha256sum "$A/geri-inen.csv" | cut -d' ' -f1)
+            [ ${#yerel} = 64 ] && [ "$yerel" = "$uzak" ] && [ "$(wc -c < "$A/yedek-dokum.csv")" = "$(wc -c < "$A/geri-inen.csv")" ] \
+              || { echo "::error::$K: yüklenen CSV yereldekiyle bayt bayt aynı değil"; exit 1; }
+            echo "   CSV OneDrive'da, geri indirilip doğrulandı: AtolyeYedek-KORUNAN/renk-hatasi/$K-yedek-dokum.csv ($(wc -c < "$A/yedek-dokum.csv") bayt, sha256 ${yerel:0:16}…)"
             rm -rf "$A"; dropdb "$DB"
           done
       - name: OneDrive erişimini sakla (yenilenen jeton)
