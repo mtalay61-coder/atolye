@@ -90,12 +90,20 @@ set search_path = public
 as $$
 declare
   v_eski text[];
+  v_var boolean;
 begin
+  -- EKLE-YA-DA-GÜNCELLE (upsert) DE GÜNCELLEMEDİR: alt_yaz / lst_yaz var olan satırı "insert … on conflict do update" ile yazar; PostgreSQL
+  -- önce BEFORE INSERT'i çalıştırır (tg_op = INSERT). Aynı kimlikte satır zaten varsa onun renk metni "eski" sayılır — eski adla duran
+  -- geçmiş kaydın miktarı düzeltilirken KR025 / KR027 ile engellenmesin (canlı yolla sınamada bulundu, b1-sina D11).
   -- Liste v2 (lst_kayit): her koli ayrı satır, veri = koli nesnesi.
   if tg_table_name = 'lst_kayit' then
     if new.tablo = 'koliler' and jsonb_typeof(new.veri -> 'kalemler') = 'array' then
       if tg_op = 'UPDATE' and jsonb_typeof(old.veri -> 'kalemler') = 'array' then
         select array_agg(x ->> 'renk') into v_eski from jsonb_array_elements(old.veri -> 'kalemler') x;
+      elsif tg_op = 'INSERT' then
+        select array_agg(x ->> 'renk') into v_eski
+          from public.lst_kayit l, jsonb_array_elements(case when jsonb_typeof(l.veri -> 'kalemler') = 'array' then l.veri -> 'kalemler' else '[]'::jsonb end) x
+         where l.tablo = new.tablo and l.id = new.id;
       end if;
       new.veri := jsonb_set(new.veri, '{kalemler}', (
         select coalesce(jsonb_agg(case when x ? 'renk' and jsonb_typeof(x -> 'renk') = 'string' and not ((x ->> 'renk') = any (coalesce(v_eski, '{}'::text[])))
@@ -126,6 +134,11 @@ begin
     return new;
   end if;
   if new.renk is not null and (tg_op = 'INSERT' or new.renk is distinct from old.renk) then
+    if tg_op = 'INSERT' then
+      execute format('select exists (select 1 from public.%I where id = %L and renk is not distinct from %L)', tg_table_name, new.id, new.renk)
+        into v_var;
+      if v_var then return new; end if;   -- upsert: aynı kimlik, aynı renk → güncelleme, renge bakılmaz
+    end if;
     new.renk := public.tanim_ad_guncel(new.renk);
   end if;
   return new;
