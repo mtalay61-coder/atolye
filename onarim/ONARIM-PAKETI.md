@@ -1,4 +1,13 @@
-# Renk çökmesi — veri onarım paketi (26 Kasım) — UYGULANMADI, AYRI ONAY
+# Renk çökmesi — veri onarım paketi (26 Kasım) — CANLIDA UYGULANDI (26 Kasım, 3. sürüm, bir kez)
+
+## Canlı uygulama sonucu
+- Onay: yalnız ana proje, `onarim-uygula.sql` sha256 `d5fec6e5…`, bir kez. Kullanıcı SQL Editor'de çalıştırdı.
+- Kullanıcının ilettiği sonuç tablosu: `onarım sonucu · 440 · 130 · 0` (beklenen). `ONARIM TAMAM` bildirim metni görülmedi;
+  kanıt olarak sayılmaz, "diğer tablolar aynı" canlıda bu yolla doğrulanmadı.
+- Onarım sonrası envanter (23 ürünü her durumda listeleyen salt okur kopya) ile DOĞRULANAN: varyant 435 → 570 (A 100 + B 35),
+  eski varyant kaybı yok, yalnız C'deki 130 pasif, stok / hareket aynı; sipariş kalemi 115/115 ve resim 16/16 bağlı, miktarlar aynı;
+  reçetede yalnız D'nin 149 satırı değişti, E'nin 8 satırı aynı; renk tanımları aynı ("Siyah Yılan" korunuyor).
+- Doğrulanmayan: 23 ürün dışı kayıtlar ve tablolar, surum / degisiklik sayacı. Geri alma kullanılmadı (ayrı onay). E ayrı karar.
 
 Yayından (1.744.37) AYRI onaylanır ve YALNIZ yayından + "Sekmeler gerçekten düzeltilmiş sürümde" denetiminden SONRA uygulanır
 (YAYIN-PAKETI-1.744.37.md). Kayıt kimlikleri depo herkese açık olduğu için BURADA YOK; yalnız kullanıcıya verilen dosyalarda.
@@ -60,6 +69,6 @@ geri alma DURDU, hiçbir şey kalmadı; ara adımda hata: aynı; 7 ön koşul bo
 1. 1.744.37 yayını (PR #370, AYRI onay) + bütün cihazlarda v1.744.37 (YAYIN-PAKETI). Sürüm kapısı bu işe dahil DEĞİL.
 2a. `canli-yapi-salt-okur.sql` (salt okur) → OZET yerel provayla aynı olmalı; değilse prova yeni yapıyla tekrarlanır.
 2. Salt okur renk envanteri (limit 5000) yeniden — ön koşul tutmuyorsa üretici yeni CSV ile yeniden çalıştırılır.
-3. `onarim-uygula.sql` (SQL Editor) → `ONARIM TAMAM` beklenir.
+3. `onarim-uygula.sql` (SQL Editor) → `ONARIM TAMAM` beklenir. (UYGULANDI 26 Kasım; sonuç tablosu 440 · 130 · 0.)
 4. Salt okur renk envanteri → etkilenen model listesinin boşalması; ekrandan 27162 D (1054 / 1055, 36–40).
 5. Sorun olursa `onarim-geri-al.sql` (ayrı onay).
