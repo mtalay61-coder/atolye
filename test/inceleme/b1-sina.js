@@ -248,6 +248,29 @@ const SONRA = (ilk) => ({
     k_("D11 eski adla duran kaydın miktarı düzeltilebilir (renk aynı → bakılmaz)", await hataKodu(() => a.olarak((c) => kalemYaz(c, "kl-eski", "Vizon Yılan", "40", 9, 9))), "geçti");
     await a.end(); }
 
+  // D12 — EKLE-YA-DA-GÜNCELLE (alt_yaz upsert) İKİ AYRI DURUM (kullanıcı, 27 Kasım): (1) var olan eski kalemin YALNIZ miktarı değişince
+  // geçmeli, renk metni olduğu gibi kalmalı; (2) koruma gevşememeli — upsert ile renk metni DEĞİŞTİRİLİYORSA belirsiz eski ada sessizce
+  // bağlanmamalı (KR025), tek rengin eski adıysa o rengin güncel adına (doğru kimliğe) bağlanmalı, yeni kimlikte belirsiz ad yine KR025.
+  console.log("\n■ D12 — upsert: (1) eski kalemin yalnız miktarı → geçer · (2) renk değişiyorsa koruma aynen (KR025 / doğru renge bağlama)");
+  { const db = await yeniDb(); const a = await baglan(db, "ali@atolye.local");
+    await a.olarak((c) => RPC(c, DEGIS));
+    // geçmişten kalan belirsiz eski ad (iki rengin eski adı) ve onunla duran kalem — tetikleyicisiz kurulur (koruma öncesinden kalmış gibi)
+    psql(db, `insert into public.tanim_ad_gecmisi (renk_id, eski_ad, eski_nrm, yeni_ad) values ('r-siyah', 'Eski Ortak', 'eski ortak', 'Siyah'), ('r-vizon', 'Eski Ortak', 'eski ortak', 'Vizon Deri');
+      set session_replication_role = replica;
+      insert into public.siparis_kalemleri (id, siparis_id, urun_id, urun_ad, renk, beden, miktar, sira) values ('kl-belirsiz', 'sp-inc-1', 'inc-bot', 'İnceleme Bot', 'Eski Ortak', '40', 1, 20),
+        ('kl-diger', 'sp-inc-1', 'inc-bot', 'İnceleme Bot', 'Siyah', '41', 1, 21);`);
+    const satir = (id) => psql(db, `select renk || '|' || miktar::float from public.siparis_kalemleri where id = '${id}'`).trim();
+    k_("D12-1 eski (belirsiz adlı) kalemin yalnız miktarı → geçti", await hataKodu(() => a.olarak((c) => kalemYaz(c, "kl-belirsiz", "Eski Ortak", "40", 5, 20))), "geçti");
+    k_("D12-1 renk metni olduğu gibi, miktar yeni", satir("kl-belirsiz"), "Eski Ortak|5");
+    k_("D12-2 var olan kalemin rengini BELİRSİZ eski ada çevirmek → KR025", await hataKodu(() => a.olarak((c) => kalemYaz(c, "kl-diger", "Eski Ortak", "41", 1, 21))),
+      'KR025 KR025: "Eski Ortak" birden çok rengin eski adı');
+    k_("D12-2 ret sonrası kalem değişmedi", satir("kl-diger"), "Siyah|1");
+    k_("D12-2 var olan kalemin rengini TEK rengin eski adına çevirmek → o rengin güncel adı", await hataKodu(() => a.olarak((c) => kalemYaz(c, "kl-diger", "Vizon Yılan", "41", 1, 21))), "geçti");
+    k_("D12-2 doğru renge bağlandı", satir("kl-diger"), "Vizon Deri|1");
+    k_("D12-2 YENİ kimlikte belirsiz eski ad → KR025", await hataKodu(() => a.olarak((c) => kalemYaz(c, "kl-yeni-b", "Eski Ortak", "40", 1, 22))),
+      'KR025 KR025: "Eski Ortak" birden çok rengin eski adı');
+    await a.end(); }
+
   // BOZMA PROVASI — korumalar kaldırılınca aynı sınamalar kırmızıya döner mi?
   console.log("\n■ B-1 — BOZMA: eski ad tetikleyicisi kaldırıldı → D2 yakalamalı");
   { const db = await yeniDb(); psql(db, "drop trigger tanim_ad_guncelle on public.siparis_kalemleri");
@@ -296,6 +319,27 @@ const SONRA = (ilk) => ({
     await a.olarak((c) => c.query(`update public.tanimlar set veri = jsonb_set(veri, '{renkler}', (veri -> 'renkler') || '[{"id":"r-yeni","ad":"Vizon Yılan"}]') where id = 'tekil'`));
     const r = await hataKodu(() => a.olarak((c) => bayatKalem(c, "kl-z", "Vizon Yılan")));
     k_("B-3 (bozuk) eski ad başka renge verildi VE bayat kalem SESSİZCE yazıldı — sınama yakaladı", r === "geçti", true);
+    await a.end(); }
+
+  console.log("\n■ B-4 — BOZMA: upsert istisnası yalnız KİMLİĞE bakıyor (renk karşılaştırması kaldırıldı) → D12-2 yakalamalı");
+  { const db = await yeniDb();
+    const tanim = psql(db, "select pg_get_functiondef('public.tanim_ad_guncelle_tetik()'::regprocedure)");
+    const bozuk = tanim.replace("where id = %L and renk is not distinct from %L)', tg_table_name, new.id, new.renk)", "where id = %L)', tg_table_name, new.id)");
+    if (bozuk === tanim) throw new Error("B-4 bozma uygulanamadı");
+    const c0 = new Client({ host: "localhost", database: db, user: "postgres" }); await c0.connect(); await c0.query(bozuk); await c0.end();
+    const a = await baglan(db, "ali@atolye.local");
+    await a.olarak((c) => RPC(c, DEGIS));
+    psql(db, `insert into public.tanim_ad_gecmisi (renk_id, eski_ad, eski_nrm, yeni_ad) values ('r-siyah', 'Eski Ortak', 'eski ortak', 'Siyah'), ('r-vizon', 'Eski Ortak', 'eski ortak', 'Vizon Deri');
+      set session_replication_role = replica;
+      insert into public.siparis_kalemleri (id, siparis_id, urun_id, urun_ad, renk, beden, miktar, sira) values ('kl-diger', 'sp-inc-1', 'inc-bot', 'İnceleme Bot', 'Siyah', '41', 1, 21);`);
+    // Yalnız ekleme katmanı bozuk: upsert güncellemeye dönünce BEFORE UPDATE (renk değişti) yine denetler → koruma TUTAR (iki katman).
+    const r1 = await hataKodu(() => a.olarak((c) => kalemYaz(c, "kl-diger", "Eski Ortak", "41", 1, 21)));
+    k_("B-4a (yalnız ekleme katmanı bozuk) güncelleme katmanı yine KR025 verdi", r1.startsWith("KR025"), true);
+    // İki katman birden bozuk: tetikleyici yalnız eklemede + kimlik istisnası → sessiz yazma; sınama kırmızıya dönmeli.
+    psql(db, `drop trigger tanim_ad_guncelle on public.siparis_kalemleri;
+      create trigger tanim_ad_guncelle before insert on public.siparis_kalemleri for each row execute function public.tanim_ad_guncelle_tetik();`);
+    const r2 = await hataKodu(() => a.olarak((c) => kalemYaz(c, "kl-diger", "Eski Ortak", "41", 1, 21)));
+    k_("B-4b (iki katman bozuk) belirsiz ad SESSİZCE yazıldı — sınama yakaladı", r2 === "geçti" && psql(db, "select renk from public.siparis_kalemleri where id = 'kl-diger'").trim() === "Eski Ortak", true);
     await a.end(); }
 
   console.log(`\n── b1-sina: ${gecen} geçti · ${kalan} kaldı ──`);
