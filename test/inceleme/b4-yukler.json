@@ -1,0 +1,647 @@
+{
+ "b4-b4t1#1": {
+  "istek": "fis-mwy0oo8h-up5m",
+  "fis": {
+   "aile": "stok",
+   "tur": "Üretim",
+   "onek": "ÜRT",
+   "kaynak": "Üretim",
+   "defter": "Genel",
+   "tarih": "2026-11-26T20:40:46.002Z",
+   "uretimId": "b4-b4t1",
+   "siparisNo": "B4T1",
+   "cariId": "fin-usta",
+   "tutar": 350,
+   "aciklama": "Üretim B4T1 · Dikim teslimi — Ekran Bot Siyah",
+   "kullanici": null,
+   "kalemler": [
+    {
+     "urunId": "ekr-bot",
+     "urunAd": "Ekran Bot",
+     "renk": "Siyah",
+     "beden": "40",
+     "miktar": 10,
+     "hareketId": "hrk-mwy0oo8h-s479",
+     "uretimFisAdi": "B4T1-Dikim-Giriş"
+    }
+   ],
+   "ek": {
+    "proses": "Dikim",
+    "uretimFisAdi": "B4T1-Dikim"
+   }
+  },
+  "stok": {
+   "satirlar": [
+    {
+     "id": "hrk-mwy0oo8h-s479",
+     "fisId": "«FIS»",
+     "urunId": "ekr-bot",
+     "renkId": null,
+     "renk": "Siyah",
+     "olcuId": null,
+     "olcu": "40",
+     "miktar": 10,
+     "kaynak": "Üretim",
+     "tarih": "2026-11-26T20:40:46.001Z",
+     "siparisId": null,
+     "siparisNo": "B4T1",
+     "kalemId": null,
+     "cariId": null,
+     "uretimId": "b4-b4t1",
+     "rezervasyonSiparisId": null,
+     "fazlaGonderim": false,
+     "aciklama": null,
+     "ek": {
+      "uretimFisAdi": "B4T1-Dikim-Giriş"
+     }
+    }
+   ]
+  },
+  "cari": {
+   "satirlar": [
+    {
+     "id": "hrk-mwy0oo8g-ft2a",
+     "cari_id": "fin-usta",
+     "tarih": "2026-11-26",
+     "zaman": "2026-11-26T20:40:46.000Z",
+     "yon": "Alacak",
+     "tutar": 350,
+     "para_birimi": "TRY",
+     "odeme_sekli": "Nakit",
+     "vade": null,
+     "defter": "Genel",
+     "fis_no": "«FIS»",
+     "siparis_no": "B4T1",
+     "uretim_id": "b4-b4t1",
+     "urun_ad": "Ekran Bot",
+     "renk": "Siyah",
+     "aciklama": "Dikim işçilik ücreti — Ekran Bot · 10 adet × 35 ₺",
+     "ek": {
+      "islemTipi": "İşçilik",
+      "uretimFisAdi": "B4T1-Dikim-İşçilik",
+      "miktar": 10,
+      "birimFiyat": 35,
+      "birim": "adet",
+      "beden": null,
+      "kalemParaBirimi": null,
+      "hamBirimFiyat": null,
+      "kur": null,
+      "kurHedef": null,
+      "matrah": null,
+      "kdvOrani": null,
+      "kdvTutari": null,
+      "esId": null,
+      "siparisId": null,
+      "kalemId": null,
+      "cariAd": null,
+      "kullanici": null,
+      "cek": null,
+      "muhasebeBagId": null,
+      "hesapAd": null,
+      "hesapPB": null,
+      "hesapTutar": null
+     }
+    }
+   ]
+  },
+  "alt": {
+   "uretim_atamalari": {
+    "satirlar": [
+     {
+      "id": "b4-b4t1-a",
+      "uretim_id": "b4-b4t1",
+      "proses": "Dikim",
+      "personel_id": "fin-usta",
+      "beden_miktarlari": {
+       "40": 10
+      },
+      "miktar": 10,
+      "verildi_mi": true,
+      "verilme_tarihi": "2026-11-28T08:10:00+00:00",
+      "tamamlandi_mi": true,
+      "tamamlanma_tarihi": "2026-11-26T20:40:46.001Z",
+      "sonuc": {
+       "saglam": {
+        "40": 10
+       },
+       "tamir": [],
+       "hurda": []
+      },
+      "tamir_mi": false,
+      "tamir_kaynak_proses": null,
+      "tamir_sebep": null,
+      "tamir_ucret": 0,
+      "tamir_hammaddeler": [],
+      "barkod": null,
+      "ek": {
+       "fisNo": "B4T1-Dikim"
+      }
+     }
+    ],
+    "sil": []
+   }
+  },
+  "istemci": {
+   "surum": "1.744.37"
+  }
+ },
+ "b4-b4t3#1": {
+  "istek": "fis-mwy0pdi2-t5tj",
+  "fis": {
+   "aile": "stok",
+   "tur": "Üretim",
+   "onek": "ÜRT",
+   "kaynak": "Üretim",
+   "defter": "Genel",
+   "tarih": "2026-11-26T20:41:18.746Z",
+   "uretimId": "b4-b4t3",
+   "siparisNo": "B4T3",
+   "cariId": "fin-usta",
+   "tutar": 210,
+   "aciklama": "Üretim B4T3 · Dikim teslimi — Ekran Bot Siyah",
+   "kullanici": null,
+   "kalemler": [
+    {
+     "urunId": "ekr-bot",
+     "urunAd": "Ekran Bot",
+     "renk": "Siyah",
+     "beden": "40",
+     "miktar": 6,
+     "hareketId": "hrk-mwy0pdi2-3hgn",
+     "uretimFisAdi": "B4T3-Dikim-Giriş"
+    }
+   ],
+   "ek": {
+    "proses": "Dikim",
+    "uretimFisAdi": "B4T3-Dikim"
+   }
+  },
+  "stok": {
+   "satirlar": [
+    {
+     "id": "hrk-mwy0pdi2-3hgn",
+     "fisId": "«FIS»",
+     "urunId": "ekr-bot",
+     "renkId": null,
+     "renk": "Siyah",
+     "olcuId": null,
+     "olcu": "40",
+     "miktar": 6,
+     "kaynak": "Üretim",
+     "tarih": "2026-11-26T20:41:18.746Z",
+     "siparisId": null,
+     "siparisNo": "B4T3",
+     "kalemId": null,
+     "cariId": null,
+     "uretimId": "b4-b4t3",
+     "rezervasyonSiparisId": null,
+     "fazlaGonderim": false,
+     "aciklama": null,
+     "ek": {
+      "uretimFisAdi": "B4T3-Dikim-Giriş"
+     }
+    }
+   ]
+  },
+  "cari": {
+   "satirlar": [
+    {
+     "id": "hrk-mwy0pdi2-8v5j",
+     "cari_id": "fin-usta",
+     "tarih": "2026-11-26",
+     "zaman": "2026-11-26T20:41:18.746Z",
+     "yon": "Alacak",
+     "tutar": 210,
+     "para_birimi": "TRY",
+     "odeme_sekli": "Nakit",
+     "vade": null,
+     "defter": "Genel",
+     "fis_no": "«FIS»",
+     "siparis_no": "B4T3",
+     "uretim_id": "b4-b4t3",
+     "urun_ad": "Ekran Bot",
+     "renk": "Siyah",
+     "aciklama": "Dikim işçilik ücreti — Ekran Bot · 6 adet × 35 ₺",
+     "ek": {
+      "islemTipi": "İşçilik",
+      "uretimFisAdi": "B4T3-Dikim-İşçilik",
+      "miktar": 6,
+      "birimFiyat": 35,
+      "birim": "adet",
+      "beden": null,
+      "kalemParaBirimi": null,
+      "hamBirimFiyat": null,
+      "kur": null,
+      "kurHedef": null,
+      "matrah": null,
+      "kdvOrani": null,
+      "kdvTutari": null,
+      "esId": null,
+      "siparisId": null,
+      "kalemId": null,
+      "cariAd": null,
+      "kullanici": null,
+      "cek": null,
+      "muhasebeBagId": null,
+      "hesapAd": null,
+      "hesapPB": null,
+      "hesapTutar": null
+     }
+    }
+   ]
+  },
+  "alt": {
+   "uretim_atamalari": {
+    "satirlar": [
+     {
+      "id": "b4-b4t3-a",
+      "uretim_id": "b4-b4t3",
+      "proses": "Dikim",
+      "personel_id": "fin-usta",
+      "beden_miktarlari": {
+       "40": 6
+      },
+      "miktar": 6,
+      "verildi_mi": true,
+      "verilme_tarihi": "2026-11-28T08:10:00+00:00",
+      "tamamlandi_mi": true,
+      "tamamlanma_tarihi": "2026-11-26T20:41:18.746Z",
+      "sonuc": {
+       "saglam": {
+        "40": 6
+       },
+       "tamir": [],
+       "hurda": []
+      },
+      "tamir_mi": false,
+      "tamir_kaynak_proses": null,
+      "tamir_sebep": null,
+      "tamir_ucret": 0,
+      "tamir_hammaddeler": [],
+      "barkod": null,
+      "ek": {
+       "fisNo": "B4T3-Dikim"
+      }
+     },
+     {
+      "id": "atama-mwy0pdi2-7r75",
+      "uretim_id": "b4-b4t3",
+      "proses": "Dikim",
+      "personel_id": "fin-usta",
+      "beden_miktarlari": {
+       "40": 4
+      },
+      "miktar": 4,
+      "verildi_mi": true,
+      "verilme_tarihi": "2026-11-28T08:10:00+00:00",
+      "tamamlandi_mi": false,
+      "tamamlanma_tarihi": null,
+      "sonuc": null,
+      "tamir_mi": false,
+      "tamir_kaynak_proses": null,
+      "tamir_sebep": null,
+      "tamir_ucret": 0,
+      "tamir_hammaddeler": [],
+      "barkod": null,
+      "ek": {
+       "verilenHammaddeler": null,
+       "hammaddeDusuldu": true,
+       "kismiKalanKaynak": "b4-b4t3-a"
+      }
+     }
+    ],
+    "sil": []
+   }
+  },
+  "istemci": {
+   "surum": "1.744.37"
+  }
+ },
+ "b4-b4t7#1": {
+  "istek": "fis-mwy0rl30-z37l",
+  "fis": {
+   "aile": "stok",
+   "tur": "Üretim",
+   "onek": "ÜRT",
+   "kaynak": "Üretim",
+   "defter": "Genel",
+   "tarih": "2026-11-26T20:43:01.884Z",
+   "uretimId": "b4-b4t7",
+   "siparisNo": "B4T7",
+   "cariId": "fin-usta",
+   "tutar": 350,
+   "aciklama": "Üretim B4T7 · Dikim teslimi — Ekran Bot Siyah",
+   "kullanici": null,
+   "kalemler": [
+    {
+     "urunId": "ekr-bot",
+     "urunAd": "Ekran Bot",
+     "renk": "Siyah",
+     "beden": "40",
+     "miktar": 7,
+     "hareketId": "hrk-mwy0rl2x-iopl",
+     "uretimFisAdi": "B4T7-Dikim-Giriş"
+    }
+   ],
+   "ek": {
+    "proses": "Dikim",
+    "uretimFisAdi": "B4T7-Dikim"
+   }
+  },
+  "stok": {
+   "satirlar": [
+    {
+     "id": "hrk-mwy0rl2x-iopl",
+     "fisId": "«FIS»",
+     "urunId": "ekr-bot",
+     "renkId": null,
+     "renk": "Siyah",
+     "olcuId": null,
+     "olcu": "40",
+     "miktar": 7,
+     "kaynak": "Üretim",
+     "tarih": "2026-11-26T20:43:01.881Z",
+     "siparisId": null,
+     "siparisNo": "B4T7",
+     "kalemId": null,
+     "cariId": null,
+     "uretimId": "b4-b4t7",
+     "rezervasyonSiparisId": null,
+     "fazlaGonderim": false,
+     "aciklama": null,
+     "ek": {
+      "uretimFisAdi": "B4T7-Dikim-Giriş"
+     }
+    }
+   ]
+  },
+  "cari": {
+   "satirlar": [
+    {
+     "id": "hrk-mwy0rl2x-zdwb",
+     "cari_id": "fin-usta",
+     "tarih": "2026-11-26",
+     "zaman": "2026-11-26T20:43:01.881Z",
+     "yon": "Alacak",
+     "tutar": 350,
+     "para_birimi": "TRY",
+     "odeme_sekli": "Nakit",
+     "vade": null,
+     "defter": "Genel",
+     "fis_no": "«FIS»",
+     "siparis_no": "B4T7",
+     "uretim_id": "b4-b4t7",
+     "urun_ad": "Ekran Bot",
+     "renk": "Siyah",
+     "aciklama": "Dikim işçilik ücreti — Ekran Bot · 10 adet × 35 ₺",
+     "ek": {
+      "islemTipi": "İşçilik",
+      "uretimFisAdi": "B4T7-Dikim-İşçilik",
+      "miktar": 10,
+      "birimFiyat": 35,
+      "birim": "adet",
+      "beden": null,
+      "kalemParaBirimi": null,
+      "hamBirimFiyat": null,
+      "kur": null,
+      "kurHedef": null,
+      "matrah": null,
+      "kdvOrani": null,
+      "kdvTutari": null,
+      "esId": null,
+      "siparisId": null,
+      "kalemId": null,
+      "cariAd": null,
+      "kullanici": null,
+      "cek": null,
+      "muhasebeBagId": null,
+      "hesapAd": null,
+      "hesapPB": null,
+      "hesapTutar": null
+     }
+    }
+   ]
+  },
+  "alt": {
+   "uretim_atamalari": {
+    "satirlar": [
+     {
+      "id": "b4-b4t7-a",
+      "uretim_id": "b4-b4t7",
+      "proses": "Dikim",
+      "personel_id": "fin-usta",
+      "beden_miktarlari": {
+       "40": 10
+      },
+      "miktar": 10,
+      "verildi_mi": true,
+      "verilme_tarihi": "2026-11-28T08:10:00+00:00",
+      "tamamlandi_mi": true,
+      "tamamlanma_tarihi": "2026-11-26T20:43:01.881Z",
+      "sonuc": {
+       "saglam": {
+        "40": 7
+       },
+       "tamir": [
+        {
+         "beden": "40",
+         "miktar": 3,
+         "hedefProses": "Dikim",
+         "sebep": "",
+         "hammaddeler": [],
+         "ucret": 5,
+         "personelId": "fin-tamirci"
+        }
+       ],
+       "hurda": []
+      },
+      "tamir_mi": false,
+      "tamir_kaynak_proses": null,
+      "tamir_sebep": null,
+      "tamir_ucret": 0,
+      "tamir_hammaddeler": [],
+      "barkod": null,
+      "ek": {
+       "fisNo": "B4T7-Dikim"
+      }
+     },
+     {
+      "id": "atama-mwy0rl2z-qph3",
+      "uretim_id": "b4-b4t7",
+      "proses": "Dikim",
+      "personel_id": "fin-tamirci",
+      "beden_miktarlari": {
+       "40": 3
+      },
+      "miktar": 3,
+      "verildi_mi": true,
+      "verilme_tarihi": "2026-11-26T20:43:01.883Z",
+      "tamamlandi_mi": false,
+      "tamamlanma_tarihi": null,
+      "sonuc": null,
+      "tamir_mi": true,
+      "tamir_kaynak_proses": "Dikim",
+      "tamir_sebep": null,
+      "tamir_ucret": 5,
+      "tamir_hammaddeler": [],
+      "barkod": null,
+      "ek": {
+       "tamirKaynakAtamaId": "b4-b4t7-a"
+      }
+     }
+    ],
+    "sil": []
+   }
+  },
+  "istemci": {
+   "surum": "1.744.37"
+  }
+ },
+ "b4-b4t7#2": {
+  "istek": "fis-mwy0rv9x-q7bl",
+  "fis": {
+   "aile": "stok",
+   "tur": "Üretim",
+   "onek": "ÜRT",
+   "kaynak": "Üretim",
+   "defter": "Genel",
+   "tarih": "2026-11-26T20:43:15.093Z",
+   "uretimId": "b4-b4t7",
+   "siparisNo": "B4T7",
+   "cariId": "fin-tamirci",
+   "tutar": 15,
+   "aciklama": "Üretim B4T7 · Dikim teslimi — Ekran Bot Siyah",
+   "kullanici": null,
+   "kalemler": [
+    {
+     "urunId": "ekr-bot",
+     "urunAd": "Ekran Bot",
+     "renk": "Siyah",
+     "beden": "40",
+     "miktar": 3,
+     "hareketId": "hrk-mwy0rv9x-q596",
+     "uretimFisAdi": "B4T7-Dikim-1-Giriş"
+    }
+   ],
+   "ek": {
+    "proses": "Dikim",
+    "uretimFisAdi": "B4T7-Dikim-1"
+   }
+  },
+  "stok": {
+   "satirlar": [
+    {
+     "id": "hrk-mwy0rv9x-q596",
+     "fisId": "«FIS»",
+     "urunId": "ekr-bot",
+     "renkId": null,
+     "renk": "Siyah",
+     "olcuId": null,
+     "olcu": "40",
+     "miktar": 3,
+     "kaynak": "Üretim",
+     "tarih": "2026-11-26T20:43:15.093Z",
+     "siparisId": null,
+     "siparisNo": "B4T7",
+     "kalemId": null,
+     "cariId": null,
+     "uretimId": "b4-b4t7",
+     "rezervasyonSiparisId": null,
+     "fazlaGonderim": false,
+     "aciklama": null,
+     "ek": {
+      "uretimFisAdi": "B4T7-Dikim-1-Giriş"
+     }
+    }
+   ]
+  },
+  "cari": {
+   "satirlar": [
+    {
+     "id": "hrk-mwy0rv9x-pg8c",
+     "cari_id": "fin-tamirci",
+     "tarih": "2026-11-26",
+     "zaman": "2026-11-26T20:43:15.093Z",
+     "yon": "Alacak",
+     "tutar": 15,
+     "para_birimi": "TRY",
+     "odeme_sekli": "Nakit",
+     "vade": null,
+     "defter": "Genel",
+     "fis_no": "«FIS»",
+     "siparis_no": "B4T7",
+     "uretim_id": "b4-b4t7",
+     "urun_ad": "Ekran Bot",
+     "renk": "Siyah",
+     "aciklama": "Dikim tamir ücreti — Ekran Bot · 3 adet × 5 ₺ — Dikim kaynaklı",
+     "ek": {
+      "islemTipi": "İşçilik",
+      "uretimFisAdi": "B4T7-Dikim-1-İşçilik",
+      "miktar": 3,
+      "birimFiyat": 5,
+      "birim": "adet",
+      "beden": null,
+      "kalemParaBirimi": null,
+      "hamBirimFiyat": null,
+      "kur": null,
+      "kurHedef": null,
+      "matrah": null,
+      "kdvOrani": null,
+      "kdvTutari": null,
+      "esId": null,
+      "siparisId": null,
+      "kalemId": null,
+      "cariAd": null,
+      "kullanici": null,
+      "cek": null,
+      "muhasebeBagId": null,
+      "hesapAd": null,
+      "hesapPB": null,
+      "hesapTutar": null
+     }
+    }
+   ]
+  },
+  "alt": {
+   "uretim_atamalari": {
+    "satirlar": [
+     {
+      "id": "atama-mwy0rl2z-qph3",
+      "uretim_id": "b4-b4t7",
+      "proses": "Dikim",
+      "personel_id": "fin-tamirci",
+      "beden_miktarlari": {
+       "40": 3
+      },
+      "miktar": 3,
+      "verildi_mi": true,
+      "verilme_tarihi": "2026-11-26T20:43:01.883+00:00",
+      "tamamlandi_mi": true,
+      "tamamlanma_tarihi": "2026-11-26T20:43:15.093Z",
+      "sonuc": {
+       "saglam": {
+        "40": 3
+       },
+       "tamir": [],
+       "hurda": []
+      },
+      "tamir_mi": true,
+      "tamir_kaynak_proses": "Dikim",
+      "tamir_sebep": null,
+      "tamir_ucret": 5,
+      "tamir_hammaddeler": [],
+      "barkod": null,
+      "ek": {
+       "tamirKaynakAtamaId": "b4-b4t7-a",
+       "fisNo": "B4T7-Dikim-1"
+      }
+     }
+    ],
+    "sil": []
+   }
+  },
+  "istemci": {
+   "surum": "1.744.37"
+  }
+ }
+}
