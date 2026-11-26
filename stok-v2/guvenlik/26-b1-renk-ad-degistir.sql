@@ -23,6 +23,30 @@
 --   kombinasyon etiketi başka etkin renkle çakışıyor.
 -- Kapsam dışı (ayrı iş): beden adı değişikliği (082 olcuAdDegistir) aynı kalıpla sonra; teklifler (082 de çevirmiyordu).
 
+-- ATOMİK KURULUM (28 Kasım, deneme paketi): dosyanın tamamı TEK işlem (begin … commit). Baştaki bekçi önkoşul tutmazsa, sondaki doğrulama
+-- (26-b1-onkosul-salt-okur.sql'in 6 kontrolü) eksik bulursa hata verir ve HİÇBİR şey kalmaz — yarım kurulum olmaz. Mevcut veriye
+-- dokunmaz: yalnız yeni tablo / fonksiyon / tetikleyici; var olan satır değişmez (anlık görüntüyle ölçülür).
+begin;
+do $$
+declare
+  eksik text[] := '{}';
+  t text;
+begin
+  if current_user <> 'postgres' and not (select rolsuper from pg_roles where rolname = current_user) then
+    raise exception 'B1 kurulumu postgres rolüyle çalıştırılmalı (şu an: %). Hiçbir şey değişmedi.', current_user;
+  end if;
+  foreach t in array array['tanimlar', 'siparis_kalemleri', 'siparisler', 'uretim', 'stok_rezervasyonlari', 'urunler'] loop
+    if to_regclass('public.' || t) is null then eksik := eksik || t; end if;
+  end loop;
+  if to_regclass('public.lst_kayit') is null and to_regclass('public.koliler') is null then eksik := eksik || 'lst_kayit/koliler'::text; end if;
+  foreach t in array array['public.stk_nrm(text)', 'public.yetki_var_mi(text[],text)', 'public.yonetici_mi()'] loop
+    if to_regprocedure(t) is null then eksik := eksik || t; end if;
+  end loop;
+  if cardinality(eksik) > 0 then
+    raise exception 'B1 önkoşulu eksik: %. Hiçbir şey değişmedi.', array_to_string(eksik, ', ');
+  end if;
+end $$;
+
 create table if not exists public.tanim_ad_gecmisi (
   id bigserial primary key,
   renk_id text not null,
@@ -388,3 +412,28 @@ revoke all on function public.tanim_ad_guncelle_tetik() from public, anon, authe
 revoke all on function public.tanim_ad_gecmisi_koru() from public, anon, authenticated;
 revoke all on function public.tanim_eski_ad_serbest(jsonb) from public, anon;
 grant execute on function public.tanim_eski_ad_serbest(jsonb) to authenticated;
+
+-- SON DOĞRULAMA (aynı işlemde): 26-b1-onkosul-salt-okur.sql'in 6 kontrolü. Biri tutmazsa hata → bütün dosya geri alınır.
+do $$
+declare
+  n_tetik int;
+begin
+  if not exists (select 1 from pg_proc p where p.oid = to_regprocedure('public.tanim_renk_ad_degistir(jsonb)') and p.prosecdef
+                   and has_function_privilege('authenticated', p.oid, 'execute') and not has_function_privilege('anon', p.oid, 'execute')) then
+    raise exception 'B1 doğrulama: tanim_renk_ad_degistir eksik ya da yetkisi yanlış — kurulum GERİ ALINDI';
+  end if;
+  if to_regprocedure('public.tanim_ad_guncel(text)') is null or to_regprocedure('public.tanim_eski_ad_serbest(jsonb)') is null
+     or not exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'tanim_ad_gecmisi' and column_name = 'serbest') then
+    raise exception 'B1 doğrulama: tanim_ad_guncel / tanim_eski_ad_serbest / tanim_ad_gecmisi.serbest eksik — kurulum GERİ ALINDI';
+  end if;
+  select count(*) into n_tetik from pg_trigger g join pg_class c on c.oid = g.tgrelid
+   where g.tgname = 'tanim_ad_guncelle' and g.tgenabled = 'O' and c.relname in ('siparis_kalemleri', 'uretim', 'stok_rezervasyonlari', 'lst_kayit');
+  if n_tetik <> (case when to_regclass('public.lst_kayit') is null then 3 else 4 end) then
+    raise exception 'B1 doğrulama: bayat yazma tetikleyicisi % / beklenen — kurulum GERİ ALINDI', n_tetik;
+  end if;
+  if not exists (select 1 from pg_trigger where tgrelid = 'public.tanimlar'::regclass and tgname = 'tanim_ad_gecmisi_koru' and tgenabled = 'O') then
+    raise exception 'B1 doğrulama: tanim_ad_gecmisi_koru tetikleyicisi yok — kurulum GERİ ALINDI';
+  end if;
+end $$;
+commit;
+select 'B1 KURULDU — 26-b1-onkosul-salt-okur.sql ile doğrulayın (GENEL: KURULU)' as sonuc;

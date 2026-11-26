@@ -1,0 +1,149 @@
+psql:stok-v2/guvenlik/26-b1-uygula.sql:390: NOTICE:  policy "tanim_ad_gecmisi_okuma" for relation "public.tanim_ad_gecmisi" does not exist, skipping
+psql:stok-v2/guvenlik/26-b1-uygula.sql:390: NOTICE:  trigger "tanim_ad_gecmisi_koru" for relation "public.tanimlar" does not exist, skipping
+psql:stok-v2/guvenlik/26-b1-uygula.sql:390: NOTICE:  trigger "tanim_ad_guncelle" for relation "public.siparis_kalemleri" does not exist, skipping
+psql:stok-v2/guvenlik/26-b1-uygula.sql:390: NOTICE:  trigger "tanim_ad_guncelle" for relation "public.uretim" does not exist, skipping
+psql:stok-v2/guvenlik/26-b1-uygula.sql:390: NOTICE:  trigger "tanim_ad_guncelle" for relation "public.stok_rezervasyonlari" does not exist, skipping
+psql:stok-v2/guvenlik/26-b1-uygula.sql:390: NOTICE:  trigger "tanim_ad_guncelle" for relation "public.lst_kayit" does not exist, skipping
+ no |                                        kontrol                                         |                    beklenen                     |                      bulunan                      | durum  
+----+----------------------------------------------------------------------------------------+-------------------------------------------------+---------------------------------------------------+--------
+  1 | tanim_renk_ad_degistir(jsonb) fonksiyonu                                               | var, güvenlik tanımlı, authenticated çalıştırır | var, definer=true, authenticated=true, anon=false | tamam
+  2 | tanim_ad_guncel(text) — belirsizlik kuralı (KR025 / KR027)                             | gövdede KR025 ve KR027                          | var                                               | tamam
+  3 | tanim_ad_gecmisi tablosu (serbest sütunu ile)                                          | var                                             | var                                               | tamam
+  4 | bayat yazma tetikleyicisi (siparis_kalemleri, uretim, stok_rezervasyonlari, lst_kayit) | 4 etkin                                         | 4 etkin                                           | tamam
+  5 | eski ad koruması (tanimlar, KR026)                                                     | 1 etkin                                         | 1 etkin                                           | tamam
+  6 | tanim_eski_ad_serbest(jsonb) fonksiyonu                                                | var                                             | var                                               | tamam
+ 99 | GENEL                                                                                  | KURULU                                          |                                                   | KURULU
+(7 rows)
+
+
+■ D1 — tam güncelleme (Yönetici): bütün bağlar tek işlemde, miktarlar aynı, sürümler arttı
+NOTICE:  database "inc_b1_10512_1" does not exist, skipping
+  ✓ dönüş: {"kalem":2,"siparis":1,"uretim":2,"rez":1,"koli":1,"urun":1,"celiski":1}
+  ✓ D1 tanim: "Vizon Deri"
+  ✓ D1 stk: "k-1054=1054 - Siyah/Vizon Deri | r-siyah=Siyah | r-vizon=Vizon Deri"
+  ✓ D1 kalem: "kl-inc-40:1054 - Siyah/Vizon Deri:2 | kl-inc-41:1054 - Siyah/Vizon Deri:3"
+  ✓ D1 bagsiz: 0
+  ✓ D1 sipSurum: "sp-inc-1:2"
+  ✓ D1 uretim: "ur-1:1054 - Siyah/Vizon Deri:s2 | ur-2:Siyah:s1 | ur-3:Vizon Deri:s2"
+  ✓ D1 rez: "rz-1:Vizon Deri:s5"
+  ✓ D1 koli: "ko-1:1054 - Siyah/Vizon Deri,Siyah"
+  ✓ D1 recete: "1054 - Siyah/Vizon Deri/->Vizon Deri/r-vizon | Siyah/->Siyah/r-vizon | 1054 - Siyah/Vizon Deri/->Vizon Yılan/r-siyah"
+  ✓ D1 resim: "1054 - Siyah/Vizon Deri,Siyah"
+  ✓ D1 barkod: "1054 - Siyah/Vizon Deri,Siyah"
+  ✓ D1 urunSurum: 3
+  ✓ D1 bağsız kalem: 0
+
+■ D2 — ad değişikliğinden SONRA bayat cihaz eski adla yeni kalem / üretim / koli yazar → güncel ada çevrilir, bağlı
+NOTICE:  database "inc_b1_10512_2" does not exist, skipping
+  ✓ D2 bayat kalem yeni adda: true
+  ✓ D2 bayat üretim yeni adda: true
+  ✓ D2 bağsız kalem: 0
+
+■ D3 — eşzamanlı: önce kalem (açık işlem), sonra ad değişikliği
+NOTICE:  database "inc_b1_10512_3" does not exist, skipping
+  ✓ D3 ikinci işlem kilitte bekledi: true
+  ✓ D3 eşzamanlı kalem yeni adda: true
+  ✓ D3 bağsız kalem: 0
+
+■ D3 — eşzamanlı: önce ad değişikliği (açık işlem), sonra kalem
+NOTICE:  database "inc_b1_10512_4" does not exist, skipping
+  ✓ D3 ikinci işlem kilitte bekledi: true
+  ✓ D3 eşzamanlı kalem yeni adda: true
+  ✓ D3 bağsız kalem: 0
+
+■ D4 — sonda bilerek hata (ürünler güncellenirken) → TAM geri alma
+NOTICE:  database "inc_b1_10512_5" does not exist, skipping
+  ✓ D4 hata iletisi: "SINAMA: son adımda hata"
+  ✓ D4 tanim değişmedi: "Vizon Yılan"
+  ✓ D4 stk değişmedi: "k-1054=1054 - Siyah/Vizon Yılan | r-siyah=Siyah | r-vizon=Vizon Yılan"
+  ✓ D4 kalem değişmedi: "kl-inc-40:1054 - Siyah/Vizon Yılan:2 | kl-inc-41:1054 - Siyah/Vizon Yılan:3"
+  ✓ D4 bagsiz değişmedi: 0
+  ✓ D4 sipSurum değişmedi: "sp-inc-1:1"
+  ✓ D4 uretim değişmedi: "ur-1:1054 - Siyah/Vizon Yılan:s1 | ur-2:Siyah:s1 | ur-3:vizon  yılan:s1"
+  ✓ D4 rez değişmedi: "rz-1:VİZON YILAN:s4"
+  ✓ D4 koli değişmedi: "ko-1:1054 - Siyah/Vizon Yılan,Siyah"
+  ✓ D4 recete değişmedi: "1054 - Siyah/Vizon Yılan/->Vizon Yılan/- | Siyah/->Siyah/r-vizon | 1054 - Siyah/Vizon Yılan/->Vizon Yılan/r-siyah"
+  ✓ D4 resim değişmedi: "1054 - Siyah/Vizon Yılan,Siyah"
+  ✓ D4 barkod değişmedi: "1054 - Siyah/Vizon Yılan,Siyah"
+  ✓ D4 urunSurum değişmedi: 2
+  ✓ D4 eski ad defteri boş: 0
+
+■ D5 — yetki: listede olmayan / Tanımlar yetkisi olmayan reddedilir, hiçbir şey değişmez
+NOTICE:  database "inc_b1_10512_6" does not exist, skipping
+  ✓ D5 zeki (listede yok) ret: "42501 Bu işlem için yetkiniz yok (tanimlar: duzenleme)"
+  ✓ D5 zeki (listede yok) değişiklik yok: true
+NOTICE:  database "inc_b1_10512_7" does not exist, skipping
+  ✓ D5 ayşe (yalnız stok) ret: "42501 Bu işlem için yetkiniz yok (tanimlar: duzenleme)"
+  ✓ D5 ayşe (yalnız stok) değişiklik yok: true
+
+■ D6 — bayat istek (eski ad tutmuyor) · aynı ad başka renkte · boş ad · istek tekrarı
+NOTICE:  database "inc_b1_10512_8" does not exist, skipping
+  ✓ D6 bayat istek: "KR021: renk adı bu arada değişmiş (şimdi \"Vizon Yılan\", istekte \"Vizon Rugan\")"
+  ✓ D6 aynı ad başka renkte: "KR022: \"siyah\" adında bir renk zaten var"
+  ✓ D6 boş ad: "KR023: yeni ad boş olamaz"
+  ✓ D6 retlerden sonra değişiklik yok: true
+  ✓ D6 tekrar: ikinci istek 'zaten': [false,true]
+  ✓ D6 tekrar: ikinci istek hiçbir şeyi değiştirmedi (sürümler dahil): true
+
+■ D7 — A → B → C: iki eski ad da (düz + kombinasyon) güncel C'ye bağlanır
+NOTICE:  database "inc_b1_10512_9" does not exist, skipping
+  ✓ D7 kalem A (en eski etiket) → C: "1054 - Siyah/Vizon Rugan"
+  ✓ D7 kalem B (ara etiket) → C: "1054 - Siyah/Vizon Rugan"
+  ✓ D7 üretim düz adlar → C: "Vizon Rugan,Vizon Rugan"
+  ✓ D7 bağsız kalem: 0
+
+■ D8 — A → B → A: A yeniden aynı rengin güncel adı; B ile gelen bayat kayıt A'ya bağlanır
+NOTICE:  database "inc_b1_10512_10" does not exist, skipping
+  ✓ D8 güncel adla gelen kalem değişmez: "1054 - Siyah/Vizon Yılan"
+  ✓ D8 ara adla (B) gelen bayat kalem → A: "1054 - Siyah/Vizon Yılan"
+  ✓ D8 bağsız kalem: 0
+
+■ D9 — eski ad BAŞKA renge verilemez (KR026): ad değişikliğiyle de, Tanımlar'da yeni renkle de; Yönetici serbest bırakınca verilir
+NOTICE:  database "inc_b1_10512_11" does not exist, skipping
+  ✓ D9 Siyah → 'Vizon Yılan' (sunucu fonksiyonu): "KR026 KR026: \"Vizon Yılan\" başka bir rengin eski adı"
+  ✓ D9 Tanımlar'a yeni renk 'vizon yılan': "KR026 KR026: \"vizon yılan\" başka bir rengin eski adı"
+  ✓ D9 retlerden sonra değişiklik yok: true
+  ✓ D9 personel serbest bırakamaz: "42501 Eski renk adını yalnız Yönetici serbest bırakabilir"
+  ✓ D9 Yönetici serbest bıraktı → yeni renk verilebilir: "geçti"
+  ✓ D9 serbest bırakılan adla gelen kayıt eski renge ÇEVRİLMEZ (yeni rengin adı): "Vizon Yılan"
+
+■ D10 — geçmişten kalan belirsizlik: eski ad hem başka etkin rengin adı (koruma öncesi) → KR025, sessiz eşleme YOK
+NOTICE:  database "inc_b1_10512_12" does not exist, skipping
+  ✓ D10 bayat kalem reddedildi: "KR025 KR025: \"Vizon Yılan\" hem etkin bir rengin adı hem başka bir rengin eski adı"
+  ✓ D10 kalem yazılmadı: "2"
+  ✓ D10 iki rengin eski adı → KR025: "KR025 KR025: \"Eski Ortak\" birden çok rengin eski adı"
+
+■ D11 — eski adın rengi silinmiş → KR027; eski adla DURAN kaydın başka alanı (miktar) düzeltilebilir
+NOTICE:  database "inc_b1_10512_13" does not exist, skipping
+  ✓ D11 silinmiş rengin eski adıyla yeni kayıt → KR027: "KR027 KR027: \"Vizon Yılan\" silinmiş ya da pasif bir rengin eski adı"
+  ✓ D11 eski adla duran kaydın miktarı düzeltilebilir (renk aynı → bakılmaz): "geçti"
+
+■ D12 — upsert: (1) eski kalemin yalnız miktarı → geçer · (2) renk değişiyorsa koruma aynen (KR025 / doğru renge bağlama)
+NOTICE:  database "inc_b1_10512_14" does not exist, skipping
+  ✓ D12-1 eski (belirsiz adlı) kalemin yalnız miktarı → geçti: "geçti"
+  ✓ D12-1 renk metni olduğu gibi, miktar yeni: "Eski Ortak|5"
+  ✓ D12-2 var olan kalemin rengini BELİRSİZ eski ada çevirmek → KR025: "KR025 KR025: \"Eski Ortak\" birden çok rengin eski adı"
+  ✓ D12-2 ret sonrası kalem değişmedi: "Siyah|1"
+  ✓ D12-2 var olan kalemin rengini TEK rengin eski adına çevirmek → o rengin güncel adı: "geçti"
+  ✓ D12-2 doğru renge bağlandı: "Vizon Deri|1"
+  ✓ D12-2 YENİ kimlikte belirsiz eski ad → KR025: "KR025 KR025: \"Eski Ortak\" birden çok rengin eski adı"
+
+■ B-1 — BOZMA: eski ad tetikleyicisi kaldırıldı → D2 yakalamalı
+NOTICE:  database "inc_b1_10512_15" does not exist, skipping
+  ✓ B-1 (bozuk) bağsız kalem VAR — sınama yakaladı: true
+
+■ B-2 — BOZMA: tablo kilidi kaldırıldı → D3 (önce ad değişikliği) yakalamalı
+NOTICE:  database "inc_b1_10512_16" does not exist, skipping
+  ✓ B-2 (bozuk) eşzamanlı kalem ESKİ adda — sınama yakaladı: true
+  ✓ B-2 (bozuk) bağsız kalem VAR: true
+
+■ B-3 — BOZMA: eşleme ilk (sessiz) sürüme döndürüldü + eski ad koruması kaldırıldı → D10 yakalamalı
+NOTICE:  database "inc_b1_10512_17" does not exist, skipping
+  ✓ B-3 (bozuk) eski ad başka renge verildi VE bayat kalem SESSİZCE yazıldı — sınama yakaladı: true
+
+■ B-4 — BOZMA: upsert istisnası yalnız KİMLİĞE bakıyor (renk karşılaştırması kaldırıldı) → D12-2 yakalamalı
+NOTICE:  database "inc_b1_10512_18" does not exist, skipping
+  ✓ B-4a (yalnız ekleme katmanı bozuk) güncelleme katmanı yine KR025 verdi: true
+  ✓ B-4b (iki katman bozuk) belirsiz ad SESSİZCE yazıldı — sınama yakaladı: true
+
+── b1-sina: 78 geçti · 0 kaldı ──

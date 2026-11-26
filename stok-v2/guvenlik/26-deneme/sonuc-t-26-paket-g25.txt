@@ -1,0 +1,41 @@
+t-26-paket · taban inc_g25 · uygula ab9661824335b39d · geri-al 51aee57ccd384f8e · önkoşul 6f7708f38ae0781f · anlık e947942f9d2c6c80
+■ P1 kurulum
+  ✓ P1 önce GENEL: KURULU DEĞİL
+  ✓ P1 kurulum çıkışı: 0
+  ✓ P1 sonra GENEL: KURULU
+  ✓ P1 anlık görüntü (tanim_ad_gecmisi dışı) kurulum öncesiyle aynı: AYNI
+  ✓ P1 tanim_ad_gecmisi boş: 0
+■ P2 üretilen = kaynak
+  ✓ P2 kaynaktan kurulum çıkışı: 0
+  ✓ P2 iki kurulumda da 5 fonksiyon: 5/5
+  ✓ P2 5 fonksiyonun gövdesi (md5) kaynaktan kurulanla aynı: AYNI
+  ✓ P2 tetikleyici tanımları aynı: AYNI
+  ✓ P2 yetkiler aynı: AYNI
+■ P3 Editor gibi parça parça
+  ✓ P3 parça sayısı (do bloğu + doğrulama sorgusu): 2
+  ✓ P3 GENEL: KURULU
+■ P4 bozma (do bloğunun sonunda hata)
+  ✓ P4 hata verdi: 1
+  ✓ P4 B1 nesnesi (fonksiyon/tetikleyici): 0/0
+  ✓ P4 tanim_ad_gecmisi tablosu yok: t
+  ✓ P4 anlık görüntü aynı: AYNI
+■ P5 geri alma (ad değişikliğinden sonra)
+  ✓ P5 ad değişikliği (r-vizon → Vizon Deri): false
+  ✓ P5 geri alma çıkışı: 0
+  ✓ P5 GENEL: KURULU DEĞİL
+  ✓ P5 B1 nesnesi: 0/0
+  ✓ P5 ad defteri satırları KALDI: r-vizon:Vizon Yılan>Vizon Deri,k-1054:1054 - Siyah/Vizon Yılan>1054 - Siyah/Vizon Deri
+  ✓ P5 diğer veri geri almadan önceyle aynı: AYNI
+■ P6 geri almanın bozması
+  ✓ P6 hata verdi: 1
+  ✓ P6 hiçbir şey kalkmadı (GENEL): KURULU
+■ P7 geri almadan sonra yeniden kurulum
+  ✓ P7 kurulum çıkışı: 0
+  ✓ P7 GENEL: KURULU
+  ✓ P7 defter satırları duruyor: r-vizon:Vizon Yılan>Vizon Deri,k-1054:1054 - Siyah/Vizon Yılan>1054 - Siyah/Vizon Deri
+  ✓ P7 eski ad yeni ada eşleniyor (tanim_ad_guncel): 1054 - Siyah/Vizon Deri
+■ P8 iki kez kurulum
+  ✓ P8 ikinci Run çıkışı: 0
+  ✓ P8 GENEL: KURULU
+  ✓ P8 veri aynı: AYNI
+── t-26-paket: 31 geçti · 0 kaldı ──
