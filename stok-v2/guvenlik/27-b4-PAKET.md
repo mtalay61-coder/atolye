@@ -69,8 +69,36 @@ Hepsi `27-b4-uret.py` ile üretilir; `--denetle` ile "AYNI" çıkar.
   - bozma kipleri (`BOZMA=ad|kilit|denetim|iptal`) yalnız atılabilir kopyada.
   - Sonuçlar `sonuc-b4-sunucu-*.txt`.
 
+## Ek sınamalar (29 Kasım; SQL değişmedi — özetler aynı)
+
+**Yayın paketinin kendisiyle** (`atolye-erp-v1.744.37.html`, SHA-256 `bc6912c2…e458a`; koşucu `test/inceleme/yayin-ekran.js`):
+- Test derlemesi yerine yayınlanmış dosya açılır; özeti tutmazsa koşmaz.
+- Yalıtım: yalnız yerel PostgreSQL + esm.sh. Canlı / G-25 deneme projesine giden istek ya da WebSocket sayılır: dört koşuda **0**.
+
+| Sınama (yayın paketi) | Düzeltmesiz | B4 kurulu |
+|---|---|---|
+| `ekran-uretim-b4.js` | 21 geçti · **14 kaldı** | **35/35** |
+| `ekran-uretim-b4-ver.js` | 9 geçti · **3 kaldı** | **12/12** |
+
+**İki cihazdan "İşi Ver"** (`ekran-uretim-b4-ver.js`; test derlemesi: önce 8/3, sonra 11/0):
+- **Düz iş verme (ilk adım):** çift atama OLUŞMADI — düzeltmesiz tabanda da.
+  - Eşzamanlı ve bayat cihazla, 75 sn bekleyerek ölçüldü: sunucuya tek atama gitti; teslimden sonra stok 10, işçilik −350.
+  - İkinci cihaz kendi atamasını hiç göndermedi (kayıtta reddedilen istek de yok). Nedeni doğrulanmadı.
+  - İkinci cihazda yine "verildi" iletisi çıkıyor; para / stok etkisi yok.
+- **Atamasız ara proses üzerinden iş verme (V3):** düzeltmesiz tabanda **çift kayıt**.
+  - İki cihaz Saya'yı aynı anda verince Yıkama (ara proses) için iki ÜRT fişi: fason −80 (olması gereken −40).
+  - İki Saya ataması doğdu; ikisi de teslim alınınca mamul 20, işçilik −400.
+  - B4 ile: ikinci cihaz KR032 ile reddedilir ("İş verilemedi — hiçbir değişiklik yapılmadı"); tek fiş, tek atama.
+
+**Adım adı denetiminin koruduğu durum** (`sonuc-ekran-uretim-b4-ver-adsiz.txt`):
+- B4 kurulu, yalnız adım adı denetimi kapatılmış kopyada V3 yeniden kırmızı (3 ✗, düzeltmesiz tabanla aynı).
+- Ara proses fişinde teslim alınan atama yok; atama durumu denetimi bu yolu göremez. Tek koruma adım adı denetimi.
+
+**Yalıtılmış gerçek-Supabase denemesi:** `27-b4-deneme/PAKET-B4-YALITILMIS-DENEME.md` (onay ve karar bekliyor; yapı kaynağı sorusu orada).
+
 ## Açık kalanlar (bu paketin dışında)
 
-- **Bayat cihaz iletisi:** bayat cihazın "Geri Al"ı sunucuda hiçbir şeyi değiştirmez, ama istemci `zatenIptal`'i başarı sayıp "geri alındı" der (yoklama 8 sn içinde ekranı düzeltir). İstemci işi: `zatenIptal` → "başka cihazda zaten geri alınmış".
+- **Bayat cihaz iletisi:** 1.744.37 bayat "Geri Al"da yine "geri alındı" der (sunucu değişmez). Düzeltmesi ayrı istemci dalında: `claude/geri-al-ileti` (1.744.41; önkoşulu bu paket).
 - **Fiş dışı yazma:** fiş dışı `alt_yaz` ile atama durumunu değiştirmek (istemci bunu yapmıyor) — B3b kapsamı.
-- **İş verme:** iki cihazdan eşzamanlı "İşi Ver" (hammadde 1.744.37'de teslimde düştüğü için para / stok etkisi yok; yinelenen atama riski) — sınanmadı.
+- **İş verme iletisi:** düz "İşi Ver"de ikinci cihazın ataması gitmediği hâlde o cihaz "verildi" der (yukarıda). İstemci işi.
+- **Kısmi kalan hammaddesi:** 1.744.37'de ilk kısmi teslim verilen işin hammaddesinin tamamını düşer (T10; mevcut davranış, değiştirilmedi).
