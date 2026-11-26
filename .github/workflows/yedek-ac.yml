@@ -1,0 +1,137 @@
+# YEDEĞİ YALITILMIŞ AÇ (26 Kasım, renk çökmesi). ETKİN DEĞİL: bu dosya .github/workflows DIŞINDA durur, çalışmaz.
+#
+# ÇALIŞTIRMA (yalnız kullanıcının AYRI onayından sonra): main'den yeni `claude/yedek-ac` dalı açılır; şu DÖRT dosya bu daldaki
+# baytlarıyla AYNEN konur ve dal gönderilir:
+#   .github/workflows/yedek-ac.yml           ← bu dosya
+#   onarim/is-akisi/yedek-ac-onedrive.sh     (koruma kopyası, özetle doğrulama, koruma kopyasından indirme)
+#   onarim/is-akisi/yedek-ac-dogrula.sh      (özet, seçili tablolarla katı açma, tamlık, döküm)
+#   onarim/yedek-varyant-dokumu-salt-okur.sql
+# Tetikleyici YALNIZ o dala gönderim → bir kez çalışır. main'e GİRMEZ, zamanlanmış değildir. İş bitince dal silinir.
+# İki betik yerelde onarim/is-akisi/sina.sh ile sağlam ve bilerek bozulmuş dökümlerle sınandı (37/37).
+#
+# NE YAPAR — canlı Supabase'e HİÇ bağlanmaz (veritabanı secret'ları YEDEK_DB_* kullanılmaz). Her klasör için:
+#   1. yedek-ac-onedrive.sh: gerekli 4 dosya var, BASARISIZ.txt yok; klasör AtolyeYedek-KORUNAN/renk-hatasi/<ad> altına
+#      kopyalanır; kopya HER DOSYANIN quickxor özetiyle (OneDrive'ın kendi özeti) doğrulanır — özet yoksa yalnız boyuta düşülmez,
+#      DURUR; dosyalar KORUMA KOPYASINDAN indirilir.
+#   2. yedek-ac-dogrula.sh: indirilen her dosyanın bayt boyutu + sha256'sı ozet.txt'yle aynı (korunan kopya bayt düzeyinde
+#      doğrulanır); içindekilerden yalnız 10 tablonun TABLE + TABLE DATA girdileri (ve public dizileri) seçilir, geri kalan HİÇ
+#      denenmez (türüne göre sayılır); Supabase'in auth.uid() / extensions.* varsayılanları varsa saplaması AÇIKÇA kurulur;
+#      pg_restore --exit-on-error --single-transaction: ilk hatada ya da tek uyarıda DURUR, hiçbir şey yüklenmez; CSV'den ÖNCE
+#      10 tablonun hepsi var ve satır sayıları envanter-kaynak.csv ile (döküm ile aynı anlık görüntü) EŞİT, tetikleyici 0.
+#   3. CSV OneDrive'a (KORUNAN klasörüne) yüklenir ve yüklenen dosya yereldekiyle quickxor özetiyle karşılaştırılır.
+#   4. Jeton: rclone OneDrive erişim jetonunu yenilediyse yenisi ONEDRIVE_TOKEN secret'ına yazılır (gece yedeğiyle aynı adım).
+#
+# YETKİLER:
+#   GITHUB_TOKEN: yalnız contents: read. Issue / PR / Pages / Actions yazma YOK. checkout kimlik bilgisini SAKLAMAZ.
+#   Secret'lar: ONEDRIVE_TOKEN + ONEDRIVE_DRIVE_ID (rclone'un mevcut Microsoft izni: OneDrive okuma + KORUNAN klasörüne yazma;
+#     yeni izin istenmez); YEDEK_PAT (fine-grained, yalnız bu depo, "Secrets: Read and write") — yalnız ONEDRIVE_TOKEN'ı geri yazmak için.
+# JETON VE EŞZAMANLILIK: Microsoft her yenilemede yeni yenileme anahtarı verir; saklanmazsa eskisi geçersizleşebilir → gece
+#   yedeği OneDrive'a erişemez. (a) Jeton saklama adımı burada da var, `if: always()` (iş hata verse de çalışır). (b) concurrency
+#   grubu gece yedeğiyle AYNI (`gece-yedek`, cancel-in-progress: false): ikisi asla aynı anda çalışmaz; biri jetonunu saklamadan
+#   öbürü başlamaz ve ESKİ jetonu okumaz (secret iş başında okunur, önceki iş bitmiştir). (c) GitHub bir grupta 1 çalışan + 1
+#   bekleyen tutar, üçüncü gelirse BEKLEYENİ iptal eder → bu iş gece yedeğinin gerçek saatinden (son günler 06:50–10:00 UTC) uzak
+#   gönderilir. (d) Jeton saklama başarısız olursa iş KIRMIZI biter ve bu, gece yedeğinden önce düzeltilmelidir.
+# GİZLİLİK (depo ve iş kaydı HERKESE AÇIK): kayda yalnız klasör / dosya / tablo ADLARI, bayt boyutları, özetlerin ilk 12–16
+#   hanesi, satır SAYILARI, nesne TÜRÜ sayıları, hatalı nesnenin türü ve tablo adı yazılır. pg_restore / psql / rclone hata
+#   metinleri (veri parçası taşıyabilir: ör. COPY CONTEXT satırı) yalnız geçici dosyalarda kalır. Döküm ve CSV yapıt (artifact)
+#   olarak SAKLANMAZ; set -x kullanılmaz; iş sonunda geçici dosyalar silinir.
+name: Yedeği yalıtılmış aç (salt okur, tek seferlik)
+on:
+  push:
+    branches: [claude/yedek-ac]
+permissions:
+  contents: read
+concurrency:
+  group: gece-yedek
+  cancel-in-progress: false
+env:
+  # 2026-11-25-1137: hata gününden önceki son sınanmış yedek (Actions kaydı: SINAMA TAMAM). 2026-11-26-1121: hata günü 11:21
+  # (SINAMA TAMAM) — hatadan önce mi sonra mı İÇERİKLE ayrılır.
+  KLASORLER: "2026-11-25-1137 2026-11-26-1121"
+  KORUMA: onedrive:AtolyeYedek-KORUNAN/renk-hatasi
+jobs:
+  ac:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    services:
+      postgres:            # GEÇİCİ: yalnız bu işin makinesinde, iş bitince yok olur; canlıyla bağı yok
+        image: postgres:17
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Ayar denetimi
+        env:
+          A4: ${{ secrets.ONEDRIVE_TOKEN }}
+          A5: ${{ secrets.ONEDRIVE_DRIVE_ID }}
+          A6: ${{ secrets.YEDEK_PAT }}
+        run: |
+          for k in $KLASORLER; do [[ "$k" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{4}$ ]] || { echo "::error::klasör adı geçersiz: $k"; exit 1; }; done
+          [ -n "$A4" ] && [ -n "$A5" ] && [ -n "$A6" ] || { echo "::error::OneDrive secret'ları eksik"; exit 1; }
+          for f in onarim/is-akisi/yedek-ac-onedrive.sh onarim/is-akisi/yedek-ac-dogrula.sh onarim/yedek-varyant-dokumu-salt-okur.sql; do
+            [ -f "$f" ] || { echo "::error::$f yok"; exit 1; }; echo "$f sha256 $(sha256sum "$f" | cut -c1-16)…"; done
+      - name: Araçlar (PostgreSQL 17 istemcisi, rclone)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-common > /dev/null
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y > /dev/null
+          sudo apt-get install -y -qq postgresql-client-17 rclone > /dev/null
+          echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
+      - name: OneDrive ayarı
+        env:
+          ONEDRIVE_TOKEN: ${{ secrets.ONEDRIVE_TOKEN }}
+          ONEDRIVE_DRIVE_ID: ${{ secrets.ONEDRIVE_DRIVE_ID }}
+        run: |
+          umask 077
+          printf '[onedrive]\ntype = onedrive\ntoken = %s\ndrive_id = %s\ndrive_type = personal\n' "$ONEDRIVE_TOKEN" "$ONEDRIVE_DRIVE_ID" > "$RUNNER_TEMP/rclone.conf"
+      - name: Koru, doğrula, yalıtılmış aç, döküm çıkar
+        env:
+          RCLONE_CONFIG: ${{ runner.temp }}/rclone.conf
+          PGHOST: localhost
+          PGUSER: postgres
+        run: |
+          set -euo pipefail
+          umask 077
+          echo "AtolyeYedek'teki son yedek klasörleri (yalnız adlar):"
+          { rclone lsf onedrive:AtolyeYedek --dirs-only 2>/dev/null | sed 's:/$::' | grep -E '^[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{4}' | sort | tail -10; } || true
+          for K in $KLASORLER; do
+            echo "── $K"
+            A="$RUNNER_TEMP/ac-$K"; DB="yedek_${K//-/_}"
+            bash onarim/is-akisi/yedek-ac-onedrive.sh onedrive:AtolyeYedek "$KORUMA" "$K" "$A"
+            createdb "$DB"
+            bash onarim/is-akisi/yedek-ac-dogrula.sh "$A" "$DB" onarim/yedek-varyant-dokumu-salt-okur.sql "$A/yedek-dokum.csv"
+            rclone copyto "$A/yedek-dokum.csv" "$KORUMA/$K-yedek-dokum.csv" 2>/dev/null || { echo "::error::$K: CSV yüklenemedi"; exit 1; }
+            yerel=$(rclone hashsum quickxor "$A/yedek-dokum.csv" 2>/dev/null | cut -d' ' -f1)
+            uzak=$(rclone hashsum quickxor "$KORUMA/$K-yedek-dokum.csv" 2>/dev/null | cut -d' ' -f1)
+            [ -n "$yerel" ] && [ "$yerel" = "$uzak" ] || { echo "::error::$K: yüklenen CSV özeti yereldekiyle aynı değil"; exit 1; }
+            echo "   CSV OneDrive'da ve özetle doğrulandı: AtolyeYedek-KORUNAN/renk-hatasi/$K-yedek-dokum.csv (quickxor ${yerel:0:12}…)"
+            rm -rf "$A"; dropdb "$DB"
+          done
+      - name: OneDrive erişimini sakla (yenilenen jeton)
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.YEDEK_PAT }}
+          ESKI: ${{ secrets.ONEDRIVE_TOKEN }}
+          RCLONE_CONFIG: ${{ runner.temp }}/rclone.conf
+        run: |
+          [ -f "$RCLONE_CONFIG" ] || exit 0
+          umask 077
+          python3 - "$RCLONE_CONFIG" "$RUNNER_TEMP/yeni-jeton.json" <<'PY'
+          import configparser, sys
+          c = configparser.RawConfigParser(); c.read(sys.argv[1]); open(sys.argv[2], "w").write(c.get("onedrive", "token", fallback=""))
+          PY
+          if [ -s "$RUNNER_TEMP/yeni-jeton.json" ] && [ "$(cat "$RUNNER_TEMP/yeni-jeton.json")" != "$ESKI" ]; then
+            gh secret set ONEDRIVE_TOKEN --repo "$GITHUB_REPOSITORY" < "$RUNNER_TEMP/yeni-jeton.json" \
+              && echo "OneDrive erişimi yenilendi ve saklandı." \
+              || { echo "::error::Yenilenen OneDrive erişimi saklanamadı — gece yedeğinden önce düzeltilmeli (kurulum § 2b)"; exit 1; }
+          else
+            echo "OneDrive erişimi değişmedi."
+          fi
+      - name: Temizlik
+        if: always()
+        run: rm -rf "$RUNNER_TEMP"/ac-* "$RUNNER_TEMP/rclone.conf" "$RUNNER_TEMP/yeni-jeton.json"
