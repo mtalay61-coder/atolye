@@ -152,7 +152,10 @@ karar_degisti (kod) 6/6. Birleşik dalın tam regresyonu (`af8c2a2`) 275/275 AYN
 ### Canlı yapı CSV'si (25, 27 Kasım) — ilk ölçümler
 - 1508 satır + OZET (`ca99b1e1…`). Satır sayısı tutuyor; OZET canlının sıralama kuralıyla (glibc en_US) hesaplandığı için yerelde birebir
   üretilemedi (C, ICU, yerelde üretilen en_US denendi). Sıralamadan bağımsız doğrulama: `25c-ozet-c-salt-okur.sql` → beklenen
-  `1508 | bd6b4457b08b9abdfed35bc60b542525`. Gizli değer tarayıcısı: 0 bulgu (yardımcı kontrol).
+  `1508 | bd6b4457b08b9abdfed35bc60b542525` — **canlıda çalıştırıldı, BİREBİR AYNI (CSV tam)**. Gizli değer tarayıcısı: 0 bulgu (yardımcı kontrol).
+- 25b (fonksiyon / görünüm gövdeleri, 141 satır): 115 fonksiyonun ve 18 görünümün md5'i 25'teki md5'lerle birebir aynı (25'te ad sütunu `name`
+  türünden 63 bayta kırpılıyor — eşleme önekle) → gövdeler tam. Tarayıcı 0 bulgu; parola / anahtar geçen satırlara elle de bakıldı, sabit sır
+  yok; fonksiyonlarda dışarıya HTTP çağrısı yok. Ham canlı metin depoya konmadı.
 - Hesaplar: auth.users 3, üçü ERP listesinde, doğrulanmış, anonim değil; ERP kullanıcılarının ÜÇÜ DE Yönetici → bugün personel yetkisiyle
   çalışan hesap yok (B3'ün personel kısmı bugün kimseyi etkilemiyor; ileride personel hesabı açılınca geçerli). girisAktifMi = true.
 - anon: yalnız `surum` okuma + site portalının 8 fonksiyonu + `yonetici_mi`. Depolama: `Uygulama` ve `gorseller` kovaları HERKESE AÇIK
