@@ -149,6 +149,24 @@ karar_degisti (kod) 6/6. Birleşik dalın tam regresyonu (`af8c2a2`) 275/275 AYN
 **Regresyon (kosu.sh):** B1 2. tur öncesi temiz · B2 2. tur 275/275 AYNI (iki altın gerekçeyle: `bekleyen-yazma` adres uzunluğu 32 → 38;
 `tanim-birlestir` sahte sunucusu artık yazılanı saklıyor — eski yolla da aynı altın) · B2 3. tur (`34377d7`) 275/275 AYNI · birleşik dal 275/275 AYNI.
 
+### Canlı yapı CSV'si (25, 27 Kasım) — ilk ölçümler
+- 1508 satır + OZET (`ca99b1e1…`). Satır sayısı tutuyor; OZET canlının sıralama kuralıyla (glibc en_US) hesaplandığı için yerelde birebir
+  üretilemedi (C, ICU, yerelde üretilen en_US denendi). Sıralamadan bağımsız doğrulama: `25c-ozet-c-salt-okur.sql` → beklenen
+  `1508 | bd6b4457b08b9abdfed35bc60b542525`. Gizli değer tarayıcısı: 0 bulgu (yardımcı kontrol).
+- Hesaplar: auth.users 3, üçü ERP listesinde, doğrulanmış, anonim değil; ERP kullanıcılarının ÜÇÜ DE Yönetici → bugün personel yetkisiyle
+  çalışan hesap yok (B3'ün personel kısmı bugün kimseyi etkilemiyor; ileride personel hesabı açılınca geçerli). girisAktifMi = true.
+- anon: yalnız `surum` okuma + site portalının 8 fonksiyonu + `yonetici_mi`. Depolama: `Uygulama` ve `gorseller` kovaları HERKESE AÇIK
+  okuma (gorseller'e yazma yalnız Yönetici politikası; Uygulama'ya politika yok → yalnız servis rolü yazar). pg_cron: 15 dakikada bir
+  `gun-sonu-raporu`. Liste v2'ye geçen tablolar: teklifler, faturalar, koliler, gorevler, modeller, fis_defteri, mesajlar; kasa v2 açık;
+  fiş kuralları KAPALI (`fis_aktif = false`), sürüm kapısı boş.
+- **B3 canlı yetkilerle yeniden ölçüldü** (`canli-yetki-hizala.py`: canlının tablo yetkileri, RLS, politikaları, eksik tetikleyicileri ve
+  stk_ayar'ı yerel tabana; `yerel-uyum.sql`'in yetki varsayımları KALKTI): listede olmayan hesap ürün adını / sürümünü, cari unvanını,
+  Tanımlar'daki renkleri (değiştirme ve hepsini silme) YAZABİLİYOR; yalnız stok yetkili personel cari unvanını ve Tanımlar'ı yazabiliyor.
+  Silme (ürün, sipariş, cari) ve kullanıcı listesi / giriş ayarı korunuyor. Önceki "sipariş kalemi doğrudan yazılır" bulgusu canlıda
+  GEÇERSİZ: authenticated'ın `siparis_kalemleri`'nde yalnız okuma yetkisi var (uygulama sunucu işlemiyle yazar). Yerelde açık görünen
+  cari silme canlıda `silme_koruma` ile kapalı. Sınır: RPC'lerin (stk_yaz, fis_kes, car_yaz, kas_yaz, lst_yaz, alt_yaz) ve `yetki_var_mi`,
+  `stk_yetki`, `yonetici_mi` gövdeleri yerelde canlıdan FARKLI (md5) — RPC düzeyindeki yetki ölçümü 25b gövdeleri gelince.
+
 ### AÇIK KAPSAM (bilerek kapatılmadı)
 - **Beden adı değişikliği** (082 `olcuAdDegistir`, `tanimsizOlcuCevir`): B1 ile aynı hata sınıfı — hâlâ istemci belleğinden, 5–6 ayrı
   yazma. Aynı kalıpla (sunucu işlemi + eski ad defteri) ayrı iş.

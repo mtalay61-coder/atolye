@@ -18,7 +18,8 @@ const HESAP = {
 // Ayşe yalnız STOK modülünde yetkili: ürün kartı yazabilir; cari, sipariş, Tanımlar (renk) yazamamalı. Zeki listede yok: hiçbir şey.
 const BEKLENEN = {
   "ürün adını değiştir (urunler UPDATE)": "RRYY", "ürün sil (urunler DELETE)": "RRRY",
-  "sipariş miktarı (siparis_kalemleri UPDATE)": "RRRY", "sipariş kalemi rengi (bağı kopar)": "RRRY",
+  // Sipariş kalemi tabloya DOĞRUDAN yazılmaz (canlı: authenticated yalnız select; uygulama sunucu işlemiyle yazar) — herkes R.
+  "sipariş miktarı (siparis_kalemleri UPDATE)": "RRRR", "sipariş kalemi rengi (bağı kopar)": "RRRR",
   "siparişi iptal et (siparisler UPDATE durum)": "RRRK", "sipariş sil (siparisler DELETE)": "RRRY",
   "Tanımlar: renk adını değiştir": "RRRY", "Tanımlar: bütün renkleri sil": "RRRY",
   "Tanımlar: kullanıcı listesine kendini Yönetici ekle": "RRRY", "Tanımlar: giriş denetimini kapat": "RRRY",
