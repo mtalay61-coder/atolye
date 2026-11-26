@@ -1,5 +1,9 @@
-# B3a — ERP TABLOLARINA DOĞRUDAN YAZMADA "LİSTEDE Mİ + YAZMA YETKİSİ VAR MI" (28 Kasım 2026; HAZIRLIK — canlıya UYGULANMADI)
+# B3a — ERP TABLOLARINA DOĞRUDAN YAZMADA "LİSTEDE Mİ + YAZMA YETKİSİ VAR MI" — **KISMİ KORUMA** (28 Kasım 2026; HAZIRLIK — canlıya UYGULANMADI)
 
+> **KISMİ KORUMA — B3a KAPANMIŞ SAYILMAZ.** Bu paket listede olmayan ve salt okur hesabı kapatır; yalnız stok yetkili personelin cari
+> unvanını değiştirmesi, renk adını değiştirmesi ve bütün renkleri silmesi **AÇIK kalır** (3 açık). Kapatacak kuralın alan / işlem
+> haritası: `28-b3a-YETKI-HARITASI.md` (tasarım; kararlar bekliyor).
+>
 > **Dal `claude/b3a-tablo-yazma-yetki`** (`main` `526167e` = yayındaki 1.744.37 üzerinden).
 > - Yalnız sunucu: istemci değişmez.
 > - B4 / B5'ten (`claude/b4-uretim-teslim-koruma`) BAĞIMSIZ: ayrı dosya, ayrı kurulum, ayrı geri alma, ayrı sınama.
