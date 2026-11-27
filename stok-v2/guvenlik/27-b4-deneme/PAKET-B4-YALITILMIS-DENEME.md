@@ -14,7 +14,7 @@
 ## Yapı dosyası (karar: yerel hizalı kopyadan, yalnız şema — 30 Kasım)
 
 - **Dosya:** `b4-deneme-yapi.sql` — depoda DEĞİL; doğrudan sana verildi.
-- **SHA-256:** `7510c95a247972e5640370617c20cb5803315306976fda91ac8632a091a88c27` · 4732 satır · ~300 KB.
+- **SHA-256:** `d777fb7ebcffa21ba57843f10fe306a21cbb8ca64eed4d6eb14a92c3ce328819` · 4734 satır · ~300 KB.
 - **Üretim:** `pg_dump --schema-only --no-owner -n public` (yerel hizalı kopya) → `27-b4-deneme/yapi-uret.py`.
 - **Biçim:** tek `do $$ … $$` bloğu + bir salt okur sayım sorgusu. Ya bütünüyle kurulur ya hiç.
   - Dosyada yalnız LF var; canlıdaki CRLF satır sonları kurulumda yeniden üretilir (pano / Editor satır sonlarını değiştirse de gövdeler canlıyla aynı kurulur).
@@ -28,7 +28,7 @@
   - adres (`http://`, `https://`), proje kimlikleri, alan adı: 0.
 
 **Yerelde kurulum sınaması** (Supabase benzeri boş veritabanı: `auth` + `extensions` + Supabase varsayılan yetkileri):
-- Kurulum: 44 tablo · 18 görünüm · 115 fonksiyon · 117 tetikleyici · 36 politika · veri 0. İkinci çalıştırma bekçide durdu.
+- Kurulum: 44 tablo · 18 görünüm · 115 fonksiyon · 117 tetikleyici · 36 politika · `stk_ayar` satırı 1 · diğer tablolarda veri satırı 0. İkinci çalıştırma bekçide durdu.
 - `27-b4-onkosul`: **HAZIR** (üç gövde canlı md5'iyle aynı).
 - **Kaynakla fark** (`yapi-karsilastir.py`, 25 sorgusunun iki çıktısı):
   - yerel kaynak kopyaya göre: yalnız nesne sahibi (`root` → `postgres`; canlıdaki gibi) ve veriye bağlı satırlar;
@@ -46,7 +46,7 @@
   | 1.744.41, B4 kurulu | **35/35** · "İşi Ver" **12/12** (ikinci cihaz "İş VERİLEMEDİ" diyor) |
 
   Dört koşuda canlıya / G-25 denemesine giden istek 0.
-- **Gerçek Supabase projesinde henüz DENENMEDİ.** Bilinmeyenler: Editor'ün 300 KB'lık tek ifadeyi kabul edip etmeyeceği; yeni projede ilk Yönetici'nin açılışı (yerel sınamada oturum taklit edildi).
+- **Gerçek Supabase projesinde henüz DENENMEDİ.** Bilinmeyenler: Editor'ün 300 KB'lık tek ifadeyi kabul edip etmeyeceği; gerçek Supabase girişinin kendisi (yerelde hesaplar ve `ilk-yonetici-uygula.sql` sınandı, yayın paketi iki hesapla açıldı; ama oturum jetonu taklit edildi).
 
 ## Yerelde ölçülenler (bu paketin dayanağı)
 
@@ -63,8 +63,10 @@ Sonuçlar `27-b4-PAKET.md` "Sınamalar" bölümünde. Özet:
 | `f49078f2361e8546d59e6a0b9c5d52e0ace6474c47663ef2615478e2b327645d` | `stok-v2/guvenlik/27-b4-uygula.sql` | **YAZAR** — B4 / B5 kurulumu (tek ifade) |
 | `940c40262bf141d35093d999c30195e098ac730d21b2f9483636c0bb8c1036af` | `stok-v2/guvenlik/27-b4-geri-al.sql` | **YAZAR** (ayrı onay) — canlı gövdelere birebir dönüş |
 | `bc6912c22a062d1c7e0b012257839dac3e2b86aab0e9f5eb1b7ab5052fbe458a` | `atolye-erp-v1.744.37.html` | yayındaki istemci |
-| `7510c95a247972e5640370617c20cb5803315306976fda91ac8632a091a88c27` | `b4-deneme-yapi.sql` (depoda değil) | **YAZAR** — yeni boş projeye yapı |
+| `d777fb7ebcffa21ba57843f10fe306a21cbb8ca64eed4d6eb14a92c3ce328819` | `b4-deneme-yapi.sql` (depoda değil) | **YAZAR** — yeni boş projeye yapı |
 | `b7d0714e2553075124db352154e697a68a944916ac04b1c3665273f3c1c74354` | `atolye-erp-v1.744.41.html` (dal `claude/geri-al-ileti`) | istemci 1.744.41 (yayınlanmadı) — adım 7b |
+| `e6b0afd59cafae6445d913b67c6d801a8c7e773dfd4b7260926b8230a38ca8d7` | `stok-v2/guvenlik/27-b4-deneme/ilk-yonetici-uygula.sql` | **YAZAR** — deneme hesaplarını ERP listesine yazar (şifre yok) |
+| `066741c15ec41eab6d0701a394458498be600b340774ba6b3eba1df8a2a0b1bb` | `stok-v2/guvenlik/27-b4-deneme/deneme-hesaplar-salt-okur.sql` | salt okur — ortam ve yetki doğrulaması |
 | (commit'te) | `stok-v2/guvenlik/27-b4-deneme/korumali-sunucu.js` | korumalı yerel sunucu — `DENEME_REF` ile; ana projeyi ve G-25 denemesini REDDEDER |
 
 ## Adımlar (sırayla; her adımın çıktısını paylaş — tutmazsa DUR)
@@ -81,7 +83,7 @@ Sonuçlar `27-b4-PAKET.md` "Sınamalar" bölümünde. Özet:
 ### 2. Yapıyı yeni projeye kur (YAZAR — yalnız yeni proje)
 
 - Adres çubuğunda YENİ projenin kimliği olmalı (`mqdg…` ya da `drtm…` DEĞİL).
-- SQL Editor → dosyanın tamamı → Run. Beklenen sonuç tablosu: tablo 44 · görünüm 18 · fonksiyon 115 · tetikleyici 117 · politika 36 · veri satırı 0.
+- SQL Editor → dosyanın tamamı → Run. Beklenen sonuç tablosu: tablo 44 · görünüm 18 · fonksiyon 115 · tetikleyici 117 · politika 36 · `stk_ayar` satırı 1 · diğer tablolarda veri satırı 0.
 - Hata çıkarsa hiçbir şey kurulmamıştır; iletisini paylaş, devam etme.
 - `27-b4-onkosul-salt-okur.sql` → 1–3 **HAZIR**, 4 `yok`, **99 GENEL: HAZIR**. "FARKLI" çıkarsa DUR.
 
@@ -89,6 +91,33 @@ Sonuçlar `27-b4-PAKET.md` "Sınamalar" bölümünde. Özet:
 
 - Yeni projede `25-canli-tam-yapi-salt-okur.sql` (dal `claude/guvenlik-inceleme`; SHA-256 `9d7f8ee1…`) → Export → CSV → bana gönder.
 - CSV'yi canlı 25 dökümüyle `yapi-karsilastir.py` ile karşılaştırıp farkları raporlarım. Beklenen: yukarıdaki "canlı 25 dökümüne göre" listesi; uygulama nesnelerinde (tablo, sütun, kısıt, indeks, görünüm, fonksiyon, tablo yetkisi) fark 0.
+
+### 2c. Deneme hesapları ve ilk Yönetici
+
+Publishable anahtar hesap açamaz; servis (secret) anahtarı tarayıcıya ya da bana verilmez. Hesapları sen panelden açarsın:
+
+1. Yeni projede Supabase paneli › Authentication › Users › **Add user › Create new user**, "Auto Confirm User" işaretli, iki hesap:
+   - `denemeyonetici@atolye.local`
+   - `denemestok@atolye.local`
+   - Şifreleri sen belirlersin; bana ya da depoya yazılmaz.
+2. Authentication › Sign In / Providers: yeni kayıt (sign-up) KAPALI olsun (canlıdaki gibi).
+3. SQL Editor → `ilk-yonetici-uygula.sql` (YAZAR, tek ifade). Bu dosya iki hesabı ERP kullanıcı listesine yazar; şifre içermez.
+   - DenemeYonetici = Yönetici.
+   - DenemeStok = "Üretim" şablonu: üretim ve stok görüntüleme / düzenleme / kaydetme; sipariş ve fişler yalnız görüntüleme; silme ve para modülleri yok.
+   - Bekçiler: Tanımlar satırı varsa, G-25 nesnesi varsa ya da hesaplardan biri panelde yoksa durur.
+   - Beklenen sonuç: iki satır, `auth_hesabi_var` ikisinde de `true`.
+4. Uygulamada giriş (adım 3'ten sonra): kullanıcı adı `DenemeYonetici` + panelde verdiğin şifre. İlk girişte "Hoş geldiniz — kurulum" sihirbazı çıkar; atlanabilir.
+
+### 2d. Ortam ve yetki doğrulaması (salt okur)
+
+- `deneme-hesaplar-salt-okur.sql` → her satır `tamam`, son satır **YALITILMIŞ DENEME ORTAMI: EVET**. Değilse sınama yapılmaz.
+- Denetledikleri:
+  - G-25 nesnesi yok;
+  - kullanıcıların hepsi "Deneme…" ve auth hesabı var; listede olmayan auth hesabı yok;
+  - giriş sistemi açık;
+  - DenemeStok yetkileri tam olarak `fisler=g siparis=g stok=gdk uretim=gdk`;
+  - "DENEME" ile başlamayan ürün / cari yok.
+- Deneme verisi girildikten sonra (adım 4) ve sınamalardan önce bir kez daha çalıştır.
 
 ### 3. İstemci — korumalı sunucu, iki pencere = iki cihaz
 
@@ -102,15 +131,18 @@ DENEME_REF=<yeni-proje-kimliği> DENEME_ANAHTAR=sb_publishable_… node korumali
 
 - Pencere A `http://127.0.0.1:8790/`, pencere B `http://127.0.0.1:8791/`.
 - Sunucu HTML özetini her istekte denetler. Tarayıcı yalnız yeni projeye ve esm.sh'a bağlanabilir (CSP).
-- İlk açılışta Supabase › Authentication'da bir kullanıcı aç (Auto Confirm) ve uygulamanın kurulum ekranından ilk Yönetici'yi oluştur.
 
 ### 4. Deneme verisi (uygulamadan, yeni projede)
 
-- Bir mamul ürün: bir renk, bir beden, proses ücreti (ör. Dikim 35 ₺).
-- Bir Personel carisi.
-- 10 çiftlik üç üretim (U1, U2, U3); her biri personele verilmiş ("İşi Ver").
+Bütün kayıtlar **"DENEME"** ile başlar (2d bunu denetler); DenemeYonetici ile girilir:
+- Bir mamul ürün "DENEME Bot": bir renk, bir beden, proses ücreti (ör. Dikim 35 ₺).
+- Bir Personel carisi "DENEME Usta".
+- 10 çiftlik üç üretim (U1, U2, U3); her biri DENEME Usta'ya verilmiş ("İşi Ver").
 
 ### 5. ÖNCE — açığı gör (B4 kurulmadan)
+
+> Açığı yeniden üretme adımları YALNIZ bu yeni, yalıtılmış projede ve DENEME kayıtlarıyla yapılır. Önce 2d "EVET" demeli; korumalı sunucu
+> ana projeye ve G-25 denemesine bağlanmayı zaten reddeder. Canlıda ya da G-25 denemesinde DENENMEZ.
 
 - **U1:** A ve B kartı açar. A "Teslim Al" (10). B, sayfayı yenilemeden 8 saniye içinde "Teslim Al" (10).
 - Beklenen (hata): mamul stoğu **20**, personel bakiyesi **−700**, Fişler'de iki geçerli ÜRT.
@@ -134,6 +166,7 @@ DENEME_REF=<yeni-proje-kimliği> DENEME_ANAHTAR=sb_publishable_… node korumali
   - Beklenen: stok ve bakiye değişmez; iş "Teslim Alındı" kalır; tek geçerli ÜRT.
   - Not: 1.744.37 istemcisi B'de yine "geri alındı" yazar; 8 sn içinde ekran düzelir. Düzeltmesi 1.744.41'de — adım 7b.
 - **Olağan akış:** tek cihazdan teslim → Geri Al → yeniden teslim sorunsuz; kısmi teslim ve tamirli teslim sorunsuz.
+- **Yetki (DenemeStok ile giriş):** teslim alabilir; "Geri Al" reddedilir (silme yetkisi yok) ve hiçbir kayıt değişmez; Cari ve Finans menüleri görünmez.
 
 ### 7b. Aynı sınamalar 1.744.41 ile (B4 kurulu)
 
@@ -164,7 +197,7 @@ DENEME_REF=<yeni-proje-kimliği> DENEME_ANAHTAR=sb_publishable_… node korumali
 
 ## Onay istenen
 
-1. Yeni projeye yazma: yapı kurulumu (`b4-deneme-yapi.sql`), deneme verisi, `27-b4-uygula.sql`.
+1. Yeni projeye yazma: yapı kurulumu (`b4-deneme-yapi.sql`), `ilk-yonetici-uygula.sql`, DENEME verisi, `27-b4-uygula.sql`.
 2. Yeni projede salt okur yapı dökümü (2b) ve CSV'nin bana gönderilmesi.
 
 Canlıya yazma, `main`, yayın, G-25 kapsam dışı.

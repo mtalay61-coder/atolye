@@ -122,7 +122,9 @@ union all select 'görünüm', count(*)::text from pg_class where relnamespace =
 union all select 'fonksiyon', count(*)::text from pg_proc where pronamespace = 'public'::regnamespace
 union all select 'tetikleyici', count(*)::text from pg_trigger g join pg_class c on c.oid = g.tgrelid where c.relnamespace = 'public'::regnamespace and not g.tgisinternal
 union all select 'politika', count(*)::text from pg_policies where schemaname = 'public'
-union all select 'veri satırı (stk_ayar dışında 0 olmalı)', (select count(*) from public.tanimlar)::text;
+union all select 'stk_ayar satırı (1 olmalı — yalnız v2 bayrakları)', (select count(*) from public.stk_ayar)::text
+union all select 'diğer tablolarda veri satırı (0 olmalı)', (select coalesce(sum((xpath('/row/n/text()', query_to_xml(format('select count(*) as n from public.%I', c.relname), false, true, '')))[1]::text::bigint), 0)
+    from pg_class c where c.relnamespace = 'public'::regnamespace and c.relkind = 'r' and c.relname <> 'stk_ayar')::text;
 """
 sonuc = bas_blok + "\n".join(satirlar) + "\n" + son_blok
 if "\r" in sonuc:
