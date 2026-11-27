@@ -1067,6 +1067,12 @@ function AtolyeUygulamasi() {
   guncelDurumRef.current = { stok, cariler, siparisler, uretim, stokRezervasyonlari, onaylar, cop, tanimlar, muhasebe, koliler, gorevler, faturalar, teklifler, fisDefteri, modeller };
   // FİYAT KUTULARI (v1.744.42, 094 `fiyatAlanYetkileri`): ekranlar kutuyu kapatmak için buradan okur (prop zinciri kurmadan).
   if (typeof window !== "undefined") window.__fiyatYetki = fiyatAlanYetkileri(tanimlar, aktifKullanici);
+  // FİŞ İPTALİ / GERİ AL DÜĞMELERİ (v1.744.44, 094 `fisIptalYetkisi`): sunucu altı modülden birinde silme ister; yetkisi olmayan
+  // kullanıcıya düğme çizilmez (onay sistemi açıksa eski davranış). Ekranlar `fisIptalGizliMi()` ile okur.
+  if (typeof window !== "undefined") {
+    window.__fisIptalYetki = fisIptalYetkisi(tanimlar, aktifKullanici);
+    window.__fisIptalGizli = fisIptalDugmesiGizli(tanimlar, aktifKullanici);
+  }
   // Döner: içeriği GERÇEKTEN değişen alanlar (not yalnız bunlar için çıkar). Aynı olan alan state'e yazılmaz.
   const bulutDegisikligiUygula = useCallback(async (alanlar) => {
     const tablolar = alanlar.flatMap(alaninTablolari);
@@ -6823,7 +6829,9 @@ function AtolyeUygulamasi() {
           }}
         >
           <span style={{ flex: 1 }}>{toast}</span>
-          {toastGeriAl && (
+          {/* Bildirimdeki "Geri al" her çağıranda fişin İPTALİDİR (fisGeriAlRef → yetimFisTemizle → fis_iptal): silme yetkisi
+              olmayan kullanıcıya çizilmez (v1.744.44) — tahsilatı kaydeden muhasebeci tıklayınca sunucudan 403 alıyordu. */}
+          {toastGeriAl && !fisIptalGizliMi() && (
             <button type="button" data-toast-geri-al="1"
               onClick={() => { const f = toastGeriAl; toastKapat(); f(); }}
               style={{ background: "transparent", border: "1px solid var(--erp-shell-ink)", color: "var(--erp-shell-ink)",

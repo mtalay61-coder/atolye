@@ -249,7 +249,9 @@ function FislerModule({ tanimlar, kapsam, muhasebe, cariler, stok, siparisler, u
       { k: "fatura", ikon: Receipt, gizli: !(onFaturaAc && faturaKesilebilirFisMi(f)), onClick: () => onFaturaAc(f.fisNo), veri: { "data-fis-fatura": f.fisNo },
         etiket: fisinFaturasi(faturalar, f.fisNo) ? "Fatura taslağını aç" : "Fatura taslağı" },
       { ayrac: true },
-      { k: "sil", ikon: kilit ? Lock : Trash2, gizli: !onYetimFisTemizle, pasif: !!kilit, veri: kilit ? kilit.veri : (baglanti ? { "data-fis-sil": "1" } : { "data-fis-temizle": "1" }),
+      // Silme yetkisi olmayana "Sil / Bu Fişi Temizle" çizilmez (v1.744.44, 094): ikisi de sunucuda fiş iptalidir. Kilit satırı da
+      // gider — kilit, zaten yapamayacağı bir işlemin neden kapalı olduğunu anlatıyor.
+      { k: "sil", ikon: kilit ? Lock : Trash2, gizli: !onYetimFisTemizle || fisIptalGizliMi(), pasif: !!kilit, veri: kilit ? kilit.veri : (baglanti ? { "data-fis-sil": "1" } : { "data-fis-temizle": "1" }),
         baslik: kilit ? kilit.mesaj : (baglanti
           ? "Bu fişin kaynağı (sipariş/üretim) hâlâ var — silerseniz o kayıtla tutarsız hale gelebilir"
           : "Bu fiş için kaynak bağlantısı bulunamadı"),

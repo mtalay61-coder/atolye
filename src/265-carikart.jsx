@@ -2071,7 +2071,9 @@ function CariCard({ onParaFisi, siteYonetici = false, tanimlar, onTanimlarKaydet
                               >
                                 <Lock size={11} />
                               </span>
-                            ) : (
+                            ) : fisIptalGizliMi() ? null : (
+                              // Silme yetkisi olmayana çizilmez (v1.744.44, 094 `fisIptalYetkisi`): fişin silinmesi sunucuda fiş
+                              // iptalidir, yalnız kaydetme yetkisi olan muhasebeci tıklayınca 403 alıyordu.
                               <SilOnayButonu onConfirm={() => onFisSil({ fisNo: g.fisNo, hareketler: g.hareketler })} boyut={10} />
                             )}
                           </td>

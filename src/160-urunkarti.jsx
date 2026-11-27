@@ -6505,11 +6505,12 @@ function ProductMatrixCard({
                           )}
                         </span>
                         <span style={{ display: "flex", alignItems: "center", gap: 8 }} onClick={(e) => e.stopPropagation()}>
-                          <SilOnayButonu
+                          {/* Fişin silinmesi sunucuda fiş İPTALİDİR; silme yetkisi olmayana çizilmez (v1.744.44, 094). */}
+                          {!fisIptalGizliMi() && <SilOnayButonu
                             onConfirm={() => g.hareketler.forEach((h) => onRemoveHareketGlobal(h.id))}
                             baslikNormal="Bu fişin tüm hareketlerini sil"
                             boyut={12}
-                          />
+                          />}
                         </span>
                         {/* Ok her açılabilen fişte (v1.744.6): tek renkli çok bedenli fiş de matrisle açılıp kapanıyor. */}
                         {tekHucre ? null : acik

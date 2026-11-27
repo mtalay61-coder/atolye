@@ -709,7 +709,7 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
                     {/* Detayın içinde hammadde çıkışı ve geri alma düğmesi var; kapalıyken orada bir
                         şey olduğu belli değildi ve kullanıcı "geri alma yok" sanıyordu. */}
                     {!detayAcik && (
-                      <span style={{ fontSize: 10, color: "var(--erp-text-3)" }}>detay / geri al</span>
+                      <span style={{ fontSize: 10, color: "var(--erp-text-3)" }}>{fisIptalGizliMi() ? "detay" : "detay / geri al"}</span>
                     )}
                     {detayAcik ? <ChevronDown size={14} color="var(--erp-text-3)" /> : <ChevronRight size={14} color="var(--erp-text-3)" />}
                   </span>
@@ -790,14 +790,16 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
                         {a.tamamlandiMi ? (
                           <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "var(--erp-primary)", fontWeight: 600, marginLeft: "auto" }}>
                             <Check size={12} /> Teslim Alındı
-                            <button
+                            {/* Teslimi geri almak üretim fişlerinin İPTALİDİR (fis_iptal_toplu): silme yetkisi olmayana çizilmez
+                                (v1.744.44, 094 `fisIptalYetkisi`) — yalnız üretim kaydetme yetkili hesap 403 alıyordu. */}
+                            {!fisIptalGizliMi() && <button
                               className="btn-ghost"
                               style={{ padding: "3px 8px", fontSize: 10, marginLeft: 6 }}
                               title="Yanlış personele verilip teslim alınmışsa — hammadde ve işçilik etkisini geri alır"
                               onClick={() => onProsesTeslimGeriAl(o.id, p.proses, a.id)}
                             >
                               Geri Al
-                            </button>
+                            </button>}
                           </span>
                         ) : (
                           <span style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: "auto" }}>
@@ -1183,7 +1185,7 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
                             return (
                               <div key={a.id} style={{ color: "var(--erp-purple)", fontWeight: 600, fontSize: 11, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                                 <span>{personelAdi} · {a.miktar} adet × {ucret2} ₺ = {(a.miktar * ucret2).toLocaleString("tr-TR")} ₺</span>
-                                {a.tamamlandiMi && (
+                                {a.tamamlandiMi && !fisIptalGizliMi() && (
                                   sonrakilerBaslamamis ? (
                                     <button
                                       className="btn-ghost"
@@ -1208,7 +1210,7 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
                         </div>
                       );
                     })()}
-                    {p.araProsesMi && prosesIlerleme.slice(i + 1).every((x) => !x.verildiMi && !x.tamamlandiMi && (!x.atamalar || x.atamalar.length === 0)) && (
+                    {p.araProsesMi && !fisIptalGizliMi() && prosesIlerleme.slice(i + 1).every((x) => !x.verildiMi && !x.tamamlandiMi && (!x.atamalar || x.atamalar.length === 0)) && (
                       <button
                         className="btn-ghost"
                         style={{ padding: "4px 10px", fontSize: 11, marginTop: 8 }}

@@ -60,6 +60,27 @@ const FINANS_RAPOR_SEKMELERI = ["finansrapor", "gelirgider", "odemerapor"];
 // Kullanıcılar'dan geri açılabilir (`tanimlar.onaySistemiAcik`). Mevcut bekleyen onaylar silinmez, karara bağlanabilir.
 function onaySistemiAcikMi(tanimlar) { return !!(tanimlar && tanimlar.onaySistemiAcik); }
 
+// ================= FİŞ İPTALİ / "GERİ AL" YETKİSİ (v1.744.44) =================
+// Kullanıcı kararı (27 Kasım): fiş iptali ve "Geri Al" silme yetkisi ister; kaydetme yetkisi buna GENİŞLETİLMEZ. Sunucu kuralı
+// (`fis_iptal` / `fis_iptal_toplu` → `stk_yetki(array[…altı modül…], 'silme')`): bu ALTI modülden HERHANGİ birinde silme yeterli;
+// giriş kapalıysa ya da kullanıcı Yönetici ise serbest. Liste sunucudakinin AYNISI olmalı — `tanimlar` gibi listede olmayan bir
+// modülün silme yetkisi sayılmaz. Ekran sınamasında (personel akışları, P1) yalnız muhasebe / yalnız üretim hesabı "Sil" ve
+// "Geri Al" düğmelerini görüyor, tıklayınca sunucudan 403 (42501) alıyordu: istemci ya tek modüle bakıyor ya hiç bakmıyordu.
+// Kullanıcının GÜNCEL kaydı tanımlardan okunur (Yönetici silme kutusunu kapatınca düğmeler oturumdaki kullanıcıda hemen kaybolsun).
+const FIS_IPTAL_MODULLERI = ["stok", "fisler", "siparis", "uretim", "cari", "muhasebe"];
+function fisIptalYetkisi(tanimlar, aktifKullanici) {
+  const guncel = (aktifKullanici && ((tanimlar && tanimlar.kullanicilar) || []).find((k) => k.id === aktifKullanici.id)) || aktifKullanici;
+  return FIS_IPTAL_MODULLERI.some((modul) => yetkiVarMi(tanimlar, guncel, modul, "silme"));
+}
+// DÜĞME GİZLİ Mİ: yetki yoksa VE onay sistemi kapalıysa (varsayılan) iptal / Geri Al düğmesi hiç çizilmez (v1.689 "düğme gizlensin"
+// kararı, `silmeGizli` deseni). Onay sistemi AÇIKKEN eski davranış aynen kalır — o akışın kendi "istek gönder" yolu var.
+function fisIptalDugmesiGizli(tanimlar, aktifKullanici) {
+  return !fisIptalYetkisi(tanimlar, aktifKullanici) && !onaySistemiAcikMi(tanimlar);
+}
+// Ekranlar prop zinciri kurmadan buradan okur (`window.__fiyatYetki` ile aynı desen; 100 her çizimde atar). Atanmamışsa (test, App
+// dışı çizim) gizlenmez — karar zaten sunucuda.
+function fisIptalGizliMi() { return typeof window !== "undefined" && window.__fisIptalGizli === true; }
+
 // ================= FİYAT ALANI YETKİSİ (v1.744.42, inceleme 25 B3a-2) =================
 // Kullanıcı kararı (27 Kasım): satış fiyatları ve müşterinin fiyat grubu → sipariş DÜZENLEME; alış fiyatı ve maliyet → muhasebe
 // DÜZENLEME; müşterinin fiyat grubunu değiştirmek ayrıca cari DÜZENLEME. Stok personeli fiyatı değiştiremese de ürünün öteki alanlarını
