@@ -1,3 +1,4 @@
+-- !!! KULLANILMAMALI (27 Kasım): ret iletisini satır sonuyla birlikte özetle arar. Yerine: 41-canli-paket-durum-salt-okur.sql
 -- =====================================================================================================================
 --  34-canli-durum-salt-okur.sql — YALNIZ OKUR. Hiçbir şeyi değiştirmez. Kurulumdan ÖNCE, her adımdan SONRA ve geri almadan sonra
 --  çalıştırılır; dört paketin (B4/B5, B3a, B3a-2, ret iletisi) durumunu ve kurulum önkoşullarını tek tabloda gösterir.
