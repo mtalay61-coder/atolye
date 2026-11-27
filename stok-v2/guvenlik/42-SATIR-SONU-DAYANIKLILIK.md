@@ -38,7 +38,7 @@ geri alma dosyalarının dayanıklı sürümleri asıllarından tek noktada ayr�
 | `yetki-api.js` (B3a matrisi) | 86 uyumlu · 0 AÇIK · 4 yanlış gerekçe | 86 uyumlu · 0 AÇIK · 4 yanlış gerekçe |
 | Ret iletisi, B4'ün CRLF'li `fis_iptal` gövdesinden çağrıldığında | "fiş iptali (gereken: … silme)" | aynı |
 | Geri alma (31 → 29 → 28), dört paket CRLF kuruluyken | yalnız B4'lü hâlle fark 0 | fark 0 |
-| `ekran-personel-akis.js` (1.744.44; dört paket CRLF kurulu) | 118 / 118 (önceki koşular) | @@AKIS@@ |
+| `ekran-personel-akis.js` (1.744.44; dört paket CRLF kurulu) | 118 / 118 (önceki koşular) | 118 / 118 |
 | B4: `b4-sunucu-sina.js` · `ekran-uretim-b4.js` (1.744.37) | 40 / 40 · 35 / 35 | 40 / 40 · 35 / 35 |
 | B3b ölçümü (`b3b-olc.js`) | AÇIK | AÇIK (paketler kapatmıyor) |
 
