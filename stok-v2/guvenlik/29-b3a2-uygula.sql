@@ -76,7 +76,10 @@ end ';
   language plpgsql
   as '
 begin
-  raise exception ''Bu değişiklik için yetkiniz yok: % (gereken: %). Hiçbir şey kaydedilmedi.'', p_ne, p_yetki using errcode = ''42501'';
+  -- HATA KODU KR040 (27 Kasım, geçiş sınaması): 42501 ile reddedilen tablo yazmasını istemci (1.744.37 dahil) "oturum kapandı /
+  -- giriş yapılmamış" sanıp başarı bildirimi gösteriyor, kaydı bekleyene alıp dakikada bir ve her açılışta yeniden gönderiyordu.
+  -- KRnnn istemcinin 1.744.0''dan beri bildiği KALICI ret: yeniden gönderilmez, sunucunun bu iletisi aynen gösterilir.
+  raise exception ''Bu değişiklik için yetkiniz yok: % (gereken: %). Hiçbir şey kaydedilmedi.'', p_ne, p_yetki using errcode = ''KR040'';
 end ';
   create or replace function public.b3a2_cariler()
   returns trigger

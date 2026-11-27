@@ -311,7 +311,7 @@ const degisenSutunlar = (a, b) => Object.keys(b).filter((x) => JSON.stringify(a[
     yaz(`     kutular: ${JSON.stringify(r.kutular)} · kayıt anındaki ürün yazmaları: ${ilk.map(yazmaOzeti).join(" ; ") || "YOK (sunucuya ürün yazması gitmedi)"}`);
     if (ilk[0]) yaz(`     istek: ${ilk[0].m} ${ilk[0].yol} · Prefer: ${ilk[0].prefer || "—"} · x-atolye-surum: ${ilk[0].surumBasligi || "—"} · gövdede ${govdeAlanlari(ilk[0]).length} sütun · ad=${kisa(JSON.stringify((() => { try { const j = JSON.parse(ilk[0].govde); return (Array.isArray(j) ? j[0] : j).ad; } catch (e) { return null; } })()), 40)} · ${alan}_fiyati=${(() => { try { const j = JSON.parse(ilk[0].govde); return (Array.isArray(j) ? j[0] : j)[`${alan}_fiyati`]; } catch (e) { return "?"; } })()}`);
     const ret = ilk.find((y) => y.durum >= 400);
-    const okRet = k_(`${kod}: sunucu reddetti [4xx, kod]`, ret ? [ret.durum >= 400 && ret.durum < 500, ret.kod] : [false, null], [true, "42501"]);
+    const okRet = k_(`${kod}: sunucu reddetti [4xx, kod]`, ret ? [ret.durum >= 400 && ret.durum < 500, ret.kod] : [false, null], [true, "KR040"]);
     if (ret) yaz(`     sunucu iletisi: ${kisa(ret.ileti, 400)}`);
     const okFiyat = k_(`${kod}: sunucuda ${etiket.toLocaleLowerCase("tr-TR")} fiyatı DEĞİŞMEDİ`, r.sonra[sutun], r.once[sutun]);
     const okAd = k_(`${kod}: aynı kayıttaki ad değişikliği de YAZILMADI (satır tek istek) [ad, sürüm]`, [r.sonra.ad, r.sonra.surum], [r.once.ad, r.once.surum]);
@@ -474,7 +474,7 @@ const degisenSutunlar = (a, b) => Object.keys(b).filter((x) => JSON.stringify(a[
       const y = c.yazmalar.slice(b.sinir); const ret = y.find((x) => /^urunler/.test(x.yol) && x.durum >= 400);
       yaz(`     G6b kutular: ${JSON.stringify(b.kutular)} · yazmalar: ${y.map(yazmaOzeti).join(" ; ") || "YOK"}`);
       yaz(`     G6b EKRAN — bildirim: ${b.bildirim} · form ${b.formAcik ? "AÇIK kaldı" : "kapandı"} · beliren satırlar: ${kisa(b.yeniSatirlar.join(" ⏎ "), 400) || "—"}`);
-      const ok1 = k_("G6b: satış fiyatlı yeni ürün reddedildi [4xx, kod]", ret ? [ret.durum >= 400 && ret.durum < 500, ret.kod] : [false, null], [true, "42501"]);
+      const ok1 = k_("G6b: satış fiyatlı yeni ürün reddedildi [4xx, kod]", ret ? [ret.durum >= 400 && ret.durum < 500, ret.kod] : [false, null], [true, "KR040"]);
       const ok2 = k_("G6b: sunucuda ürün OLUŞMADI (satır sayısı)", b.satir.length, 0);
       if (!ok1 || !ok2) bulgu(`G6b — Ayşe satış fiyatlı yeni ürün ekleyebildi ya da beklenen biçimde reddedilmedi: ${y.map(yazmaOzeti).join(" ; ") || "yazma gitmedi"} · sunucu ${JSON.stringify(b.satir)} · bildirim: ${b.bildirim}`);
       if (!k_('G6b: reddedilen yeni üründe "başarılı" bildirimi ÇIKMADI ("kaydedildi" yok)', /kaydedildi/i.test(b.bildirim), false))

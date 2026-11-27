@@ -228,7 +228,7 @@ const kisa = (s, n = 170) => String(s == null ? "" : s).replace(/\s+/g, " ").sli
   // RET beklenen deneme: 4xx + 42501 ve satır aynı
   const retBekle = async (c, ad, gonder, oku) => {
     const once = JSON.stringify(await oku()); const r = await gonder(); const sonra = JSON.stringify(await oku());
-    const ok = k_(`${c.kullanici} YETKİSİZ: ${ad} → ret (4xx + 42501), satır değişmedi`, [r.durum >= 400 && r.durum < 500, r.kod, sonra === once], [true, "42501", true]);
+    const ok = k_(`${c.kullanici} YETKİSİZ: ${ad} → ret (4xx + KR040), satır değişmedi`, [r.durum >= 400 && r.durum < 500, r.kod, sonra === once], [true, "KR040", true]);
     yaz(`     ${ozet(r)}`);
     if (!ok) bulgu(`${c.kullanici} — YETKİSİZ YAZMA beklenen biçimde reddedilmedi: ${ad} · ${ozet(r)} · önce ${kisa(once, 120)} · sonra ${kisa(sonra, 120)}`);
   };

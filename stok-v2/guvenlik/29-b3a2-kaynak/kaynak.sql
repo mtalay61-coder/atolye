@@ -3,7 +3,7 @@
 --
 -- KURALIN ÖZÜ (kullanıcı kararları, 26–27 Kasım): sunucu GERÇEK alan değişikliğine bakar (eski satır ↔ yeni satır). İstemcinin
 -- değiştirmediği alanı göndermesi ret sebebi DEĞİLDİR. Jetonsuz istek (SQL Editor, servis rolü), anon ve Yönetici serbest. Yetki
--- `yetki_var_mi([modül], işlem)` ile (giriş sistemi kapalıysa herkes yetkili — A6 kuralı aynen). Ret: 42501, hiçbir satır değişmez.
+-- `yetki_var_mi([modül], işlem)` ile (giriş sistemi kapalıysa herkes yetkili — A6 kuralı aynen). Ret: KR040 (kalıcı ret), hiçbir satır değişmez.
 --   cariler  : hızlı ekleme (yalnız unvan + tip) sipariş / stok / cari kaydetme · boş koda kod: herhangi bir yazma yetkisi · fiyat grubu
 --              (`ek.fiyatGrubuId` ve eski `fiyat_grubu` sütunu): cari düzenleme VE sipariş düzenleme · diğer kart alanları: cari düzenleme
 --   urunler  : satış fiyatı (satis_fiyati, satis_para_birimi, fiyat_kurallari içinde tipi Alış OLMAYAN kurallar): sipariş düzenleme ·
@@ -89,7 +89,10 @@ returns void
 language plpgsql
 as $$
 begin
-  raise exception 'Bu değişiklik için yetkiniz yok: % (gereken: %). Hiçbir şey kaydedilmedi.', p_ne, p_yetki using errcode = '42501';
+  -- HATA KODU KR040 (27 Kasım, geçiş sınaması): 42501 ile reddedilen tablo yazmasını istemci (1.744.37 dahil) "oturum kapandı /
+  -- giriş yapılmamış" sanıp başarı bildirimi gösteriyor, kaydı bekleyene alıp dakikada bir ve her açılışta yeniden gönderiyordu.
+  -- KRnnn istemcinin 1.744.0'dan beri bildiği KALICI ret: yeniden gönderilmez, sunucunun bu iletisi aynen gösterilir.
+  raise exception 'Bu değişiklik için yetkiniz yok: % (gereken: %). Hiçbir şey kaydedilmedi.', p_ne, p_yetki using errcode = 'KR040';
 end $$;
 -- @@
 -- CARİLER

@@ -4,7 +4,7 @@
 // ALINIR. Başarıda yazılan değer okunur; retlerde SQLSTATE + ileti. Hesaplar bu betikle (yalnız sınama kopyasına) eklenir:
 //   ayse = yalnız stok (g, d, k) · cem = yalnız cari (g, d, k) · selin = yalnız sipariş (g, d, k) · murat = yalnız muhasebe (g, d, k)
 //   tuna = yalnız tanımlar (g, d — silme YOK) · deniz = cari + sipariş (g, d, k) · ali = Yönetici
-// BEKLENEN: hesap sırasıyla Y (yazabilmeli) / R (42501). "AÇIK (B6)" işaretli durumlar bu paketin BİLEREK kapatmadığı ücret verisidir.
+// BEKLENEN: hesap sırasıyla Y (yazabilmeli) / R (KR040). "AÇIK (B6)" işaretli durumlar bu paketin BİLEREK kapatmadığı ücret verisidir.
 // Kullanım: KOPRU_PG=<pg> node b3a2-matris.js <veritabanı>   (veritabanı atılabilir kopya olmalı — hesaplar eklenir)
 const { Client } = require(process.env.KOPRU_PG || "pg");
 const db = process.argv[2];
@@ -144,7 +144,7 @@ const D = [
         try { const r = await c.query(typeof sql === "function" ? sql(h) : sql);
           let v = null; try { v = Object.values((await c.query(dogrula)).rows[0] || {})[0]; } catch (e) { v = `okunamadı ${e.code}`; }
           s = { g: r.rowCount > 0 ? "Y" : "0", not: `satır ${r.rowCount} · sonra: ${v}` };
-        } catch (e) { await c.query("rollback to savepoint d"); s = { g: e.code === "42501" ? "R" : "H", not: `${e.code} ${String(e.message).slice(0, 120)}` }; }
+        } catch (e) { await c.query("rollback to savepoint d"); s = { g: e.code === "KR040" ? "R" : "H", not: `${e.code} ${String(e.message).slice(0, 120)}` }; }
       } finally { await c.query("rollback"); }
       const b = beklenen[i]; const karar = s.g === b ? "uyumlu" : s.g === "Y" ? "acik" : "fazla";
       oz[karar] += 1; ham.push(`${ad}|${h}|${s.g}`);
