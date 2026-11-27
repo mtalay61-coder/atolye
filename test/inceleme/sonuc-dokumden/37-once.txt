@@ -1,0 +1,54 @@
+ekran-uretim-b4 · inc_b4y · kurallar KAPALI · G-25 nesnesi 0 · B4 kurulu HAYIR
+
+■ T1 · B4T1 · iki cihaz AYNI ANDA tam teslim
+  ✗ [T1 tek teslim: mamul +10, taban −10, usta −350] {"mamul":20,"usta":-700} · beklenen {"mamul":10,"usta":-350}
+  ✗ [T1 tek geçerli ÜRT fişi] "2 geçerli / 0 iptal" · beklenen "1 geçerli / 0 iptal"
+     A: ÜRT-261127001 · B4T1 tüm prosesler tamamlandı — mamul stoğa eklendi
+     B: ÜRT-261127002 · B4T1 tüm prosesler tamamlandı — mamul stoğa eklendi
+     B4T1: fiş 2 geçerli / 0 iptal · atamalar ["Dikim:10:fin-usta:teslim"]
+
+■ T2 · B4T2 · iki cihaz AYNI ANDA kısmi teslim (6 / 6), sonra kalan 4
+  ✗ [T2a tek kısmi: +6 / −6 / −210] {"mamul":12,"usta":-420} · beklenen {"mamul":6,"usta":-210}
+  ✗ [T2a atamalar: 6 teslim + kalan 4 bekliyor (tek kalan)] ["Dikim:4:fin-usta:bekliyor","Dikim:4:fin-usta:bekliyor","Dikim:6:fin-usta:teslim"] · beklenen ["Dikim:4:fin-usta:bekliyor","Dikim:6:fin-usta:teslim"]
+     A: ÜRT-261127004 · 10 adetlik atama teslim alındı — bu kısım mamul stoğa eklendi — 4 çift ustada kaldı; aynı ustada açık iş olarak duruyor, sonra teslim alınabilir.
+     B: ÜRT-261127003 · 10 adetlik atama teslim alındı — bu kısım mamul stoğa eklendi — 4 çift ustada kaldı; aynı ustada açık iş olarak duruyor, sonra teslim alınabilir.
+  ✗ [T2b kalan 4 → toplam +10 / −10 / −350] {"mamul":16,"usta":-560} · beklenen {"mamul":10,"usta":-350}
+  ✗ [T2b iki geçerli fiş] "3 geçerli / 0 iptal" · beklenen "2 geçerli / 0 iptal"
+     B4T2: fiş 3 geçerli / 0 iptal · atamalar ["Dikim:4:fin-usta:bekliyor","Dikim:4:fin-usta:teslim","Dikim:6:fin-usta:teslim"]
+
+■ T3 · B4T3 · A kısmi 6, bayat B tam 10
+  ✗ [T3 yalnız A'nın kısmi teslimi: +6 / −6 / −210] {"mamul":16,"usta":-560} · beklenen {"mamul":6,"usta":-210}
+  ✗ [T3 tek geçerli fiş, kalan 4 bekliyor] ["2 geçerli / 0 iptal",["Dikim:10:fin-usta:teslim","Dikim:4:fin-usta:bekliyor"]] · beklenen ["1 geçerli / 0 iptal",["Dikim:4:fin-usta:bekliyor","Dikim:6:fin-usta:teslim"]]
+     B: ÜRT-261127007 · B4T3 tüm prosesler tamamlandı — mamul stoğa eklendi
+
+■ T4 · B4T4 · A teslim → A Geri Al → A yeniden teslim → bayat B Geri Al
+  ✓ [T4a A'nın zinciri: +10 / −10 / −350, 1 geçerli + 1 iptal] [{"mamul":10,"usta":-350},"1 geçerli / 1 iptal"]
+  ✓ [T4b bayat B'nin Geri Al'ı defterleri DEĞİŞTİRMEDİ] {}
+  ✗ [T4b atama teslim, 1 geçerli fiş (tutarlı)] [["Dikim:10:fin-usta:bekliyor"],"1 geçerli / 1 iptal"] · beklenen [["Dikim:10:fin-usta:teslim"],"1 geçerli / 1 iptal"]
+     B: "Dikim" için 10 adetlik teslim alma işlemi geri alındı — hammadde ve işçilik geri alındı
+
+■ T5 · B4T5 · A kısmi 6 → bayat B açık → A kalan 4'ü teslim → B ilk parçayı Geri Al
+  ✓ [T5a A: 6 + 4 → +10 / −10 / −350, 2 geçerli] [{"mamul":10,"usta":-350},"2 geçerli / 0 iptal"]
+     B: "Dikim" için 6 adetlik teslim alma işlemi geri alındı — hammadde ve işçilik geri alındı
+     B4T5: fiş 1 geçerli / 1 iptal · atamalar ["Dikim:4:fin-usta:teslim","Dikim:6:fin-usta:bekliyor"]
+  ✓ [T5b kalan parçanın teslimi bozulmadı (ret ya da yalnız ilk parça)] true
+
+■ T6 · B4T6 · yanıt kaybı → yeniden Teslim Al; aynı istek iki kez; Geri Al yanıt kaybı → yeniden Geri Al
+     yanıt kaybı sonrası B: Teslim kaydedilemedi — hiçbir değişiklik yapılmadı (Failed to fetch — POST rpc/fis_kes · gövde 2 KB · adres 11 karakter)
+  ✓ [T6a sunucu ilk teslimi yazdı (yanıt kayboldu)] [{"mamul":10,"usta":-350},"1 geçerli / 0 iptal"]
+     B'de teslim formu hâlâ açık (kullanıcı yeniden basabilir): true
+  ✗ [T6b kullanıcı yeniden Teslim Al (yeni istek) → ikinci fiş YOK] [{"mamul":20,"usta":-700},"2 geçerli / 0 iptal"] · beklenen [{"mamul":10,"usta":-350},"1 geçerli / 0 iptal"]
+     yeniden Teslim Al sonrası B: ÜRT-261127013 · B4T6 tüm prosesler tamamlandı — mamul stoğa eklendi
+     Geri Al yanıt kaybı sonrası B: Geri alınamadı — hiçbir değişiklik yapılmadı (Failed to fetch — POST rpc/fis_iptal_toplu · gövde 1 KB · adres 19 karakter)
+  ✗ [T6c Geri Al sunucuda yapıldı (yanıt kayboldu): defterler başlangıçta] [{},"0 geçerli / 2 iptal",["Dikim:10:fin-usta:bekliyor"]] · beklenen [{},"0 geçerli / 1 iptal",["Dikim:10:fin-usta:bekliyor"]]
+     B'de Geri Al hâlâ var: true
+  ✗ [T6d yeniden Geri Al → değişiklik yok, atama tutarlı] [{},"0 geçerli / 2 iptal",["Dikim:10:fin-usta:bekliyor"]] · beklenen [{},"0 geçerli / 1 iptal",["Dikim:10:fin-usta:bekliyor"]]
+HATA locator.fill: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('[data-teslim-al]:visible').first().locator('xpath=ancestor::div[.//table][1]').locator('tr').filter({ hasText: 'SAĞLAM' }).locator('input').first()[22m
+
+    at teslimHazirla (/home/user/atolye-b4/test/inceleme/ekran-uretim-b4.js:115:75)
+    at async teslim (/home/user/atolye-b4/test/inceleme/ekran-uretim-b4.js:124:50)
+    at async /home/user/atolye-b4/test/inceleme/ekran-uretim-b4.js:242:21 {
+  name: 'TimeoutError'
+}
