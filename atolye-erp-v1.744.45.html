@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.744.42</title>
+<title>Atölye ERP 1.744.45</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2319,9 +2319,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.744.42";
+const SURUM = "1.744.45";
 const SURUM_TARIHI = "2026-11-27";
-const SURUM_NOTU = "Fiyat alanları yetkiye bağlandı: satış fiyatı sipariş düzenleme, alış fiyatı muhasebe düzenleme yetkisi ister; yetkisiz fiyat değişikliği kaydedilmez, ürünün öteki alanları kaydedilir";
+const SURUM_NOTU = "Geri dönüş sürümü: 1.744.37 ile aynı uygulama, yalnız sürüm numarası yükseltildi";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2351,7 +2351,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 }
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" }; // teklif: v1.723.0, Sipariş'in alt sekmesi
 const SURUM_GECMISI = [
-    { surum: "1.744.42", tarih: "27.11.2026", eklenen: [], degisen: ["Fiyat alanları yetkiye bağlandı (sunucu kuralıyla birlikte): satış fiyatı ve satış fiyat kuralları \"Sipariş › düzenleme\", alış fiyatı ve alış fiyat kuralları \"Muhasebe › düzenleme\" yetkisi ister; yetkisi olmayan kullanıcıda fiyat kutuları kapalıdır. Yetkisiz bir fiyat değişikliği kayda girerse yalnız fiyat eski değerine döner, ürünün öteki alanları kaydedilir ve kullanıcıya söylenir", "Cari kartı: müşterinin fiyat grubunu değiştirmek \"Sipariş › düzenleme\" ve \"Cari › düzenleme\" yetkisi ister"], duzeltilen: [] },
+    { surum: "1.744.45", tarih: "27.11.2026", eklenen: [], degisen: ["Geri dönüş sürümü: içerik 1.744.37 ile aynıdır; yalnız sürüm numarası yükseltildi (uygulama düşük numaralı sürüme kendiliğinden dönmediği için)"], duzeltilen: [] },
     { surum: "1.744.37", tarih: "26.11.2026", eklenen: [], degisen: [], duzeltilen: ["Tanımlar › renk adı değiştirme: rengin geçtiği model kombinasyonları (ör. \"1054 - KAHVE SÜET/VİZON YILAN\" ve \"1055 - BEJ SÜET/VİZON YILAN\") ayrı kalıyor, yalnız yazımları değişiyor. Önceden rengin adı değişince (büyük/küçük harf dahil) modelin bütün kombinasyon renkleri rengin düz adına (\"Vizon Yılan\") dönüp tek renk gibi görünüyordu; reçetenin model rengi de aynı şekilde çöküyordu. Önceden çökmüş kayıtları bu sürüm geri getirmez (ayrı onarım)."] },
     { surum: "1.744.36", tarih: "23.11.2026", eklenen: ["Kasa & Banka › hesap › \"Hesaplar arası aktarım\": kasadan bankaya, bankadan kasaya, hesaptan hesaba para aktarımı yeniden arayüzde (cari virmanından ayrı işlem; kur çevirici ve aktarım sebebi aynen)."], degisen: ["Ödeme & Tahsilat'taki virman \"Cari virmanı (cariden cariye)\" adını aldı. Para birimi ilk carinin para birimidir; karşı cari başka para birimindeyse virman yapılmaz (kur dönüşümü yok). Aynı cari ve sıfır / eksi / boş tutar reddedilir."], duzeltilen: [] },
     { surum: "1.744.35", tarih: "23.11.2026", eklenen: ["Ödeme & Tahsilat › ödeme şekli \"Virman (cariden cariye)\": ilk cari ve karşı cari seçilir. Ödemede ilk cariye ödeme, karşı cariden tahsilat; tahsilatta ilk cariden tahsilat, karşı cariye ödeme. İki satır tek fişte (CVR-…), kasa / banka hareketi yok; geri alınca ikisi birden kalkar.", "Ödeme & Tahsilat › Kasa / Banka satırının yanında + düğmesi: yeni kasa ya da banka hesabı oradan açılır ve hemen seçilir."], degisen: ["Kasa & Banka ekranında Virman ve \"Yeni Kasa / Yeni Banka Hesabı\" düğmeleri kalktı (hesap düzenleme, arşivleme ve silme yerinde)."], duzeltilen: [] },
@@ -22813,80 +22813,6 @@ const FINANS_RAPOR_SEKMELERI = ["finansrapor", "gelirgider", "odemerapor"];
 // yönetici onayına düşmez; düğmesi hiç gösterilmez (kullanıcı kararı: "düğme gizlensin"). Eski davranış Tanımlar ›
 // Kullanıcılar'dan geri açılabilir (`tanimlar.onaySistemiAcik`). Mevcut bekleyen onaylar silinmez, karara bağlanabilir.
 function onaySistemiAcikMi(tanimlar) { return !!(tanimlar && tanimlar.onaySistemiAcik); }
-// ================= FİYAT ALANI YETKİSİ (v1.744.42, inceleme 25 B3a-2) =================
-// Kullanıcı kararı (27 Kasım): satış fiyatları ve müşterinin fiyat grubu → sipariş DÜZENLEME; alış fiyatı ve maliyet → muhasebe
-// DÜZENLEME; müşterinin fiyat grubunu değiştirmek ayrıca cari DÜZENLEME. Stok personeli fiyatı değiştiremese de ürünün öteki alanlarını
-// kaydeder. Sunucu (29-b3a2-uygula.sql) GERÇEK alan değişikliğini denetler; istemci aynı kuralı iki yerde uygular:
-//   • fiyat kutuları yetkisizken kapalıdır (window.__fiyatYetki — 100 ayarlar);
-//   • kayıt yolunda (saveStok / saveCariler) yetkisiz fiyat değişikliği ESKİ değerine döndürülür — bir ekran kutuyu kapatmayı unutsa da
-//     kaydın tamamı sunucuda reddedilmesin, öteki alanlar yazılsın. Kullanıcıya ne olduğu söylenir.
-function fiyatAlanYetkileri(tanimlar, aktifKullanici) {
-    const guncel = (aktifKullanici && ((tanimlar && tanimlar.kullanicilar) || []).find((k) => k.id === aktifKullanici.id)) || aktifKullanici;
-    const y = (modul, islem) => yetkiVarMi(tanimlar, guncel, modul, islem);
-    return { satis: y("siparis", "duzenleme"), alis: y("muhasebe", "duzenleme"), cariFiyatGrubu: y("siparis", "duzenleme") && y("cari", "duzenleme") };
-}
-const fiyatKuraliAlisMi = (k) => !!k && (k.tip || "Satış") === "Alış";
-const fiyatSayi = (v) => { const n = parseFloat(v); return Number.isFinite(n) ? n : 0; };
-// Saf. Yetkisiz fiyat alanlarını eski değerine döndürür; değişiklik yoksa AYNI diziyi döndürür. `geriAlinan`: etkilenen ürün sayısı.
-function fiyatDegisiklikleriniSuz(eskiListe, yeniListe, yetki) {
-    if (!Array.isArray(yeniListe) || !yetki || (yetki.satis && yetki.alis))
-        return { liste: yeniListe, geriAlinan: 0, satis: 0, alis: 0 };
-    const eski = new Map((eskiListe || []).map((u) => [u.id, u]));
-    const ayni = (a, b) => JSON.stringify(a) === JSON.stringify(b);
-    let satis = 0, alis = 0;
-    const liste = yeniListe.map((u) => {
-        if (!u)
-            return u;
-        const e = eski.get(u.id);
-        if (e === u)
-            return u;
-        let s = u;
-        for (const [alisMi, izin] of [[false, yetki.satis], [true, yetki.alis]]) {
-            if (izin)
-                continue;
-            const fA = alisMi ? "alisFiyati" : "satisFiyati", pA = alisMi ? "alisParaBirimi" : "satisParaBirimi";
-            const kurallar = (x) => ((x && x.fiyatKurallari) || []).filter((k) => fiyatKuraliAlisMi(k) === alisMi);
-            const degisti = e
-                ? fiyatSayi(u[fA]) !== fiyatSayi(e[fA]) || (u[pA] || "") !== (e[pA] || "") || !ayni(kurallar(u), kurallar(e))
-                : fiyatSayi(u[fA]) !== 0 || kurallar(u).length > 0;
-            if (!degisti)
-                continue;
-            const oteki = ((s.fiyatKurallari) || []).filter((k) => fiyatKuraliAlisMi(k) !== alisMi);
-            s = { ...s, [fA]: e ? e[fA] : 0, ...(e ? { [pA]: e[pA] } : {}), fiyatKurallari: [...oteki, ...kurallar(e)] };
-            if (alisMi)
-                alis += 1;
-            else
-                satis += 1;
-        }
-        return s;
-    });
-    return satis + alis === 0 ? { liste: yeniListe, geriAlinan: 0, satis: 0, alis: 0 } : { liste, geriAlinan: satis + alis, satis, alis };
-}
-// Saf. Yetkisizken müşterinin fiyat grubu değişikliği geri alınır (yeni caride boş kalır). Alan `fiyatGrubuId` (ek'te saklanır);
-// eski kayıtlarda `fiyatGrubu` — ikisi de korunur.
-function cariFiyatGrubuSuz(eskiListe, yeniListe, izinli) {
-    if (izinli || !Array.isArray(yeniListe))
-        return { liste: yeniListe, geriAlinan: 0 };
-    const eski = new Map((eskiListe || []).map((c) => [c.id, c]));
-    let n = 0;
-    const liste = yeniListe.map((c) => {
-        if (!c)
-            return c;
-        const e = eski.get(c.id);
-        if (e === c)
-            return c;
-        let s = c;
-        for (const a of ["fiyatGrubuId", "fiyatGrubu"]) {
-            if ((c[a] || "") === ((e && e[a]) || ""))
-                continue;
-            s = { ...s, [a]: e ? e[a] : "" };
-        }
-        if (s !== c)
-            n += 1;
-        return s;
-    });
-    return n === 0 ? { liste: yeniListe, geriAlinan: 0 } : { liste, geriAlinan: n };
-}
 // ================= PENCERE SİSTEMİ =================
 //
 // 19 Eylül (2. madde): `100-app.jsx` 7.758 satırdı ve her değişiklik oraya dokunuyordu. Tek
@@ -23186,8 +23112,6 @@ function AtolyeUygulamasi() {
     const [surumSeridiKapali, setSurumSeridiKapali] = useState(false);
     const [storageOk, setStorageOk] = useState(true);
     const [aktifKullanici, setAktifKullanici] = useState(null);
-    const aktifKullaniciRef = useRef(null); // v1.744.42: kayıt yolları (saveStok / saveCariler) fiyat yetkisini render beklemeden okur
-    aktifKullaniciRef.current = aktifKullanici;
     damgaKullanicisiAyarla(aktifKullanici && aktifKullanici.ad); // kayıt damgası (048) — her çizimde güncel
     // OTURUM SÜRDÜRME (kullanıcı, 15 Eylül: "sayfa yenilendiğinde tekrar kullanıcı adı ve şifre
     // girmemi istiyor"). `aktifKullanici` yalnız bellekteydi; her yenilemede giriş ekranı geliyordu.
@@ -24175,9 +24099,6 @@ function AtolyeUygulamasi() {
     // `degisiklikIcerikAyni`). Her çizimde güncellenir; geri çağırma bayat kapanış yerine bunu okur.
     const guncelDurumRef = useRef({});
     guncelDurumRef.current = { stok, cariler, siparisler, uretim, stokRezervasyonlari, onaylar, cop, tanimlar, muhasebe, koliler, gorevler, faturalar, teklifler, fisDefteri, modeller };
-    // FİYAT KUTULARI (v1.744.42, 094 `fiyatAlanYetkileri`): ekranlar kutuyu kapatmak için buradan okur (prop zinciri kurmadan).
-    if (typeof window !== "undefined")
-        window.__fiyatYetki = fiyatAlanYetkileri(tanimlar, aktifKullanici);
     // Döner: içeriği GERÇEKTEN değişen alanlar (not yalnız bunlar için çıkar). Aynı olan alan state'e yazılmaz.
     const bulutDegisikligiUygula = useCallback(async (alanlar) => {
         const tablolar = alanlar.flatMap(alaninTablolari);
@@ -24762,16 +24683,7 @@ function AtolyeUygulamasi() {
             : `"${ad}" rengi eklendi — reçete kopyalanmadı, Stok ekranından tanımlayın`);
         return true;
     }, [stok, showToast, tanimlar]);
-    const saveStok = useCallback(async (nextHam) => {
-        // FİYAT ALANI YETKİSİ (v1.744.42, B3a-2): yetkisiz fiyat değişikliği eski değerine döner; ürünün öteki alanları kaydedilir.
-        // Sunucu aynı kuralı uygular (29-b3a2) — burada ayıklanmasa kaydın TAMAMI reddedilirdi.
-        const fy = fiyatAlanYetkileri(guncelDurumRef.current.tanimlar, aktifKullaniciRef.current);
-        const suz = fiyatDegisiklikleriniSuz(guncelDurumRef.current.stok, nextHam, fy);
-        const next = suz.liste;
-        if (suz.geriAlinan > 0) {
-            showToast(`Fiyat değişikliği KAYDEDİLMEDİ — yetkiniz yok (${[suz.satis ? "satış fiyatı: sipariş düzenleme" : "", suz.alis ? "alış fiyatı: muhasebe düzenleme" : ""].filter(Boolean).join("; ")}). Öteki alanlar kaydedildi.`);
-            gunlukYaz(`Yetkisiz fiyat değişikliği kayıttan ayıklandı: ${suz.satis} satış, ${suz.alis} alış`, "guvenlik", { satis: suz.satis, alis: suz.alis });
-        }
+    const saveStok = useCallback(async (next) => {
         setStok(next);
         // GÖRSELLER AYRI YAZILIYOR. `stok:items` tek anahtar ve `guvenliYaz` 5 MB'ı aşan kaydı
         // depoya sormadan reddediyor; görseller o anahtarın içindeyken yüz ürünün birkaç rengi
@@ -25593,17 +25505,9 @@ function AtolyeUygulamasi() {
         // FONKSİYON DA KABUL EDİLİR (v1.639.0, denetim): kasa/banka ekranı (205) kasa yazımını bekledikten sonra cari listesini
         // kapanıştaki hâliyle yazıyordu; bu arada gelen değişiklik eziliyordu. Fonksiyon verilirse güncel liste üzerinden
         // kurulur (addCariHareketFromStok kalıbı). Kod ataması yine `cariKodlariAta`; tanım yazımı mikro göreve.
-        // MÜŞTERİNİN FİYAT GRUBU (v1.744.42, B3a-2): sipariş düzenleme VE cari düzenleme ister; yetkisiz değişiklik eski değerine döner.
-        const fgIzin = fiyatAlanYetkileri(guncelDurumRef.current.tanimlar, aktifKullaniciRef.current).cariFiyatGrubu;
-        const fgSuz = (eski, yeni) => {
-            const z = cariFiyatGrubuSuz(eski, yeni, fgIzin);
-            if (z.geriAlinan > 0)
-                showToast("Müşterinin fiyat grubu DEĞİŞTİRİLMEDİ — yetkiniz yok (sipariş düzenleme ve cari düzenleme gerekir). Öteki alanlar kaydedildi.");
-            return z.liste;
-        };
         if (typeof next === "function") {
             setCariler((prev) => {
-                const sonuc = cariKodlariAta(fgSuz(prev, next(prev)), tanimlar);
+                const sonuc = cariKodlariAta(next(prev), tanimlar);
                 if (sonuc.atanan > 0)
                     Promise.resolve().then(() => {
                         setTanimlar(sonuc.tanimlar);
@@ -25617,7 +25521,7 @@ function AtolyeUygulamasi() {
         // YENİ CARİYE KODU ANINDA VERİLİYOR. Ayrı bir "kodları ata" adımına bırakmak, kullanıcının
         // cariyi açıp koduna baktığında boş görmesi demekti. `cariKodlariAta` kodu OLANA dokunmuyor,
         // o yüzden her kayıtta güvenle çağrılabiliyor.
-        const sonuc = cariKodlariAta(fgSuz(guncelDurumRef.current.cariler, next), tanimlar);
+        const sonuc = cariKodlariAta(next, tanimlar);
         if (sonuc.atanan > 0) {
             setTanimlar(sonuc.tanimlar);
             yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", sonuc.tanimlar), "Tanımlar", sonuc.tanimlar);
@@ -36074,11 +35978,11 @@ function StokModule({ onStokFisiKes, kapsam = "genel", onFiyatGrubuMarj, onRecet
                 React.createElement(Field, { label: isMamul ? "Alış Fiyatı (çift başına)" : "Alış Fiyatı (birim başına)" },
                     React.createElement("div", { style: { display: "flex", gap: 4 } },
                         React.createElement("select", { value: form.alisParaBirimi, onChange: (e) => setForm({ ...form, alisParaBirimi: e.target.value }), style: { ...inputStyle, width: 52, flex: "0 0 auto", padding: "8px 4px", textAlign: "center" } }, PARA_BIRIMLERI.map((p) => React.createElement("option", { key: p }, p))),
-                        React.createElement("input", { type: "number", step: "0.01", value: form.alisFiyati, disabled: !((typeof window !== "undefined" && window.__fiyatYetki) || { alis: true }).alis, title: ((typeof window !== "undefined" && window.__fiyatYetki) || { alis: true }).alis ? undefined : "Alış fiyatını değiştirme yetkiniz yok (muhasebe: düzenleme)", onChange: (e) => setForm({ ...form, alisFiyati: e.target.value }), placeholder: "\u00D6rn. 450", style: inputStyle }))),
+                        React.createElement("input", { type: "number", step: "0.01", value: form.alisFiyati, onChange: (e) => setForm({ ...form, alisFiyati: e.target.value }), placeholder: "\u00D6rn. 450", style: inputStyle }))),
                 React.createElement(Field, { label: `Satış Fiyatı${form.birim ? ` (${form.birim} başına)` : ""}` },
                     React.createElement("div", { style: { display: "flex", gap: 4 } },
                         React.createElement("select", { value: form.satisParaBirimi, onChange: (e) => setForm({ ...form, satisParaBirimi: e.target.value }), style: { ...inputStyle, width: 52, flex: "0 0 auto", padding: "8px 4px", textAlign: "center" } }, PARA_BIRIMLERI.map((p) => React.createElement("option", { key: p }, p))),
-                        React.createElement("input", { type: "number", step: "0.01", value: form.satisFiyati, disabled: !((typeof window !== "undefined" && window.__fiyatYetki) || { satis: true }).satis, title: ((typeof window !== "undefined" && window.__fiyatYetki) || { satis: true }).satis ? undefined : "Satış fiyatını değiştirme yetkiniz yok (sipariş: düzenleme)", onChange: (e) => setForm({ ...form, satisFiyati: e.target.value }), placeholder: isMamul ? "Örn. 890" : "Örn. 12", style: inputStyle }))),
+                        React.createElement("input", { type: "number", step: "0.01", value: form.satisFiyati, onChange: (e) => setForm({ ...form, satisFiyati: e.target.value }), placeholder: isMamul ? "Örn. 890" : "Örn. 12", style: inputStyle }))),
                 (React.createElement(React.Fragment, null,
                     React.createElement(Field, { label: "Tedarik\u00E7i" },
                         React.createElement("select", { value: form.tedarikciId || "", onChange: (e) => {
@@ -39158,11 +39062,11 @@ function ProductMatrixCard({ tanimlarTum, onKapasiteKaydet, kurlar, kurGecmisi, 
                                     showEdit ? (React.createElement(React.Fragment, null,
                                         React.createElement("label", { style: { display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 } },
                                             "Al\u0131\u015F",
-                                            React.createElement("input", { type: "number", step: "any", min: "0", value: editForm.alisFiyati, disabled: !((typeof window !== "undefined" && window.__fiyatYetki) || { alis: true }).alis, title: ((typeof window !== "undefined" && window.__fiyatYetki) || { alis: true }).alis ? undefined : "Alış fiyatını değiştirme yetkiniz yok (muhasebe: düzenleme)", onChange: (e) => setEditForm({ ...editForm, alisFiyati: e.target.value }), className: "mono", style: { ...inputStyle, width: 74, padding: "4px 6px" } }),
+                                            React.createElement("input", { type: "number", step: "any", min: "0", value: editForm.alisFiyati, onChange: (e) => setEditForm({ ...editForm, alisFiyati: e.target.value }), className: "mono", style: { ...inputStyle, width: 74, padding: "4px 6px" } }),
                                             React.createElement("select", { value: editForm.alisParaBirimi, onChange: (e) => setEditForm({ ...editForm, alisParaBirimi: e.target.value }), className: "mono", style: { border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "2px 3px", fontSize: 12, background: "#fff" } }, PARA_BIRIMLERI.map((p) => React.createElement("option", { key: p }, p)))),
                                         React.createElement("label", { style: { display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 } },
                                             "Sat\u0131\u015F",
-                                            React.createElement("input", { type: "number", step: "any", min: "0", value: editForm.satisFiyati, disabled: !((typeof window !== "undefined" && window.__fiyatYetki) || { satis: true }).satis, title: ((typeof window !== "undefined" && window.__fiyatYetki) || { satis: true }).satis ? undefined : "Satış fiyatını değiştirme yetkiniz yok (sipariş: düzenleme)", onChange: (e) => setEditForm({ ...editForm, satisFiyati: e.target.value }), className: "mono", style: { ...inputStyle, width: 74, padding: "4px 6px" } }),
+                                            React.createElement("input", { type: "number", step: "any", min: "0", value: editForm.satisFiyati, onChange: (e) => setEditForm({ ...editForm, satisFiyati: e.target.value }), className: "mono", style: { ...inputStyle, width: 74, padding: "4px 6px" } }),
                                             React.createElement("select", { value: editForm.satisParaBirimi, onChange: (e) => setEditForm({ ...editForm, satisParaBirimi: e.target.value }), className: "mono", style: { border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "2px 3px", fontSize: 12, background: "#fff" } }, PARA_BIRIMLERI.map((p) => React.createElement("option", { key: p }, p)))),
                                         React.createElement("label", { style: { display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 } },
                                             "Tedarik\u00E7i",
@@ -39237,11 +39141,11 @@ function ProductMatrixCard({ tanimlarTum, onKapasiteKaydet, kurlar, kurGecmisi, 
                                     showEdit ? (React.createElement(React.Fragment, null,
                                         React.createElement("label", { style: { display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 } },
                                             "Al\u0131\u015F",
-                                            React.createElement("input", { type: "number", step: "any", min: "0", value: editForm.alisFiyati, disabled: !((typeof window !== "undefined" && window.__fiyatYetki) || { alis: true }).alis, title: ((typeof window !== "undefined" && window.__fiyatYetki) || { alis: true }).alis ? undefined : "Alış fiyatını değiştirme yetkiniz yok (muhasebe: düzenleme)", onChange: (e) => setEditForm({ ...editForm, alisFiyati: e.target.value }), className: "mono", style: { ...inputStyle, width: 74, padding: "4px 6px" } }),
+                                            React.createElement("input", { type: "number", step: "any", min: "0", value: editForm.alisFiyati, onChange: (e) => setEditForm({ ...editForm, alisFiyati: e.target.value }), className: "mono", style: { ...inputStyle, width: 74, padding: "4px 6px" } }),
                                             React.createElement("select", { value: editForm.alisParaBirimi, onChange: (e) => setEditForm({ ...editForm, alisParaBirimi: e.target.value }), className: "mono", style: { border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "2px 3px", fontSize: 12, background: "#fff" } }, PARA_BIRIMLERI.map((p) => React.createElement("option", { key: p }, p)))),
                                         React.createElement("label", { style: { display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 } },
                                             "Sat\u0131\u015F",
-                                            React.createElement("input", { type: "number", step: "any", min: "0", value: editForm.satisFiyati, disabled: !((typeof window !== "undefined" && window.__fiyatYetki) || { satis: true }).satis, title: ((typeof window !== "undefined" && window.__fiyatYetki) || { satis: true }).satis ? undefined : "Satış fiyatını değiştirme yetkiniz yok (sipariş: düzenleme)", onChange: (e) => setEditForm({ ...editForm, satisFiyati: e.target.value }), className: "mono", style: { ...inputStyle, width: 74, padding: "4px 6px" } }),
+                                            React.createElement("input", { type: "number", step: "any", min: "0", value: editForm.satisFiyati, onChange: (e) => setEditForm({ ...editForm, satisFiyati: e.target.value }), className: "mono", style: { ...inputStyle, width: 74, padding: "4px 6px" } }),
                                             React.createElement("select", { value: editForm.satisParaBirimi, onChange: (e) => setEditForm({ ...editForm, satisParaBirimi: e.target.value }), className: "mono", style: { border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "2px 3px", fontSize: 12, background: "#fff" } }, PARA_BIRIMLERI.map((p) => React.createElement("option", { key: p }, p)))),
                                         React.createElement("span", { style: { fontSize: 12, color: "var(--erp-text-2)" } },
                                             "De\u011Fer: ",
@@ -54654,7 +54558,7 @@ function CariModule({ onParaFisi, onFisIptal, tanimlar, onTanimlarKaydet, onMuha
                         " ",
                         PARA_SEMBOLU[pb] || ""))))),
                 yeniCariFiyatGruplari(form.tip).length > 0 && (React.createElement(Field, { label: "Fiyat Grubu" },
-                    React.createElement("select", { value: form.fiyatGrubuId, disabled: !((typeof window !== "undefined" && window.__fiyatYetki) || { cariFiyatGrubu: true }).cariFiyatGrubu, title: ((typeof window !== "undefined" && window.__fiyatYetki) || { cariFiyatGrubu: true }).cariFiyatGrubu ? undefined : "Müşterinin fiyat grubunu değiştirmek için sipariş düzenleme ve cari düzenleme yetkisi gerekir", "data-yeni-cari-fiyat-grubu": "1", onChange: (e) => setForm({ ...form, fiyatGrubuId: e.target.value }), style: inputStyle, title: "Bu gruba \u00F6zel fiyat tan\u0131mlanm\u0131\u015F \u00FCr\u00FCnlerde, bu cariye otomatik o fiyat uygulan\u0131r" },
+                    React.createElement("select", { value: form.fiyatGrubuId, "data-yeni-cari-fiyat-grubu": "1", onChange: (e) => setForm({ ...form, fiyatGrubuId: e.target.value }), style: inputStyle, title: "Bu gruba \u00F6zel fiyat tan\u0131mlanm\u0131\u015F \u00FCr\u00FCnlerde, bu cariye otomatik o fiyat uygulan\u0131r" },
                         React.createElement("option", { value: "" }, "Grupsuz (standart fiyat)"),
                         yeniCariFiyatGruplari(form.tip).map((g) => React.createElement("option", { key: g.id, value: g.id },
                             g.ad,
@@ -56999,7 +56903,7 @@ function CariCard({ onParaFisi, siteYonetici = false, tanimlar, onTanimlarKaydet
                 cardTab === "bilgiler" && cari.tip !== "Personel" && (tanimlarFiyatGruplari || []).some((g) => g.tip === (cari.tip === "Tedarikçi" ? "Alış" : "Satış") || cari.tip === "Her İkisi") && (React.createElement("div", { style: { marginBottom: 14, padding: "8px 10px", background: "#EAF0F4", borderRadius: "var(--erp-r-md)" } },
                     React.createElement("label", { style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" } },
                         React.createElement("span", { style: { fontSize: 12, color: "var(--erp-info)", fontWeight: 600 } }, "Fiyat Grubu:"),
-                        React.createElement("select", { value: cari.fiyatGrubuId || "", disabled: !((typeof window !== "undefined" && window.__fiyatYetki) || { cariFiyatGrubu: true }).cariFiyatGrubu, title: ((typeof window !== "undefined" && window.__fiyatYetki) || { cariFiyatGrubu: true }).cariFiyatGrubu ? undefined : "Müşterinin fiyat grubunu değiştirmek için sipariş düzenleme ve cari düzenleme yetkisi gerekir", onChange: (e) => onFieldChange(cari.id, "fiyatGrubuId", e.target.value || undefined), style: { ...inputStyle, width: 200, padding: "4px 6px", fontSize: 12 } },
+                        React.createElement("select", { value: cari.fiyatGrubuId || "", onChange: (e) => onFieldChange(cari.id, "fiyatGrubuId", e.target.value || undefined), style: { ...inputStyle, width: 200, padding: "4px 6px", fontSize: 12 } },
                             React.createElement("option", { value: "" }, "Grupsuz (standart fiyat)"),
                             (tanimlarFiyatGruplari || [])
                                 .filter((g) => cari.tip === "Her İkisi" || g.tip === (cari.tip === "Tedarikçi" ? "Alış" : "Satış"))
@@ -74193,7 +74097,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.744.42)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.744.45)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),
