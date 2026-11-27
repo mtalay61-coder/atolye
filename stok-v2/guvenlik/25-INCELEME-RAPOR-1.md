@@ -419,6 +419,21 @@ paket `4904a7e` değişmedi. Ayrıntı: `33-YEREL-SUPABASE-SONUC.md`; öneri: `3
 - Buluttaki Supabase'de hiçbir şey çalıştırılmadı; farklar ve doğrulanmayanlar 33'te.
 - **AÇIK:** B1 / B2 (ayrı bekleyen paket; adayda yok), B3b, B6, Y1. Canlı uygulama ve yayın ayrı onay bekliyor.
 
+## 19. B4 / B5 CANLIDA KURULU (27 Kasım 2026; kullanıcı onayıyla, yalnız bu paket)
+- **Uygulanan:** `27-b4-uygula.sql` (`f49078f2361e8546d59e6a0b9c5d52e0ace6474c47663ef2615478e2b327645d`), ana projede, kullanıcı tarafından SQL Editor'den.
+  Önce önkoşul iki kez `GENEL: HAZIR`; yedek: gece yedeği koşu 22 (27.11 11:36) "SINAMA TAMAM", OneDrive'da 12 dosya doğrulandı.
+  Kurulum sonucu `GENEL: UYGULANMIŞ`. İstemci 1.744.37'de kaldı; yetki paketleri, istemci yayını, geri alma UYGULANMADI.
+- **Satır sonu:** kurulum metni Editor'e CRLF ile ulaştı; canlıdaki beş gövde paketin koduyla aynı, yalnız satır sonları farklı (özetler
+  yerelde CRLF'li kurulumla birebir üretildi). Aynı gövdelerle B4 sunucu sınaması 40 / 40, yayındaki 1.744.37 ile ekran sınaması 35 / 35.
+- **Geri alma:** `27-b4-geri-al.sql` KULLANILMAMALI (CRLF ile yapıştırılınca kendi doğrulamasında durur). Geçerli dosya
+  `27-b4-geri-al-satirsonu.sql` (`4dbe9e7e7b843e6369850f8aa9bdc37198bcc371dcceb60f4b2662f75b7ae69c`); LF ve CRLF ile sınandı. Çalıştırma onayı YOK.
+- **Canlı deneme (kullanıcı; DENEME ÜRÜN / DENEME HAMMADDE / DENEME USTA, üretim 10001, tek cihaz):** iş verme → teslim → Geri Al →
+  yeniden teslim → Geri Al. Her teslimde tek fiş (mamul +2, hammadde −2); her geri almada stok, hammadde ve bölüm tahakkuku başa döndü.
+  İki cihaz koruması canlıda DENENMEDİ (yerel sınamalarda doğrulandı).
+- **Açıklığa kavuşan (hata değil):** Kesim işçiliği cariye değil KESİMHANE bölümüne yazıldı — mevcut kural (015 `iscilikBolumu`); kullanıcı
+  "doğru, değişiklik gerekmiyor" dedi. Hammaddesiz reçete onaylanmıyor / üretim açılmıyor (mevcut kural).
+- **Sıradaki işlerden önce:** 28 / 29 / 31 dosyaları CRLF yapıştırma koşuluyla sınanmadan sunulmaz. B1 / B2, B3b, B6, Y1 AÇIK.
+
 ## 4. Sıradaki adımlar (güncel)
 1. Kullanıcı onayıyla B1 / B2 deneme paketi (§9) — deneme projesinde salt okur adım 0, sonra kurulum ve elle sınamalar.
 2. Sonraki düzeltme paketi (§10) için tasarım onayı: B4 / B5 + B3a; B3b G-25 kararından sonra.
