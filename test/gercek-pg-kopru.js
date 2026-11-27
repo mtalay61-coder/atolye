@@ -16,7 +16,55 @@
 const path = require("path");
 const { Pool } = require(process.env.KOPRU_PG || "pg");
 
+// GERÇEK API KİPİ (27 Kasım, yerel Supabase): KOPRU_SUPABASE=<API kökü, ör. http://127.0.0.1:54321> verilirse köprü PostgREST'i TAKLİT
+// ETMEZ — sayfanın /rest|auth|functions/v1/ isteklerini yerel Supabase'in GERÇEK geçidine (Kong → PostgREST / GoTrue) aynen iletir.
+// Oturum gerçek Auth hesabıyla ekrandan açılır (jeton GoTrue'nun imzaladığı JWT). Değişen tek şey: uygulamaya gömülü proje anahtarı
+// yerine yerel projenin anon anahtarı (KOPRU_SUPABASE_ANAHTAR). `sorgu` gözlem / fikstür içindir: KOPRU_SUPABASE_DB (süper kullanıcı).
+// `gunluk` aynı biçimde tutulur (m, yol, durum, kod, mesaj) — sınamalar değişmeden çalışsın.
+function gercekApiKopru() {
+  const { Pool } = require(process.env.KOPRU_PG || "pg");
+  const havuz = new Pool({ connectionString: process.env.KOPRU_SUPABASE_DB, max: 4 });
+  const KOK = process.env.KOPRU_SUPABASE.replace(/\/$/, ""), ANAHTAR = process.env.KOPRU_SUPABASE_ANAHTAR;
+  const gunluk = [], girissizGunluk = [], authGunluk = [];
+  const cors = { "access-control-allow-origin": "*", "access-control-allow-headers": "*", "access-control-allow-methods": "*", "access-control-expose-headers": "*" };
+  async function yanitla(istek) {
+    const u = new URL(istek.url()); const m = istek.method();
+    if (m === "OPTIONS") return { status: 204, headers: cors, body: "" };
+    const e = u.pathname.match(/\/(rest|auth|functions)\/v1\/(.*)$/);
+    const bas = { ...istek.headers() };
+    for (const k of ["host", "origin", "referer", "content-length", "accept-encoding", "connection"]) delete bas[k];
+    const gomulu = bas.apikey;
+    bas.apikey = ANAHTAR;
+    // girişsiz istekte uygulama gömülü anahtarı Bearer olarak da yollar → yerel anon anahtarı; oturum jetonu (gerçek JWT) aynen geçer
+    const girissiz = !bas.authorization || bas.authorization === `Bearer ${gomulu}`;
+    if (girissiz) bas.authorization = `Bearer ${ANAHTAR}`;
+    let y, govde;
+    try {
+      y = await fetch(`${KOK}/${e[1]}/v1/${e[2]}${u.search}`, { method: m, headers: bas, body: m === "GET" || m === "HEAD" ? undefined : (typeof istek.postDataBuffer === "function" ? istek.postDataBuffer() : (istek.postData() != null ? Buffer.from(istek.postData(), "utf8") : undefined)) });
+      govde = Buffer.from(await y.arrayBuffer());
+    } catch (x) { gunluk.push({ m, yol: e[2], durum: 599, kod: "AG", mesaj: String(x.message).slice(0, 200) }); return { status: 502, headers: cors, body: String(x.message) }; }
+    if (e[1] === "auth") authGunluk.push({ m, yol: e[2] + u.search, durum: y.status, govde: y.status >= 400 ? govde.toString("utf8").slice(0, 160) : undefined });
+    if (e[1] === "rest") {
+      const kayit = { m, yol: e[2], durum: y.status };
+      if (y.status >= 400) { try { const j = JSON.parse(govde.toString("utf8")); kayit.kod = j.code; kayit.mesaj = String(j.message || "").slice(0, 200); } catch (x) { kayit.mesaj = govde.toString("utf8").slice(0, 200); } }
+      // GİRİŞ ÖNCESİ (anon) istekler ayrı tutulur: uygulama giriş ekranındayken `rpc/site_kayit_listesi` çağırır, anon'un o fonksiyonda
+      // yetkisi yok → 401 (canlıya hizalı yetkilerle aynı; paketlerle ilgisi yok). Sınamaların "reddedilen yazma" sayımı OTURUMLU istekleri sayar.
+      (girissiz ? girissizGunluk : gunluk).push(kayit);
+      if (process.env.KOPRU_KAYIT && (m !== "GET" && m !== "HEAD")) {
+        try { require("fs").appendFileSync(process.env.KOPRU_KAYIT, JSON.stringify({ yol: e[2], durum: y.status, hata: kayit.kod, ileti: kayit.mesaj, govde: istek.postData() }) + "\n"); } catch (x) { /* kayıt isteğe bağlı */ }
+      }
+    }
+    const h = { ...cors };
+    for (const k of ["content-type", "content-range", "content-profile", "preference-applied", "location"]) if (y.headers.get(k)) h[k] = y.headers.get(k);
+    return { status: y.status, headers: h, body: govde };
+  }
+  async function bagla(sayfa) { await sayfa.route(/\/(rest|auth|functions)\/v1\//, async (r) => r.fulfill(await yanitla(r.request()))); }
+  const sorgu = async (sql, deg) => (await havuz.query(sql, deg)).rows;
+  return { bagla, sorgu, gunluk, __yanitla: yanitla, kapat: () => havuz.end(), gercekApi: true, girissizGunluk, authGunluk };
+}
+
 function kopruKur({ veritabani, port = Number(process.env.PGPORT || 5432), host = process.env.PGHOST || "localhost" }) {
+  if (process.env.KOPRU_SUPABASE) return gercekApiKopru();
   if (!["localhost", "127.0.0.1", "::1"].includes(host)) throw new Error("Köprü yalnız yerel PostgreSQL'e bağlanır");
   const havuz = new Pool({ host, port, user: process.env.PGUSER || "postgres", database: veritabani, max: 6 });
   const gunluk = [];   // her istek: { m, yol, durum, kod }
@@ -192,11 +240,20 @@ function kopruKur({ veritabani, port = Number(process.env.PGPORT || 5432), host 
         const e = new Error(`yöntem desteklenmiyor: ${m}`); e.code = "PGRST100"; throw e;
       });
       gunluk.push({ m, yol: yol.split("?")[0], durum: sonuc.durum });
+      // İSTEK KAYDI (27 Kasım, inceleme 25 atomiklik): KOPRU_KAYIT verilirse başarılı RPC istekleri (yol + jeton e-postası + gövde) dosyaya
+      // satır satır yazılır — sonra SQL düzeyinde gerçek yükle yeniden oynatmak için (sonda hata, tekrar, iptal). Verilmezse hiçbir şey yazılmaz.
+      if (process.env.KOPRU_KAYIT && /^rpc\//.test(yol)) {
+        try { require("fs").appendFileSync(process.env.KOPRU_KAYIT, JSON.stringify({ yol: yol.split("?")[0], eposta: iddialar && iddialar.email, govde: istek.postData() }) + "\n"); } catch (e) { /* kayıt isteğe bağlı */ }
+      }
       return json(sonuc.durum === 200 && sonuc.govde === undefined ? 204 : sonuc.durum, sonuc.govde, sonuc.ek);
     } catch (e) {
       const kod = e.code || "XX000";
       const durum = e.http || (kod === "42501" ? 403 : kod === "42P01" ? 404 : kod === "23505" ? 409 : kod === "PGRST100" ? 400 : 400);
       gunluk.push({ m, yol: yol.split("?")[0], durum, kod, mesaj: String(e.message).slice(0, 200) });
+      // 29 Kasım: reddedilen yazmalar da kayda (KOPRU_KAYIT) — "ikinci cihazın isteğine ne oldu" sorusu için (hata: kod + ileti).
+      if (process.env.KOPRU_KAYIT && m !== "GET") {
+        try { require("fs").appendFileSync(process.env.KOPRU_KAYIT, JSON.stringify({ yol: yol.split("?")[0], eposta: iddialar && iddialar.email, hata: kod, ileti: String(e.message).slice(0, 200), govde: istek.postData() }) + "\n"); } catch (e2) { /* isteğe bağlı */ }
+      }
       return json(durum, { code: kod, message: e.message, details: e.detail || null, hint: e.hint || null });
     }
   }

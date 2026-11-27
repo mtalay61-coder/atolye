@@ -1,0 +1,579 @@
+b3a2-matris · aday_m3 · B3a-2 KURULU · B3a kurulu
+
+■ cari: hızlı ekleme (yalnız unvan + tip)
+   ✓ ayse   Y  satır 1 · sonra: 1
+   ✓ cem    Y  satır 1 · sonra: 1
+   ✓ selin  Y  satır 1 · sonra: 1
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: yeni cari kartı (Hızlı Tedarikçi) (gereken: cari: kaydetme; hızlı ekleme — yalnız unvan
+   ✓ tuna   R  42501 Bu değişiklik için yetkiniz yok: yeni cari kartı (Hızlı Tedarikçi) (gereken: cari: kaydetme; hızlı ekleme — yalnız unvan
+   ✓ deniz  Y  satır 1 · sonra: 1
+   ✓ ali    Y  satır 1 · sonra: 1
+
+■ cari: dolu kart ekleme (telefon, vergi no)
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: yeni cari kartı (Dolu Cari) (gereken: cari: kaydetme; hızlı ekleme — yalnız unvan ve ti
+   ✓ cem    Y  satır 1 · sonra: 1
+   ✓ selin  R  42501 Bu değişiklik için yetkiniz yok: yeni cari kartı (Dolu Cari) (gereken: cari: kaydetme; hızlı ekleme — yalnız unvan ve ti
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: yeni cari kartı (Dolu Cari) (gereken: cari: kaydetme; hızlı ekleme — yalnız unvan ve ti
+   ✓ tuna   R  42501 Bu değişiklik için yetkiniz yok: yeni cari kartı (Dolu Cari) (gereken: cari: kaydetme; hızlı ekleme — yalnız unvan ve ti
+   ✓ deniz  Y  satır 1 · sonra: 1
+   ✓ ali    Y  satır 1 · sonra: 1
+
+■ cari: unvan değiştirme
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: unvan) (gereken: cari: düzenleme). Hiçbir şey kaydedilmed
+   ✓ cem    Y  satır 1 · sonra: Değişti
+   ✓ selin  R  42501 Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: unvan) (gereken: cari: düzenleme). Hiçbir şey kaydedilmed
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: unvan) (gereken: cari: düzenleme). Hiçbir şey kaydedilmed
+   ✓ tuna   R  42501 Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: unvan) (gereken: cari: düzenleme). Hiçbir şey kaydedilmed
+   ✓ deniz  Y  satır 1 · sonra: Değişti
+   ✓ ali    Y  satır 1 · sonra: Değişti
+
+■ cari: BOŞ koda kod verme (otomatik)
+   ✓ ayse   Y  satır 1 · sonra: 7
+   ✓ cem    Y  satır 1 · sonra: 7
+   ✓ selin  Y  satır 1 · sonra: 7
+   ✓ murat  Y  satır 1 · sonra: 7
+   ✓ tuna   Y  satır 1 · sonra: 7
+   ✓ deniz  Y  satır 1 · sonra: 7
+   ✓ ali    Y  satır 1 · sonra: 7
+
+■ cari: müşterinin fiyat grubunu değiştirme
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: müşterinin fiyat grubu (İnceleme Müşteri) (gereken: cari: düzenleme VE sipariş: düzenle
+   ✓ cem    R  42501 Bu değişiklik için yetkiniz yok: müşterinin fiyat grubu (İnceleme Müşteri) (gereken: cari: düzenleme VE sipariş: düzenle
+   ✓ selin  R  42501 Bu değişiklik için yetkiniz yok: müşterinin fiyat grubu (İnceleme Müşteri) (gereken: cari: düzenleme VE sipariş: düzenle
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: müşterinin fiyat grubu (İnceleme Müşteri) (gereken: cari: düzenleme VE sipariş: düzenle
+   ✓ tuna   R  42501 Bu değişiklik için yetkiniz yok: müşterinin fiyat grubu (İnceleme Müşteri) (gereken: cari: düzenleme VE sipariş: düzenle
+   ✓ deniz  Y  satır 1 · sonra: fg-toptan
+   ✓ ali    Y  satır 1 · sonra: fg-toptan
+
+■ cari: eski fiyat_grubu sütununu değiştirme
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: müşterinin fiyat grubu (İnceleme Müşteri) (gereken: cari: düzenleme VE sipariş: düzenle
+   ✓ cem    R  42501 Bu değişiklik için yetkiniz yok: müşterinin fiyat grubu (İnceleme Müşteri) (gereken: cari: düzenleme VE sipariş: düzenle
+   ✓ selin  R  42501 Bu değişiklik için yetkiniz yok: müşterinin fiyat grubu (İnceleme Müşteri) (gereken: cari: düzenleme VE sipariş: düzenle
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: müşterinin fiyat grubu (İnceleme Müşteri) (gereken: cari: düzenleme VE sipariş: düzenle
+   ✓ tuna   R  42501 Bu değişiklik için yetkiniz yok: müşterinin fiyat grubu (İnceleme Müşteri) (gereken: cari: düzenleme VE sipariş: düzenle
+   ✓ deniz  Y  satır 1 · sonra: fg-toptan
+   ✓ ali    Y  satır 1 · sonra: fg-toptan
+
+■ cari: fiyat gruplu yeni cari (hızlı ekleme sayılmaz)
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: fiyat gruplu yeni cari (Gruplu) (gereken: cari: düzenleme VE sipariş: düzenleme). Hiçbi
+   ✓ cem    R  42501 Bu değişiklik için yetkiniz yok: fiyat gruplu yeni cari (Gruplu) (gereken: cari: düzenleme VE sipariş: düzenleme). Hiçbi
+   ✓ selin  R  42501 Bu değişiklik için yetkiniz yok: fiyat gruplu yeni cari (Gruplu) (gereken: cari: düzenleme VE sipariş: düzenleme). Hiçbi
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: fiyat gruplu yeni cari (Gruplu) (gereken: cari: düzenleme VE sipariş: düzenleme). Hiçbi
+   ✓ tuna   R  42501 Bu değişiklik için yetkiniz yok: fiyat gruplu yeni cari (Gruplu) (gereken: cari: düzenleme VE sipariş: düzenleme). Hiçbi
+   ✓ deniz  Y  satır 1 · sonra: 1
+   ✓ ali    Y  satır 1 · sonra: 1
+
+■ cari: ek alanında fiyat grubu DIŞI değişiklik (not)
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: ek) (gereken: cari: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ cem    Y  satır 1 · sonra: x
+   ✓ selin  R  42501 Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: ek) (gereken: cari: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: ek) (gereken: cari: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ tuna   R  42501 Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: ek) (gereken: cari: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ deniz  Y  satır 1 · sonra: x
+   ✓ ali    Y  satır 1 · sonra: x
+
+■ cari: değişmeyen satırı aynen gönderme (ekle-ya-da-güncelle)
+   ✓ ayse   Y  satır 1 · sonra: İnceleme Müşteri
+   ✓ cem    Y  satır 1 · sonra: İnceleme Müşteri
+   ✓ selin  Y  satır 1 · sonra: İnceleme Müşteri
+   ✓ murat  Y  satır 1 · sonra: İnceleme Müşteri
+   ✓ tuna   Y  satır 1 · sonra: İnceleme Müşteri
+   ✓ deniz  Y  satır 1 · sonra: İnceleme Müşteri
+   ✓ ali    Y  satır 1 · sonra: İnceleme Müşteri
+
+■ cari: boş alanları varsayılanla yazma (null → [], {}, false, TRY — açılış normalleştirmesi)
+   ✓ ayse   Y  satır 1 · sonra: false
+   ✓ cem    Y  satır 1 · sonra: false
+   ✓ selin  Y  satır 1 · sonra: false
+   ✓ murat  Y  satır 1 · sonra: false
+   ✓ tuna   Y  satır 1 · sonra: false
+   ✓ deniz  Y  satır 1 · sonra: false
+   ✓ ali    Y  satır 1 · sonra: false
+
+■ cari: ek'e sunucunun olusturma damgasını geri yazma (veri değil)
+   ✓ ayse   Y  satır 1 · sonra: 2026-11-26T18:35:17Z
+   ✓ cem    Y  satır 1 · sonra: 2026-11-26T18:35:17Z
+   ✓ selin  Y  satır 1 · sonra: 2026-11-26T18:35:17Z
+   ✓ murat  Y  satır 1 · sonra: 2026-11-26T18:35:17Z
+   ✓ tuna   Y  satır 1 · sonra: 2026-11-26T18:35:17Z
+   ✓ deniz  Y  satır 1 · sonra: 2026-11-26T18:35:17Z
+   ✓ ali    Y  satır 1 · sonra: 2026-11-26T18:35:17Z
+
+■ İSTİSNA cari: boş telefonu DOLDURMA (boş ≡ boş istisnası dolu değeri geçirmez)
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: telefon) (gereken: cari: düzenleme). Hiçbir şey kaydedilm
+   ✓ cem    Y  satır 1 · sonra: 0555 000 00 00
+   ✓ selin  R  42501 Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: telefon) (gereken: cari: düzenleme). Hiçbir şey kaydedilm
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: telefon) (gereken: cari: düzenleme). Hiçbir şey kaydedilm
+   ✓ tuna   R  42501 Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: telefon) (gereken: cari: düzenleme). Hiçbir şey kaydedilm
+   ✓ deniz  Y  satır 1 · sonra: 0555 000 00 00
+   ✓ ali    Y  satır 1 · sonra: 0555 000 00 00
+
+■ İSTİSNA cari: dolu telefonu BOŞALTMA
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: telefon) (gereken: cari: düzenleme). Hiçbir şey kaydedilm
+   ✓ cem    Y  satır 1 · sonra: 
+   ✓ selin  R  42501 Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: telefon) (gereken: cari: düzenleme). Hiçbir şey kaydedilm
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: telefon) (gereken: cari: düzenleme). Hiçbir şey kaydedilm
+   ✓ tuna   R  42501 Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: telefon) (gereken: cari: düzenleme). Hiçbir şey kaydedilm
+   ✓ deniz  Y  satır 1 · sonra: 
+   ✓ ali    Y  satır 1 · sonra: 
+
+■ İSTİSNA cari: pasif false → TRUE (false boş sayılır, true sayılmaz)
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: pasif) (gereken: cari: düzenleme). Hiçbir şey kaydedilmed
+   ✓ cem    Y  satır 1 · sonra: true
+   ✓ selin  R  42501 Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: pasif) (gereken: cari: düzenleme). Hiçbir şey kaydedilmed
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: pasif) (gereken: cari: düzenleme). Hiçbir şey kaydedilmed
+   ✓ tuna   R  42501 Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: pasif) (gereken: cari: düzenleme). Hiçbir şey kaydedilmed
+   ✓ deniz  Y  satır 1 · sonra: true
+   ✓ ali    Y  satır 1 · sonra: true
+
+■ İSTİSNA cari: para birimini TRY DIŞI bir değerle doldurma
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: para_birimi) (gereken: cari: düzenleme). Hiçbir şey kayde
+   ✓ cem    Y  satır 1 · sonra: USD
+   ✓ selin  R  42501 Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: para_birimi) (gereken: cari: düzenleme). Hiçbir şey kayde
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: para_birimi) (gereken: cari: düzenleme). Hiçbir şey kayde
+   ✓ tuna   R  42501 Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: para_birimi) (gereken: cari: düzenleme). Hiçbir şey kayde
+   ✓ deniz  Y  satır 1 · sonra: USD
+   ✓ ali    Y  satır 1 · sonra: USD
+
+■ İSTİSNA cari: oluşturma damgasının YANINDA başka ek anahtarı
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: ek) (gereken: cari: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ cem    Y  satır 1 · sonra: 90
+   ✓ selin  R  42501 Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: ek) (gereken: cari: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: ek) (gereken: cari: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ tuna   R  42501 Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: ek) (gereken: cari: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ deniz  Y  satır 1 · sonra: 90
+   ✓ ali    Y  satır 1 · sonra: 90
+
+■ İSTİSNA cari: oluşturma damgasının YANINDA fiyat grubu
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: müşterinin fiyat grubu (İnceleme Müşteri) (gereken: cari: düzenleme VE sipariş: düzenle
+   ✓ cem    R  42501 Bu değişiklik için yetkiniz yok: müşterinin fiyat grubu (İnceleme Müşteri) (gereken: cari: düzenleme VE sipariş: düzenle
+   ✓ selin  R  42501 Bu değişiklik için yetkiniz yok: müşterinin fiyat grubu (İnceleme Müşteri) (gereken: cari: düzenleme VE sipariş: düzenle
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: müşterinin fiyat grubu (İnceleme Müşteri) (gereken: cari: düzenleme VE sipariş: düzenle
+   ✓ tuna   R  42501 Bu değişiklik için yetkiniz yok: müşterinin fiyat grubu (İnceleme Müşteri) (gereken: cari: düzenleme VE sipariş: düzenle
+   ✓ deniz  Y  satır 1 · sonra: fg-toptan
+   ✓ ali    Y  satır 1 · sonra: fg-toptan
+
+■ İSTİSNA cari: oluşturma damgasının YANINDA unvan değişikliği
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: unvan) (gereken: cari: düzenleme). Hiçbir şey kaydedilmed
+   ✓ cem    Y  satır 1 · sonra: Gizli Değişiklik
+   ✓ selin  R  42501 Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: unvan) (gereken: cari: düzenleme). Hiçbir şey kaydedilmed
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: unvan) (gereken: cari: düzenleme). Hiçbir şey kaydedilmed
+   ✓ tuna   R  42501 Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: unvan) (gereken: cari: düzenleme). Hiçbir şey kaydedilmed
+   ✓ deniz  Y  satır 1 · sonra: Gizli Değişiklik
+   ✓ ali    Y  satır 1 · sonra: Gizli Değişiklik
+
+■ İSTİSNA cari: mevcut fiyat grubunu SİLME (dolu → boş)
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: müşterinin fiyat grubu (İnceleme Müşteri) (gereken: cari: düzenleme VE sipariş: düzenle
+   ✓ cem    R  42501 Bu değişiklik için yetkiniz yok: müşterinin fiyat grubu (İnceleme Müşteri) (gereken: cari: düzenleme VE sipariş: düzenle
+   ✓ selin  R  42501 Bu değişiklik için yetkiniz yok: müşterinin fiyat grubu (İnceleme Müşteri) (gereken: cari: düzenleme VE sipariş: düzenle
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: müşterinin fiyat grubu (İnceleme Müşteri) (gereken: cari: düzenleme VE sipariş: düzenle
+   ✓ tuna   R  42501 Bu değişiklik için yetkiniz yok: müşterinin fiyat grubu (İnceleme Müşteri) (gereken: cari: düzenleme VE sipariş: düzenle
+   ✓ deniz  Y  satır 1 · sonra: yok
+   ✓ ali    Y  satır 1 · sonra: yok
+
+■ İSTİSNA ürün: mevcut satış fiyatını SIFIRLAMA (dolu → 0)
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: satış fiyatı (İnceleme Bot) (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ cem    R  42501 Bu değişiklik için yetkiniz yok: satış fiyatı (İnceleme Bot) (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ selin  Y  satır 1 · sonra: 0
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: satış fiyatı (İnceleme Bot) (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ tuna   R  42501 Bu değişiklik için yetkiniz yok: satış fiyatı (İnceleme Bot) (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ deniz  Y  satır 1 · sonra: 0
+   ✓ ali    Y  satır 1 · sonra: 0
+
+■ İSTİSNA ürün: mevcut alış fiyatını NULL yapma
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: alış fiyatı / maliyet (İnceleme Bot) (gereken: muhasebe: düzenleme). Hiçbir şey kaydedi
+   ✓ cem    R  42501 Bu değişiklik için yetkiniz yok: alış fiyatı / maliyet (İnceleme Bot) (gereken: muhasebe: düzenleme). Hiçbir şey kaydedi
+   ✓ selin  R  42501 Bu değişiklik için yetkiniz yok: alış fiyatı / maliyet (İnceleme Bot) (gereken: muhasebe: düzenleme). Hiçbir şey kaydedi
+   ✓ murat  Y  satır 1 · sonra: null
+   ✓ tuna   R  42501 Bu değişiklik için yetkiniz yok: alış fiyatı / maliyet (İnceleme Bot) (gereken: muhasebe: düzenleme). Hiçbir şey kaydedi
+   ✓ deniz  R  42501 Bu değişiklik için yetkiniz yok: alış fiyatı / maliyet (İnceleme Bot) (gereken: muhasebe: düzenleme). Hiçbir şey kaydedi
+   ✓ ali    Y  satır 1 · sonra: null
+
+■ İSTİSNA ürün: mevcut fiyat kurallarını BOŞALTMA (dolu → [])
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: satış fiyatı (İnceleme Bot) (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ cem    R  42501 Bu değişiklik için yetkiniz yok: satış fiyatı (İnceleme Bot) (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ selin  Y  satır 1 · sonra: 0
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: satış fiyatı (İnceleme Bot) (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ tuna   R  42501 Bu değişiklik için yetkiniz yok: satış fiyatı (İnceleme Bot) (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ deniz  Y  satır 1 · sonra: 0
+   ✓ ali    Y  satır 1 · sonra: 0
+
+■ İSTİSNA ürün: satış fiyatı DOLUYKEN para birimini değiştirme
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: satış fiyatı (İnceleme Bot) (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ cem    R  42501 Bu değişiklik için yetkiniz yok: satış fiyatı (İnceleme Bot) (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ selin  Y  satır 1 · sonra: $
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: satış fiyatı (İnceleme Bot) (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ tuna   R  42501 Bu değişiklik için yetkiniz yok: satış fiyatı (İnceleme Bot) (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ deniz  Y  satır 1 · sonra: $
+   ✓ ali    Y  satır 1 · sonra: $
+
+■ İSTİSNA ürün: ad değişikliğinin YANINDA fiyat değişikliği (tam satır)
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: satış fiyatı (Ad + Fiyat) (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ cem    R  42501 Bu değişiklik için yetkiniz yok: satış fiyatı (Ad + Fiyat) (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ selin  Y  satır 1 · sonra: Ad + Fiyat
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: satış fiyatı (Ad + Fiyat) (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ tuna   R  42501 Bu değişiklik için yetkiniz yok: satış fiyatı (Ad + Fiyat) (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ deniz  Y  satır 1 · sonra: Ad + Fiyat
+   ✓ ali    Y  satır 1 · sonra: Ad + Fiyat
+
+■ ürün: boş fiyat alanlarını varsayılanla yazma (null → 0, boş birim → ₺)
+   ✓ ayse   Y  satır 1 · sonra: 0
+   ✓ cem    Y  satır 1 · sonra: 0
+   ✓ selin  Y  satır 1 · sonra: 0
+   ✓ murat  Y  satır 1 · sonra: 0
+   ✓ tuna   Y  satır 1 · sonra: 0
+   ✓ deniz  Y  satır 1 · sonra: 0
+   ✓ ali    Y  satır 1 · sonra: 0
+
+■ ürün: fiyat dışı alan (ad) değiştirme
+   ✓ ayse   Y  satır 1 · sonra: Yeni Ad
+   ✓ cem    Y  satır 1 · sonra: Yeni Ad
+   ✓ selin  Y  satır 1 · sonra: Yeni Ad
+   ✓ murat  Y  satır 1 · sonra: Yeni Ad
+   ✓ tuna   Y  satır 1 · sonra: Yeni Ad
+   ✓ deniz  Y  satır 1 · sonra: Yeni Ad
+   ✓ ali    Y  satır 1 · sonra: Yeni Ad
+
+■ ürün: satış fiyatını değiştirme
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: satış fiyatı (İnceleme Bot) (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ cem    R  42501 Bu değişiklik için yetkiniz yok: satış fiyatı (İnceleme Bot) (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ selin  Y  satır 1 · sonra: 999
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: satış fiyatı (İnceleme Bot) (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ tuna   R  42501 Bu değişiklik için yetkiniz yok: satış fiyatı (İnceleme Bot) (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ deniz  Y  satır 1 · sonra: 999
+   ✓ ali    Y  satır 1 · sonra: 999
+
+■ ürün: alış fiyatını değiştirme
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: alış fiyatı / maliyet (İnceleme Bot) (gereken: muhasebe: düzenleme). Hiçbir şey kaydedi
+   ✓ cem    R  42501 Bu değişiklik için yetkiniz yok: alış fiyatı / maliyet (İnceleme Bot) (gereken: muhasebe: düzenleme). Hiçbir şey kaydedi
+   ✓ selin  R  42501 Bu değişiklik için yetkiniz yok: alış fiyatı / maliyet (İnceleme Bot) (gereken: muhasebe: düzenleme). Hiçbir şey kaydedi
+   ✓ murat  Y  satır 1 · sonra: 555
+   ✓ tuna   R  42501 Bu değişiklik için yetkiniz yok: alış fiyatı / maliyet (İnceleme Bot) (gereken: muhasebe: düzenleme). Hiçbir şey kaydedi
+   ✓ deniz  R  42501 Bu değişiklik için yetkiniz yok: alış fiyatı / maliyet (İnceleme Bot) (gereken: muhasebe: düzenleme). Hiçbir şey kaydedi
+   ✓ ali    Y  satır 1 · sonra: 555
+
+■ ürün: adı değiştirip fiyatları AYNEN gönderme (istemcinin tam satır yazması)
+   ✓ ayse   Y  satır 1 · sonra: Tam Satır
+   ✓ cem    Y  satır 1 · sonra: Tam Satır
+   ✓ selin  Y  satır 1 · sonra: Tam Satır
+   ✓ murat  Y  satır 1 · sonra: Tam Satır
+   ✓ tuna   Y  satır 1 · sonra: Tam Satır
+   ✓ deniz  Y  satır 1 · sonra: Tam Satır
+   ✓ ali    Y  satır 1 · sonra: Tam Satır
+
+■ ürün: satış fiyat kuralı ekleme (fiyat grubu fiyatı)
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: satış fiyatı (İnceleme Bot) (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ cem    R  42501 Bu değişiklik için yetkiniz yok: satış fiyatı (İnceleme Bot) (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ selin  Y  satır 1 · sonra: 1
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: satış fiyatı (İnceleme Bot) (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ tuna   R  42501 Bu değişiklik için yetkiniz yok: satış fiyatı (İnceleme Bot) (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ deniz  Y  satır 1 · sonra: 1
+   ✓ ali    Y  satır 1 · sonra: 1
+
+■ ürün: alış fiyat kuralı ekleme
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: alış fiyatı / maliyet (İnceleme Bot) (gereken: muhasebe: düzenleme). Hiçbir şey kaydedi
+   ✓ cem    R  42501 Bu değişiklik için yetkiniz yok: alış fiyatı / maliyet (İnceleme Bot) (gereken: muhasebe: düzenleme). Hiçbir şey kaydedi
+   ✓ selin  R  42501 Bu değişiklik için yetkiniz yok: alış fiyatı / maliyet (İnceleme Bot) (gereken: muhasebe: düzenleme). Hiçbir şey kaydedi
+   ✓ murat  Y  satır 1 · sonra: 1
+   ✓ tuna   R  42501 Bu değişiklik için yetkiniz yok: alış fiyatı / maliyet (İnceleme Bot) (gereken: muhasebe: düzenleme). Hiçbir şey kaydedi
+   ✓ deniz  R  42501 Bu değişiklik için yetkiniz yok: alış fiyatı / maliyet (İnceleme Bot) (gereken: muhasebe: düzenleme). Hiçbir şey kaydedi
+   ✓ ali    Y  satır 1 · sonra: 1
+
+■ ürün: fiyatsız yeni ürün
+   ✓ ayse   Y  satır 1 · sonra: 1
+   ✓ cem    Y  satır 1 · sonra: 1
+   ✓ selin  Y  satır 1 · sonra: 1
+   ✓ murat  Y  satır 1 · sonra: 1
+   ✓ tuna   Y  satır 1 · sonra: 1
+   ✓ deniz  Y  satır 1 · sonra: 1
+   ✓ ali    Y  satır 1 · sonra: 1
+
+■ ürün: satış fiyatlı yeni ürün
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: satış fiyatı (Fiyatlı Ürün) (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ cem    R  42501 Bu değişiklik için yetkiniz yok: satış fiyatı (Fiyatlı Ürün) (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ selin  Y  satır 1 · sonra: 1
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: satış fiyatı (Fiyatlı Ürün) (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ tuna   R  42501 Bu değişiklik için yetkiniz yok: satış fiyatı (Fiyatlı Ürün) (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ deniz  Y  satır 1 · sonra: 1
+   ✓ ali    Y  satır 1 · sonra: 1
+
+■ tanımlar: boş varsayılan iskeleti yazma (açılış: boş firma bilgileri, boş listeler)
+   ✓ ayse   Y  satır 1 · sonra: 
+   ✓ cem    Y  satır 1 · sonra: 
+   ✓ selin  Y  satır 1 · sonra: 
+   ✓ murat  Y  satır 1 · sonra: 
+   ✓ tuna   Y  satır 1 · sonra: 
+   ✓ deniz  Y  satır 1 · sonra: 
+   ✓ ali    Y  satır 1 · sonra: 
+
+■ tanımlar: firma bilgisi yokken yalnız varsayılan logolu boş iskelet (açılış)
+   ✓ ayse   Y  satır 1 · sonra: true
+   ✓ cem    Y  satır 1 · sonra: true
+   ✓ selin  Y  satır 1 · sonra: true
+   ✓ murat  Y  satır 1 · sonra: true
+   ✓ tuna   Y  satır 1 · sonra: true
+   ✓ deniz  Y  satır 1 · sonra: true
+   ✓ ali    Y  satır 1 · sonra: true
+
+■ İSTİSNA tanımlar: firma bilgisi YOKKEN iskeletin içinde DOLU unvan
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › firmaBilgileri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ cem    R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › firmaBilgileri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ selin  R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › firmaBilgileri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › firmaBilgileri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ tuna   Y  satır 1 · sonra: Sahte Firma
+   ✓ deniz  R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › firmaBilgileri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ ali    Y  satır 1 · sonra: Sahte Firma
+
+■ İSTİSNA tanımlar: firma bilgisi YOKKEN iskeletin içinde iç içe DOLU değer (e-posta sunucusu)
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › firmaBilgileri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ cem    R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › firmaBilgileri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ selin  R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › firmaBilgileri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › firmaBilgileri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ tuna   Y  satır 1 · sonra: smtp.ornek.test
+   ✓ deniz  R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › firmaBilgileri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ ali    Y  satır 1 · sonra: smtp.ornek.test
+
+■ İSTİSNA tanımlar: firma bilgisi YOKKEN iskeletin içinde KDV anahtarını AÇMA (true)
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › firmaBilgileri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ cem    R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › firmaBilgileri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ selin  R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › firmaBilgileri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › firmaBilgileri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ tuna   Y  satır 1 · sonra: true
+   ✓ deniz  R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › firmaBilgileri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ ali    Y  satır 1 · sonra: true
+
+■ İSTİSNA tanımlar: firma bilgisi YOKKEN dönem kapanış tarihi yazma
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › firmaBilgileri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ cem    R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › firmaBilgileri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ selin  R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › firmaBilgileri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › firmaBilgileri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ tuna   Y  satır 1 · sonra: 2026-12-31
+   ✓ deniz  R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › firmaBilgileri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ ali    Y  satır 1 · sonra: 2026-12-31
+
+■ İSTİSNA tanımlar: firma bilgisi VARKEN yalnız logoyu değiştirme (logo istisnası yalnız ilk iskelette)
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › firmaBilgileri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ cem    R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › firmaBilgileri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ selin  R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › firmaBilgileri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › firmaBilgileri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ tuna   Y  satır 1 · sonra: data:image/png;base64,BBBB
+   ✓ deniz  R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › firmaBilgileri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ ali    Y  satır 1 · sonra: data:image/png;base64,BBBB
+
+■ İSTİSNA tanımlar: firma bilgisi VARKEN boş iskeletle EZME (dolu → boş)
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › firmaBilgileri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ cem    R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › firmaBilgileri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ selin  R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › firmaBilgileri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › firmaBilgileri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ tuna   Y  satır 1 · sonra: 
+   ✓ deniz  R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › firmaBilgileri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ ali    Y  satır 1 · sonra: 
+
+■ İSTİSNA tanımlar: boş iskeletin YANINDA dolu ara proses listesi
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: araProsesler listesine ekleme (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ cem    R  42501 Bu değişiklik için yetkiniz yok: araProsesler listesine ekleme (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ selin  R  42501 Bu değişiklik için yetkiniz yok: araProsesler listesine ekleme (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: araProsesler listesine ekleme (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ tuna   Y  satır 1 · sonra: 1
+   ✓ deniz  R  42501 Bu değişiklik için yetkiniz yok: araProsesler listesine ekleme (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ ali    Y  satır 1 · sonra: 1
+
+■ İSTİSNA tanımlar: boş iskeletin YANINDA bilinmeyen anahtarı true yapma
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › siteYayinda (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ cem    R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › siteYayinda (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ selin  R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › siteYayinda (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › siteYayinda (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ tuna   Y  satır 1 · sonra: true
+   ✓ deniz  R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › siteYayinda (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ ali    Y  satır 1 · sonra: true
+
+■ İSTİSNA tanımlar: bilinmeyen anahtarı false yazma (boş ≡ boş — değişiklik değil)
+   ✓ ayse   Y  satır 1 · sonra: false
+   ✓ cem    Y  satır 1 · sonra: false
+   ✓ selin  Y  satır 1 · sonra: false
+   ✓ murat  Y  satır 1 · sonra: false
+   ✓ tuna   Y  satır 1 · sonra: false
+   ✓ deniz  Y  satır 1 · sonra: false
+   ✓ ali    Y  satır 1 · sonra: false
+
+■ tanımlar: firma unvanını yazma (gerçek değişiklik)
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › firmaBilgileri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ cem    R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › firmaBilgileri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ selin  R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › firmaBilgileri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › firmaBilgileri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ tuna   Y  satır 1 · sonra: Başka Firma
+   ✓ deniz  R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › firmaBilgileri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ ali    Y  satır 1 · sonra: Başka Firma
+
+■ tanımlar: kod sayacını ARTIRMA
+   ✓ ayse   Y  satır 1 · sonra: 60
+   ✓ cem    Y  satır 1 · sonra: 60
+   ✓ selin  Y  satır 1 · sonra: 60
+   ✓ murat  Y  satır 1 · sonra: 60
+   ✓ tuna   Y  satır 1 · sonra: 60
+   ✓ deniz  Y  satır 1 · sonra: 60
+   ✓ ali    Y  satır 1 · sonra: 60
+
+■ tanımlar: kod sayacını GERİ ALMA
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: kod sayacını geri alma (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ cem    R  42501 Bu değişiklik için yetkiniz yok: kod sayacını geri alma (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ selin  R  42501 Bu değişiklik için yetkiniz yok: kod sayacını geri alma (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: kod sayacını geri alma (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ tuna   Y  satır 1 · sonra: 1
+   ✓ deniz  R  42501 Bu değişiklik için yetkiniz yok: kod sayacını geri alma (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ ali    Y  satır 1 · sonra: 1
+
+■ tanımlar: yeni renk EKLEME (ürün ekranı)
+   ✓ ayse   Y  satır 1 · sonra: 3
+   ✓ cem    R  42501 Bu değişiklik için yetkiniz yok: renkler listesine ekleme (gereken: stok: kaydetme ya da tanımlar: düzenleme). Hiçbir şe
+   ✓ selin  R  42501 Bu değişiklik için yetkiniz yok: renkler listesine ekleme (gereken: stok: kaydetme ya da tanımlar: düzenleme). Hiçbir şe
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: renkler listesine ekleme (gereken: stok: kaydetme ya da tanımlar: düzenleme). Hiçbir şe
+   ✓ tuna   Y  satır 1 · sonra: 3
+   ✓ deniz  R  42501 Bu değişiklik için yetkiniz yok: renkler listesine ekleme (gereken: stok: kaydetme ya da tanımlar: düzenleme). Hiçbir şe
+   ✓ ali    Y  satır 1 · sonra: 3
+
+■ tanımlar: mevcut rengin ADINI değiştirme
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: renkler listesinde mevcut öğeyi değiştirme (gereken: tanımlar: düzenleme). Hiçbir şey k
+   ✓ cem    R  42501 Bu değişiklik için yetkiniz yok: renkler listesinde mevcut öğeyi değiştirme (gereken: tanımlar: düzenleme). Hiçbir şey k
+   ✓ selin  R  42501 Bu değişiklik için yetkiniz yok: renkler listesinde mevcut öğeyi değiştirme (gereken: tanımlar: düzenleme). Hiçbir şey k
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: renkler listesinde mevcut öğeyi değiştirme (gereken: tanımlar: düzenleme). Hiçbir şey k
+   ✓ tuna   Y  satır 1 · sonra: Bozuk Ad
+   ✓ deniz  R  42501 Bu değişiklik için yetkiniz yok: renkler listesinde mevcut öğeyi değiştirme (gereken: tanımlar: düzenleme). Hiçbir şey k
+   ✓ ali    Y  satır 1 · sonra: Bozuk Ad
+
+■ tanımlar: BÜTÜN renkleri silme
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: renkler listesinden öğe silme (2) (gereken: tanımlar: silme). Hiçbir şey kaydedilmedi.
+   ✓ cem    R  42501 Bu değişiklik için yetkiniz yok: renkler listesinden öğe silme (2) (gereken: tanımlar: silme). Hiçbir şey kaydedilmedi.
+   ✓ selin  R  42501 Bu değişiklik için yetkiniz yok: renkler listesinden öğe silme (2) (gereken: tanımlar: silme). Hiçbir şey kaydedilmedi.
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: renkler listesinden öğe silme (2) (gereken: tanımlar: silme). Hiçbir şey kaydedilmedi.
+   ✓ tuna   R  42501 Bu değişiklik için yetkiniz yok: renkler listesinden öğe silme (2) (gereken: tanımlar: silme). Hiçbir şey kaydedilmedi.
+   ✓ deniz  R  42501 Bu değişiklik için yetkiniz yok: renkler listesinden öğe silme (2) (gereken: tanımlar: silme). Hiçbir şey kaydedilmedi.
+   ✓ ali    Y  satır 1 · sonra: 0
+
+■ tanımlar: tek rengi silme
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: renkler listesinden öğe silme (1) (gereken: tanımlar: silme). Hiçbir şey kaydedilmedi.
+   ✓ cem    R  42501 Bu değişiklik için yetkiniz yok: renkler listesinden öğe silme (1) (gereken: tanımlar: silme). Hiçbir şey kaydedilmedi.
+   ✓ selin  R  42501 Bu değişiklik için yetkiniz yok: renkler listesinden öğe silme (1) (gereken: tanımlar: silme). Hiçbir şey kaydedilmedi.
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: renkler listesinden öğe silme (1) (gereken: tanımlar: silme). Hiçbir şey kaydedilmedi.
+   ✓ tuna   R  42501 Bu değişiklik için yetkiniz yok: renkler listesinden öğe silme (1) (gereken: tanımlar: silme). Hiçbir şey kaydedilmedi.
+   ✓ deniz  R  42501 Bu değişiklik için yetkiniz yok: renkler listesinden öğe silme (1) (gereken: tanımlar: silme). Hiçbir şey kaydedilmedi.
+   ✓ ali    Y  satır 1 · sonra: 1
+
+■ tanımlar: BOŞ renk koduna kod verme (otomatik)
+   ✓ ayse   Y  satır 1 · sonra: 101
+   ✓ cem    Y  satır 1 · sonra: 101
+   ✓ selin  Y  satır 1 · sonra: 101
+   ✓ murat  Y  satır 1 · sonra: 101
+   ✓ tuna   Y  satır 1 · sonra: 101
+   ✓ deniz  Y  satır 1 · sonra: 101
+   ✓ ali    Y  satır 1 · sonra: 101
+
+■ tanımlar: yeni kombinasyon EKLEME (model rengi)
+   ✓ ayse   Y  satır 1 · sonra: 2
+   ✓ cem    R  42501 Bu değişiklik için yetkiniz yok: renkKombinasyonlari listesine ekleme (gereken: stok: kaydetme ya da tanımlar: düzenleme
+   ✓ selin  R  42501 Bu değişiklik için yetkiniz yok: renkKombinasyonlari listesine ekleme (gereken: stok: kaydetme ya da tanımlar: düzenleme
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: renkKombinasyonlari listesine ekleme (gereken: stok: kaydetme ya da tanımlar: düzenleme
+   ✓ tuna   Y  satır 1 · sonra: 2
+   ✓ deniz  R  42501 Bu değişiklik için yetkiniz yok: renkKombinasyonlari listesine ekleme (gereken: stok: kaydetme ya da tanımlar: düzenleme
+   ✓ ali    Y  satır 1 · sonra: 2
+
+■ tanımlar: mevcut kombinasyonun bileşenini değiştirme
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: renkKombinasyonlari listesinde mevcut öğeyi değiştirme (gereken: tanımlar: düzenleme). 
+   ✓ cem    R  42501 Bu değişiklik için yetkiniz yok: renkKombinasyonlari listesinde mevcut öğeyi değiştirme (gereken: tanımlar: düzenleme). 
+   ✓ selin  R  42501 Bu değişiklik için yetkiniz yok: renkKombinasyonlari listesinde mevcut öğeyi değiştirme (gereken: tanımlar: düzenleme). 
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: renkKombinasyonlari listesinde mevcut öğeyi değiştirme (gereken: tanımlar: düzenleme). 
+   ✓ tuna   Y  satır 1 · sonra: r-siyah
+   ✓ deniz  R  42501 Bu değişiklik için yetkiniz yok: renkKombinasyonlari listesinde mevcut öğeyi değiştirme (gereken: tanımlar: düzenleme). 
+   ✓ ali    Y  satır 1 · sonra: r-siyah
+
+■ tanımlar: yeni beden EKLEME
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: bedenler listesine ekleme (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ cem    R  42501 Bu değişiklik için yetkiniz yok: bedenler listesine ekleme (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ selin  R  42501 Bu değişiklik için yetkiniz yok: bedenler listesine ekleme (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: bedenler listesine ekleme (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ tuna   Y  satır 1 · sonra: 3
+   ✓ deniz  R  42501 Bu değişiklik için yetkiniz yok: bedenler listesine ekleme (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ ali    Y  satır 1 · sonra: 3
+
+■ tanımlar: SATIŞ fiyat grubu ekleme
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: satış fiyat grubu (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ cem    R  42501 Bu değişiklik için yetkiniz yok: satış fiyat grubu (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ selin  Y  satır 1 · sonra: 2
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: satış fiyat grubu (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ tuna   R  42501 Bu değişiklik için yetkiniz yok: satış fiyat grubu (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ deniz  Y  satır 1 · sonra: 2
+   ✓ ali    Y  satır 1 · sonra: 2
+
+■ tanımlar: ALIŞ fiyat grubu ekleme
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: alış fiyat grubu (gereken: muhasebe: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ cem    R  42501 Bu değişiklik için yetkiniz yok: alış fiyat grubu (gereken: muhasebe: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ selin  R  42501 Bu değişiklik için yetkiniz yok: alış fiyat grubu (gereken: muhasebe: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ murat  Y  satır 1 · sonra: 2
+   ✓ tuna   R  42501 Bu değişiklik için yetkiniz yok: alış fiyat grubu (gereken: muhasebe: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ deniz  R  42501 Bu değişiklik için yetkiniz yok: alış fiyat grubu (gereken: muhasebe: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ ali    Y  satır 1 · sonra: 2
+
+■ tanımlar: gider kartı ekleme
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: giderKartlari listesine ekleme (gereken: muhasebe: kaydetme ya da tanımlar: düzenleme).
+   ✓ cem    R  42501 Bu değişiklik için yetkiniz yok: giderKartlari listesine ekleme (gereken: muhasebe: kaydetme ya da tanımlar: düzenleme).
+   ✓ selin  R  42501 Bu değişiklik için yetkiniz yok: giderKartlari listesine ekleme (gereken: muhasebe: kaydetme ya da tanımlar: düzenleme).
+   ✓ murat  Y  satır 1 · sonra: 1
+   ✓ tuna   Y  satır 1 · sonra: 1
+   ✓ deniz  R  42501 Bu değişiklik için yetkiniz yok: giderKartlari listesine ekleme (gereken: muhasebe: kaydetme ya da tanımlar: düzenleme).
+   ✓ ali    Y  satır 1 · sonra: 1
+
+■ tanımlar: ORTAK ekran düzeni
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › ekranDuzenleri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ cem    R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › ekranDuzenleri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ selin  R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › ekranDuzenleri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › ekranDuzenleri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ tuna   Y  satır 1 · sonra: true
+   ✓ deniz  R  42501 Bu değişiklik için yetkiniz yok: Tanımlar › ekranDuzenleri (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+   ✓ ali    Y  satır 1 · sonra: true
+
+■ tanımlar: KİŞİSEL rapor (sahibi kendisi)
+   ✓ ayse   Y  satır 1 · sonra: 1
+   ✓ cem    Y  satır 1 · sonra: 1
+   ✓ selin  Y  satır 1 · sonra: 1
+   ✓ murat  Y  satır 1 · sonra: 1
+   ✓ tuna   Y  satır 1 · sonra: 1
+   ✓ deniz  Y  satır 1 · sonra: 1
+   ✓ ali    Y  satır 1 · sonra: 1
+
+■ tanımlar: ORTAK rapor
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: ortak ya da başkasına ait rapor (Ortak Rapor) (gereken: tanımlar: düzenleme; kişisel ra
+   ✓ cem    R  42501 Bu değişiklik için yetkiniz yok: ortak ya da başkasına ait rapor (Ortak Rapor) (gereken: tanımlar: düzenleme; kişisel ra
+   ✓ selin  R  42501 Bu değişiklik için yetkiniz yok: ortak ya da başkasına ait rapor (Ortak Rapor) (gereken: tanımlar: düzenleme; kişisel ra
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: ortak ya da başkasına ait rapor (Ortak Rapor) (gereken: tanımlar: düzenleme; kişisel ra
+   ✓ tuna   Y  satır 1 · sonra: 1
+   ✓ deniz  R  42501 Bu değişiklik için yetkiniz yok: ortak ya da başkasına ait rapor (Ortak Rapor) (gereken: tanımlar: düzenleme; kişisel ra
+   ✓ ali    Y  satır 1 · sonra: 1
+
+■ tanımlar: başkasının kişisel raporu
+   ✓ ayse   R  42501 Bu değişiklik için yetkiniz yok: ortak ya da başkasına ait rapor (Başkasının) (gereken: tanımlar: düzenleme; kişisel rap
+   ✓ cem    R  42501 Bu değişiklik için yetkiniz yok: ortak ya da başkasına ait rapor (Başkasının) (gereken: tanımlar: düzenleme; kişisel rap
+   ✓ selin  R  42501 Bu değişiklik için yetkiniz yok: ortak ya da başkasına ait rapor (Başkasının) (gereken: tanımlar: düzenleme; kişisel rap
+   ✓ murat  R  42501 Bu değişiklik için yetkiniz yok: ortak ya da başkasına ait rapor (Başkasının) (gereken: tanımlar: düzenleme; kişisel rap
+   ✓ tuna   Y  satır 1 · sonra: 1
+   ✓ deniz  R  42501 Bu değişiklik için yetkiniz yok: ortak ya da başkasına ait rapor (Başkasının) (gereken: tanımlar: düzenleme; kişisel rap
+   ✓ ali    Y  satır 1 · sonra: 1
+
+■ AÇIK (B6) tanımlar: personel maaşı (bolumler) — bu pakette kural YOK
+   ✓ ayse   Y  satır 1 · sonra: 99999
+   ✓ cem    Y  satır 1 · sonra: 99999
+   ✓ selin  Y  satır 1 · sonra: 99999
+   ✓ murat  Y  satır 1 · sonra: 99999
+   ✓ tuna   Y  satır 1 · sonra: 99999
+   ✓ deniz  Y  satır 1 · sonra: 99999
+   ✓ ali    Y  satır 1 · sonra: 99999
+
+■ AÇIK (B6) ürün: proses ücretleri — bu pakette kural YOK
+   ✓ ayse   Y  satır 1 · sonra: 999
+   ✓ cem    Y  satır 1 · sonra: 999
+   ✓ selin  Y  satır 1 · sonra: 999
+   ✓ murat  Y  satır 1 · sonra: 999
+   ✓ tuna   Y  satır 1 · sonra: 999
+   ✓ deniz  Y  satır 1 · sonra: 999
+   ✓ ali    Y  satır 1 · sonra: 999
+
+── b3a2-matris aday_m3: 448 uyumlu · 0 AÇIK · 0 fazla kısıt / yanlış gerekçe ──

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.744.36</title>
+<title>Atölye ERP 1.744.45</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2319,9 +2319,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.744.36";
-const SURUM_TARIHI = "2026-11-23";
-const SURUM_NOTU = "Cari virmanı Ödeme & Tahsilat'ta (aynı para biriminde); kasa / banka arası aktarım Kasa & Banka'da; hesap formdaki + ile açılır";
+const SURUM = "1.744.45";
+const SURUM_TARIHI = "2026-11-27";
+const SURUM_NOTU = "Geri dönüş sürümü: 1.744.37 ile aynı uygulama, yalnız sürüm numarası yükseltildi";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2351,6 +2351,8 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 }
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" }; // teklif: v1.723.0, Sipariş'in alt sekmesi
 const SURUM_GECMISI = [
+    { surum: "1.744.45", tarih: "27.11.2026", eklenen: [], degisen: ["Geri dönüş sürümü: içerik 1.744.37 ile aynıdır; yalnız sürüm numarası yükseltildi (uygulama düşük numaralı sürüme kendiliğinden dönmediği için)"], duzeltilen: [] },
+    { surum: "1.744.37", tarih: "26.11.2026", eklenen: [], degisen: [], duzeltilen: ["Tanımlar › renk adı değiştirme: rengin geçtiği model kombinasyonları (ör. \"1054 - KAHVE SÜET/VİZON YILAN\" ve \"1055 - BEJ SÜET/VİZON YILAN\") ayrı kalıyor, yalnız yazımları değişiyor. Önceden rengin adı değişince (büyük/küçük harf dahil) modelin bütün kombinasyon renkleri rengin düz adına (\"Vizon Yılan\") dönüp tek renk gibi görünüyordu; reçetenin model rengi de aynı şekilde çöküyordu. Önceden çökmüş kayıtları bu sürüm geri getirmez (ayrı onarım)."] },
     { surum: "1.744.36", tarih: "23.11.2026", eklenen: ["Kasa & Banka › hesap › \"Hesaplar arası aktarım\": kasadan bankaya, bankadan kasaya, hesaptan hesaba para aktarımı yeniden arayüzde (cari virmanından ayrı işlem; kur çevirici ve aktarım sebebi aynen)."], degisen: ["Ödeme & Tahsilat'taki virman \"Cari virmanı (cariden cariye)\" adını aldı. Para birimi ilk carinin para birimidir; karşı cari başka para birimindeyse virman yapılmaz (kur dönüşümü yok). Aynı cari ve sıfır / eksi / boş tutar reddedilir."], duzeltilen: [] },
     { surum: "1.744.35", tarih: "23.11.2026", eklenen: ["Ödeme & Tahsilat › ödeme şekli \"Virman (cariden cariye)\": ilk cari ve karşı cari seçilir. Ödemede ilk cariye ödeme, karşı cariden tahsilat; tahsilatta ilk cariden tahsilat, karşı cariye ödeme. İki satır tek fişte (CVR-…), kasa / banka hareketi yok; geri alınca ikisi birden kalkar.", "Ödeme & Tahsilat › Kasa / Banka satırının yanında + düğmesi: yeni kasa ya da banka hesabı oradan açılır ve hemen seçilir."], degisen: ["Kasa & Banka ekranında Virman ve \"Yeni Kasa / Yeni Banka Hesabı\" düğmeleri kalktı (hesap düzenleme, arşivleme ve silme yerinde)."], duzeltilen: [] },
     { surum: "1.744.34", tarih: "20.11.2026", eklenen: [], degisen: [], duzeltilen: ["Ürün kartı › Reçete: \"Hammaddesiz proses ekle\" satırı yalnız reçetede hammadde satırı varken görünüyordu; reçetesi boş yeni üründe de görünür, ilk adım (ör. yalnız işçilikli Dikim) doğrudan eklenir."] },
@@ -9122,6 +9124,50 @@ function renkKimlikleriniDamgala(urunler, tanimliRenkler) {
         return degisti ? { ...u, variants, recete } : u;
     });
     return { urunler: yeni, damgalanan };
+}
+// ================= RENK ADI DEĞİŞİNCE VARYANT VE REÇETE EŞLEŞMESİ (v1.744.37) =================
+// 082 `hammaddeRenkAdDegistir` her eşleşme (kombinasyon etiketi ya da rengin kendi adı) için bunu çağırır. Saf olduğu için
+// birim testi (test/birim-renk-ad-kombinasyon.js) doğrudan sınar.
+//
+// KİMLİK ÖNCELİKLİ EŞLEŞTİRME yalnız rengin KENDİ adında (`duz`): kayıt damgalanmışsa kimlikle bulunur ve adı tazelenir,
+// damgasızsa ada düşülür. Kombinasyon etiketi ("1054 - KAHVE SÜET/VİZON YILAN") YALNIZ ADLA eşleşir, kimlik damgalanmaz.
+function renkAdVaryantReceteUygula(variants, recete, { eskiEtiket, yeniEtiket, duz }, renkId) {
+    const normalize = (x) => String(x || "").trim().toLocaleLowerCase("tr-TR").replace(/\s+/g, " ");
+    const es = (deger) => normalize(deger) === normalize(eskiEtiket);
+    let degisti = false;
+    let nextVariants = variants || [];
+    let nextRecete = recete;
+    // KOMBİNASYON RENKLERİ ÇÖKÜYORDU (v1.744.37 — kullanıcı, 26 Kasım: "bu modelde 2 renk eklemiştik, hatta sipariş de girdik,
+    // sonradan renklerin büyük küçük harf değişikliği yaptık örn: VİZON YILAN : Vizon Yılan diye, şimdi sanki modelde tek renk
+    // eklemişiz gibi oldu diğer renkler kayboldu"). Eskiden kombinasyon etiketiyle eşleşen varyant da rengin KİMLİĞİYLE
+    // damgalanıyordu ({ renkId: renkId }). Sonraki eşleşmeler kimlikle baktığı için "1054 - KAHVE SÜET/VİZON YILAN" varyantı
+    // bir sonraki kombinasyonun ("1055 - …") etiketine, en sonda da rengin düz adına ("Vizon Yılan") çevriliyordu: modelin bütün
+    // kombinasyon renkleri TEK renge çöküyor, bulutta eski varyantlar kaldırılıyordu (stok-v2 stk_yaz varyantKaldir). Sipariş /
+    // üretim adla eşleştiği için doğru kalıyor, stokla bağı kopuyordu. Şimdi: kimlik YALNIZ rengin kendi adında (duz) kullanılır
+    // ve damgalanır; kombinasyon etiketi YALNIZ adla eşleşir, kimliği değişmez.
+    const kimlikEs = (v) => (duz ? (v.renkId ? v.renkId === renkId : es(v.renk)) : es(v.renk));
+    if (nextVariants.some((v) => kimlikEs(v))) {
+        degisti = true;
+        nextVariants = nextVariants.map((v) => kimlikEs(v) ? (duz ? { ...v, renk: yeniEtiket, renkId: renkId } : { ...v, renk: yeniEtiket }) : v);
+    }
+    // Reçetede renk İKİ ALANDA geçiyor: mamulRenk (hangi model rengi için) ve
+    // renk (hangi hammadde rengi kullanılacak). İkincisi atlanınca üretim, adı
+    // değişmiş hammaddeyi bulamıyordu.
+    // Reçetede iki ayrı renk alanı var; her biri kendi kimliğiyle eşleştirilir.
+    // Aynı çöküş reçetede de vardı (mamulRenk kombinasyon etiketiyken mamulRenkId damgalanıyordu): aynı kural.
+    const receteHamEs = (r) => (duz ? (r.renkId ? r.renkId === renkId : es(r.renk)) : es(r.renk));
+    const receteMamulEs = (r) => (duz ? (r.mamulRenkId ? r.mamulRenkId === renkId : es(r.mamulRenk)) : es(r.mamulRenk));
+    if ((nextRecete || []).some((r) => receteMamulEs(r) || receteHamEs(r))) {
+        degisti = true;
+        nextRecete = nextRecete.map((r) => ({
+            ...r,
+            mamulRenk: receteMamulEs(r) ? yeniEtiket : r.mamulRenk,
+            mamulRenkId: receteMamulEs(r) && duz ? renkId : r.mamulRenkId,
+            renk: receteHamEs(r) ? yeniEtiket : r.renk,
+            renkId: receteHamEs(r) && duz ? renkId : r.renkId,
+        }));
+    }
+    return { degisti, variants: nextVariants, recete: nextRecete };
 }
 // DEĞİŞİKLİK SAYACI — başka cihazın yazdığını anında görmek (7 Ekim 2026, v1.611.0).
 //
@@ -19172,7 +19218,9 @@ function useAdDegistirme(d) {
         // var olmaya başlıyordu — eşleşme kurulamadığı için üretim malzemeyi bulamıyor.
         //
         // Kombinasyonu olmayan bir rengi yeniden adlandırmak, hiçbir şeyi güncellemiyordu.
-        const tumEslesmeler = [...etiketEslesmeleri, { eskiEtiket: eskiAd, yeniEtiket: yeniAd }];
+        // `duz`: rengin KENDİ adı (kimlikle eşleşir, kimlik damgalanır). Kombinasyon etiketleri ("1054 - KAHVE SÜET/VİZON YILAN") YALNIZ
+        // ADLA eşleşir ve renk kimliğiyle DAMGALANMAZ — bkz. aşağıdaki not (v1.744.37).
+        const tumEslesmeler = [...etiketEslesmeleri.map((e) => ({ ...e, duz: false })), { eskiEtiket: eskiAd, yeniEtiket: yeniAd, duz: true }];
         // Eşleştirme BÜYÜK/KÜÇÜK HARF ve BOŞLUK farkını yok sayar.
         //
         // Sebebi: geçmişte başarısız kalmış bir yeniden adlandırma, kayıtları öksüz bırakabiliyor —
@@ -19200,7 +19248,7 @@ function useAdDegistirme(d) {
                 let nextRecete = p.recete;
                 let nextHareketler = p.hareketler;
                 let nextHarici = p.hariciBarkodlar;
-                tumEslesmeler.forEach(({ eskiEtiket, yeniEtiket }) => {
+                tumEslesmeler.forEach(({ eskiEtiket, yeniEtiket, duz }) => {
                     // KİMLİK ÖNCELİKLİ EŞLEŞTİRME.
                     //
                     // Kayıt damgalanmışsa kimlikle bulunur: ad ne kadar bozuk olursa olsun doğru kaydı
@@ -19209,10 +19257,12 @@ function useAdDegistirme(d) {
                     // Bu, "tanımda T-283 ama stokta t-28" gibi kopuklukların bir daha oluşmamasını sağlar:
                     // kimlik metinden bağımsızdır.
                     const es = (deger) => normalize(deger) === normalize(eskiEtiket);
-                    const kimlikEs = (v) => (v.renkId ? v.renkId === renkId : es(v.renk));
-                    if (nextVariants.some((v) => kimlikEs(v))) {
+                    // Varyant ve reçete eşleşmesi saf yardımcıda (046-renk-ad-eslesme.jsx), birim testi oradan sınar.
+                    const vr = renkAdVaryantReceteUygula(nextVariants, nextRecete, { eskiEtiket, yeniEtiket, duz }, renkId);
+                    if (vr.degisti) {
                         degisti = true;
-                        nextVariants = nextVariants.map((v) => kimlikEs(v) ? { ...v, renk: yeniEtiket, renkId: renkId } : v);
+                        nextVariants = vr.variants;
+                        nextRecete = vr.recete;
                     }
                     // Görsel anahtarı da farklı yazımda olabilir; tam eşleşme yerine tarayarak bulunur.
                     const gorselAnahtar = Object.keys(nextRenkResimleri || {}).find((k) => es(k));
@@ -19220,22 +19270,6 @@ function useAdDegistirme(d) {
                         degisti = true;
                         const { [gorselAnahtar]: gorsel, ...kalan } = nextRenkResimleri;
                         nextRenkResimleri = { ...kalan, [yeniEtiket]: gorsel };
-                    }
-                    // Reçetede renk İKİ ALANDA geçiyor: mamulRenk (hangi model rengi için) ve
-                    // renk (hangi hammadde rengi kullanılacak). İkincisi atlanınca üretim, adı
-                    // değişmiş hammaddeyi bulamıyordu.
-                    // Reçetede iki ayrı renk alanı var; her biri kendi kimliğiyle eşleştirilir.
-                    const receteHamEs = (r) => (r.renkId ? r.renkId === renkId : es(r.renk));
-                    const receteMamulEs = (r) => (r.mamulRenkId ? r.mamulRenkId === renkId : es(r.mamulRenk));
-                    if ((nextRecete || []).some((r) => receteMamulEs(r) || receteHamEs(r))) {
-                        degisti = true;
-                        nextRecete = nextRecete.map((r) => ({
-                            ...r,
-                            mamulRenk: receteMamulEs(r) ? yeniEtiket : r.mamulRenk,
-                            mamulRenkId: receteMamulEs(r) ? renkId : r.mamulRenkId,
-                            renk: receteHamEs(r) ? yeniEtiket : r.renk,
-                            renkId: receteHamEs(r) ? renkId : r.renkId,
-                        }));
                     }
                     // Stok hareketleri de güncellenmeli: aksi halde geçmiş, artık var olmayan bir
                     // renk adına bakar ve varyant eşleşmesi kurulamaz (defter tutmaz).
@@ -74063,7 +74097,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.744.36)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.744.45)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

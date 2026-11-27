@@ -1,0 +1,38 @@
+ekran-geri-al-ileti · inc_ileti · istemci ? · B4 kurulu EVET
+
+■ G1 · bayat cihaz, iş arada yeniden teslim alınmış
+     B iletisi: "Dikim" teslimi zaten geri alınmıştı (başka cihazdan ya da önceki denemede) ve iş yeniden teslim alınmış (geçerli bir fişi var) — bu işlem yeni bir değişiklik yapmadı. Ekran güncel duruma getirildi; işin şimdiki durumunu kontrol edin.
+  ✓ [G1 ileti: zaten geri alınmıştı, iş yeniden teslim alınmış, yeni değişiklik yok] [true,true,true]
+  ✓ [G1 'geri alındı' başarı iletisi YOK] false
+  ✓ [G1 sunucu değişmedi (geçerli teslim duruyor)] {"mamul":10,"usta":-350,"fis":"1 geçerli / 1 iptal","atama":"teslim"}
+  ✓ [G1 sunucu: stok 10, usta −350, atama teslim] [10,-350,"teslim","1 geçerli / 1 iptal"]
+  ✓ [G1 B'nin ekranı işi TESLİM ALINMIŞ gösteriyor (yoklama donukken)] {"tamamlandi":true,"teslimFormu":false}
+
+■ G2 · yanıt kaybı: Geri Al sunucuda yapıldı, yanıt düştü, istemci yeniden denedi
+     B iletisi: "Dikim" için 10 adetlik teslim zaten geri alınmıştı (önceki denemede ya da başka cihazdan) — kayıtlar geri alınmış durumda, iş yeniden teslim alınabilir
+  ✓ [G2 sunucu: fiş iptal, atama bekliyor, teslimin stoğu / ödemesi geri] ["0 geçerli / 1 iptal","bekliyor"]
+  ✓ [G2 ileti: zaten geri alınmıştı — kayıtlar geri alınmış durumda] [true,true]
+  ✓ [G2 sunucu: üretimin ana satırı da geri döndü (adım tamamlanmadı)] "Dikim/false"
+  ✓ [G2 B'nin ekranı işi BEKLİYOR gösteriyor (teslim formu açık)] {"tamamlandi":false,"teslimFormu":true}
+
+■ G3 · olağan Geri Al (tek cihaz)
+  ✓ [G3 ileti: geri alındı (eski ileti)] [true,false]
+  ✓ [G3 defterler başlangıçta, fiş iptal, atama bekliyor] [0,0,"0 geçerli / 1 iptal","bekliyor"]
+
+■ G4 · iki cihazdan eşzamanlı İşi Ver
+     A: 10 adet (40:10) Fin Usta'a verildi
+     B: İş VERİLEMEDİ — bu üretim az önce başka bir cihazda değişti (iş oradan verilmiş olabilir). Kaydınız gönderilmedi; sayfayı yenileyip güncel durumu kontrol edin.
+  ✓ [G4 yalnız BİR cihaz 'verildi' dedi, öteki 'İş VERİLEMEDİ'] [1,1]
+  ✓ [G4 sunucuda tek atama (10)] {"n":1,"m":10}
+
+■ G5 · ara prosesin bayat geri alınması (fiş üzerinden doğrulama)
+  ✓ [G5 hazırlık: Yıkama fişi F1 kesildi (fason −40)] [-40,"1 geçerli / 0 iptal"]
+  ✓ [G5 hazırlık: A ara prosesi geri aldı (fason 0)] [0,"0 geçerli / 1 iptal"]
+  ✓ [G5 hazırlık: adım yeniden tamamlandı (F2, fason −40)] [-40,"1 geçerli / 1 iptal"]
+     B iletisi: "Yıkama" ara prosesi zaten geri alınmıştı (başka cihazdan ya da önceki denemede) ve adım yeniden tamamlanmış (geçerli bir fişi var) — bu işlem yeni bir değişiklik yapmadı. Ekran güncel duruma getirildi; işin şimdiki durumunu kontrol edin.
+  ✓ [G5 ileti: zaten geri alınmıştı, adım yeniden tamamlanmış, yeni değişiklik yok] [true,true,true]
+  ✓ [G5 'geri alındı' başarı iletisi YOK] false
+  ✓ [G5 sunucu değişmedi (F2 geçerli, fason −40, Saya ataması duruyor)] [-40,"1 geçerli / 1 iptal",1]
+  ✓ [sayfa hatası yok] [[],[]]
+
+── ekran-geri-al-ileti: 20 geçti · 0 kaldı ──

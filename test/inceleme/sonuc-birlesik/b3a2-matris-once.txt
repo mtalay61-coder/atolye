@@ -1,0 +1,579 @@
+b3a2-matris · b3a2_m0 · B3a-2 KURULU DEĞİL · B3a yok
+
+■ cari: hızlı ekleme (yalnız unvan + tip)
+   ✓ ayse   Y  satır 1 · sonra: 1
+   ✓ cem    Y  satır 1 · sonra: 1
+   ✓ selin  Y  satır 1 · sonra: 1
+   ✗ murat  Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ tuna   Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ deniz  Y  satır 1 · sonra: 1
+   ✓ ali    Y  satır 1 · sonra: 1
+
+■ cari: dolu kart ekleme (telefon, vergi no)
+   ✗ ayse   Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ cem    Y  satır 1 · sonra: 1
+   ✗ selin  Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ murat  Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ tuna   Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ deniz  Y  satır 1 · sonra: 1
+   ✓ ali    Y  satır 1 · sonra: 1
+
+■ cari: unvan değiştirme
+   ✗ ayse   Y  satır 1 · sonra: Değişti   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ cem    Y  satır 1 · sonra: Değişti
+   ✗ selin  Y  satır 1 · sonra: Değişti   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ murat  Y  satır 1 · sonra: Değişti   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ tuna   Y  satır 1 · sonra: Değişti   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ deniz  Y  satır 1 · sonra: Değişti
+   ✓ ali    Y  satır 1 · sonra: Değişti
+
+■ cari: BOŞ koda kod verme (otomatik)
+   ✓ ayse   Y  satır 1 · sonra: 7
+   ✓ cem    Y  satır 1 · sonra: 7
+   ✓ selin  Y  satır 1 · sonra: 7
+   ✓ murat  Y  satır 1 · sonra: 7
+   ✓ tuna   Y  satır 1 · sonra: 7
+   ✓ deniz  Y  satır 1 · sonra: 7
+   ✓ ali    Y  satır 1 · sonra: 7
+
+■ cari: müşterinin fiyat grubunu değiştirme
+   ✗ ayse   Y  satır 1 · sonra: fg-toptan   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ cem    Y  satır 1 · sonra: fg-toptan   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ selin  Y  satır 1 · sonra: fg-toptan   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ murat  Y  satır 1 · sonra: fg-toptan   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ tuna   Y  satır 1 · sonra: fg-toptan   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ deniz  Y  satır 1 · sonra: fg-toptan
+   ✓ ali    Y  satır 1 · sonra: fg-toptan
+
+■ cari: eski fiyat_grubu sütununu değiştirme
+   ✗ ayse   Y  satır 1 · sonra: fg-toptan   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ cem    Y  satır 1 · sonra: fg-toptan   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ selin  Y  satır 1 · sonra: fg-toptan   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ murat  Y  satır 1 · sonra: fg-toptan   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ tuna   Y  satır 1 · sonra: fg-toptan   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ deniz  Y  satır 1 · sonra: fg-toptan
+   ✓ ali    Y  satır 1 · sonra: fg-toptan
+
+■ cari: fiyat gruplu yeni cari (hızlı ekleme sayılmaz)
+   ✗ ayse   Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ cem    Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ selin  Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ murat  Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ tuna   Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ deniz  Y  satır 1 · sonra: 1
+   ✓ ali    Y  satır 1 · sonra: 1
+
+■ cari: ek alanında fiyat grubu DIŞI değişiklik (not)
+   ✗ ayse   Y  satır 1 · sonra: x   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ cem    Y  satır 1 · sonra: x
+   ✗ selin  Y  satır 1 · sonra: x   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ murat  Y  satır 1 · sonra: x   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ tuna   Y  satır 1 · sonra: x   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ deniz  Y  satır 1 · sonra: x
+   ✓ ali    Y  satır 1 · sonra: x
+
+■ cari: değişmeyen satırı aynen gönderme (ekle-ya-da-güncelle)
+   ✓ ayse   Y  satır 1 · sonra: İnceleme Müşteri
+   ✓ cem    Y  satır 1 · sonra: İnceleme Müşteri
+   ✓ selin  Y  satır 1 · sonra: İnceleme Müşteri
+   ✓ murat  Y  satır 1 · sonra: İnceleme Müşteri
+   ✓ tuna   Y  satır 1 · sonra: İnceleme Müşteri
+   ✓ deniz  Y  satır 1 · sonra: İnceleme Müşteri
+   ✓ ali    Y  satır 1 · sonra: İnceleme Müşteri
+
+■ cari: boş alanları varsayılanla yazma (null → [], {}, false, TRY — açılış normalleştirmesi)
+   ✓ ayse   Y  satır 1 · sonra: false
+   ✓ cem    Y  satır 1 · sonra: false
+   ✓ selin  Y  satır 1 · sonra: false
+   ✓ murat  Y  satır 1 · sonra: false
+   ✓ tuna   Y  satır 1 · sonra: false
+   ✓ deniz  Y  satır 1 · sonra: false
+   ✓ ali    Y  satır 1 · sonra: false
+
+■ cari: ek'e sunucunun olusturma damgasını geri yazma (veri değil)
+   ✓ ayse   Y  satır 1 · sonra: 2026-11-26T18:35:17Z
+   ✓ cem    Y  satır 1 · sonra: 2026-11-26T18:35:17Z
+   ✓ selin  Y  satır 1 · sonra: 2026-11-26T18:35:17Z
+   ✓ murat  Y  satır 1 · sonra: 2026-11-26T18:35:17Z
+   ✓ tuna   Y  satır 1 · sonra: 2026-11-26T18:35:17Z
+   ✓ deniz  Y  satır 1 · sonra: 2026-11-26T18:35:17Z
+   ✓ ali    Y  satır 1 · sonra: 2026-11-26T18:35:17Z
+
+■ İSTİSNA cari: boş telefonu DOLDURMA (boş ≡ boş istisnası dolu değeri geçirmez)
+   ✗ ayse   Y  satır 1 · sonra: 0555 000 00 00   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ cem    Y  satır 1 · sonra: 0555 000 00 00
+   ✗ selin  Y  satır 1 · sonra: 0555 000 00 00   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ murat  Y  satır 1 · sonra: 0555 000 00 00   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ tuna   Y  satır 1 · sonra: 0555 000 00 00   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ deniz  Y  satır 1 · sonra: 0555 000 00 00
+   ✓ ali    Y  satır 1 · sonra: 0555 000 00 00
+
+■ İSTİSNA cari: dolu telefonu BOŞALTMA
+   ✗ ayse   Y  satır 1 · sonra:    ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ cem    Y  satır 1 · sonra: 
+   ✗ selin  Y  satır 1 · sonra:    ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ murat  Y  satır 1 · sonra:    ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ tuna   Y  satır 1 · sonra:    ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ deniz  Y  satır 1 · sonra: 
+   ✓ ali    Y  satır 1 · sonra: 
+
+■ İSTİSNA cari: pasif false → TRUE (false boş sayılır, true sayılmaz)
+   ✗ ayse   Y  satır 1 · sonra: true   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ cem    Y  satır 1 · sonra: true
+   ✗ selin  Y  satır 1 · sonra: true   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ murat  Y  satır 1 · sonra: true   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ tuna   Y  satır 1 · sonra: true   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ deniz  Y  satır 1 · sonra: true
+   ✓ ali    Y  satır 1 · sonra: true
+
+■ İSTİSNA cari: para birimini TRY DIŞI bir değerle doldurma
+   ✗ ayse   Y  satır 1 · sonra: USD   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ cem    Y  satır 1 · sonra: USD
+   ✗ selin  Y  satır 1 · sonra: USD   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ murat  Y  satır 1 · sonra: USD   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ tuna   Y  satır 1 · sonra: USD   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ deniz  Y  satır 1 · sonra: USD
+   ✓ ali    Y  satır 1 · sonra: USD
+
+■ İSTİSNA cari: oluşturma damgasının YANINDA başka ek anahtarı
+   ✗ ayse   Y  satır 1 · sonra: 90   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ cem    Y  satır 1 · sonra: 90
+   ✗ selin  Y  satır 1 · sonra: 90   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ murat  Y  satır 1 · sonra: 90   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ tuna   Y  satır 1 · sonra: 90   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ deniz  Y  satır 1 · sonra: 90
+   ✓ ali    Y  satır 1 · sonra: 90
+
+■ İSTİSNA cari: oluşturma damgasının YANINDA fiyat grubu
+   ✗ ayse   Y  satır 1 · sonra: fg-toptan   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ cem    Y  satır 1 · sonra: fg-toptan   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ selin  Y  satır 1 · sonra: fg-toptan   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ murat  Y  satır 1 · sonra: fg-toptan   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ tuna   Y  satır 1 · sonra: fg-toptan   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ deniz  Y  satır 1 · sonra: fg-toptan
+   ✓ ali    Y  satır 1 · sonra: fg-toptan
+
+■ İSTİSNA cari: oluşturma damgasının YANINDA unvan değişikliği
+   ✗ ayse   Y  satır 1 · sonra: Gizli Değişiklik   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ cem    Y  satır 1 · sonra: Gizli Değişiklik
+   ✗ selin  Y  satır 1 · sonra: Gizli Değişiklik   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ murat  Y  satır 1 · sonra: Gizli Değişiklik   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ tuna   Y  satır 1 · sonra: Gizli Değişiklik   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ deniz  Y  satır 1 · sonra: Gizli Değişiklik
+   ✓ ali    Y  satır 1 · sonra: Gizli Değişiklik
+
+■ İSTİSNA cari: mevcut fiyat grubunu SİLME (dolu → boş)
+   ✗ ayse   Y  satır 1 · sonra: yok   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ cem    Y  satır 1 · sonra: yok   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ selin  Y  satır 1 · sonra: yok   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ murat  Y  satır 1 · sonra: yok   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ tuna   Y  satır 1 · sonra: yok   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ deniz  Y  satır 1 · sonra: yok
+   ✓ ali    Y  satır 1 · sonra: yok
+
+■ İSTİSNA ürün: mevcut satış fiyatını SIFIRLAMA (dolu → 0)
+   ✗ ayse   Y  satır 1 · sonra: 0   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ cem    Y  satır 1 · sonra: 0   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ selin  Y  satır 1 · sonra: 0
+   ✗ murat  Y  satır 1 · sonra: 0   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ tuna   Y  satır 1 · sonra: 0   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ deniz  Y  satır 1 · sonra: 0
+   ✓ ali    Y  satır 1 · sonra: 0
+
+■ İSTİSNA ürün: mevcut alış fiyatını NULL yapma
+   ✗ ayse   Y  satır 1 · sonra: null   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ cem    Y  satır 1 · sonra: null   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ selin  Y  satır 1 · sonra: null   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ murat  Y  satır 1 · sonra: null
+   ✗ tuna   Y  satır 1 · sonra: null   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ deniz  Y  satır 1 · sonra: null   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ ali    Y  satır 1 · sonra: null
+
+■ İSTİSNA ürün: mevcut fiyat kurallarını BOŞALTMA (dolu → [])
+   ✗ ayse   Y  satır 1 · sonra: 0   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ cem    Y  satır 1 · sonra: 0   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ selin  Y  satır 1 · sonra: 0
+   ✗ murat  Y  satır 1 · sonra: 0   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ tuna   Y  satır 1 · sonra: 0   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ deniz  Y  satır 1 · sonra: 0
+   ✓ ali    Y  satır 1 · sonra: 0
+
+■ İSTİSNA ürün: satış fiyatı DOLUYKEN para birimini değiştirme
+   ✗ ayse   Y  satır 1 · sonra: $   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ cem    Y  satır 1 · sonra: $   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ selin  Y  satır 1 · sonra: $
+   ✗ murat  Y  satır 1 · sonra: $   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ tuna   Y  satır 1 · sonra: $   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ deniz  Y  satır 1 · sonra: $
+   ✓ ali    Y  satır 1 · sonra: $
+
+■ İSTİSNA ürün: ad değişikliğinin YANINDA fiyat değişikliği (tam satır)
+   ✗ ayse   Y  satır 1 · sonra: Ad + Fiyat   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ cem    Y  satır 1 · sonra: Ad + Fiyat   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ selin  Y  satır 1 · sonra: Ad + Fiyat
+   ✗ murat  Y  satır 1 · sonra: Ad + Fiyat   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ tuna   Y  satır 1 · sonra: Ad + Fiyat   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ deniz  Y  satır 1 · sonra: Ad + Fiyat
+   ✓ ali    Y  satır 1 · sonra: Ad + Fiyat
+
+■ ürün: boş fiyat alanlarını varsayılanla yazma (null → 0, boş birim → ₺)
+   ✓ ayse   Y  satır 1 · sonra: 0
+   ✓ cem    Y  satır 1 · sonra: 0
+   ✓ selin  Y  satır 1 · sonra: 0
+   ✓ murat  Y  satır 1 · sonra: 0
+   ✓ tuna   Y  satır 1 · sonra: 0
+   ✓ deniz  Y  satır 1 · sonra: 0
+   ✓ ali    Y  satır 1 · sonra: 0
+
+■ ürün: fiyat dışı alan (ad) değiştirme
+   ✓ ayse   Y  satır 1 · sonra: Yeni Ad
+   ✓ cem    Y  satır 1 · sonra: Yeni Ad
+   ✓ selin  Y  satır 1 · sonra: Yeni Ad
+   ✓ murat  Y  satır 1 · sonra: Yeni Ad
+   ✓ tuna   Y  satır 1 · sonra: Yeni Ad
+   ✓ deniz  Y  satır 1 · sonra: Yeni Ad
+   ✓ ali    Y  satır 1 · sonra: Yeni Ad
+
+■ ürün: satış fiyatını değiştirme
+   ✗ ayse   Y  satır 1 · sonra: 999   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ cem    Y  satır 1 · sonra: 999   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ selin  Y  satır 1 · sonra: 999
+   ✗ murat  Y  satır 1 · sonra: 999   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ tuna   Y  satır 1 · sonra: 999   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ deniz  Y  satır 1 · sonra: 999
+   ✓ ali    Y  satır 1 · sonra: 999
+
+■ ürün: alış fiyatını değiştirme
+   ✗ ayse   Y  satır 1 · sonra: 555   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ cem    Y  satır 1 · sonra: 555   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ selin  Y  satır 1 · sonra: 555   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ murat  Y  satır 1 · sonra: 555
+   ✗ tuna   Y  satır 1 · sonra: 555   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ deniz  Y  satır 1 · sonra: 555   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ ali    Y  satır 1 · sonra: 555
+
+■ ürün: adı değiştirip fiyatları AYNEN gönderme (istemcinin tam satır yazması)
+   ✓ ayse   Y  satır 1 · sonra: Tam Satır
+   ✓ cem    Y  satır 1 · sonra: Tam Satır
+   ✓ selin  Y  satır 1 · sonra: Tam Satır
+   ✓ murat  Y  satır 1 · sonra: Tam Satır
+   ✓ tuna   Y  satır 1 · sonra: Tam Satır
+   ✓ deniz  Y  satır 1 · sonra: Tam Satır
+   ✓ ali    Y  satır 1 · sonra: Tam Satır
+
+■ ürün: satış fiyat kuralı ekleme (fiyat grubu fiyatı)
+   ✗ ayse   Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ cem    Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ selin  Y  satır 1 · sonra: 1
+   ✗ murat  Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ tuna   Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ deniz  Y  satır 1 · sonra: 1
+   ✓ ali    Y  satır 1 · sonra: 1
+
+■ ürün: alış fiyat kuralı ekleme
+   ✗ ayse   Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ cem    Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ selin  Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ murat  Y  satır 1 · sonra: 1
+   ✗ tuna   Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ deniz  Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ ali    Y  satır 1 · sonra: 1
+
+■ ürün: fiyatsız yeni ürün
+   ✓ ayse   Y  satır 1 · sonra: 1
+   ✓ cem    Y  satır 1 · sonra: 1
+   ✓ selin  Y  satır 1 · sonra: 1
+   ✓ murat  Y  satır 1 · sonra: 1
+   ✓ tuna   Y  satır 1 · sonra: 1
+   ✓ deniz  Y  satır 1 · sonra: 1
+   ✓ ali    Y  satır 1 · sonra: 1
+
+■ ürün: satış fiyatlı yeni ürün
+   ✗ ayse   Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ cem    Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ selin  Y  satır 1 · sonra: 1
+   ✗ murat  Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ tuna   Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ deniz  Y  satır 1 · sonra: 1
+   ✓ ali    Y  satır 1 · sonra: 1
+
+■ tanımlar: boş varsayılan iskeleti yazma (açılış: boş firma bilgileri, boş listeler)
+   ✓ ayse   Y  satır 1 · sonra: 
+   ✓ cem    Y  satır 1 · sonra: 
+   ✓ selin  Y  satır 1 · sonra: 
+   ✓ murat  Y  satır 1 · sonra: 
+   ✓ tuna   Y  satır 1 · sonra: 
+   ✓ deniz  Y  satır 1 · sonra: 
+   ✓ ali    Y  satır 1 · sonra: 
+
+■ tanımlar: firma bilgisi yokken yalnız varsayılan logolu boş iskelet (açılış)
+   ✓ ayse   Y  satır 1 · sonra: true
+   ✓ cem    Y  satır 1 · sonra: true
+   ✓ selin  Y  satır 1 · sonra: true
+   ✓ murat  Y  satır 1 · sonra: true
+   ✓ tuna   Y  satır 1 · sonra: true
+   ✓ deniz  Y  satır 1 · sonra: true
+   ✓ ali    Y  satır 1 · sonra: true
+
+■ İSTİSNA tanımlar: firma bilgisi YOKKEN iskeletin içinde DOLU unvan
+   ✗ ayse   Y  satır 1 · sonra: Sahte Firma   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ cem    Y  satır 1 · sonra: Sahte Firma   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ selin  Y  satır 1 · sonra: Sahte Firma   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ murat  Y  satır 1 · sonra: Sahte Firma   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ tuna   Y  satır 1 · sonra: Sahte Firma
+   ✗ deniz  Y  satır 1 · sonra: Sahte Firma   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ ali    Y  satır 1 · sonra: Sahte Firma
+
+■ İSTİSNA tanımlar: firma bilgisi YOKKEN iskeletin içinde iç içe DOLU değer (e-posta sunucusu)
+   ✗ ayse   Y  satır 1 · sonra: smtp.ornek.test   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ cem    Y  satır 1 · sonra: smtp.ornek.test   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ selin  Y  satır 1 · sonra: smtp.ornek.test   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ murat  Y  satır 1 · sonra: smtp.ornek.test   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ tuna   Y  satır 1 · sonra: smtp.ornek.test
+   ✗ deniz  Y  satır 1 · sonra: smtp.ornek.test   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ ali    Y  satır 1 · sonra: smtp.ornek.test
+
+■ İSTİSNA tanımlar: firma bilgisi YOKKEN iskeletin içinde KDV anahtarını AÇMA (true)
+   ✗ ayse   Y  satır 1 · sonra: true   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ cem    Y  satır 1 · sonra: true   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ selin  Y  satır 1 · sonra: true   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ murat  Y  satır 1 · sonra: true   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ tuna   Y  satır 1 · sonra: true
+   ✗ deniz  Y  satır 1 · sonra: true   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ ali    Y  satır 1 · sonra: true
+
+■ İSTİSNA tanımlar: firma bilgisi YOKKEN dönem kapanış tarihi yazma
+   ✗ ayse   Y  satır 1 · sonra: 2026-12-31   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ cem    Y  satır 1 · sonra: 2026-12-31   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ selin  Y  satır 1 · sonra: 2026-12-31   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ murat  Y  satır 1 · sonra: 2026-12-31   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ tuna   Y  satır 1 · sonra: 2026-12-31
+   ✗ deniz  Y  satır 1 · sonra: 2026-12-31   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ ali    Y  satır 1 · sonra: 2026-12-31
+
+■ İSTİSNA tanımlar: firma bilgisi VARKEN yalnız logoyu değiştirme (logo istisnası yalnız ilk iskelette)
+   ✗ ayse   Y  satır 1 · sonra: data:image/png;base64,BBBB   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ cem    Y  satır 1 · sonra: data:image/png;base64,BBBB   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ selin  Y  satır 1 · sonra: data:image/png;base64,BBBB   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ murat  Y  satır 1 · sonra: data:image/png;base64,BBBB   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ tuna   Y  satır 1 · sonra: data:image/png;base64,BBBB
+   ✗ deniz  Y  satır 1 · sonra: data:image/png;base64,BBBB   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ ali    Y  satır 1 · sonra: data:image/png;base64,BBBB
+
+■ İSTİSNA tanımlar: firma bilgisi VARKEN boş iskeletle EZME (dolu → boş)
+   ✗ ayse   Y  satır 1 · sonra:    ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ cem    Y  satır 1 · sonra:    ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ selin  Y  satır 1 · sonra:    ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ murat  Y  satır 1 · sonra:    ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ tuna   Y  satır 1 · sonra: 
+   ✗ deniz  Y  satır 1 · sonra:    ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ ali    Y  satır 1 · sonra: 
+
+■ İSTİSNA tanımlar: boş iskeletin YANINDA dolu ara proses listesi
+   ✗ ayse   Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ cem    Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ selin  Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ murat  Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ tuna   Y  satır 1 · sonra: 1
+   ✗ deniz  Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ ali    Y  satır 1 · sonra: 1
+
+■ İSTİSNA tanımlar: boş iskeletin YANINDA bilinmeyen anahtarı true yapma
+   ✗ ayse   Y  satır 1 · sonra: true   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ cem    Y  satır 1 · sonra: true   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ selin  Y  satır 1 · sonra: true   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ murat  Y  satır 1 · sonra: true   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ tuna   Y  satır 1 · sonra: true
+   ✗ deniz  Y  satır 1 · sonra: true   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ ali    Y  satır 1 · sonra: true
+
+■ İSTİSNA tanımlar: bilinmeyen anahtarı false yazma (boş ≡ boş — değişiklik değil)
+   ✓ ayse   Y  satır 1 · sonra: false
+   ✓ cem    Y  satır 1 · sonra: false
+   ✓ selin  Y  satır 1 · sonra: false
+   ✓ murat  Y  satır 1 · sonra: false
+   ✓ tuna   Y  satır 1 · sonra: false
+   ✓ deniz  Y  satır 1 · sonra: false
+   ✓ ali    Y  satır 1 · sonra: false
+
+■ tanımlar: firma unvanını yazma (gerçek değişiklik)
+   ✗ ayse   Y  satır 1 · sonra: Başka Firma   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ cem    Y  satır 1 · sonra: Başka Firma   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ selin  Y  satır 1 · sonra: Başka Firma   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ murat  Y  satır 1 · sonra: Başka Firma   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ tuna   Y  satır 1 · sonra: Başka Firma
+   ✗ deniz  Y  satır 1 · sonra: Başka Firma   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ ali    Y  satır 1 · sonra: Başka Firma
+
+■ tanımlar: kod sayacını ARTIRMA
+   ✓ ayse   Y  satır 1 · sonra: 60
+   ✓ cem    Y  satır 1 · sonra: 60
+   ✓ selin  Y  satır 1 · sonra: 60
+   ✓ murat  Y  satır 1 · sonra: 60
+   ✓ tuna   Y  satır 1 · sonra: 60
+   ✓ deniz  Y  satır 1 · sonra: 60
+   ✓ ali    Y  satır 1 · sonra: 60
+
+■ tanımlar: kod sayacını GERİ ALMA
+   ✗ ayse   Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ cem    Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ selin  Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ murat  Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ tuna   Y  satır 1 · sonra: 1
+   ✗ deniz  Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ ali    Y  satır 1 · sonra: 1
+
+■ tanımlar: yeni renk EKLEME (ürün ekranı)
+   ✓ ayse   Y  satır 1 · sonra: 3
+   ✗ cem    Y  satır 1 · sonra: 3   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ selin  Y  satır 1 · sonra: 3   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ murat  Y  satır 1 · sonra: 3   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ tuna   Y  satır 1 · sonra: 3
+   ✗ deniz  Y  satır 1 · sonra: 3   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ ali    Y  satır 1 · sonra: 3
+
+■ tanımlar: mevcut rengin ADINI değiştirme
+   ✗ ayse   Y  satır 1 · sonra: Bozuk Ad   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ cem    Y  satır 1 · sonra: Bozuk Ad   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ selin  Y  satır 1 · sonra: Bozuk Ad   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ murat  Y  satır 1 · sonra: Bozuk Ad   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ tuna   Y  satır 1 · sonra: Bozuk Ad
+   ✗ deniz  Y  satır 1 · sonra: Bozuk Ad   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ ali    Y  satır 1 · sonra: Bozuk Ad
+
+■ tanımlar: BÜTÜN renkleri silme
+   ✗ ayse   Y  satır 1 · sonra: 0   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ cem    Y  satır 1 · sonra: 0   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ selin  Y  satır 1 · sonra: 0   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ murat  Y  satır 1 · sonra: 0   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ tuna   Y  satır 1 · sonra: 0   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ deniz  Y  satır 1 · sonra: 0   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ ali    Y  satır 1 · sonra: 0
+
+■ tanımlar: tek rengi silme
+   ✗ ayse   Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ cem    Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ selin  Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ murat  Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ tuna   Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ deniz  Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ ali    Y  satır 1 · sonra: 1
+
+■ tanımlar: BOŞ renk koduna kod verme (otomatik)
+   ✓ ayse   Y  satır 1 · sonra: 101
+   ✓ cem    Y  satır 1 · sonra: 101
+   ✓ selin  Y  satır 1 · sonra: 101
+   ✓ murat  Y  satır 1 · sonra: 101
+   ✓ tuna   Y  satır 1 · sonra: 101
+   ✓ deniz  Y  satır 1 · sonra: 101
+   ✓ ali    Y  satır 1 · sonra: 101
+
+■ tanımlar: yeni kombinasyon EKLEME (model rengi)
+   ✓ ayse   Y  satır 1 · sonra: 2
+   ✗ cem    Y  satır 1 · sonra: 2   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ selin  Y  satır 1 · sonra: 2   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ murat  Y  satır 1 · sonra: 2   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ tuna   Y  satır 1 · sonra: 2
+   ✗ deniz  Y  satır 1 · sonra: 2   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ ali    Y  satır 1 · sonra: 2
+
+■ tanımlar: mevcut kombinasyonun bileşenini değiştirme
+   ✗ ayse   Y  satır 1 · sonra: r-siyah   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ cem    Y  satır 1 · sonra: r-siyah   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ selin  Y  satır 1 · sonra: r-siyah   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ murat  Y  satır 1 · sonra: r-siyah   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ tuna   Y  satır 1 · sonra: r-siyah
+   ✗ deniz  Y  satır 1 · sonra: r-siyah   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ ali    Y  satır 1 · sonra: r-siyah
+
+■ tanımlar: yeni beden EKLEME
+   ✗ ayse   Y  satır 1 · sonra: 3   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ cem    Y  satır 1 · sonra: 3   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ selin  Y  satır 1 · sonra: 3   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ murat  Y  satır 1 · sonra: 3   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ tuna   Y  satır 1 · sonra: 3
+   ✗ deniz  Y  satır 1 · sonra: 3   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ ali    Y  satır 1 · sonra: 3
+
+■ tanımlar: SATIŞ fiyat grubu ekleme
+   ✗ ayse   Y  satır 1 · sonra: 2   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ cem    Y  satır 1 · sonra: 2   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ selin  Y  satır 1 · sonra: 2
+   ✗ murat  Y  satır 1 · sonra: 2   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ tuna   Y  satır 1 · sonra: 2   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ deniz  Y  satır 1 · sonra: 2
+   ✓ ali    Y  satır 1 · sonra: 2
+
+■ tanımlar: ALIŞ fiyat grubu ekleme
+   ✗ ayse   Y  satır 1 · sonra: 2   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ cem    Y  satır 1 · sonra: 2   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ selin  Y  satır 1 · sonra: 2   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ murat  Y  satır 1 · sonra: 2
+   ✗ tuna   Y  satır 1 · sonra: 2   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ deniz  Y  satır 1 · sonra: 2   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ ali    Y  satır 1 · sonra: 2
+
+■ tanımlar: gider kartı ekleme
+   ✗ ayse   Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ cem    Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ selin  Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ murat  Y  satır 1 · sonra: 1
+   ✓ tuna   Y  satır 1 · sonra: 1
+   ✗ deniz  Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ ali    Y  satır 1 · sonra: 1
+
+■ tanımlar: ORTAK ekran düzeni
+   ✗ ayse   Y  satır 1 · sonra: true   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ cem    Y  satır 1 · sonra: true   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ selin  Y  satır 1 · sonra: true   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ murat  Y  satır 1 · sonra: true   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ tuna   Y  satır 1 · sonra: true
+   ✗ deniz  Y  satır 1 · sonra: true   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ ali    Y  satır 1 · sonra: true
+
+■ tanımlar: KİŞİSEL rapor (sahibi kendisi)
+   ✓ ayse   Y  satır 1 · sonra: 1
+   ✓ cem    Y  satır 1 · sonra: 1
+   ✓ selin  Y  satır 1 · sonra: 1
+   ✓ murat  Y  satır 1 · sonra: 1
+   ✓ tuna   Y  satır 1 · sonra: 1
+   ✓ deniz  Y  satır 1 · sonra: 1
+   ✓ ali    Y  satır 1 · sonra: 1
+
+■ tanımlar: ORTAK rapor
+   ✗ ayse   Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ cem    Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ selin  Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ murat  Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ tuna   Y  satır 1 · sonra: 1
+   ✗ deniz  Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ ali    Y  satır 1 · sonra: 1
+
+■ tanımlar: başkasının kişisel raporu
+   ✗ ayse   Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ cem    Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ selin  Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✗ murat  Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ tuna   Y  satır 1 · sonra: 1
+   ✗ deniz  Y  satır 1 · sonra: 1   ← AÇIK (yetkisiz yazdı) (beklenen R)
+   ✓ ali    Y  satır 1 · sonra: 1
+
+■ AÇIK (B6) tanımlar: personel maaşı (bolumler) — bu pakette kural YOK
+   ✓ ayse   Y  satır 1 · sonra: 99999
+   ✓ cem    Y  satır 1 · sonra: 99999
+   ✓ selin  Y  satır 1 · sonra: 99999
+   ✓ murat  Y  satır 1 · sonra: 99999
+   ✓ tuna   Y  satır 1 · sonra: 99999
+   ✓ deniz  Y  satır 1 · sonra: 99999
+   ✓ ali    Y  satır 1 · sonra: 99999
+
+■ AÇIK (B6) ürün: proses ücretleri — bu pakette kural YOK
+   ✓ ayse   Y  satır 1 · sonra: 999
+   ✓ cem    Y  satır 1 · sonra: 999
+   ✓ selin  Y  satır 1 · sonra: 999
+   ✓ murat  Y  satır 1 · sonra: 999
+   ✓ tuna   Y  satır 1 · sonra: 999
+   ✓ deniz  Y  satır 1 · sonra: 999
+   ✓ ali    Y  satır 1 · sonra: 999
+
+── b3a2-matris b3a2_m0: 229 uyumlu · 219 AÇIK · 0 fazla kısıt / yanlış gerekçe ──

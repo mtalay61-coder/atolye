@@ -1,0 +1,22 @@
+b3a-sina · taban aday_t2 · uygula 15f1051d5c9f652a · geri-al c015689afb9f2c34
+■ M0 kurulumdan önce
+── yetki-api b3a_1: 83 uyumlu · 4 AÇIK (yetkisiz yazdı) · 3 fazla kısıt / yanlış gerekçe ──
+■ M1 kurulum
+  ✓ M1 kurulum çıkışı: 0
+  ✓ M1 nesneler (fonksiyon / tetikleyici): 1/14
+── yetki-api b3a_1: 89 uyumlu · 0 AÇIK (yetkisiz yazdı) · 1 fazla kısıt / yanlış gerekçe ──
+■ M2 geri alma
+  ✓ M2 geri alma çıkışı: 0
+  ✓ M2 nesne kalmadı: 0/0
+── yetki-api b3a_1: 83 uyumlu · 4 AÇIK (yetkisiz yazdı) · 3 fazla kısıt / yanlış gerekçe ──
+  ✓ M2 geri almadan sonraki matris kurulum öncesiyle BİREBİR aynı: AYNI
+■ M3 iki kez kurulum
+  ✓ M3 ikinci Run çıkışı: 0
+  ✓ M3 nesneler: 1/14
+■ M4 bozma (do bloğunun sonunda hata)
+  ✓ M4 hata verdi: 1
+  ✓ M4 hiçbir B3a nesnesi yok: 0/0
+■ M5 Editor gibi parça parça
+  ✓ M5 parça sayısı: 2
+  ✓ M5 nesneler: 1/14
+── b3a-sina: 11 geçti · 0 kaldı (matris ayrıntısı: /tmp/claude-0/-home-user/6fb38da4-0d40-53c4-8348-d529c722ab74/scratchpad/aday/b3a/once.json.txt · sonra.json.txt · geri.json.txt) ──

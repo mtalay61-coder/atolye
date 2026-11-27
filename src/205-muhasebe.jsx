@@ -583,8 +583,11 @@ function MuhasebeModule({ onParaFisiKes, onFisIptal, sunucuFisiMi, kapsam = "gen
         />
       )}
       {altSekme === "hareketler" && <KasaBankaHareketleri muhasebe={muhasebe} cariler={cariler} />}
+      {/* SON İŞLEMİ GERİ AL (v1.744.44): ciro / iade / tahsil geri alma fişin iptalidir ve `cekSonIslemiGeriAl` bütün dallarında
+          Kasa & Banka silme yetkisi ister (yoksa "yetkiniz yok" der). Onay sistemi kapalıyken yetkisiz kullanıcıya menü öğesi hiç
+          çizilmez — kasa hareketindeki `silmeGizli` ile aynı kural (CekListesi öğeyi `onSonIslemiGeriAl` yoksa gizler). */}
       {altSekme === "cek" && (
-        <CekListesi cekler={cekler} cariler={cariler} kurlar={kurlar} onEkle={cekEkle} onSil={cekSil} onIslem={onCekIslem} onSonIslemiGeriAl={cekSonIslemiGeriAl} onYazdir={onCekYazdir} bankalar={bankalar} kasalar={kasalar} gorseller={cekGorselleri} onGorselKaydet={onCekGorselKaydet} />
+        <CekListesi cekler={cekler} cariler={cariler} kurlar={kurlar} onEkle={cekEkle} onSil={cekSil} onIslem={onCekIslem} onSonIslemiGeriAl={(!!kullaniciYetkisiVar && !kullaniciYetkisiVar("muhasebe", "silme") && !onaySistemiAcikMi(tanimlar)) ? undefined : cekSonIslemiGeriAl} onYazdir={onCekYazdir} bankalar={bankalar} kasalar={kasalar} gorseller={cekGorselleri} onGorselKaydet={onCekGorselKaydet} />
       )}
     </div>
   );

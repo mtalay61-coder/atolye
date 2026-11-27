@@ -18,6 +18,8 @@ const cikti = process.argv[3] || path.join(__dirname, "erp.cjs");
 // Dışa aktarılacak üst düzey adlar. Test neye bakacaksa buraya eklenir.
 const DISA_AKTAR = [
   "renkAdVaryantReceteUygula",
+  "fiyatAlanYetkileri", "fiyatDegisiklikleriniSuz", "cariFiyatGrubuSuz",
+  "fisIptalYetkisi", "fisIptalDugmesiGizli",   // fiş iptali / Geri Al düğmeleri (v1.744.44)
   "fisKesStokSatiri", "fisKesCariSatiri", "fisKesKasaHareketi", "fisKesGonder", "fisIptalGonder", "fisKesTabaniKur", "fisKesKasaTabaniKur", "fisYerTutucuDoldur",
   "FIS_YER", "ANA_FIS_YER", "fisDefteriKuruluAyarla", "fisKesYolu", "defterSunucuFisleriyleBirlestir", "stokFisiSunucuYuku", "stokFisiSunucuSonucu",
   "fisKesEtkilenen", "fisKesDegisenIdler", "kasadanBaglariCikar", "fisSiparisleriGuncelle", "sunucuFisleriniOku", "stokMiktarlariniHesapla", "fisDefterKaydiKur", "siparisTeslimSunucuYuku", "fisKesSiparisKalemleri", "fisKesKalemArtisi", "fisKesKalemleriUygula",   // tek fiş defteri (v1.732.0)

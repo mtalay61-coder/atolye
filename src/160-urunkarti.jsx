@@ -1598,7 +1598,7 @@ function ProductMatrixCard({
                     Alış
                     <input
                       type="number" step="any" min="0"
-                      value={editForm.alisFiyati}
+                      value={editForm.alisFiyati} disabled={!((typeof window !== "undefined" && window.__fiyatYetki) || { alis: true }).alis} title={((typeof window !== "undefined" && window.__fiyatYetki) || { alis: true }).alis ? undefined : "Alış fiyatını değiştirme yetkiniz yok (muhasebe: düzenleme)"}
                       onChange={(e) => setEditForm({ ...editForm, alisFiyati: e.target.value })}
                       className="mono"
                       style={{ ...inputStyle, width: 74, padding: "4px 6px" }}
@@ -1616,7 +1616,7 @@ function ProductMatrixCard({
                     Satış
                     <input
                       type="number" step="any" min="0"
-                      value={editForm.satisFiyati}
+                      value={editForm.satisFiyati} disabled={!((typeof window !== "undefined" && window.__fiyatYetki) || { satis: true }).satis} title={((typeof window !== "undefined" && window.__fiyatYetki) || { satis: true }).satis ? undefined : "Satış fiyatını değiştirme yetkiniz yok (sipariş: düzenleme)"}
                       onChange={(e) => setEditForm({ ...editForm, satisFiyati: e.target.value })}
                       className="mono"
                       style={{ ...inputStyle, width: 74, padding: "4px 6px" }}
@@ -1724,7 +1724,7 @@ function ProductMatrixCard({
                     Alış
                     <input
                       type="number" step="any" min="0"
-                      value={editForm.alisFiyati}
+                      value={editForm.alisFiyati} disabled={!((typeof window !== "undefined" && window.__fiyatYetki) || { alis: true }).alis} title={((typeof window !== "undefined" && window.__fiyatYetki) || { alis: true }).alis ? undefined : "Alış fiyatını değiştirme yetkiniz yok (muhasebe: düzenleme)"}
                       onChange={(e) => setEditForm({ ...editForm, alisFiyati: e.target.value })}
                       className="mono"
                       style={{ ...inputStyle, width: 74, padding: "4px 6px" }}
@@ -1745,7 +1745,7 @@ function ProductMatrixCard({
                     Satış
                     <input
                       type="number" step="any" min="0"
-                      value={editForm.satisFiyati}
+                      value={editForm.satisFiyati} disabled={!((typeof window !== "undefined" && window.__fiyatYetki) || { satis: true }).satis} title={((typeof window !== "undefined" && window.__fiyatYetki) || { satis: true }).satis ? undefined : "Satış fiyatını değiştirme yetkiniz yok (sipariş: düzenleme)"}
                       onChange={(e) => setEditForm({ ...editForm, satisFiyati: e.target.value })}
                       className="mono"
                       style={{ ...inputStyle, width: 74, padding: "4px 6px" }}
@@ -6505,11 +6505,12 @@ function ProductMatrixCard({
                           )}
                         </span>
                         <span style={{ display: "flex", alignItems: "center", gap: 8 }} onClick={(e) => e.stopPropagation()}>
-                          <SilOnayButonu
+                          {/* Fişin silinmesi sunucuda fiş İPTALİDİR; silme yetkisi olmayana çizilmez (v1.744.44, 094). */}
+                          {!fisIptalGizliMi() && <SilOnayButonu
                             onConfirm={() => g.hareketler.forEach((h) => onRemoveHareketGlobal(h.id))}
                             baslikNormal="Bu fişin tüm hareketlerini sil"
                             boyut={12}
-                          />
+                          />}
                         </span>
                         {/* Ok her açılabilen fişte (v1.744.6): tek renkli çok bedenli fiş de matrisle açılıp kapanıyor. */}
                         {tekHucre ? null : acik

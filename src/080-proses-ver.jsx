@@ -478,8 +478,20 @@ const uretimProsesVer = useCallback((uretimId, prosesAdi, personelId, bedenMikta
     verYazmalari.push({ anahtar: "siparis:data", tablo: "siparisler", kayitlar: nextSiparislerRez, etiket: "Siparişler" });
   }
   verYazmalari.push({ anahtar: "uretim:siparisler", tablo: "uretim", kayitlar: nextUretim, etiket: "Üretim" });
-  birlikteYaz(verYazmalari);
-  showToast(mesaj);
+  // "VERİLDİ" İLETİSİ YAZMA SONUCUNA GÖRE (v1.744.41, inceleme 25): ileti yazmadan ÖNCE gösteriliyordu. İki cihaz aynı işi verince
+  // ikincinin üretim satırı sürüm çakışmasıyla reddedilir (040: atama gönderilmez, bellek geri alınır) — o cihaz yine "verildi" görüyordu.
+  // Artık: yazma tuttuysa "verildi"; tutmadıysa olan söylenir (çakışmada ayrıca turuncu şerit çıkar).
+  return birlikteYaz(verYazmalari).then((r) => {
+    if (r && r.ok === false) {
+      const cakisma = (r.sonuclar || []).some((x) => x && x.cakisma);
+      showToast(cakisma
+        ? "İş VERİLEMEDİ — bu üretim az önce başka bir cihazda değişti (iş oradan verilmiş olabilir). Kaydınız gönderilmedi; sayfayı yenileyip güncel durumu kontrol edin."
+        : `İş verme buluta yazılamadı (${String(r.hata || "bilinmeyen hata").slice(0, 120)}) — bağlantı düzelince yeniden denenecek; ekrandaki hâl henüz kaydedilmiş değil.`);
+      return false;
+    }
+    showToast(mesaj);
+    return true;
+  });
 }, [uretim, stok, cariler, tanimlar, siparisler, stokRezervasyonlari, showToast, araProsesSunucuyaKes]);
 
   return uretimProsesVer;

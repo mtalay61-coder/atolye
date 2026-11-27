@@ -1,0 +1,67 @@
+ekran-surum-gecis · GERÇEK API KİPİ (yerel Supabase: Kong → PostgREST / GoTrue; giriş ekrandan)
+  atolye-erp-v1.744.37.html · sha256 bc6912c22a062d1c7e0b012257839dac3e2b86aab0e9f5eb1b7ab5052fbe458a · 6196383 bayt
+  atolye-erp-v1.744.44.html · sha256 b87afc137406202b5e6180c3b97f31139581d3e79238eda51b0cb4252418a7e8 · 6217028 bayt
+  atolye-erp-v1.744.45.html · sha256 37c20323e6ccc9bb2afac2428143b94a22ff1dc970169965f2f65570e872f299 · 6196635 bayt
+
+■ 0 SUNUCU · yerel Supabase, veri sıfırlandı · dört paket kurulur
+  27-b4-uygula → 99|GENEL|UYGULANMIŞ · 28-b3a-uygula → GENEL|KURULU · 29-b3a2-uygula → GENEL|KURULU · 31-yetki-ileti-uygula → GENEL|KURULU
+
+■ A YÖNETİCİ · Ali · surum.json = 1.744.37
+  ✓ A0 dört paket kurulu [b3a tetikleyici, b3a2 tetikleyici, b4 işlev > 0]
+  ✓ A1 yayındaki sürüm açıldı: adres ve sekme başlığı 1.744.37
+  ✓ A1 giriş ekrandan, gerçek Auth hesabıyla yapıldı (1 kez)
+     (bilgi) sürüm değişmeden yenileme, 1.744.37: ilk yenilemede giriş 1 kez istendi · ikinci yenilemede 0 kez
+  ✓ A1 yerleşik cihaz: aynı sürümde yenilemede oturum korunuyor (giriş istenmedi)
+
+  → YAYIN: surum.json = 1.744.44 · sayfa yenilenir (cihazda uygulamanın yeniden açılması)
+     gezinme: atolye-erp-v1.744.37.html → atolye-erp-v1.744.44.html · başlık "Atölye ERP 1.744.44"
+  ✓ A2 uygulama kendiliğinden 1.744.44'e geçti (adres + başlık)
+  ✓ A2 oturum korundu: geçişte yeniden giriş istenmedi
+  ✓ A2 aday istemcinin kancaları var [window.__fiyatYetki, window.__fisIptalGizli]
+     kayıt: PATCH urunler?id=eq.ekr-bot&surum=eq.1&select=id [istemci 1.744.44] → HTTP 200 · bildirim: Ürün güncellendi
+  ✓ A3 1.744.44'te temel kayıt (ürün adı + satış fiyatı, Yönetici) sunucuya yazıldı
+  ✓ A3 yazma 1.744.44 istemcisinden gitti, reddedilen yok
+     gezilen modüller: Üretim · Fişler · Anasayfa
+  ✓ A3 1.744.44'te modüller açılıyor, sayfa hatası yok
+
+  → GERİ DÖNÜŞ: surum.json = 1.744.45 · sayfa yenilenir
+     gezinme: atolye-erp-v1.744.44.html → atolye-erp-v1.744.45.html · başlık "Atölye ERP 1.744.45"
+  ✓ A4 uygulama kendiliğinden 1.744.45'e geçti (adres + başlık)
+  ✓ A4 oturum korundu: geçişte yeniden giriş istenmedi
+  ✓ A4 geri dönüş istemcisi eski kod: aday kancaları YOK
+     kayıt: PATCH urunler?id=eq.ekr-bot&surum=eq.2&select=id [istemci 1.744.45] → HTTP 200 · bildirim: Ürün güncellendi
+  ✓ A5 1.744.45'te temel kayıt (ürün adı + satış fiyatı, Yönetici) sunucuya yazıldı
+  ✓ A5 yazma 1.744.45 istemcisinden gitti, reddedilen yok
+  ✓ A5 1.744.45'te modüller açılıyor, sayfa hatası yok
+
+  → ESKİ ADRES: yeni sekmede atolye-erp-v1.744.44.html açılır (surum.json = 1.744.45)
+     gezinme: atolye-erp-v1.744.44.html → atolye-erp-v1.744.45.html
+  ✓ A6 1.744.44 adresi açılınca 1.744.45'e geçildi
+     gezinme: atolye-erp-v1.744.37.html → atolye-erp-v1.744.45.html
+  ✓ A6 1.744.37 adresi açılınca 1.744.45'e geçildi (aradaki sürüm atlanır)
+
+  → TERS YÖN: surum.json = 1.744.44, sonra 1.744.37 · 1.744.45 yenilenir
+  ✓ A7 1.744.45 düşük numaralı sürüme DÖNMEDİ (geri dönüş yalnız daha yüksek numarayla olur)
+  ✓ A sayfa hatası yok · reddedilen yazma yok (bütün oturum)
+     surum.json okuma sayısı: 13 · toplam yazma: 31
+
+■ B PERSONEL · Ayşe (yalnız stok) · surum.json = 1.744.44 → 1.744.45
+     gezinme: atolye-erp-v1.744.37.html → atolye-erp-v1.744.44.html · başlık "Atölye ERP 1.744.44"
+  ✓ B1 eski adresle açılan cihaz 1.744.44'e geçti
+  ✓ B1 giriş ekrandan yapıldı (1 kez; geçiş girişten önce ya da sonra olabilir)
+     (bilgi) sürüm değişmeden yenileme, 1.744.44: ilk yenilemede giriş 1 kez istendi · ikinci yenilemede 0 kez
+  ✓ B1 yerleşik cihaz: aynı sürümde yenilemede oturum korunuyor (giriş istenmedi)
+     kayıt: PATCH urunler?id=eq.ekr-bot&surum=eq.3&select=id [istemci 1.744.44] → HTTP 200 · satış kutusu KAPALI · bildirim: Ürün güncellendi
+  ✓ B2 1.744.44: personel ürün adını kaydetti; fiyat değişmedi; satış kutusu KAPALI; reddedilen yok
+     gezinme: atolye-erp-v1.744.44.html → atolye-erp-v1.744.45.html · başlık "Atölye ERP 1.744.45"
+  ✓ B3 geri dönüş: 1.744.45'e geçti, yeniden giriş istenmedi
+     kayıt: PATCH urunler?id=eq.ekr-bot&surum=eq.4&select=id [istemci 1.744.45] → HTTP 200 · satış kutusu AÇIK · bildirim: Ürün güncellendi
+  ✓ B4 1.744.45 (eski kod): personel ürün adını kaydetti; fiyat değişmedi; reddedilen yok
+     (bilgi) 1.744.45'te satış kutusu AÇIK: eski kodda kutu kapatılmaz; koruma sunucudadır (B3a-2) — bu sınamanın kapsamı değil
+  ✓ B sayfa hatası yok · reddedilen yazma yok (bütün oturum)
+  ✓ S dört paket sınamanın sonunda da kurulu ve gövdeleri AYNI
+  ✓ buluttaki projelere (ana, G-25) giden istek yok
+
+kesilen dış adresler: www.tcmb.gov.tr ×13 · api.allorigins.win ×26 · api.codetabs.com ×26 · corsproxy.io ×26 · thingproxy.freeboard.io ×13 · canlipiyasalar.haremaltin.com ×13 · api.frankfurter.app ×13 · api.anthropic.com ×13
+
+SONUÇ: 29 geçti · 0 kaldı

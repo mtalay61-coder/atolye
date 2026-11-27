@@ -164,6 +164,8 @@ function AtolyeUygulamasi() {
   const [surumSeridiKapali, setSurumSeridiKapali] = useState(false);
   const [storageOk, setStorageOk] = useState(true);
   const [aktifKullanici, setAktifKullanici] = useState(null);
+  const aktifKullaniciRef = useRef(null);   // v1.744.42: kayıt yolları (saveStok / saveCariler) fiyat yetkisini render beklemeden okur
+  aktifKullaniciRef.current = aktifKullanici;
   damgaKullanicisiAyarla(aktifKullanici && aktifKullanici.ad);   // kayıt damgası (048) — her çizimde güncel
   // OTURUM SÜRDÜRME (kullanıcı, 15 Eylül: "sayfa yenilendiğinde tekrar kullanıcı adı ve şifre
   // girmemi istiyor"). `aktifKullanici` yalnız bellekteydi; her yenilemede giriş ekranı geliyordu.
@@ -1063,6 +1065,14 @@ function AtolyeUygulamasi() {
   // `degisiklikIcerikAyni`). Her çizimde güncellenir; geri çağırma bayat kapanış yerine bunu okur.
   const guncelDurumRef = useRef({});
   guncelDurumRef.current = { stok, cariler, siparisler, uretim, stokRezervasyonlari, onaylar, cop, tanimlar, muhasebe, koliler, gorevler, faturalar, teklifler, fisDefteri, modeller };
+  // FİYAT KUTULARI (v1.744.42, 094 `fiyatAlanYetkileri`): ekranlar kutuyu kapatmak için buradan okur (prop zinciri kurmadan).
+  if (typeof window !== "undefined") window.__fiyatYetki = fiyatAlanYetkileri(tanimlar, aktifKullanici);
+  // FİŞ İPTALİ / GERİ AL DÜĞMELERİ (v1.744.44, 094 `fisIptalYetkisi`): sunucu altı modülden birinde silme ister; yetkisi olmayan
+  // kullanıcıya düğme çizilmez (onay sistemi açıksa eski davranış). Ekranlar `fisIptalGizliMi()` ile okur.
+  if (typeof window !== "undefined") {
+    window.__fisIptalYetki = fisIptalYetkisi(tanimlar, aktifKullanici);
+    window.__fisIptalGizli = fisIptalDugmesiGizli(tanimlar, aktifKullanici);
+  }
   // Döner: içeriği GERÇEKTEN değişen alanlar (not yalnız bunlar için çıkar). Aynı olan alan state'e yazılmaz.
   const bulutDegisikligiUygula = useCallback(async (alanlar) => {
     const tablolar = alanlar.flatMap(alaninTablolari);
@@ -1573,7 +1583,16 @@ function AtolyeUygulamasi() {
     return true;
   }, [stok, showToast, tanimlar]);
 
-  const saveStok = useCallback(async (next) => {
+  const saveStok = useCallback(async (nextHam) => {
+    // FİYAT ALANI YETKİSİ (v1.744.42, B3a-2): yetkisiz fiyat değişikliği eski değerine döner; ürünün öteki alanları kaydedilir.
+    // Sunucu aynı kuralı uygular (29-b3a2) — burada ayıklanmasa kaydın TAMAMI reddedilirdi.
+    const fy = fiyatAlanYetkileri(guncelDurumRef.current.tanimlar, aktifKullaniciRef.current);
+    const suz = fiyatDegisiklikleriniSuz(guncelDurumRef.current.stok, nextHam, fy);
+    const next = suz.liste;
+    if (suz.geriAlinan > 0) {
+      showToast(`Fiyat değişikliği KAYDEDİLMEDİ — yetkiniz yok (${[suz.satis ? "satış fiyatı: sipariş düzenleme" : "", suz.alis ? "alış fiyatı: muhasebe düzenleme" : ""].filter(Boolean).join("; ")}). Öteki alanlar kaydedildi.`);
+      gunlukYaz(`Yetkisiz fiyat değişikliği kayıttan ayıklandı: ${suz.satis} satış, ${suz.alis} alış`, "guvenlik", { satis: suz.satis, alis: suz.alis });
+    }
     setStok(next);
     // GÖRSELLER AYRI YAZILIYOR. `stok:items` tek anahtar ve `guvenliYaz` 5 MB'ı aşan kaydı
     // depoya sormadan reddediyor; görseller o anahtarın içindeyken yüz ürünün birkaç rengi
@@ -1860,6 +1879,7 @@ function AtolyeUygulamasi() {
     // değişmez. İptal edilen satırlar fark tabanından çıkar (eski yoldan bir daha "silinmesin"); kalan iş (üretimin ana satırı,
     // sipariş rezervasyonu, eski usul satırlar) bugünkü yoldan.
     const sunucuSatirlari = fisKesYolu() ? uretimSunucuFisSatirlari(sonuc.silinenStokKayitlari, sonuc.silinenCariKayitlari) : null;
+    let zatenGeriAlinmis = false;   // v1.744.41: sunucu "fişler zaten iptal" dedi (aşağıda)
     if (fisKesYolu() && (!sunucuSatirlari || !sunucuSatirlari.fisler.length) && (sonuc.silinenStokKayitlari.length || sonuc.silinenCariKayitlari.length)) {
       showToast("Üretim tesliminin fişleri doğrulanamadı — kayıtlar korunuyor. Listeyi yenileyip tekrar deneyin.");
       return;
@@ -1868,14 +1888,44 @@ function AtolyeUygulamasi() {
       const etkU = fisKesEtkilenen(uretim, sonuc.uretim, [uretimId]);
       const atamaFarki = fisKesAltFarki("uretim", "uretim_atamalari", etkU.eskiler[0], etkU.yeniler[0]);
       const alt = atamaFarki.satirlar.length || atamaFarki.sil.length ? { uretim_atamalari: atamaFarki } : null;
+      let iptalYaniti = null;
       try {
-        await supabaseIstek("rpc/fis_iptal_toplu", { method: "POST", body: JSON.stringify({p:{
+        iptalYaniti = await supabaseIstek("rpc/fis_iptal_toplu", { method: "POST", body: JSON.stringify({p:{
           fisler:sunucuSatirlari.fisler,sebep:`Üretim teslimi geri alındı (${siparis.siparisNo} · ${prosesAdi})`,alt
         }}) });
       } catch (e) {
         showToast(`Geri alınamadı — hiçbir değişiklik yapılmadı (${String((e && e.message) || e).slice(0, 160)})`);
         gunlukYaz(`Üretim teslimi geri alınamadı (${siparis.siparisNo} · ${prosesAdi}): ${String((e && e.message) || e).slice(0, 200)}`, "uretim", { uretimId, atamaId });
         return;
+      }
+      // BAYAT GERİ AL (v1.744.41, inceleme 25 B5): sunucu bütün fişler için "zaten iptal" dediyse bu çağrı fişlerde HİÇBİR şeyi
+      // değiştirmedi — teslim başka cihazda ya da yanıtı kaybolan önceki denemede geri alınmıştı. Sonuç SUNUCUDAN doğrulanır:
+      //   • adımın GEÇERLİ bir fişi var mı (078 `uretimAdimiSunucudaGecerliMi`) — ara proses dahil (ataması yok, tek kanıt fiş);
+      //   • atamalı adımda ayrıca atama satırı teslim alınmış mı.
+      // Geçerli fiş VAR / atama teslimli / okunamadı → bu cihazın bayat hesabı UYGULANMAZ; ekran sunucudaki hâle getirilir ve
+      // kullanıcıya gerçekleşmeyen işlem için başarı denmez. İkisi de "yok / bekliyor" → geri alma gerçekten yapılmış (yanıt kaybı
+      // tekrarı): olağan yol sürer (üretimin ana satırını istemci yazar), ileti önceden yapıldığını söyler.
+      if (fisIptalHepsiZatenIptal(iptalYaniti)) {
+        zatenGeriAlinmis = true;
+        const gecerliFis = await uretimAdimiSunucudaGecerliMi(uretimId, uretimFisAdlari(siparis, adimIndex, araProsesMi ? null : atamaId));
+        let sunucudaTeslim = false;
+        if (!araProsesMi) {
+          try {
+            const r = await supabaseIstek(`uretim_atamalari?id=eq.${encodeURIComponent(atamaId)}&select=tamamlandi_mi`);
+            sunucudaTeslim = Array.isArray(r) && r[0] ? !!r[0].tamamlandi_mi : null;
+          } catch (e) { sunucudaTeslim = null; }
+        }
+        if (gecerliFis !== false || sunucudaTeslim !== false) {
+          gunlukYaz(`Üretim teslimi geri alma: fişler zaten iptal, değişiklik yapılmadı (${sunucuSatirlari.fisler.join(", ")} · ${siparis.siparisNo} · ${prosesAdi})`, "uretim",
+            { uretimId, atamaId, gecerliFis, sunucudaTeslim });
+          try { await bulutDegisikligiUygula(["uretim", "stok", "cariler", "siparisler", "stokRezervasyonlari", "fisDefteri"]); } catch (e) { /* yoklama birazdan tazeler */ }
+          const durumNotu = gecerliFis === true
+            ? (araProsesMi ? " ve adım yeniden tamamlanmış (geçerli bir fişi var)" : sunucudaTeslim ? " ve iş yeniden teslim alınmış (geçerli bir fişi var)"
+              : "; ancak sunucuda bu adımın geçerli bir fişi duruyor — Fişler ekranından kontrol edin")
+            : (sunucudaTeslim ? " ve iş yeniden teslim alınmış" : "; sunucudaki güncel durum doğrulanamadı");
+          showToast(`"${prosesAdi}" ${araProsesMi ? "ara prosesi" : "teslimi"} zaten geri alınmıştı (başka cihazdan ya da önceki denemede)${durumNotu} — bu işlem yeni bir değişiklik yapmadı. Ekran güncel duruma getirildi; işin şimdiki durumunu kontrol edin.`);
+          return;
+        }
       }
       fisKesTabandanCikar("urunler", "stok_hareketleri", sunucuSatirlari.stokIdler);
       fisKesTabandanCikar("cariler", "cari_hareketleri", sunucuSatirlari.cariIdler);
@@ -1905,12 +1955,16 @@ function AtolyeUygulamasi() {
 
     showToast(
       araProsesMi
-        ? `"${prosesAdi}" ara prosesinin otomatik tamamlanması geri alındı — hammadde ve işçilik geri alındı` +
+        ? (zatenGeriAlinmis
+            ? `"${prosesAdi}" ara prosesinin tamamlanması zaten geri alınmıştı (önceki denemede ya da başka cihazdan) — kayıtlar geri alınmış durumda`
+            : `"${prosesAdi}" ara prosesinin otomatik tamamlanması geri alındı — hammadde ve işçilik geri alındı`) +
           (iadeEdilenRez > 0 ? " · rezervasyon payları serbest bırakıldı" : "")
-        : `"${prosesAdi}" için ${atama.miktar} adetlik teslim alma işlemi geri alındı — hammadde ve işçilik geri alındı` +
+        : (zatenGeriAlinmis
+            ? `"${prosesAdi}" için ${atama.miktar} adetlik teslim zaten geri alınmıştı (önceki denemede ya da başka cihazdan) — kayıtlar geri alınmış durumda, iş yeniden teslim alınabilir`
+            : `"${prosesAdi}" için ${atama.miktar} adetlik teslim alma işlemi geri alındı — hammadde ve işçilik geri alındı`) +
           (iadeEdilenRez > 0 ? " · rezervasyon payları serbest bırakıldı" : "")
     );
-  }, [faturalar, uretim, stok, cariler, siparisler, stokRezervasyonlari, showToast, muhasebe, koliler, fisDefterindeIptal]);
+  }, [faturalar, uretim, stok, cariler, siparisler, stokRezervasyonlari, showToast, muhasebe, koliler, fisDefterindeIptal, bulutDegisikligiUygula]);
 
   // Bir üretim siparişini siler; bu üretime bağlı (Tedarik Planlama ile oluşmuş) bir satış kalemi varsa
   // o kalemin planlama referansını temizleyerek yeniden planlanabilir hale getirir.
@@ -2362,9 +2416,16 @@ function AtolyeUygulamasi() {
     // FONKSİYON DA KABUL EDİLİR (v1.639.0, denetim): kasa/banka ekranı (205) kasa yazımını bekledikten sonra cari listesini
     // kapanıştaki hâliyle yazıyordu; bu arada gelen değişiklik eziliyordu. Fonksiyon verilirse güncel liste üzerinden
     // kurulur (addCariHareketFromStok kalıbı). Kod ataması yine `cariKodlariAta`; tanım yazımı mikro göreve.
+    // MÜŞTERİNİN FİYAT GRUBU (v1.744.42, B3a-2): sipariş düzenleme VE cari düzenleme ister; yetkisiz değişiklik eski değerine döner.
+    const fgIzin = fiyatAlanYetkileri(guncelDurumRef.current.tanimlar, aktifKullaniciRef.current).cariFiyatGrubu;
+    const fgSuz = (eski, yeni) => {
+      const z = cariFiyatGrubuSuz(eski, yeni, fgIzin);
+      if (z.geriAlinan > 0) showToast("Müşterinin fiyat grubu DEĞİŞTİRİLMEDİ — yetkiniz yok (sipariş düzenleme ve cari düzenleme gerekir). Öteki alanlar kaydedildi.");
+      return z.liste;
+    };
     if (typeof next === "function") {
       setCariler((prev) => {
-        const sonuc = cariKodlariAta(next(prev), tanimlar);
+        const sonuc = cariKodlariAta(fgSuz(prev, next(prev)), tanimlar);
         if (sonuc.atanan > 0) Promise.resolve().then(() => {
           setTanimlar(sonuc.tanimlar);
           yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", sonuc.tanimlar), "Tanımlar", sonuc.tanimlar);
@@ -2377,7 +2438,7 @@ function AtolyeUygulamasi() {
     // YENİ CARİYE KODU ANINDA VERİLİYOR. Ayrı bir "kodları ata" adımına bırakmak, kullanıcının
     // cariyi açıp koduna baktığında boş görmesi demekti. `cariKodlariAta` kodu OLANA dokunmuyor,
     // o yüzden her kayıtta güvenle çağrılabiliyor.
-    const sonuc = cariKodlariAta(next, tanimlar);
+    const sonuc = cariKodlariAta(fgSuz(guncelDurumRef.current.cariler, next), tanimlar);
     if (sonuc.atanan > 0) {
       setTanimlar(sonuc.tanimlar);
       yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", sonuc.tanimlar), "Tanımlar", sonuc.tanimlar);
@@ -4067,7 +4128,9 @@ function AtolyeUygulamasi() {
     sonuc.silinenCariKayitlari.forEach(({ cari: c, hareket: h }) => gunlukYaz(`Fiş iptal — cari satırı: ${c.unvan} ${h.yon || ""} ${h.tutar || 0}`, "cari", { fisNo: sunucuFisi.fisNo }));
     gunlukYaz(`Fiş iptal edildi: ${sunucuFisi.fisNo}${sunucuFisi.bagliFis ? ` + ${sunucuFisi.bagliFis}` : ""}`, "stok",
       { fisNo: sunucuFisi.fisNo, bagliFisNo: sunucuFisi.bagliFis || null, stokHareketi: sonuc.silinenStok, cariHareketi: sonuc.silinenCari, kasaHareketi: kasaSilinen.length });
-    showToast(`"${sunucuFisi.fisNo}" iptal edildi${sunucuFisi.bagliFis ? ` (bağlı ${sunucuFisi.bagliFis} de)` : ""} — `
+    // v1.744.41: sunucu "zaten iptal" dediyse bu işlem yeni bir şey değiştirmedi — ileti bunu söyler (satırlar ekrandan yine kalkar:
+    // sunucuda da iptaller).
+    showToast(`"${sunucuFisi.fisNo}" ${iptalYaniti && iptalYaniti.zatenIptal ? "zaten iptal edilmişti (başka cihazdan ya da önceki denemede) — ekran güncellendi" : "iptal edildi"}${sunucuFisi.bagliFis ? ` (bağlı ${sunucuFisi.bagliFis} de)` : ""} — `
       + [sonuc.silinenStok ? `${sonuc.silinenStok} stok` : "", sonuc.silinenCari ? `${sonuc.silinenCari} cari` : "", kasaSilinen.length ? `${kasaSilinen.length} kasa` : ""].filter(Boolean).join(", ") + " satırı");
     return true;
   }, [faturalar, stok, cariler, siparisler, uretim, muhasebe, koliler, showToast, aktifKullanici]);
@@ -6766,7 +6829,9 @@ function AtolyeUygulamasi() {
           }}
         >
           <span style={{ flex: 1 }}>{toast}</span>
-          {toastGeriAl && (
+          {/* Bildirimdeki "Geri al" her çağıranda fişin İPTALİDİR (fisGeriAlRef → yetimFisTemizle → fis_iptal): silme yetkisi
+              olmayan kullanıcıya çizilmez (v1.744.44) — tahsilatı kaydeden muhasebeci tıklayınca sunucudan 403 alıyordu. */}
+          {toastGeriAl && !fisIptalGizliMi() && (
             <button type="button" data-toast-geri-al="1"
               onClick={() => { const f = toastGeriAl; toastKapat(); f(); }}
               style={{ background: "transparent", border: "1px solid var(--erp-shell-ink)", color: "var(--erp-shell-ink)",

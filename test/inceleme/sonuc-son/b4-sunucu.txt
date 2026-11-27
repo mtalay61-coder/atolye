@@ -1,0 +1,58 @@
+b4-sunucu-sina · şablon son_b4s · normal · B4 kurulu EVET
+
+■ T1 tam
+  ✓ E A geçti: true
+  ✓ E B reddedildi (kod): true
+  ✓ E tek fiş, stok / işçilik bir kez: [1,10,-350]
+     B: KR030 Bu iş başka cihazda zaten teslim alınmış (atama b4-b4t1-a) — ekranı yenileyin. Hiçbir şey kaydedilmedi.
+  ✓ Y aynı istek yeniden → zatenVar, aynı fiş, defter aynı: [true,true,true]
+  ✓ Y kullanıcı YENİ istekle yeniden → ret, defter aynı: [true,true]
+  ✓ Y tek fiş: [1,10,-350]
+  ✓ H stk_fis son adımda hata → defterler AYNI: ["P0001",true]
+  ✓ H stk_hareket son adımda hata → defterler AYNI: ["P0001",true]
+  ✓ H car_hareket son adımda hata → defterler AYNI: ["P0001",true]
+  ✓ H uretim_atamalari son adımda hata → defterler AYNI: ["P0001",true]
+
+■ T3 kısmi 6 + kalan 4
+  ✓ E A geçti: true
+  ✓ E B reddedildi (kod): true
+  ✓ E tek fiş, stok / işçilik bir kez: [1,6,-210]
+     B: KR030 Bu iş başka cihazda zaten teslim alınmış (atama b4-b4t3-a) — ekranı yenileyin. Hiçbir şey kaydedilmedi.
+  ✓ Y aynı istek yeniden → zatenVar, aynı fiş, defter aynı: [true,true,true]
+  ✓ Y kullanıcı YENİ istekle yeniden → ret, defter aynı: [true,true]
+  ✓ Y tek fiş: [1,6,-210]
+  ✓ H stk_fis son adımda hata → defterler AYNI: ["P0001",true]
+  ✓ H stk_hareket son adımda hata → defterler AYNI: ["P0001",true]
+  ✓ H car_hareket son adımda hata → defterler AYNI: ["P0001",true]
+  ✓ H uretim_atamalari son adımda hata → defterler AYNI: ["P0001",true]
+
+■ T7 tamirli (7 + 3 tamir)
+  ✓ E A geçti: true
+  ✓ E B reddedildi (kod): true
+  ✓ E tek fiş, stok / işçilik bir kez: [1,7,-350]
+     B: KR030 Bu iş başka cihazda zaten teslim alınmış (atama b4-b4t7-a) — ekranı yenileyin. Hiçbir şey kaydedilmedi.
+  ✓ Y aynı istek yeniden → zatenVar, aynı fiş, defter aynı: [true,true,true]
+  ✓ Y kullanıcı YENİ istekle yeniden → ret, defter aynı: [true,true]
+  ✓ Y tek fiş: [1,7,-350]
+  ✓ H stk_fis son adımda hata → defterler AYNI: ["P0001",true]
+  ✓ H stk_hareket son adımda hata → defterler AYNI: ["P0001",true]
+  ✓ H car_hareket son adımda hata → defterler AYNI: ["P0001",true]
+  ✓ H uretim_atamalari son adımda hata → defterler AYNI: ["P0001",true]
+
+■ İptal zinciri (T1): teslim F1 → iptal → yeniden teslim F2 → F1'in bayat iptali
+  ✓ İ F1 iptal, atama bekliyor: [true,"Dikim:10:b",0]
+  ✓ İ F2 geçerli: stok 10, işçilik −350, atama teslim: [1,10,-350,"Dikim:10:t"]
+  ✓ İ bayat B: F1'in toplu iptali → defterler ve atama DEĞİŞMEDİ: [true,"Dikim:10:t"]
+     B toplu: {"fisler":[{"fisNo":"ÜRT-261127001","cekler":[],"kalemler":[],"bagliFisNo":null,"zatenIptal":true,"karsilananDuzeltme":[]}]}
+  ✓ İ bayat B: F1'in tekil iptali → defterler ve atama DEĞİŞMEDİ: [true,"Dikim:10:t",true]
+  ✓ İ F2 iptalinde uretim_atamalari hatası → defterler AYNI, F2 geçerli: ["P0001",true,1]
+  ✓ İ F2 iptalinde car_hareket hatası → defterler AYNI, F2 geçerli: ["P0001",true,1]
+  ✓ İ F2 iptalinde stk_hareket hatası → defterler AYNI, F2 geçerli: ["P0001",true,1]
+  ✓ İ F2 iptali tekrar (yanıt kaybı) → etkisiz, atama bekliyor: [true,"Dikim:10:b",0,true]
+
+■ Tamir: tamirli teslim → tamir parçasını iki cihaz eşzamanlı teslim
+  ✓ T tamir teslimi bir kez: mamul +3, işçilik −15: [true,true,3,-15,2]
+     B: KR030 Bu iş başka cihazda zaten teslim alınmış (atama atama-mwy0rl2z-qph3) — ekranı yenileyin. Hiçbir şey kaydedilme
+  ✓ şablon fonksiyonları koşu boyunca değişmedi: true
+
+── b4-sunucu-sina (normal): 40 geçti · 0 kaldı ──
