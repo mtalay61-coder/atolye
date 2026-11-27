@@ -37,7 +37,16 @@
     - `public` varsayılan yetkilerinde `service_role` ve TRUNCATE yok (yalnız sonradan açılacak tabloları etkiler);
     - ortam: depolama kovaları ve politikaları, `pg_cron` / `pg_net`, zamanlanmış iş, olay tetikleyicileri, roller;
     - veri: hesaplar, ERP kullanıcıları, giriş ayarı.
-- **Gerçek Supabase projesinde henüz DENENMEDİ.** Editor'ün 300 KB'lık tek ifadeyi kabul edip etmeyeceği bilinmiyor.
+- **Dökümden kurulan veritabanında uygulama sınaması** (yayın paketleri, iki cihaz; sonuçlar `test/inceleme/sonuc-dokumden/`):
+
+  | Koşu | Sonuç |
+  |---|---|
+  | 1.744.37, B4 YOK | çift kayıtlar görüldü (ör. eşzamanlı teslim mamul 20; yanıt kaybından sonra yeniden "Teslim Al" ikinci fişi kesti). Betik bu bozuk durumdan sonra T6'da durdu — tam sayı yok |
+  | 1.744.37, B4 kurulu | **35/35** · "İşi Ver" **12/12** |
+  | 1.744.41, B4 kurulu | **35/35** · "İşi Ver" **12/12** (ikinci cihaz "İş VERİLEMEDİ" diyor) |
+
+  Dört koşuda canlıya / G-25 denemesine giden istek 0.
+- **Gerçek Supabase projesinde henüz DENENMEDİ.** Bilinmeyenler: Editor'ün 300 KB'lık tek ifadeyi kabul edip etmeyeceği; yeni projede ilk Yönetici'nin açılışı (yerel sınamada oturum taklit edildi).
 
 ## Yerelde ölçülenler (bu paketin dayanağı)
 
