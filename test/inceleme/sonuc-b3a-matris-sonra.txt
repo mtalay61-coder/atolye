@@ -1,0 +1,128 @@
+
+■ ürün adını değiştir (urunler UPDATE)
+   ✓ anon                 RET      42501 permission denied for table urunler
+   ✓ zeki (listede yok)   RET      42501 Bu işlem için yetkiniz yok: hesap ERP kullanıcı listesinde değil ya da hiçbir modülde yazma yetkisi yok (tablo
+   ✓ ayşe (yalnız stok)   YAZDI    satır 1 · sonra: Kırık Ad
+   ✓ okan (salt okur)     RET      42501 Bu işlem için yetkiniz yok: hesap ERP kullanıcı listesinde değil ya da hiçbir modülde yazma yetkisi yok (tablo
+   ✓ ali (Yönetici)       YAZDI    satır 1 · sonra: Kırık Ad
+
+■ ürün sil (urunler DELETE)
+   ✓ anon                 RET      42501 permission denied for table urunler
+   ✓ zeki (listede yok)   RET      42501 Bu işlem için yetkiniz yok: hesap ERP kullanıcı listesinde değil ya da hiçbir modülde yazma yetkisi yok (tablo
+   ✓ ayşe (yalnız stok)   RET      42501 Bu işlem için yetkiniz yok (urunler: silme)
+   ✓ okan (salt okur)     RET      42501 Bu işlem için yetkiniz yok: hesap ERP kullanıcı listesinde değil ya da hiçbir modülde yazma yetkisi yok (tablo
+   ✓ ali (Yönetici)       YAZDI    satır 1 · sonra: 0
+
+■ sipariş miktarı (siparis_kalemleri UPDATE)
+   ✓ anon                 RET      42501 permission denied for table siparis_kalemleri
+   ✓ zeki (listede yok)   RET      42501 permission denied for table siparis_kalemleri
+   ✓ ayşe (yalnız stok)   RET      42501 permission denied for table siparis_kalemleri
+   ✓ okan (salt okur)     RET      42501 permission denied for table siparis_kalemleri
+   ✓ ali (Yönetici)       RET      42501 permission denied for table siparis_kalemleri
+
+■ sipariş kalemi rengi (bağı kopar)
+   ✓ anon                 RET      42501 permission denied for table siparis_kalemleri
+   ✓ zeki (listede yok)   RET      42501 permission denied for table siparis_kalemleri
+   ✓ ayşe (yalnız stok)   RET      42501 permission denied for table siparis_kalemleri
+   ✓ okan (salt okur)     RET      42501 permission denied for table siparis_kalemleri
+   ✓ ali (Yönetici)       RET      42501 permission denied for table siparis_kalemleri
+
+■ siparişi iptal et (siparisler UPDATE durum)
+   ✓ anon                 RET      42501 permission denied for table siparisler
+   ✓ zeki (listede yok)   RET      42501 Bu işlem için yetkiniz yok: hesap ERP kullanıcı listesinde değil ya da hiçbir modülde yazma yetkisi yok (tablo
+   ✗ ayşe (yalnız stok)   RET      KR006 Sipariş iptali yalnız bağları birlikte çözen işlemden yapılır (sipariş sp-inc-1)   ← FAZLA KISIT (beklenen R)
+   ✓ okan (salt okur)     RET      42501 Bu işlem için yetkiniz yok: hesap ERP kullanıcı listesinde değil ya da hiçbir modülde yazma yetkisi yok (tablo
+   ✓ ali (Yönetici)       RET      KR006 Sipariş iptali yalnız bağları birlikte çözen işlemden yapılır (sipariş sp-inc-1)
+
+■ sipariş sil (siparisler DELETE)
+   ✓ anon                 RET      42501 permission denied for table siparisler
+   ✓ zeki (listede yok)   RET      42501 Bu işlem için yetkiniz yok: hesap ERP kullanıcı listesinde değil ya da hiçbir modülde yazma yetkisi yok (tablo
+   ✓ ayşe (yalnız stok)   RET      42501 Bu işlem için yetkiniz yok (siparisler: silme)
+   ✓ okan (salt okur)     RET      42501 Bu işlem için yetkiniz yok: hesap ERP kullanıcı listesinde değil ya da hiçbir modülde yazma yetkisi yok (tablo
+   ✓ ali (Yönetici)       YAZDI    satır 1 · sonra: 0
+
+■ Tanımlar: renk adını değiştir
+   ✓ anon                 RET      42501 permission denied for table tanimlar
+   ✓ zeki (listede yok)   RET      42501 Bu işlem için yetkiniz yok: hesap ERP kullanıcı listesinde değil ya da hiçbir modülde yazma yetkisi yok (tablo
+   ✗ ayşe (yalnız stok)   YAZDI    satır 1 · sonra: Bozuk Ad / kombi: 1054 - Siyah/Bozuk Ad   ← AÇIK (beklenen R)
+   ✓ okan (salt okur)     RET      42501 Bu işlem için yetkiniz yok: hesap ERP kullanıcı listesinde değil ya da hiçbir modülde yazma yetkisi yok (tablo
+   ✓ ali (Yönetici)       YAZDI    satır 1 · sonra: Bozuk Ad / kombi: 1054 - Siyah/Bozuk Ad
+
+■ Tanımlar: bütün renkleri sil
+   ✓ anon                 RET      42501 permission denied for table tanimlar
+   ✓ zeki (listede yok)   RET      42501 Bu işlem için yetkiniz yok: hesap ERP kullanıcı listesinde değil ya da hiçbir modülde yazma yetkisi yok (tablo
+   ✗ ayşe (yalnız stok)   YAZDI    satır 1 · sonra: 0 etkin renk   ← AÇIK (beklenen R)
+   ✓ okan (salt okur)     RET      42501 Bu işlem için yetkiniz yok: hesap ERP kullanıcı listesinde değil ya da hiçbir modülde yazma yetkisi yok (tablo
+   ✓ ali (Yönetici)       YAZDI    satır 1 · sonra: 0 etkin renk
+
+■ Tanımlar: kullanıcı listesine kendini Yönetici ekle
+   ✓ anon                 RET      42501 permission denied for table tanimlar
+   ✓ zeki (listede yok)   RET      42501 Bu işlem için yetkiniz yok: hesap ERP kullanıcı listesinde değil ya da hiçbir modülde yazma yetkisi yok (tablo
+   ✓ ayşe (yalnız stok)   RET      42501 Kullanıcı listesini ve giriş ayarını yalnız Yönetici değiştirebilir
+   ✓ okan (salt okur)     RET      42501 Bu işlem için yetkiniz yok: hesap ERP kullanıcı listesinde değil ya da hiçbir modülde yazma yetkisi yok (tablo
+   ✓ ali (Yönetici)       YAZDI    satır 1 · sonra: 4
+
+■ Tanımlar: giriş denetimini kapat
+   ✓ anon                 RET      42501 permission denied for table tanimlar
+   ✓ zeki (listede yok)   RET      42501 Bu işlem için yetkiniz yok: hesap ERP kullanıcı listesinde değil ya da hiçbir modülde yazma yetkisi yok (tablo
+   ✓ ayşe (yalnız stok)   RET      42501 Kullanıcı listesini ve giriş ayarını yalnız Yönetici değiştirebilir
+   ✓ okan (salt okur)     RET      42501 Bu işlem için yetkiniz yok: hesap ERP kullanıcı listesinde değil ya da hiçbir modülde yazma yetkisi yok (tablo
+   ✓ ali (Yönetici)       YAZDI    satır 1 · sonra: false
+
+■ varyantı doğrudan sil (stk_varyant DELETE)
+   ✓ anon                 RET      42501 permission denied for table stk_varyant
+   ✓ zeki (listede yok)   RET      42501 permission denied for table stk_varyant
+   ✓ ayşe (yalnız stok)   RET      42501 permission denied for table stk_varyant
+   ✓ okan (salt okur)     RET      42501 permission denied for table stk_varyant
+   ✓ ali (Yönetici)       RET      42501 permission denied for table stk_varyant
+
+■ stok fişi doğrudan ekle (stk_fis INSERT)
+   ✓ anon                 RET      42501 permission denied for table stk_fis
+   ✓ zeki (listede yok)   RET      42501 permission denied for table stk_fis
+   ✓ ayşe (yalnız stok)   RET      42501 permission denied for table stk_fis
+   ✓ okan (salt okur)     RET      42501 permission denied for table stk_fis
+   ✓ ali (Yönetici)       RET      42501 permission denied for table stk_fis
+
+■ cari unvanı (cariler UPDATE)
+   ✓ anon                 RET      42501 permission denied for table cariler
+   ✓ zeki (listede yok)   RET      42501 Bu işlem için yetkiniz yok: hesap ERP kullanıcı listesinde değil ya da hiçbir modülde yazma yetkisi yok (tablo
+   ✗ ayşe (yalnız stok)   YAZDI    satır 1 · sonra: Kırık   ← AÇIK (beklenen R)
+   ✓ okan (salt okur)     RET      42501 Bu işlem için yetkiniz yok: hesap ERP kullanıcı listesinde değil ya da hiçbir modülde yazma yetkisi yok (tablo
+   ✓ ali (Yönetici)       YAZDI    satır 1 · sonra: Kırık
+
+■ cari sil (cariler DELETE)
+   ✓ anon                 RET      42501 permission denied for table cariler
+   ✓ zeki (listede yok)   RET      42501 Bu işlem için yetkiniz yok: hesap ERP kullanıcı listesinde değil ya da hiçbir modülde yazma yetkisi yok (tablo
+   ✓ ayşe (yalnız stok)   RET      42501 Bu işlem için yetkiniz yok (cariler: silme)
+   ✓ okan (salt okur)     RET      42501 Bu işlem için yetkiniz yok: hesap ERP kullanıcı listesinde değil ya da hiçbir modülde yazma yetkisi yok (tablo
+   ✓ ali (Yönetici)       YAZDI    satır 1 · sonra: 0
+
+■ cari hareketi doğrudan ekle (car_hareket INSERT)
+   ✓ anon                 RET      42501 permission denied for table car_hareket
+   ✓ zeki (listede yok)   RET      42501 permission denied for table car_hareket
+   ✓ ayşe (yalnız stok)   RET      42501 permission denied for table car_hareket
+   ✓ okan (salt okur)     RET      42501 permission denied for table car_hareket
+   ✓ ali (Yönetici)       RET      42501 permission denied for table car_hareket
+
+■ hızlı cari ekle (cariler INSERT)
+   ✓ anon                 RET      42501 permission denied for table cariler
+   ✓ zeki (listede yok)   RET      42501 Bu işlem için yetkiniz yok: hesap ERP kullanıcı listesinde değil ya da hiçbir modülde yazma yetkisi yok (tablo
+   ✓ ayşe (yalnız stok)   YAZDI    satır 1 · sonra: 1
+   ✓ okan (salt okur)     RET      42501 Bu işlem için yetkiniz yok: hesap ERP kullanıcı listesinde değil ya da hiçbir modülde yazma yetkisi yok (tablo
+   ✓ ali (Yönetici)       YAZDI    satır 1 · sonra: 1
+
+■ Tanımlar: kod sayacı (otomatik kod verme)
+   ✓ anon                 RET      42501 permission denied for table tanimlar
+   ✓ zeki (listede yok)   RET      42501 Bu işlem için yetkiniz yok: hesap ERP kullanıcı listesinde değil ya da hiçbir modülde yazma yetkisi yok (tablo
+   ✓ ayşe (yalnız stok)   YAZDI    satır 1 · sonra: 999
+   ✓ okan (salt okur)     RET      42501 Bu işlem için yetkiniz yok: hesap ERP kullanıcı listesinde değil ya da hiçbir modülde yazma yetkisi yok (tablo
+   ✓ ali (Yönetici)       YAZDI    satır 1 · sonra: 999
+
+■ ürün sürümünü elle düşür (urunler.surum)
+   ✓ anon                 RET      42501 permission denied for table urunler
+   ✓ zeki (listede yok)   RET      42501 Bu işlem için yetkiniz yok: hesap ERP kullanıcı listesinde değil ya da hiçbir modülde yazma yetkisi yok (tablo
+   ✓ ayşe (yalnız stok)   YAZDI    satır 1 · sonra: 2
+   ✓ okan (salt okur)     RET      42501 Bu işlem için yetkiniz yok: hesap ERP kullanıcı listesinde değil ya da hiçbir modülde yazma yetkisi yok (tablo
+   ✓ ali (Yönetici)       YAZDI    satır 1 · sonra: 2
+
+── yetki-api b3a_1: 86 uyumlu · 3 AÇIK (yetkisiz yazdı) · 1 fazla kısıt / yanlış gerekçe ──
