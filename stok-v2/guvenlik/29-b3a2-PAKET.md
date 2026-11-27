@@ -88,7 +88,7 @@ ilk açılışı personel yaparsa reddedilmesin diye var.
 | `test/ekran/ekran-stok.js`, `ekran-kasa.js`, `ekran-cari-virman.js` (Yönetici) | — | 24/24 · 29/29 · 29/29 |
 | Geri alma: kur → yeniden kur → geri al | — | şema dökümü kurulum öncesiyle aynı; matris yeniden 170 / 124 |
 | `test/birim-fiyat-yetki.js` | — | 21/21 |
-| `./test/kosu.sh` (1.744.42) | — | @@KOSU@@ |
+| `./test/kosu.sh` (1.744.42) | — | 275/275 AYNI (paralel koşuda 274 + oynak `recete-genis` tek başına AYNI) |
 
 Matristeki "AÇIK (B6)" işaretli iki durum (personel maaşı, proses ücretleri) bu paketin bilerek kapatmadığı veridir; beklenen değerleri
 "yazabilir" olarak kayıtlıdır ki paket bunları kapatmış gibi görünmesin.
