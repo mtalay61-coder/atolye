@@ -13,6 +13,7 @@ node birim-yazma-dayaniklilik.js || HATA=1
 node birim-tekil-birlestir.js || HATA=1
 node birim-renk-ad-kombinasyon.js || HATA=1
 node birim-fiyat-yetki.js || HATA=1
+node birim-fis-iptal-yetki.js || HATA=1
 node birim-stok-v2-kopru.js || HATA=1
 node birim-yazma-zarfi.js || HATA=1
 node birim-karsilanan-sunucu.js || HATA=1

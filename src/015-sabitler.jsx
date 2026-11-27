@@ -492,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.744.43";
+const SURUM = "1.744.44";
 const SURUM_TARIHI = "2026-11-27";
-const SURUM_NOTU = "Birleşik aday: üretimde \"İşi Ver\" ve \"Geri Al\" iletileri gerçek sonuca bağlı (1.744.41) + fiyat alanları yetkiye bağlı (1.744.42)";
+const SURUM_NOTU = "Silme yetkisi olmayan kullanıcıda fiş iptali ve Geri Al düğmeleri artık görünmüyor (sunucu zaten reddediyordu)";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -525,6 +525,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" };   // teklif: v1.723.0, Sipariş'in alt sekmesi
 
 const SURUM_GECMISI = [
+  { surum: "1.744.44", tarih: "27.11.2026", eklenen: [], degisen: [], duzeltilen: ["Silme yetkisi olmayan kullanıcıda fiş iptali ve Geri Al düğmeleri artık görünmüyor (sunucu zaten reddediyordu)"] },
   { surum: "1.744.43", tarih: "27.11.2026", eklenen: [], degisen: ["Birleşik sürüm: 1.744.41 (üretimde \"İşi Ver\" ve \"Geri Al\" iletileri gerçek sonuca bağlı) ile 1.744.42 (fiyat alanları yetkiye bağlı) tek pakette; yeni davranış yok"], duzeltilen: [] },
   { surum: "1.744.42", tarih: "27.11.2026", eklenen: [], degisen: ["Fiyat alanları yetkiye bağlandı (sunucu kuralıyla birlikte): satış fiyatı ve satış fiyat kuralları \"Sipariş › düzenleme\", alış fiyatı ve alış fiyat kuralları \"Muhasebe › düzenleme\" yetkisi ister; yetkisi olmayan kullanıcıda fiyat kutuları kapalıdır. Yetkisiz bir fiyat değişikliği kayda girerse yalnız fiyat eski değerine döner, ürünün öteki alanları kaydedilir ve kullanıcıya söylenir", "Cari kartı: müşterinin fiyat grubunu değiştirmek \"Sipariş › düzenleme\" ve \"Cari › düzenleme\" yetkisi ister"], duzeltilen: [] },
   { surum: "1.744.41", tarih: "27.11.2026", eklenen: [], degisen: [], duzeltilen: ["Üretim › teslimi \"Geri Al\": teslim başka cihazda (ya da yanıtı kaybolan önceki denemede) zaten geri alınmışsa uygulama artık \"geri alındı\" demiyor ve kendi eski hesabını ekrana işlemiyor; \"zaten geri alınmıştı — bu işlem yeni bir değişiklik yapmadı\" der ve üretim, stok, cari ekranını sunucudaki güncel duruma getirir (iş arada yeniden teslim alınmışsa öyle görünür)", "Fişler › fiş iptali: fiş zaten iptal edilmişse ileti \"iptal edildi\" yerine \"zaten iptal edilmişti\" der", "Üretim › ara prosesin geri alınması: sonuç sunucudaki fişten doğrulanır; adım başka cihazda yeniden tamamlanmışsa \"geri alındı\" denmez", "Üretim › \"İşi Ver\": ileti artık kayıt buluta yazıldıktan sonra gösterilir; aynı iş aynı anda başka cihazdan verilmişse \"verildi\" yerine \"İş VERİLEMEDİ — bu üretim az önce başka bir cihazda değişti\" der"] },
