@@ -7,7 +7,7 @@ Paket iki parçadır ve BİRLİKTE devreye girer:
 
 | Parça | Dosya | SHA-256 |
 |---|---|---|
-| Sunucu kurulumu | `29-b3a2-uygula.sql` | `e67eef17c9f40addc6ccb2b22b5166ba8e16284a5ec4f8a468acd2396cfcaef1` |
+| Sunucu kurulumu | `29-b3a2-uygula.sql` | `ec3df68d922ba5d49e1f5b95bd795c4ff1982bd89472681a8c75df816a12986f` |
 | Sunucu geri alma | `29-b3a2-geri-al.sql` | `8d471fcf8c5847ecca808f148c1dfb4a95becfc8faa95bc0aa89ec862be1d9c5` |
 | İstemci | `atolye-erp-v1.744.42.html` (dal `claude/b3a2-alan-yetki`) | `1fc546342df8af8f565a19abff5795610cf76d9592063159e497cb485755d07e` |
 
@@ -19,7 +19,7 @@ politikayı ya da veriyi değiştirmez.
 
 Sunucu **gerçek alan değişikliğine** bakar: eski satır ile yeni satır karşılaştırılır. İstemcinin değiştirmediği alanı da göndermesi
 (uygulama satırın tamamını yazar) ret sebebi değildir. Boş değerlerin birbirine dönüşmesi (null ↔ "" ↔ [] ↔ {} ↔ false, fiyatta null ↔ 0,
-para biriminde boş → TRY) değişiklik sayılmaz. Ret `42501`'dir ve hiçbir satır değişmez; ileti gereken yetkiyi adıyla söyler.
+para biriminde boş → TRY) değişiklik sayılmaz. Ret `KR040`'tır (istemcinin kalıcı ret sayıp yeniden göndermediği kod; ilk hâlde 42501 idi, geçiş sınamasında değişti) ve hiçbir satır değişmez; ileti gereken yetkiyi adıyla söyler.
 
 Denetim dışı: jetonsuz istek (SQL Editor, servis rolü), Yönetici. Giriş sistemi kapalıysa `yetki_var_mi` herkesi yetkili sayar (mevcut kural).
 
@@ -77,7 +77,7 @@ ilk açılışı personel yaparsa reddedilmesin diye var.
   `cariFiyatGrubuSuz`) ve bunu bildirimle söyler; kaydın geri kalanı yazılır. Böylece içe aktarma ya da toplu düzenleme gibi yan yollar
   da kaydın tamamını reddettirmez.
 - İstemci kuralı yalnız kolaylıktır; koruma sunucudadır. Eski istemci (1.744.37 / 1.744.41) kurulu sunucuyla çalışır: fiyatı değiştiren
-  yetkisiz kullanıcı `42501` iletisini görür, kayıt yazılmaz.
+  yetkisiz kullanıcının kaydı sunucuda yazılmaz; ekranda "inceleme gerekiyor" şeridi ve sunucunun iletisi çıkar (ayrıntı `30-BIRLIKTE-KURULUM.md`, geçiş bölümü).
 
 ## Sınama sonuçları (yerel PostgreSQL 16, canlıya hizalı G-25'siz taban)
 

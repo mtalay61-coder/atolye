@@ -15,7 +15,7 @@ düzeltmelerini **içermiyordu** (`git merge-base --is-ancestor` olumsuz; 1.744.
 |---|---|---|
 | B4/B5 kurulum | `27-b4-uygula.sql` | `f49078f2361e8546d59e6a0b9c5d52e0ace6474c47663ef2615478e2b327645d` |
 | B3a kurulum | `28-b3a-uygula.sql` | `15f1051d5c9f652ac99d091fb329aea67ef35ef10adb82fee1cbe31ba3d38250` |
-| B3a-2 kurulum | `29-b3a2-uygula.sql` | `e67eef17c9f40addc6ccb2b22b5166ba8e16284a5ec4f8a468acd2396cfcaef1` |
+| B3a-2 kurulum | `29-b3a2-uygula.sql` | `ec3df68d922ba5d49e1f5b95bd795c4ff1982bd89472681a8c75df816a12986f` |
 | İstemci adayı | `atolye-erp-v1.744.43.html` | `35cc6fbf4f0ce66eaa6f4d9552803018b5a9da73e77bd355ca78868bf7017d66` |
 
 Üç SQL dosyası kendi dallarındakiyle bayt bayt aynıdır (birleştirme içerik değiştirmedi).
@@ -100,11 +100,11 @@ koşan `ekran-uretim-b4.js`'de); dört hesap da Stok / Sipariş menülerini gör
 
 - **Boş değer:** boş telefonu doldurma, dolu telefonu boşaltma, `pasif` false → true, para birimini TRY dışı doldurma,
   mevcut satış fiyatını sıfırlama, alış fiyatını null yapma, fiyat kurallarını boşaltma, fiyat doluyken para birimini değiştirme,
-  ad değişikliğinin yanında fiyat değişikliği → yetkisiz hesapta 42501.
-- **Oluşturma damgası:** damganın yanında başka `ek` anahtarı, fiyat grubu ya da unvan değişikliği; mevcut fiyat grubunu silme → 42501.
+  ad değişikliğinin yanında fiyat değişikliği → yetkisiz hesapta ret (KR040).
+- **Oluşturma damgası:** damganın yanında başka `ek` anahtarı, fiyat grubu ya da unvan değişikliği; mevcut fiyat grubunu silme → ret (KR040).
 - **Varsayılan firma bilgisi:** iskeletin içinde dolu unvan, iç içe dolu değer (e-posta sunucusu), KDV anahtarını açma, dönem kapanış
   tarihi; firma bilgisi varken yalnız logoyu değiştirme ya da boş iskeletle ezme; boş iskeletin yanında dolu ara proses listesi ya da
-  bilinmeyen anahtarı true yapma → 42501.
+  bilinmeyen anahtarı true yapma → ret (KR040).
 
 Bilinen ve kabul edilen tek gevşeklik: firma bilgisi **hiç yokken** yazma yetkisi olan herhangi bir hesap ilk logoyu yazabilir
 (başka hiçbir alanı değil). Canlıda firma bilgisi dolu olduğundan bu yol orada kapalıdır.

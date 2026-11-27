@@ -16,7 +16,7 @@ Ayrıntı ve gerekçeler: `27-b4-deneme/PAKET-B4-YALITILMIS-DENEME.md`, `30-BIRL
 | `27-b4-onkosul-salt-okur.sql` | `76c5c3c4c4194db10bc61c68f367aef9964d280bc5b9ec8406620653140f1bba` |
 | `27-b4-uygula.sql` | `f49078f2361e8546d59e6a0b9c5d52e0ace6474c47663ef2615478e2b327645d` |
 | `28-b3a-uygula.sql` | `15f1051d5c9f652ac99d091fb329aea67ef35ef10adb82fee1cbe31ba3d38250` |
-| `29-b3a2-uygula.sql` | `e67eef17c9f40addc6ccb2b22b5166ba8e16284a5ec4f8a468acd2396cfcaef1` |
+| `29-b3a2-uygula.sql` | `ec3df68d922ba5d49e1f5b95bd795c4ff1982bd89472681a8c75df816a12986f` |
 | `31-yetki-ileti-uygula.sql` | `b3a48e5ab1461d9c6b18aec8f925e38769b1e57684bfdf48facbb40c1724acaf` |
 | `atolye-erp-v1.744.37.html` (yayındaki) | `bc6912c22a062d1c7e0b012257839dac3e2b86aab0e9f5eb1b7ab5052fbe458a` |
 | `atolye-erp-v1.744.44.html` (aday; dal `claude/aday-birlesik`) | `b87afc137406202b5e6180c3b97f31139581d3e79238eda51b0cb4252418a7e8` |
