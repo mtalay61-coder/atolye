@@ -119,6 +119,10 @@ async function ac(db, kullanici) {
   // YAZMA KAYDI: uygulamanın gönderdiği her REST yazması — yöntem, yol + sorgu, gövde, yanıt durumu / kod / ileti, zaman
   sayfa.on("response", async (y) => { const r = y.request(); const u = r.url(); if (!/\/rest\/v1\//.test(u) || ["GET", "HEAD", "OPTIONS"].includes(r.method())) return;
     const kayit = { z: Date.now(), m: r.method(), yol: decodeURIComponent(u.replace(/^.*\/rest\/v1\//, "")), durum: y.status(), govde: r.postData() || "", prefer: r.headers().prefer || "", kim: String(r.headers().authorization || "").replace(/^Bearer\s+(yerel-test:)?/i, ""), surumBasligi: r.headers()["x-atolye-surum"] || "" };
+    // gerçek API kipi: giriş ÖNCESİ (gömülü anahtarla, anon) istekler sayılmaz — giriş ekranındaki `rpc/site_kayit_listesi` anon'a kapalıdır
+    // (401; canlıya hizalı yetkiler, paketlerle ilgisi yok). Oturumlu isteklerde jetonun içindeki e-posta yazılır.
+    if (GERCEK) { if (/^sb_publishable/.test(kayit.kim)) return;
+      try { kayit.kim = JSON.parse(Buffer.from(kayit.kim.split(".")[1], "base64url").toString("utf8")).email || kayit.kim.slice(0, 12); } catch (e) { kayit.kim = kayit.kim.slice(0, 12); } }
     c.yazmalar.push(kayit);
     if (y.status() >= 400) { try { const j = JSON.parse(await y.text()); kayit.kod = j.code; kayit.ileti = j.message; } catch (e) { /* gövde yok */ } } });
   await sayfa.context().route(/^https?:\/\//, (r) => {
@@ -258,7 +262,7 @@ const degisenSutunlar = (a, b) => Object.keys(b).filter((x) => JSON.stringify(a[
     yaz(`     kurulum: ${kurulum.join(" ; ")}${kurHata ? ` ; HATA ${kurHata}` : ""}`);
     // başarı sözü betiğin KENDİ son satırı: 27-b4 "99|GENEL|UYGULANMIŞ" yazar (HAZIR = henüz uygulanmamış, FARKLI — DUR = beklenmeyen gövde);
     // 28-b3a ve 29-b3a2 "GENEL|KURULU" yazar
-    k_("G2: üç paket sırayla kuruldu [27 → GENEL|UYGULANMIŞ, 28 → GENEL|KURULU, 29 → GENEL|KURULU]", [kurulum.map((x) => x.replace(/^.* → (\d+\|)?/, "")), kurHata], [["GENEL|UYGULANMIŞ", "GENEL|KURULU", "GENEL|KURULU"], null]);
+    k_("G2: paketler sırayla kuruldu [27 → GENEL|UYGULANMIŞ, 28 / 29 / 31 → GENEL|KURULU]", [kurulum.map((x) => x.replace(/^.* → (\d+\|)?/, "")), kurHata], [["GENEL|UYGULANMIŞ", "GENEL|KURULU", "GENEL|KURULU", "GENEL|KURULU"], null]);
     k_("G2: kurulumdan sonra paketler var", (await paketDurum(c.q)).map((x) => x > 0), [true, true, true]);
     // sekme YENİLENMEDEN: ad değiştir, kaydet
     const r = await urunDuzenle(c, { ad: "Ekran Bot G2" });

@@ -25,7 +25,7 @@ function gercekApiKopru() {
   const { Pool } = require(process.env.KOPRU_PG || "pg");
   const havuz = new Pool({ connectionString: process.env.KOPRU_SUPABASE_DB, max: 4 });
   const KOK = process.env.KOPRU_SUPABASE.replace(/\/$/, ""), ANAHTAR = process.env.KOPRU_SUPABASE_ANAHTAR;
-  const gunluk = [], girissizGunluk = [];
+  const gunluk = [], girissizGunluk = [], authGunluk = [];
   const cors = { "access-control-allow-origin": "*", "access-control-allow-headers": "*", "access-control-allow-methods": "*", "access-control-expose-headers": "*" };
   async function yanitla(istek) {
     const u = new URL(istek.url()); const m = istek.method();
@@ -40,9 +40,10 @@ function gercekApiKopru() {
     if (girissiz) bas.authorization = `Bearer ${ANAHTAR}`;
     let y, govde;
     try {
-      y = await fetch(`${KOK}/${e[1]}/v1/${e[2]}${u.search}`, { method: m, headers: bas, body: m === "GET" || m === "HEAD" ? undefined : istek.postDataBuffer() });
+      y = await fetch(`${KOK}/${e[1]}/v1/${e[2]}${u.search}`, { method: m, headers: bas, body: m === "GET" || m === "HEAD" ? undefined : (typeof istek.postDataBuffer === "function" ? istek.postDataBuffer() : (istek.postData() != null ? Buffer.from(istek.postData(), "utf8") : undefined)) });
       govde = Buffer.from(await y.arrayBuffer());
     } catch (x) { gunluk.push({ m, yol: e[2], durum: 599, kod: "AG", mesaj: String(x.message).slice(0, 200) }); return { status: 502, headers: cors, body: String(x.message) }; }
+    if (e[1] === "auth") authGunluk.push({ m, yol: e[2] + u.search, durum: y.status, govde: y.status >= 400 ? govde.toString("utf8").slice(0, 160) : undefined });
     if (e[1] === "rest") {
       const kayit = { m, yol: e[2], durum: y.status };
       if (y.status >= 400) { try { const j = JSON.parse(govde.toString("utf8")); kayit.kod = j.code; kayit.mesaj = String(j.message || "").slice(0, 200); } catch (x) { kayit.mesaj = govde.toString("utf8").slice(0, 200); } }
@@ -59,7 +60,7 @@ function gercekApiKopru() {
   }
   async function bagla(sayfa) { await sayfa.route(/\/(rest|auth|functions)\/v1\//, async (r) => r.fulfill(await yanitla(r.request()))); }
   const sorgu = async (sql, deg) => (await havuz.query(sql, deg)).rows;
-  return { bagla, sorgu, gunluk, __yanitla: yanitla, kapat: () => havuz.end(), gercekApi: true, girissizGunluk };
+  return { bagla, sorgu, gunluk, __yanitla: yanitla, kapat: () => havuz.end(), gercekApi: true, girissizGunluk, authGunluk };
 }
 
 function kopruKur({ veritabani, port = Number(process.env.PGPORT || 5432), host = process.env.PGHOST || "localhost" }) {

@@ -65,11 +65,11 @@ const k_ = (ad, g, b) => { const ok = JSON.stringify(g) === JSON.stringify(b); i
       await c.sayfa.reload(); await c.sayfa.waitForTimeout(800);
       await c.sayfa.evaluate(() => { const kok = window.__ReactDOMClient.createRoot(document.getElementById("kok")); kok.render(window.__React.createElement(window.__App)); });
       for (let i = 0; i < 30; i++) {
-        if (await c.sayfa.locator('[data-nav="Üretim"]').count()) break;
+        if (await (require("../ekran/ortak-ekran.js").uretimMenusuHazir)(c.sayfa)) break;
         if (await c.sayfa.locator('input[type="password"]:visible').count()) { try { await girisYap(c.sayfa); } catch (x) { /* yeniden bakılır */ } }
         await c.sayfa.waitForTimeout(1000);
       }
-      if (await c.sayfa.locator('[data-nav="Üretim"]').count()) break;
+      if (await (require("../ekran/ortak-ekran.js").uretimMenusuHazir)(c.sayfa)) break;
     }
     await c.sayfa.waitForTimeout(1500);
   };
