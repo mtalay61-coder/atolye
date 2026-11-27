@@ -330,6 +330,15 @@ Sıra önerisi: **B4/B5 ve B3a birlikte (yalnız sunucu, istemci değişmez), B3
 - **İstemci 1.744.41** (dal `claude/geri-al-ileti`): bayat "Geri Al" iletisi; önkoşul B4. Ekran 12/12, kosu 275 AYNI.
 - **B3a KISMİ KORUMA**: 3 açık kapanmadı. Alan / işlem yetki haritası `28-b3a-YETKI-HARITASI.md` (dal `claude/b3a-tablo-yazma-yetki`, `8faa4f5`); kararlar bekliyor.
 
+## 13. Yalıtılmış deneme hazırlığı, istemci 1.744.41, yetki haritası, B6 (30 Kasım; canlı / deneme / main / yayın YOK)
+- **Yapı dosyası** (yeni boş Supabase projesi için; depoda değil): yerel hizalı kopyadan yalnız şema, sha256 `7510c95a…88c27`.
+  - Supabase benzeri boş veritabanında kuruldu; canlı 25 dökümüne göre uygulama nesnelerinde fark 0 (ayrıntı `27-b4-deneme/PAKET-B4-YALITILMIS-DENEME.md`).
+  - Dökümden kurulan tabanda yayın paketleriyle: 1.744.37 + B4 35/35 ve 12/12; 1.744.41 + B4 35/35 ve 12/12. Gerçek Supabase'de denenmedi.
+- **Düz "İşi Ver" neden yazmadan "verildi" diyordu:** ileti yazmadan ÖNCE gösteriliyordu. İkinci cihazın `uretim` satırı sürüm koşullu yazmada 0 satır aldı (çakışma); atama gönderilmedi, bellek geri alındı, turuncu çakışma şeridi çıktı — ama "verildi" iletisi çoktan gösterilmişti. 1.744.41'de ileti yazma sonucuna bağlandı.
+- **1.744.41** (dal `claude/geri-al-ileti`): geri almanın sonucu fişten doğrulanır (ara proses dahil); gerçekleşmeyen işlem için başarı iletisi yok.
+- **B3a-2 yetki haritası 2. sürüm** (`28-b3a-YETKI-HARITASI.md`, `420cf6f`): kullanıcı kararları işlendi; kural yazılmadı. B3a kısmi koruma; 3 açık duruyor.
+- **B6 (AÇIK, yeni kayıt) — ücret verisinin yetkisiz değiştirilmesi:** maaş / aylık saat (`tanimlar.bolumler`), mesai katsayıları, ara proses ücreti, `urunler.proses_ucretleri`, `uretim_atamalari.tamir_ucret` yazma yetkisi olan her hesaba açık. Tasarım G-25'te; bu incelemede açık bulgu.
+
 ## 4. Sıradaki adımlar (güncel)
 1. Kullanıcı onayıyla B1 / B2 deneme paketi (§9) — deneme projesinde salt okur adım 0, sonra kurulum ve elle sınamalar.
 2. Sonraki düzeltme paketi (§10) için tasarım onayı: B4 / B5 + B3a; B3b G-25 kararından sonra.
