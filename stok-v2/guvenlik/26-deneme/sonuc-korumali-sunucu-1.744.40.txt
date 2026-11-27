@@ -1,0 +1,16 @@
+  ✓ [1 özeti tutmayan HTML ile başlamaz] 2
+  ✓ [2 gizli anahtarla başlamaz] 2
+  ✓ [giriş sayfası firma seçimini deneme projesine yazdı] "https://drtmnovafswzcmpacubl.supabase.co"
+  ✓ [3 ana proje REST engellendi (CSP)] {"sonuc":"TypeError","ihlal":true}
+  ✓ [3 ana proje auth engellendi (CSP)] {"sonuc":"TypeError","ihlal":true}
+  ✓ [4 deneme projesi CSP'den geçer (ihlal yok)] false
+    · deneme projesine ağ sonucu bu ortamda: ağa gitti
+    · uygulama ekranı: "📡 İnternet bağlantısı yok Veri kaybolmasın diye uygulama durduruldu — internetsiz girilen kayıtlar buluta gitmeyip kaybolabiliyordu. Uygulama buluta ulaşamadan"
+    · ana projeye CSP ihlali (engellenen deneme): 31 — https://mqdgucoomgqcvhvgixbl.supabase.co/rest/v1/urunler, https://mqdgucoomgqcvhvgixbl.supabase.co/rest/v1/surum, https://mqdgucoomgqcvhvgixbl.supabase.co/rest/v1/site_talepleri, https://mqdgucoomgqcvhvgixbl.supabase.co/rest/v1/rpc/site_kayit_listesi
+    · firma seçimi ANA projeyken açılışta ana projeye denenen istek: 0, nedenler: -
+  ✓ [5 ana proje seçiliyken uygulamanın ana projeye denemeleri CSP ile engellendi (≥1 ihlal)] true
+  ✓ [5 ana projeden yanıt 0, ağa çıkan istek 0] [0,0]
+  ✓ [6 sw.js / manifest.json 404] [404,404]
+  ✓ [6 HTML değişince 409] 409
+  ✓ [CSP connect-src yalnız deneme + esm.sh, ana proje yok] [true,false]
+── korumalı sunucu doğrulaması: 11 ✓ / 0 ✗ / 0 SINANMADI ──

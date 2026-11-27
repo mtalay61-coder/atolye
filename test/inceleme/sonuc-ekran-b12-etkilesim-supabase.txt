@@ -1,0 +1,64 @@
+ekran-b12-etkilesim · GERÇEK API KİPİ (yerel Supabase; giriş ekrandan)
+
+■ E1 Tuna (yalnız Tanımlar › düzenleme) "Vizon Yılan" → "Vizon Deri"
+  ✓ E1 başlangıç: kalemler eski adda, kopuk bağ yok
+  ✓ E1 Tanımlar › renk sekmesi Tuna'ya açık
+     bildirim: Renk adı "Vizon Yılan" → "Vizon Deri" — 2 sipariş kalemi, 0 üretim, 0 ürün, 0 koli, 0 rezervasyon güncellendi
+  ✓ E1 ad değişikliği sunucu işlemiyle gitti ve kabul edildi (HTTP 200)
+  ✓ E1 Tanımlar'da ad değişti
+  ✓ E1 varyant tablosunda renk ve kombinasyon etiketi yeni adda
+  ✓ E1 sipariş kalemleri yeni adda (B3a tablo tetikleyicisi işlemi kesmedi), kopuk bağ yok
+  ✓ E1 renk / kombinasyon KİMLİKLERİ, varyantlar, kalem ve sipariş bağları AYNI
+  ✓ E1 eski ad defterine yazıldı (rengin adı + geçtiği kombinasyon etiketi)
+  ✓ E1 reddedilen yazma yok, sayfa hatası yok
+
+■ E2 yetki korumaları (B1 kuruluyken)
+     Ayşe'de Tanımlar › renk sekmesi: yok / kapalı (bilgi)
+     Ayşe ad değiştirme çağrısı → HTTP 403 · 42501 · Bu işlem için yetkiniz yok (tanimlar: duzenleme)
+  ✓ E2 Ayşe (yalnız stok) renk adını değiştiremez: 42501, ileti gereken yetkiyi söyler
+  ✓ E2 Ayşe eski adı serbest bırakamaz (yalnız Yönetici)
+     Ayşe fiyat yazması → HTTP 400 · KR040 · Bu değişiklik için yetkiniz yok: satış fiyatı (Ekran Bot) (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+  ✓ E2 Ayşe satış fiyatını değiştiremez (B3a-2, KR040) — koruma yerinde
+  ✓ E2 hiçbir şey değişmedi: adlar, kalemler, kimlikler
+  ✓ E2 Tuna (tanımlar: düzenleme) renk ekleyebildi — B2 yazması B3a-2'den geçti
+     silme düğmesi: silme düğmesi yok (düğmeler: ) · Tuna'nın silme sonrası Tanımlar yazmaları: yok
+     ret iletisi: 
+     Tuna bildirimleri: 
+     (bilgi) silme ekrandan üretilemedi — sunucu denetimi doğrudan çağrıyla ölçülür; istemcinin ret gösterimi bu senaryoda ÖLÇÜLMEDİ
+  ✓ E2 Tuna'nın renk silmesi (doğrudan sürüm koşullu yazma) reddedildi (KR040), renk yerinde
+     Tuna fiyat grubu ekledi → Tanımlar yazmaları: PATCH 400 KR040
+     ret iletisi: Bu değişiklik için yetkiniz yok: satış fiyat grubu (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+     Tuna bildirimleri: 
+  ✓ E2 Tuna'nın Satış fiyat grubu eklemesi sunucuda reddedildi (KR040), grup yazılmadı
+  ✓ E2 ret çakışma SANILMADI (çakışma şeridi yok) ve yazma dönüp durmadı (25 sn'de en çok 3 deneme)
+     şerit: "Tanımlar — inceleme gerekiyor (kendiliğinden denenmez)" · "Hata" penceresinde sebep: var (yetkiniz yok: satış fiyat grubu … sipariş: düzenleme)
+  ✓ E2 ret ekranda kalıcı ret şeridiyle duruyor; sebep "Hata" penceresinde okunuyor
+  ✓ E2 reddedilen yazma Tuna'nın önceki eklemesini (Mor) bozmadı
+
+■ E3 iki cihaz aynı anda renk ekler: Ali "Kırmızı", Deniz (stok + tanımlar) "Lacivert" — Deniz'in yazması Ali'ninkinden SONRA varır
+  ✓ E3 Tanımlar › renk sekmesi Deniz'e açık
+     Deniz'in bekletilen yazması: PATCH · Deniz'in Tanımlar yazmaları: PATCH 200 | PATCH 200
+  ✓ E3 iki renk de sunucuda (birinin eklediği kaybolmadı)
+  ✓ E3 renk kodları ve barkod kodları tekil
+  ✓ E3 var olan renk / kombinasyon kimlikleri, varyantlar ve sipariş bağları AYNI
+  ✓ E3 B3a-2 Deniz'in birleştirme yazmasını reddetmedi; Ali'de de ret yok
+  ✓ E3 sayfa hatası yok
+
+■ E4 aynı alan iki cihazda: Ali ton kodu "201", Tuna "202" (Tuna'nın yazması sonra varır) → Tuna "Benimkini uygula"
+  ✓ E4 sunucuda Ali'nin değeri kaldı (Tuna sessizce ezmedi)
+  ✓ E4 Tuna'da çakışma şeridi: hangi öğe
+  ✓ E4 Tuna'nın değişikliği bekleyen defterde (kaybolmadı)
+  ✓ E4 'Benimkini uygula' → sunucuda Tuna'nın değeri (B3a-2 personelin çakışma çözümünü reddetmedi)
+  ✓ E4 çakışma şeridi kapandı
+  ✓ E4 kimlikler ve bağlar AYNI; ret yok
+
+■ E5 Tuna "Vizon Yılan" → "Vizon Rugan"; ardından (ekranı bayat) Ali aynı rengi "Vizon Deri" yapmak ister
+     Ali'nin ekranı bayattı (eski ad görünüyordu) · Ali'nin isteği: 400:KR021 · bildirim: Başka cihazdan güncellendi: Stok, Siparişler | Renk adı değiştirilemedi — hiçbir kayıt değişmedi. KR021: renk adı bu arada değişmiş (şimdi "Vizon Rugan", istekte "Vizon Yılan") — ekranı yenileyip tekrar deneyin [KR021]
+  ✓ E5 ikinci istek KR021 ile reddedildi, açık ileti
+  ✓ E5 ilk gelen uygulandı, ikinci EZMEDİ
+     eski adla kalem yazması → HTTP 200
+  ✓ E5 eski adla gelen yeni kalem güncel ada bağlandı, kopuk bağ yok
+  ✓ E5 kimlikler, varyantlar ve önceki kalem / sipariş bağları AYNI
+  ✓ E5 sayfa hatası yok
+
+SONUÇ: 36 geçti · 0 kaldı

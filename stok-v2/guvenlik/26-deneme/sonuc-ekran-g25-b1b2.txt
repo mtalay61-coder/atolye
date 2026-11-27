@@ -1,0 +1,19 @@
+### G25 ekle ad
+── ekran-tanim-yaris (ekle, yarış): 5 geçti · 0 kaldı ──
+### G25 cakisma ad
+  ✗ [sunucuda A'nın değeri (B sessizce ezmedi)] "Vizon Rugan" · beklenen "Vizon Deri"
+  ✗ [B'de çakışma şeridi: hangi öğe] [] · beklenen ["renkler › Vizon Rugan › ad"]
+  ✗ [B'nin değişikliği bekleyen defterde (kaybolmadı)] false · beklenen true
+── ekran-tanim-yaris (cakisma, yarış): 1 geçti · 3 kaldı ──
+### G25 cakisma kod
+── ekran-tanim-yaris (cakisma, yarış): 6 geçti · 0 kaldı ──
+### G25 karar_ucuncu kod
+── ekran-tanim-yaris (karar_ucuncu, yarış): 7 geçti · 0 kaldı ──
+### G25 karar_degisti kod
+── ekran-tanim-yaris (karar_degisti, yarış): 6 geçti · 0 kaldı ──
+### G25 ad_yaris ad
+── ekran-tanim-yaris (ad_yaris, yarış): 4 geçti · 0 kaldı ──
+### G25 ad-bag BAYAT=1
+── ekran-ad-bag (bayat): 4 geçti · 0 kaldı ──
+### G25 ad-bag BAYAT=0
+── ekran-ad-bag (kontrol): 4 geçti · 0 kaldı ──
