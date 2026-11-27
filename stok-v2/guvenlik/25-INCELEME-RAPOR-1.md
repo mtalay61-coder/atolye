@@ -350,7 +350,7 @@ Dal `claude/b3a2-alan-yetki`; belge `29-b3a2-PAKET.md`. B4 / B5 ve 1.744.41 önc
 - **Ölçüm (yerel, canlıya hizalı, G-25'siz):** yetki matrisi 42 durum × 7 hesap — kurulumdan önce 170 uyumlu · 124 AÇIK; sonra
   294 uyumlu · 0 AÇIK · 0 fazla kısıt. Personel ekran sınaması (yalnız stok yetkili hesap + Yönetici) 10/10: reddedilen yazma 0,
   fiyat kutuları kapalı / açık, fiyat dışı alan kaydedildi. Ekran regresyonları 24/24 · 29/29 · 29/29. Geri alma sonrası şema
-  kurulum öncesiyle aynı. kosu.sh: @@KOSU@@.
+  kurulum öncesiyle aynı. kosu.sh 275/275 AYNI (paralel koşuda 274 + oynak `recete-genis` tek başına AYNI).
 - **Sınamada bulunan ve düzeltilen yanlış retler:** uygulamanın açılışta kendiliğinden yazdığı normalleştirmeler (boş değer dönüşümleri,
   `ek.olusturma`, Tanımlar'a boş listeler ve varsayılan logolu boş firma bilgisi) ilk hâlde yalnız stok yetkili personelin açılışını
   reddediyordu. Yönetici ile koşan sınamalar bunu göstermedi; personel oturumu sınaması bu yüzden eklendi.
