@@ -396,6 +396,19 @@ Dal `claude/aday-birlesik` (`4904a7e`); belge `30-BIRLIKTE-KURULUM.md` "2. TUR" 
   Supabase; 1.744.44 B4'süz sunucuda; `uretim_sil` kuralı; "Çeki sil"; Fişler menüsü / ürün kartı hareketleri / çeklerdeki düğme
   gizlemesi ekrandan; salt okur kişisel tercih; beden adı, diğer tek satırlık tablolar, site portalı, depolama kovaları.
 
+## 17. Gerçek deneme öncesi kayıtlar (27 Kasım; kullanıcı kararları)
+- **Sabit paket:** `claude/aday-birlesik` `4904a7e`. Yeni kapsam eklenmez. Gerçek Supabase denemesi adım adım, her adımın sonucu
+  kontrol edilerek yürür; açık yalnız yeni yalıtılmış projenin DENEME kayıtlarında üretilir. Canlıya ve G-25 denemesine dokunulmaz.
+- **B1 / B2 bu adayda YOK.** `4904a7e`; B1 (renk adı değişikliği sunucuda tek işlem, `claude/b1-ad-degistir-sunucu`), B2 (Tanımlar
+  sürüm koşullu yazma, `claude/b2-tanim-surum-kosullu`) ve birleşik deneme paketini (`claude/b1-b2-birlesik`, `c6ee52a`) içermez
+  (`git merge-base --is-ancestor` olumsuz). B1 / B2 **ayrı bekleyen pakettir** (§9); renk adı ve eşzamanlı Tanımlar yazma
+  bulguları bu aday yayınlansa da AÇIK kalır.
+- **Yayın planı koşulları:** (1) B4'ün kurulmuş olması istemci yayınının ÖNKOŞULUDUR. (2) Eski sekme reddedilen kaydı "güncellendi"
+  diye gösterdiği için, geçişte bütün cihazların yeni sürüme geçtiği AYRICA doğrulanır.
+- **"448 uyumlu · 0 açık"** yalnız B3a-2 matrisinin kapsamıdır (cariler, ürün fiyat alanları, Tanımlar — 64 durum × 7 hesap). Genel
+  güvenliğin tamamlandığı anlamına gelmez: **B3b ve B6 AÇIK**, B1 / B2 bekliyor, Y1 açık.
+- Deneme bitince: tek sonuç raporu + canlı için önerilen kesin paket; canlı uygulama ve yayın ayrıca onay bekler.
+
 ## 4. Sıradaki adımlar (güncel)
 1. Kullanıcı onayıyla B1 / B2 deneme paketi (§9) — deneme projesinde salt okur adım 0, sonra kurulum ve elle sınamalar.
 2. Sonraki düzeltme paketi (§10) için tasarım onayı: B4 / B5 + B3a; B3b G-25 kararından sonra.
