@@ -1,0 +1,270 @@
+ekran-personel-akis · aday_pa (şablon b12_crlf) · b3a_yazma_koru 14 tablo · b3a2_alan_koru 3 tablo · b4_* işlev 2
+  ✓ [üç paket kurulu (B3a, B3a-2 tetikleyicileri, B4 işlevleri)] [true,true,true]
+
+■ Ayşe · ayse@atolye.local
+     menü ([data-nav]): Anasayfa · Stok · Ürün Stok · Fiyat Listesi · Depo · Paketleme · Sevkiyat · Alış / Satış · Modelhane · Planlama · Sipariş · Alış Siparişi · Sohbet · Kılavuz
+     menü grupları: Depo · Üretim · Siparişler · Finans · fiyat bayrağı {"satis":false,"alis":false,"cariFiyatGrubu":false}
+     fiş iptali bayrağı (1.744.44): {"yetki":false,"gizli":true}
+  ✓ [Ayşe: menüde Üretim YOK (iş verme / teslim bu hesaptan yapılamaz)] false
+     bildirim: Stok girişi kaydedildi — fiş: MNL-261127001
+  ✓ [Ayşe (a): bağımsız stok girişi → stok Siyah 40 +5, 41 +3] [5,3]
+  ✓ [Ayşe (a): stk_fis'te 1 yeni geçerli fiş] ["0 geçerli / 0 iptal","1 geçerli / 0 iptal"]
+     fiş: MNL-261127001 · Giriş · ayse@atolye.local
+  ✓ [Ayşe (b): ürün kartında fiyat kutuları KAPALI (alış açık mı, satış açık mı)] [false,false]
+     açıklama: Alış fiyatını değiştirme yetkiniz yok (muhasebe: düzenleme) | Satış fiyatını değiştirme yetkiniz yok (sipariş: düzenleme)
+  ✓ [Ayşe (b): fiyat dışı alan (ad) kaydedildi, fiyatlar aynen] ["Ekran Bot Ayşe",0,0]
+     bildirim: Stok girişi kaydedildi — fiş: MNL-261127001 | Ürün güncellendi
+  ✓ [Ayşe (c): hızlı tedarikçi → cariler'de 1 yeni satır] [1,1]
+  ✓ [Ayşe (c): yeni cari yalnız unvan + tip (telefon, vergi no, adres, fiyat grubu, bağlı proses boş; pasif değil)] ["PA Hızlı Tedarik","Tedarikçi","","","","","","[]",false]
+  ✓ [Ayşe (c): ürün kartı yeni tedarikçiyle kaydedildi (urunler.tedarikci_id)] "cari-mwz8vg65-jefp"
+     kartta seçili: cari-mwz8vg65-jefp · pencere: prompt: Yeni tedarikçi unvanı:
+  ✓ [Ayşe: akışlarda sunucunun reddettiği yazma YOK (21 yazma isteği)] []
+  — doğrudan REST denemeleri (jeton ✓ · kök mqdgucoomgqcvhvgixbl.supabase.co/rest/v1/ · başlıklar authorization, content-type, apikey, x-atolye-surum)
+  ✓ [Ayşe: denemeler hesabın KENDİ jetonuyla] "yerel-test:ayse@atolye.local"
+  ✓ [Ayşe YETKİSİZ: urunler satış fiyatı PATCH → ret (4xx + KR040), satır değişmedi] [true,"KR040",true]
+     HTTP 400 · KR040 · Bu değişiklik için yetkiniz yok: satış fiyatı (Ekran Bot Ayşe) (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+  ✓ [Ayşe YETKİSİZ: cariler unvan PATCH → ret (4xx + KR040), satır değişmedi] [true,"KR040",true]
+     HTTP 400 · KR040 · Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: unvan) (gereken: cari: düzenleme). Hiçbir şey kaydedilmedi.
+  ✓ [Ayşe YETKİSİZ: bir rengi silme (renkler'den Vizon Yılan) (tanimlar upsert — uygulamanın biçimi) → ret (4xx + KR040), satır değişmedi] [true,"KR040",true]
+     HTTP 400 · KR040 · Bu değişiklik için yetkiniz yok: renkler listesinden öğe silme (1) (gereken: tanımlar: silme). Hiçbir şey kaydedilmedi.
+  ✓ [Ayşe YETKİSİZ: bir rengi silme (renkler'den Vizon Yılan) (tanimlar PATCH) → ret (4xx + KR040), satır değişmedi] [true,"KR040",true]
+     HTTP 400 · KR040 · Bu değişiklik için yetkiniz yok: renkler listesinden öğe silme (1) (gereken: tanımlar: silme). Hiçbir şey kaydedilmedi.
+  ✓ [Ayşe: sayfa hatası yok] []
+     istemcinin isteklerinde x-atolye-surum: 1.744.46
+     tarayıcı pencereleri: prompt: Yeni tedarikçi unvanı:
+
+■ Selin · selin@atolye.local
+     menü ([data-nav]): Anasayfa · Stok · Ürün Stok · Depo · Paketleme · Sevkiyat · Alış / Satış · Planlama · Sipariş · Alış Siparişi · Sohbet · Kılavuz
+     menü grupları: Depo · Üretim · Siparişler · Finans · fiyat bayrağı {"satis":true,"alis":false,"cariFiyatGrubu":false}
+     fiş iptali bayrağı (1.744.44): {"yetki":false,"gizli":true}
+  ✓ [Selin: menüde Üretim YOK (iş verme / teslim bu hesaptan yapılamaz)] false
+     seçilen cari inc-musteri · bildirim: 1 kalem eklendi | Sipariş oluşturuldu
+  ✓ [Selin: yeni satış siparişi → siparisler +1 (mevcut müşteri, tip Satış)] [1,"inc-musteri","Satış"]
+  ✓ [Selin: siparis_kalemleri'nde yeni siparişin kalemi (Ekran Bot · Siyah · 40 × 4 · 100)] [["ekr-bot","Siyah","40",4,100]]
+     sipariş: {"id":"sip-mwz8w1xb-7cf4","siparis_no":"SAT-9002","cari_id":"inc-musteri","tip":"Satış","durum":"Bekliyor"} · kalem: [{"urun_id":"ekr-bot","urun_ad":"Ekran Bot Ayşe","renk":"Siyah","beden":"40","m":4,"f":100,"pb":"TRY"}]
+  ✓ [Selin: ürün kartında fiyat kutuları (alış açık mı, satış açık mı)] [false,true]
+     kapalı kutunun açıklaması: Alış fiyatını değiştirme yetkiniz yok (muhasebe: düzenleme)
+  ✓ [Selin: akışlarda sunucunun reddettiği yazma YOK (6 yazma isteği)] []
+  — doğrudan REST denemeleri (jeton ✓ · kök mqdgucoomgqcvhvgixbl.supabase.co/rest/v1/ · başlıklar authorization, content-type, apikey, x-atolye-surum)
+  ✓ [Selin: denemeler hesabın KENDİ jetonuyla] "yerel-test:selin@atolye.local"
+  ✓ [Selin YETKİSİZ: urunler alış fiyatı PATCH → ret (4xx + KR040), satır değişmedi] [true,"KR040",true]
+     HTTP 400 · KR040 · Bu değişiklik için yetkiniz yok: alış fiyatı / maliyet (Ekran Bot Ayşe) (gereken: muhasebe: düzenleme). Hiçbir şey kaydedilmedi.
+  ✓ [Selin YETKİSİZ: cariler unvan PATCH → ret (4xx + KR040), satır değişmedi] [true,"KR040",true]
+     HTTP 400 · KR040 · Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: unvan) (gereken: cari: düzenleme). Hiçbir şey kaydedilmedi.
+  ✓ [Selin YETKİSİZ: müşterinin ek.fiyatGrubuId'si PATCH → ret (4xx + KR040), satır değişmedi] [true,"KR040",true]
+     HTTP 400 · KR040 · Bu değişiklik için yetkiniz yok: müşterinin fiyat grubu (İnceleme Müşteri) (gereken: cari: düzenleme VE sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+  ✓ [Selin İZİNLİ: urunler satış fiyatı PATCH → geçti, değer yazıldı] [true,1,120]
+     HTTP 200 · 1 satır
+  ✓ [Selin: sayfa hatası yok] []
+     istemcinin isteklerinde x-atolye-surum: 1.744.46
+
+■ Mert · mert@atolye.local
+     menü ([data-nav]): Anasayfa · Stok · Ürün Stok · Depo · Paketleme · Sevkiyat · Alış / Satış · Planlama · Sipariş · Alış Siparişi · Ödeme & Tahsilat · Sohbet · Kılavuz
+     menü grupları: Depo · Üretim · Siparişler · Finans · fiyat bayrağı {"satis":false,"alis":true,"cariFiyatGrubu":false}
+     fiş iptali bayrağı (1.744.44): {"yetki":true,"gizli":false}
+  ✓ [Mert: fiş iptali bayrağı [yetki, düğme gizli] (silme VAR)] [true,false]
+     bildirim: Tahsilat kaydedildi — TH-261127001 Geri al · fiş TH-261127001 (Tahsilat, mert@atolye.local)
+  ✓ [Mert (a): tahsilat fişi → kasa +500, cari bakiyesi −500 (alacak), fiş geçerli] [500,-500,"geçerli"]
+  ✓ [Mert (a): bildirimde "Geri al" düğmesi GÖRÜNÜR ([data-toast-geri-al] çizildi)] true
+  ✓ [Mert: tahsilat fişi TH-261127001 bildirimdeki "Geri al" ile iptal → [kasa farkı, cari bakiye farkı] başa döndü, fiş iptal] [0,0,"iptal"]
+     bildirim: "TH-261127001" iptal edildi — 1 cari, 1 kasa satırı · yazmalar: ["POST rpc/fis_iptal 200","POST gunluk 201","POST gunluk 201"]
+     yakalanan gerçek istek (rpc/fis_iptal): {"p":{"no":"TH-261127001","sebep":"Geri alındı","istemci":{"surum":"1.744.46"}}}
+     bildirim: Tahsilat kaydedildi — TH-261127002 Geri al · fiş TH-261127002 (Tahsilat, mert@atolye.local)
+  ✓ [Mert (b): ikinci tahsilat fişi → kasa +500, cari bakiyesi −500, fiş geçerli] [500,-500,"geçerli"]
+  ✓ [Mert (b): cari kartı › Hareketler'de TH-261127002 satırında "Sil" düğmesi GÖRÜNÜR [son işlemler listesinde, hareket satırı, Sil düğmesi]] [true,true,true]
+  ✓ [Mert: tahsilat fişi TH-261127002 cari kartı › Hareketler › Sil ile iptal → [kasa farkı, cari bakiye farkı] başa döndü, fiş iptal] [0,0,"iptal"]
+     bildirim: Tahsilat kaydedildi — TH-261127002 Geri al | "TH-261127002" iptal edildi — 1 cari, 1 kasa satırı · yazmalar: ["POST rpc/fis_iptal 200","POST gunluk 201","POST gunluk 201"]
+     onay bekleyen kayıt (onaylar tablosu): 0
+  ✓ [Mert: akışlarda sunucunun reddettiği yazma YOK (13 yazma isteği)] []
+  ✓ [Mert: sayfa hatası yok] []
+     istemcinin isteklerinde x-atolye-surum: 1.744.46
+
+■ Murat · murat@atolye.local
+     menü ([data-nav]): Anasayfa · Stok · Ürün Stok · Depo · Paketleme · Sevkiyat · Alış / Satış · Planlama · Sipariş · Alış Siparişi · Ödeme & Tahsilat · Sohbet · Kılavuz
+     menü grupları: Depo · Üretim · Siparişler · Finans · fiyat bayrağı {"satis":false,"alis":true,"cariFiyatGrubu":false}
+     fiş iptali bayrağı (1.744.44): {"yetki":false,"gizli":true}
+  ✓ [Murat: menüde Üretim YOK (iş verme / teslim bu hesaptan yapılamaz)] false
+  ✓ [Murat: fiş iptali bayrağı [yetki, düğme gizli] (silme YOK)] [false,true]
+     Kasa & Banka alanına giriş: menü "Ödeme & Tahsilat" (menüde ayrı "Kasa & Banka" öğesi yok; aynı alanın sekmesi)
+     bildirim: Tahsilat kaydedildi — TH-261127003 · fiş TH-261127003 (Tahsilat, murat@atolye.local)
+  ✓ [Murat: tahsilat fişi → kasa +500, cari bakiyesi −500 (alacak), fiş geçerli] [500,-500,"geçerli"]
+  ✓ [Murat: bildirimde "Geri al" düğmesi YOK [bildirim görüldü, [data-toast-geri-al] çizildi, bildirim metninde "Geri al"]] [true,false,false]
+  ✓ [Murat: cari kartı › Hareketler'de TH-261127003 satırında "Sil" düğmesi YOK [son işlemler listesinde, hareket satırı, satırdaki Sil düğmesi]] [true,true,0]
+     sayfanın tamamında görünen Sil düğmesi ([data-sil-onay]): 0
+  ✓ [Murat: fiş TH-261127003 geçerli; kasa / cari tahsilat sonrası hâlinde] ["geçerli",500,-500]
+  ✓ [Murat: ürün kartında fiyat kutuları (alış açık mı, satış açık mı)] [true,false]
+     kapalı kutunun açıklaması: Satış fiyatını değiştirme yetkiniz yok (sipariş: düzenleme)
+  ✓ [Murat: akışlarda sunucunun reddettiği yazma YOK (5 yazma isteği)] []
+  — doğrudan REST denemeleri (jeton ✓ · kök mqdgucoomgqcvhvgixbl.supabase.co/rest/v1/ · başlıklar authorization, content-type, apikey, x-atolye-surum)
+  ✓ [Murat: denemeler hesabın KENDİ jetonuyla] "yerel-test:murat@atolye.local"
+  ✓ [Murat YETKİSİZ: urunler satış fiyatı PATCH → ret (4xx + KR040), satır değişmedi] [true,"KR040",true]
+     HTTP 400 · KR040 · Bu değişiklik için yetkiniz yok: satış fiyatı (Ekran Bot Ayşe) (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+  ✓ [Murat İZİNLİ: urunler alış fiyatı PATCH → geçti, değer yazıldı] [true,1,60]
+     HTTP 200 · 1 satır
+  ✓ [Murat YETKİSİZ: mevcut rengin adını değiştirme (Siyah → Kara) (tanimlar upsert — uygulamanın biçimi) → ret (4xx + KR040), satır değişmedi] [true,"KR040",true]
+     HTTP 400 · KR040 · Bu değişiklik için yetkiniz yok: renkler listesinde mevcut öğeyi değiştirme (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+  ✓ [Murat YETKİSİZ: mevcut rengin adını değiştirme (Siyah → Kara) (tanimlar PATCH) → ret (4xx + KR040), satır değişmedi] [true,"KR040",true]
+     HTTP 400 · KR040 · Bu değişiklik için yetkiniz yok: renkler listesinde mevcut öğeyi değiştirme (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+     doğrudan iptal gövdesi: Mert'in gerçek isteğinden (TH-261127001 → TH-261127003) · p anahtarları ["no","sebep","istemci"] · p.no TH-261127003
+  ✓ [Murat YETKİSİZ İPTAL: POST rpc/fis_iptal (TH-261127003) → [HTTP, kod, iletide "fiş iptali", iletide "silme", iletide "(stok:", hiçbir kayıt değişmedi, geçerli kalan fiş]] [403,"42501",true,true,false,true,1]
+     HTTP 403 · 42501 · Bu işlem için yetkiniz yok: fiş iptali (gereken: stok, fişler, sipariş, üretim, cari, muhasebe modüllerinden birinde silme)
+  ✓ [Murat: sayfa hatası yok] []
+     istemcinin isteklerinde x-atolye-surum: 1.744.46
+
+■ Ufuk · ufuk@atolye.local
+     menü ([data-nav]): Anasayfa · Stok · Ürün Stok · Depo · Paketleme · Sevkiyat · Alış / Satış · Üretim · Üretim Raporu · Planlama · Sipariş · Alış Siparişi · Sohbet · Kılavuz
+     menü grupları: Depo · Üretim · Siparişler · Finans · fiyat bayrağı {"satis":false,"alis":false,"cariFiyatGrubu":false}
+     fiş iptali bayrağı (1.744.44): {"yetki":true,"gizli":false}
+  ✓ [Ufuk: menüde Üretim VAR] true
+  ✓ [Ufuk: fiş iptali bayrağı [yetki, düğme gizli] (silme VAR)] [true,false]
+  · TAM (PAF1) — başlangıç {"mamul":5,"taban":0,"usta":0,"usta2":0,"tamirci":0} · fiş 0 geçerli / 0 iptal · atamalar []
+  ✓ [Ufuk PAF1: İşi Ver (PA Usta) → [fark (akış başından), üretim fişleri, atamalar]] [{},"0 geçerli / 0 iptal",["Dikim:10:pa-usta:bekliyor"]]
+     bildirim: 10 adet (40:10) PA Usta'a verildi · yazmalar: ["PATCH uretim 200","POST rpc/alt_yaz 200","POST gunluk 201"]
+  ✓ [Ufuk PAF1: teslim al (sağlam 10) → [fark (akış başından), üretim fişleri, atamalar]] [{"mamul":10,"usta":-350},"1 geçerli / 0 iptal",["Dikim:10:pa-usta:teslim"]]
+     form: önerilen sağlam 10 · Sağlam 10 · bildirim: ÜRT-261127001 · PAF1 tüm prosesler tamamlandı — mamul stoğa eklendi · yazmalar: ["POST rpc/fis_kes 200","POST gunluk 201","PATCH uretim 200","POST gunluk 201"]
+  ✓ [Ufuk PAF1: Geri Al (teslimin iptali) → [fark (akış başından), üretim fişleri, atamalar]] [{},"0 geçerli / 1 iptal",["Dikim:10:pa-usta:bekliyor"]]
+     bildirim: ÜRT-261127001 · PAF1 tüm prosesler tamamlandı — mamul stoğa eklendi | "Dikim" için 10 adetlik teslim alma işlemi geri alındı — hammadde ve işçilik geri alındı · yazmalar: ["POST rpc/fis_iptal_toplu 200","POST gunluk 201","PATCH urunler 200","PATCH cariler 200","PATCH uretim 200","POST gunluk 201","POST gunluk 201","POST gunluk 201"]
+     yakalanan gerçek istek (rpc/fis_iptal_toplu): {"p":{"fisler":["ÜRT-261127001"],"sebep":"Üretim teslimi geri alındı (PAF1 · Dikim)","alt":{"uretim_atamalari":{"satirlar":[{"id":"atama-mwz8y166-1z8e","uretim_id":"pa-paf1","proses":"Dikim","personel_id":"pa-usta","beden_miktarlari":{"40":10},"miktar":10,"verildi_mi":true,"verilme_tarihi":"2026-11-27T17:19:45.774Z","tamamlandi_mi":false,"tamamlanma_tarihi":null,"sonuc":{"saglam":{"40":10},"tamir":[],"hurda":[]},"tam
+  ✓ [Ufuk PAF1: yeniden teslim (sağlam 10) → [fark (akış başından), üretim fişleri, atamalar]] [{"mamul":10,"usta":-350},"1 geçerli / 1 iptal",["Dikim:10:pa-usta:teslim"]]
+     form: önerilen sağlam 10 · Sağlam 10 · bildirim: ÜRT-261127002 · PAF1 tüm prosesler tamamlandı — mamul stoğa eklendi · yazmalar: ["POST rpc/fis_kes 200","POST gunluk 201","PATCH uretim 200","POST gunluk 201"]
+  ✓ [Ufuk PAF1 (TAM teslim + Geri Al + yeniden teslim): akışta reddedilen yazma YOK (19 yazma isteği)] []
+     TAM teslim + Geri Al + yeniden teslim akışı: TAMAMLANDI
+  · KISMİ (PAFK) — başlangıç {"mamul":15,"taban":0,"usta":-350,"usta2":0,"tamirci":0}
+  ✓ [Ufuk PAFK: İşi Ver (PA Usta) → [fark (akış başından), üretim fişleri, atamalar]] [{},"0 geçerli / 0 iptal",["Dikim:10:pa-usta:bekliyor"]]
+     bildirim: ÜRT-261127002 · PAF1 tüm prosesler tamamlandı — mamul stoğa eklendi | 10 adet (40:10) PA Usta'a verildi · yazmalar: ["PATCH uretim 200","POST rpc/alt_yaz 200","POST gunluk 201"]
+  ✓ [Ufuk PAFK: kısmi teslim (10'dan 6 sağlam) → kalan 4 bekliyor → [fark (akış başından), üretim fişleri, atamalar]] [{"mamul":6,"usta":-210},"1 geçerli / 0 iptal",["Dikim:4:pa-usta:bekliyor","Dikim:6:pa-usta:teslim"]]
+     form: önerilen sağlam 10 · Sağlam 6 · bildirim: 10 adet (40:10) PA Usta'a verildi | ÜRT-261127003 · 10 adetlik atama teslim alındı — bu kısım mamul stoğa eklendi — 4 çift ustada kaldı; aynı ustada açık iş olarak duruyor, sonra teslim alınabilir. · yazmalar: ["POST rpc/fis_kes 200","POST gunluk 201","PATCH uretim 200","POST gunluk 201"]
+  ✓ [Ufuk PAFK: kalan 4'ü teslim → toplam 10, fazlası yok → [fark (akış başından), üretim fişleri, atamalar]] [{"mamul":10,"usta":-350},"2 geçerli / 0 iptal",["Dikim:4:pa-usta:teslim","Dikim:6:pa-usta:teslim"]]
+     form: önerilen sağlam 4 · Sağlam 4 · bildirim: ÜRT-261127004 · PAFK tüm prosesler tamamlandı — mamul stoğa eklendi · yazmalar: ["POST rpc/fis_kes 200","POST gunluk 201","PATCH uretim 200","POST gunluk 201"]
+  ✓ [Ufuk PAFK: kalan teslimde formun önerdiği miktar 4; iş bitince kartta teslim formu ve "İşi Ver" kalmadı] ["4",0,0]
+  ✓ [Ufuk PAFK: Geri Al — son parça (4) → [fark (akış başından), üretim fişleri, atamalar]] [{"mamul":6,"usta":-210},"1 geçerli / 1 iptal",["Dikim:4:pa-usta:bekliyor","Dikim:6:pa-usta:teslim"]]
+     bildirim: ÜRT-261127004 · PAFK tüm prosesler tamamlandı — mamul stoğa eklendi | "Dikim" için 4 adetlik teslim alma işlemi geri alındı — hammadde ve işçilik geri alındı · yazmalar: ["POST rpc/fis_iptal_toplu 200","POST gunluk 201","PATCH urunler 200","PATCH cariler 200","PATCH uretim 200","POST gunluk 201","POST gunluk 201","POST gunluk 201"]
+  ✓ [Ufuk PAFK: Geri Al — ilk parça (6) → stok ve işçilik başa döndü, 10'un tamamı bekliyor → [fark (akış başından), üretim fişleri, atamalar]] [{},"0 geçerli / 2 iptal",["Dikim:4:pa-usta:bekliyor","Dikim:6:pa-usta:bekliyor"]]
+     bildirim: "Dikim" için 6 adetlik teslim alma işlemi geri alındı — hammadde ve işçilik geri alındı · yazmalar: ["POST rpc/fis_iptal_toplu 200","POST gunluk 201","PATCH urunler 200","PATCH cariler 200","PATCH uretim 200","POST gunluk 201","POST gunluk 201","POST gunluk 201"]
+  ✓ [Ufuk PAFK: yeniden teslim (bekleyen iki parça, formların önerdiği miktarla) → toplam 10 → [fark (akış başından), üretim fişleri, atamalar]] [{"mamul":10,"usta":-350},"2 geçerli / 2 iptal",["Dikim:4:pa-usta:teslim","Dikim:6:pa-usta:teslim"]]
+     form: önerilen sağlam 6 + 4 · 2 form · bildirim: ÜRT-261127005 · 6 adetlik atama teslim alındı — bu kısım mamul stoğa eklendi | ÜRT-261127006 · PAFK tüm prosesler tamamlandı — mamul stoğa eklendi · yazmalar: ["POST rpc/fis_kes 200","POST gunluk 201","PATCH uretim 200","POST gunluk 201","POST rpc/fis_kes 200","POST gunluk 201","PATCH uretim 200","POST gunluk 201"]
+  ✓ [Ufuk PAFK (KISMİ teslim (6 + 4) + Geri Al + yeniden teslim): akışta reddedilen yazma YOK (35 yazma isteği)] []
+     KISMİ teslim (6 + 4) + Geri Al + yeniden teslim akışı: TAMAMLANDI
+  · TAMİR (PAFT) — başlangıç {"mamul":25,"taban":0,"usta":-700,"usta2":0,"tamirci":0}
+  ✓ [Ufuk PAFT: İşi Ver (PA Usta) → [fark (akış başından), üretim fişleri, atamalar]] [{},"0 geçerli / 0 iptal",["Dikim:10:pa-usta:bekliyor"]]
+     bildirim: ÜRT-261127006 · PAFK tüm prosesler tamamlandı — mamul stoğa eklendi | 10 adet (40:10) PA Usta'a verildi · yazmalar: ["PATCH uretim 200","POST rpc/alt_yaz 200","POST gunluk 201"]
+  ✓ [Ufuk PAFT: teslim (8 sağlam + 2 tamir · PA Tamirci · 5 ₺) → tamir ataması → [fark (akış başından), üretim fişleri, atamalar]] [{"mamul":8,"usta":-350},"1 geçerli / 0 iptal",["Dikim:10:pa-usta:teslim","Dikim:2T:pa-tamirci:bekliyor"]]
+     form: önerilen sağlam 10 · Sağlam 8 · Tamir 2 · bildirim: 10 adet (40:10) PA Usta'a verildi | ÜRT-261127007 · PAFT tüm prosesler tamamlandı — mamul stoğa eklendi — 2 çift TAMİRE gönderildi (Dikim). · yazmalar: ["POST rpc/fis_kes 200","POST gunluk 201","PATCH uretim 200","POST gunluk 201"]
+  ✓ [Ufuk PAFT: tamirci 2'yi teslim eder → mamul +2, tamirci 2 × 5 ₺ → [fark (akış başından), üretim fişleri, atamalar]] [{"mamul":10,"usta":-350,"tamirci":-10},"2 geçerli / 0 iptal",["Dikim:10:pa-usta:teslim","Dikim:2T:pa-tamirci:teslim"]]
+     form: önerilen sağlam 2 · Sağlam 2 · bildirim: ÜRT-261127008 · PAFT tüm prosesler tamamlandı — mamul stoğa eklendi · yazmalar: ["POST rpc/fis_kes 200","POST gunluk 201","PATCH uretim 200","POST gunluk 201"]
+  ✓ [Ufuk PAFT: tamir tesliminde formun önerdiği miktar 2; iş bitince kartta teslim formu kalmadı] ["2",0]
+  ✓ [Ufuk PAFT (TAMİR (8 sağlam + 2 tamir → tamirci teslimi)): akışta reddedilen yazma YOK (11 yazma isteği)] []
+     TAMİR (8 sağlam + 2 tamir → tamirci teslimi) akışı: TAMAMLANDI
+  · HAMMADDELİ (PAFH) — başlangıç {"mamul":35,"taban":0,"usta":-1050,"usta2":0,"tamirci":-10}
+  ✓ [Ufuk PAFH: Kesim'i ver (PA Usta) — hammadde henüz düşmez → [fark (akış başından), üretim fişleri, atamalar]] [{},"0 geçerli / 0 iptal",["Kesim:10:pa-usta:bekliyor"]]
+     bildirim: ÜRT-261127008 · PAFT tüm prosesler tamamlandı — mamul stoğa eklendi | 10 adet (40:10) PA Usta'a verildi · yazmalar: ["PATCH uretim 200","POST rpc/alt_yaz 200","POST gunluk 201"]
+     iş verildikten sonra hammadde (fin-taban Siyah/40) farkı: 0 (teslimde düşmesi beklenir)
+  ✓ [Ufuk PAFH: Kesim teslim (sağlam 10) → hammadde −10, usta 10 × 30 ₺, mamul YOK (ara adım) → [fark (akış başından), üretim fişleri, atamalar]] [{"taban":-10,"usta":-300},"1 geçerli / 0 iptal",["Kesim:10:pa-usta:teslim"]]
+     form: önerilen sağlam 10 · Sağlam 10 · bildirim: ÜRT-261127009 · Kesim adımı tamamen bitti (Fin Taban -10 çift [1×10 (40)]) · yazmalar: ["POST rpc/fis_kes 200","POST gunluk 201","PATCH uretim 200","PATCH urunler 200","POST gunluk 201","POST gunluk 201"]
+  ✓ [Ufuk PAFH: Geri Al (Kesim teslimi) → hammadde ve işçilik başa döndü → [fark (akış başından), üretim fişleri, atamalar]] [{},"0 geçerli / 1 iptal",["Kesim:10:pa-usta:bekliyor"]]
+     bildirim: ÜRT-261127009 · Kesim adımı tamamen bitti (Fin Taban -10 çift [1×10 (40)]) | "Kesim" için 10 adetlik teslim alma işlemi geri alındı — hammadde ve işçilik geri alındı · yazmalar: ["POST rpc/fis_iptal_toplu 200","POST gunluk 201","PATCH urunler 200","PATCH cariler 200","PATCH uretim 200","POST gunluk 201","POST gunluk 201","POST gunluk 201"]
+  ✓ [Ufuk PAFH: Kesim'i yeniden teslim (sağlam 10) → [fark (akış başından), üretim fişleri, atamalar]] [{"taban":-10,"usta":-300},"1 geçerli / 1 iptal",["Kesim:10:pa-usta:teslim"]]
+     form: önerilen sağlam 10 · Sağlam 10 · bildirim: ÜRT-261127010 · Kesim adımı tamamen bitti (Fin Taban -10 çift [1×10 (40)]) · yazmalar: ["POST rpc/fis_kes 200","POST gunluk 201","PATCH urunler 200","PATCH uretim 200","POST gunluk 201","POST gunluk 201"]
+  ✓ [Ufuk PAFH: Saya'yı ver (PA Usta2) → [fark (akış başından), üretim fişleri, atamalar]] [{"taban":-10,"usta":-300},"1 geçerli / 1 iptal",["Kesim:10:pa-usta:teslim","Saya:10:pa-usta2:bekliyor"]]
+     bildirim: ÜRT-261127010 · Kesim adımı tamamen bitti (Fin Taban -10 çift [1×10 (40)]) | 10 adet (40:10) PA Usta2'a verildi · yazmalar: ["PATCH uretim 200","POST rpc/alt_yaz 200","POST gunluk 201"]
+  ✓ [Ufuk PAFH: Saya teslim (sağlam 10) → mamul +10, usta2 10 × 20 ₺; hammadde İKİNCİ kez düşmedi → [fark (akış başından), üretim fişleri, atamalar]] [{"mamul":10,"taban":-10,"usta":-300,"usta2":-200},"2 geçerli / 1 iptal",["Kesim:10:pa-usta:teslim","Saya:10:pa-usta2:teslim"]]
+     form: önerilen sağlam 10 · Sağlam 10 · bildirim: ÜRT-261127011 · PAFH tüm prosesler tamamlandı — mamul stoğa eklendi · yazmalar: ["POST rpc/fis_kes 200","POST gunluk 201","PATCH uretim 200","POST gunluk 201"]
+  ✓ [Ufuk PAFH (HAMMADDELİ (Kesim reçeteli → Saya) + Geri Al + yeniden teslim): akışta reddedilen yazma YOK (30 yazma isteği)] []
+     HAMMADDELİ (Kesim reçeteli → Saya) + Geri Al + yeniden teslim akışı: TAMAMLANDI
+  ✓ [Ufuk: akışlarda sunucunun reddettiği yazma YOK (98 yazma isteği)] []
+  ✓ [Ufuk: dört akışın toplam etkisi (oturum sonu) — mamul 4 × 10, hammadde −10 (tek akış), usta 3 × 350 + 300, usta2 200, tamirci 10] {"mamul":40,"taban":-10,"usta":-1350,"usta2":-200,"tamirci":-10}
+     üretim fişleri: PAF1 1 geçerli / 1 iptal · PAFK 2 geçerli / 2 iptal · PAFT 2 geçerli / 0 iptal · PAFH 2 geçerli / 1 iptal · bütün fişler önce 2 geçerli / 2 iptal sonra 9 geçerli / 6 iptal
+  ✓ [Ufuk: sayfa hatası yok] []
+     istemcinin isteklerinde x-atolye-surum: 1.744.46
+
+■ Umut · umut@atolye.local
+     menü ([data-nav]): Anasayfa · Stok · Ürün Stok · Depo · Paketleme · Sevkiyat · Alış / Satış · Üretim · Üretim Raporu · Planlama · Sipariş · Alış Siparişi · Sohbet · Kılavuz
+     menü grupları: Depo · Üretim · Siparişler · Finans · fiyat bayrağı {"satis":false,"alis":false,"cariFiyatGrubu":false}
+     fiş iptali bayrağı (1.744.44): {"yetki":false,"gizli":true}
+  ✓ [Umut: menüde Üretim VAR] true
+  ✓ [Umut: fiş iptali bayrağı [yetki, düğme gizli] (silme YOK)] [false,true]
+  · TAM (PAU1) — başlangıç {"mamul":45,"taban":-10,"usta":-1350,"usta2":-200,"tamirci":-10} · fiş 0 geçerli / 0 iptal · atamalar []
+  ✓ [Umut PAU1: İşi Ver (PA Usta) → [fark (akış başından), üretim fişleri, atamalar]] [{},"0 geçerli / 0 iptal",["Dikim:10:pa-usta:bekliyor"]]
+     bildirim: 10 adet (40:10) PA Usta'a verildi · yazmalar: ["PATCH uretim 200","POST rpc/alt_yaz 200","POST gunluk 201"]
+  ✓ [Umut PAU1: teslim al (sağlam 10) → [fark (akış başından), üretim fişleri, atamalar]] [{"mamul":10,"usta":-350},"1 geçerli / 0 iptal",["Dikim:10:pa-usta:teslim"]]
+     form: önerilen sağlam 10 · Sağlam 10 · bildirim: ÜRT-261127012 · PAU1 tüm prosesler tamamlandı — mamul stoğa eklendi · yazmalar: ["POST rpc/fis_kes 200","POST gunluk 201","PATCH uretim 200","POST gunluk 201"]
+  ✓ [Umut PAU1: tam teslimden sonra — teslimi geri alan "Geri Al" düğmesi YOK [kartta, sayfada, "detay / geri al" etiketi, düğmenin yeri ekranda, __fisIptalGizli]] [0,0,0,true,true]
+     kapalı bölüm etiketleri: ["detay"] · "Teslim Alındı" satırı yok · detayda "Atamalar:" var · bekleyen atamada iş vermeyi geri alan düğme (fiş iptali değil): 0
+  ✓ [Umut PAU1 (TAM teslim): akışta reddedilen yazma YOK (7 yazma isteği)] []
+     TAM teslim akışı: TAMAMLANDI
+  · KISMİ (PAUK) — başlangıç {"mamul":55,"taban":-10,"usta":-1700,"usta2":-200,"tamirci":-10}
+  ✓ [Umut PAUK: İşi Ver (PA Usta) → [fark (akış başından), üretim fişleri, atamalar]] [{},"0 geçerli / 0 iptal",["Dikim:10:pa-usta:bekliyor"]]
+     bildirim: ÜRT-261127012 · PAU1 tüm prosesler tamamlandı — mamul stoğa eklendi | 10 adet (40:10) PA Usta'a verildi · yazmalar: ["PATCH uretim 200","POST rpc/alt_yaz 200","POST gunluk 201"]
+  ✓ [Umut PAUK: kısmi teslim (10'dan 6 sağlam) → kalan 4 bekliyor → [fark (akış başından), üretim fişleri, atamalar]] [{"mamul":6,"usta":-210},"1 geçerli / 0 iptal",["Dikim:4:pa-usta:bekliyor","Dikim:6:pa-usta:teslim"]]
+     form: önerilen sağlam 10 · Sağlam 6 · bildirim: 10 adet (40:10) PA Usta'a verildi | ÜRT-261127013 · 10 adetlik atama teslim alındı — bu kısım mamul stoğa eklendi — 4 çift ustada kaldı; aynı ustada açık iş olarak duruyor, sonra teslim alınabilir. · yazmalar: ["POST rpc/fis_kes 200","POST gunluk 201","PATCH uretim 200","POST gunluk 201"]
+  ✓ [Umut PAUK: kısmi teslimden sonra — teslimi geri alan "Geri Al" düğmesi YOK [kartta, sayfada, "detay / geri al" etiketi, düğmenin yeri ekranda, __fisIptalGizli]] [0,0,0,true,true]
+     kapalı bölüm etiketleri: [] · "Teslim Alındı" satırı var · detayda "Atamalar:" yok · bekleyen atamada iş vermeyi geri alan düğme (fiş iptali değil): 1
+  ✓ [Umut PAUK: kalan 4'ü teslim → toplam 10, fazlası yok → [fark (akış başından), üretim fişleri, atamalar]] [{"mamul":10,"usta":-350},"2 geçerli / 0 iptal",["Dikim:4:pa-usta:teslim","Dikim:6:pa-usta:teslim"]]
+     form: önerilen sağlam 4 · Sağlam 4 · bildirim: ÜRT-261127014 · PAUK tüm prosesler tamamlandı — mamul stoğa eklendi · yazmalar: ["POST rpc/fis_kes 200","POST gunluk 201","PATCH uretim 200","POST gunluk 201"]
+  ✓ [Umut PAUK: kalan teslimde formun önerdiği miktar 4; iş bitince kartta teslim formu ve "İşi Ver" kalmadı] ["4",0,0]
+  ✓ [Umut PAUK: kalan teslimden sonra — teslimi geri alan "Geri Al" düğmesi YOK [kartta, sayfada, "detay / geri al" etiketi, düğmenin yeri ekranda, __fisIptalGizli]] [0,0,0,true,true]
+     kapalı bölüm etiketleri: ["detay"] · "Teslim Alındı" satırı yok · detayda "Atamalar:" var · bekleyen atamada iş vermeyi geri alan düğme (fiş iptali değil): 0
+  ✓ [Umut PAUK (KISMİ teslim (6 + 4)): akışta reddedilen yazma YOK (11 yazma isteği)] []
+     KISMİ teslim (6 + 4) akışı: TAMAMLANDI
+  · TAMİR (PAUT) — başlangıç {"mamul":65,"taban":-10,"usta":-2050,"usta2":-200,"tamirci":-10}
+  ✓ [Umut PAUT: İşi Ver (PA Usta) → [fark (akış başından), üretim fişleri, atamalar]] [{},"0 geçerli / 0 iptal",["Dikim:10:pa-usta:bekliyor"]]
+     bildirim: ÜRT-261127014 · PAUK tüm prosesler tamamlandı — mamul stoğa eklendi | 10 adet (40:10) PA Usta'a verildi · yazmalar: ["PATCH uretim 200","POST rpc/alt_yaz 200","POST gunluk 201"]
+  ✓ [Umut PAUT: teslim (8 sağlam + 2 tamir · PA Tamirci · 5 ₺) → tamir ataması → [fark (akış başından), üretim fişleri, atamalar]] [{"mamul":8,"usta":-350},"1 geçerli / 0 iptal",["Dikim:10:pa-usta:teslim","Dikim:2T:pa-tamirci:bekliyor"]]
+     form: önerilen sağlam 10 · Sağlam 8 · Tamir 2 · bildirim: 10 adet (40:10) PA Usta'a verildi | ÜRT-261127015 · PAUT tüm prosesler tamamlandı — mamul stoğa eklendi — 2 çift TAMİRE gönderildi (Dikim). · yazmalar: ["POST rpc/fis_kes 200","POST gunluk 201","PATCH uretim 200","POST gunluk 201"]
+  ✓ [Umut PAUT: tamirci 2'yi teslim eder → mamul +2, tamirci 2 × 5 ₺ → [fark (akış başından), üretim fişleri, atamalar]] [{"mamul":10,"usta":-350,"tamirci":-10},"2 geçerli / 0 iptal",["Dikim:10:pa-usta:teslim","Dikim:2T:pa-tamirci:teslim"]]
+     form: önerilen sağlam 2 · Sağlam 2 · bildirim: ÜRT-261127016 · PAUT tüm prosesler tamamlandı — mamul stoğa eklendi · yazmalar: ["POST rpc/fis_kes 200","POST gunluk 201","PATCH uretim 200","POST gunluk 201"]
+  ✓ [Umut PAUT: tamir tesliminde formun önerdiği miktar 2; iş bitince kartta teslim formu kalmadı] ["2",0]
+  ✓ [Umut PAUT: tamir tesliminden sonra — teslimi geri alan "Geri Al" düğmesi YOK [kartta, sayfada, "detay / geri al" etiketi, düğmenin yeri ekranda, __fisIptalGizli]] [0,0,0,true,true]
+     kapalı bölüm etiketleri: ["detay"] · "Teslim Alındı" satırı yok · detayda "Atamalar:" var · bekleyen atamada iş vermeyi geri alan düğme (fiş iptali değil): 0
+  ✓ [Umut PAUT (TAMİR (8 sağlam + 2 tamir → tamirci teslimi)): akışta reddedilen yazma YOK (11 yazma isteği)] []
+     TAMİR (8 sağlam + 2 tamir → tamirci teslimi) akışı: TAMAMLANDI
+  · HAMMADDELİ (PAUH) — başlangıç {"mamul":75,"taban":-10,"usta":-2400,"usta2":-200,"tamirci":-20}
+  ✓ [Umut PAUH: Kesim'i ver (PA Usta) — hammadde henüz düşmez → [fark (akış başından), üretim fişleri, atamalar]] [{},"0 geçerli / 0 iptal",["Kesim:10:pa-usta:bekliyor"]]
+     bildirim: ÜRT-261127016 · PAUT tüm prosesler tamamlandı — mamul stoğa eklendi | 10 adet (40:10) PA Usta'a verildi · yazmalar: ["PATCH uretim 200","POST rpc/alt_yaz 200","POST gunluk 201"]
+     iş verildikten sonra hammadde (fin-taban Siyah/40) farkı: 0 (teslimde düşmesi beklenir)
+  ✓ [Umut PAUH: Kesim teslim (sağlam 10) → hammadde −10, usta 10 × 30 ₺, mamul YOK (ara adım) → [fark (akış başından), üretim fişleri, atamalar]] [{"taban":-10,"usta":-300},"1 geçerli / 0 iptal",["Kesim:10:pa-usta:teslim"]]
+     form: önerilen sağlam 10 · Sağlam 10 · bildirim: ÜRT-261127017 · Kesim adımı tamamen bitti (Fin Taban -10 çift [1×10 (40)]) · yazmalar: ["POST rpc/fis_kes 200","POST gunluk 201","PATCH urunler 200","PATCH uretim 200","POST gunluk 201","POST gunluk 201"]
+  ✓ [Umut PAUH: Kesim tesliminden sonra — teslimi geri alan "Geri Al" düğmesi YOK [kartta, sayfada, "detay / geri al" etiketi, düğmenin yeri ekranda, __fisIptalGizli]] [0,0,0,true,true]
+     kapalı bölüm etiketleri: ["detay"] · "Teslim Alındı" satırı yok · detayda "Atamalar:" var · bekleyen atamada iş vermeyi geri alan düğme (fiş iptali değil): 0
+  ✓ [Umut PAUH: Saya'yı ver (PA Usta2) → [fark (akış başından), üretim fişleri, atamalar]] [{"taban":-10,"usta":-300},"1 geçerli / 0 iptal",["Kesim:10:pa-usta:teslim","Saya:10:pa-usta2:bekliyor"]]
+     bildirim: ÜRT-261127017 · Kesim adımı tamamen bitti (Fin Taban -10 çift [1×10 (40)]) | 10 adet (40:10) PA Usta2'a verildi · yazmalar: ["PATCH uretim 200","POST rpc/alt_yaz 200","POST gunluk 201"]
+  ✓ [Umut PAUH: Saya teslim (sağlam 10) → mamul +10, usta2 10 × 20 ₺; hammadde İKİNCİ kez düşmedi → [fark (akış başından), üretim fişleri, atamalar]] [{"mamul":10,"taban":-10,"usta":-300,"usta2":-200},"2 geçerli / 0 iptal",["Kesim:10:pa-usta:teslim","Saya:10:pa-usta2:teslim"]]
+     form: önerilen sağlam 10 · Sağlam 10 · bildirim: ÜRT-261127018 · PAUH tüm prosesler tamamlandı — mamul stoğa eklendi · yazmalar: ["POST rpc/fis_kes 200","POST gunluk 201","PATCH uretim 200","POST gunluk 201"]
+  ✓ [Umut PAUH: Saya tesliminden sonra (iş bitti) — teslimi geri alan "Geri Al" düğmesi YOK [kartta, sayfada, "detay / geri al" etiketi, düğmenin yeri ekranda, __fisIptalGizli]] [0,0,0,true,true]
+     kapalı bölüm etiketleri: ["detay"] · "Teslim Alındı" satırı yok · detayda "Atamalar:" var · bekleyen atamada iş vermeyi geri alan düğme (fiş iptali değil): 0
+  ✓ [Umut PAUH (HAMMADDELİ (Kesim reçeteli → Saya)): akışta reddedilen yazma YOK (16 yazma isteği)] []
+     HAMMADDELİ (Kesim reçeteli → Saya) akışı: TAMAMLANDI
+  ✓ [Umut: akışlarda sunucunun reddettiği yazma YOK (48 yazma isteği)] []
+  ✓ [Umut: dört akışın toplam etkisi (oturum sonu) — mamul 4 × 10, hammadde −10 (tek akış), usta 3 × 350 + 300, usta2 200, tamirci 10] {"mamul":40,"taban":-10,"usta":-1350,"usta2":-200,"tamirci":-10}
+     üretim fişleri: PAU1 1 geçerli / 0 iptal · PAUK 2 geçerli / 0 iptal · PAUT 2 geçerli / 0 iptal · PAUH 2 geçerli / 0 iptal · bütün fişler önce 9 geçerli / 6 iptal sonra 16 geçerli / 6 iptal
+  — doğrudan REST denemeleri (jeton ✓ · kök mqdgucoomgqcvhvgixbl.supabase.co/rest/v1/ · başlıklar authorization, content-type, apikey, x-atolye-surum)
+  ✓ [Umut: denemeler hesabın KENDİ jetonuyla] "yerel-test:umut@atolye.local"
+  ✓ [Umut YETKİSİZ: urunler satış fiyatı PATCH → ret (4xx + KR040), satır değişmedi] [true,"KR040",true]
+     HTTP 400 · KR040 · Bu değişiklik için yetkiniz yok: satış fiyatı (Ekran Bot Ayşe) (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+  ✓ [Umut YETKİSİZ: urunler alış fiyatı PATCH → ret (4xx + KR040), satır değişmedi] [true,"KR040",true]
+     HTTP 400 · KR040 · Bu değişiklik için yetkiniz yok: alış fiyatı / maliyet (Ekran Bot Ayşe) (gereken: muhasebe: düzenleme). Hiçbir şey kaydedilmedi.
+  ✓ [Umut YETKİSİZ: cariler unvan PATCH → ret (4xx + KR040), satır değişmedi] [true,"KR040",true]
+     HTTP 400 · KR040 · Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: unvan) (gereken: cari: düzenleme). Hiçbir şey kaydedilmedi.
+     doğrudan toplu iptal gövdesi: Ufuk'un gerçek isteğinden (PAF1 → PAU1; fiş ÜRT-261127001 → ÜRT-261127012) · p anahtarları ["fisler","sebep","alt"] · {"p":{"fisler":["ÜRT-261127012"],"sebep":"Üretim teslimi geri alındı (PAU1 · Dikim)","alt":{"uretim_atamalari":{"satirlar":[{"id":"atama-mwz8zxil-y8jx","uretim_id":"pa-pau1","proses":"Dikim","personel_id":"pa-usta","beden_miktarlari":{"40":10},"miktar":10,"verildi_mi":true,"verilme_tarihi":"2026-11-27T17:19:45.774Z","tamamlandi_mi":false,"tamamlanma_tarihi":null,"sonuc":{"saglam":{"40":10},"tamir":[],"hurda":[]},"tam
+  ✓ [Umut: doğrudan toplu iptal gövdesi Umut'un KENDİ geçerli teslim fişini hedefliyor] ["ÜRT-261127012"]
+  ✓ [Umut YETKİSİZ İPTAL: POST rpc/fis_iptal_toplu (PAU1: ÜRT-261127012) → [HTTP, kod, iletide "fiş iptali", iletide "silme", iletide "(stok:", hiçbir kayıt değişmedi, geçerli kalan fiş]] [403,"42501",true,true,false,true,1]
+     HTTP 403 · 42501 · Bu işlem için yetkiniz yok: fiş iptali (Geri Al) (gereken: stok, fişler, sipariş, üretim, cari, muhasebe modüllerinden birinde silme)
+  ✓ [Umut: ret sonrası PAU1 aynen [üretim fişleri, atamalar]] ["1 geçerli / 0 iptal",["Dikim:10:pa-usta:teslim"]]
+  ✓ [Umut YETKİSİZ İPTAL: POST rpc/fis_iptal (ÜRT-261127012) → [HTTP, kod, iletide "fiş iptali", iletide "silme", iletide "(stok:", hiçbir kayıt değişmedi, geçerli kalan fiş]] [403,"42501",true,true,false,true,1]
+     HTTP 403 · 42501 · Bu işlem için yetkiniz yok: fiş iptali (gereken: stok, fişler, sipariş, üretim, cari, muhasebe modüllerinden birinde silme)
+  ✓ [Umut: sayfa hatası yok] []
+     istemcinin isteklerinde x-atolye-surum: 1.744.46
+
+SON DURUM (sunucu): ürün {"ad":"Ekran Bot Ayşe","sf":120,"af":60,"t":"cari-mwz8vg65-jefp","surum":12} · müşteri unvanı "İnceleme Müşteri" · renkler ["Siyah","Vizon Yılan"] · fişler 16 geçerli / 6 iptal
+ÜRETİM AKIŞLARI (hesap başına):
+  Ufuk · PAF1 · TAM teslim + Geri Al + yeniden teslim: TAMAMLANDI
+  Ufuk · PAFK · KISMİ teslim (6 + 4) + Geri Al + yeniden teslim: TAMAMLANDI
+  Ufuk · PAFT · TAMİR (8 sağlam + 2 tamir → tamirci teslimi): TAMAMLANDI
+  Ufuk · PAFH · HAMMADDELİ (Kesim reçeteli → Saya) + Geri Al + yeniden teslim: TAMAMLANDI
+  Umut · PAU1 · TAM teslim: TAMAMLANDI
+  Umut · PAUK · KISMİ teslim (6 + 4): TAMAMLANDI
+  Umut · PAUT · TAMİR (8 sağlam + 2 tamir → tamirci teslimi): TAMAMLANDI
+  Umut · PAUH · HAMMADDELİ (Kesim reçeteli → Saya): TAMAMLANDI
+BULGULAR: yok
+
+── ekran-personel-akis: 118 geçti · 0 kaldı ──

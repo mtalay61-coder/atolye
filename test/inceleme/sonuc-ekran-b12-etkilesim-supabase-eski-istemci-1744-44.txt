@@ -1,0 +1,77 @@
+ekran-b12-etkilesim · GERÇEK API KİPİ (yerel Supabase; giriş ekrandan)
+
+■ E1 Tuna (yalnız Tanımlar › düzenleme) "Vizon Yılan" → "Vizon Deri"
+  ✓ E1 başlangıç: kalemler eski adda, kopuk bağ yok
+  ✓ E1 Tanımlar › renk sekmesi Tuna'ya açık
+     bildirim: 
+  ✗ KALDI E1 ad değişikliği sunucu işlemiyle gitti ve kabul edildi (HTTP 200) — görülen [] · beklenen [200]
+  ✓ E1 Tanımlar'da ad değişti
+  ✓ E1 varyant tablosunda renk ve kombinasyon etiketi yeni adda
+  ✗ KALDI E1 sipariş kalemleri yeni adda (B3a tablo tetikleyicisi işlemi kesmedi), kopuk bağ yok — görülen [["1054 - Siyah/Vizon Yılan"],2] · beklenen [["1054 - Siyah/Vizon Deri"],0]
+  ✓ E1 renk / kombinasyon KİMLİKLERİ, varyantlar, kalem ve sipariş bağları AYNI
+  ✗ KALDI E1 eski ad defterine yazıldı (rengin adı + geçtiği kombinasyon etiketi) — görülen [] · beklenen ["k-1054:1054 - Siyah/Vizon Yılan→1054 - Siyah/Vizon Deri","r-vizon:Vizon Yılan→Vizon Deri"]
+  ✗ KALDI E1 reddedilen yazma yok, sayfa hatası yok — görülen [["POST rpc/alt_yaz 403 42501 Bu işlem için yetkiniz yok: bağlı kayıt yazma (sipariş / üretim satırları) (gereken: sipariş, fişler, stok, cari modüllerinden birinde kaydetme)"],[]] · beklenen [[],[]]
+
+■ E2 yetki korumaları (B1 kuruluyken)
+     Ayşe'de Tanımlar › renk sekmesi: yok / kapalı (bilgi)
+     Ayşe ad değiştirme çağrısı → HTTP 403 · 42501 · Bu işlem için yetkiniz yok (tanimlar: duzenleme)
+  ✓ E2 Ayşe (yalnız stok) renk adını değiştiremez: 42501, ileti gereken yetkiyi söyler
+  ✓ E2 Ayşe eski adı serbest bırakamaz (yalnız Yönetici)
+     Ayşe fiyat yazması → HTTP 400 · KR040 · Bu değişiklik için yetkiniz yok: satış fiyatı (Ekran Bot) (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+  ✓ E2 Ayşe satış fiyatını değiştiremez (B3a-2, KR040) — koruma yerinde
+  ✓ E2 hiçbir şey değişmedi: adlar, kalemler, kimlikler
+  ✓ E2 Tuna (tanımlar: düzenleme) renk ekleyebildi — B2 yazması B3a-2'den geçti
+     silme düğmesi: silme düğmesi yok (düğmeler: ) · Tuna'nın silme sonrası Tanımlar yazmaları: yok
+     ret iletisi: 
+     Tuna bildirimleri: 
+     (bilgi) silme ekrandan üretilemedi — sunucu denetimi doğrudan çağrıyla ölçülür; istemcinin ret gösterimi bu senaryoda ÖLÇÜLMEDİ
+  ✓ E2 Tuna'nın renk silmesi (doğrudan sürüm koşullu yazma) reddedildi (KR040), renk yerinde
+     Tuna fiyat grubu ekledi → Tanımlar yazmaları: POST 400 KR040
+     ret iletisi: Bu değişiklik için yetkiniz yok: satış fiyat grubu (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+     Tuna bildirimleri: 
+  ✓ E2 Tuna'nın Satış fiyat grubu eklemesi sunucuda reddedildi (KR040), grup yazılmadı
+  ✓ E2 ret çakışma SANILMADI (çakışma şeridi yok) ve yazma dönüp durmadı (25 sn'de en çok 3 deneme)
+     şerit: "Tanımlar — inceleme gerekiyor (kendiliğinden denenmez)" · "Hata" penceresinde sebep: var (yetkiniz yok: satış fiyat grubu … sipariş: düzenleme)
+  ✓ E2 ret ekranda kalıcı ret şeridiyle duruyor; sebep "Hata" penceresinde okunuyor
+  ✓ E2 reddedilen yazma Tuna'nın önceki eklemesini (Mor) bozmadı
+
+■ E3 iki cihaz aynı anda renk ekler: Ali "Kırmızı", Deniz (stok + tanımlar) "Lacivert" — Deniz'in yazması Ali'ninkinden SONRA varır
+  ✓ E3 Tanımlar › renk sekmesi Deniz'e açık
+     Deniz'in bekletilen yazması: POST · Deniz'in Tanımlar yazmaları: POST 400
+  ✗ KALDI E3 iki renk de sunucuda (birinin eklediği kaybolmadı) — görülen ["Kırmızı","Siyah","Vizon Yılan"] · beklenen ["Kırmızı","Lacivert","Siyah","Vizon Yılan"]
+  ✓ E3 renk kodları ve barkod kodları tekil
+  ✓ E3 var olan renk / kombinasyon kimlikleri, varyantlar ve sipariş bağları AYNI
+  ✗ KALDI E3 B3a-2 Deniz'in birleştirme yazmasını reddetmedi; Ali'de de ret yok — görülen [["POST tanimlar 400 KR040 Bu değişiklik için yetkiniz yok: renkler listesinden öğe silme (1) (gereken: tanımlar: silme). Hiçbir şey kaydedilmedi."],[]] · beklenen [[],[]]
+  ✓ E3 sayfa hatası yok
+
+■ E4 aynı alan iki cihazda: Ali ton kodu "201", Tuna "202" (Tuna'nın yazması sonra varır) → Tuna "Benimkini uygula"
+  ✗ KALDI E4 sunucuda Ali'nin değeri kaldı (Tuna sessizce ezmedi) — görülen "202" · beklenen "201"
+  ✗ KALDI E4 Tuna'da çakışma şeridi: hangi öğe — görülen [] · beklenen ["renkler › Vizon Yılan › kod"]
+  ✗ KALDI E4 Tuna'nın değişikliği bekleyen defterde (kaybolmadı) — görülen false · beklenen true
+  ✓ E4 'Benimkini uygula' → sunucuda Tuna'nın değeri (B3a-2 personelin çakışma çözümünü reddetmedi)
+  ✓ E4 çakışma şeridi kapandı
+  ✓ E4 kimlikler ve bağlar AYNI; ret yok
+
+■ E5 Tuna "Vizon Yılan" → "Vizon Rugan"; ardından (ekranı bayat) Ali aynı rengi "Vizon Deri" yapmak ister
+     Ali'nin ekranı bayattı (eski ad görünüyordu) · Ali'nin isteği: yok · bildirim: Başka cihazdan güncellendi: Stok | Renk adı "Vizon Yılan" → "Vizon Deri" olarak değişti. Hiçbir üründe kullanılmıyordu.
+  ✗ KALDI E5 ikinci istek KR021 ile reddedildi, açık ileti — görülen [false,false] · beklenen [true,true]
+  ✗ KALDI E5 ilk gelen uygulandı, ikinci EZMEDİ — görülen [["Siyah","Vizon Deri"],["1054 - Siyah/Vizon Deri"]] · beklenen [["Siyah","Vizon Rugan"],["1054 - Siyah/Vizon Rugan"]]
+     eski adla kalem yazması → HTTP 200
+  ✗ KALDI E5 eski adla gelen yeni kalem güncel ada bağlandı, kopuk bağ yok — görülen [["1054 - Siyah/Vizon Yılan"],1] · beklenen [["1054 - Siyah/Vizon Rugan"],0]
+  ✓ E5 kimlikler, varyantlar ve önceki kalem / sipariş bağları AYNI
+  ✓ E5 sayfa hatası yok
+
+SONUÇ: 24 geçti · 12 kaldı
+KALANLAR:
+  - E1 ad değişikliği sunucu işlemiyle gitti ve kabul edildi (HTTP 200)
+  - E1 sipariş kalemleri yeni adda (B3a tablo tetikleyicisi işlemi kesmedi), kopuk bağ yok
+  - E1 eski ad defterine yazıldı (rengin adı + geçtiği kombinasyon etiketi)
+  - E1 reddedilen yazma yok, sayfa hatası yok
+  - E3 iki renk de sunucuda (birinin eklediği kaybolmadı)
+  - E3 B3a-2 Deniz'in birleştirme yazmasını reddetmedi; Ali'de de ret yok
+  - E4 sunucuda Ali'nin değeri kaldı (Tuna sessizce ezmedi)
+  - E4 Tuna'da çakışma şeridi: hangi öğe
+  - E4 Tuna'nın değişikliği bekleyen defterde (kaybolmadı)
+  - E5 ikinci istek KR021 ile reddedildi, açık ileti
+  - E5 ilk gelen uygulandı, ikinci EZMEDİ
+  - E5 eski adla gelen yeni kalem güncel ada bağlandı, kopuk bağ yok
