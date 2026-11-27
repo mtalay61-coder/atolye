@@ -451,6 +451,27 @@ paket `4904a7e` değişmedi. Ayrıntı: `33-YEREL-SUPABASE-SONUC.md`; öneri: `3
   G-25 nesnesi 0; kullanıcılar 3 Yönetici · 0 diğer; GENEL "tutarlı". Yetki paketleri için kurulum onayı BEKLENİYOR.
 - **AÇIK:** B1 / B2, B3b, B6, Y1.
 
+## 21. YETKİ PAKETLERİ CANLIDA KURULU (27 Kasım 2026; kullanıcı onayıyla, yalnız ana proje `mqdgucoomgqcvhvgixbl`)
+Kullanıcı SQL Editor'den sırayla, birer birer çalıştırdı; her adımın sonuç tablosu doğrulanmadan sonrakine geçilmedi.
+
+| Adım | Dosya | SHA-256 | Canlıdaki sonuç |
+|---|---|---|---|
+| 1 | `28-b3a-uygula.sql` | `15f1051d5c9f652ac99d091fb329aea67ef35ef10adb82fee1cbe31ba3d38250` | fonksiyon var · 14 etkin tetikleyici · `GENEL | KURULU` |
+| 2 | `29-b3a2-uygula.sql` | `ec3df68d922ba5d49e1f5b95bd795c4ff1982bd89472681a8c75df816a12986f` | 10 fonksiyon · cariler, tanimlar, urunler · `GENEL | KURULU` |
+| 3 | `31-yetki-ileti-uygula-satirsonu.sql` | `98b4c1b4b3265984cafe627f777cf20119be08097e884f6b86954b8e0a046bad` | `YENİ İLETİ (31)` · `GENEL | KURULU` |
+| 4 | `41-canli-paket-durum-salt-okur.sql` (salt okur) | `f4d003b549f5e1f888c00c73c9ba8e7ec7a64d25dee55de3c705373d665842f8` | B4/B5, B3a, B3a-2 "KURULU — kod sınananla aynı"; ret iletisi "KURULU — yeni ileti"; iç fonksiyonlar kapalı; G-25 0; kullanıcılar 3 · 0; GENEL "tutarlı" |
+
+- **Canlıda şimdi kurulu:** B4/B5, B3a, B3a-2, ret iletisi. İstemci 1.744.37 (değişmedi). İstemci yayını, main birleşmesi, geri alma, G-25: YAPILMADI, onay yok.
+- **Canlıda DOĞRULANAN:** kurulu kodun sınanan kodla aynı olduğu ve tetikleyicilerin etkin olduğu (salt okur). **Canlıda DOĞRULANMAYAN:** yetki
+  kurallarının bir Yönetici olmayan hesapla davranışı — canlıda öyle hesap yok (3 Yönetici · 0 diğer); kurallar yalnız yerel PostgreSQL 16
+  ve yerel Supabase'de sınandı. İlk personel hesabı açıldığında gözlenmeli.
+- **Geçerli geri alma dosyaları (çalıştırma onayı YOK):** `31-yetki-ileti-geri-al-satirsonu.sql` (`5c5b9521…6ff0f`), `29-b3a2-geri-al.sql`
+  (`8d471fcf…d9c5`), `28-b3a-geri-al.sql` (`c015689a…0ef3f`), `27-b4-geri-al-satirsonu.sql` (`4dbe9e7e…e69c`).
+- **Bilinen etki (personel hesabı açılınca):** açık kalmış 1.744.37 sekmesi, reddedilen fiyat değişikliğini "güncellendi" diye gösterir ve
+  değeri o cihazda tutar; 1.744.44 bunu fiyat kutularını kapatarak önler. İstemci yayını ayrı onay ister; önkoşulu B4 (kurulu).
+- **AÇIK:** B1 / B2 (ayrı bekleyen paket), B3b (RPC ile yazma genişliği — bu paketler kapatmaz), B6, Y1. "448 uyumlu · 0 açık" yalnız B3a-2
+  matrisinin kapsamıdır. Deneme kalıntısı (üretim 10001, üç DENEME kartı) kullanıcı kararıyla olduğu gibi bırakıldı.
+
 ## 4. Sıradaki adımlar (güncel)
 1. Kullanıcı onayıyla B1 / B2 deneme paketi (§9) — deneme projesinde salt okur adım 0, sonra kurulum ve elle sınamalar.
 2. Sonraki düzeltme paketi (§10) için tasarım onayı: B4 / B5 + B3a; B3b G-25 kararından sonra.
