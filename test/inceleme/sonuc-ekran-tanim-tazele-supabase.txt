@@ -1,0 +1,41 @@
+ekran-tanim-tazele · istemci 1.744.48 (/home/user/atolye-b12) · GERÇEK API KİPİ (yerel Supabase; giriş ekrandan)
+
+■ T1 aynı cihaz: "Vizon Yılan" → "Vizon Deri", ardından aynı cihazdan renk eklenir, sayfa yenilenir
+  ✓ T1 başlangıç: rozet var, kopuk bağ yok
+     ad değişikliğinden sonra bellek: {"renkler":["Siyah","Vizon Deri"],"varyantAdlari":["1054 - Siyah/Vizon Deri","Siyah","Taba"]}
+  ✓ T1 ad değişikliğinden sonra ekrandaki (bellekteki) Tanımlar YENİ adda
+  ✓ T1 rozet kaybolmadı ("N üründe")
+  ✓ T1 aynı cihazın sonraki Tanımlar kaydı eski adı GERİ YAZMADI (sunucu Tanımlar)
+  ✓ T1 varyant etiketleri yeni adda
+  ✓ T1 sipariş kalemleri yeni adda, kopuk bağ yok
+  ✓ T1 renk / kombinasyon kimlikleri, varyantlar, kalem ve sipariş bağları AYNI
+  ✓ T1 yenilemeden sonra ekranda yeni ad ve rozet; bekleyen kayıt / çakışma yok
+  ✓ T1 yenilemeden sonraki kayıt da adı korudu
+  ✓ T1 reddedilen yazma yok, sayfa hatası yok
+
+■ T2 diğer cihaz: A ton kodu verir, renk ekler, bir rengin adını değiştirir — B'nin ekranı AÇIK, yenilenmez
+  ✓ T2 A'nın değişiklikleri sunucuda
+     B'nin belleği (yoklamadan sonra): {"renkler":["Kırmızı","Siyah#301","Vizon Deri"],"varyantAdlari":["1054 - Siyah/Vizon Deri","Siyah","Taba"]} · B bildirimleri: Başka cihazdan güncellendi: Tanımlar | Başka cihazdan güncellendi: Stok, Tanımlar, Siparişler
+  ✓ T2 A'nın değişiklikleri B'nin AÇIK ekranına geldi (ton kodu, yeni renk, yeni ad)
+  ✓ T2 B'nin ekranında yeni renk ve yeni ad görünüyor
+  ✓ T2 B'nin sonraki kaydı A'nın değişikliklerini GERİ ÇEVİRMEDİ
+  ✓ T2 kalemler yeni adda, kopuk bağ yok; kimlikler ve bağlar AYNI
+  ✓ T2 çakışma şeridi yok, bekleyen yok, ret yok
+  ✓ T2 sayfa hatası yok
+
+■ T3 B'nin Tanımlar yazması gidemiyor (bekleyen); A başka bir öğeyi değiştirir
+  ✓ T3 B'nin değişikliği bekleyen defterde, sunucuya gitmedi
+     B'nin belleği (A yazdıktan ve yoklama süresi geçtikten sonra): ["Siyah","Vizon Yılan#777"]
+  ✓ T3 tazeleme B'nin bekleyen yerel değişikliğini EZMEDİ (ekranda 777 duruyor, defterde duruyor)
+  ✓ T3 yazma açılınca ikisi de sunucuda: B'nin ton kodu + A'nın rengi (B2 birleştirme)
+  ✓ T3 defter boşaldı, çakışma şeridi yok
+  ✓ T3 sınama engeli dışında ret yok, sayfa hatası yok
+
+■ T4 B'nin bekleyen değişikliği ile A'nın değişikliği AYNI alanda (Siyah › ton kodu)
+  ✓ T4 tazeleme B'nin bekleyen değerini EZMEDİ (ekranda 888)
+  ✓ T4 B sessizce ezmedi: sunucuda A'nın değeri
+  ✓ T4 B'de çakışma şeridi: hangi öğe; değişiklik defterde bekliyor
+  ✓ T4 "Benimkini uygula" → sunucuda B'nin değeri; şerit kapandı, defter boş
+  ✓ T4 sayfa hatası yok
+
+SONUÇ: 27 geçti · 0 kaldı

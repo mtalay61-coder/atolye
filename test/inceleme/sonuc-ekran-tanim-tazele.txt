@@ -33,12 +33,9 @@ ekran-tanim-tazele · istemci 1.744.48 (/home/user/atolye-b12) · PostgreSQL kip
 
 ■ T4 B'nin bekleyen değişikliği ile A'nın değişikliği AYNI alanda (Siyah › ton kodu)
   ✓ T4 tazeleme B'nin bekleyen değerini EZMEDİ (ekranda 888)
-  ✗ KALDI T4 B sessizce ezmedi: sunucuda A'nın değeri — görülen ["Siyah#888","Vizon Yılan"] · beklenen ["Siyah#999","Vizon Yılan"]
-  ✗ KALDI T4 B'de çakışma şeridi: hangi öğe; değişiklik defterde bekliyor — görülen [[],false] · beklenen [["renkler › Siyah › kod"],true]
+  ✓ T4 B sessizce ezmedi: sunucuda A'nın değeri
+  ✓ T4 B'de çakışma şeridi: hangi öğe; değişiklik defterde bekliyor
   ✓ T4 "Benimkini uygula" → sunucuda B'nin değeri; şerit kapandı, defter boş
   ✓ T4 sayfa hatası yok
 
-SONUÇ: 25 geçti · 2 kaldı
-KALANLAR:
-  - T4 B sessizce ezmedi: sunucuda A'nın değeri
-  - T4 B'de çakışma şeridi: hangi öğe; değişiklik defterde bekliyor
+SONUÇ: 27 geçti · 0 kaldı
