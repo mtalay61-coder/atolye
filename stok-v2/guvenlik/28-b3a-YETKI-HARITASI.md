@@ -1,4 +1,4 @@
-# B3a-2 — ALAN VE İŞLEM BAZINDA YETKİ HARİTASI: `cariler`, `tanimlar`, `urunler` (2. sürüm, 30 Kasım 2026; TASARIM — kural yazılmadı)
+# B3a-2 — ALAN VE İŞLEM BAZINDA YETKİ HARİTASI: `cariler`, `tanimlar`, `urunler` (2. sürüm; 3. sürüm notu 27 Kasım 2026 — kural `29-b3a2` paketinde yazıldı)
 
 > **Durum:** B3a (`28-b3a-uygula.sql`) KISMİ korumadır. Listede olmayan ve salt okur hesabı kapatır; aşağıdaki **üç açık AÇIK durur**.
 > Bu belge o açıkları kapatacak kuralın haritasıdır.
@@ -10,6 +10,15 @@
 > - maaş ve proses ücreti tasarımı G-25'te kalır, bugünkü yetkisiz yollar burada açık bulgu;
 > - "yeni öğe eklemek açık" genel kural DEĞİL: her listeyi kimin ekleyebileceği ayrı yazıldı.
 
+>
+> **3. sürüm notu (27 Kasım) — KURAL YAZILDI, harita şu kararlarla kesinleşti.** Uygulanan ve sınanan kural tabloları
+> `29-b3a2-PAKET.md`'dedir (dal `claude/b3a2-alan-yetki`); bu belgeyle çeliştiği yerde O geçerlidir:
+> - yeni yetki modülü açılmadı, MEVCUT modüller kullanıldı: satış fiyatı ve müşterinin fiyat grubu → sipariş: düzenleme;
+>   alış fiyatı / maliyet → muhasebe: düzenleme; müşterinin fiyat grubunu değiştirmek ayrıca cari: düzenleme;
+> - ürün fiyat kapsamı yalnız fiyat + para birimi + fiyat kuralları (KDV oranı ve tedarikçi alanı kapsam DIŞI);
+> - müşterinin fiyat grubu `ek.fiyatGrubuId`'dedir (eski `fiyat_grubu` sütunu da korunur);
+> - stok personeli ürünün fiyat dışındaki alanlarını kaydeder; sunucu gerçek alan değişikliğine bakar;
+> - salt okur kullanıcının kişisel tercihi için ayrı tablo (`kullanici_tercih`) hâlâ 2. aşamadır, yazılmadı.
 ## Kalan üç açık (matris, `inc_tam`, B3a kurulu — `test/inceleme/sonuc-b3a-matris-sonra.txt`)
 
 Yalnız **stok** modülünde yetkili personel, doğrudan REST ile:
