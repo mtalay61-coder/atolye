@@ -150,6 +150,25 @@ function fisIptalHepsiZatenIptal(yanit) {
   return !!f && f.length > 0 && f.every((x) => x && x.zatenIptal === true);
 }
 
+// ÜRETİM ADIMI SUNUCUDA GEÇERLİ BİR FİŞTE Mİ (v1.744.41): geri almanın sonucu FİŞ üzerinden doğrulanır — ara proseste atama satırı yok,
+// atamalı adımda da atama ile fiş tutarsız olabilir (B4 / B5 öncesi sunucu). `adlar`: adımın satır adları (079 `uretimFisAdlari`).
+// Döner: true (iptal edilmemiş bir fişte bu adımın iptal edilmemiş satırı var) · false (yok) · null (okunamadı — çağıran "bilinmiyor" sayar).
+async function uretimAdimiSunucudaGecerliMi(uretimId, adlar) {
+  try {
+    const fisler = await supabaseIstek(`stk_fis?uretim_id=eq.${encodeURIComponent(uretimId)}&iptal=eq.false&select=id`);
+    if (!Array.isArray(fisler)) return null;
+    if (fisler.length === 0) return false;
+    const liste = fisler.map((f) => encodeURIComponent(`"${String(f.id).replace(/"/g, '\\"')}"`)).join(",");
+    const kume = new Set(adlar || []);
+    for (const tablo of ["stk_hareket", "car_hareket"]) {
+      const satirlar = await supabaseIstek(`${tablo}?fis_id=in.(${liste})&select=ek,iptal`);
+      if (!Array.isArray(satirlar)) return null;
+      if (satirlar.some((h) => h && !h.iptal && h.ek && kume.has(h.ek.uretimFisAdi))) return true;
+    }
+    return false;
+  } catch (e) { return null; }
+}
+
 async function fisIptalGonder(no, sebep, alt) {
   const r = await supabaseIstek("rpc/fis_iptal", { method: "POST", body: JSON.stringify({ p: { no, sebep: sebep || null, ...(alt ? { alt } : {}), istemci: fisIstemciBilgisi() } }) });
   fisKarsilananDuzeltmeBildir(r, "fis_iptal");

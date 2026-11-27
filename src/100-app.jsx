@@ -1880,26 +1880,31 @@ function AtolyeUygulamasi() {
         return;
       }
       // BAYAT GERİ AL (v1.744.41, inceleme 25 B5): sunucu bütün fişler için "zaten iptal" dediyse bu çağrı fişlerde HİÇBİR şeyi
-      // değiştirmedi — teslim başka cihazda ya da yanıtı kaybolan önceki denemede geri alınmıştı. İki durum sunucudaki ATAMAYA bakılarak
-      // ayrılır (ana satırı istemci sonradan yazdığı için yalnız tazelemek yetmez):
-      //   • atama sunucuda TESLİM ALINMIŞ (iş arada yeniden teslim alınmış) ya da okunamadı → bu cihazın bayat hesabı UYGULANMAZ; ekran
-      //     sunucudaki hâle getirilir, kullanıcıya "yeni bir değişiklik yapmadı" denir. Eskiden "geri alındı" deniyordu.
-      //   • atama sunucuda BEKLİYOR (geri alma gerçekten yapılmış; yanıt kaybı tekrarı) → olağan yol sürer: üretimin ana satırı (aşama,
-      //     adım tamamlandı) da geri yazılır; ileti geri almanın önceden yapıldığını söyler.
-      // Ara proses (ataması yok) olağan yoldan devam eder — sunucuda bakılacak atama satırı yok.
+      // değiştirmedi — teslim başka cihazda ya da yanıtı kaybolan önceki denemede geri alınmıştı. Sonuç SUNUCUDAN doğrulanır:
+      //   • adımın GEÇERLİ bir fişi var mı (078 `uretimAdimiSunucudaGecerliMi`) — ara proses dahil (ataması yok, tek kanıt fiş);
+      //   • atamalı adımda ayrıca atama satırı teslim alınmış mı.
+      // Geçerli fiş VAR / atama teslimli / okunamadı → bu cihazın bayat hesabı UYGULANMAZ; ekran sunucudaki hâle getirilir ve
+      // kullanıcıya gerçekleşmeyen işlem için başarı denmez. İkisi de "yok / bekliyor" → geri alma gerçekten yapılmış (yanıt kaybı
+      // tekrarı): olağan yol sürer (üretimin ana satırını istemci yazar), ileti önceden yapıldığını söyler.
       if (fisIptalHepsiZatenIptal(iptalYaniti)) {
         zatenGeriAlinmis = true;
-        let sunucudaTeslim = null;
+        const gecerliFis = await uretimAdimiSunucudaGecerliMi(uretimId, uretimFisAdlari(siparis, adimIndex, araProsesMi ? null : atamaId));
+        let sunucudaTeslim = false;
         if (!araProsesMi) {
           try {
             const r = await supabaseIstek(`uretim_atamalari?id=eq.${encodeURIComponent(atamaId)}&select=tamamlandi_mi`);
             sunucudaTeslim = Array.isArray(r) && r[0] ? !!r[0].tamamlandi_mi : null;
           } catch (e) { sunucudaTeslim = null; }
         }
-        if (!araProsesMi && sunucudaTeslim !== false) {
-          gunlukYaz(`Üretim teslimi geri alma: fişler zaten iptal, değişiklik yapılmadı (${sunucuSatirlari.fisler.join(", ")} · ${siparis.siparisNo} · ${prosesAdi})`, "uretim", { uretimId, atamaId });
+        if (gecerliFis !== false || sunucudaTeslim !== false) {
+          gunlukYaz(`Üretim teslimi geri alma: fişler zaten iptal, değişiklik yapılmadı (${sunucuSatirlari.fisler.join(", ")} · ${siparis.siparisNo} · ${prosesAdi})`, "uretim",
+            { uretimId, atamaId, gecerliFis, sunucudaTeslim });
           try { await bulutDegisikligiUygula(["uretim", "stok", "cariler", "siparisler", "stokRezervasyonlari", "fisDefteri"]); } catch (e) { /* yoklama birazdan tazeler */ }
-          showToast(`"${prosesAdi}" teslimi zaten geri alınmıştı (başka cihazdan ya da önceki denemede)${sunucudaTeslim ? " ve iş yeniden teslim alınmış" : ""} — bu işlem yeni bir değişiklik yapmadı. Ekran güncel duruma getirildi; işin şimdiki durumunu kontrol edin.`);
+          const durumNotu = gecerliFis === true
+            ? (araProsesMi ? " ve adım yeniden tamamlanmış (geçerli bir fişi var)" : sunucudaTeslim ? " ve iş yeniden teslim alınmış (geçerli bir fişi var)"
+              : "; ancak sunucuda bu adımın geçerli bir fişi duruyor — Fişler ekranından kontrol edin")
+            : (sunucudaTeslim ? " ve iş yeniden teslim alınmış" : "; sunucudaki güncel durum doğrulanamadı");
+          showToast(`"${prosesAdi}" ${araProsesMi ? "ara prosesi" : "teslimi"} zaten geri alınmıştı (başka cihazdan ya da önceki denemede)${durumNotu} — bu işlem yeni bir değişiklik yapmadı. Ekran güncel duruma getirildi; işin şimdiki durumunu kontrol edin.`);
           return;
         }
       }
@@ -1931,7 +1936,9 @@ function AtolyeUygulamasi() {
 
     showToast(
       araProsesMi
-        ? `"${prosesAdi}" ara prosesinin otomatik tamamlanması geri alındı — hammadde ve işçilik geri alındı` +
+        ? (zatenGeriAlinmis
+            ? `"${prosesAdi}" ara prosesinin tamamlanması zaten geri alınmıştı (önceki denemede ya da başka cihazdan) — kayıtlar geri alınmış durumda`
+            : `"${prosesAdi}" ara prosesinin otomatik tamamlanması geri alındı — hammadde ve işçilik geri alındı`) +
           (iadeEdilenRez > 0 ? " · rezervasyon payları serbest bırakıldı" : "")
         : (zatenGeriAlinmis
             ? `"${prosesAdi}" için ${atama.miktar} adetlik teslim zaten geri alınmıştı (önceki denemede ya da başka cihazdan) — kayıtlar geri alınmış durumda, iş yeniden teslim alınabilir`
