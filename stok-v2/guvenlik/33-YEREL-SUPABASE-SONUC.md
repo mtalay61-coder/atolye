@@ -55,6 +55,8 @@ Sonuç dosyaları: `test/inceleme/sonuc-sb/`.
 İki cihaz aynı anda kısmi (6 / 6): tek kısmi teslim (+6 / −210), kalan 4 tek atamada. Fazla stok ya da çift işçilik oluşmadı.
 
 ### Yanıt kaybı ve tekrar (T6; istek kaydıyla)
+**Kayıt:** SUNUCUDA tekrar güvenliği DOĞRULANDI. İstemcinin otomatik tekrar zinciri tek akışta DOĞRULANMADI — tamamlanmış sayılmaz.
+
 | Olay | Kanıt |
 |---|---|
 | İlk teslim isteği sunucuda TAMAMLANDI, yanıtı düşürüldü | `rpc/fis_kes` istek `fis-mwyx4hy6-7a77` → sunucu HTTP 200; `stk_fis`'te `ÜRT-261127009` bu istek kimliğiyle; mamul +10, usta −350 |
@@ -63,8 +65,9 @@ Sonuç dosyaları: `test/inceleme/sonuc-sb/`.
 | Kayıtlı iki isteğin sonradan AYNI kimlikle yeniden gönderilmesi (gerçek API, gerçek oturum) | ikisi de HTTP 200, `zatenVar: true`, aynı fiş no; fiş sayısı önce / sonra aynı (1 geçerli / 1 iptal) |
 | Geri Al'ın yanıtı düştü, kullanıcı yeniden Geri Al | defterler başlangıçta, atama "bekliyor"; ikinci Geri Al değişiklik yapmadı |
 
-Açık nokta: "yanıt kaybından sonra aynı kimliğin istemci tarafından kendiliğinden sunucuya ulaşması" tek akışta ekrandan ölçülmedi
-(sınama tekrarları kesiyor); aynı kimliğin sunucuya ikinci kez ulaşması T6e ve doğrudan yeniden gönderimle gösterildi.
+**Doğrulanmayan:** yanıtı kaybolan isteğin istemci tarafından AYNI kimlikle kendiliğinden yeniden gönderilip sunucuya ulaşması ve
+ekranın buna göre doğru sonucu göstermesi tek akışta ölçülmedi: sınama, istemcinin otomatik tekrarlarını ağa çıkmadan kesiyor.
+Gösterilen yalnız şudur: aynı kimlik sunucuya ikinci kez ulaştığında (T6e ve doğrudan yeniden gönderim) sunucu ikinci fişi yazmıyor.
 
 ### Personel yetkileri (gerçek jetonla)
 - Yalnız stok yetkili hesap: satış fiyatı → **HTTP 400 · KR040** "… (gereken: sipariş: düzenleme)"; fiş iptali → **HTTP 403 · 42501**
