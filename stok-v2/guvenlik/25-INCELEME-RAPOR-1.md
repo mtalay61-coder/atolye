@@ -331,13 +331,34 @@ Sıra önerisi: **B4/B5 ve B3a birlikte (yalnız sunucu, istemci değişmez), B3
 - **B3a KISMİ KORUMA**: 3 açık kapanmadı. Alan / işlem yetki haritası `28-b3a-YETKI-HARITASI.md` (dal `claude/b3a-tablo-yazma-yetki`, `8faa4f5`); kararlar bekliyor.
 
 ## 13. Yalıtılmış deneme hazırlığı, istemci 1.744.41, yetki haritası, B6 (30 Kasım; canlı / deneme / main / yayın YOK)
-- **Yapı dosyası** (yeni boş Supabase projesi için; depoda değil): yerel hizalı kopyadan yalnız şema, sha256 `7510c95a…88c27`.
+- **Yapı dosyası** (yeni boş Supabase projesi için; depoda değil): yerel hizalı kopyadan yalnız şema; geçerli 2. sürüm sha256 `d777fb7e…28819` (ilk sürüm `7510c95a…` geçersiz). "Veri 0" sayımında tek veri satırı olan `stk_ayar` bayrak satırı ayrı gösterilir.
   - Supabase benzeri boş veritabanında kuruldu; canlı 25 dökümüne göre uygulama nesnelerinde fark 0 (ayrıntı `27-b4-deneme/PAKET-B4-YALITILMIS-DENEME.md`).
   - Dökümden kurulan tabanda yayın paketleriyle: 1.744.37 + B4 35/35 ve 12/12; 1.744.41 + B4 35/35 ve 12/12. Gerçek Supabase'de denenmedi.
 - **Düz "İşi Ver" neden yazmadan "verildi" diyordu:** ileti yazmadan ÖNCE gösteriliyordu. İkinci cihazın `uretim` satırı sürüm koşullu yazmada 0 satır aldı (çakışma); atama gönderilmedi, bellek geri alındı, turuncu çakışma şeridi çıktı — ama "verildi" iletisi çoktan gösterilmişti. 1.744.41'de ileti yazma sonucuna bağlandı.
 - **1.744.41** (dal `claude/geri-al-ileti`): geri almanın sonucu fişten doğrulanır (ara proses dahil); gerçekleşmeyen işlem için başarı iletisi yok.
 - **B3a-2 yetki haritası 2. sürüm** (`28-b3a-YETKI-HARITASI.md`, `420cf6f`): kullanıcı kararları işlendi; kural yazılmadı. B3a kısmi koruma; 3 açık duruyor.
 - **B6 (AÇIK, yeni kayıt) — ücret verisinin yetkisiz değiştirilmesi:** maaş / aylık saat (`tanimlar.bolumler`), mesai katsayıları, ara proses ücreti, `urunler.proses_ucretleri`, `uretim_atamalari.tamir_ucret` yazma yetkisi olan her hesaba açık. Tasarım G-25'te; bu incelemede açık bulgu.
+
+## 14. B3a-2 yetki paketi + istemci 1.744.42 (27 Kasım; canlı / deneme / main / yayın YOK)
+Dal `claude/b3a2-alan-yetki`; belge `29-b3a2-PAKET.md`. B4 / B5 ve 1.744.41 öncelikli; bu paket bağımsız kurulur ve geri alınır.
+- **Kural:** sunucu gerçek alan değişikliğine bakar (eski ↔ yeni satır). Satış fiyatı ve müşterinin fiyat grubu → sipariş: düzenleme;
+  alış fiyatı / maliyet → muhasebe: düzenleme; müşterinin fiyat grubunu değiştirmek ayrıca cari: düzenleme. Stok personeli ürünün
+  fiyat dışındaki alanlarını kaydeder. Tanımlar'da her liste ayrı (ekleme / değiştirme / silme).
+- **Sunucu:** `29-b3a2-uygula.sql` sha256 `e67eef17…caef1`, geri alma `8d471fcf…d9c5`. Tek tetikleyici adı (`b3a2_alan_koru`) üç tabloda;
+  var olan fonksiyon ve politikaya dokunmaz.
+- **İstemci 1.744.42:** fiyat kutuları yetkisizde kapalı; yetkisiz fiyat değişikliği eski değerle gönderilir ve bildirilir.
+- **Ölçüm (yerel, canlıya hizalı, G-25'siz):** yetki matrisi 42 durum × 7 hesap — kurulumdan önce 170 uyumlu · 124 AÇIK; sonra
+  294 uyumlu · 0 AÇIK · 0 fazla kısıt. Personel ekran sınaması (yalnız stok yetkili hesap + Yönetici) 10/10: reddedilen yazma 0,
+  fiyat kutuları kapalı / açık, fiyat dışı alan kaydedildi. Ekran regresyonları 24/24 · 29/29 · 29/29. Geri alma sonrası şema
+  kurulum öncesiyle aynı. kosu.sh: @@KOSU@@.
+- **Sınamada bulunan ve düzeltilen yanlış retler:** uygulamanın açılışta kendiliğinden yazdığı normalleştirmeler (boş değer dönüşümleri,
+  `ek.olusturma`, Tanımlar'a boş listeler ve varsayılan logolu boş firma bilgisi) ilk hâlde yalnız stok yetkili personelin açılışını
+  reddediyordu. Yönetici ile koşan sınamalar bunu göstermedi; personel oturumu sınaması bu yüzden eklendi.
+- **Durum:** B3a'nın kalan üç açığı bu paket canlıya kurulana kadar AÇIK sayılır. Pakette olmayanlar: B6 (ücret verisi), salt okur
+  kullanıcının kişisel tercih tablosu, B3b. Personelin sipariş / üretim / fiş akışları ekrandan uçtan uca koşulmadı. Gerçek
+  Supabase'de denenmedi; açığı üretme adımları yalnız yeni, yalıtılmış projede ve DENEME kayıtlarıyla çalıştırılır.
+- **İlk Yönetici (yalıtılmış deneme):** publishable anahtar yönetici hesabı oluşturmaz. Hesap Supabase panelinde (Authentication)
+  elle açılır, `ilk-yonetici-uygula.sql` SQL Editor'de Tanımlar'a Yönetici kaydını yazar; servis anahtarı hiçbir yere girilmez.
 
 ## 4. Sıradaki adımlar (güncel)
 1. Kullanıcı onayıyla B1 / B2 deneme paketi (§9) — deneme projesinde salt okur adım 0, sonra kurulum ve elle sınamalar.
