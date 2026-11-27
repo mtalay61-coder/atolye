@@ -878,7 +878,7 @@ function CariModule({ onParaFisi, onFisIptal, tanimlar, onTanimlarKaydet, onMuha
             </Field>
             {yeniCariFiyatGruplari(form.tip).length > 0 && (
               <Field label="Fiyat Grubu">
-                <select value={form.fiyatGrubuId} data-yeni-cari-fiyat-grubu="1" onChange={(e) => setForm({ ...form, fiyatGrubuId: e.target.value })} style={inputStyle}
+                <select value={form.fiyatGrubuId} disabled={!((typeof window !== "undefined" && window.__fiyatYetki) || { cariFiyatGrubu: true }).cariFiyatGrubu} title={((typeof window !== "undefined" && window.__fiyatYetki) || { cariFiyatGrubu: true }).cariFiyatGrubu ? undefined : "Müşterinin fiyat grubunu değiştirmek için sipariş düzenleme ve cari düzenleme yetkisi gerekir"} data-yeni-cari-fiyat-grubu="1" onChange={(e) => setForm({ ...form, fiyatGrubuId: e.target.value })} style={inputStyle}
                   title="Bu gruba özel fiyat tanımlanmış ürünlerde, bu cariye otomatik o fiyat uygulanır">
                   <option value="">Grupsuz (standart fiyat)</option>
                   {yeniCariFiyatGruplari(form.tip).map((g) => <option key={g.id} value={g.id}>{g.ad} ({g.tip})</option>)}

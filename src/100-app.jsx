@@ -164,6 +164,8 @@ function AtolyeUygulamasi() {
   const [surumSeridiKapali, setSurumSeridiKapali] = useState(false);
   const [storageOk, setStorageOk] = useState(true);
   const [aktifKullanici, setAktifKullanici] = useState(null);
+  const aktifKullaniciRef = useRef(null);   // v1.744.42: kayıt yolları (saveStok / saveCariler) fiyat yetkisini render beklemeden okur
+  aktifKullaniciRef.current = aktifKullanici;
   damgaKullanicisiAyarla(aktifKullanici && aktifKullanici.ad);   // kayıt damgası (048) — her çizimde güncel
   // OTURUM SÜRDÜRME (kullanıcı, 15 Eylül: "sayfa yenilendiğinde tekrar kullanıcı adı ve şifre
   // girmemi istiyor"). `aktifKullanici` yalnız bellekteydi; her yenilemede giriş ekranı geliyordu.
@@ -1063,6 +1065,8 @@ function AtolyeUygulamasi() {
   // `degisiklikIcerikAyni`). Her çizimde güncellenir; geri çağırma bayat kapanış yerine bunu okur.
   const guncelDurumRef = useRef({});
   guncelDurumRef.current = { stok, cariler, siparisler, uretim, stokRezervasyonlari, onaylar, cop, tanimlar, muhasebe, koliler, gorevler, faturalar, teklifler, fisDefteri, modeller };
+  // FİYAT KUTULARI (v1.744.42, 094 `fiyatAlanYetkileri`): ekranlar kutuyu kapatmak için buradan okur (prop zinciri kurmadan).
+  if (typeof window !== "undefined") window.__fiyatYetki = fiyatAlanYetkileri(tanimlar, aktifKullanici);
   // Döner: içeriği GERÇEKTEN değişen alanlar (not yalnız bunlar için çıkar). Aynı olan alan state'e yazılmaz.
   const bulutDegisikligiUygula = useCallback(async (alanlar) => {
     const tablolar = alanlar.flatMap(alaninTablolari);
@@ -1573,7 +1577,16 @@ function AtolyeUygulamasi() {
     return true;
   }, [stok, showToast, tanimlar]);
 
-  const saveStok = useCallback(async (next) => {
+  const saveStok = useCallback(async (nextHam) => {
+    // FİYAT ALANI YETKİSİ (v1.744.42, B3a-2): yetkisiz fiyat değişikliği eski değerine döner; ürünün öteki alanları kaydedilir.
+    // Sunucu aynı kuralı uygular (29-b3a2) — burada ayıklanmasa kaydın TAMAMI reddedilirdi.
+    const fy = fiyatAlanYetkileri(guncelDurumRef.current.tanimlar, aktifKullaniciRef.current);
+    const suz = fiyatDegisiklikleriniSuz(guncelDurumRef.current.stok, nextHam, fy);
+    const next = suz.liste;
+    if (suz.geriAlinan > 0) {
+      showToast(`Fiyat değişikliği KAYDEDİLMEDİ — yetkiniz yok (${[suz.satis ? "satış fiyatı: sipariş düzenleme" : "", suz.alis ? "alış fiyatı: muhasebe düzenleme" : ""].filter(Boolean).join("; ")}). Öteki alanlar kaydedildi.`);
+      gunlukYaz(`Yetkisiz fiyat değişikliği kayıttan ayıklandı: ${suz.satis} satış, ${suz.alis} alış`, "guvenlik", { satis: suz.satis, alis: suz.alis });
+    }
     setStok(next);
     // GÖRSELLER AYRI YAZILIYOR. `stok:items` tek anahtar ve `guvenliYaz` 5 MB'ı aşan kaydı
     // depoya sormadan reddediyor; görseller o anahtarın içindeyken yüz ürünün birkaç rengi
@@ -2362,9 +2375,16 @@ function AtolyeUygulamasi() {
     // FONKSİYON DA KABUL EDİLİR (v1.639.0, denetim): kasa/banka ekranı (205) kasa yazımını bekledikten sonra cari listesini
     // kapanıştaki hâliyle yazıyordu; bu arada gelen değişiklik eziliyordu. Fonksiyon verilirse güncel liste üzerinden
     // kurulur (addCariHareketFromStok kalıbı). Kod ataması yine `cariKodlariAta`; tanım yazımı mikro göreve.
+    // MÜŞTERİNİN FİYAT GRUBU (v1.744.42, B3a-2): sipariş düzenleme VE cari düzenleme ister; yetkisiz değişiklik eski değerine döner.
+    const fgIzin = fiyatAlanYetkileri(guncelDurumRef.current.tanimlar, aktifKullaniciRef.current).cariFiyatGrubu;
+    const fgSuz = (eski, yeni) => {
+      const z = cariFiyatGrubuSuz(eski, yeni, fgIzin);
+      if (z.geriAlinan > 0) showToast("Müşterinin fiyat grubu DEĞİŞTİRİLMEDİ — yetkiniz yok (sipariş düzenleme ve cari düzenleme gerekir). Öteki alanlar kaydedildi.");
+      return z.liste;
+    };
     if (typeof next === "function") {
       setCariler((prev) => {
-        const sonuc = cariKodlariAta(next(prev), tanimlar);
+        const sonuc = cariKodlariAta(fgSuz(prev, next(prev)), tanimlar);
         if (sonuc.atanan > 0) Promise.resolve().then(() => {
           setTanimlar(sonuc.tanimlar);
           yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", sonuc.tanimlar), "Tanımlar", sonuc.tanimlar);
@@ -2377,7 +2397,7 @@ function AtolyeUygulamasi() {
     // YENİ CARİYE KODU ANINDA VERİLİYOR. Ayrı bir "kodları ata" adımına bırakmak, kullanıcının
     // cariyi açıp koduna baktığında boş görmesi demekti. `cariKodlariAta` kodu OLANA dokunmuyor,
     // o yüzden her kayıtta güvenle çağrılabiliyor.
-    const sonuc = cariKodlariAta(next, tanimlar);
+    const sonuc = cariKodlariAta(fgSuz(guncelDurumRef.current.cariler, next), tanimlar);
     if (sonuc.atanan > 0) {
       setTanimlar(sonuc.tanimlar);
       yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", sonuc.tanimlar), "Tanımlar", sonuc.tanimlar);

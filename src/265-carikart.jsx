@@ -993,7 +993,7 @@ function CariCard({ onParaFisi, siteYonetici = false, tanimlar, onTanimlarKaydet
               <label style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                 <span style={{ fontSize: 12, color: "var(--erp-info)", fontWeight: 600 }}>Fiyat Grubu:</span>
                 <select
-                  value={cari.fiyatGrubuId || ""}
+                  value={cari.fiyatGrubuId || ""} disabled={!((typeof window !== "undefined" && window.__fiyatYetki) || { cariFiyatGrubu: true }).cariFiyatGrubu} title={((typeof window !== "undefined" && window.__fiyatYetki) || { cariFiyatGrubu: true }).cariFiyatGrubu ? undefined : "Müşterinin fiyat grubunu değiştirmek için sipariş düzenleme ve cari düzenleme yetkisi gerekir"}
                   onChange={(e) => onFieldChange(cari.id, "fiyatGrubuId", e.target.value || undefined)}
                   style={{ ...inputStyle, width: 200, padding: "4px 6px", fontSize: 12 }}
                 >
