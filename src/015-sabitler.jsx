@@ -492,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.744.44";
+const SURUM = "1.744.46";
 const SURUM_TARIHI = "2026-11-27";
-const SURUM_NOTU = "Silme yetkisi olmayan kullanıcıda fiş iptali ve Geri Al düğmeleri artık görünmüyor (sunucu zaten reddediyordu)";
+const SURUM_NOTU = "Renk adı değişikliği sunucuda tek işlem; Tanımlar iki cihazdan aynı anda kaydedilince birinin eklediği artık kaybolmuyor";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -525,6 +525,8 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" };   // teklif: v1.723.0, Sipariş'in alt sekmesi
 
 const SURUM_GECMISI = [
+  { surum: "1.744.46", tarih: "27.11.2026", eklenen: [], degisen: [], duzeltilen: ["Tanımlar › renk adı değiştirme artık sunucuda TEK işlem (stok-v2/guvenlik/26-b1-renk-ad-degistir.sql kurulu ise): Tanımlar, sipariş kalemleri, üretim, rezervasyon, koliler, reçete, renk resimleri ve harici barkodlar aynı anda güncellenir; değişiklik sırasında bu kayıtlara başka yazma araya giremez. Eskiden bu cihazın henüz görmediği, başka cihazdan az önce girilmiş sipariş kalemi eski adda kalıyor ve varyant bağı kopuyordu. Değişiklikten sonra eski bir sekmenin eski adla gönderdiği kayıt da sunucuda yeni ada çevrilir. Buluta gönderilmeyi bekleyen kayıt varken ad değiştirilmez. Sunucu kurulumu yoksa ad değiştirilmez ve bunu açıkça söyler (eski, hatalı yönteme dönülmez). Bir rengin eski adı başka bir renge verilemez (Yönetici serbest bırakmadıkça); eski adı belirsiz ya da rengi silinmiş kayıt sessizce bağlanmaz, açık uyarıyla reddedilir.", "Tanımlar iki cihazdan aynı anda kaydedilince birinin eklediği (ör. yeni renk) artık kaybolmuyor: kayıt sunucudaki sürümle koşullu yazılıyor, arada başka cihaz yazdıysa güncel hâl yeniden okunup birleştiriliyor. İki cihaz AYNI öğeyi farklı değiştirdiyse hiçbiri sessizce seçilmiyor: bu cihazın değişikliği bekletiliyor, üstteki \"İnceleme gerekiyor\" şeridinde hangi öğede ne çakıştığı yazıyor; \"Benimkini uygula\" ya da \"Sunucudakini al\" seçilir. (1.744.38 numarası renk adı düzeltmesinin ayrı dalında.)"] },
+  { surum: "1.744.45", tarih: "27.11.2026", eklenen: [], degisen: ["Bu numara geri dönüş dosyasına ayrıldı (1.744.37 ile aynı uygulama; yalnız gerektiğinde yayına alınır). Yeni özellik içermez."], duzeltilen: [] },
   { surum: "1.744.44", tarih: "27.11.2026", eklenen: [], degisen: [], duzeltilen: ["Silme yetkisi olmayan kullanıcıda fiş iptali ve Geri Al düğmeleri artık görünmüyor (sunucu zaten reddediyordu)"] },
   { surum: "1.744.43", tarih: "27.11.2026", eklenen: [], degisen: ["Birleşik sürüm: 1.744.41 (üretimde \"İşi Ver\" ve \"Geri Al\" iletileri gerçek sonuca bağlı) ile 1.744.42 (fiyat alanları yetkiye bağlı) tek pakette; yeni davranış yok"], duzeltilen: [] },
   { surum: "1.744.42", tarih: "27.11.2026", eklenen: [], degisen: ["Fiyat alanları yetkiye bağlandı (sunucu kuralıyla birlikte): satış fiyatı ve satış fiyat kuralları \"Sipariş › düzenleme\", alış fiyatı ve alış fiyat kuralları \"Muhasebe › düzenleme\" yetkisi ister; yetkisi olmayan kullanıcıda fiyat kutuları kapalıdır. Yetkisiz bir fiyat değişikliği kayda girerse yalnız fiyat eski değerine döner, ürünün öteki alanları kaydedilir ve kullanıcıya söylenir", "Cari kartı: müşterinin fiyat grubunu değiştirmek \"Sipariş › düzenleme\" ve \"Cari › düzenleme\" yetkisi ister"], duzeltilen: [] },

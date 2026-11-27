@@ -22,7 +22,7 @@ function useAdDegistirme(d) {
   const {
     tanimlar, stok, siparisler, uretim, koliler, stokRezervasyonlari, showToast,
     setStok, setSiparisler, setUretim, saveTanimlar, saveKoliler,
-    setTanimlar, setKoliler, setStokRezervasyonlari, cariler,
+    setTanimlar, setKoliler, setStokRezervasyonlari, cariler, buluttanTazele,
   } = d;
 
 const olcuAdDegistir = useCallback((olcuId, yeniAdHam) => {
@@ -178,6 +178,53 @@ const hammaddeRenkAdDegistir = useCallback((renkId, yeniAdHam) => {
     return;
   }
 
+  // SUNUCUDA TEK İŞLEM (v1.744.38, inceleme 25 B1 — kanıt test/inceleme/ekran-ad-bag.js). Sipariş kalemi, üretim, rezervasyon, koli,
+  // reçete, renk resmi ve harici barkod renge ADIYLA bağlı. Aşağıdaki eski yol bunları BU CİHAZIN belleğinden çevirip 5–6 ayrı yazmayla
+  // gönderiyordu: başka cihazın az önce eklediği (bu cihazın henüz görmediği) kalem eski adda kalıyor, varyant bağı kopuyordu. Önce
+  // tazelemek de çözmez — tazelemeden hemen sonra başka cihaz yazabilir. Şimdi değişikliği sunucu yapar (`tanim_renk_ad_degistir`,
+  // stok-v2/guvenlik/26-b1-renk-ad-degistir.sql): Tanımlar + bütün bağlar aynı işlemde, ilgili tablolar kilitli; sonra eski adla gelen
+  // bayat yazmayı sunucu tetikleyicisi güncel ada çevirir. Bu cihaz yalnız sonucu buluttan TAZELER.
+  // · Sunucuda fonksiyon yoksa (SQL henüz çalıştırılmamış: PGRST202) ESKİ YOLA DÖNÜLMEZ (kullanıcı, 27 Kasım: "güvenlik düzeltmesi
+  //   yayınlandığında sunucu fonksiyonu yoksa hatalı eski yöntemle ad değiştirmeye devam etmesin"): işlem açık iletiyle durur, hiçbir
+  //   kayıt değişmez. Sunucu kurulumu (26-b1-renk-ad-degistir.sql, doğrulama 26-b1-onkosul-salt-okur.sql) YAYIN ÖNKOŞULU.
+  // · Bulut kapalıysa (yalnız yerel çalışma, tek cihaz) eski yol — orada başka cihaz yok.
+  // · Bu alanlarda buluta GİTMEMİŞ yazma varsa değişiklik yapılmaz: tazeleme bekleyen yerel değişikliği ezerdi.
+  if (typeof supabaseAcikMi === "function" && supabaseAcikMi() && typeof buluttanTazele === "function") {
+    const bekleyen = bekleyenYazmalariOku();
+    const ilgili = ["tanimlar:data", "stok:items", "siparis:data", "uretim:siparisler", "stokrez:data", "koli:data"].filter((a) => bekleyen[a]);
+    if (ilgili.length) {
+      showToast(`Renk adı değiştirilmedi — buluta gönderilmeyi bekleyen kayıt var (${ilgili.length} bölüm). Önce bekleyen kayıtları gönderin, sonra tekrar deneyin.`);
+      return;
+    }
+    (async () => {
+      let r;
+      try {
+        r = await supabaseIstek("rpc/tanim_renk_ad_degistir", { method: "POST", body: JSON.stringify({ p: { renk_id: renkId, yeni_ad: yeniAd, eski_ad: eskiAd } }) });
+      } catch (e) {
+        const m = String((e && e.message) || e);
+        if (/PGRST202|Could not find the function/i.test(m)) {
+          showToast("Renk adı değiştirilemedi — sunucuda güvenli ad değiştirme kurulumu yok (26-b1-renk-ad-degistir.sql). "
+            + "Yönetici kurulumu yapana kadar renk adı değiştirilemez. Hiçbir kayıt değişmedi.");
+          gunlukYaz(`Renk adı değiştirilemedi (sunucu kurulumu yok): ${eskiAd} → ${yeniAd}`, "tanimlar", { renkId });
+          return;
+        }
+        showToast(`Renk adı değiştirilemedi — hiçbir kayıt değişmedi. ${m.slice(0, 200)}`);
+        return;
+      }
+      try { await buluttanTazele(["tanimlar", "stok", "siparisler", "uretim", "stokRezervasyonlari", "koliler"]); }
+      catch (e) { console.warn("Ad değişikliği sonrası tazeleme:", e && e.message); }
+      if (r && r.zaten) { showToast(`Renk adı zaten "${yeniAd}"`); return; }
+      const n = r || {};
+      gunlukYaz(`Renk adı değişti (sunucu): ${eskiAd} → ${yeniAd}`, "tanimlar", { renkId, ...n });
+      showToast(`Renk adı "${eskiAd}" → "${yeniAd}" — ${n.kalem || 0} sipariş kalemi, ${n.uretim || 0} üretim, ${n.urun || 0} ürün, `
+        + `${n.koli || 0} koli, ${n.rezervasyon || 0} rezervasyon güncellendi`
+        + (n.celiskili_recete_satiri ? ` · ${n.celiskili_recete_satiri} reçete satırında renk kimliği ile adı çelişiyor, dokunulmadı` : ""));
+    })();
+    return;
+  }
+  eskiYol();
+  function eskiYol() {
+
   // Bu rengi içeren her model rengi kombinasyonu için eski/yeni etiketi hesapla.
   const etiketEslesmeleri = (tanimlar.renkKombinasyonlari || [])
     .filter((k) => k.renkIdler.includes(renkId))
@@ -322,7 +369,8 @@ const hammaddeRenkAdDegistir = useCallback((renkId, yeniAdHam) => {
       ? `Renk adı "${eskiAd}" → "${yeniAd}" — ${guncellenenSayisi} üründe güncellendi`
       : `Renk adı "${eskiAd}" → "${yeniAd}" olarak değişti. Hiçbir üründe kullanılmıyordu.`
   );
-}, [tanimlar, stok, siparisler, uretim, stokRezervasyonlari, koliler, showToast]);
+  }
+}, [tanimlar, stok, siparisler, uretim, stokRezervasyonlari, koliler, showToast, buluttanTazele]);
 
   // Blok içinde duran onarım/çevirme işleri de buradan veriliyor: ikisi de AD/ÖLÇÜ hizalamasıyla
   // aynı aileden — "kayıtlar birbirini tutmuyorsa düzelt" işi.
