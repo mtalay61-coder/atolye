@@ -1,5 +1,10 @@
 # Canlı için önerilen kesin paket
 
+> **GÜNCEL DURUM 2 (27 Kasım, sonradan):** B3a (`28-b3a-uygula.sql`), B3a-2 (`29-b3a2-uygula.sql`) ve ret iletisi
+> (`31-yetki-ileti-uygula-satirsonu.sql`) de kullanıcı onayıyla canlıya UYGULANDI; `41-canli-paket-durum-salt-okur.sql` dört paketi
+> "KURULU — kod sınananla aynı" gösterdi. İstemci yayını, main birleşmesi, geri alma YAPILMADI. Geçerli dosyalar ve özetler:
+> `42-SATIR-SONU-DAYANIKLILIK.md`. Aşağıdaki eski adım listesi tarihsel kayıttır.
+>
 > **GÜNCEL DURUM (27 Kasım):** yalnız 4. adım (B4 / B5, `27-b4-uygula.sql`) kullanıcı onayıyla canlıya UYGULANDI. Yetki paketleri,
 > istemci yayını ve geri alma UYGULANMADI ve onaylanmadı. Kurulum metni Editor'e CRLF ile ulaştı; geri alma için `27-b4-geri-al.sql`
 > KULLANILMAMALI — bkz. `27-b4-GERI-ALMA-NOTU.md`. Aşağıdaki diğer dosyalar CRLF yapıştırma koşuluyla sınanmadan sunulmaz.
