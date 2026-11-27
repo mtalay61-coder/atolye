@@ -1,3 +1,5 @@
+-- !!! KULLANILMAMALI (27 Kasım): gövde özetini satır sonuyla birlikte karşılaştırır; CRLF ile yapıştırılmış DOĞRU kurulumu "FARKLI" gösterir.
+-- !!! Yerine: 38-canli-b4-durum-salt-okur.sql
 -- =====================================================================================================================
 --  37-canli-b4-dogrula-salt-okur.sql — YALNIZ OKUR. Hiçbir şeyi değiştirmez. B4 / B5 kurulumundan SONRA çalıştırılır.
 --  Kurulan beş fonksiyonun gövdesi, sınanmış kurulumdaki (yerel PostgreSQL 16 ve yerel Supabase) gövdelerle bayt bayt aynı mı;

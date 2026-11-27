@@ -1,4 +1,8 @@
-# Canlı için önerilen kesin paket (ONAY BEKLİYOR — uygulanmadı)
+# Canlı için önerilen kesin paket
+
+> **GÜNCEL DURUM (27 Kasım):** yalnız 4. adım (B4 / B5, `27-b4-uygula.sql`) kullanıcı onayıyla canlıya UYGULANDI. Yetki paketleri,
+> istemci yayını ve geri alma UYGULANMADI ve onaylanmadı. Kurulum metni Editor'e CRLF ile ulaştı; geri alma için `27-b4-geri-al.sql`
+> KULLANILMAMALI — bkz. `27-b4-GERI-ALMA-NOTU.md`. Aşağıdaki diğer dosyalar CRLF yapıştırma koşuluyla sınanmadan sunulmaz.
 
 Canlıya, main'e ve yayına hiçbir şey uygulanmadı. Bu belge yalnız öneridir; canlı SQL ve yayın için **ayrı ayrı onay** gerekir.
 Kaynak: dal `claude/aday-birlesik`, commit `4904a7e` (sabit). Sınama sonuçları: `33-YEREL-SUPABASE-SONUC.md`, `30-BIRLIKTE-KURULUM.md`.
