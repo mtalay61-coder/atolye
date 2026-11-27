@@ -1064,6 +1064,7 @@ function AtolyeUygulamasi() {
   // Ekrandaki son hâl (v1.645.7): tazelemede buluttan gelenle karşılaştırmak için — aynıysa "başka cihaz" değil (047
   // `degisiklikIcerikAyni`). Her çizimde güncellenir; geri çağırma bayat kapanış yerine bunu okur.
   const guncelDurumRef = useRef({});
+  if (typeof window !== "undefined" && window.__TANI_AC) window.__TANI = guncelDurumRef;   // sınama gözlemi (yalnız okuma)
   guncelDurumRef.current = { stok, cariler, siparisler, uretim, stokRezervasyonlari, onaylar, cop, tanimlar, muhasebe, koliler, gorevler, faturalar, teklifler, fisDefteri, modeller };
   // FİYAT KUTULARI (v1.744.42, 094 `fiyatAlanYetkileri`): ekranlar kutuyu kapatmak için buradan okur (prop zinciri kurmadan).
   if (typeof window !== "undefined") window.__fiyatYetki = fiyatAlanYetkileri(tanimlar, aktifKullanici);
@@ -1103,7 +1104,13 @@ function AtolyeUygulamasi() {
         // Tanımlar bulut hâli ekrandakine EKLENİR: yalnız buluttan gelen anahtarlar karşılaştırılır.
         if (bulut.tanimlar) {
           const mevcut = Object.fromEntries(Object.keys(bulut.tanimlar).map((k) => [k, (g.tanimlar || {})[k]]));
-          if (!ayni(alan, mevcut)) setTanimlar((t) => ({ ...t, ...bulut.tanimlar }));
+          // KARŞILAŞTIRMA BULUTLA (v1.744.48): burada `ayni(alan, mevcut)` çağrılıyordu — o yardımcı ekrandaki Tanımlar'ı (g.tanimlar)
+          // verilen değerle karşılaştırır, `mevcut` ise ekrandaki hâlin KENDİ alt kümesi: anahtar kümeleri aynıyken hep "aynı" çıkıyor,
+          // buluttan gelen Tanımlar ekrana HİÇ işlenmiyordu; taban ise (aşağıda) bulut hâline geçiyordu. Sonuç (canlıda 27 Kasım, renk
+          // adı sunucuda değiştikten sonra "N üründe" rozeti kayboldu): ekranda eski ad kalıyor, aynı cihazın SONRAKİ Tanımlar kaydı
+          // eski adı "yerel değişiklik" sanıp sunucuya geri yazıyor, kalemler yeni adda kaldığı için bağ kopuyordu. Doğrusu: ekrandaki
+          // değerler (bulutun getirdiği anahtarlar için) BULUT hâliyle karşılaştırılır.
+          if (!degisiklikIcerikAyni(mevcut, bulut.tanimlar)) { degisen.push(alan); farklar[alan] = "içerik"; setTanimlar((t) => ({ ...t, ...bulut.tanimlar })); }
           // TABAN + TAZELİK (v1.744.16): ekran sunucu hâline geçti — sonraki tanım yazması bununla üç yönlü uzlaşır.
           tekilTabanAyarla("tanimlar", bulut.tanimlar);
           tanimlarOkundu();

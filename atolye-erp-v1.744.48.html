@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.744.45</title>
+<title>Atölye ERP 1.744.48</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2319,9 +2319,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.744.45";
+const SURUM = "1.744.48";
 const SURUM_TARIHI = "2026-11-27";
-const SURUM_NOTU = "Geri dönüş sürümü: 1.744.37 ile aynı uygulama, yalnız sürüm numarası yükseltildi";
+const SURUM_NOTU = "Renk adı değiştikten sonra ekrandaki Tanımlar da yeni ada geçiyor (aynı cihazın sonraki kaydı eski adı geri yazabiliyordu)";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2351,7 +2351,14 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 }
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" }; // teklif: v1.723.0, Sipariş'in alt sekmesi
 const SURUM_GECMISI = [
-    { surum: "1.744.45", tarih: "27.11.2026", eklenen: [], degisen: ["Geri dönüş sürümü: içerik 1.744.37 ile aynıdır; yalnız sürüm numarası yükseltildi (uygulama düşük numaralı sürüme kendiliğinden dönmediği için)"], duzeltilen: [] },
+    { surum: "1.744.48", tarih: "27.11.2026", eklenen: [], degisen: [], duzeltilen: ["Tanımlar › renk adı değiştirme: değişiklikten sonra ekrandaki Tanımlar eski adda kalıyordu (\"N üründe\" rozeti kayboluyordu). Daha önemlisi, aynı cihazdan sayfa yenilenmeden yapılan bir sonraki Tanımlar kaydı eski adı sunucuya geri yazabiliyor, sipariş kalemleri yeni adda kaldığı için bağ kopabiliyordu. Buluttan gelen Tanımlar artık ekrana işleniyor; başka cihazın Tanımlar değişikliği de açık ekrana yansıyor."] },
+    { surum: "1.744.47", tarih: "27.11.2026", eklenen: [], degisen: ["Bu numara geri dönüş dosyasına ayrıldı (1.744.44 ile aynı uygulama). Yeni özellik içermez."], duzeltilen: [] },
+    { surum: "1.744.46", tarih: "27.11.2026", eklenen: [], degisen: [], duzeltilen: ["Tanımlar › renk adı değiştirme artık sunucuda TEK işlem (stok-v2/guvenlik/26-b1-renk-ad-degistir.sql kurulu ise): Tanımlar, sipariş kalemleri, üretim, rezervasyon, koliler, reçete, renk resimleri ve harici barkodlar aynı anda güncellenir; değişiklik sırasında bu kayıtlara başka yazma araya giremez. Eskiden bu cihazın henüz görmediği, başka cihazdan az önce girilmiş sipariş kalemi eski adda kalıyor ve varyant bağı kopuyordu. Değişiklikten sonra eski bir sekmenin eski adla gönderdiği kayıt da sunucuda yeni ada çevrilir. Buluta gönderilmeyi bekleyen kayıt varken ad değiştirilmez. Sunucu kurulumu yoksa ad değiştirilmez ve bunu açıkça söyler (eski, hatalı yönteme dönülmez). Bir rengin eski adı başka bir renge verilemez (Yönetici serbest bırakmadıkça); eski adı belirsiz ya da rengi silinmiş kayıt sessizce bağlanmaz, açık uyarıyla reddedilir.", "Tanımlar iki cihazdan aynı anda kaydedilince birinin eklediği (ör. yeni renk) artık kaybolmuyor: kayıt sunucudaki sürümle koşullu yazılıyor, arada başka cihaz yazdıysa güncel hâl yeniden okunup birleştiriliyor. İki cihaz AYNI öğeyi farklı değiştirdiyse hiçbiri sessizce seçilmiyor: bu cihazın değişikliği bekletiliyor, üstteki \"İnceleme gerekiyor\" şeridinde hangi öğede ne çakıştığı yazıyor; \"Benimkini uygula\" ya da \"Sunucudakini al\" seçilir. (1.744.38 numarası renk adı düzeltmesinin ayrı dalında.)"] },
+    { surum: "1.744.45", tarih: "27.11.2026", eklenen: [], degisen: ["Bu numara geri dönüş dosyasına ayrıldı (1.744.37 ile aynı uygulama; yalnız gerektiğinde yayına alınır). Yeni özellik içermez."], duzeltilen: [] },
+    { surum: "1.744.44", tarih: "27.11.2026", eklenen: [], degisen: [], duzeltilen: ["Silme yetkisi olmayan kullanıcıda fiş iptali ve Geri Al düğmeleri artık görünmüyor (sunucu zaten reddediyordu)"] },
+    { surum: "1.744.43", tarih: "27.11.2026", eklenen: [], degisen: ["Birleşik sürüm: 1.744.41 (üretimde \"İşi Ver\" ve \"Geri Al\" iletileri gerçek sonuca bağlı) ile 1.744.42 (fiyat alanları yetkiye bağlı) tek pakette; yeni davranış yok"], duzeltilen: [] },
+    { surum: "1.744.42", tarih: "27.11.2026", eklenen: [], degisen: ["Fiyat alanları yetkiye bağlandı (sunucu kuralıyla birlikte): satış fiyatı ve satış fiyat kuralları \"Sipariş › düzenleme\", alış fiyatı ve alış fiyat kuralları \"Muhasebe › düzenleme\" yetkisi ister; yetkisi olmayan kullanıcıda fiyat kutuları kapalıdır. Yetkisiz bir fiyat değişikliği kayda girerse yalnız fiyat eski değerine döner, ürünün öteki alanları kaydedilir ve kullanıcıya söylenir", "Cari kartı: müşterinin fiyat grubunu değiştirmek \"Sipariş › düzenleme\" ve \"Cari › düzenleme\" yetkisi ister"], duzeltilen: [] },
+    { surum: "1.744.41", tarih: "27.11.2026", eklenen: [], degisen: [], duzeltilen: ["Üretim › teslimi \"Geri Al\": teslim başka cihazda (ya da yanıtı kaybolan önceki denemede) zaten geri alınmışsa uygulama artık \"geri alındı\" demiyor ve kendi eski hesabını ekrana işlemiyor; \"zaten geri alınmıştı — bu işlem yeni bir değişiklik yapmadı\" der ve üretim, stok, cari ekranını sunucudaki güncel duruma getirir (iş arada yeniden teslim alınmışsa öyle görünür)", "Fişler › fiş iptali: fiş zaten iptal edilmişse ileti \"iptal edildi\" yerine \"zaten iptal edilmişti\" der", "Üretim › ara prosesin geri alınması: sonuç sunucudaki fişten doğrulanır; adım başka cihazda yeniden tamamlanmışsa \"geri alındı\" denmez", "Üretim › \"İşi Ver\": ileti artık kayıt buluta yazıldıktan sonra gösterilir; aynı iş aynı anda başka cihazdan verilmişse \"verildi\" yerine \"İş VERİLEMEDİ — bu üretim az önce başka bir cihazda değişti\" der"] },
     { surum: "1.744.37", tarih: "26.11.2026", eklenen: [], degisen: [], duzeltilen: ["Tanımlar › renk adı değiştirme: rengin geçtiği model kombinasyonları (ör. \"1054 - KAHVE SÜET/VİZON YILAN\" ve \"1055 - BEJ SÜET/VİZON YILAN\") ayrı kalıyor, yalnız yazımları değişiyor. Önceden rengin adı değişince (büyük/küçük harf dahil) modelin bütün kombinasyon renkleri rengin düz adına (\"Vizon Yılan\") dönüp tek renk gibi görünüyordu; reçetenin model rengi de aynı şekilde çöküyordu. Önceden çökmüş kayıtları bu sürüm geri getirmez (ayrı onarım)."] },
     { surum: "1.744.36", tarih: "23.11.2026", eklenen: ["Kasa & Banka › hesap › \"Hesaplar arası aktarım\": kasadan bankaya, bankadan kasaya, hesaptan hesaba para aktarımı yeniden arayüzde (cari virmanından ayrı işlem; kur çevirici ve aktarım sebebi aynen)."], degisen: ["Ödeme & Tahsilat'taki virman \"Cari virmanı (cariden cariye)\" adını aldı. Para birimi ilk carinin para birimidir; karşı cari başka para birimindeyse virman yapılmaz (kur dönüşümü yok). Aynı cari ve sıfır / eksi / boş tutar reddedilir."], duzeltilen: [] },
     { surum: "1.744.35", tarih: "23.11.2026", eklenen: ["Ödeme & Tahsilat › ödeme şekli \"Virman (cariden cariye)\": ilk cari ve karşı cari seçilir. Ödemede ilk cariye ödeme, karşı cariden tahsilat; tahsilatta ilk cariden tahsilat, karşı cariye ödeme. İki satır tek fişte (CVR-…), kasa / banka hareketi yok; geri alınca ikisi birden kalkar.", "Ödeme & Tahsilat › Kasa / Banka satırının yanında + düğmesi: yeni kasa ya da banka hesabı oradan açılır ve hemen seçilir."], degisen: ["Kasa & Banka ekranında Virman ve \"Yeni Kasa / Yeni Banka Hesabı\" düğmeleri kalktı (hesap düzenleme, arşivleme ve silme yerinde)."], duzeltilen: [] },
@@ -5829,7 +5836,7 @@ async function supabaseIstek(yol, secenekler = {}, tekrarMi = false, islemDeneme
         }
         catch (e) { /* geçersiz yanıt: normal hata */ }
         // Bu SQLSTATE'lerde transaction tamamen geri alınmıştır. Aynı istek kimliğiyle sınırlı tekrar güvenlidir.
-        const atomikRpc = /^rpc\/(?:fis_(?:kes|iptal|iptal_toplu|bag_coz)|kas_yaz|alt_yaz|stk_yaz)(?:\?|$)/.test(yol);
+        const atomikRpc = /^rpc\/(?:fis_(?:kes|iptal|iptal_toplu|bag_coz)|kas_yaz|alt_yaz|stk_yaz|tanim_renk_ad_degistir)(?:\?|$)/.test(yol);
         if (atomikRpc && (islemKodu === "40P01" || islemKodu === "40001") && islemDenemesi < 2) {
             await new Promise((r) => setTimeout(r, 40 * (islemDenemesi + 1)));
             return supabaseIstek(yol, secenekler, tekrarMi, islemDenemesi + 1);
@@ -6067,6 +6074,11 @@ function tekilYaz(anahtar, tablo, veri, secenek = {}) {
     if (typeof VERI_KILIDI !== "undefined" && VERI_KILIDI.aktif)
         return yerel;
     bulutYazmaBasladi(tablo);
+    // TABAN YAZMA ÇAĞRILDIĞI AN YAKALANIR (v1.744.39, B2 3. tur — ölçüldü: ekran-tanim-yaris ALAN=kod). `veri` bu cihazın O ANKİ bildiği
+    // sunucu hâline (taban) göre yapılmış değişikliktir. Yazma yoldayken açılış / tazeleme / yoklama tabanı başka cihazın yeni hâline
+    // çekebiliyordu (045, 091, 100); yeniden denemede o hâl "bu cihazın bildiği" sanılıyor, çakışma görünmüyor ve bu cihaz öbürünü
+    // SESSİZCE eziyordu. Artık her deneme çağrı anındaki tabanla üç yönlü karşılaştırır.
+    const tabanCagri = tekilTabanOku(tablo);
     const benimSiram = (_tekilSayac[anahtar] = (_tekilSayac[anahtar] || 0) + 1);
     // TANIMLAR BULUTLA BİRLEŞEREK YAZILIR (v1.552.0, 089). Tanımlar tek satır; bütün hâli yazılınca başka
     // cihazda açılmış model renkleri/renkler bu cihazın eski listesiyle siliniyordu (kullanıcı: Paketleme'de
@@ -6087,29 +6099,86 @@ function tekilYaz(anahtar, tablo, veri, secenek = {}) {
     // (2) ÜÇ YÖNLÜ (089 `tanimlarUzlastir`): bu cihazın bildiği son sunucu hâli (taban) varsa başka cihazın DEĞİŞTİRDİĞİ öğe
     // de korunur (eskiden aynı kimlikte bu cihaz kazanıyordu); eklenen / silinen koruması (`tanimlariBirlestir`) aynen sürer.
     const tetikleyen = secenek.tetikleyen || "kayıt";
-    const isi = () => (birlestir
-        ? supabaseIstek("tanimlar?id=eq.tekil&select=veri").catch((e) => {
-            const h = new Error(`Tanımlar sunucudan okunamadı — eski kopya gönderilmedi (${String((e && e.message) || e).slice(0, 120)})`);
-            if (e && e.yazmaKapisi)
-                h.yazmaKapisi = e.yazmaKapisi;
-            throw h;
-        }).then((r) => {
-            const bulut = Array.isArray(r) && r[0] ? r[0].veri : null;
+    // TANIMLAR SÜRÜM KOŞULLU (v1.744.38, inceleme 25 B2 — kanıt test/inceleme/ekran-tanim-yaris.js). Oku → birleştir → KOŞULSUZ yaz
+    // yolunda, okuma ile yazma arasında başka cihaz yazarsa onun eklediği SESSİZCE siliniyordu (son yazan kazanır; tanimlar_surum
+    // tetikleyicisi sürümü artırıyordu ama yazma koşul göndermiyordu). Şimdi: sürümle birlikte okunur, üç yönlü birleştirilir ve
+    // `surum=eq.N` koşuluyla yazılır; 0 satır = arada başka yazma oldu → YENİDEN okunur ve birleştirilir (taban aynı kalır: bu cihazın
+    // dayandığı hâl). İki taraf AYNI öğeyi farklı değiştirdiyse (089 `tanimCakismalari`) sessizce seçilmez: yazma durur, değişiklik
+    // bekleyen deftere "inceleme" olarak düşer (kendiliğinden yeniden gönderilmez, yoklama ekranı ezmez), şerit hangi öğede ne çakıştığını
+    // gösterir; kullanıcı "Benimkini uygula" (`secenek.cakismaKarari = "yerel"`) ya da "Sunucudakini al" der (100).
+    const tanimSurumlu = async () => {
+        for (let deneme = 0; deneme < 6; deneme++) {
+            let r;
+            try {
+                r = await supabaseIstek("tanimlar?id=eq.tekil&select=veri,surum");
+            }
+            catch (e) {
+                const h = new Error(`Tanımlar sunucudan okunamadı — eski kopya gönderilmedi (${String((e && e.message) || e).slice(0, 120)})`);
+                if (e && e.yazmaKapisi)
+                    h.yazmaKapisi = e.yazmaKapisi;
+                throw h;
+            }
+            const satir = Array.isArray(r) && r[0] ? r[0] : null;
+            const bulut = satir ? satir.veri : null;
+            const surum = satir ? Number(satir.surum) : NaN;
             if (typeof tanimlarOkundu === "function")
                 tanimlarOkundu();
-            const u = tanimlarUzlastir(veri, bulut, tekilTabanOku("tanimlar"), tanimSilinenleriOku());
-            // Ortak silinenler (`__silinenler`) her yazmada buluta taşınır; yerel/ekran yalnız öğe eklendi/çıkarıldı/değiştiyse.
-            if (u.toplam === 0)
-                return u.tanimlar;
-            // katman-muaf: tekilYaz'ın kendi gövdesi — birleşik hâl yerele de yazılır (arada daha yeni kayıt yoksa).
-            if (_tekilSayac[anahtar] === benimSiram)
-                guvenliYaz(anahtar, JSON.stringify(u.tanimlar), true);
-            console.info(`Tanımlar bulutla birleştirildi (${tetikleyen}): ${u.metin}`);
-            if (typeof window !== "undefined" && window.__tanimlarBirlesti)
-                window.__tanimlarBirlesti({ birlesik: u.tanimlar, gonderilen: veri, ozet: u, tetikleyen });
-            return u.tanimlar;
-        })
-        : ucYonlu
+            const taban = tabanCagri;
+            // ONAY YALNIZ GÖRÜLEN ÇAKIŞMAYI ÇÖZER (kullanıcı, 27 Kasım: "'Benimkini uygula' seçildiğinde sürümü yeniden denetle; bu sırada
+            // başka cihazın eklediği kayıt silinmemeli; yalnız onaylanan çatışma çözülmeli"). Kullanıcı şeritte gördüğü listeyi onaylar
+            // (`secenek.onaylananCakismalar`); her denemede çakışmalar YENİDEN hesaplanır, onaylanan sayılan yalnız aynı yol + aynı iki değer.
+            // Karar verilirken başka cihaz o öğeyi yeniden değiştirdiyse ya da yeni bir çakışma doğduysa yazma yine durur ve yeniden sorulur;
+            // çakışmayan değişiklikler (başka cihazın eklediği kayıt dahil) her zamanki gibi birleşir.
+            const onay = Array.isArray(secenek.onaylananCakismalar) ? secenek.onaylananCakismalar : [];
+            const ayni = (a, c) => a.yol === c.yol && JSON.stringify(a.bulut) === JSON.stringify(c.bulut) && JSON.stringify(a.yerel) === JSON.stringify(c.yerel);
+            const cak = bulut ? tanimCakismalari(veri, bulut, taban) : [];
+            const kalan = cak.filter((c) => !onay.some((a) => ayni(a, c)));
+            const u = tanimlarUzlastir(veri, bulut, taban, tanimSilinenleriOku());
+            // Yeni öğenin kodu sunucudakiyle çakışıyorsa yalnız yeni öğe sıradaki koda geçer; kombinasyon kodu çakışması açık çakışma.
+            const ka = tanimYeniKodlariAyir(tanimOtomatikBirlestir(u.tanimlar, veri, bulut), bulut);
+            kalan.push(...ka.kombiCakismalari);
+            if (kalan.length) {
+                const e = new Error(`Tanımlar çakışması — başka cihaz aynı öğeleri değiştirdi; bu cihazın değişikliği BEKLETİLİYOR (gönderilmedi): ${tanimCakismaMetni(kalan)}`);
+                e.kaliciRet = true;
+                e.kod = "CAKISMA";
+                e.cakismalar = kalan;
+                throw e;
+            }
+            const v = ka.tanimlar;
+            if (ka.degisenler.length) {
+                console.info(`Tanımlar: yeni öğenin kodu sunucudakiyle çakıştı, sıradaki koda geçti: ${ka.degisenler.map((d) => `${d.ad} ${d.alan} ${d.eski}→${d.yeni}`).join(", ")}`);
+                if (typeof window !== "undefined" && window.__tanimKodlariAyrildi)
+                    window.__tanimKodlariAyrildi(ka.degisenler);
+            }
+            if (satir && Number.isFinite(surum)) {
+                const yazilan = await supabaseIstek(`tanimlar?id=eq.tekil&surum=eq.${surum}`, {
+                    method: "PATCH", headers: { Prefer: "return=representation" }, body: JSON.stringify({ veri: v }),
+                });
+                if (!Array.isArray(yazilan) || yazilan.length === 0) { // arada başka yazma → yeniden oku-birleştir
+                    await new Promise((ok) => setTimeout(ok, 60 * (deneme + 1)));
+                    continue;
+                }
+            }
+            else {
+                // Satır hiç yok (ilk kurulum) ya da sürüm sütunu yok: tek satırı ilk kez yazan.
+                await supabaseIstek("tanimlar", { method: "POST", headers: { Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify([{ id: "tekil", veri: v }]) });
+            }
+            if (u.toplam !== 0 || v !== u.tanimlar) {
+                // katman-muaf: tekilYaz'ın kendi gövdesi — birleşik hâl yerele de yazılır (arada daha yeni kayıt yoksa).
+                if (_tekilSayac[anahtar] === benimSiram)
+                    guvenliYaz(anahtar, JSON.stringify(v), true);
+                console.info(`Tanımlar bulutla birleştirildi (${tetikleyen}${deneme ? `, ${deneme + 1}. deneme` : ""}): ${u.metin}`);
+                if (typeof window !== "undefined" && window.__tanimlarBirlesti)
+                    window.__tanimlarBirlesti({ birlesik: v, gonderilen: veri, ozet: u, tetikleyen });
+            }
+            return v;
+        }
+        throw new Error("Tanımlar art arda başka cihazlarca değiştirildi — bu cihazın değişikliği yazılamadı, yeniden denenecek");
+    };
+    const isi = () => (birlestir
+        ? tanimSurumlu()
+        // Öbür tek parça tablolar: üç yönlü birleştir → yaz (tanımlar bu yoldan GİTMEZ — yukarıda kendi koşullu yazması var).
+        : (ucYonlu
             ? supabaseIstek(`${tablo}?id=eq.tekil&select=veri`).then((r) => {
                 const bulut = Array.isArray(r) && r[0] ? r[0].veri : null;
                 if (bulut === null || bulut === undefined)
@@ -6125,17 +6194,17 @@ function tekilYaz(anahtar, tablo, veri, secenek = {}) {
                 return b;
             })
             : Promise.resolve(veri)).then((v) => supabaseIstek(tablo, {
-        method: "POST",
-        headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
-        body: JSON.stringify([{ id: "tekil", veri: v }]),
-    }).then(() => {
+            method: "POST",
+            headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+            body: JSON.stringify([{ id: "tekil", veri: v }]),
+        }).then(() => v))).then((v) => {
         // Taban = bu cihazın ekranındaki hâl (gönderdiği), birleşik hâl değil: ekran henüz birleşiği göstermiyorsa bir sonraki
         // yazmada buluttan gelen kayıtlar "bu cihaz sildi" sayılmasın. Ekran birleşiğe geçince (yoklama) taban da güncellenir.
         // TANIMLAR (v1.744.16): ekran birleşik hâle hemen geçer (100 `__tanimlarBirlesti`) — taban sunucuya giden birleşik hâl.
         tekilTabanAyarla(tablo, birlestir ? v : gonderilen);
         if (tablo === "tanimlar")
             tanimBekleyenTabanSil();
-    }));
+    });
     // KASA & BANKA v2 (v1.729.0, 038 `kasaV2Yuku`): geçiş yapıldıysa (`stk_ayar.kasa_aktif`) belge YAZILMAZ — `muhasebe` artık
     // salt-okur görünüm. Bu cihazın tabanla yeni hâl arasındaki farkı satır olarak `kas_yaz`a gider: başka cihazın kaydına
     // dokunulmaz, bayat ya da boş liste hiçbir şeyi silemez, silme iptaldir. Fark kuyrukta SIRASI GELİNCE hesaplanır (önceki
@@ -6172,7 +6241,8 @@ function tekilYaz(anahtar, tablo, veri, secenek = {}) {
     gidecek.then(() => bulutYazmaBitti(tablo), () => bulutYazmaBitti(tablo));
     return Promise.all([
         yerel,
-        gidecek.then(() => { bekleyenYazmaSil(anahtar); if (typeof window !== "undefined" && window.__supabaseBasariBildir)
+        gidecek.then(() => { bekleyenYazmaSil(anahtar); if (tablo === "tanimlar" && typeof incelemeSil === "function" && incelemeOku().tanimlar)
+            incelemeSil("tanimlar", "tekil"); if (typeof window !== "undefined" && window.__supabaseBasariBildir)
             window.__supabaseBasariBildir(tablo); }).catch((e) => {
             console.error("Supabase yazma hatası:", tablo, e);
             // Toplu silme engeli (Kasa & Banka / liste v2, 038) bekleyen yazma DEĞİLDİR — 040 tabloYaz ile aynı kural.
@@ -6182,6 +6252,10 @@ function tekilYaz(anahtar, tablo, veri, secenek = {}) {
                 return;
             if (tablo === "tanimlar")
                 tanimBekleyenTabanSakla(_tekilTaban.tanimlar);
+            // TANIM ÇAKIŞMASI (B2): şeritte (100) hangi öğede ne çakıştığı ve iki seçenek — kendiliğinden yeniden gönderilmez.
+            if (tablo === "tanimlar" && e && e.kod === "CAKISMA" && typeof incelemeEkle === "function") {
+                incelemeEkle("tanimlar", "tekil", { kod: "CAKISMA", sebep: e.message, anahtar, cakismalar: (e.cakismalar || []).slice(0, 30) });
+            }
             if (!(e && e.topluSilmeEngeli) || bekleyenYazmalariOku()[anahtar])
                 bekleyenYazmaEkle(anahtar, tablo, e && e.message, e && e.kaliciRet ? { inceleme: true, kod: e.kod } : undefined);
             if (typeof window !== "undefined" && window.__supabaseHataBildir) {
@@ -15532,6 +15606,37 @@ async function fisKesGonder(yuk) {
     fisKarsilananDuzeltmeBildir(r, "fis_kes");
     return r;
 }
+// TOPLU İPTAL YANITI "HİÇBİR ŞEY DEĞİŞMEDİ" Mİ (v1.744.41, saf): `fis_iptal_toplu` → { fisler: [{ fisNo, zatenIptal, … }] }. Bütün
+// fişler çağrıdan ÖNCE iptaldiyse true (boş / tanınmayan yanıt → false: eski sunucu, olağan yol).
+function fisIptalHepsiZatenIptal(yanit) {
+    const f = yanit && Array.isArray(yanit.fisler) ? yanit.fisler : null;
+    return !!f && f.length > 0 && f.every((x) => x && x.zatenIptal === true);
+}
+// ÜRETİM ADIMI SUNUCUDA GEÇERLİ BİR FİŞTE Mİ (v1.744.41): geri almanın sonucu FİŞ üzerinden doğrulanır — ara proseste atama satırı yok,
+// atamalı adımda da atama ile fiş tutarsız olabilir (B4 / B5 öncesi sunucu). `adlar`: adımın satır adları (079 `uretimFisAdlari`).
+// Döner: true (iptal edilmemiş bir fişte bu adımın iptal edilmemiş satırı var) · false (yok) · null (okunamadı — çağıran "bilinmiyor" sayar).
+async function uretimAdimiSunucudaGecerliMi(uretimId, adlar) {
+    try {
+        const fisler = await supabaseIstek(`stk_fis?uretim_id=eq.${encodeURIComponent(uretimId)}&iptal=eq.false&select=id`);
+        if (!Array.isArray(fisler))
+            return null;
+        if (fisler.length === 0)
+            return false;
+        const liste = fisler.map((f) => encodeURIComponent(`"${String(f.id).replace(/"/g, '\\"')}"`)).join(",");
+        const kume = new Set(adlar || []);
+        for (const tablo of ["stk_hareket", "car_hareket"]) {
+            const satirlar = await supabaseIstek(`${tablo}?fis_id=in.(${liste})&select=ek,iptal`);
+            if (!Array.isArray(satirlar))
+                return null;
+            if (satirlar.some((h) => h && !h.iptal && h.ek && kume.has(h.ek.uretimFisAdi)))
+                return true;
+        }
+        return false;
+    }
+    catch (e) {
+        return null;
+    }
+}
 async function fisIptalGonder(no, sebep, alt) {
     const r = await supabaseIstek("rpc/fis_iptal", { method: "POST", body: JSON.stringify({ p: { no, sebep: sebep || null, ...(alt ? { alt } : {}), istemci: fisIstemciBilgisi() } }) });
     fisKarsilananDuzeltmeBildir(r, "fis_iptal");
@@ -18678,8 +18783,20 @@ function useProsesVer(d) {
             verYazmalari.push({ anahtar: "siparis:data", tablo: "siparisler", kayitlar: nextSiparislerRez, etiket: "Siparişler" });
         }
         verYazmalari.push({ anahtar: "uretim:siparisler", tablo: "uretim", kayitlar: nextUretim, etiket: "Üretim" });
-        birlikteYaz(verYazmalari);
-        showToast(mesaj);
+        // "VERİLDİ" İLETİSİ YAZMA SONUCUNA GÖRE (v1.744.41, inceleme 25): ileti yazmadan ÖNCE gösteriliyordu. İki cihaz aynı işi verince
+        // ikincinin üretim satırı sürüm çakışmasıyla reddedilir (040: atama gönderilmez, bellek geri alınır) — o cihaz yine "verildi" görüyordu.
+        // Artık: yazma tuttuysa "verildi"; tutmadıysa olan söylenir (çakışmada ayrıca turuncu şerit çıkar).
+        return birlikteYaz(verYazmalari).then((r) => {
+            if (r && r.ok === false) {
+                const cakisma = (r.sonuclar || []).some((x) => x && x.cakisma);
+                showToast(cakisma
+                    ? "İş VERİLEMEDİ — bu üretim az önce başka bir cihazda değişti (iş oradan verilmiş olabilir). Kaydınız gönderilmedi; sayfayı yenileyip güncel durumu kontrol edin."
+                    : `İş verme buluta yazılamadı (${String(r.hata || "bilinmeyen hata").slice(0, 120)}) — bağlantı düzelince yeniden denenecek; ekrandaki hâl henüz kaydedilmiş değil.`);
+                return false;
+            }
+            showToast(mesaj);
+            return true;
+        });
     }, [uretim, stok, cariler, tanimlar, siparisler, stokRezervasyonlari, showToast, araProsesSunucuyaKes]);
     return uretimProsesVer;
 }
@@ -19038,7 +19155,7 @@ function atamaBedenAdlariniCevir(at, es, yeniAd) {
     return { ...at, ...(at.bedenMiktarlari ? { bedenMiktarlari: haritaCevir(at.bedenMiktarlari) } : {}), ...(at.sonuc ? { sonuc } : {}) };
 }
 function useAdDegistirme(d) {
-    const { tanimlar, stok, siparisler, uretim, koliler, stokRezervasyonlari, showToast, setStok, setSiparisler, setUretim, saveTanimlar, saveKoliler, setTanimlar, setKoliler, setStokRezervasyonlari, cariler, } = d;
+    const { tanimlar, stok, siparisler, uretim, koliler, stokRezervasyonlari, showToast, setStok, setSiparisler, setUretim, saveTanimlar, saveKoliler, setTanimlar, setKoliler, setStokRezervasyonlari, cariler, buluttanTazele, } = d;
     const olcuAdDegistir = useCallback((olcuId, yeniAdHam) => {
         const yeniAd = String(yeniAdHam || "").trim();
         const eski = (tanimlar.bedenler || []).find((b) => b.id === olcuId);
@@ -19198,146 +19315,201 @@ function useAdDegistirme(d) {
             showToast(`"${yeniAd}" adında bir renk zaten var — iki rengi birleştirmek ad değiştirmekle yapılmaz`);
             return;
         }
-        // Bu rengi içeren her model rengi kombinasyonu için eski/yeni etiketi hesapla.
-        const etiketEslesmeleri = (tanimlar.renkKombinasyonlari || [])
-            .filter((k) => k.renkIdler.includes(renkId))
-            .map((k) => {
-            const adGetir = (id, kullanilacakAd) => id === renkId ? kullanilacakAd : ((tanimlar.renkler.find((r) => r.id === id) || {}).ad || "?");
-            const eskiEtiket = `${k.kod} - ${k.renkIdler.map((id) => adGetir(id, eskiAd)).join("/")}`;
-            const yeniEtiket = `${k.kod} - ${k.renkIdler.map((id) => adGetir(id, yeniAd)).join("/")}`;
-            return { eskiEtiket, yeniEtiket };
-        });
-        const nextTanimlar = { ...tanimlar, renkler: tanimlar.renkler.map((r) => (r.id === renkId ? { ...r, ad: yeniAd } : r)) };
-        setTanimlar(nextTanimlar);
-        yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", nextTanimlar), "Tanımlar", nextTanimlar);
-        // Rengin DOĞRUDAN kullanıldığı yerler de eşlemeye eklenir.
-        //
-        // Önceki sürüm yalnızca KOMBİNASYON etiketlerini ("1010 - Bej/Siyah") güncelliyordu. Ama bir
-        // renk çoğu zaman doğrudan kullanılıyor: hammadde varyantı "T-28", reçete satırının hammadde
-        // rengi "T-28", stok hareketi "T-28". Bu kayıtlar eski adla kalıyor ve renk iki farklı isimle
-        // var olmaya başlıyordu — eşleşme kurulamadığı için üretim malzemeyi bulamıyor.
-        //
-        // Kombinasyonu olmayan bir rengi yeniden adlandırmak, hiçbir şeyi güncellemiyordu.
-        // `duz`: rengin KENDİ adı (kimlikle eşleşir, kimlik damgalanır). Kombinasyon etiketleri ("1054 - KAHVE SÜET/VİZON YILAN") YALNIZ
-        // ADLA eşleşir ve renk kimliğiyle DAMGALANMAZ — bkz. aşağıdaki not (v1.744.37).
-        const tumEslesmeler = [...etiketEslesmeleri.map((e) => ({ ...e, duz: false })), { eskiEtiket: eskiAd, yeniEtiket: yeniAd, duz: true }];
-        // Eşleştirme BÜYÜK/KÜÇÜK HARF ve BOŞLUK farkını yok sayar.
-        //
-        // Sebebi: geçmişte başarısız kalmış bir yeniden adlandırma, kayıtları öksüz bırakabiliyor —
-        // tanımda "T-28", stokta "t-28". Sonraki denemede tam eşleşme aranırsa hiçbir şey bulunamaz
-        // ve kullanıcı "değiştirdim ama olmadı" der. Oysa "t-28" ile "T-28" aynı renktir.
-        //
-        // Bu, aynı zamanda kopuklukları KENDİLİĞİNDEN onarır: bir kez yeniden adlandırınca
-        // eski yazımdaki tüm kayıtlar yeni ada hizalanır.
-        const normalize = (x) => String(x || "").trim().toLocaleLowerCase("tr-TR").replace(/\s+/g, " ");
-        const eslesmeBul = (deger) => {
-            const n = normalize(deger);
-            return tumEslesmeler.find((e) => normalize(e.eskiEtiket) === n);
-        };
-        // Kaç kayıt güncellendiği SAYILIR ve kullanıcıya söylenir.
-        //
-        // "senkronize edildi" demek, hiçbir şey bulunamadığında da aynı görünüyordu; kullanıcı
-        // değişikliğin işe yarayıp yaramadığını anlayamıyordu. Sayı görünce belli oluyor:
-        // 0 ise eşleşme yok demektir ve sebebi aranabilir.
-        let guncellenenSayisi = 0;
-        if (tumEslesmeler.length > 0) {
-            const nextStok = stok.map((p) => {
-                let degisti = false;
-                let nextVariants = p.variants;
-                let nextRenkResimleri = p.renkResimleri;
-                let nextRecete = p.recete;
-                let nextHareketler = p.hareketler;
-                let nextHarici = p.hariciBarkodlar;
-                tumEslesmeler.forEach(({ eskiEtiket, yeniEtiket, duz }) => {
-                    // KİMLİK ÖNCELİKLİ EŞLEŞTİRME.
-                    //
-                    // Kayıt damgalanmışsa kimlikle bulunur: ad ne kadar bozuk olursa olsun doğru kaydı
-                    // yakalar ve önbellekteki adı tazeler. Damgalanmamış eski kayıtlar için ada düşülür.
-                    //
-                    // Bu, "tanımda T-283 ama stokta t-28" gibi kopuklukların bir daha oluşmamasını sağlar:
-                    // kimlik metinden bağımsızdır.
-                    const es = (deger) => normalize(deger) === normalize(eskiEtiket);
-                    // Varyant ve reçete eşleşmesi saf yardımcıda (046-renk-ad-eslesme.jsx), birim testi oradan sınar.
-                    const vr = renkAdVaryantReceteUygula(nextVariants, nextRecete, { eskiEtiket, yeniEtiket, duz }, renkId);
-                    if (vr.degisti) {
-                        degisti = true;
-                        nextVariants = vr.variants;
-                        nextRecete = vr.recete;
-                    }
-                    // Görsel anahtarı da farklı yazımda olabilir; tam eşleşme yerine tarayarak bulunur.
-                    const gorselAnahtar = Object.keys(nextRenkResimleri || {}).find((k) => es(k));
-                    if (gorselAnahtar) {
-                        degisti = true;
-                        const { [gorselAnahtar]: gorsel, ...kalan } = nextRenkResimleri;
-                        nextRenkResimleri = { ...kalan, [yeniEtiket]: gorsel };
-                    }
-                    // Stok hareketleri de güncellenmeli: aksi halde geçmiş, artık var olmayan bir
-                    // renk adına bakar ve varyant eşleşmesi kurulamaz (defter tutmaz).
-                    if ((nextHareketler || []).some((h) => es(h.renk))) {
-                        degisti = true;
-                        nextHareketler = nextHareketler.map((h) => (es(h.renk) ? { ...h, renk: yeniEtiket } : h));
-                    }
-                    // Harici barkodlar renk ADIYLA (v1.639.0, denetim): hizalanmayınca tedarikçi/kutu etiketi tanınmaz oluyordu.
-                    if (Array.isArray(nextHarici) && nextHarici.some((h) => es(h.renk))) {
-                        degisti = true;
-                        nextHarici = nextHarici.map((h) => (es(h.renk) ? { ...h, renk: yeniEtiket } : h));
-                    }
-                });
-                if (degisti)
-                    guncellenenSayisi++;
-                return degisti ? { ...p, variants: nextVariants, renkResimleri: nextRenkResimleri, recete: nextRecete, hareketler: nextHareketler, ...(Array.isArray(nextHarici) ? { hariciBarkodlar: nextHarici } : {}) } : p;
-            });
-            setStok(nextStok);
-            // KİLİT İZNİ (v1.724.0): renk adı değişince o rengin bütün varyant satırları silinip yeniden yazılır (anahtar
-            // urun_id+renk+beden); yaygın renkte toplu silme kilidi yazmayı düşürüyordu. Kullanıcının açık isteği: izinle.
-            yazimiIzle(tabloYaz("stok:items", "urunler", nextStok, undefined, { topluSilmeIzni: true }), "Stok kartları", nextStok);
-            const nextSiparisler = siparisler.map((s) => {
-                let degisti = false;
-                const nextKalemler = s.kalemler.map((k) => {
-                    const eslesme = eslesmeBul(k.renk);
-                    if (!eslesme)
-                        return k;
-                    degisti = true;
-                    return { ...k, renk: eslesme.yeniEtiket };
-                });
-                return degisti ? { ...s, kalemler: nextKalemler } : s;
-            });
-            setSiparisler(nextSiparisler);
-            yazimiIzle(tabloYaz("siparis:data", "siparisler", nextSiparisler), "Siparişler", nextSiparisler);
-            const nextUretim = uretim.map((o) => {
-                const eslesme = eslesmeBul(o.renk);
-                return eslesme ? { ...o, renk: eslesme.yeniEtiket } : o;
-            });
-            setUretim(nextUretim);
-            yazimiIzle(tabloYaz("uretim:siparisler", "uretim", nextUretim), "Üretim", nextUretim);
-            // Koliler de renk ADIYLA (v1.639.0, denetim; ölçü sürümü koliyi güncelliyordu, renk sürümü değil): 237 koli kalemini
-            // sipariş kalemiyle renkle eşliyor — adı değişen mamulün hazır kolisi sevkiyatta "siparişte yok" sayılıyordu.
-            const nextKoliler = (koliler || []).map((k) => {
-                const kalemler = (k.kalemler || []).map((x) => { const e = eslesmeBul(x.renk); return e ? { ...x, renk: e.yeniEtiket } : x; });
-                return kalemler.some((x, i) => x !== (k.kalemler || [])[i]) ? { ...k, kalemler } : k;
-            });
-            if (nextKoliler.some((k, i) => k !== (koliler || [])[i])) {
-                setKoliler(nextKoliler);
-                yazimiIzle(tekilYaz("koli:data", "koliler", nextKoliler), "Koliler", nextKoliler);
+        // SUNUCUDA TEK İŞLEM (v1.744.38, inceleme 25 B1 — kanıt test/inceleme/ekran-ad-bag.js). Sipariş kalemi, üretim, rezervasyon, koli,
+        // reçete, renk resmi ve harici barkod renge ADIYLA bağlı. Aşağıdaki eski yol bunları BU CİHAZIN belleğinden çevirip 5–6 ayrı yazmayla
+        // gönderiyordu: başka cihazın az önce eklediği (bu cihazın henüz görmediği) kalem eski adda kalıyor, varyant bağı kopuyordu. Önce
+        // tazelemek de çözmez — tazelemeden hemen sonra başka cihaz yazabilir. Şimdi değişikliği sunucu yapar (`tanim_renk_ad_degistir`,
+        // stok-v2/guvenlik/26-b1-renk-ad-degistir.sql): Tanımlar + bütün bağlar aynı işlemde, ilgili tablolar kilitli; sonra eski adla gelen
+        // bayat yazmayı sunucu tetikleyicisi güncel ada çevirir. Bu cihaz yalnız sonucu buluttan TAZELER.
+        // · Sunucuda fonksiyon yoksa (SQL henüz çalıştırılmamış: PGRST202) ESKİ YOLA DÖNÜLMEZ (kullanıcı, 27 Kasım: "güvenlik düzeltmesi
+        //   yayınlandığında sunucu fonksiyonu yoksa hatalı eski yöntemle ad değiştirmeye devam etmesin"): işlem açık iletiyle durur, hiçbir
+        //   kayıt değişmez. Sunucu kurulumu (26-b1-renk-ad-degistir.sql, doğrulama 26-b1-onkosul-salt-okur.sql) YAYIN ÖNKOŞULU.
+        // · Bulut kapalıysa (yalnız yerel çalışma, tek cihaz) eski yol — orada başka cihaz yok.
+        // · Bu alanlarda buluta GİTMEMİŞ yazma varsa değişiklik yapılmaz: tazeleme bekleyen yerel değişikliği ezerdi.
+        if (typeof supabaseAcikMi === "function" && supabaseAcikMi() && typeof buluttanTazele === "function") {
+            const bekleyen = bekleyenYazmalariOku();
+            const ilgili = ["tanimlar:data", "stok:items", "siparis:data", "uretim:siparisler", "stokrez:data", "koli:data"].filter((a) => bekleyen[a]);
+            if (ilgili.length) {
+                showToast(`Renk adı değiştirilmedi — buluta gönderilmeyi bekleyen kayıt var (${ilgili.length} bölüm). Önce bekleyen kayıtları gönderin, sonra tekrar deneyin.`);
+                return;
             }
-            // Stok rezervasyonları da renk taşıyor. Güncellenmezse rezervasyon, adı değişmiş
-            // hammaddeyle eşleşmez ve talep karşılanmamış görünür.
-            // Güncel listeden (v1.713.1): kapanış listesi bayatsa silinmiş üretimin satırları buluta geri gelirdi.
-            setStokRezervasyonlari((onceki) => {
-                const nextRez = (onceki || []).map((r) => {
-                    const eslesme = eslesmeBul(r.renk);
-                    return eslesme ? { ...r, renk: eslesme.yeniEtiket } : r;
-                });
-                if (!nextRez.some((r, i) => r !== (onceki || [])[i]))
-                    return onceki;
-                yazimiIzle(tabloYaz("stokrez:data", "stok_rezervasyonlari", nextRez), "Stok rezervasyonları", nextRez);
-                return nextRez;
-            });
+            (async () => {
+                let r;
+                try {
+                    r = await supabaseIstek("rpc/tanim_renk_ad_degistir", { method: "POST", body: JSON.stringify({ p: { renk_id: renkId, yeni_ad: yeniAd, eski_ad: eskiAd } }) });
+                }
+                catch (e) {
+                    const m = String((e && e.message) || e);
+                    if (/PGRST202|Could not find the function/i.test(m)) {
+                        showToast("Renk adı değiştirilemedi — sunucuda güvenli ad değiştirme kurulumu yok (26-b1-renk-ad-degistir.sql). "
+                            + "Yönetici kurulumu yapana kadar renk adı değiştirilemez. Hiçbir kayıt değişmedi.");
+                        gunlukYaz(`Renk adı değiştirilemedi (sunucu kurulumu yok): ${eskiAd} → ${yeniAd}`, "tanimlar", { renkId });
+                        return;
+                    }
+                    showToast(`Renk adı değiştirilemedi — hiçbir kayıt değişmedi. ${m.slice(0, 200)}`);
+                    return;
+                }
+                try {
+                    await buluttanTazele(["tanimlar", "stok", "siparisler", "uretim", "stokRezervasyonlari", "koliler"]);
+                }
+                catch (e) {
+                    console.warn("Ad değişikliği sonrası tazeleme:", e && e.message);
+                }
+                if (r && r.zaten) {
+                    showToast(`Renk adı zaten "${yeniAd}"`);
+                    return;
+                }
+                const n = r || {};
+                gunlukYaz(`Renk adı değişti (sunucu): ${eskiAd} → ${yeniAd}`, "tanimlar", { renkId, ...n });
+                showToast(`Renk adı "${eskiAd}" → "${yeniAd}" — ${n.kalem || 0} sipariş kalemi, ${n.uretim || 0} üretim, ${n.urun || 0} ürün, `
+                    + `${n.koli || 0} koli, ${n.rezervasyon || 0} rezervasyon güncellendi`
+                    + (n.celiskili_recete_satiri ? ` · ${n.celiskili_recete_satiri} reçete satırında renk kimliği ile adı çelişiyor, dokunulmadı` : ""));
+            })();
+            return;
         }
-        showToast(guncellenenSayisi > 0
-            ? `Renk adı "${eskiAd}" → "${yeniAd}" — ${guncellenenSayisi} üründe güncellendi`
-            : `Renk adı "${eskiAd}" → "${yeniAd}" olarak değişti. Hiçbir üründe kullanılmıyordu.`);
-    }, [tanimlar, stok, siparisler, uretim, stokRezervasyonlari, koliler, showToast]);
+        eskiYol();
+        function eskiYol() {
+            // Bu rengi içeren her model rengi kombinasyonu için eski/yeni etiketi hesapla.
+            const etiketEslesmeleri = (tanimlar.renkKombinasyonlari || [])
+                .filter((k) => k.renkIdler.includes(renkId))
+                .map((k) => {
+                const adGetir = (id, kullanilacakAd) => id === renkId ? kullanilacakAd : ((tanimlar.renkler.find((r) => r.id === id) || {}).ad || "?");
+                const eskiEtiket = `${k.kod} - ${k.renkIdler.map((id) => adGetir(id, eskiAd)).join("/")}`;
+                const yeniEtiket = `${k.kod} - ${k.renkIdler.map((id) => adGetir(id, yeniAd)).join("/")}`;
+                return { eskiEtiket, yeniEtiket };
+            });
+            const nextTanimlar = { ...tanimlar, renkler: tanimlar.renkler.map((r) => (r.id === renkId ? { ...r, ad: yeniAd } : r)) };
+            setTanimlar(nextTanimlar);
+            yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", nextTanimlar), "Tanımlar", nextTanimlar);
+            // Rengin DOĞRUDAN kullanıldığı yerler de eşlemeye eklenir.
+            //
+            // Önceki sürüm yalnızca KOMBİNASYON etiketlerini ("1010 - Bej/Siyah") güncelliyordu. Ama bir
+            // renk çoğu zaman doğrudan kullanılıyor: hammadde varyantı "T-28", reçete satırının hammadde
+            // rengi "T-28", stok hareketi "T-28". Bu kayıtlar eski adla kalıyor ve renk iki farklı isimle
+            // var olmaya başlıyordu — eşleşme kurulamadığı için üretim malzemeyi bulamıyor.
+            //
+            // Kombinasyonu olmayan bir rengi yeniden adlandırmak, hiçbir şeyi güncellemiyordu.
+            // `duz`: rengin KENDİ adı (kimlikle eşleşir, kimlik damgalanır). Kombinasyon etiketleri ("1054 - KAHVE SÜET/VİZON YILAN") YALNIZ
+            // ADLA eşleşir ve renk kimliğiyle DAMGALANMAZ — bkz. aşağıdaki not (v1.744.37).
+            const tumEslesmeler = [...etiketEslesmeleri.map((e) => ({ ...e, duz: false })), { eskiEtiket: eskiAd, yeniEtiket: yeniAd, duz: true }];
+            // Eşleştirme BÜYÜK/KÜÇÜK HARF ve BOŞLUK farkını yok sayar.
+            //
+            // Sebebi: geçmişte başarısız kalmış bir yeniden adlandırma, kayıtları öksüz bırakabiliyor —
+            // tanımda "T-28", stokta "t-28". Sonraki denemede tam eşleşme aranırsa hiçbir şey bulunamaz
+            // ve kullanıcı "değiştirdim ama olmadı" der. Oysa "t-28" ile "T-28" aynı renktir.
+            //
+            // Bu, aynı zamanda kopuklukları KENDİLİĞİNDEN onarır: bir kez yeniden adlandırınca
+            // eski yazımdaki tüm kayıtlar yeni ada hizalanır.
+            const normalize = (x) => String(x || "").trim().toLocaleLowerCase("tr-TR").replace(/\s+/g, " ");
+            const eslesmeBul = (deger) => {
+                const n = normalize(deger);
+                return tumEslesmeler.find((e) => normalize(e.eskiEtiket) === n);
+            };
+            // Kaç kayıt güncellendiği SAYILIR ve kullanıcıya söylenir.
+            //
+            // "senkronize edildi" demek, hiçbir şey bulunamadığında da aynı görünüyordu; kullanıcı
+            // değişikliğin işe yarayıp yaramadığını anlayamıyordu. Sayı görünce belli oluyor:
+            // 0 ise eşleşme yok demektir ve sebebi aranabilir.
+            let guncellenenSayisi = 0;
+            if (tumEslesmeler.length > 0) {
+                const nextStok = stok.map((p) => {
+                    let degisti = false;
+                    let nextVariants = p.variants;
+                    let nextRenkResimleri = p.renkResimleri;
+                    let nextRecete = p.recete;
+                    let nextHareketler = p.hareketler;
+                    let nextHarici = p.hariciBarkodlar;
+                    tumEslesmeler.forEach(({ eskiEtiket, yeniEtiket, duz }) => {
+                        // KİMLİK ÖNCELİKLİ EŞLEŞTİRME.
+                        //
+                        // Kayıt damgalanmışsa kimlikle bulunur: ad ne kadar bozuk olursa olsun doğru kaydı
+                        // yakalar ve önbellekteki adı tazeler. Damgalanmamış eski kayıtlar için ada düşülür.
+                        //
+                        // Bu, "tanımda T-283 ama stokta t-28" gibi kopuklukların bir daha oluşmamasını sağlar:
+                        // kimlik metinden bağımsızdır.
+                        const es = (deger) => normalize(deger) === normalize(eskiEtiket);
+                        // Varyant ve reçete eşleşmesi saf yardımcıda (046-renk-ad-eslesme.jsx), birim testi oradan sınar.
+                        const vr = renkAdVaryantReceteUygula(nextVariants, nextRecete, { eskiEtiket, yeniEtiket, duz }, renkId);
+                        if (vr.degisti) {
+                            degisti = true;
+                            nextVariants = vr.variants;
+                            nextRecete = vr.recete;
+                        }
+                        // Görsel anahtarı da farklı yazımda olabilir; tam eşleşme yerine tarayarak bulunur.
+                        const gorselAnahtar = Object.keys(nextRenkResimleri || {}).find((k) => es(k));
+                        if (gorselAnahtar) {
+                            degisti = true;
+                            const { [gorselAnahtar]: gorsel, ...kalan } = nextRenkResimleri;
+                            nextRenkResimleri = { ...kalan, [yeniEtiket]: gorsel };
+                        }
+                        // Stok hareketleri de güncellenmeli: aksi halde geçmiş, artık var olmayan bir
+                        // renk adına bakar ve varyant eşleşmesi kurulamaz (defter tutmaz).
+                        if ((nextHareketler || []).some((h) => es(h.renk))) {
+                            degisti = true;
+                            nextHareketler = nextHareketler.map((h) => (es(h.renk) ? { ...h, renk: yeniEtiket } : h));
+                        }
+                        // Harici barkodlar renk ADIYLA (v1.639.0, denetim): hizalanmayınca tedarikçi/kutu etiketi tanınmaz oluyordu.
+                        if (Array.isArray(nextHarici) && nextHarici.some((h) => es(h.renk))) {
+                            degisti = true;
+                            nextHarici = nextHarici.map((h) => (es(h.renk) ? { ...h, renk: yeniEtiket } : h));
+                        }
+                    });
+                    if (degisti)
+                        guncellenenSayisi++;
+                    return degisti ? { ...p, variants: nextVariants, renkResimleri: nextRenkResimleri, recete: nextRecete, hareketler: nextHareketler, ...(Array.isArray(nextHarici) ? { hariciBarkodlar: nextHarici } : {}) } : p;
+                });
+                setStok(nextStok);
+                // KİLİT İZNİ (v1.724.0): renk adı değişince o rengin bütün varyant satırları silinip yeniden yazılır (anahtar
+                // urun_id+renk+beden); yaygın renkte toplu silme kilidi yazmayı düşürüyordu. Kullanıcının açık isteği: izinle.
+                yazimiIzle(tabloYaz("stok:items", "urunler", nextStok, undefined, { topluSilmeIzni: true }), "Stok kartları", nextStok);
+                const nextSiparisler = siparisler.map((s) => {
+                    let degisti = false;
+                    const nextKalemler = s.kalemler.map((k) => {
+                        const eslesme = eslesmeBul(k.renk);
+                        if (!eslesme)
+                            return k;
+                        degisti = true;
+                        return { ...k, renk: eslesme.yeniEtiket };
+                    });
+                    return degisti ? { ...s, kalemler: nextKalemler } : s;
+                });
+                setSiparisler(nextSiparisler);
+                yazimiIzle(tabloYaz("siparis:data", "siparisler", nextSiparisler), "Siparişler", nextSiparisler);
+                const nextUretim = uretim.map((o) => {
+                    const eslesme = eslesmeBul(o.renk);
+                    return eslesme ? { ...o, renk: eslesme.yeniEtiket } : o;
+                });
+                setUretim(nextUretim);
+                yazimiIzle(tabloYaz("uretim:siparisler", "uretim", nextUretim), "Üretim", nextUretim);
+                // Koliler de renk ADIYLA (v1.639.0, denetim; ölçü sürümü koliyi güncelliyordu, renk sürümü değil): 237 koli kalemini
+                // sipariş kalemiyle renkle eşliyor — adı değişen mamulün hazır kolisi sevkiyatta "siparişte yok" sayılıyordu.
+                const nextKoliler = (koliler || []).map((k) => {
+                    const kalemler = (k.kalemler || []).map((x) => { const e = eslesmeBul(x.renk); return e ? { ...x, renk: e.yeniEtiket } : x; });
+                    return kalemler.some((x, i) => x !== (k.kalemler || [])[i]) ? { ...k, kalemler } : k;
+                });
+                if (nextKoliler.some((k, i) => k !== (koliler || [])[i])) {
+                    setKoliler(nextKoliler);
+                    yazimiIzle(tekilYaz("koli:data", "koliler", nextKoliler), "Koliler", nextKoliler);
+                }
+                // Stok rezervasyonları da renk taşıyor. Güncellenmezse rezervasyon, adı değişmiş
+                // hammaddeyle eşleşmez ve talep karşılanmamış görünür.
+                // Güncel listeden (v1.713.1): kapanış listesi bayatsa silinmiş üretimin satırları buluta geri gelirdi.
+                setStokRezervasyonlari((onceki) => {
+                    const nextRez = (onceki || []).map((r) => {
+                        const eslesme = eslesmeBul(r.renk);
+                        return eslesme ? { ...r, renk: eslesme.yeniEtiket } : r;
+                    });
+                    if (!nextRez.some((r, i) => r !== (onceki || [])[i]))
+                        return onceki;
+                    yazimiIzle(tabloYaz("stokrez:data", "stok_rezervasyonlari", nextRez), "Stok rezervasyonları", nextRez);
+                    return nextRez;
+                });
+            }
+            showToast(guncellenenSayisi > 0
+                ? `Renk adı "${eskiAd}" → "${yeniAd}" — ${guncellenenSayisi} üründe güncellendi`
+                : `Renk adı "${eskiAd}" → "${yeniAd}" olarak değişti. Hiçbir üründe kullanılmıyordu.`);
+        }
+    }, [tanimlar, stok, siparisler, uretim, stokRezervasyonlari, koliler, showToast, buluttanTazele]);
     // Blok içinde duran onarım/çevirme işleri de buradan veriliyor: ikisi de AD/ÖLÇÜ hizalamasıyla
     // aynı aileden — "kayıtlar birbirini tutmuyorsa düzelt" işi.
     return {
@@ -20967,6 +21139,153 @@ function tanimlarUzlastir(yerel, bulut, taban, silinenler) {
         tc ? `başka cihazda silinen ${tc} öğe çıkarıldı (${parca(cikarilan)})` : "",
     ].filter(Boolean).join("; ") || "fark yok";
     return { tanimlar: sonuc, eklenen, cikarilan, degisen, toplam: te + tc + td, metin };
+}
+// GERÇEK ÇAKIŞMALAR (v1.744.38, inceleme 25 B2 — kanıt test/inceleme/ekran-tanim-yaris.js). `ucYonluBirlestir` iki taraf da
+// değiştirdiğinde düz değerde YEREL'i seçiyordu: başka cihazın aynı alana yaptığı değişiklik SESSİZCE eziliyordu (kullanıcı, 27 Kasım:
+// "çakışma sessizce ezilmesin; kullanıcının bekleyen değişikliği korunsun; güncel veriyle güvenli birleştirme veya açık çakışma
+// bildirimi"). Bu işlev, üç yönlü birleştirmenin "ikisi de değişti ve farklı" dediği YAPRAKLARI listeler — birleştirme ancak liste boşsa
+// sessiz yapılır; doluysa yazma durur, kullanıcıya hangi öğede ne çakıştığı gösterilir (030, 100 inceleme şeridi).
+// Çakışma sayılan: (a) aynı yaprakta iki farklı yeni değer, (b) bir tarafın sildiği öğeyi öbür tarafın değiştirmesi. Taban yoksa
+// (bulut hiç okunamamıştı) çakışma bilinemez → boş liste (eski birleşim davranışı). Otomatik çözülenler ÇAKIŞMA SAYILMAZ:
+// `kodSayaclari` (iki cihazın sayacı → büyüğü), `__silinenler` (birleşim). Saf; birim testi `birim-tanim-cakisma`.
+// Döner: [{ yol: "renkler › Vizon Yılan › ad", yerel, bulut, tur: "deger" | "silindi-yerel" | "silindi-bulut" }]
+const TANIM_OTOMATIK_ALANLAR = new Set(["kodSayaclari", "__silinenler"]);
+function tanimCakismalari(yerel, bulut, taban, yol) {
+    const es = (a, b) => a === b || JSON.stringify(a) === JSON.stringify(b);
+    const yolu = yol || [];
+    // "Taban bilinmiyor" YALNIZ EN ÜSTTE: içeride `undefined` = alan tabanda YOK (iki taraf da sonradan ekledi) — karıştırılınca iki cihazın
+    // aynı alana (ör. renk ton kodu) verdiği farklı değerler çakışma sayılmıyor, yerel sessizce kazanıyordu (ekran-tanim-yaris ALAN=kod).
+    if (taban === undefined && yolu.length === 0)
+        return [];
+    if (es(yerel, taban) || es(bulut, taban) || es(yerel, bulut))
+        return [];
+    if (yolu.length === 1 && TANIM_OTOMATIK_ALANLAR.has(yolu[0]))
+        return [];
+    const ad = (x) => (x && typeof x === "object" && (x.ad || x.kod || x.kullaniciAdi)) ? `${x.ad || x.kod || x.kullaniciAdi}` : (x && x.id) || "?";
+    if (yerel === undefined)
+        return [{ yol: yolu.join(" › "), yerel: "(bu cihazda silindi)", bulut, tur: "silindi-yerel" }];
+    if (bulut === undefined || bulut === null)
+        return [{ yol: yolu.join(" › "), yerel, bulut: "(başka cihazda silindi)", tur: "silindi-bulut" }];
+    const kimlikliDizi = (d) => Array.isArray(d) && d.every((x) => x && typeof x === "object" && !Array.isArray(x) && x.id !== undefined);
+    if (kimlikliDizi(yerel) && kimlikliDizi(bulut)) {
+        const tH = new Map(kimlikliDizi(taban) ? taban.map((x) => [x.id, x]) : []);
+        const bH = new Map(bulut.map((x) => [x.id, x]));
+        const yH = new Map(yerel.map((x) => [x.id, x]));
+        const sonuc = [];
+        yerel.forEach((x) => {
+            const etiket = [...yolu, ad(x)];
+            if (bH.has(x.id))
+                sonuc.push(...tanimCakismalari(x, bH.get(x.id), tH.get(x.id), etiket));
+            else if (tH.has(x.id) && !es(x, tH.get(x.id)))
+                sonuc.push({ yol: etiket.join(" › "), yerel: x, bulut: "(başka cihazda silindi)", tur: "silindi-bulut" });
+        });
+        bulut.forEach((y) => {
+            if (yH.has(y.id))
+                return;
+            if (tH.has(y.id) && !es(y, tH.get(y.id)))
+                sonuc.push({ yol: [...yolu, ad(y)].join(" › "), yerel: "(bu cihazda silindi)", bulut: y, tur: "silindi-yerel" });
+        });
+        return sonuc;
+    }
+    const duzNesne = (o) => o && typeof o === "object" && !Array.isArray(o);
+    if (duzNesne(yerel) && duzNesne(bulut)) {
+        const t = duzNesne(taban) ? taban : {};
+        const sonuc = [];
+        new Set([...Object.keys(bulut), ...Object.keys(yerel)]).forEach((k) => {
+            sonuc.push(...tanimCakismalari(yerel[k], bulut[k], duzNesne(taban) ? t[k] : undefined, [...yolu, yolu.length === 0 ? tanimAlanOkunurAdi(k) : k]));
+        });
+        return sonuc;
+    }
+    return [{ yol: yolu.join(" › "), yerel, bulut, tur: "deger" }];
+}
+// Otomatik alanların birleşimi: sayaçlarda büyük olan (iki cihaz aynı sayacı ilerletti → ikisinin de verdiği kod korunsun).
+function tanimOtomatikBirlestir(birlesik, yerel, bulut) {
+    const ys = (yerel && yerel.kodSayaclari) || {};
+    const bs = (bulut && bulut.kodSayaclari) || {};
+    if (!Object.keys(ys).length && !Object.keys(bs).length)
+        return birlesik;
+    const s = { ...bs, ...ys };
+    Object.keys(s).forEach((k) => { const a = Number(ys[k]); const b = Number(bs[k]); if (Number.isFinite(a) || Number.isFinite(b))
+        s[k] = Math.max(Number.isFinite(a) ? a : -Infinity, Number.isFinite(b) ? b : -Infinity); });
+    return { ...birlesik, kodSayaclari: s };
+}
+// YENİ ÖĞENİN KODU ÇAKIŞIRSA (v1.744.39, B2 — kullanıcı, 27 Kasım: "büyük sayacı almak iki cihazın aynı kodu üretmesini tek başına
+// engellemez"). İki cihaz aynı sayaçtan aynı kodu verir (ölçüldü: iki yeni renk de ton kodu 101). Birleştirme anında, BU CİHAZIN henüz
+// sunucuya gitmemiş yeni öğesi (bulutta kimliği yok) sunucudaki başka bir öğenin koduyla çakışıyorsa yalnız O yeni öğeye sıradaki boş kod
+// verilir — sunucudaki öğenin (etiketi basılmış olabilir) koduna DOKUNULMAZ. Aileler: renk ton kodu `kod` (renk + kombinasyon numaraları
+// atlanır), renk / beden / asorti `barkodKodu` (077 kodSayacIlerlet; renk ailesinde kombinasyon kodları da dolu sayılır).
+// KOMBİNASYON kodu etikette görünür ("1003 - Siyah/Taba") ve varyantlara metin olarak geçmiş olabilir → sessizce değiştirilmez:
+// `kombiCakismalari` olarak döner, çağıran açık çakışma bildirir. Saf. Döner: { tanimlar, degisenler: [{ aile, ad, alan, eski, yeni }],
+// kombiCakismalari: [{ yol, yerel, bulut, tur: "kod" }] }.
+function tanimYeniKodlariAyir(birlesik, bulut) {
+    const t = birlesik || {};
+    const b = bulut || {};
+    const degisenler = [];
+    const kombiCakismalari = [];
+    const sayaclar = { ...(t.kodSayaclari || {}) };
+    const sonuc = { ...t };
+    const bulutIdleri = (alan) => new Set(((b[alan]) || []).map((x) => x && x.id).filter(Boolean));
+    const kombiNo = new Set((t.renkKombinasyonlari || []).map((k) => Number(k.kod)).filter((v) => v > 0));
+    // Kombinasyon: bu cihazın yeni kombinasyonu sunucudaki başka bir kombinasyonla aynı kodda
+    {
+        const bIds = bulutIdleri("renkKombinasyonlari");
+        const bKod = new Map((b.renkKombinasyonlari || []).map((k) => [String(k.kod), k]));
+        (t.renkKombinasyonlari || []).forEach((k) => {
+            if (bIds.has(k.id))
+                return;
+            const d = bKod.get(String(k.kod));
+            if (d && d.id !== k.id)
+                kombiCakismalari.push({ yol: `kombinasyonlar › kod ${k.kod}`, yerel: k, bulut: d, tur: "kod" });
+        });
+    }
+    const ayir = (alan, kodAlani, aile) => {
+        const liste = sonuc[alan] || []; // önceki ayırmanın sonucu (renkte önce ton kodu, sonra barkod kodu)
+        if (!liste.length)
+            return;
+        const bIds = bulutIdleri(alan);
+        const sunucuKodlari = new Set(liste.filter((x) => bIds.has(x.id)).map((x) => String(x[kodAlani] == null ? "" : x[kodAlani])).filter((v) => v !== ""));
+        const kullanilan = new Set(liste.map((x) => Number(x[kodAlani])).filter((v) => v > 0));
+        if (aile === "renk" || kodAlani === "kod")
+            kombiNo.forEach((v) => kullanilan.add(v));
+        let degisti = false;
+        const yeni = liste.map((x) => {
+            if (bIds.has(x.id))
+                return x;
+            const v = x[kodAlani] == null ? "" : String(x[kodAlani]);
+            if (v === "" || !sunucuKodlari.has(v))
+                return x;
+            let n;
+            if (kodAlani === "barkodKodu") {
+                n = kodSayacIlerlet(sayaclar, aile, kullanilan);
+                if (n === null)
+                    return x;
+            }
+            else {
+                n = Math.max(100, ...[...kullanilan].filter((z) => z < 1000)) + 1;
+                while (kullanilan.has(n))
+                    n += 1;
+                kullanilan.add(n);
+                n = String(n);
+            }
+            degisti = true;
+            degisenler.push({ aile: alan, ad: x.ad, alan: kodAlani, eski: v, yeni: n });
+            return { ...x, [kodAlani]: n };
+        });
+        if (degisti)
+            sonuc[alan] = yeni;
+    };
+    ayir("renkler", "kod", "renk");
+    ayir("renkler", "barkodKodu", "renk");
+    ayir("bedenler", "barkodKodu", "beden");
+    ayir("asortiler", "barkodKodu", "asorti");
+    if (degisenler.length)
+        sonuc.kodSayaclari = sayaclar;
+    return { tanimlar: degisenler.length ? sonuc : birlesik, degisenler, kombiCakismalari };
+}
+function tanimCakismaMetni(liste) {
+    const kisa = (v) => { const m = typeof v === "string" ? v : JSON.stringify(v); return m && m.length > 60 ? `${m.slice(0, 57)}…` : m; };
+    return (liste || []).slice(0, 8).map((c) => `${c.yol}: bu cihazda ${kisa(c.yerel)} · sunucuda ${kisa(c.bulut)}`).join(" | ")
+        + ((liste || []).length > 8 ? ` | … +${liste.length - 8}` : "");
 }
 const TANIM_ALAN_OKUNUR = {
     renkler: "renkler", bedenler: "ölçüler", birimler: "birimler", prosesler: "prosesler", araProsesler: "ara prosesler",
@@ -22813,6 +23132,100 @@ const FINANS_RAPOR_SEKMELERI = ["finansrapor", "gelirgider", "odemerapor"];
 // yönetici onayına düşmez; düğmesi hiç gösterilmez (kullanıcı kararı: "düğme gizlensin"). Eski davranış Tanımlar ›
 // Kullanıcılar'dan geri açılabilir (`tanimlar.onaySistemiAcik`). Mevcut bekleyen onaylar silinmez, karara bağlanabilir.
 function onaySistemiAcikMi(tanimlar) { return !!(tanimlar && tanimlar.onaySistemiAcik); }
+// ================= FİŞ İPTALİ / "GERİ AL" YETKİSİ (v1.744.44) =================
+// Kullanıcı kararı (27 Kasım): fiş iptali ve "Geri Al" silme yetkisi ister; kaydetme yetkisi buna GENİŞLETİLMEZ. Sunucu kuralı
+// (`fis_iptal` / `fis_iptal_toplu` → `stk_yetki(array[…altı modül…], 'silme')`): bu ALTI modülden HERHANGİ birinde silme yeterli;
+// giriş kapalıysa ya da kullanıcı Yönetici ise serbest. Liste sunucudakinin AYNISI olmalı — `tanimlar` gibi listede olmayan bir
+// modülün silme yetkisi sayılmaz. Ekran sınamasında (personel akışları, P1) yalnız muhasebe / yalnız üretim hesabı "Sil" ve
+// "Geri Al" düğmelerini görüyor, tıklayınca sunucudan 403 (42501) alıyordu: istemci ya tek modüle bakıyor ya hiç bakmıyordu.
+// Kullanıcının GÜNCEL kaydı tanımlardan okunur (Yönetici silme kutusunu kapatınca düğmeler oturumdaki kullanıcıda hemen kaybolsun).
+const FIS_IPTAL_MODULLERI = ["stok", "fisler", "siparis", "uretim", "cari", "muhasebe"];
+function fisIptalYetkisi(tanimlar, aktifKullanici) {
+    const guncel = (aktifKullanici && ((tanimlar && tanimlar.kullanicilar) || []).find((k) => k.id === aktifKullanici.id)) || aktifKullanici;
+    return FIS_IPTAL_MODULLERI.some((modul) => yetkiVarMi(tanimlar, guncel, modul, "silme"));
+}
+// DÜĞME GİZLİ Mİ: yetki yoksa VE onay sistemi kapalıysa (varsayılan) iptal / Geri Al düğmesi hiç çizilmez (v1.689 "düğme gizlensin"
+// kararı, `silmeGizli` deseni). Onay sistemi AÇIKKEN eski davranış aynen kalır — o akışın kendi "istek gönder" yolu var.
+function fisIptalDugmesiGizli(tanimlar, aktifKullanici) {
+    return !fisIptalYetkisi(tanimlar, aktifKullanici) && !onaySistemiAcikMi(tanimlar);
+}
+// Ekranlar prop zinciri kurmadan buradan okur (`window.__fiyatYetki` ile aynı desen; 100 her çizimde atar). Atanmamışsa (test, App
+// dışı çizim) gizlenmez — karar zaten sunucuda.
+function fisIptalGizliMi() { return typeof window !== "undefined" && window.__fisIptalGizli === true; }
+// ================= FİYAT ALANI YETKİSİ (v1.744.42, inceleme 25 B3a-2) =================
+// Kullanıcı kararı (27 Kasım): satış fiyatları ve müşterinin fiyat grubu → sipariş DÜZENLEME; alış fiyatı ve maliyet → muhasebe
+// DÜZENLEME; müşterinin fiyat grubunu değiştirmek ayrıca cari DÜZENLEME. Stok personeli fiyatı değiştiremese de ürünün öteki alanlarını
+// kaydeder. Sunucu (29-b3a2-uygula.sql) GERÇEK alan değişikliğini denetler; istemci aynı kuralı iki yerde uygular:
+//   • fiyat kutuları yetkisizken kapalıdır (window.__fiyatYetki — 100 ayarlar);
+//   • kayıt yolunda (saveStok / saveCariler) yetkisiz fiyat değişikliği ESKİ değerine döndürülür — bir ekran kutuyu kapatmayı unutsa da
+//     kaydın tamamı sunucuda reddedilmesin, öteki alanlar yazılsın. Kullanıcıya ne olduğu söylenir.
+function fiyatAlanYetkileri(tanimlar, aktifKullanici) {
+    const guncel = (aktifKullanici && ((tanimlar && tanimlar.kullanicilar) || []).find((k) => k.id === aktifKullanici.id)) || aktifKullanici;
+    const y = (modul, islem) => yetkiVarMi(tanimlar, guncel, modul, islem);
+    return { satis: y("siparis", "duzenleme"), alis: y("muhasebe", "duzenleme"), cariFiyatGrubu: y("siparis", "duzenleme") && y("cari", "duzenleme") };
+}
+const fiyatKuraliAlisMi = (k) => !!k && (k.tip || "Satış") === "Alış";
+const fiyatSayi = (v) => { const n = parseFloat(v); return Number.isFinite(n) ? n : 0; };
+// Saf. Yetkisiz fiyat alanlarını eski değerine döndürür; değişiklik yoksa AYNI diziyi döndürür. `geriAlinan`: etkilenen ürün sayısı.
+function fiyatDegisiklikleriniSuz(eskiListe, yeniListe, yetki) {
+    if (!Array.isArray(yeniListe) || !yetki || (yetki.satis && yetki.alis))
+        return { liste: yeniListe, geriAlinan: 0, satis: 0, alis: 0 };
+    const eski = new Map((eskiListe || []).map((u) => [u.id, u]));
+    const ayni = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+    let satis = 0, alis = 0;
+    const liste = yeniListe.map((u) => {
+        if (!u)
+            return u;
+        const e = eski.get(u.id);
+        if (e === u)
+            return u;
+        let s = u;
+        for (const [alisMi, izin] of [[false, yetki.satis], [true, yetki.alis]]) {
+            if (izin)
+                continue;
+            const fA = alisMi ? "alisFiyati" : "satisFiyati", pA = alisMi ? "alisParaBirimi" : "satisParaBirimi";
+            const kurallar = (x) => ((x && x.fiyatKurallari) || []).filter((k) => fiyatKuraliAlisMi(k) === alisMi);
+            const degisti = e
+                ? fiyatSayi(u[fA]) !== fiyatSayi(e[fA]) || (u[pA] || "") !== (e[pA] || "") || !ayni(kurallar(u), kurallar(e))
+                : fiyatSayi(u[fA]) !== 0 || kurallar(u).length > 0;
+            if (!degisti)
+                continue;
+            const oteki = ((s.fiyatKurallari) || []).filter((k) => fiyatKuraliAlisMi(k) !== alisMi);
+            s = { ...s, [fA]: e ? e[fA] : 0, ...(e ? { [pA]: e[pA] } : {}), fiyatKurallari: [...oteki, ...kurallar(e)] };
+            if (alisMi)
+                alis += 1;
+            else
+                satis += 1;
+        }
+        return s;
+    });
+    return satis + alis === 0 ? { liste: yeniListe, geriAlinan: 0, satis: 0, alis: 0 } : { liste, geriAlinan: satis + alis, satis, alis };
+}
+// Saf. Yetkisizken müşterinin fiyat grubu değişikliği geri alınır (yeni caride boş kalır). Alan `fiyatGrubuId` (ek'te saklanır);
+// eski kayıtlarda `fiyatGrubu` — ikisi de korunur.
+function cariFiyatGrubuSuz(eskiListe, yeniListe, izinli) {
+    if (izinli || !Array.isArray(yeniListe))
+        return { liste: yeniListe, geriAlinan: 0 };
+    const eski = new Map((eskiListe || []).map((c) => [c.id, c]));
+    let n = 0;
+    const liste = yeniListe.map((c) => {
+        if (!c)
+            return c;
+        const e = eski.get(c.id);
+        if (e === c)
+            return c;
+        let s = c;
+        for (const a of ["fiyatGrubuId", "fiyatGrubu"]) {
+            if ((c[a] || "") === ((e && e[a]) || ""))
+                continue;
+            s = { ...s, [a]: e ? e[a] : "" };
+        }
+        if (s !== c)
+            n += 1;
+        return s;
+    });
+    return n === 0 ? { liste: yeniListe, geriAlinan: 0 } : { liste, geriAlinan: n };
+}
 // ================= PENCERE SİSTEMİ =================
 //
 // 19 Eylül (2. madde): `100-app.jsx` 7.758 satırdı ve her değişiklik oraya dokunuyordu. Tek
@@ -23112,6 +23525,8 @@ function AtolyeUygulamasi() {
     const [surumSeridiKapali, setSurumSeridiKapali] = useState(false);
     const [storageOk, setStorageOk] = useState(true);
     const [aktifKullanici, setAktifKullanici] = useState(null);
+    const aktifKullaniciRef = useRef(null); // v1.744.42: kayıt yolları (saveStok / saveCariler) fiyat yetkisini render beklemeden okur
+    aktifKullaniciRef.current = aktifKullanici;
     damgaKullanicisiAyarla(aktifKullanici && aktifKullanici.ad); // kayıt damgası (048) — her çizimde güncel
     // OTURUM SÜRDÜRME (kullanıcı, 15 Eylül: "sayfa yenilendiğinde tekrar kullanıcı adı ve şifre
     // girmemi istiyor"). `aktifKullanici` yalnız bellekteydi; her yenilemede giriş ekranı geliyordu.
@@ -24098,7 +24513,18 @@ function AtolyeUygulamasi() {
     // Ekrandaki son hâl (v1.645.7): tazelemede buluttan gelenle karşılaştırmak için — aynıysa "başka cihaz" değil (047
     // `degisiklikIcerikAyni`). Her çizimde güncellenir; geri çağırma bayat kapanış yerine bunu okur.
     const guncelDurumRef = useRef({});
+    if (typeof window !== "undefined" && window.__TANI_AC)
+        window.__TANI = guncelDurumRef; // sınama gözlemi (yalnız okuma)
     guncelDurumRef.current = { stok, cariler, siparisler, uretim, stokRezervasyonlari, onaylar, cop, tanimlar, muhasebe, koliler, gorevler, faturalar, teklifler, fisDefteri, modeller };
+    // FİYAT KUTULARI (v1.744.42, 094 `fiyatAlanYetkileri`): ekranlar kutuyu kapatmak için buradan okur (prop zinciri kurmadan).
+    if (typeof window !== "undefined")
+        window.__fiyatYetki = fiyatAlanYetkileri(tanimlar, aktifKullanici);
+    // FİŞ İPTALİ / GERİ AL DÜĞMELERİ (v1.744.44, 094 `fisIptalYetkisi`): sunucu altı modülden birinde silme ister; yetkisi olmayan
+    // kullanıcıya düğme çizilmez (onay sistemi açıksa eski davranış). Ekranlar `fisIptalGizliMi()` ile okur.
+    if (typeof window !== "undefined") {
+        window.__fisIptalYetki = fisIptalYetkisi(tanimlar, aktifKullanici);
+        window.__fisIptalGizli = fisIptalDugmesiGizli(tanimlar, aktifKullanici);
+    }
     // Döner: içeriği GERÇEKTEN değişen alanlar (not yalnız bunlar için çıkar). Aynı olan alan state'e yazılmaz.
     const bulutDegisikligiUygula = useCallback(async (alanlar) => {
         const tablolar = alanlar.flatMap(alaninTablolari);
@@ -24169,8 +24595,17 @@ function AtolyeUygulamasi() {
                 // Tanımlar bulut hâli ekrandakine EKLENİR: yalnız buluttan gelen anahtarlar karşılaştırılır.
                 if (bulut.tanimlar) {
                     const mevcut = Object.fromEntries(Object.keys(bulut.tanimlar).map((k) => [k, (g.tanimlar || {})[k]]));
-                    if (!ayni(alan, mevcut))
+                    // KARŞILAŞTIRMA BULUTLA (v1.744.48): burada `ayni(alan, mevcut)` çağrılıyordu — o yardımcı ekrandaki Tanımlar'ı (g.tanimlar)
+                    // verilen değerle karşılaştırır, `mevcut` ise ekrandaki hâlin KENDİ alt kümesi: anahtar kümeleri aynıyken hep "aynı" çıkıyor,
+                    // buluttan gelen Tanımlar ekrana HİÇ işlenmiyordu; taban ise (aşağıda) bulut hâline geçiyordu. Sonuç (canlıda 27 Kasım, renk
+                    // adı sunucuda değiştikten sonra "N üründe" rozeti kayboldu): ekranda eski ad kalıyor, aynı cihazın SONRAKİ Tanımlar kaydı
+                    // eski adı "yerel değişiklik" sanıp sunucuya geri yazıyor, kalemler yeni adda kaldığı için bağ kopuyordu. Doğrusu: ekrandaki
+                    // değerler (bulutun getirdiği anahtarlar için) BULUT hâliyle karşılaştırılır.
+                    if (!degisiklikIcerikAyni(mevcut, bulut.tanimlar)) {
+                        degisen.push(alan);
+                        farklar[alan] = "içerik";
                         setTanimlar((t) => ({ ...t, ...bulut.tanimlar }));
+                    }
                     // TABAN + TAZELİK (v1.744.16): ekran sunucu hâline geçti — sonraki tanım yazması bununla üç yönlü uzlaşır.
                     tekilTabanAyarla("tanimlar", bulut.tanimlar);
                     tanimlarOkundu();
@@ -24683,7 +25118,16 @@ function AtolyeUygulamasi() {
             : `"${ad}" rengi eklendi — reçete kopyalanmadı, Stok ekranından tanımlayın`);
         return true;
     }, [stok, showToast, tanimlar]);
-    const saveStok = useCallback(async (next) => {
+    const saveStok = useCallback(async (nextHam) => {
+        // FİYAT ALANI YETKİSİ (v1.744.42, B3a-2): yetkisiz fiyat değişikliği eski değerine döner; ürünün öteki alanları kaydedilir.
+        // Sunucu aynı kuralı uygular (29-b3a2) — burada ayıklanmasa kaydın TAMAMI reddedilirdi.
+        const fy = fiyatAlanYetkileri(guncelDurumRef.current.tanimlar, aktifKullaniciRef.current);
+        const suz = fiyatDegisiklikleriniSuz(guncelDurumRef.current.stok, nextHam, fy);
+        const next = suz.liste;
+        if (suz.geriAlinan > 0) {
+            showToast(`Fiyat değişikliği KAYDEDİLMEDİ — yetkiniz yok (${[suz.satis ? "satış fiyatı: sipariş düzenleme" : "", suz.alis ? "alış fiyatı: muhasebe düzenleme" : ""].filter(Boolean).join("; ")}). Öteki alanlar kaydedildi.`);
+            gunlukYaz(`Yetkisiz fiyat değişikliği kayıttan ayıklandı: ${suz.satis} satış, ${suz.alis} alış`, "guvenlik", { satis: suz.satis, alis: suz.alis });
+        }
         setStok(next);
         // GÖRSELLER AYRI YAZILIYOR. `stok:items` tek anahtar ve `guvenliYaz` 5 MB'ı aşan kaydı
         // depoya sormadan reddediyor; görseller o anahtarın içindeyken yüz ürünün birkaç rengi
@@ -24979,6 +25423,7 @@ function AtolyeUygulamasi() {
         // değişmez. İptal edilen satırlar fark tabanından çıkar (eski yoldan bir daha "silinmesin"); kalan iş (üretimin ana satırı,
         // sipariş rezervasyonu, eski usul satırlar) bugünkü yoldan.
         const sunucuSatirlari = fisKesYolu() ? uretimSunucuFisSatirlari(sonuc.silinenStokKayitlari, sonuc.silinenCariKayitlari) : null;
+        let zatenGeriAlinmis = false; // v1.744.41: sunucu "fişler zaten iptal" dedi (aşağıda)
         if (fisKesYolu() && (!sunucuSatirlari || !sunucuSatirlari.fisler.length) && (sonuc.silinenStokKayitlari.length || sonuc.silinenCariKayitlari.length)) {
             showToast("Üretim tesliminin fişleri doğrulanamadı — kayıtlar korunuyor. Listeyi yenileyip tekrar deneyin.");
             return;
@@ -24987,8 +25432,9 @@ function AtolyeUygulamasi() {
             const etkU = fisKesEtkilenen(uretim, sonuc.uretim, [uretimId]);
             const atamaFarki = fisKesAltFarki("uretim", "uretim_atamalari", etkU.eskiler[0], etkU.yeniler[0]);
             const alt = atamaFarki.satirlar.length || atamaFarki.sil.length ? { uretim_atamalari: atamaFarki } : null;
+            let iptalYaniti = null;
             try {
-                await supabaseIstek("rpc/fis_iptal_toplu", { method: "POST", body: JSON.stringify({ p: {
+                iptalYaniti = await supabaseIstek("rpc/fis_iptal_toplu", { method: "POST", body: JSON.stringify({ p: {
                             fisler: sunucuSatirlari.fisler, sebep: `Üretim teslimi geri alındı (${siparis.siparisNo} · ${prosesAdi})`, alt
                         } }) });
             }
@@ -24996,6 +25442,40 @@ function AtolyeUygulamasi() {
                 showToast(`Geri alınamadı — hiçbir değişiklik yapılmadı (${String((e && e.message) || e).slice(0, 160)})`);
                 gunlukYaz(`Üretim teslimi geri alınamadı (${siparis.siparisNo} · ${prosesAdi}): ${String((e && e.message) || e).slice(0, 200)}`, "uretim", { uretimId, atamaId });
                 return;
+            }
+            // BAYAT GERİ AL (v1.744.41, inceleme 25 B5): sunucu bütün fişler için "zaten iptal" dediyse bu çağrı fişlerde HİÇBİR şeyi
+            // değiştirmedi — teslim başka cihazda ya da yanıtı kaybolan önceki denemede geri alınmıştı. Sonuç SUNUCUDAN doğrulanır:
+            //   • adımın GEÇERLİ bir fişi var mı (078 `uretimAdimiSunucudaGecerliMi`) — ara proses dahil (ataması yok, tek kanıt fiş);
+            //   • atamalı adımda ayrıca atama satırı teslim alınmış mı.
+            // Geçerli fiş VAR / atama teslimli / okunamadı → bu cihazın bayat hesabı UYGULANMAZ; ekran sunucudaki hâle getirilir ve
+            // kullanıcıya gerçekleşmeyen işlem için başarı denmez. İkisi de "yok / bekliyor" → geri alma gerçekten yapılmış (yanıt kaybı
+            // tekrarı): olağan yol sürer (üretimin ana satırını istemci yazar), ileti önceden yapıldığını söyler.
+            if (fisIptalHepsiZatenIptal(iptalYaniti)) {
+                zatenGeriAlinmis = true;
+                const gecerliFis = await uretimAdimiSunucudaGecerliMi(uretimId, uretimFisAdlari(siparis, adimIndex, araProsesMi ? null : atamaId));
+                let sunucudaTeslim = false;
+                if (!araProsesMi) {
+                    try {
+                        const r = await supabaseIstek(`uretim_atamalari?id=eq.${encodeURIComponent(atamaId)}&select=tamamlandi_mi`);
+                        sunucudaTeslim = Array.isArray(r) && r[0] ? !!r[0].tamamlandi_mi : null;
+                    }
+                    catch (e) {
+                        sunucudaTeslim = null;
+                    }
+                }
+                if (gecerliFis !== false || sunucudaTeslim !== false) {
+                    gunlukYaz(`Üretim teslimi geri alma: fişler zaten iptal, değişiklik yapılmadı (${sunucuSatirlari.fisler.join(", ")} · ${siparis.siparisNo} · ${prosesAdi})`, "uretim", { uretimId, atamaId, gecerliFis, sunucudaTeslim });
+                    try {
+                        await bulutDegisikligiUygula(["uretim", "stok", "cariler", "siparisler", "stokRezervasyonlari", "fisDefteri"]);
+                    }
+                    catch (e) { /* yoklama birazdan tazeler */ }
+                    const durumNotu = gecerliFis === true
+                        ? (araProsesMi ? " ve adım yeniden tamamlanmış (geçerli bir fişi var)" : sunucudaTeslim ? " ve iş yeniden teslim alınmış (geçerli bir fişi var)"
+                            : "; ancak sunucuda bu adımın geçerli bir fişi duruyor — Fişler ekranından kontrol edin")
+                        : (sunucudaTeslim ? " ve iş yeniden teslim alınmış" : "; sunucudaki güncel durum doğrulanamadı");
+                    showToast(`"${prosesAdi}" ${araProsesMi ? "ara prosesi" : "teslimi"} zaten geri alınmıştı (başka cihazdan ya da önceki denemede)${durumNotu} — bu işlem yeni bir değişiklik yapmadı. Ekran güncel duruma getirildi; işin şimdiki durumunu kontrol edin.`);
+                    return;
+                }
             }
             fisKesTabandanCikar("urunler", "stok_hareketleri", sunucuSatirlari.stokIdler);
             fisKesTabandanCikar("cariler", "cari_hareketleri", sunucuSatirlari.cariIdler);
@@ -25022,11 +25502,15 @@ function AtolyeUygulamasi() {
             yazimiIzle(tabloYaz("stokrez:data", "stok_rezervasyonlari", nextStokRezGeri), "Stok rezervasyonları", nextStokRezGeri);
         }
         showToast(araProsesMi
-            ? `"${prosesAdi}" ara prosesinin otomatik tamamlanması geri alındı — hammadde ve işçilik geri alındı` +
+            ? (zatenGeriAlinmis
+                ? `"${prosesAdi}" ara prosesinin tamamlanması zaten geri alınmıştı (önceki denemede ya da başka cihazdan) — kayıtlar geri alınmış durumda`
+                : `"${prosesAdi}" ara prosesinin otomatik tamamlanması geri alındı — hammadde ve işçilik geri alındı`) +
                 (iadeEdilenRez > 0 ? " · rezervasyon payları serbest bırakıldı" : "")
-            : `"${prosesAdi}" için ${atama.miktar} adetlik teslim alma işlemi geri alındı — hammadde ve işçilik geri alındı` +
+            : (zatenGeriAlinmis
+                ? `"${prosesAdi}" için ${atama.miktar} adetlik teslim zaten geri alınmıştı (önceki denemede ya da başka cihazdan) — kayıtlar geri alınmış durumda, iş yeniden teslim alınabilir`
+                : `"${prosesAdi}" için ${atama.miktar} adetlik teslim alma işlemi geri alındı — hammadde ve işçilik geri alındı`) +
                 (iadeEdilenRez > 0 ? " · rezervasyon payları serbest bırakıldı" : ""));
-    }, [faturalar, uretim, stok, cariler, siparisler, stokRezervasyonlari, showToast, muhasebe, koliler, fisDefterindeIptal]);
+    }, [faturalar, uretim, stok, cariler, siparisler, stokRezervasyonlari, showToast, muhasebe, koliler, fisDefterindeIptal, bulutDegisikligiUygula]);
     // Bir üretim siparişini siler; bu üretime bağlı (Tedarik Planlama ile oluşmuş) bir satış kalemi varsa
     // o kalemin planlama referansını temizleyerek yeniden planlanabilir hale getirir.
     // cascade=true ise: bu üretimin tamamlanmış proseslerinde stoktan düşülen hammaddeleri geri ekler,
@@ -25505,9 +25989,17 @@ function AtolyeUygulamasi() {
         // FONKSİYON DA KABUL EDİLİR (v1.639.0, denetim): kasa/banka ekranı (205) kasa yazımını bekledikten sonra cari listesini
         // kapanıştaki hâliyle yazıyordu; bu arada gelen değişiklik eziliyordu. Fonksiyon verilirse güncel liste üzerinden
         // kurulur (addCariHareketFromStok kalıbı). Kod ataması yine `cariKodlariAta`; tanım yazımı mikro göreve.
+        // MÜŞTERİNİN FİYAT GRUBU (v1.744.42, B3a-2): sipariş düzenleme VE cari düzenleme ister; yetkisiz değişiklik eski değerine döner.
+        const fgIzin = fiyatAlanYetkileri(guncelDurumRef.current.tanimlar, aktifKullaniciRef.current).cariFiyatGrubu;
+        const fgSuz = (eski, yeni) => {
+            const z = cariFiyatGrubuSuz(eski, yeni, fgIzin);
+            if (z.geriAlinan > 0)
+                showToast("Müşterinin fiyat grubu DEĞİŞTİRİLMEDİ — yetkiniz yok (sipariş düzenleme ve cari düzenleme gerekir). Öteki alanlar kaydedildi.");
+            return z.liste;
+        };
         if (typeof next === "function") {
             setCariler((prev) => {
-                const sonuc = cariKodlariAta(next(prev), tanimlar);
+                const sonuc = cariKodlariAta(fgSuz(prev, next(prev)), tanimlar);
                 if (sonuc.atanan > 0)
                     Promise.resolve().then(() => {
                         setTanimlar(sonuc.tanimlar);
@@ -25521,7 +26013,7 @@ function AtolyeUygulamasi() {
         // YENİ CARİYE KODU ANINDA VERİLİYOR. Ayrı bir "kodları ata" adımına bırakmak, kullanıcının
         // cariyi açıp koduna baktığında boş görmesi demekti. `cariKodlariAta` kodu OLANA dokunmuyor,
         // o yüzden her kayıtta güvenle çağrılabiliyor.
-        const sonuc = cariKodlariAta(next, tanimlar);
+        const sonuc = cariKodlariAta(fgSuz(guncelDurumRef.current.cariler, next), tanimlar);
         if (sonuc.atanan > 0) {
             setTanimlar(sonuc.tanimlar);
             yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", sonuc.tanimlar), "Tanımlar", sonuc.tanimlar);
@@ -26171,7 +26663,7 @@ function AtolyeUygulamasi() {
     // AD DEĞİŞTİRME (ÖLÇÜ VE RENK) AYRI DOSYADA (19 Eylül, 2. madde, 9. tur): `082-ad-degistir.jsx`.
     const { olcuAdDegistir, kullanimdakiOlculer, hammaddeRenkAdDegistir, tanimsizOlcuCevir, } = useAdDegistirme({
         tanimlar, stok, siparisler, uretim, koliler, stokRezervasyonlari, showToast, setStok, setSiparisler, setUretim, saveTanimlar, saveKoliler,
-        setTanimlar, setKoliler, setStokRezervasyonlari, cariler,
+        setTanimlar, setKoliler, setStokRezervasyonlari, cariler, buluttanTazele: bulutDegisikligiUygula,
     });
     // TANIMLARI KODLU YAZ (26 Eylül, v1.467.0 — kullanıcı: "renk kodunu otomatik veriyor, burada
     // vermemiş; stok kartı içerisinden açılan renk bu, tüm açılan renklere otomatik renk kodu versin").
@@ -26412,6 +26904,12 @@ function AtolyeUygulamasi() {
                 bolumKartImzaRef.current = false;
         });
     }, [loading, baglantiYok, tanimlar, saveTanimlar, showToast, yazmaOturumu, tanimBayatDalgasi]);
+    // YENİ ÖĞE KODU AYRILDI (v1.744.39, B2 — 030 / 089 `tanimYeniKodlariAyir`): iki cihaz aynı kodu vermişti; bu cihazın henüz yazılmamış
+    // yeni öğesi sıradaki koda geçti (sunucudakine dokunulmadı) — söylenir.
+    useEffect(() => {
+        window.__tanimKodlariAyrildi = (liste) => showToast(`Kod çakışması önlendi — başka cihaz aynı kodu az önce vermişti: ${(liste || []).map((d) => `${d.ad} ${d.alan === "kod" ? "renk kodu" : "barkod kodu"} ${d.eski} → ${d.yeni}`).join(" · ")}`);
+        return () => { window.__tanimKodlariAyrildi = null; };
+    }, [showToast]);
     // KOD ÇAKIŞMASI KENDİLİĞİNDEN ONARILIR (v1.556.0, 089 `tanimKodlariniOnar`). Kullanıcı: "Renk kodları
     // çakışıyor, burayı düzeltmiştik daha önce!" — iki cihazın aynı anda verdiği barkod kodları tanım
     // birleştirmesiyle yan yana geldi. Tanımlar her değiştiğinde (açılış, bulutla birleştirme, kayıt) denetlenir;
@@ -27304,7 +27802,9 @@ function AtolyeUygulamasi() {
         }
         sonuc.silinenCariKayitlari.forEach(({ cari: c, hareket: h }) => gunlukYaz(`Fiş iptal — cari satırı: ${c.unvan} ${h.yon || ""} ${h.tutar || 0}`, "cari", { fisNo: sunucuFisi.fisNo }));
         gunlukYaz(`Fiş iptal edildi: ${sunucuFisi.fisNo}${sunucuFisi.bagliFis ? ` + ${sunucuFisi.bagliFis}` : ""}`, "stok", { fisNo: sunucuFisi.fisNo, bagliFisNo: sunucuFisi.bagliFis || null, stokHareketi: sonuc.silinenStok, cariHareketi: sonuc.silinenCari, kasaHareketi: kasaSilinen.length });
-        showToast(`"${sunucuFisi.fisNo}" iptal edildi${sunucuFisi.bagliFis ? ` (bağlı ${sunucuFisi.bagliFis} de)` : ""} — `
+        // v1.744.41: sunucu "zaten iptal" dediyse bu işlem yeni bir şey değiştirmedi — ileti bunu söyler (satırlar ekrandan yine kalkar:
+        // sunucuda da iptaller).
+        showToast(`"${sunucuFisi.fisNo}" ${iptalYaniti && iptalYaniti.zatenIptal ? "zaten iptal edilmişti (başka cihazdan ya da önceki denemede) — ekran güncellendi" : "iptal edildi"}${sunucuFisi.bagliFis ? ` (bağlı ${sunucuFisi.bagliFis} de)` : ""} — `
             + [sonuc.silinenStok ? `${sonuc.silinenStok} stok` : "", sonuc.silinenCari ? `${sonuc.silinenCari} cari` : "", kasaSilinen.length ? `${kasaSilinen.length} kasa` : ""].filter(Boolean).join(", ") + " satırı");
         return true;
     }, [faturalar, stok, cariler, siparisler, uretim, muhasebe, koliler, showToast, aktifKullanici]);
@@ -28359,6 +28859,40 @@ function AtolyeUygulamasi() {
                             " \u00B7 ",
                             String(v.sebep || "").replace(/^Supabase \d+:\s*/, "")),
                         React.createElement("span", { className: "mono", style: { fontSize: 10, color: "var(--erp-text-2)" } }, v.zaman ? tarihYaz(v.zaman) : ""),
+                        tablo === "tanimlar" && v.kod === "CAKISMA" && (React.createElement("span", { "data-tanim-cakisma": "1", style: { flexBasis: "100%", display: "flex", flexDirection: "column", gap: 4 } },
+                            (v.cakismalar || []).map((c, i) => (React.createElement("span", { key: i, "data-tanim-cakisma-satir": c.yol, style: { fontSize: 11, color: "var(--erp-text)" } },
+                                React.createElement("b", null, c.yol),
+                                ": bu cihazda ",
+                                React.createElement("span", { className: "mono" }, typeof c.yerel === "string" ? c.yerel : JSON.stringify(c.yerel)),
+                                " \u00B7 sunucuda ",
+                                React.createElement("span", { className: "mono" }, typeof c.bulut === "string" ? c.bulut : JSON.stringify(c.bulut))))),
+                            React.createElement("span", { style: { display: "flex", gap: 6, flexWrap: "wrap" } },
+                                React.createElement("button", { type: "button", className: "btn-primary", "data-tanim-cakisma-benim": "1", style: { padding: "3px 8px", fontSize: 11 }, onClick: () => {
+                                        if ((v.cakismalar || []).some((c) => c.tur === "kod")) {
+                                            showToast("Kombinasyon kodu çakışması 'Benimkini uygula' ile çözülmez (kod etikette görünür) — 'Sunucudakini al' deyip kombinasyonu yeniden açın");
+                                            return;
+                                        }
+                                        if (!window.confirm("Yukarıda listelenen çakışan öğelerde BU CİHAZDAKİ değerler yazılacak; başka cihazın yalnız bu öğelerdeki değişikliği geri alınır, öbür değişiklikleri korunur. Bu arada yeni bir çakışma olduysa yeniden sorulur. Devam?"))
+                                            return;
+                                        gunlukYaz("Tanım çakışması: bu cihazın değerleri uygulandı", "tanimlar", { cakismalar: v.cakismalar || [] });
+                                        incelemeSil(tablo, sid);
+                                        // Yalnız GÖRÜLEN çakışmalar onaylanır; arada yenisi doğduysa yazma yine durur ve şerit yeniden sorar (030).
+                                        yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", tanimlar, { onaylananCakismalar: v.cakismalar || [], tetikleyen: "çakışma kararı" }), "Tanımlar", tanimlar);
+                                    } }, "Benimkini uygula"),
+                                React.createElement("button", { type: "button", className: "btn-ghost", "data-tanim-cakisma-sunucu": "1", style: { padding: "3px 8px", fontSize: 11 }, onClick: () => {
+                                        if (!window.confirm("Bu cihazın gönderilmemiş Tanımlar değişiklikleri BIRAKILACAK; sunucudaki hâl geçerli olur (yerel kopya günlüğe yedeklenir). Devam?"))
+                                            return;
+                                        gunlukYaz("Tanım çakışması: sunucudaki hâl alındı, yerel değişiklik bırakıldı", "tanimlar", { cakismalar: v.cakismalar || [], yerelYedek: tanimlar });
+                                        try {
+                                            window.localStorage.setItem(`inceleme-yedek:tanimlar:${Date.now()}`, JSON.stringify(tanimlar));
+                                        }
+                                        catch (e) { /* */ }
+                                        incelemeSil(tablo, sid);
+                                        if (v.anahtar)
+                                            bekleyenYazmaSil(v.anahtar);
+                                        tanimBekleyenTabanSil();
+                                        bulutDegisikligiUygula(["tanimlar"]).then(() => showToast("Sunucudaki Tanımlar alındı")).catch((e) => showToast(`Tanımlar alınamadı: ${e && e.message}`));
+                                    } }, "Sunucudakini al")))),
                         React.createElement("button", { type: "button", className: "btn-ghost", "data-inceleme-yeniden": sid, style: { padding: "3px 8px", fontSize: 11 }, onClick: () => {
                                 incelemeSil(tablo, sid);
                                 if (v.anahtar)
@@ -28908,7 +29442,7 @@ function AtolyeUygulamasi() {
                     gap: 10,
                 } },
                 React.createElement("span", { style: { flex: 1 } }, toast),
-                toastGeriAl && (React.createElement("button", { type: "button", "data-toast-geri-al": "1", onClick: () => { const f = toastGeriAl; toastKapat(); f(); }, style: { background: "transparent", border: "1px solid var(--erp-shell-ink)", color: "var(--erp-shell-ink)",
+                toastGeriAl && !fisIptalGizliMi() && (React.createElement("button", { type: "button", "data-toast-geri-al": "1", onClick: () => { const f = toastGeriAl; toastKapat(); f(); }, style: { background: "transparent", border: "1px solid var(--erp-shell-ink)", color: "var(--erp-shell-ink)",
                         borderRadius: "var(--erp-r-sm)", padding: "4px 10px", fontSize: 12, fontWeight: 700, cursor: "pointer" } }, "Geri al")),
                 React.createElement(X, { size: 14, style: { flexShrink: 0, marginTop: 2, opacity: .7 } }))),
             onayPaneliAcik && (React.createElement("div", { style: {
@@ -35978,11 +36512,11 @@ function StokModule({ onStokFisiKes, kapsam = "genel", onFiyatGrubuMarj, onRecet
                 React.createElement(Field, { label: isMamul ? "Alış Fiyatı (çift başına)" : "Alış Fiyatı (birim başına)" },
                     React.createElement("div", { style: { display: "flex", gap: 4 } },
                         React.createElement("select", { value: form.alisParaBirimi, onChange: (e) => setForm({ ...form, alisParaBirimi: e.target.value }), style: { ...inputStyle, width: 52, flex: "0 0 auto", padding: "8px 4px", textAlign: "center" } }, PARA_BIRIMLERI.map((p) => React.createElement("option", { key: p }, p))),
-                        React.createElement("input", { type: "number", step: "0.01", value: form.alisFiyati, onChange: (e) => setForm({ ...form, alisFiyati: e.target.value }), placeholder: "\u00D6rn. 450", style: inputStyle }))),
+                        React.createElement("input", { type: "number", step: "0.01", value: form.alisFiyati, disabled: !((typeof window !== "undefined" && window.__fiyatYetki) || { alis: true }).alis, title: ((typeof window !== "undefined" && window.__fiyatYetki) || { alis: true }).alis ? undefined : "Alış fiyatını değiştirme yetkiniz yok (muhasebe: düzenleme)", onChange: (e) => setForm({ ...form, alisFiyati: e.target.value }), placeholder: "\u00D6rn. 450", style: inputStyle }))),
                 React.createElement(Field, { label: `Satış Fiyatı${form.birim ? ` (${form.birim} başına)` : ""}` },
                     React.createElement("div", { style: { display: "flex", gap: 4 } },
                         React.createElement("select", { value: form.satisParaBirimi, onChange: (e) => setForm({ ...form, satisParaBirimi: e.target.value }), style: { ...inputStyle, width: 52, flex: "0 0 auto", padding: "8px 4px", textAlign: "center" } }, PARA_BIRIMLERI.map((p) => React.createElement("option", { key: p }, p))),
-                        React.createElement("input", { type: "number", step: "0.01", value: form.satisFiyati, onChange: (e) => setForm({ ...form, satisFiyati: e.target.value }), placeholder: isMamul ? "Örn. 890" : "Örn. 12", style: inputStyle }))),
+                        React.createElement("input", { type: "number", step: "0.01", value: form.satisFiyati, disabled: !((typeof window !== "undefined" && window.__fiyatYetki) || { satis: true }).satis, title: ((typeof window !== "undefined" && window.__fiyatYetki) || { satis: true }).satis ? undefined : "Satış fiyatını değiştirme yetkiniz yok (sipariş: düzenleme)", onChange: (e) => setForm({ ...form, satisFiyati: e.target.value }), placeholder: isMamul ? "Örn. 890" : "Örn. 12", style: inputStyle }))),
                 (React.createElement(React.Fragment, null,
                     React.createElement(Field, { label: "Tedarik\u00E7i" },
                         React.createElement("select", { value: form.tedarikciId || "", onChange: (e) => {
@@ -39062,11 +39596,11 @@ function ProductMatrixCard({ tanimlarTum, onKapasiteKaydet, kurlar, kurGecmisi, 
                                     showEdit ? (React.createElement(React.Fragment, null,
                                         React.createElement("label", { style: { display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 } },
                                             "Al\u0131\u015F",
-                                            React.createElement("input", { type: "number", step: "any", min: "0", value: editForm.alisFiyati, onChange: (e) => setEditForm({ ...editForm, alisFiyati: e.target.value }), className: "mono", style: { ...inputStyle, width: 74, padding: "4px 6px" } }),
+                                            React.createElement("input", { type: "number", step: "any", min: "0", value: editForm.alisFiyati, disabled: !((typeof window !== "undefined" && window.__fiyatYetki) || { alis: true }).alis, title: ((typeof window !== "undefined" && window.__fiyatYetki) || { alis: true }).alis ? undefined : "Alış fiyatını değiştirme yetkiniz yok (muhasebe: düzenleme)", onChange: (e) => setEditForm({ ...editForm, alisFiyati: e.target.value }), className: "mono", style: { ...inputStyle, width: 74, padding: "4px 6px" } }),
                                             React.createElement("select", { value: editForm.alisParaBirimi, onChange: (e) => setEditForm({ ...editForm, alisParaBirimi: e.target.value }), className: "mono", style: { border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "2px 3px", fontSize: 12, background: "#fff" } }, PARA_BIRIMLERI.map((p) => React.createElement("option", { key: p }, p)))),
                                         React.createElement("label", { style: { display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 } },
                                             "Sat\u0131\u015F",
-                                            React.createElement("input", { type: "number", step: "any", min: "0", value: editForm.satisFiyati, onChange: (e) => setEditForm({ ...editForm, satisFiyati: e.target.value }), className: "mono", style: { ...inputStyle, width: 74, padding: "4px 6px" } }),
+                                            React.createElement("input", { type: "number", step: "any", min: "0", value: editForm.satisFiyati, disabled: !((typeof window !== "undefined" && window.__fiyatYetki) || { satis: true }).satis, title: ((typeof window !== "undefined" && window.__fiyatYetki) || { satis: true }).satis ? undefined : "Satış fiyatını değiştirme yetkiniz yok (sipariş: düzenleme)", onChange: (e) => setEditForm({ ...editForm, satisFiyati: e.target.value }), className: "mono", style: { ...inputStyle, width: 74, padding: "4px 6px" } }),
                                             React.createElement("select", { value: editForm.satisParaBirimi, onChange: (e) => setEditForm({ ...editForm, satisParaBirimi: e.target.value }), className: "mono", style: { border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "2px 3px", fontSize: 12, background: "#fff" } }, PARA_BIRIMLERI.map((p) => React.createElement("option", { key: p }, p)))),
                                         React.createElement("label", { style: { display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 } },
                                             "Tedarik\u00E7i",
@@ -39141,11 +39675,11 @@ function ProductMatrixCard({ tanimlarTum, onKapasiteKaydet, kurlar, kurGecmisi, 
                                     showEdit ? (React.createElement(React.Fragment, null,
                                         React.createElement("label", { style: { display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 } },
                                             "Al\u0131\u015F",
-                                            React.createElement("input", { type: "number", step: "any", min: "0", value: editForm.alisFiyati, onChange: (e) => setEditForm({ ...editForm, alisFiyati: e.target.value }), className: "mono", style: { ...inputStyle, width: 74, padding: "4px 6px" } }),
+                                            React.createElement("input", { type: "number", step: "any", min: "0", value: editForm.alisFiyati, disabled: !((typeof window !== "undefined" && window.__fiyatYetki) || { alis: true }).alis, title: ((typeof window !== "undefined" && window.__fiyatYetki) || { alis: true }).alis ? undefined : "Alış fiyatını değiştirme yetkiniz yok (muhasebe: düzenleme)", onChange: (e) => setEditForm({ ...editForm, alisFiyati: e.target.value }), className: "mono", style: { ...inputStyle, width: 74, padding: "4px 6px" } }),
                                             React.createElement("select", { value: editForm.alisParaBirimi, onChange: (e) => setEditForm({ ...editForm, alisParaBirimi: e.target.value }), className: "mono", style: { border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "2px 3px", fontSize: 12, background: "#fff" } }, PARA_BIRIMLERI.map((p) => React.createElement("option", { key: p }, p)))),
                                         React.createElement("label", { style: { display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 } },
                                             "Sat\u0131\u015F",
-                                            React.createElement("input", { type: "number", step: "any", min: "0", value: editForm.satisFiyati, onChange: (e) => setEditForm({ ...editForm, satisFiyati: e.target.value }), className: "mono", style: { ...inputStyle, width: 74, padding: "4px 6px" } }),
+                                            React.createElement("input", { type: "number", step: "any", min: "0", value: editForm.satisFiyati, disabled: !((typeof window !== "undefined" && window.__fiyatYetki) || { satis: true }).satis, title: ((typeof window !== "undefined" && window.__fiyatYetki) || { satis: true }).satis ? undefined : "Satış fiyatını değiştirme yetkiniz yok (sipariş: düzenleme)", onChange: (e) => setEditForm({ ...editForm, satisFiyati: e.target.value }), className: "mono", style: { ...inputStyle, width: 74, padding: "4px 6px" } }),
                                             React.createElement("select", { value: editForm.satisParaBirimi, onChange: (e) => setEditForm({ ...editForm, satisParaBirimi: e.target.value }), className: "mono", style: { border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "2px 3px", fontSize: 12, background: "#fff" } }, PARA_BIRIMLERI.map((p) => React.createElement("option", { key: p }, p)))),
                                         React.createElement("span", { style: { fontSize: 12, color: "var(--erp-text-2)" } },
                                             "De\u011Fer: ",
@@ -41974,8 +42508,7 @@ function ProductMatrixCard({ tanimlarTum, onKapasiteKaydet, kurlar, kurGecmisi, 
                                         fisFiyatlari.tutar.toLocaleString("tr-TR", { maximumFractionDigits: 2 }),
                                         " ",
                                         fisFiyatlari.sembol))),
-                                React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 8 }, onClick: (e) => e.stopPropagation() },
-                                    React.createElement(SilOnayButonu, { onConfirm: () => g.hareketler.forEach((h) => onRemoveHareketGlobal(h.id)), baslikNormal: "Bu fi\u015Fin t\u00FCm hareketlerini sil", boyut: 12 })),
+                                React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 8 }, onClick: (e) => e.stopPropagation() }, !fisIptalGizliMi() && React.createElement(SilOnayButonu, { onConfirm: () => g.hareketler.forEach((h) => onRemoveHareketGlobal(h.id)), baslikNormal: "Bu fi\u015Fin t\u00FCm hareketlerini sil", boyut: 12 })),
                                 tekHucre ? null : acik
                                     ? React.createElement(ChevronDown, { size: 15, color: "var(--erp-text-3)" })
                                     : React.createElement(ChevronRight, { size: 15, color: "var(--erp-text-3)" })),
@@ -44319,7 +44852,7 @@ function MuhasebeModule({ onParaFisiKes, onFisIptal, sunucuFisiMi, kapsam = "gen
                 ...(muhasebe.bankalar || []).map((b2) => ({ ...b2, tur: "banka" })),
             ], onVirman: virmanYap, giderKartlari: giderKartlari, onHareketGuncelle: (hid, hrid, y) => hareketGuncelle("banka", hid, hrid, y), onHareketEkle: (hid, h) => hareketEkle("banka", hid, h), onHareketSil: (hid, hrid) => hareketSil("banka", hid, hrid), cariler: cariler, kurlar: muhasebe.kurlar || {}, showToast: showToast })),
         altSekme === "hareketler" && React.createElement(KasaBankaHareketleri, { muhasebe: muhasebe, cariler: cariler }),
-        altSekme === "cek" && (React.createElement(CekListesi, { cekler: cekler, cariler: cariler, kurlar: kurlar, onEkle: cekEkle, onSil: cekSil, onIslem: onCekIslem, onSonIslemiGeriAl: cekSonIslemiGeriAl, onYazdir: onCekYazdir, bankalar: bankalar, kasalar: kasalar, gorseller: cekGorselleri, onGorselKaydet: onCekGorselKaydet }))));
+        altSekme === "cek" && (React.createElement(CekListesi, { cekler: cekler, cariler: cariler, kurlar: kurlar, onEkle: cekEkle, onSil: cekSil, onIslem: onCekIslem, onSonIslemiGeriAl: (!!kullaniciYetkisiVar && !kullaniciYetkisiVar("muhasebe", "silme") && !onaySistemiAcikMi(tanimlar)) ? undefined : cekSonIslemiGeriAl, onYazdir: onCekYazdir, bankalar: bankalar, kasalar: kasalar, gorseller: cekGorselleri, onGorselKaydet: onCekGorselKaydet }))));
 }
 // ================= KASA/BANKA ↔ CARİ HAREKETİ: TEK ÇEKİRDEK =================
 //
@@ -52333,7 +52866,9 @@ function FislerModule({ tanimlar, kapsam, muhasebe, cariler, stok, siparisler, u
             { k: "fatura", ikon: Receipt, gizli: !(onFaturaAc && faturaKesilebilirFisMi(f)), onClick: () => onFaturaAc(f.fisNo), veri: { "data-fis-fatura": f.fisNo },
                 etiket: fisinFaturasi(faturalar, f.fisNo) ? "Fatura taslağını aç" : "Fatura taslağı" },
             { ayrac: true },
-            { k: "sil", ikon: kilit ? Lock : Trash2, gizli: !onYetimFisTemizle, pasif: !!kilit, veri: kilit ? kilit.veri : (baglanti ? { "data-fis-sil": "1" } : { "data-fis-temizle": "1" }),
+            // Silme yetkisi olmayana "Sil / Bu Fişi Temizle" çizilmez (v1.744.44, 094): ikisi de sunucuda fiş iptalidir. Kilit satırı da
+            // gider — kilit, zaten yapamayacağı bir işlemin neden kapalı olduğunu anlatıyor.
+            { k: "sil", ikon: kilit ? Lock : Trash2, gizli: !onYetimFisTemizle || fisIptalGizliMi(), pasif: !!kilit, veri: kilit ? kilit.veri : (baglanti ? { "data-fis-sil": "1" } : { "data-fis-temizle": "1" }),
                 baslik: kilit ? kilit.mesaj : (baglanti
                     ? "Bu fişin kaynağı (sipariş/üretim) hâlâ var — silerseniz o kayıtla tutarsız hale gelebilir"
                     : "Bu fiş için kaynak bağlantısı bulunamadı"),
@@ -54558,7 +55093,7 @@ function CariModule({ onParaFisi, onFisIptal, tanimlar, onTanimlarKaydet, onMuha
                         " ",
                         PARA_SEMBOLU[pb] || ""))))),
                 yeniCariFiyatGruplari(form.tip).length > 0 && (React.createElement(Field, { label: "Fiyat Grubu" },
-                    React.createElement("select", { value: form.fiyatGrubuId, "data-yeni-cari-fiyat-grubu": "1", onChange: (e) => setForm({ ...form, fiyatGrubuId: e.target.value }), style: inputStyle, title: "Bu gruba \u00F6zel fiyat tan\u0131mlanm\u0131\u015F \u00FCr\u00FCnlerde, bu cariye otomatik o fiyat uygulan\u0131r" },
+                    React.createElement("select", { value: form.fiyatGrubuId, disabled: !((typeof window !== "undefined" && window.__fiyatYetki) || { cariFiyatGrubu: true }).cariFiyatGrubu, title: ((typeof window !== "undefined" && window.__fiyatYetki) || { cariFiyatGrubu: true }).cariFiyatGrubu ? undefined : "Müşterinin fiyat grubunu değiştirmek için sipariş düzenleme ve cari düzenleme yetkisi gerekir", "data-yeni-cari-fiyat-grubu": "1", onChange: (e) => setForm({ ...form, fiyatGrubuId: e.target.value }), style: inputStyle, title: "Bu gruba \u00F6zel fiyat tan\u0131mlanm\u0131\u015F \u00FCr\u00FCnlerde, bu cariye otomatik o fiyat uygulan\u0131r" },
                         React.createElement("option", { value: "" }, "Grupsuz (standart fiyat)"),
                         yeniCariFiyatGruplari(form.tip).map((g) => React.createElement("option", { key: g.id, value: g.id },
                             g.ad,
@@ -56903,7 +57438,7 @@ function CariCard({ onParaFisi, siteYonetici = false, tanimlar, onTanimlarKaydet
                 cardTab === "bilgiler" && cari.tip !== "Personel" && (tanimlarFiyatGruplari || []).some((g) => g.tip === (cari.tip === "Tedarikçi" ? "Alış" : "Satış") || cari.tip === "Her İkisi") && (React.createElement("div", { style: { marginBottom: 14, padding: "8px 10px", background: "#EAF0F4", borderRadius: "var(--erp-r-md)" } },
                     React.createElement("label", { style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" } },
                         React.createElement("span", { style: { fontSize: 12, color: "var(--erp-info)", fontWeight: 600 } }, "Fiyat Grubu:"),
-                        React.createElement("select", { value: cari.fiyatGrubuId || "", onChange: (e) => onFieldChange(cari.id, "fiyatGrubuId", e.target.value || undefined), style: { ...inputStyle, width: 200, padding: "4px 6px", fontSize: 12 } },
+                        React.createElement("select", { value: cari.fiyatGrubuId || "", disabled: !((typeof window !== "undefined" && window.__fiyatYetki) || { cariFiyatGrubu: true }).cariFiyatGrubu, title: ((typeof window !== "undefined" && window.__fiyatYetki) || { cariFiyatGrubu: true }).cariFiyatGrubu ? undefined : "Müşterinin fiyat grubunu değiştirmek için sipariş düzenleme ve cari düzenleme yetkisi gerekir", onChange: (e) => onFieldChange(cari.id, "fiyatGrubuId", e.target.value || undefined), style: { ...inputStyle, width: 200, padding: "4px 6px", fontSize: 12 } },
                             React.createElement("option", { value: "" }, "Grupsuz (standart fiyat)"),
                             (tanimlarFiyatGruplari || [])
                                 .filter((g) => cari.tip === "Her İkisi" || g.tip === (cari.tip === "Tedarikçi" ? "Alış" : "Satış"))
@@ -57455,7 +57990,7 @@ function CariCard({ onParaFisi, siteYonetici = false, tanimlar, onTanimlarKaydet
                                                             sembolG),
                                                         React.createElement("td", { style: { padding: "6px 2px", textAlign: "center" } }, (g.hareketler || []).some((h) => h.uretimId) ? (React.createElement("span", { title: "Bu bir \u00FCretim i\u015F\u00E7ilik fi\u015Fi. Silmek i\u00E7in \u00FCretim kart\u0131ndan ilgili prosesin teslim al\u0131nmas\u0131n\u0131 geri al\u0131n (prosesler sondan geriye do\u011Fru geri al\u0131n\u0131r).", style: { display: "inline-flex", color: "var(--erp-text-3)" } },
                                                             React.createElement(Lock, { size: 11 }))) : cekKilidiBul(g) ? (React.createElement("span", { "data-cek-kilidi": "1", title: cekKilidiBul(g).mesaj, style: { display: "inline-flex", color: "var(--erp-text-3)" } },
-                                                            React.createElement(Lock, { size: 11 }))) : (React.createElement(SilOnayButonu, { onConfirm: () => onFisSil({ fisNo: g.fisNo, hareketler: g.hareketler }), boyut: 10 })))));
+                                                            React.createElement(Lock, { size: 11 }))) : fisIptalGizliMi() ? null : (React.createElement(SilOnayButonu, { onConfirm: () => onFisSil({ fisNo: g.fisNo, hareketler: g.hareketler }), boyut: 10 })))));
                                                 })),
                                             gorunenSatirlar.length > 0 && (() => {
                                                 const toplamlar = {};
@@ -63911,7 +64446,7 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
                                 toplamAdet,
                                 " adet da\u011F\u0131t\u0131ld\u0131")),
                             p.tamamlandiMi && (React.createElement("span", { style: { marginLeft: "auto", display: "flex", alignItems: "center", gap: 6 } },
-                                !detayAcik && (React.createElement("span", { style: { fontSize: 10, color: "var(--erp-text-3)" } }, "detay / geri al")),
+                                !detayAcik && (React.createElement("span", { style: { fontSize: 10, color: "var(--erp-text-3)" } }, fisIptalGizliMi() ? "detay" : "detay / geri al")),
                                 detayAcik ? React.createElement(ChevronDown, { size: 14, color: "var(--erp-text-3)" }) : React.createElement(ChevronRight, { size: 14, color: "var(--erp-text-3)" })))),
                         prosesNotu(p.proses).length > 0 && (React.createElement("div", { "data-uretim-proses-notu": p.proses, style: { margin: "3px 0 2px 34px", padding: "5px 9px", fontSize: 12, fontWeight: 600,
                                 background: "#FFF4DC", border: "1px solid #E3C77A", borderRadius: "var(--erp-r-sm)", color: "#5C4A1E", display: "grid", gap: 2 } }, prosesNotu(p.proses).map((n) => React.createElement("span", { key: n.metin },
@@ -63951,7 +64486,7 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
                                     a.tamamlandiMi ? (React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "var(--erp-primary)", fontWeight: 600, marginLeft: "auto" } },
                                         React.createElement(Check, { size: 12 }),
                                         " Teslim Al\u0131nd\u0131",
-                                        React.createElement("button", { className: "btn-ghost", style: { padding: "3px 8px", fontSize: 10, marginLeft: 6 }, title: "Yanl\u0131\u015F personele verilip teslim al\u0131nm\u0131\u015Fsa \u2014 hammadde ve i\u015F\u00E7ilik etkisini geri al\u0131r", onClick: () => onProsesTeslimGeriAl(o.id, p.proses, a.id) }, "Geri Al"))) : (React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 6, marginLeft: "auto" } },
+                                        !fisIptalGizliMi() && React.createElement("button", { className: "btn-ghost", style: { padding: "3px 8px", fontSize: 10, marginLeft: 6 }, title: "Yanl\u0131\u015F personele verilip teslim al\u0131nm\u0131\u015Fsa \u2014 hammadde ve i\u015F\u00E7ilik etkisini geri al\u0131r", onClick: () => onProsesTeslimGeriAl(o.id, p.proses, a.id) }, "Geri Al"))) : (React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 6, marginLeft: "auto" } },
                                         !a.verildiMi && onAtamaPersonelVer ? (React.createElement(React.Fragment, null,
                                             React.createElement("select", { "data-tamir-personel": a.id, defaultValue: "", style: { ...inputStyle, width: 170, padding: "4px 8px", fontSize: 12, border: "2px solid var(--erp-orange)" } },
                                                 React.createElement("option", { value: "" }, "\u26A0 Personel se\u00E7in"),
@@ -64194,10 +64729,10 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
                                                     " \u20BA = ",
                                                     (a.miktar * ucret2).toLocaleString("tr-TR"),
                                                     " \u20BA"),
-                                                a.tamamlandiMi && (sonrakilerBaslamamis ? (React.createElement("button", { className: "btn-ghost", style: { padding: "2px 8px", fontSize: 10, marginLeft: "auto" }, title: "Bu atamay\u0131 geri al\u0131r \u2014 d\u00FC\u015F\u00FClen hammadde sto\u011Fa d\u00F6ner, i\u015F\u00E7ilik cariden silinir", onClick: (e) => { e.stopPropagation(); onProsesTeslimGeriAl(o.id, p.proses, a.id); } }, "Geri Al")) : (React.createElement("span", { style: { marginLeft: "auto", fontSize: 10, fontWeight: 400, color: "var(--erp-text-3)" }, title: "Geri almak i\u00E7in \u00F6nce sonraki proseslerdeki atamalar\u0131 geri almal\u0131s\u0131n\u0131z" }, "sonraki proses ba\u015Flad\u0131")))));
+                                                a.tamamlandiMi && !fisIptalGizliMi() && (sonrakilerBaslamamis ? (React.createElement("button", { className: "btn-ghost", style: { padding: "2px 8px", fontSize: 10, marginLeft: "auto" }, title: "Bu atamay\u0131 geri al\u0131r \u2014 d\u00FC\u015F\u00FClen hammadde sto\u011Fa d\u00F6ner, i\u015F\u00E7ilik cariden silinir", onClick: (e) => { e.stopPropagation(); onProsesTeslimGeriAl(o.id, p.proses, a.id); } }, "Geri Al")) : (React.createElement("span", { style: { marginLeft: "auto", fontSize: 10, fontWeight: 400, color: "var(--erp-text-3)" }, title: "Geri almak i\u00E7in \u00F6nce sonraki proseslerdeki atamalar\u0131 geri almal\u0131s\u0131n\u0131z" }, "sonraki proses ba\u015Flad\u0131")))));
                                         })));
                                 })(),
-                                p.araProsesMi && prosesIlerleme.slice(i + 1).every((x) => !x.verildiMi && !x.tamamlandiMi && (!x.atamalar || x.atamalar.length === 0)) && (React.createElement("button", { className: "btn-ghost", style: { padding: "4px 10px", fontSize: 11, marginTop: 8 }, title: "Bu ara prosesin otomatik tamamlanmas\u0131n\u0131 geri al\u0131r", onClick: (e) => { e.stopPropagation(); onProsesTeslimGeriAl(o.id, p.proses, null); } }, "Bu Ara Prosesi Geri Al"))));
+                                p.araProsesMi && !fisIptalGizliMi() && prosesIlerleme.slice(i + 1).every((x) => !x.verildiMi && !x.tamamlandiMi && (!x.atamalar || x.atamalar.length === 0)) && (React.createElement("button", { className: "btn-ghost", style: { padding: "4px 10px", fontSize: 11, marginTop: 8 }, title: "Bu ara prosesin otomatik tamamlanmas\u0131n\u0131 geri al\u0131r", onClick: (e) => { e.stopPropagation(); onProsesTeslimGeriAl(o.id, p.proses, null); } }, "Bu Ara Prosesi Geri Al"))));
                         })()));
                 }))),
                 kartSekme === "hammadde" && (() => {
@@ -74097,7 +74632,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.744.45)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.744.48)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),
