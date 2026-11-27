@@ -1,0 +1,46 @@
+ekran-cari-virman · b3a2_e · kurallar KAPALI
+1 · Ödeme + Cari virmanı 1.000 (Alıcı → karşı Satıcı)
+  ✓ [tek fiş, başlık] {"tur":"Cari virmanı","onek":"CVR","cari_id":"ekr-alici","iptal":false,"kasa_satiri":0}
+  ✓ [iki satır: yön, tutar, para birimi, şekil, işlem] [{"cari_id":"ekr-alici","yon":"Borç","tutar":1000,"para_birimi":"TRY","odeme_sekli":"Virman","islem":"Ödeme","iptal":false},{"cari_id":"ekr-satici","yon":"Alacak","tutar":1000,"para_birimi":"TRY","odeme_sekli":"Virman","islem":"Tahsilat","iptal":false}]
+  ✓ [sunucu bakiyesi] {"ekr-alici":1000,"ekr-satici":-1000}
+  ✓ [bildirim] true
+2 · TEK İŞLEM: ikinci satırın tutarı yolda NaN yapılır
+  ✓ [sunucu reddetti] [true]
+    (sunucu yanıtı: {"code":"KR010","message":"Cari hareket tutarı sonlu bir sayı olmalı","details":null,"hint":null})
+  ✓ [ilk satır da yazılmadı, fiş açılmadı (car_hareket / stk_fis aynı)] {"car":"2","fis":"1"}
+  ✓ [ekranda kaydedilemedi] true
+  ✓ [ekranda 77'lik satır yok] 0
+  ✓ [form dolu kaldı] "77"
+3 · Tahsilat + Cari virmanı 250 (Satıcı → karşı Alıcı)
+  ✓ [ayrı tek fiş] true
+  ✓ [iki satır] [{"cari_id":"ekr-alici","yon":"Borç","tutar":250,"para_birimi":"TRY","odeme_sekli":"Virman","islem":"Ödeme","iptal":false},{"cari_id":"ekr-satici","yon":"Alacak","tutar":250,"para_birimi":"TRY","odeme_sekli":"Virman","islem":"Tahsilat","iptal":false}]
+  ✓ [sunucu bakiyesi] {"ekr-alici":1250,"ekr-satici":-1250}
+5 · İptal (Geri al, 3'teki fiş)
+  ✓ [fiş iptal] true
+  ✓ [iki satır birlikte iptal] ["ekr-alici:true","ekr-satici:true"]
+  ✓ [ilk fiş geçerli] false
+  ✓ [sunucu bakiyesi 1'deki hâle döndü] {"ekr-alici":1000,"ekr-satici":-1000}
+4 · Farklı para birimi (Alıcı TRY → Ekran Müşteri USD)
+  ✓ [ekranda ret] true
+  ✓ [sunucuya fiş gitmedi] "2"
+  ✓ [uygulamanın gerçek CVR isteği yakalandı (2 cari satırı, kasa yok)] [2,false]
+7a · Veli (yalnız stok görüntüleme) — aynı fis_kes isteği, Veli'nin jetonuyla
+  ✓ [ret 42501, satır yazılmadı] [true,"42501",0]
+    (sunucu: Bu işlem için yetkiniz yok (stok: kaydetme))
+7b · Deniz (cari / muhasebe görüntüleme, kaydetme yok) — aynı istek, Deniz'in jetonuyla
+  ✓ [ret 42501, satır yazılmadı] [true,"42501",0]
+  ✓ [iki carinin satır sayısı ve bakiyesi değişmedi, fiş açılmadı] {"sayi":{"car":"4","fis":"2","kasa":"0"},"bakiye":{"ekr-alici":1000,"ekr-satici":-1000}}
+7c · Deniz EKRANDAN (ayrı oturum, giriş ekranından)
+    (Deniz'in ekranı: Cari virmanı kaydedilemedi — hiçbir değişiklik yapılmadı (Bu işlem için yetkiniz yok (stok: kaydetme)); fis_kes isteği 1)
+  ✓ [Deniz'in kaydı sunucuda yok (fiş / satır / bakiye aynı)] {"sayi":{"car":"4","fis":"2","kasa":"0"},"bakiye":{"ekr-alici":1000,"ekr-satici":-1000}}
+  ✓ [Deniz'in ekranında 'kaydedildi' yok] false
+  ✓ [Deniz sayfa hatası yok] []
+7d · GÖZLEM: Ayşe (yalnız STOK kaydetme) — aynı istek, Ayşe'nin jetonuyla
+    GÖZLEM Ayşe: durum 200 · kod - · fiş CVR-261127003 · yazılan satır 2
+    (Ayşe'nin fişi iptal edildi: durum 200)
+  ✓ [7 sonrası iki carinin bakiyesi 1'deki hâlde] {"ekr-alici":1000,"ekr-satici":-1000}
+6 · Sayfa yenilendi
+  ✓ [ekran (sunucudan yüklendi): yalnız 1. fişin iki satırı, yön / şekil doğru, iptal edilen yok] ["Ekran Alıcı Ödeme Virman — Genel 1.000 ₺ fiş1 Virman (ödeme) — karşı: Ekran Satıcı","Ekran Satıcı Tahsilat Virman — Genel 1.000 ₺ fiş1 Virman (tahsilat) — karşı: Ekran Alıcı"]
+  ✓ [kasa / banka satırı hiç değişmedi] "0"
+  ✓ [sayfa hatası yok] []
+── ekran-cari-virman: 29 ✓ / 0 ✗ ──

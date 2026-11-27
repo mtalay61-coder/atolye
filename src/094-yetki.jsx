@@ -59,3 +59,65 @@ const FINANS_RAPOR_SEKMELERI = ["finansrapor", "gelirgider", "odemerapor"];
 // yönetici onayına düşmez; düğmesi hiç gösterilmez (kullanıcı kararı: "düğme gizlensin"). Eski davranış Tanımlar ›
 // Kullanıcılar'dan geri açılabilir (`tanimlar.onaySistemiAcik`). Mevcut bekleyen onaylar silinmez, karara bağlanabilir.
 function onaySistemiAcikMi(tanimlar) { return !!(tanimlar && tanimlar.onaySistemiAcik); }
+
+// ================= FİYAT ALANI YETKİSİ (v1.744.42, inceleme 25 B3a-2) =================
+// Kullanıcı kararı (27 Kasım): satış fiyatları ve müşterinin fiyat grubu → sipariş DÜZENLEME; alış fiyatı ve maliyet → muhasebe
+// DÜZENLEME; müşterinin fiyat grubunu değiştirmek ayrıca cari DÜZENLEME. Stok personeli fiyatı değiştiremese de ürünün öteki alanlarını
+// kaydeder. Sunucu (29-b3a2-uygula.sql) GERÇEK alan değişikliğini denetler; istemci aynı kuralı iki yerde uygular:
+//   • fiyat kutuları yetkisizken kapalıdır (window.__fiyatYetki — 100 ayarlar);
+//   • kayıt yolunda (saveStok / saveCariler) yetkisiz fiyat değişikliği ESKİ değerine döndürülür — bir ekran kutuyu kapatmayı unutsa da
+//     kaydın tamamı sunucuda reddedilmesin, öteki alanlar yazılsın. Kullanıcıya ne olduğu söylenir.
+function fiyatAlanYetkileri(tanimlar, aktifKullanici) {
+  const guncel = (aktifKullanici && ((tanimlar && tanimlar.kullanicilar) || []).find((k) => k.id === aktifKullanici.id)) || aktifKullanici;
+  const y = (modul, islem) => yetkiVarMi(tanimlar, guncel, modul, islem);
+  return { satis: y("siparis", "duzenleme"), alis: y("muhasebe", "duzenleme"), cariFiyatGrubu: y("siparis", "duzenleme") && y("cari", "duzenleme") };
+}
+const fiyatKuraliAlisMi = (k) => !!k && (k.tip || "Satış") === "Alış";
+const fiyatSayi = (v) => { const n = parseFloat(v); return Number.isFinite(n) ? n : 0; };
+// Saf. Yetkisiz fiyat alanlarını eski değerine döndürür; değişiklik yoksa AYNI diziyi döndürür. `geriAlinan`: etkilenen ürün sayısı.
+function fiyatDegisiklikleriniSuz(eskiListe, yeniListe, yetki) {
+  if (!Array.isArray(yeniListe) || !yetki || (yetki.satis && yetki.alis)) return { liste: yeniListe, geriAlinan: 0, satis: 0, alis: 0 };
+  const eski = new Map((eskiListe || []).map((u) => [u.id, u]));
+  const ayni = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  let satis = 0, alis = 0;
+  const liste = yeniListe.map((u) => {
+    if (!u) return u;
+    const e = eski.get(u.id);
+    if (e === u) return u;
+    let s = u;
+    for (const [alisMi, izin] of [[false, yetki.satis], [true, yetki.alis]]) {
+      if (izin) continue;
+      const fA = alisMi ? "alisFiyati" : "satisFiyati", pA = alisMi ? "alisParaBirimi" : "satisParaBirimi";
+      const kurallar = (x) => ((x && x.fiyatKurallari) || []).filter((k) => fiyatKuraliAlisMi(k) === alisMi);
+      const degisti = e
+        ? fiyatSayi(u[fA]) !== fiyatSayi(e[fA]) || (u[pA] || "") !== (e[pA] || "") || !ayni(kurallar(u), kurallar(e))
+        : fiyatSayi(u[fA]) !== 0 || kurallar(u).length > 0;
+      if (!degisti) continue;
+      const oteki = ((s.fiyatKurallari) || []).filter((k) => fiyatKuraliAlisMi(k) !== alisMi);
+      s = { ...s, [fA]: e ? e[fA] : 0, ...(e ? { [pA]: e[pA] } : {}), fiyatKurallari: [...oteki, ...kurallar(e)] };
+      if (alisMi) alis += 1; else satis += 1;
+    }
+    return s;
+  });
+  return satis + alis === 0 ? { liste: yeniListe, geriAlinan: 0, satis: 0, alis: 0 } : { liste, geriAlinan: satis + alis, satis, alis };
+}
+// Saf. Yetkisizken müşterinin fiyat grubu değişikliği geri alınır (yeni caride boş kalır). Alan `fiyatGrubuId` (ek'te saklanır);
+// eski kayıtlarda `fiyatGrubu` — ikisi de korunur.
+function cariFiyatGrubuSuz(eskiListe, yeniListe, izinli) {
+  if (izinli || !Array.isArray(yeniListe)) return { liste: yeniListe, geriAlinan: 0 };
+  const eski = new Map((eskiListe || []).map((c) => [c.id, c]));
+  let n = 0;
+  const liste = yeniListe.map((c) => {
+    if (!c) return c;
+    const e = eski.get(c.id);
+    if (e === c) return c;
+    let s = c;
+    for (const a of ["fiyatGrubuId", "fiyatGrubu"]) {
+      if ((c[a] || "") === ((e && e[a]) || "")) continue;
+      s = { ...s, [a]: e ? e[a] : "" };
+    }
+    if (s !== c) n += 1;
+    return s;
+  });
+  return n === 0 ? { liste: yeniListe, geriAlinan: 0 } : { liste, geriAlinan: n };
+}

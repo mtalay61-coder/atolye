@@ -1645,7 +1645,7 @@ function StokModule({ onStokFisiKes, kapsam = "genel", onFiyatGrubuMarj, onRecet
                 >
                   {PARA_BIRIMLERI.map((p) => <option key={p}>{p}</option>)}
                 </select>
-                <input type="number" step="0.01" value={form.alisFiyati} onChange={(e) => setForm({ ...form, alisFiyati: e.target.value })} placeholder="Örn. 450" style={inputStyle} />
+                <input type="number" step="0.01" value={form.alisFiyati} disabled={!((typeof window !== "undefined" && window.__fiyatYetki) || { alis: true }).alis} title={((typeof window !== "undefined" && window.__fiyatYetki) || { alis: true }).alis ? undefined : "Alış fiyatını değiştirme yetkiniz yok (muhasebe: düzenleme)"} onChange={(e) => setForm({ ...form, alisFiyati: e.target.value })} placeholder="Örn. 450" style={inputStyle} />
               </div>
             </Field>
             {/* SATIŞIN KENDİ PARA BİRİMİ — alışla AYNI OLMAK ZORUNDA DEĞİL ve bu HER KATEGORİDE
@@ -1662,7 +1662,7 @@ function StokModule({ onStokFisiKes, kapsam = "genel", onFiyatGrubuMarj, onRecet
                 >
                   {PARA_BIRIMLERI.map((p) => <option key={p}>{p}</option>)}
                 </select>
-                <input type="number" step="0.01" value={form.satisFiyati} onChange={(e) => setForm({ ...form, satisFiyati: e.target.value })} placeholder={isMamul ? "Örn. 890" : "Örn. 12"} style={inputStyle} />
+                <input type="number" step="0.01" value={form.satisFiyati} disabled={!((typeof window !== "undefined" && window.__fiyatYetki) || { satis: true }).satis} title={((typeof window !== "undefined" && window.__fiyatYetki) || { satis: true }).satis ? undefined : "Satış fiyatını değiştirme yetkiniz yok (sipariş: düzenleme)"} onChange={(e) => setForm({ ...form, satisFiyati: e.target.value })} placeholder={isMamul ? "Örn. 890" : "Örn. 12"} style={inputStyle} />
               </div>
             </Field>
             {/* TEDARİKÇİ MAMULDE DE (v1.744.29 — kullanıcı: "ürün stok kartında tedarikçi ekleyelim"): satın alınan modelde
