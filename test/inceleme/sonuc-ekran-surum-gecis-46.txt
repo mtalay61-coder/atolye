@@ -1,0 +1,61 @@
+ekran-surum-gecis-46 · PostgreSQL kipi (köprü; beş paket CRLF kurulum)
+  atolye-erp-v1.744.44.html · sha256 b87afc137406202b5e6180c3b97f31139581d3e79238eda51b0cb4252418a7e8 · 6217028 bayt
+  atolye-erp-v1.744.46.html · sha256 29fa13c5de845a14ef263653d8c080518d52943c22a9d5d1bf07232dab549d9e · 6243470 bayt
+  atolye-erp-v1.744.47.html · sha256 6fe659e97a3d07c5fc913082821bd8d300c34a9462223fbff10c1977a2c3b045 · 6217282 bayt
+
+■ 0 SUNUCU · surum_gecis46 (şablon inc_ekran_taban) · beş paket kurulur
+  27-b4-uygula.sql (CRLF) → 99|GENEL|UYGULANMIŞ
+  28-b3a-uygula.sql (CRLF) → GENEL|KURULU
+  29-b3a2-uygula.sql (CRLF) → GENEL|KURULU
+  31-yetki-ileti-uygula-satirsonu.sql (CRLF) → GENEL|KURULU
+  26-b1-uygula.sql (CRLF) → 99|GENEL|KURULU||KURULU
+
+■ K0 sunucu durumu (başlangıç): 99|GENEL|tutarlı (yarım ya da farklı kurulum yok) · 99|GENEL|KURULU||KURULU
+  ✓ K0 beş paket kurulu [b3a, b3a2, b4 işlev, B1 tetikleyici > 0]
+     yetkisiz yoklama (Ayşe): {"fiyat":[true,"KR040"],"adDegistir":[true,"42501"],"cariYaz":[true,"KR040"]}
+  ✓ K0 yetkisiz fiyat (KR040), ad değişikliği (42501) ve cari yazması reddediliyor
+
+■ A YÖNETİCİ · Ali · surum.json = 1.744.44
+  ✓ A1 yayındaki sürüm açıldı: 1.744.44
+  ✓ A1 1.744.44'te temel kayıt yazıldı
+     bekleyen kayıt (44'te üretildi): defter ["stok:items"] · şerit 1 · sunucudaki ad "Ekran Bot s44"
+  ✓ A2 gönderilemeyen kayıt bekleyen defterde, sunucuya gitmedi
+
+  → YAYIN: surum.json = 1.744.46 · sayfa yenilenir (bekleyen kayıt varken)
+     gezinme: atolye-erp-v1.744.44.html → atolye-erp-v1.744.46.html · başlık "Atölye ERP 1.744.46"
+  ✓ A3 uygulama kendiliğinden 1.744.46'ya geçti; oturum korundu
+  ✓ A3 bekleyen kayıt geçişten sonra defterde duruyor, sunucu hâlâ eski değerde
+     gönderim: "Yeniden dene" ile · defter [] · sunucudaki ad "Ekran Bot bekleyen-44"
+  ✓ A4 44'te bekleyen kayıt 1.744.46'dan gönderildi, defter boşaldı
+     kayıt: PATCH urunler?id=eq.ekr-bot&surum=eq.3&select=id [istemci 1.744.46] → HTTP 200
+  ✓ A4 1.744.46'da temel kayıt yazıldı (yazma 1.744.46'dan, ret yok)
+  ✓ A5 1.744.46: renk adı sunucu işlemiyle değişti (B1), kalemler yeni adda, kopuk bağ yok
+     bekleyen kayıt (46'da üretildi): defter ["stok:items"] · sunucudaki ad "Ekran Bot s46"
+  ✓ A6 1.744.46'da gönderilemeyen kayıt bekleyen defterde
+
+  → GERİ DÖNÜŞ: surum.json = 1.744.47 · sayfa yenilenir (bekleyen kayıt varken; B1 SQL'i sunucuda KALIR)
+     gezinme: atolye-erp-v1.744.46.html → atolye-erp-v1.744.47.html · başlık "Atölye ERP 1.744.47"
+  ✓ A7 uygulama kendiliğinden 1.744.47'ye geçti; oturum korundu
+  ✓ A7 bekleyen kayıt geçişten sonra defterde duruyor
+     gönderim: "Yeniden dene" ile · defter [] · sunucudaki ad "Ekran Bot bekleyen-46"
+  ✓ A8 46'da bekleyen kayıt 1.744.47'den gönderildi, defter boşaldı
+     kayıt: PATCH urunler?id=eq.ekr-bot&surum=eq.5&select=id [istemci 1.744.47] → HTTP 200
+  ✓ A8 1.744.47'de temel kayıt yazıldı (yazma 1.744.47'den, ret yok)
+  ✓ A9 geri dönüşten sonra 46'da değiştirilen ad ve bağlar YERİNDE (geri dönüş veriyi geri çevirmez)
+  ✓ A9 1.744.47 açıkken eski adla yazılan kalem sunucuda güncel ada bağlandı (B1 koruması eski istemciyle de çalışıyor)
+  ✓ A10 surum.json 1.744.46'ya çevrilse de 1.744.47 yerinde kaldı
+  ✓ A10 1.744.46 adresi elle açılınca 1.744.47'ye geçildi
+  ✓ A sayfa hatası yok · sınama engeli dışında reddedilen yazma yok
+     toplam yazma: 31 · sınama engeliyle 503: 4
+  ✓ K1 personelin cihazı (eski adres) doğrudan 1.744.47'ye geçti
+
+■ K1 yetkisiz yoklama (Ayşe, son): {"fiyat":[true,"KR040"],"adDegistir":[true,"42501"],"cariYaz":[true,"KR040"]}
+  ✓ K1 yetkisiz yoklamalar baştakiyle AYNI kodlarla reddedildi
+  ✓ K1 yoklamalar veriyi değiştirmedi (fiyat, renk adı, cari)
+  ✓ S beş paketin tetikleyicileri ve fonksiyon gövdeleri sınama boyunca AYNI
+  ✓ S 41 (dört paket) ve 26 önkoşul (B1) durum sorgularının çıktısı baştakiyle AYNI
+     sunucu durumu (son): 99|GENEL|tutarlı (yarım ya da farklı kurulum yok) · 99|GENEL|KURULU||KURULU
+  ✓ S eski ad defteri: 46'daki ad değişikliği kayıtlı
+  ✓ buluttaki projelere (ana, G-25) giden istek yok
+
+SONUÇ: 27 geçti · 0 kaldı

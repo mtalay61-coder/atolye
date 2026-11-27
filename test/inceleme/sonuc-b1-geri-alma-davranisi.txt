@@ -1,0 +1,39 @@
+B1 GERİ ALMA DAVRANIŞI — yerel PostgreSQL (beş paket CRLF kurulu taban b12_crlf kopyası), 27 Kasım
+
+1) B1 kuruluyken Ali rengi yeniden adlandırır: Vizon Yılan → Vizon Deri
+{"eski": "Vizon Yılan", "koli": 0, "urun": 0, "yeni": "Vizon Deri", "kalem": 2, "zaten": false, "uretim": 0, "eslesme": 2, "renk_id": "r-vizon", "siparis": 1, "rezervasyon": 0, "celiskili_recete_satiri": 0}
+   renkler: r-siyah=Siyah, r-vizon=Vizon Deri · kalemler: 1054 - Siyah/Vizon Deri · defter: r-vizon:Vizon Yılan→Vizon Deri ; k-1054:1054 - Siyah/Vizon Yılan→1054 - Siyah/Vizon Deri
+
+2) B1 SQL'i GERİ ALINIR (26-b1-geri-al.sql, CRLF)
+   99|GENEL|KURULU||KURULU DEĞİL
+   renkler: r-siyah=Siyah, r-vizon=Vizon Deri · kalemler: 1054 - Siyah/Vizon Deri · defter: r-vizon:Vizon Yılan→Vizon Deri ; k-1054:1054 - Siyah/Vizon Yılan→1054 - Siyah/Vizon Deri
+   → yeniden adlandırılmış kayıtlar yeni adda KALIR; defter satırları KALIR ama artık hiçbir şey onu okumaz
+
+3) B1 yokken bayat cihaz eski adla kalem yazar
+alt_yaz tamam
+   → kl-g1 renk: 1054 - Siyah/Vizon Yılan
+   kopuk bağ (varyantla eşleşmeyen kalem): 1
+
+4) B1 yokken (eski yol, defter tutulmaz) ad yeniden değişir: Vizon Deri → Vizon Rugan; ve eski ad 'Vizon Yılan' YENİ bir renge verilir
+   renkler: r-siyah=Siyah, r-vizon=Vizon Rugan, r-yeni=Vizon Yılan · kalemler: 1054 - Siyah/Vizon Deri | 1054 - Siyah/Vizon Yılan · defter: r-vizon:Vizon Yılan→Vizon Deri ; k-1054:1054 - Siyah/Vizon Yılan→1054 - Siyah/Vi
+
+5) B1 YENİDEN kurulur (26-b1-uygula.sql, CRLF)
+   99|GENEL|KURULU||KURULU
+   a) eski kombinasyon etiketiyle kalem (defterde k-1054'ün eski adı):
+alt_yaz tamam
+   → kl-g2 renk: 1054 - Siyah/Vizon Rugan
+   b) 'Vizon Yılan' adıyla kalem (şimdi r-yeni'nin ETKİN adı, aynı zamanda r-vizon'un defterdeki eski adı):
+ERROR:  KR025: "Vizon Yılan" hem etkin bir rengin adı hem başka bir rengin eski adı — hangi renk olduğu belirsiz, kayıt yazılmadı; ekranı yenileyip rengi yeniden seçin
+CONTEXT:  PL/pgSQL function tanim_ad_guncel(text) line 14 at RAISE
+PL/pgSQL function tanim_ad_guncelle_tetik() line 53 at assignment
+SQL statement "insert into public.siparis_kalemleri as h (id, siparis_id, urun_id, urun_ad, renk, beden, miktar, sira) select id, siparis_id, urun_id, urun_ad, renk, beden, miktar, sira from jsonb_populate_record(null::public.sipa
+PL/pgSQL function alt_yaz(jsonb) line 69 at EXECUTE
+   → kl-g3 renk: (YAZILMADI)
+   c) Yönetici eski adı serbest bırakır, sonra aynı yazma:
+{"serbest": 1}
+alt_yaz tamam
+   → kl-g3 renk: Vizon Yılan
+   renkler: r-siyah=Siyah, r-vizon=Vizon Rugan, r-yeni=Vizon Yılan · kalemler: 1054 - Siyah/Vizon Deri | 1054 - Siyah/Vizon Rugan | 1054 - Siyah/Vizon Yılan | Vizon Yılan · defter: r-vizon:Vizon Yılan→Vizon Deri (serbest) 
+
+6) yeniden kurulumdan sonra durum sorgusu:
+   99|GENEL|KURULU||KURULU · 41: 99|GENEL|tutarlı (yarım ya da farklı kurulum yok)
