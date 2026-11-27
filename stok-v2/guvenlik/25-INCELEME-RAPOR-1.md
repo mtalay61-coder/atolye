@@ -360,6 +360,25 @@ Dal `claude/b3a2-alan-yetki`; belge `29-b3a2-PAKET.md`. B4 / B5 ve 1.744.41 önc
 - **İlk Yönetici (yalıtılmış deneme):** publishable anahtar yönetici hesabı oluşturmaz. Hesap Supabase panelinde (Authentication)
   elle açılır, `ilk-yonetici-uygula.sql` SQL Editor'de Tanımlar'a Yönetici kaydını yazar; servis anahtarı hiçbir yere girilmez.
 
+## 15. Birleşik aday 1.744.43 ve birlikte kurulum doğrulaması (27 Kasım; canlı / deneme / main / yayın YOK)
+Dal `claude/aday-birlesik`; belge `30-BIRLIKTE-KURULUM.md`. B3a-2 paketi sabit (SQL özetleri değişmedi); B4 / B5 öncelikli.
+- **Sürüm birleşimi:** 1.744.42, 1.744.41'deki "İşi Ver" / "Geri Al" düzeltmelerini içermiyordu. Aday 1.744.43 ikisini birleştirir
+  (sha256 `35cc6fbf…17d66`); kosu.sh 275/275.
+- **Birlikte kurulum:** B4, B3a, B3a-2 birbirine SQL olarak bağımlı değil; iki uç sırayla şema birebir aynı. Önerilen sıra B4 → B3a →
+  B3a-2 → istemci. B3a-2 anlam olarak B3a'yı ister. Üçü kuruluyken: B3a-2 matrisi 448 / 0 açık; B3a matrisi 0 açık (tek başına
+  bıraktığı 3 açık kapanıyor); B4 sunucu 40/40; üretim ekranları 34/34, 11/11, 20/20; stok / kasa / cari virman 24, 29, 29.
+- **Otomatik yazma istisnaları:** 22 olumsuz durum — hiçbiri gerçek alan değişikliğini geçirmedi. Kabul edilen tek gevşeklik: firma
+  bilgisi hiç yokken ilk logo.
+- **Personel akışları (ekrandan, 4 hesap):** 51 / 56. Stok girişi, ürün kaydı, hızlı tedarikçi, sipariş oluşturma, tahsilat, iş verme
+  ve teslim tamamlandı; 13 yetkisiz deneme reddedildi, yetkisiz yazma geçmedi.
+- **BULGU P1 (AÇIK, karar bekliyor):** fiş iptali ve üretimde "Geri Al" `silme` yetkisi ister (mevcut kural). Kaydetme yetkili
+  muhasebe / üretim personeli kendi kestiği fişi iptal edemiyor; düğme görünüyor, ileti hep "stok: silme". Kalan 5 kontrol bu.
+- **Gerçek Supabase: YAPILMADI.** Bu ortamdan erişim yok; yalıtılmış proje kurulmadı. Araçlar ve adımlar hazır.
+- **AÇIK DURANLAR:** B3b (okuma yetkisi; dört hesap da Stok / Sipariş menülerini görüyor), B6 (ücret verisi), P1, Y1, B3a'nın açıkları
+  (paketler canlıya kurulana kadar). **Sınanmayan kapsam:** gerçek Supabase; 1.744.43'ün B4'süz sunucuda davranışı; eski istemci
+  (1.744.37) ile B3a-2 ekrandan; personelle kısmi teslim / tamir / hammaddeli teslim; salt okur kullanıcının kişisel tercihi;
+  beden adı değişikliği, diğer tek satırlık tablolar, eski sekme, site portalı, depolama kovaları.
+
 ## 4. Sıradaki adımlar (güncel)
 1. Kullanıcı onayıyla B1 / B2 deneme paketi (§9) — deneme projesinde salt okur adım 0, sonra kurulum ve elle sınamalar.
 2. Sonraki düzeltme paketi (§10) için tasarım onayı: B4 / B5 + B3a; B3b G-25 kararından sonra.
