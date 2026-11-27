@@ -44,7 +44,7 @@ koruması (yalnız yerelde), yetki kurallarının Yönetici olmayan hesapla davr
   (`094 fisIptalYetkisi`, `100`, `160`, `205`, `250`, `265`, `310`).
 - Yönetici hesabında davranış değişmez (canlıdaki üç hesap Yönetici).
 
-Kaynak farkı (main `526167e` → bu dal): `src/` 12 dosya, +511 / −311 satır (`.satir-haritasi.json` dahil). Dalın geri kalanı sınama
+Kaynak farkı (main `526167e` → bu dal): `src/` 13 dosya (12 kaynak + `.satir-haritasi.json`), +511 / −311 satır. Dalın geri kalanı sınama
 betikleri (`test/inceleme`, `test/sb`), sonuç dosyaları ve `stok-v2/guvenlik` altındaki SQL / belgelerdir; uygulamaya girmez.
 
 ## 4. Sınama özeti
