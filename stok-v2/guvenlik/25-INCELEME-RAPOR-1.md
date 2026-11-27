@@ -409,6 +409,16 @@ Dal `claude/aday-birlesik` (`4904a7e`); belge `30-BIRLIKTE-KURULUM.md` "2. TUR" 
   güvenliğin tamamlandığı anlamına gelmez: **B3b ve B6 AÇIK**, B1 / B2 bekliyor, Y1 açık.
 - Deneme bitince: tek sonuç raporu + canlı için önerilen kesin paket; canlı uygulama ve yayın ayrıca onay bekler.
 
+## 18. Yerel Supabase sınaması ve canlı için önerilen paket (27 Kasım; canlı / deneme / main / yayın YOK)
+Üçüncü bulut projesi açılmadı; mevcut G-25 projesine yazılmadı (B4'ün G-25 uyarlaması yalnız yerelde denendi: 40 / 40, kurulmadı).
+Çalışma ortamında Docker + Supabase CLI ile yerel Supabase (gerçek Postgres 17, Auth, API) kuruldu. Dal `claude/yerel-supabase`;
+paket `4904a7e` değişmedi. Ayrıntı: `33-YEREL-SUPABASE-SONUC.md`; öneri: `35-CANLI-PAKET.md`; durum sorgusu `34-canli-durum-salt-okur.sql`.
+- Kurulum / tekrar / geri alma / yeniden kurulum aynı dosyalarla, süper kullanıcı olmayan `postgres` rolüyle: geri almadan sonra fark 0.
+- Gerçek giriş + gerçek API ile ekran sınamaları: 34 / 34, 11 / 11, 20 / 20, 118 / 118, 10 / 10; açık kalmış 1.744.37 sekmesi 61 / 70
+  (kalan 9 eski istemcinin bildirim davranışı). Paket kaynaklı hata bulunmadı; beş test düzeneği sorunu yalnız `test/` altında giderildi.
+- Buluttaki Supabase'de hiçbir şey çalıştırılmadı; farklar ve doğrulanmayanlar 33'te.
+- **AÇIK:** B1 / B2 (ayrı bekleyen paket; adayda yok), B3b, B6, Y1. Canlı uygulama ve yayın ayrı onay bekliyor.
+
 ## 4. Sıradaki adımlar (güncel)
 1. Kullanıcı onayıyla B1 / B2 deneme paketi (§9) — deneme projesinde salt okur adım 0, sonra kurulum ve elle sınamalar.
 2. Sonraki düzeltme paketi (§10) için tasarım onayı: B4 / B5 + B3a; B3b G-25 kararından sonra.
