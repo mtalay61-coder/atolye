@@ -12,11 +12,11 @@ ekran-personel-akis · aday_pa (şablon aday_a) · b3a_yazma_koru 14 tablo · b3
   ✓ [Ayşe (b): ürün kartında fiyat kutuları KAPALI (alış açık mı, satış açık mı)] [false,false]
      açıklama: Alış fiyatını değiştirme yetkiniz yok (muhasebe: düzenleme) | Satış fiyatını değiştirme yetkiniz yok (sipariş: düzenleme)
   ✓ [Ayşe (b): fiyat dışı alan (ad) kaydedildi, fiyatlar aynen] ["Ekran Bot Ayşe",0,0]
-     bildirim: Ürün güncellendi
+     bildirim: Stok girişi kaydedildi — fiş: MNL-261127001 | Ürün güncellendi
   ✓ [Ayşe (c): hızlı tedarikçi → cariler'de 1 yeni satır] [1,1]
   ✓ [Ayşe (c): yeni cari yalnız unvan + tip (telefon, vergi no, adres, fiyat grubu, bağlı proses boş; pasif değil)] ["PA Hızlı Tedarik","Tedarikçi","","","","","","[]",false]
-  ✓ [Ayşe (c): ürün kartı yeni tedarikçiyle kaydedildi (urunler.tedarikci_id)] "cari-mwymx15m-ty87"
-     kartta seçili: cari-mwymx15m-ty87 · pencere: prompt: Yeni tedarikçi unvanı:
+  ✓ [Ayşe (c): ürün kartı yeni tedarikçiyle kaydedildi (urunler.tedarikci_id)] "cari-mwyn5atm-pek7"
+     kartta seçili: cari-mwyn5atm-pek7 · pencere: prompt: Yeni tedarikçi unvanı:
   ✓ [Ayşe: akışlarda sunucunun reddettiği yazma YOK (17 yazma isteği)] []
   — doğrudan REST denemeleri (jeton ✓ · kök mqdgucoomgqcvhvgixbl.supabase.co/rest/v1/ · başlıklar authorization, content-type, apikey, x-atolye-surum)
   ✓ [Ayşe: denemeler hesabın KENDİ jetonuyla] "yerel-test:ayse@atolye.local"
@@ -35,11 +35,10 @@ ekran-personel-akis · aday_pa (şablon aday_a) · b3a_yazma_koru 14 tablo · b3
      menü ([data-nav]): Anasayfa · Stok · Ürün Stok · Depo · Paketleme · Sevkiyat · Alış / Satış · Planlama · Sipariş · Alış Siparişi · Sohbet · Kılavuz
      menü grupları: Depo · Üretim · Siparişler · Finans · fiyat bayrağı {"satis":true,"alis":false,"cariFiyatGrubu":false}
   ✓ [Selin: menüde Üretim YOK (iş verme / teslim bu hesaptan yapılamaz)] false
-     seçilen cari inc-musteri · ürün "" · bildirim: 
-  ✓ [Selin: yeni satış siparişi → siparisler +1 (mevcut müşteri)] [1,"inc-musteri"]
-  ✗ [Selin: siparis_kalemleri'nde kalem (Ekran Bot · Siyah · 40 × 4)] [true,"inc-bot"] · beklenen [true,"ekr-bot"]
-     sipariş: {"id":"sip-mwymxor9-tlob","siparis_no":"SAT-9002","cari_id":"inc-musteri","tip":"Satış","durum":"Bekliyor"}
-     kalem(ler): [{"id":"kl-inc-40","siparis_id":"sp-inc-1","urun_id":"inc-bot","urun_ad":"İnceleme Bot","renk":"1054 - Siyah/Vizon Yılan","beden":"40","miktar":"2","karsilanan":"0","fiyat":"0","para_birimi":"TRY","birim":null,"planlama":null,"ambalaj":null,"rezervasyonlar":[],"sira":0,"ek":null},{"id":"kl-inc-41","
+     seçilen cari inc-musteri · bildirim: 1 kalem eklendi | Sipariş oluşturuldu
+  ✓ [Selin: yeni satış siparişi → siparisler +1 (mevcut müşteri, tip Satış)] [1,"inc-musteri","Satış"]
+  ✓ [Selin: siparis_kalemleri'nde yeni siparişin kalemi (Ekran Bot · Siyah · 40 × 4 · 100)] [["ekr-bot","Siyah","40",4,100]]
+     sipariş: {"id":"sip-mwyn5w7e-akkk","siparis_no":"SAT-9002","cari_id":"inc-musteri","tip":"Satış","durum":"Bekliyor"} · kalem: [{"urun_id":"ekr-bot","urun_ad":"Ekran Bot Ayşe","renk":"Siyah","beden":"40","m":4,"f":100,"pb":"TRY"}]
   ✓ [Selin: ürün kartında fiyat kutuları (alış açık mı, satış açık mı)] [false,true]
      kapalı kutunun açıklaması: Alış fiyatını değiştirme yetkiniz yok (muhasebe: düzenleme)
   ✓ [Selin: akışlarda sunucunun reddettiği yazma YOK (6 yazma isteği)] []
@@ -62,11 +61,13 @@ ekran-personel-akis · aday_pa (şablon aday_a) · b3a_yazma_koru 14 tablo · b3
      Kasa & Banka alanına giriş: menü "Ödeme & Tahsilat" (menüde ayrı "Kasa & Banka" öğesi yok; aynı alanın sekmesi)
      bildirim: Tahsilat kaydedildi — TH-261127001 Geri al · fiş TH-261127001 (Tahsilat, murat@atolye.local)
   ✓ [Murat: tahsilat fişi → kasa +500, cari bakiyesi −500 (alacak), 1 yeni geçerli fiş] [500,-500,"2 geçerli / 0 iptal"]
-     listede iptal düğmeleri: []
-  ✗ [Murat: tahsilat fişinin iptali] EKRANDAN ERİŞİLEMİYOR — "Son tahsilat ve ödemeler"de TH-261127001 satırında sil düğmesi yok
+  ✗ [Murat: tahsilat fişi TH-261127001 ekrandan iptal → [kasa farkı, cari bakiye farkı] başa döndü, fiş iptal] [500,-500,"geçerli"] · beklenen [0,0,"iptal"]
+     bildirim: Tahsilat kaydedildi — TH-261127001 Geri al | "TH-261127001" iptal edilemedi — hiçbir değişiklik yapılmadı (Bu işlem için yetkiniz yok (stok: silme)) · yazmalar: ["POST rpc/fis_iptal 403 42501 Bu işlem için yetkiniz yok (stok: silme)"]
+     onay bekleyen kayıt (onaylar tablosu): 0
+     ‼ BULGU: Murat — tahsilat fişinin (TH-261127001) ekrandan iptali tamamlanmadı: POST rpc/fis_iptal 403 42501 Bu işlem için yetkiniz yok (stok: silme) · ekrandaki bildirim: Tahsilat kaydedildi — TH-261127001 Geri al | "TH-261127001" iptal edilemedi — hiçbir değişiklik yapılmadı (Bu işlem için yetkiniz yok (stok: silme))
   ✓ [Murat: ürün kartında fiyat kutuları (alış açık mı, satış açık mı)] [true,false]
      kapalı kutunun açıklaması: Satış fiyatını değiştirme yetkiniz yok (sipariş: düzenleme)
-  ✓ [Murat: akışlarda sunucunun reddettiği yazma YOK (5 yazma isteği)] []
+  ✗ [Murat: akışlarda sunucunun reddettiği yazma YOK (6 yazma isteği)] ["POST rpc/fis_iptal 403 42501 Bu işlem için yetkiniz yok (stok: silme)"] · beklenen []
   — doğrudan REST denemeleri (jeton ✓ · kök mqdgucoomgqcvhvgixbl.supabase.co/rest/v1/ · başlıklar authorization, content-type, apikey, x-atolye-surum)
   ✓ [Murat: denemeler hesabın KENDİ jetonuyla] "yerel-test:murat@atolye.local"
   ✓ [Murat YETKİSİZ: urunler satış fiyatı PATCH → ret (4xx + 42501), satır değişmedi] [true,"42501",true]
@@ -85,17 +86,14 @@ ekran-personel-akis · aday_pa (şablon aday_a) · b3a_yazma_koru 14 tablo · b3
   ✓ [Umut: menüde Üretim VAR] true
      başlangıç: mamul (Siyah/40) 5 · usta bakiyesi 0 · fiş 0 geçerli / 0 iptal · atamalar []
   ✓ [Umut: İşi Ver (PA Usta) → [mamul farkı, usta bakiye farkı, üretim fişleri, atamalar]] [0,0,"0 geçerli / 0 iptal",["Dikim:10:pa-usta:bekliyor"]]
-     bildirim: 10 adet (40:10) PA Usta'a verildi · yazmalar: ["PATCH uretim 200","POST rpc/alt_yaz 200","HEAD uretim 200","HEAD uretim_atamalari 200","POST gunluk 201"]
+     bildirim: 10 adet (40:10) PA Usta'a verildi · yazmalar: ["PATCH uretim 200","POST rpc/alt_yaz 200","POST gunluk 201"]
   ✓ [Umut: teslim al (sağlam 10) → [mamul farkı, usta bakiye farkı, üretim fişleri, atamalar]] [10,-350,"1 geçerli / 0 iptal",["Dikim:10:pa-usta:teslim"]]
-     bildirim: ÜRT-261127001 · PAU1 tüm prosesler tamamlandı — mamul stoğa eklendi · yazmalar: ["POST rpc/fis_kes 200","POST gunluk 201","PATCH uretim 200","HEAD uretim 200","HEAD uretim_atamalari 200","POST gunluk 201"]
+     bildirim: ÜRT-261127001 · PAU1 tüm prosesler tamamlandı — mamul stoğa eklendi · yazmalar: ["POST rpc/fis_kes 200","POST gunluk 201","PATCH uretim 200","POST gunluk 201"]
   ✗ [Umut: Geri Al (teslimin iptali) → [mamul farkı, usta bakiye farkı, üretim fişleri, atamalar]] [10,-350,"1 geçerli / 0 iptal",["Dikim:10:pa-usta:teslim"]] · beklenen [0,0,"0 geçerli / 1 iptal",["Dikim:10:pa-usta:bekliyor"]]
-     bildirim:  · yazmalar: ["POST rpc/fis_iptal_toplu 403 42501 Bu işlem için yetkiniz yok (stok: silme)","POST gunluk 201"]
-     ‼ BULGU: Umut — YETKİLİ üretim adımı reddedildi (Geri Al (teslimin iptali)): POST rpc/fis_iptal_toplu 403 42501 Bu işlem için yetkiniz yok (stok: silme)
-     ! yeniden teslim (sağlam 10): ekran adımı düştü — locator.fill: Timeout 30000ms exceeded. Call log: [2m - waiting for locator('[data-teslim-al]:visible').first().locator('xpath=ancestor::div[.//table][1]').loc
-  ✗ [Umut: yeniden teslim (sağlam 10) → [mamul farkı, usta bakiye farkı, üretim fişleri, atamalar]] [10,-350,"1 geçerli / 0 iptal",["Dikim:10:pa-usta:teslim"]] · beklenen [10,-350,"1 geçerli / 1 iptal",["Dikim:10:pa-usta:teslim"]]
-     bildirim:  · yazmalar: []
+     bildirim: ÜRT-261127001 · PAU1 tüm prosesler tamamlandı — mamul stoğa eklendi | Geri alınamadı — hiçbir değişiklik yapılmadı (Bu işlem için yetkiniz yok (stok: silme)) · yazmalar: ["POST rpc/fis_iptal_toplu 403 42501 Bu işlem için yetkiniz yok (stok: silme)","POST gunluk 201"]
+     ‼ BULGU: Umut — üretim adımı sunucuda reddedildi (Geri Al (teslimin iptali)): POST rpc/fis_iptal_toplu 403 42501 Bu işlem için yetkiniz yok (stok: silme) · ekrandaki bildirim: ÜRT-261127001 · PAU1 tüm prosesler tamamlandı — mamul stoğa eklendi | Geri alınamadı — hiçbir değişiklik yapılmadı (Bu işlem için yetkiniz yok (stok: silme))
+  ✗ [Umut: yeniden teslim (sağlam 10)] YAPILAMADI — önceki adım (Geri Al) tamamlanmadı — teslim hâlâ geçerli, yeniden teslim edilecek iş yok
   ✗ [Umut: akışlarda sunucunun reddettiği yazma YOK (12 yazma isteği)] ["POST rpc/fis_iptal_toplu 403 42501 Bu işlem için yetkiniz yok (stok: silme)"] · beklenen []
-     ‼ BULGU: Umut — beklenmeyen ret: POST rpc/fis_iptal_toplu 403 42501 Bu işlem için yetkiniz yok (stok: silme)
   — doğrudan REST denemeleri (jeton ✓ · kök mqdgucoomgqcvhvgixbl.supabase.co/rest/v1/ · başlıklar authorization, content-type, apikey, x-atolye-surum)
   ✓ [Umut: denemeler hesabın KENDİ jetonuyla] "yerel-test:umut@atolye.local"
   ✓ [Umut YETKİSİZ: urunler satış fiyatı PATCH → ret (4xx + 42501), satır değişmedi] [true,"42501",true]
@@ -106,9 +104,30 @@ ekran-personel-akis · aday_pa (şablon aday_a) · b3a_yazma_koru 14 tablo · b3
      HTTP 403 · 42501 · Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: unvan) (gereken: cari: düzenleme). Hiçbir şey kaydedilmedi.
   ✓ [Umut: sayfa hatası yok] []
 
-SON DURUM (sunucu): ürün {"ad":"Ekran Bot Ayşe","sf":120,"af":60,"t":"cari-mwymx15m-ty87","surum":6} · müşteri unvanı "İnceleme Müşteri" · renkler ["Siyah","Vizon Yılan"] · fişler 3 geçerli / 0 iptal
-BULGULAR: 
-  1. Umut — YETKİLİ üretim adımı reddedildi (Geri Al (teslimin iptali)): POST rpc/fis_iptal_toplu 403 42501 Bu işlem için yetkiniz yok (stok: silme)
-  2. Umut — beklenmeyen ret: POST rpc/fis_iptal_toplu 403 42501 Bu işlem için yetkiniz yok (stok: silme)
+■ Mert · mert@atolye.local
+     menü ([data-nav]): Anasayfa · Stok · Ürün Stok · Depo · Paketleme · Sevkiyat · Alış / Satış · Planlama · Sipariş · Alış Siparişi · Ödeme & Tahsilat · Sohbet · Kılavuz
+     menü grupları: Depo · Üretim · Siparişler · Finans · fiyat bayrağı {"satis":false,"alis":true,"cariFiyatGrubu":false}
+     (EK hesap: muhasebe görüntüleme + düzenleme + kaydetme + SİLME — Murat'ın iptal edemediği fiş)
+  ✓ [Mert: tahsilat fişi TH-261127001 ekrandan iptal → [kasa farkı, cari bakiye farkı] başa döndü, fiş iptal] [0,0,"iptal"]
+     bildirim: "TH-261127001" iptal edildi — 1 cari, 1 kasa satırı · yazmalar: ["POST rpc/fis_iptal 200","POST gunluk 201","POST gunluk 201"]
+     onay bekleyen kayıt (onaylar tablosu): 0
+  ✓ [Mert: akışlarda sunucunun reddettiği yazma YOK (6 yazma isteği)] []
+  ✓ [Mert: sayfa hatası yok] []
 
-── ekran-personel-akis: 44 geçti · 5 kaldı ──
+■ Ufuk · ufuk@atolye.local
+     menü ([data-nav]): Anasayfa · Stok · Ürün Stok · Depo · Paketleme · Sevkiyat · Alış / Satış · Üretim · Üretim Raporu · Planlama · Sipariş · Alış Siparişi · Sohbet · Kılavuz
+     menü grupları: Depo · Üretim · Siparişler · Finans · fiyat bayrağı {"satis":false,"alis":false,"cariFiyatGrubu":false}
+     (EK hesap: üretim görüntüleme + düzenleme + kaydetme + SİLME — Umut'un geri alamadığı teslim)
+  ✓ [Ufuk: Geri Al (teslimin iptali) → [mamul farkı, usta bakiye farkı, üretim fişleri, atamalar]] [0,0,"0 geçerli / 1 iptal",["Dikim:10:pa-usta:bekliyor"]]
+     bildirim: "Dikim" için 10 adetlik teslim alma işlemi geri alındı — hammadde ve işçilik geri alındı · yazmalar: ["POST rpc/fis_iptal_toplu 200","POST gunluk 201","PATCH urunler 200","PATCH cariler 200","PATCH uretim 200","POST gunluk 201","POST gunluk 201","POST gunluk 201"]
+  ✓ [Ufuk: yeniden teslim (sağlam 10) → [mamul farkı, usta bakiye farkı, üretim fişleri, atamalar]] [10,-350,"1 geçerli / 1 iptal",["Dikim:10:pa-usta:teslim"]]
+     bildirim: ÜRT-261127002 · PAU1 tüm prosesler tamamlandı — mamul stoğa eklendi · yazmalar: ["POST rpc/fis_kes 200","POST gunluk 201","PATCH uretim 200","POST gunluk 201"]
+  ✓ [Ufuk: akışlarda sunucunun reddettiği yazma YOK (15 yazma isteği)] []
+  ✓ [Ufuk: sayfa hatası yok] []
+
+SON DURUM (sunucu): ürün {"ad":"Ekran Bot Ayşe","sf":120,"af":60,"t":"cari-mwyn5atm-pek7","surum":7} · müşteri unvanı "İnceleme Müşteri" · renkler ["Siyah","Vizon Yılan"] · fişler 2 geçerli / 2 iptal
+BULGULAR: 
+  1. Murat — tahsilat fişinin (TH-261127001) ekrandan iptali tamamlanmadı: POST rpc/fis_iptal 403 42501 Bu işlem için yetkiniz yok (stok: silme) · ekrandaki bildirim: Tahsilat kaydedildi — TH-261127001 Geri al | "TH-261127001" iptal edilemedi — hiçbir değişiklik yapılmadı (Bu işlem için yetkiniz yok (stok: silme))
+  2. Umut — üretim adımı sunucuda reddedildi (Geri Al (teslimin iptali)): POST rpc/fis_iptal_toplu 403 42501 Bu işlem için yetkiniz yok (stok: silme) · ekrandaki bildirim: ÜRT-261127001 · PAU1 tüm prosesler tamamlandı — mamul stoğa eklendi | Geri alınamadı — hiçbir değişiklik yapılmadı (Bu işlem için yetkiniz yok (stok: silme))
+
+── ekran-personel-akis: 51 geçti · 5 kaldı ──

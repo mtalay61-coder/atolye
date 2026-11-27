@@ -14,9 +14,9 @@ düzeltmelerini **içermiyordu** (`git merge-base --is-ancestor` olumsuz; 1.744.
 | Parça | Dosya | SHA-256 |
 |---|---|---|
 | B4/B5 kurulum | `27-b4-uygula.sql` | `f49078f2361e8546d59e6a0b9c5d52e0ace6474c47663ef2615478e2b327645d` |
-| B3a kurulum | `28-b3a-uygula.sql` | `@@B3A@@` |
+| B3a kurulum | `28-b3a-uygula.sql` | `15f1051d5c9f652ac99d091fb329aea67ef35ef10adb82fee1cbe31ba3d38250` |
 | B3a-2 kurulum | `29-b3a2-uygula.sql` | `e67eef17c9f40addc6ccb2b22b5166ba8e16284a5ec4f8a468acd2396cfcaef1` |
-| İstemci adayı | `atolye-erp-v1.744.43.html` | `@@HTML@@` |
+| İstemci adayı | `atolye-erp-v1.744.43.html` | `35cc6fbf4f0ce66eaa6f4d9552803018b5a9da73e77bd355ca78868bf7017d66` |
 
 Üç SQL dosyası kendi dallarındakiyle bayt bayt aynıdır (birleştirme içerik değiştirmedi).
 
@@ -53,7 +53,34 @@ B4 geri alınacaksa önce istemci 1.744.37'ye döndürülmelidir.
 
 ## Bu bileşimle sınama (yerel PostgreSQL 16, canlıya hizalı G-25'siz taban, üç paket kurulu, istemci 1.744.43)
 
-@@SONUC@@
+Sonuç dosyaları: `test/inceleme/sonuc-birlesik/`.
+
+| Sınama | Sonuç |
+|---|---|
+| Kurulum sırası: B4 → B3a → B3a-2 ile B3a-2 → B3a → B4 | şema dökümü birebir aynı (fark 0 satır) |
+| `b3a2-matris.js` — 64 durum × 7 hesap (22'si olumsuz istisna testi) | kurulumdan önce 229 uyumlu · 219 AÇIK; üç paketle **448 uyumlu · 0 AÇIK · 0 fazla kısıt** |
+| `b3a-sina.sh` — B4 + B3a-2 kurulu tabana B3a kur / geri al | 11/11; B3a matrisi 83 uyumlu · 4 AÇIK → **89 uyumlu · 0 AÇIK** (B3a'nın tek başına bıraktığı 3 açık B3a-2 ile kapanıyor). 1 satır "yanlış gerekçe": ret doğru, kod farklı (KR006, eski kural) |
+| `b4-sunucu-sina.js` — B3a + B3a-2 eklenmiş B4 tabanı | 40/40 |
+| `ekran-uretim-b4.js` (iki cihaz teslim, kısmi, tamir, bayat Geri Al, yanıt kaybı) | 34/34 |
+| `ekran-uretim-b4-ver.js` (iki cihaz İşi Ver, atamasız ara proses) | 11/11 |
+| `ekran-geri-al-ileti.js` (1.744.41 düzeltmeleri) | 20/20 |
+| `ekran-stok.js`, `ekran-kasa.js`, `ekran-cari-virman.js` (Yönetici) | 24/24 · 29/29 · 29/29 |
+| `ekran-b3a2-personel.js` (yalnız stok yetkili hesap + Yönetici) | 10/10 |
+| `ekran-personel-akis.js` (stok, sipariş, muhasebe, üretim hesapları) | @@AKIS@@ |
+| `./test/kosu.sh` (1.744.43) | 275/275 AYNI |
+
+### Otomatik yazma istisnaları gerçek değişikliği gizleyebiliyor mu — HAYIR (22 olumsuz durum, hepsi beklenen sonucu verdi)
+
+- **Boş değer:** boş telefonu doldurma, dolu telefonu boşaltma, `pasif` false → true, para birimini TRY dışı doldurma,
+  mevcut satış fiyatını sıfırlama, alış fiyatını null yapma, fiyat kurallarını boşaltma, fiyat doluyken para birimini değiştirme,
+  ad değişikliğinin yanında fiyat değişikliği → yetkisiz hesapta 42501.
+- **Oluşturma damgası:** damganın yanında başka `ek` anahtarı, fiyat grubu ya da unvan değişikliği; mevcut fiyat grubunu silme → 42501.
+- **Varsayılan firma bilgisi:** iskeletin içinde dolu unvan, iç içe dolu değer (e-posta sunucusu), KDV anahtarını açma, dönem kapanış
+  tarihi; firma bilgisi varken yalnız logoyu değiştirme ya da boş iskeletle ezme; boş iskeletin yanında dolu ara proses listesi ya da
+  bilinmeyen anahtarı true yapma → 42501.
+
+Bilinen ve kabul edilen tek gevşeklik: firma bilgisi **hiç yokken** yazma yetkisi olan herhangi bir hesap ilk logoyu yazabilir
+(başka hiçbir alanı değil). Canlıda firma bilgisi dolu olduğundan bu yol orada kapalıdır.
 
 ## Gerçek Supabase — YAPILMADI
 

@@ -1,0 +1,56 @@
+ekran-kasa · aday_e2 · kurallar KAPALI
+0 · başlangıç
+  ✓ [0 · başlangıç · sunucu (kas_hareket)] 0
+  ✓ [0 · başlangıç · ekran (Kasa & Banka)] 0
+    gelir: Ekran Gelir · gelir (kasaya giriş) · Merkez Kasa · fiş GL-261127001 · Gelir kaydedildi — GL-261127001 Geri al
+1 · gelir 1.000
+  ✓ [1 · gelir 1.000 · sunucu (kas_hareket)] 1000
+  ✓ [1 · gelir 1.000 · ekran (Kasa & Banka)] 1000
+    gider: Ekran Gider · gider (kasadan çıkış) · Merkez Kasa · fiş GD-261127001 · Gider kaydedildi — GD-261127001 Geri al
+2 · gider 250
+  ✓ [2 · gider 250 · sunucu (kas_hareket)] 750
+  ✓ [2 · gider 250 · ekran (Kasa & Banka)] 750
+    iptal: satır bulundu · "GL-261127001" iptal edildi — 1 kasa satırı
+  ✓ [3 · gelir fişi sunucuda iptal] true
+3 · gelirin iptali
+  ✓ [3 · gelirin iptali · sunucu (kas_hareket)] -250
+  ✓ [3 · gelirin iptali · ekran (Kasa & Banka)] -250
+4 · sayfa yenilendi
+  ✓ [4 · sayfa yenilendi · sunucu (kas_hareket)] -250
+  ✓ [4 · sayfa yenilendi · ekran (Kasa & Banka)] -250
+  ✓ [5 · çift tık → tek fiş] 1
+5 · Kaydet'e çift tık (gelir 400)
+  ✓ [5 · Kaydet'e çift tık (gelir 400) · sunucu (kas_hareket)] 150
+  ✓ [5 · Kaydet'e çift tık (gelir 400) · ekran (Kasa & Banka)] 150
+    tekrar: [200,200] · {"fisNo":"GD-261127002","kalemler":[],"zatenVar":true,"bagliFisNo":null,"karsilananDuzeltme":[]}
+  ✓ [6 · aynı istek iki kez → tek fiş] 1
+6 · aynı kaydetme isteği ağda iki kez (gider 75)
+  ✓ [6 · aynı kaydetme isteği ağda iki kez (gider 75) · sunucu (kas_hareket)] 75
+  ✓ [6 · aynı kaydetme isteği ağda iki kez (gider 75) · ekran (Kasa & Banka)] 75
+    yanıt kaybı: tutar kutusu "" · Gelir kaydedildi — GL-261127003 Geri al
+  ✓ [7 · yanıt kaybı → tek fiş] 1
+7 · yanıt kaybı (gelir 60)
+  ✓ [7 · yanıt kaybı (gelir 60) · sunucu (kas_hareket)] 135
+  ✓ [7 · yanıt kaybı (gelir 60) · ekran (Kasa & Banka)] 135
+8 · sayfa yenilendi
+  ✓ [8 · sayfa yenilendi · sunucu (kas_hareket)] 135
+  ✓ [8 · sayfa yenilendi · ekran (Kasa & Banka)] 135
+    cari tahsilat: fiş TH-261127001 · Tahsilat kaydedildi — TH-261127001 Geri al
+  ✓ [9 · tahsilat fişi TH- numaralı (sunucu fişi)] true
+  ✓ [9 · Son tahsilat ve ödemeler'de görünüyor] true
+9 · cariye nakit tahsilat 500 ₺
+  ✓ [9 · cariye nakit tahsilat 500 ₺ · sunucu (kas_hareket)] 635
+  ✓ [9 · cariye nakit tahsilat 500 ₺ · ekran (Kasa & Banka)] 635
+  ✓ [10 · yenilemeden sonra da listede] true
+10 · sayfa yenilendi
+  ✓ [10 · sayfa yenilendi · sunucu (kas_hareket)] 635
+  ✓ [10 · sayfa yenilendi · ekran (Kasa & Banka)] 635
+FİŞLER (sunucu, bu koşu)
+    GL-261127001 Gelir İPTAL Giriş:1000(iptal)
+    GD-261127001 Gider geçerli Çıkış:250
+    GL-261127002 Gelir geçerli Giriş:400
+    GD-261127002 Gider geçerli Çıkış:75
+    GL-261127003 Gelir geçerli Giriş:60
+    TH-261127001 Tahsilat geçerli Giriş:500
+  ağ: 171 istek, hatalı 0 []
+── ekran-kasa: 29 geçti, 0 kaldı ──

@@ -11,6 +11,10 @@
 //   Selin : yeni satış siparişi (mevcut müşteri, tek kalem) · ürün kartında satış kutusu açık / alış kapalı
 //   Murat : cariden nakit tahsilat fişi → ekrandan iptal · ürün kartında alış kutusu açık / satış kapalı
 //   Umut  : İşi Ver → teslim (sağlam) → Geri Al → yeniden teslim (her adımda mamul stoğu, usta bakiyesi, fiş sayısı)
+// EK HESAPLAR (teşhis; asıl dört hesabın sonucunu DEĞİŞTİRMEZ, ayrı satırlarda raporlanır): fiş iptali (tahsilatın silinmesi, üretimde
+//   "Geri Al") sunucuda `silme` yetkisi ister (fis_iptal / fis_iptal_toplu → stk_yetki(…, 'silme'); paketlerden ÖNCE de böyle). Görevdeki
+//   hesaplarda silme yok; aynı akışın `silme` EKLENİNCE ekrandan tamamlandığını göstermek için:
+//   Mert = muhasebe (g, d, k + silme) · Ufuk = üretim (g, d, k + silme)
 // YETKİSİZ DENEMELER: her hesabın KENDİ oturum jetonuyla, sayfanın içinden `fetch` — uygulamanın gönderdiği başlıklar (apikey,
 //   Authorization, x-atolye-surum, Prefer) ve biçim (sürüm koşullu PATCH: ?id=eq.X&surum=eq.N, gövdede surum N+1; tanimlar: tek
 //   satırın upsert'i — uygulamanın `tekilYaz` biçimi — ve ayrıca düz PATCH). Beklenen ret: HTTP 4xx + 42501, satır değişmedi.
@@ -21,7 +25,7 @@
 //   EKRAN_DB verilirse o veritabanı OLDUĞU GİBİ kullanılır (kopyalanmaz); verilmezse aday_pa, EKRAN_SABLON (vars. aday_a) kopyası.
 const fs = require("fs");
 const path = require("path");
-const { ekranAc, toastlar, O } = require("../ekran/ortak-ekran.js");
+const { ekranAc, O } = require("../ekran/ortak-ekran.js");
 const { kopruKur } = require("../gercek-pg-kopru.js");
 const { Client } = require(process.env.KOPRU_PG || "pg");
 
@@ -55,6 +59,8 @@ const kisa = (s, n = 170) => String(s == null ? "" : s).replace(/\s+/g, " ").sli
     { id: "u-selin", kullaniciAdi: "Selin", eposta: "selin@atolye.local", rol: "Personel", yetkiler: yt("siparis") },
     { id: "u-murat", kullaniciAdi: "Murat", eposta: "murat@atolye.local", rol: "Personel", yetkiler: yt("muhasebe") },
     { id: "u-umut", kullaniciAdi: "Umut", eposta: "umut@atolye.local", rol: "Personel", yetkiler: yt("uretim") },
+    { id: "u-mert", kullaniciAdi: "Mert", eposta: "mert@atolye.local", rol: "Personel", yetkiler: { muhasebe: { ...yt("muhasebe").muhasebe, silme: true } } },
+    { id: "u-ufuk", kullaniciAdi: "Ufuk", eposta: "ufuk@atolye.local", rol: "Personel", yetkiler: { uretim: { ...yt("uretim").uretim, silme: true } } },
   ];
   await q(`update public.tanimlar set veri = jsonb_set(veri, '{kullanicilar}', (veri -> 'kullanicilar') || $1::jsonb) where id = 'tekil'`, [JSON.stringify(HESAP)]);
   await q(`insert into public.cariler (id, unvan, tip) values ($1, 'PA Usta', 'Personel') on conflict (id) do nothing`, [USTA]);
@@ -91,6 +97,10 @@ const kisa = (s, n = 170) => String(s == null ? "" : s).replace(/\s+/g, " ").sli
     // uygulamanın KENDİ REST isteği: adres kökü + başlıklar yetkisiz denemelerde aynen kullanılır
     c.sayfa.on("request", (r) => { const u = r.url(); if (/\/rest\/v1\//.test(u)) { const h = r.headers(); if (h.authorization && (!c.ornek || r.method() !== "GET")) c.ornek = { kok: u.replace(/\/rest\/v1\/.*$/, "/rest/v1/"), basliklar: h, m: r.method() }; } });
     for (let i = 0; i < 30 && !(await c.sayfa.locator("[data-nav]").count()); i++) await c.sayfa.waitForTimeout(1000);
+    // BİLDİRİM TOPLAYICI: bildirimler birkaç saniyede kaybolur; beklerken kaçmasın diye sayfada biriktirilir
+    await c.sayfa.evaluate(() => { window.__paBildirim = [];
+      const tara = () => document.querySelectorAll("[data-toast]").forEach((x) => { const t = (x.innerText || "").replace(/\s+/g, " ").trim(); if (t && !window.__paBildirim.includes(t)) window.__paBildirim.push(t); });
+      new MutationObserver(tara).observe(document.body, { childList: true, subtree: true, characterData: true }); tara(); });
     c.menu = await c.sayfa.evaluate(() => [...document.querySelectorAll("[data-nav]")].map((x) => x.getAttribute("data-nav")));
     c.gruplar = await c.sayfa.evaluate(() => [...document.querySelectorAll("[data-nav-grup]")].map((x) => x.getAttribute("data-nav-grup")));
     yaz(`\n■ ${kullanici} · ${c.eposta}`);
@@ -99,13 +109,15 @@ const kisa = (s, n = 170) => String(s == null ? "" : s).replace(/\s+/g, " ").sli
     return c;
   };
   const erisilemiyor = (c, akis, modul) => { kalan += 1; yaz(`  ✗ [${c.kullanici}: ${akis}] EKRANDAN ERİŞİLEMİYOR — menüde "${modul}" yok`); };
-  const toast = async (c) => kisa(await toastlar(c.sayfa), 220);
+  // son okumadan beri görünen bütün bildirimler (okununca boşalır)
+  const toast = async (c) => kisa((await c.sayfa.evaluate(() => { const a = (window.__paBildirim || []).slice(); if (window.__paBildirim) window.__paBildirim.length = 0; return a; })).join(" | ") || "(bildirim yok)", 320);
   // akışlar bitince: sunucunun reddettiği yazmalar (uygulamanın kendi otomatik yazmaları dahil). Yetkisiz denemelerden ÖNCE alınır.
   const beklenmeyenRet = async (c) => {
     await c.sayfa.waitForTimeout(8000);   // yoklama + gecikmeli otomatik yazmalar
     const yazma = c.k.gunluk.filter((x) => x.m !== "GET" && x.m !== "HEAD" && x.m !== "OPTIONS");
     const red = yazma.filter((x) => x.durum >= 400).map((x) => `${x.m} ${x.yol} ${x.durum} ${x.kod || ""} ${kisa(x.mesaj, 150)}`);
-    if (k_(`${c.kullanici}: akışlarda sunucunun reddettiği yazma YOK (${yazma.length} yazma isteği)`, red, []) === false) red.forEach((r) => bulgu(`${c.kullanici} — beklenmeyen ret: ${r}`));
+    if (k_(`${c.kullanici}: akışlarda sunucunun reddettiği yazma YOK (${yazma.length} yazma isteği)`, red, []) === false)
+      red.filter((r) => !bulgular.some((b) => b.startsWith(c.kullanici) && b.includes(r.slice(0, 60)))).forEach((r) => bulgu(`${c.kullanici} — beklenmeyen ret: ${r}`));
     c.gunlukSinir = c.k.gunluk.length;
   };
 
@@ -195,6 +207,79 @@ const kisa = (s, n = 170) => String(s == null ? "" : s).replace(/\s+/g, " ").sli
     await c.tarayici.close(); await c.k.kapat().catch(() => {});
   };
 
+  // ── TAHSİLAT FİŞİNİN EKRANDAN İPTALİ: Ödeme & Tahsilat › "Son tahsilat ve ödemeler"de satıra dokun → cari kartı açılır ›
+  // Hareketler'de fişin satırındaki Sil › onay. (Listedeki doğrudan sil düğmesi yalnız gelir/gider KARTI kayıtlarında — 260-cari.)
+  const fisIptalMi = (r) => (r[0] ? (r[0].iptal ? "iptal" : "geçerli") : "fiş yok");
+  const tahsilatIptal = async (c, giris, fisNo, b0) => {
+    const s = c.sayfa;
+    await O.modulAc(s, giris); await s.waitForTimeout(900);
+    const sek = s.locator('[data-odeme-alani-sekme="odemetahsilat"]:visible'); if (await sek.count()) { await sek.first().click(); await s.waitForTimeout(800); }
+    const satir = s.locator(`[data-odeme-son-satir="${fisNo}"]:visible`).first();
+    if (!(await satir.count())) { kalan += 1; yaz(`  ✗ [${c.kullanici}: tahsilat fişinin iptali] EKRANDAN ERİŞİLEMİYOR — "Son tahsilat ve ödemeler"de ${fisNo} satırı yok`); return false; }
+    await satir.click(); await s.waitForTimeout(1500);
+    const sil = s.locator("tr", { has: s.locator(`button[title^="${fisNo}"]`) }).locator("[data-sil-onay]:visible").first();
+    if (!(await sil.count())) { kalan += 1; yaz(`  ✗ [${c.kullanici}: tahsilat fişinin iptali] EKRANDAN ERİŞİLEMİYOR — cari kartının Hareketler'inde ${fisNo} satırında Sil düğmesi yok`); return false; }
+    const sinir = c.k.gunluk.length; await toast(c);
+    await sil.click(); await s.waitForTimeout(600);
+    const onay = s.locator("[data-sil-onayla]:visible"); if (await onay.count()) await onay.first().click();
+    await bekle(async () => (await kasaBakiye()) === b0.kasa, 15); await s.waitForTimeout(1500);
+    const b2 = { kasa: await kasaBakiye(), cari: await cariBakiye(MUSTERI), fis: fisIptalMi(await q(`select iptal from public.stk_fis where id = $1`, [fisNo])) };
+    const istekler = c.k.gunluk.slice(sinir).filter((x) => x.m !== "GET" && x.m !== "HEAD").map((x) => `${x.m} ${x.yol} ${x.durum}${x.kod ? ` ${x.kod} ${kisa(x.mesaj, 160)}` : ""}`);
+    const bildirim = await toast(c);
+    const ok = k_(`${c.kullanici}: tahsilat fişi ${fisNo} ekrandan iptal → [kasa farkı, cari bakiye farkı] başa döndü, fiş iptal`, [b2.kasa - b0.kasa, b2.cari - b0.cari, b2.fis], [0, 0, "iptal"]);
+    yaz(`     bildirim: ${bildirim} · yazmalar: ${JSON.stringify(istekler)}`);
+    const onayKaydi = await q(`select count(*)::int n from public.onaylar`).catch(() => [{ n: "?" }]);
+    yaz(`     onay bekleyen kayıt (onaylar tablosu): ${onayKaydi[0].n}`);
+    if (!ok) bulgu(`${c.kullanici} — tahsilat fişinin (${fisNo}) ekrandan iptali tamamlanmadı: ${istekler.filter((x) => / [45]\d\d/.test(x)).join(" ; ") || "sunucuya iptal isteği gitmedi"} · ekrandaki bildirim: ${bildirim}`);
+    return ok;
+  };
+
+  // ── ÜRETİM EKRANI yardımcıları (ekran-uretim-b4.js'den): kart aç, İşi Ver, teslim, Geri Al; her adım sunucudan ölçülür
+  const uretimEkrani = (c) => {
+    const s = c.sayfa;
+    const kartAc = async () => { await O.modulAc(s, "Üretim"); await s.waitForTimeout(1200); await s.getByText(URETIM_NO, { exact: true }).last().click(); await s.waitForTimeout(1500); };
+    const isVer = async (personel) => {
+      if (!(await s.locator('button:has-text("İşi Ver"):visible').count())) await kartAc();
+      await s.locator("select:visible", { has: s.locator("option", { hasText: "⚠ Personel seçin" }) }).last().selectOption(personel);
+      await s.waitForTimeout(400); await s.locator('button:has-text("İşi Ver"):visible').last().click();
+    };
+    const teslim = async (saglam) => {
+      if (!(await s.locator("[data-teslim-al]:visible").count())) await kartAc();
+      if (!(await s.locator("[data-teslim-al]:visible").count())) throw new Error("ekranda teslim formu ([data-teslim-al]) yok");
+      const f = s.locator("[data-teslim-al]:visible").first().locator("xpath=ancestor::div[.//table][1]");
+      await f.locator("tr", { hasText: "SAĞLAM" }).locator("input").first().fill(String(saglam)); await s.waitForTimeout(400);
+      await s.locator("[data-teslim-al]:visible").first().click();
+    };
+    const GERI = 'span:has-text("Teslim Alındı") >> button:has-text("Geri Al")', TAM = 'div:has-text("Atamalar:") >> button:has-text("Geri Al")';
+    const geriAl = async () => {
+      for (let tur = 0; tur < 3; tur++) {
+        for (const sec of [GERI, TAM]) { const d = s.locator(sec + ":visible"); if (await d.count()) { await d.first().click(); return; } }
+        const detay = s.getByText("detay / geri al");
+        if ((await detay.count()) && (await detay.last().isVisible())) { await detay.last().click(); await s.waitForTimeout(1000); continue; }
+        await kartAc();
+      }
+      throw new Error('ekranda "Geri Al" düğmesi yok');
+    };
+    const foto = async () => ({ mamul: await stok("Siyah", "40"), usta: await cariBakiye(USTA) });
+    const adim = async (ad, is, kosul, beklenen, o) => {
+      const sinir = c.k.gunluk.length; await toast(c);
+      try { await is(); } catch (e) { yaz(`     ! ${ad}: ekran adımı yapılamadı — ${kisa(e.message, 160)}`); }
+      await bekle(kosul, 20); await s.waitForTimeout(1500);
+      const yazma = c.k.gunluk.slice(sinir).filter((x) => x.m !== "GET" && x.m !== "HEAD").map((x) => `${x.m} ${x.yol} ${x.durum}${x.kod ? ` ${x.kod} ${kisa(x.mesaj, 160)}` : ""}`);
+      const f = await foto();
+      const ok = k_(`${c.kullanici}: ${ad} → [mamul farkı, usta bakiye farkı, üretim fişleri, atamalar]`, [f.mamul - o.mamul, f.usta - o.usta, await uretimFis(), await atamalar()], beklenen);
+      const bildirim = await toast(c);
+      yaz(`     bildirim: ${bildirim} · yazmalar: ${JSON.stringify(yazma)}`);
+      if (!ok && yazma.some((x) => / [45]\d\d/.test(x))) bulgu(`${c.kullanici} — üretim adımı sunucuda reddedildi (${ad}): ${yazma.filter((x) => / [45]\d\d/.test(x)).join(" ; ")} · ekrandaki bildirim: ${bildirim}`);
+      return ok;
+    };
+    const atla = (ad, neden) => { kalan += 1; yaz(`  ✗ [${c.kullanici}: ${ad}] YAPILAMADI — ${neden}`); return false; };
+    return { kartAc, isVer, teslim, geriAl, foto, adim, atla };
+  };
+  const U = { bos: [0, 0, "0 geçerli / 0 iptal", [`Dikim:10:${USTA}:bekliyor`]], teslim1: [10, -350, "1 geçerli / 0 iptal", [`Dikim:10:${USTA}:teslim`]],
+    geri: [0, 0, "0 geçerli / 1 iptal", [`Dikim:10:${USTA}:bekliyor`]], teslim2: [10, -350, "1 geçerli / 1 iptal", [`Dikim:10:${USTA}:teslim`]] };
+  const durumlar = {};   // hesaplar arası aktarılan: tahsilat fişi, üretim başlangıç ölçümü, hangi adımda kalındı
+
   // ════════════════════════════════════════ 1 · AYŞE (yalnız stok) ════════════════════════════════════════
   { const c = await ac("Ayşe"); const s = c.sayfa;
     k_("Ayşe: menüde Üretim YOK (iş verme / teslim bu hesaptan yapılamaz)", c.menu.includes("Üretim"), false);
@@ -274,7 +359,7 @@ const kisa = (s, n = 170) => String(s == null ? "" : s).replace(/\s+/g, " ").sli
     k_("Selin: menüde Üretim YOK (iş verme / teslim bu hesaptan yapılamaz)", c.menu.includes("Üretim"), false);
     if (!c.menu.includes("Sipariş")) erisilemiyor(c, "yeni satış siparişi", "Sipariş");
     else {
-      const n0 = (await q(`select (select count(*) from public.siparisler)::int s, (select count(*) from public.siparis_kalemleri)::int k`))[0];
+      const n0 = (await q(`select (select coalesce(array_agg(id), '{}') from public.siparisler) idler, (select count(*) from public.siparis_kalemleri)::int k`))[0];
       await O.modulAc(s, "Sipariş"); await s.waitForTimeout(1000);
       await s.locator("[data-yeni-siparis]:visible").first().click(); await s.waitForTimeout(900);
       const kutu = s.locator("input[data-siparis-cari]:visible").first();
@@ -290,13 +375,12 @@ const kisa = (s, n = 170) => String(s == null ? "" : s).replace(/\s+/g, " ").sli
       await s.locator("[data-kalemlere-ekle]:visible").first().click(); await s.waitForTimeout(800);
       await s.locator("[data-siparis-kaydet]:visible").first().click();
       await bekle(async () => (await q(`select count(*)::int n from public.siparis_kalemleri`))[0].n > n0.k, 25);
-      yaz(`     seçilen cari ${secilen} · ürün "${await u.inputValue().catch(() => "")}" · bildirim: ${await toast(c)}`);
-      const sip = await q(`select id, siparis_no, cari_id, tip, durum from public.siparisler order by olusturma desc`).catch(async () => q(`select * from public.siparisler`));
-      const kal = await q(`select urun_id, renk, beden, miktar::float m, birim_fiyat::float f from public.siparis_kalemleri`).catch(async () => (await q(`select * from public.siparis_kalemleri`)));
-      k_("Selin: yeni satış siparişi → siparisler +1 (mevcut müşteri)", [sip.length - n0.s, sip[0] && sip[0].cari_id], [1, MUSTERI]);
-      k_("Selin: siparis_kalemleri'nde kalem (Ekran Bot · Siyah · 40 × 4)", [kal.length - n0.k >= 1, kal[0] && kal[0].urun_id], [true, URUN]);
-      yaz(`     sipariş: ${kisa(JSON.stringify(sip[0] || null), 200)}`);
-      yaz(`     kalem(ler): ${kisa(JSON.stringify(kal), 300)}`);
+      yaz(`     seçilen cari ${secilen} · bildirim: ${await toast(c)}`);
+      const sip = await q(`select id, siparis_no, cari_id, tip, durum from public.siparisler where id not in (select unnest($1::text[])) order by olusturma desc`, [n0.idler]);
+      const kal = sip[0] ? await q(`select urun_id, urun_ad, renk, beden, miktar::float m, fiyat::float f, para_birimi pb from public.siparis_kalemleri where siparis_id = $1 order by sira`, [sip[0].id]) : [];
+      k_("Selin: yeni satış siparişi → siparisler +1 (mevcut müşteri, tip Satış)", [sip.length, sip[0] && sip[0].cari_id, sip[0] && sip[0].tip], [1, MUSTERI, "Satış"]);
+      k_("Selin: siparis_kalemleri'nde yeni siparişin kalemi (Ekran Bot · Siyah · 40 × 4 · 100)", kal.map((x) => [x.urun_id, x.renk, x.beden, x.m, x.f]), [[URUN, "Siyah", "40", 4, 100]]);
+      yaz(`     sipariş: ${kisa(JSON.stringify(sip[0] || null), 200)} · kalem: ${kisa(JSON.stringify(kal), 240)}`);
     }
     await fiyatKutuKontrol(c, [false, true]);
     await beklenmeyenRet(c);
@@ -335,24 +419,8 @@ const kisa = (s, n = 170) => String(s == null ? "" : s).replace(/\s+/g, " ").sli
       const th = (await q(`select coalesce(h.fis_no, f.id) no, f.id, f.tur, f.iptal, f.olusturan from public.car_hareket h left join public.stk_fis f on f.id = h.fis_id where h.cari_id = $1 order by h.olusturma desc limit 1`, [MUSTERI]))[0] || {};
       yaz(`     bildirim: ${await toast(c)} · fiş ${th.no || "YOK"} (${th.tur || "?"}, ${th.olusturan || "?"})`);
       k_("Murat: tahsilat fişi → kasa +500, cari bakiyesi −500 (alacak), 1 yeni geçerli fiş", [b1.kasa - b0.kasa, b1.cari - b0.cari, b1.fis], [500, -500, "2 geçerli / 0 iptal"]);
-      // İPTAL: Son tahsilat ve ödemeler › satırın sil düğmesi › onay
-      await odemeAc();
-      const siller = await s.evaluate(() => [...document.querySelectorAll("[data-odeme-son-sil]")].map((x) => `${x.getAttribute("data-odeme-son-sil")}${x.querySelector("[data-sil-onay]") ? "" : " (sil düğmesi YOK)"}`));
-      yaz(`     listede iptal düğmeleri: ${JSON.stringify(siller)}`);
-      const sil = s.locator(`[data-odeme-son-sil="${th.no}"] [data-sil-onay]`).first();
-      if (!(await sil.count())) { kalan += 1; yaz(`  ✗ [Murat: tahsilat fişinin iptali] EKRANDAN ERİŞİLEMİYOR — "Son tahsilat ve ödemeler"de ${th.no} satırında sil düğmesi yok`); }
-      else {
-        const sinir = c.k.gunluk.length;
-        await sil.click(); await s.waitForTimeout(500);
-        const onay = s.locator("[data-sil-onayla]:visible"); if (await onay.count()) await onay.first().click();
-        await bekle(async () => (await kasaBakiye()) === b0.kasa, 20);
-        const b2 = { kasa: await kasaBakiye(), cari: await cariBakiye(MUSTERI), fis: await fisSayisi() };
-        yaz(`     iptal bildirimi: ${await toast(c)}`);
-        const iptalIstekleri = c.k.gunluk.slice(sinir).filter((x) => x.m !== "GET").map((x) => `${x.m} ${x.yol} ${x.durum}${x.kod ? ` ${x.kod} ${kisa(x.mesaj, 160)}` : ""}`);
-        yaz(`     iptal sırasında yazma istekleri: ${JSON.stringify(iptalIstekleri)}`);
-        const ok = k_("Murat: fiş ekrandan iptal → kasa ve cari bakiyesi BAŞA döndü, fiş iptal", [b2.kasa - b0.kasa, b2.cari - b0.cari, b2.fis], [0, 0, "1 geçerli / 1 iptal"]);
-        if (!ok) bulgu(`Murat — tahsilat fişinin ekrandan iptali tamamlanmadı: ${JSON.stringify(iptalIstekleri)} · bildirim: ${await toast(c)}`);
-      }
+      durumlar.tahsilat = { no: th.no, b0, giris };
+      await tahsilatIptal(c, giris, th.no, b0);
     }
     await fiyatKutuKontrol(c, [true, false]);
     await beklenmeyenRet(c);
@@ -368,48 +436,15 @@ const kisa = (s, n = 170) => String(s == null ? "" : s).replace(/\s+/g, " ").sli
     k_("Umut: menüde Üretim VAR", c.menu.includes("Üretim"), true);
     if (!c.menu.includes("Üretim")) erisilemiyor(c, "İşi Ver → teslim → Geri Al → yeniden teslim", "Üretim");
     else {
-      // ekran yardımcıları — ekran-uretim-b4.js'den
-      const kartAc = async () => { await O.modulAc(s, "Üretim"); await s.waitForTimeout(1200); await s.getByText(URETIM_NO, { exact: true }).last().click(); await s.waitForTimeout(1500); };
-      const isVer = async (personel) => {
-        if (!(await s.locator('button:has-text("İşi Ver"):visible').count())) await kartAc();
-        await s.locator("select:visible", { has: s.locator("option", { hasText: "⚠ Personel seçin" }) }).last().selectOption(personel);
-        await s.waitForTimeout(400); await s.locator('button:has-text("İşi Ver"):visible').last().click();
-      };
-      const teslim = async (saglam) => {
-        if (!(await s.locator("[data-teslim-al]:visible").count())) await kartAc();
-        const f = s.locator("[data-teslim-al]:visible").first().locator("xpath=ancestor::div[.//table][1]");
-        await f.locator("tr", { hasText: "SAĞLAM" }).locator("input").first().fill(String(saglam)); await s.waitForTimeout(400);
-        await s.locator("[data-teslim-al]:visible").first().click();
-      };
-      const GERI = 'span:has-text("Teslim Alındı") >> button:has-text("Geri Al")', TAM = 'div:has-text("Atamalar:") >> button:has-text("Geri Al")';
-      const geriAl = async () => {
-        for (let tur = 0; tur < 3; tur++) {
-          for (const sec of [GERI, TAM]) { const d = s.locator(sec + ":visible"); if (await d.count()) { await d.first().click(); return true; } }
-          const detay = s.getByText("detay / geri al");
-          if ((await detay.count()) && (await detay.last().isVisible())) { await detay.last().click(); await s.waitForTimeout(1000); continue; }
-          await kartAc();
-        }
-        return false;
-      };
-      const foto = async () => ({ mamul: await stok("Siyah", "40"), usta: await cariBakiye(USTA) });
-      const durum = async (o) => { const f = await foto(); return [f.mamul - o.mamul, f.usta - o.usta, await uretimFis(), await atamalar()]; };
-      const adim = async (ad, is, kosul, beklenen, o) => {
-        const sinir = c.k.gunluk.length;
-        try { await is(); } catch (e) { yaz(`     ! ${ad}: ekran adımı düştü — ${kisa(e.message, 160)}`); }
-        await bekle(kosul, 25); await s.waitForTimeout(1200);
-        const yazma = c.k.gunluk.slice(sinir).filter((x) => x.m !== "GET").map((x) => `${x.m} ${x.yol} ${x.durum}${x.kod ? ` ${x.kod} ${kisa(x.mesaj, 160)}` : ""}`);
-        const ok = k_(`Umut: ${ad} → [mamul farkı, usta bakiye farkı, üretim fişleri, atamalar]`, await durum(o), beklenen);
-        yaz(`     bildirim: ${await toast(c)} · yazmalar: ${JSON.stringify(yazma)}`);
-        if (!ok && yazma.some((x) => / [45]\d\d/.test(x))) bulgu(`Umut — YETKİLİ üretim adımı reddedildi (${ad}): ${yazma.filter((x) => / [45]\d\d/.test(x)).join(" ; ")}`);
-        return ok;
-      };
-      await kartAc();
-      const o = await foto();
+      const e = uretimEkrani(c);
+      await e.kartAc();
+      const o = await e.foto(); durumlar.uretim = { o, geriAlindi: false, yenidenTeslim: false };
       yaz(`     başlangıç: mamul (Siyah/40) ${o.mamul} · usta bakiyesi ${o.usta} · fiş ${await uretimFis()} · atamalar ${JSON.stringify(await atamalar())}`);
-      await adim("İşi Ver (PA Usta)", () => isVer(USTA), async () => (await atamalar()).length > 0, [0, 0, "0 geçerli / 0 iptal", [`Dikim:10:${USTA}:bekliyor`]], o);
-      await adim("teslim al (sağlam 10)", () => teslim(10), async () => (await uretimFis()) === "1 geçerli / 0 iptal", [10, -350, "1 geçerli / 0 iptal", [`Dikim:10:${USTA}:teslim`]], o);
-      await adim("Geri Al (teslimin iptali)", () => geriAl(), async () => (await uretimFis()) === "0 geçerli / 1 iptal", [0, 0, "0 geçerli / 1 iptal", [`Dikim:10:${USTA}:bekliyor`]], o);
-      await adim("yeniden teslim (sağlam 10)", () => teslim(10), async () => (await uretimFis()) === "1 geçerli / 1 iptal", [10, -350, "1 geçerli / 1 iptal", [`Dikim:10:${USTA}:teslim`]], o);
+      const a1 = await e.adim("İşi Ver (PA Usta)", () => e.isVer(USTA), async () => (await atamalar()).length > 0, U.bos, o);
+      const a2 = a1 ? await e.adim("teslim al (sağlam 10)", () => e.teslim(10), async () => (await uretimFis()) === "1 geçerli / 0 iptal", U.teslim1, o) : e.atla("teslim al (sağlam 10)", "önceki adım (İşi Ver) tamamlanmadı");
+      const a3 = a2 ? await e.adim("Geri Al (teslimin iptali)", () => e.geriAl(), async () => (await uretimFis()) === "0 geçerli / 1 iptal", U.geri, o) : e.atla("Geri Al (teslimin iptali)", "önceki adım (teslim) tamamlanmadı");
+      const a4 = a3 ? await e.adim("yeniden teslim (sağlam 10)", () => e.teslim(10), async () => (await uretimFis()) === "1 geçerli / 1 iptal", U.teslim2, o) : e.atla("yeniden teslim (sağlam 10)", "önceki adım (Geri Al) tamamlanmadı — teslim hâlâ geçerli, yeniden teslim edilecek iş yok");
+      durumlar.uretim.teslimEdildi = !!a2; durumlar.uretim.geriAlindi = !!a3; durumlar.uretim.yenidenTeslim = !!a4;
     }
     await beklenmeyenRet(c);
     await denemeBasligi(c);
@@ -417,6 +452,27 @@ const kisa = (s, n = 170) => String(s == null ? "" : s).replace(/\s+/g, " ").sli
     await retBekle(c, "urunler alış fiyatı PATCH", fiyatPatch(c, "alis_fiyati", (await fiyatOku("alis_fiyati")()) + 7), fiyatOku("alis_fiyati"));
     await retBekle(c, "cariler unvan PATCH", () => surumluPatch(c, "cariler", MUSTERI, { unvan: "Umut Değiştirdi" }), unvanOku);
     await kapat(c); }
+
+  // ════════════════════════════════════════ EK · `silme` EKLENMİŞ HESAPLAR (teşhis) ════════════════════════════════════════
+  // Yalnız asıl hesapta iptal adımı TAMAMLANMADIYSA koşar: aynı ekran yolu, aynı fiş / üretim — tek fark hesapta `silme` olması.
+  if (durumlar.tahsilat && fisIptalMi(await q(`select iptal from public.stk_fis where id = $1`, [durumlar.tahsilat.no])) === "geçerli") {
+    const c = await ac("Mert"); yaz("     (EK hesap: muhasebe görüntüleme + düzenleme + kaydetme + SİLME — Murat'ın iptal edemediği fiş)");
+    const giris = ["Kasa & Banka", "Ödeme & Tahsilat"].find((m) => c.menu.includes(m));
+    if (!giris) erisilemiyor(c, "tahsilat fişinin iptali", "Ödeme & Tahsilat"); else await tahsilatIptal(c, giris, durumlar.tahsilat.no, durumlar.tahsilat.b0);
+    await beklenmeyenRet(c); await kapat(c);
+  } else yaz("\n■ Mert (EK) — koşmadı: Murat'ın tahsilat fişi zaten iptal ya da hiç kesilmedi");
+  if (durumlar.uretim && durumlar.uretim.teslimEdildi && !durumlar.uretim.yenidenTeslim) {
+    const c = await ac("Ufuk"); yaz("     (EK hesap: üretim görüntüleme + düzenleme + kaydetme + SİLME — Umut'un geri alamadığı teslim)");
+    if (!c.menu.includes("Üretim")) erisilemiyor(c, "Geri Al → yeniden teslim", "Üretim");
+    else {
+      const e = uretimEkrani(c), o = durumlar.uretim.o;
+      await e.kartAc();
+      const a3 = durumlar.uretim.geriAlindi || await e.adim("Geri Al (teslimin iptali)", () => e.geriAl(), async () => (await uretimFis()) === "0 geçerli / 1 iptal", U.geri, o);
+      if (a3) await e.adim("yeniden teslim (sağlam 10)", () => e.teslim(10), async () => (await uretimFis()) === "1 geçerli / 1 iptal", U.teslim2, o);
+      else e.atla("yeniden teslim (sağlam 10)", "Geri Al tamamlanmadı");
+    }
+    await beklenmeyenRet(c); await kapat(c);
+  } else yaz("\n■ Ufuk (EK) — koşmadı: Umut'un akışı tamamlandı ya da teslim aşamasına gelmedi");
 
   // ── SON DURUM (sunucu) + ÖZET
   const u = await urunSatiri();

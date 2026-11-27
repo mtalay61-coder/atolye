@@ -1,0 +1,16 @@
+
+■ Ayşe
+  ✓ [Ayşe: ürün kartında fiyat kutuları KAPALI (2 sayı kutusu, 2 kapalı)] true
+  ✓ [Ayşe: fiyat dışı alan (ad) kaydedildi, fiyatlar aynen] ["Ekran Bot Ayşe",0,0]
+  ✓ [Ayşe: sunucunun reddettiği yazma YOK (9 yazma isteği)] []
+  ✓ [Ayşe: fiyat yetkisi bayrağı (satış / alış)] [false,false]
+  ✓ [Ayşe: sayfa hatası yok] []
+
+■ Ali
+  ✓ [Ali: ürün kartında fiyat kutuları AÇIK (2 sayı kutusu, 0 kapalı)] true
+  ✓ [Ali: fiyat dışı alan (ad) kaydedildi, fiyatlar aynen] ["Ekran Bot Ali",0,0]
+  ✓ [Ali: sunucunun reddettiği yazma YOK (5 yazma isteği)] []
+  ✓ [Ali: fiyat yetkisi bayrağı (satış / alış)] [true,true]
+  ✓ [Ali: sayfa hatası yok] []
+
+── ekran-b3a2-personel: 10 geçti · 0 kaldı ──
