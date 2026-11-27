@@ -120,3 +120,112 @@ projesine erişim yok ve proje henüz kurulmadı. Kurulum adımları, yapı dosy
 3. Aynı aday (1.744.43, yukarıdaki özet) ile temel akışlar; önce 1.744.37 + B4.
 
 Mevcut G-25 deneme projesi (`drtmnovafswzcmpacubl`) ve ana proje bu işte kullanılmaz; `korumali-sunucu.js` ikisinin adresini reddeder.
+
+---
+
+# 2. TUR (27 Kasım, sonradan) — SABİTLENEN SON HÂL: istemci 1.744.44, dört SQL paketi
+
+Bu bölüm yukarıdakinin yerine geçer: aday artık **1.744.44**, B3a-2'nin ret kodu **KR040**, ret iletisi paketi (**31**) eklendi.
+Canlıya, main'e, yayına ve G-25'e UYGULANMADI. Gerçek Supabase'de denenmedi (adımlar: `32-GERCEK-SUPABASE-ADIMLAR.md`).
+
+## Sabit paket (dal `claude/aday-birlesik`)
+
+| Parça | Kurulum | Geri alma |
+|---|---|---|
+| B4/B5 (öncelikli) | `27-b4-uygula.sql` `f49078f2361e8546d59e6a0b9c5d52e0ace6474c47663ef2615478e2b327645d` | `27-b4-geri-al.sql` `940c40262bf141d35093d999c30195e098ac730d21b2f9483636c0bb8c1036af` |
+| B3a | `28-b3a-uygula.sql` `15f1051d5c9f652ac99d091fb329aea67ef35ef10adb82fee1cbe31ba3d38250` | `28-b3a-geri-al.sql` `c015689afb9f2c3436878c9a15e697f2800b4f72f90ab43bcf478c9b3a40ef3f` |
+| B3a-2 | `29-b3a2-uygula.sql` `ec3df68d922ba5d49e1f5b95bd795c4ff1982bd89472681a8c75df816a12986f` | `29-b3a2-geri-al.sql` `8d471fcf8c5847ecca808f148c1dfb4a95becfc8faa95bc0aa89ec862be1d9c5` |
+| Ret iletisi | `31-yetki-ileti-uygula.sql` `b3a48e5ab1461d9c6b18aec8f925e38769b1e57684bfdf48facbb40c1724acaf` | `31-yetki-ileti-geri-al.sql` `661d831a03be7bace5e525e004a6e9b57f9135c2c76ed9aae9b9124586952ec0` |
+| İstemci | `atolye-erp-v1.744.44.html` `b87afc137406202b5e6180c3b97f31139581d3e79238eda51b0cb4252418a7e8` | yayındaki 1.744.37 |
+
+B4 ve B3a dosyaları değişmedi. B3a-2'nin kurulum dosyası DEĞİŞTİ (yalnız ret kodu); `claude/b3a2-alan-yetki` dalındaki eski özet
+(`e67eef17…`) artık geçersizdir. Kurulum sırası: B4 → B3a → B3a-2 → 31 → istemci. 31 hiçbir pakete bağımlı değildir.
+
+## Bu turda değişenler ve nedenleri
+
+1. **İptal / "Geri Al" silme yetkisi ister (karar: korunur).** Kaydetme yetkisi genişletilmedi. İstemci 1.744.44 düğmeleri silme
+   yetkisi olmayan kullanıcıya çizmez (sunucunun kuralının aynısı: stok, fişler, sipariş, üretim, cari, muhasebe modüllerinden birinde
+   silme). Kapsanan düğmeler: bildirimdeki "Geri al", cari kartı › Hareketler › Sil, ürün kartı hareketleri, Fişler sağ tık menüsü,
+   üretim kartındaki üç "Geri Al", çeklerde "Son işlemi geri al". Sunucu denetimi aynen sürüyor.
+   - Dokunulmayanlar: kasa / banka ve gelir-gider hareketi Sil (zaten yalnız muhasebe silmeye bakıp gizleniyor — sunucudan sıkı),
+     "Çeki sil" (karışık yol; işleyici reddediyor, düğme görünür), üretim silme (`uretim_sil` — kuralı ölçülmedi).
+2. **Ret iletisi (paket 31).** `stk_yetki` her işlemde "(stok: …)" diyordu. Artık çağıran işlemi ve gereken modülleri söyler:
+   "Bu işlem için yetkiniz yok: fiş iptali (Geri Al) (gereken: stok, fişler, sipariş, üretim, cari, muhasebe modüllerinden birinde
+   silme)". Kural, modül listeleri ve hata kodu (42501) aynı; geri alma canlıdaki gövdeye satır sonlarıyla birlikte bayt bayt döner.
+3. **B3a-2 ret kodu 42501 → KR040.** Geçiş sınamasında görüldü (aşağıda). Kural değişmedi.
+
+## Bu bileşimle sınama (dört paket kurulu, istemci 1.744.44; sonuçlar `test/inceleme/sonuc-son/`)
+
+| Sınama | Sonuç |
+|---|---|
+| `ekran-personel-akis.js` — 6 hesap, iki tam koşu | **118/118** ve **118/118**; bulgu yok |
+| `ekran-uretim-b4.js` · `-ver.js` · `ekran-geri-al-ileti.js` (Yönetici) | 34/34 · 11/11 · 20/20 |
+| `ekran-stok.js` · `ekran-kasa.js` · `ekran-cari-virman.js` · `ekran-b3a2-personel.js` | 24/24 · 29/29 · 29/29 · 10/10 |
+| `b4-sunucu-sina.js` | 40/40 |
+| `b3a2-matris.js` | 448 uyumlu · 0 AÇIK · 0 fazla kısıt |
+| `b3a-sina.sh` | 11/11; matris 0 AÇIK. 4 satır "yanlış gerekçe": ret doğru, kod 42501 yerine KR040 / KR006 |
+| `./test/kosu.sh` (1.744.44) | 275/275 AYNI; `birim-fis-iptal-yetki.js` 24/24 |
+| Paket 31: kur → yeniden kur → geri al → kur | geri almadan sonra tanım ve yetkiler kurulum öncesiyle aynı |
+
+### Personel akışları — iptal yetkisi OLAN ve OLMAYAN hesaplar ayrı
+
+| Hesap | Silme | Ekrandan tamamlanan | İptal / Geri Al |
+|---|---|---|---|
+| Ayşe (stok) | yok | stok giriş fişi · ürün kaydı · hızlı tedarikçi | — |
+| Selin (sipariş) | yok | satış siparişi | — |
+| Murat (muhasebe) | **yok** | tahsilat fişi | düğme YOK (bildirimde ve cari kartında); doğrudan istek → 403, ileti "fiş iptali … silme" |
+| Mert (muhasebe) | **var** | tahsilat fişi ×2 | bildirimden ve cari kartından iptal; kasa ve cari başa döndü |
+| Umut (üretim) | **yok** | tam · **kısmi (6 + 4)** · **tamir (8 + 2, tamirci teslimi)** · **hammaddeli (Kesim −10 hammadde → Saya)** teslim | düğme YOK; doğrudan istek → 403; hiçbir kayıt değişmedi |
+| Ufuk (üretim) | **var** | aynı dört teslim akışı | Geri Al → stok, hammadde ve işçilik başa döndü → yeniden teslim; kısmi teslimde iki parça ayrı ayrı geri alındı |
+
+Kısmi teslimde toplam 10'u aşan stok ya da işçilik oluşmadı; tamirde mamul 8 + 2, tamirciye 2 × 5 ₺. Yetkisiz yazma ya da iptal
+geçmedi; yetkili akışlarda sunucunun reddettiği yazma 0.
+
+### Geçiş uyumluluğu — paketler kurulunca açık kalmış 1.744.37 sekmeleri (`ekran-gecis-1744-37.js`, yayın paketiyle; 61 geçti · 9 kaldı)
+
+| Soru | Sonuç |
+|---|---|
+| Meşru kayıtlar reddediliyor mu? | **Hayır.** Açılış (yalnız stok yetkili hesap ve Yönetici): reddedilen yazma 0. Paketler sekme AÇIKKEN kuruldu, yenilemeden ürün adı kaydedildi. Fiyat dışı alan kaydı (eski istemci satırın tamamını, fiyatlarla yollar), Yönetici'nin fiyat değişikliği, fiyatsız yeni ürün, stok giriş fişi geçti. |
+| Eski istemci korumayı aşabiliyor mu? | **Hayır.** 1.744.37'de fiyat kutuları herkese açık; yalnız stok yetkili hesap satış / alış fiyatını değiştirince sunucu reddetti, sunucudaki fiyat ve ad değişmedi. Satış fiyatlı yeni ürün de reddedildi. |
+| Kullanıcı reddi nasıl görüyor? | İlk ölçümde KÖTÜ, KR040'tan sonra kabul edilebilir — aşağıda. |
+
+**İlk ölçüm (ret kodu 42501):** eski istemci reddi "Bulut oturumunuz kapandı" şeridiyle gösterdi, ayrıntıda "giriş yapılmamış /
+rls-kimlik.sql" dedi, kaydı bekleyene alıp dakikada bir ve her açılışta yeniden gönderdi (17 kontrol kaldı).
+
+**KR040 ile (istemcinin 1.744.0'dan beri bildiği kalıcı ret):** yeniden gönderim yok (95 sn içinde 1 istek; yenilemede 0); şerit
+"Stok kartları — inceleme gerekiyor (kendiliğinden denenmez)", ayrıntısında sunucunun iletisi aynen okunuyor. Kullanıcı fiyatı eski
+hâline getirip kaydedince kayıt geçiyor ve şerit kalkıyor.
+
+**Eski sekmede KALAN davranış (9 kontrol; istemcinin kalıcı ret tasarımı, bu pakette değiştirilmedi):**
+- kayıt anında "Ürün güncellendi" bildirimi çıkıyor (istemci bildirimi sunucu yanıtından önce gösteriyor);
+- reddedilen değer o cihazda görünmeye devam ediyor, yenilemeden sonra da (yerel kayıt kullanıcı bırakmadan silinmez — 1.744.0 kararı);
+- ret nedeni bildirimde değil, şeridin ayrıntısında; ayrıntı metni "yetki ya da bağlantı sorunu değil" diye başlıyor, altında
+  sunucunun "yetkiniz yok … gereken: …" iletisi var (çelişkili okunabilir).
+
+Yeni istemcide (1.744.44) fiyat kutuları kapalı ve süzgeç yetkisiz fiyatı göndermediği için bu duruma düşülmüyor. Bugün canlıdaki
+üç hesabın üçü de Yönetici olduğundan geçiş anında bu ret kimseye çıkmaz; personel hesabı açılmadan önce istemcinin yeni sürüme
+geçmiş olması yeterli.
+
+## B3b — KAPSAM DÜZELTMESİ (önceki özet yanlıştı)
+
+B3b **okuma / menü görünürlüğü değil, RPC ile YAZMA genişliğidir.** Bu belgenin ilk hâlinde ve rapor §15'te yanlışlıkla "okuma yetkisi"
+diye geçti. Yeniden ölçüldü (`test/inceleme/b3b-olc.js`, sonuç `sonuc-b3b-olc.txt`; fonksiyon gövdeleri canlı dökümle birebir):
+
+| Yalnız STOK yetkili hesap | Paketsiz | Dört paketle |
+|---|---|---|
+| `alt_yaz` ile sipariş kalemi miktarını 999 yapma | YAZDI | **YAZDI** |
+| `car_yaz` ile müşteriye 1.000 ₺ cari hareketi | YAZDI | **YAZDI** |
+| `fis_kes` ile cari virmanı fişi (uygulamanın gerçek isteği; `ekran-cari-virman.js` 7d) | KESTİ | **KESTİ** (2 cari satırı) |
+
+Listede olmayan hesap üçünde de reddediliyor. **B3b AÇIKTIR; bu paketlerin hiçbiri kapatmaz.** Neden: `stk_yetki` listelenen
+modüllerden herhangi birinde kaydetmeyi yeterli sayıyor. Kapatmak tür bazlı yetki kararı ister (G-25 sınıfı iş).
+Ayrıca gözlem (ayrı konu): yalnız stok / sipariş / muhasebe / üretim hesaplarının dördü de Stok ve Sipariş menülerini görüyor.
+
+## Açık duranlar
+
+- **B3b** (yukarıda) · **B6** (maaş, mesai ayarı, proses ücretleri kuralsız; G-25) · **Y1** · B3a'nın açıkları paketler canlıya kurulana kadar.
+- Eski sekmede kalıcı ret gösterimi (yukarıdaki üç madde) — istemci tasarımı; ayrı iş.
+- Sınanmayan: gerçek Supabase; 1.744.44'ün B4'süz sunucuda davranışı; `uretim_sil` yetki kuralı; "Çeki sil"; salt okur kullanıcının
+  kişisel tercihi; beden adı değişikliği, diğer tek satırlık tablolar, site portalı, depolama kovaları. Yeni düğme gizlemeleri
+  ekrandan yalnız üretim, tahsilat bildirimi ve cari kartı yollarında doğrulandı; Fişler menüsü, ürün kartı hareketleri ve çekler
+  yalnız birim testi ve kod incelemesiyle.

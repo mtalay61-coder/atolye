@@ -16,19 +16,19 @@ ekran-personel-akis · aday_pa (şablon aday_a4) · b3a_yazma_koru 14 tablo · b
      bildirim: Stok girişi kaydedildi — fiş: MNL-261127001 | Ürün güncellendi
   ✓ [Ayşe (c): hızlı tedarikçi → cariler'de 1 yeni satır] [1,1]
   ✓ [Ayşe (c): yeni cari yalnız unvan + tip (telefon, vergi no, adres, fiyat grubu, bağlı proses boş; pasif değil)] ["PA Hızlı Tedarik","Tedarikçi","","","","","","[]",false]
-  ✓ [Ayşe (c): ürün kartı yeni tedarikçiyle kaydedildi (urunler.tedarikci_id)] "cari-mwypi3g2-dliv"
-     kartta seçili: cari-mwypi3g2-dliv · pencere: prompt: Yeni tedarikçi unvanı:
+  ✓ [Ayşe (c): ürün kartı yeni tedarikçiyle kaydedildi (urunler.tedarikci_id)] "cari-mwyr5qws-03t6"
+     kartta seçili: cari-mwyr5qws-03t6 · pencere: prompt: Yeni tedarikçi unvanı:
   ✓ [Ayşe: akışlarda sunucunun reddettiği yazma YOK (19 yazma isteği)] []
   — doğrudan REST denemeleri (jeton ✓ · kök mqdgucoomgqcvhvgixbl.supabase.co/rest/v1/ · başlıklar authorization, content-type, apikey, x-atolye-surum)
   ✓ [Ayşe: denemeler hesabın KENDİ jetonuyla] "yerel-test:ayse@atolye.local"
-  ✓ [Ayşe YETKİSİZ: urunler satış fiyatı PATCH → ret (4xx + 42501), satır değişmedi] [true,"42501",true]
-     HTTP 403 · 42501 · Bu değişiklik için yetkiniz yok: satış fiyatı (Ekran Bot Ayşe) (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
-  ✓ [Ayşe YETKİSİZ: cariler unvan PATCH → ret (4xx + 42501), satır değişmedi] [true,"42501",true]
-     HTTP 403 · 42501 · Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: unvan) (gereken: cari: düzenleme). Hiçbir şey kaydedilmedi.
-  ✓ [Ayşe YETKİSİZ: bir rengi silme (renkler'den Vizon Yılan) (tanimlar upsert — uygulamanın biçimi) → ret (4xx + 42501), satır değişmedi] [true,"42501",true]
-     HTTP 403 · 42501 · Bu değişiklik için yetkiniz yok: renkler listesinden öğe silme (1) (gereken: tanımlar: silme). Hiçbir şey kaydedilmedi.
-  ✓ [Ayşe YETKİSİZ: bir rengi silme (renkler'den Vizon Yılan) (tanimlar PATCH) → ret (4xx + 42501), satır değişmedi] [true,"42501",true]
-     HTTP 403 · 42501 · Bu değişiklik için yetkiniz yok: renkler listesinden öğe silme (1) (gereken: tanımlar: silme). Hiçbir şey kaydedilmedi.
+  ✓ [Ayşe YETKİSİZ: urunler satış fiyatı PATCH → ret (4xx + KR040), satır değişmedi] [true,"KR040",true]
+     HTTP 400 · KR040 · Bu değişiklik için yetkiniz yok: satış fiyatı (Ekran Bot Ayşe) (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+  ✓ [Ayşe YETKİSİZ: cariler unvan PATCH → ret (4xx + KR040), satır değişmedi] [true,"KR040",true]
+     HTTP 400 · KR040 · Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: unvan) (gereken: cari: düzenleme). Hiçbir şey kaydedilmedi.
+  ✓ [Ayşe YETKİSİZ: bir rengi silme (renkler'den Vizon Yılan) (tanimlar upsert — uygulamanın biçimi) → ret (4xx + KR040), satır değişmedi] [true,"KR040",true]
+     HTTP 400 · KR040 · Bu değişiklik için yetkiniz yok: renkler listesinden öğe silme (1) (gereken: tanımlar: silme). Hiçbir şey kaydedilmedi.
+  ✓ [Ayşe YETKİSİZ: bir rengi silme (renkler'den Vizon Yılan) (tanimlar PATCH) → ret (4xx + KR040), satır değişmedi] [true,"KR040",true]
+     HTTP 400 · KR040 · Bu değişiklik için yetkiniz yok: renkler listesinden öğe silme (1) (gereken: tanımlar: silme). Hiçbir şey kaydedilmedi.
   ✓ [Ayşe: sayfa hatası yok] []
      istemcinin isteklerinde x-atolye-surum: 1.744.44
      tarayıcı pencereleri: prompt: Yeni tedarikçi unvanı:
@@ -41,18 +41,18 @@ ekran-personel-akis · aday_pa (şablon aday_a4) · b3a_yazma_koru 14 tablo · b
      seçilen cari inc-musteri · bildirim: 1 kalem eklendi | Sipariş oluşturuldu
   ✓ [Selin: yeni satış siparişi → siparisler +1 (mevcut müşteri, tip Satış)] [1,"inc-musteri","Satış"]
   ✓ [Selin: siparis_kalemleri'nde yeni siparişin kalemi (Ekran Bot · Siyah · 40 × 4 · 100)] [["ekr-bot","Siyah","40",4,100]]
-     sipariş: {"id":"sip-mwypioxk-01pc","siparis_no":"SAT-9002","cari_id":"inc-musteri","tip":"Satış","durum":"Bekliyor"} · kalem: [{"urun_id":"ekr-bot","urun_ad":"Ekran Bot Ayşe","renk":"Siyah","beden":"40","m":4,"f":100,"pb":"TRY"}]
+     sipariş: {"id":"sip-mwyr6ch6-ln78","siparis_no":"SAT-9002","cari_id":"inc-musteri","tip":"Satış","durum":"Bekliyor"} · kalem: [{"urun_id":"ekr-bot","urun_ad":"Ekran Bot Ayşe","renk":"Siyah","beden":"40","m":4,"f":100,"pb":"TRY"}]
   ✓ [Selin: ürün kartında fiyat kutuları (alış açık mı, satış açık mı)] [false,true]
      kapalı kutunun açıklaması: Alış fiyatını değiştirme yetkiniz yok (muhasebe: düzenleme)
   ✓ [Selin: akışlarda sunucunun reddettiği yazma YOK (6 yazma isteği)] []
   — doğrudan REST denemeleri (jeton ✓ · kök mqdgucoomgqcvhvgixbl.supabase.co/rest/v1/ · başlıklar authorization, content-type, apikey, x-atolye-surum)
   ✓ [Selin: denemeler hesabın KENDİ jetonuyla] "yerel-test:selin@atolye.local"
-  ✓ [Selin YETKİSİZ: urunler alış fiyatı PATCH → ret (4xx + 42501), satır değişmedi] [true,"42501",true]
-     HTTP 403 · 42501 · Bu değişiklik için yetkiniz yok: alış fiyatı / maliyet (Ekran Bot Ayşe) (gereken: muhasebe: düzenleme). Hiçbir şey kaydedilmedi.
-  ✓ [Selin YETKİSİZ: cariler unvan PATCH → ret (4xx + 42501), satır değişmedi] [true,"42501",true]
-     HTTP 403 · 42501 · Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: unvan) (gereken: cari: düzenleme). Hiçbir şey kaydedilmedi.
-  ✓ [Selin YETKİSİZ: müşterinin ek.fiyatGrubuId'si PATCH → ret (4xx + 42501), satır değişmedi] [true,"42501",true]
-     HTTP 403 · 42501 · Bu değişiklik için yetkiniz yok: müşterinin fiyat grubu (İnceleme Müşteri) (gereken: cari: düzenleme VE sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+  ✓ [Selin YETKİSİZ: urunler alış fiyatı PATCH → ret (4xx + KR040), satır değişmedi] [true,"KR040",true]
+     HTTP 400 · KR040 · Bu değişiklik için yetkiniz yok: alış fiyatı / maliyet (Ekran Bot Ayşe) (gereken: muhasebe: düzenleme). Hiçbir şey kaydedilmedi.
+  ✓ [Selin YETKİSİZ: cariler unvan PATCH → ret (4xx + KR040), satır değişmedi] [true,"KR040",true]
+     HTTP 400 · KR040 · Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: unvan) (gereken: cari: düzenleme). Hiçbir şey kaydedilmedi.
+  ✓ [Selin YETKİSİZ: müşterinin ek.fiyatGrubuId'si PATCH → ret (4xx + KR040), satır değişmedi] [true,"KR040",true]
+     HTTP 400 · KR040 · Bu değişiklik için yetkiniz yok: müşterinin fiyat grubu (İnceleme Müşteri) (gereken: cari: düzenleme VE sipariş: düzenleme). Hiçbir şey kaydedilmedi.
   ✓ [Selin İZİNLİ: urunler satış fiyatı PATCH → geçti, değer yazıldı] [true,1,120]
      HTTP 200 · 1 satır
   ✓ [Selin: sayfa hatası yok] []
@@ -97,14 +97,14 @@ ekran-personel-akis · aday_pa (şablon aday_a4) · b3a_yazma_koru 14 tablo · b
   ✓ [Murat: akışlarda sunucunun reddettiği yazma YOK (5 yazma isteği)] []
   — doğrudan REST denemeleri (jeton ✓ · kök mqdgucoomgqcvhvgixbl.supabase.co/rest/v1/ · başlıklar authorization, content-type, apikey, x-atolye-surum)
   ✓ [Murat: denemeler hesabın KENDİ jetonuyla] "yerel-test:murat@atolye.local"
-  ✓ [Murat YETKİSİZ: urunler satış fiyatı PATCH → ret (4xx + 42501), satır değişmedi] [true,"42501",true]
-     HTTP 403 · 42501 · Bu değişiklik için yetkiniz yok: satış fiyatı (Ekran Bot Ayşe) (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+  ✓ [Murat YETKİSİZ: urunler satış fiyatı PATCH → ret (4xx + KR040), satır değişmedi] [true,"KR040",true]
+     HTTP 400 · KR040 · Bu değişiklik için yetkiniz yok: satış fiyatı (Ekran Bot Ayşe) (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
   ✓ [Murat İZİNLİ: urunler alış fiyatı PATCH → geçti, değer yazıldı] [true,1,60]
      HTTP 200 · 1 satır
-  ✓ [Murat YETKİSİZ: mevcut rengin adını değiştirme (Siyah → Kara) (tanimlar upsert — uygulamanın biçimi) → ret (4xx + 42501), satır değişmedi] [true,"42501",true]
-     HTTP 403 · 42501 · Bu değişiklik için yetkiniz yok: renkler listesinde mevcut öğeyi değiştirme (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
-  ✓ [Murat YETKİSİZ: mevcut rengin adını değiştirme (Siyah → Kara) (tanimlar PATCH) → ret (4xx + 42501), satır değişmedi] [true,"42501",true]
-     HTTP 403 · 42501 · Bu değişiklik için yetkiniz yok: renkler listesinde mevcut öğeyi değiştirme (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+  ✓ [Murat YETKİSİZ: mevcut rengin adını değiştirme (Siyah → Kara) (tanimlar upsert — uygulamanın biçimi) → ret (4xx + KR040), satır değişmedi] [true,"KR040",true]
+     HTTP 400 · KR040 · Bu değişiklik için yetkiniz yok: renkler listesinde mevcut öğeyi değiştirme (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
+  ✓ [Murat YETKİSİZ: mevcut rengin adını değiştirme (Siyah → Kara) (tanimlar PATCH) → ret (4xx + KR040), satır değişmedi] [true,"KR040",true]
+     HTTP 400 · KR040 · Bu değişiklik için yetkiniz yok: renkler listesinde mevcut öğeyi değiştirme (gereken: tanımlar: düzenleme). Hiçbir şey kaydedilmedi.
      doğrudan iptal gövdesi: Mert'in gerçek isteğinden (TH-261127001 → TH-261127003) · p anahtarları ["no","sebep","istemci"] · p.no TH-261127003
   ✓ [Murat YETKİSİZ İPTAL: POST rpc/fis_iptal (TH-261127003) → [HTTP, kod, iletide "fiş iptali", iletide "silme", iletide "(stok:", hiçbir kayıt değişmedi, geçerli kalan fiş]] [403,"42501",true,true,false,true,1]
      HTTP 403 · 42501 · Bu işlem için yetkiniz yok: fiş iptali (gereken: stok, fişler, sipariş, üretim, cari, muhasebe modüllerinden birinde silme)
@@ -124,7 +124,7 @@ ekran-personel-akis · aday_pa (şablon aday_a4) · b3a_yazma_koru 14 tablo · b
      form: önerilen sağlam 10 · Sağlam 10 · bildirim: ÜRT-261127001 · PAF1 tüm prosesler tamamlandı — mamul stoğa eklendi · yazmalar: ["POST rpc/fis_kes 200","POST gunluk 201","PATCH uretim 200","POST gunluk 201"]
   ✓ [Ufuk PAF1: Geri Al (teslimin iptali) → [fark (akış başından), üretim fişleri, atamalar]] [{},"0 geçerli / 1 iptal",["Dikim:10:pa-usta:bekliyor"]]
      bildirim: ÜRT-261127001 · PAF1 tüm prosesler tamamlandı — mamul stoğa eklendi | "Dikim" için 10 adetlik teslim alma işlemi geri alındı — hammadde ve işçilik geri alındı · yazmalar: ["POST rpc/fis_iptal_toplu 200","POST gunluk 201","PATCH urunler 200","PATCH cariler 200","PATCH uretim 200","POST gunluk 201","POST gunluk 201","POST gunluk 201"]
-     yakalanan gerçek istek (rpc/fis_iptal_toplu): {"p":{"fisler":["ÜRT-261127001"],"sebep":"Üretim teslimi geri alındı (PAF1 · Dikim)","alt":{"uretim_atamalari":{"satirlar":[{"id":"atama-mwypko5u-nh2h","uretim_id":"pa-paf1","proses":"Dikim","personel_id":"pa-usta","beden_miktarlari":{"40":10},"miktar":10,"verildi_mi":true,"verilme_tarihi":"2026-11-27T08:17:29.682Z","tamamlandi_mi":false,"tamamlanma_tarihi":null,"sonuc":{"saglam":{"40":10},"tamir":[],"hurda":[]},"tam
+     yakalanan gerçek istek (rpc/fis_iptal_toplu): {"p":{"fisler":["ÜRT-261127001"],"sebep":"Üretim teslimi geri alındı (PAF1 · Dikim)","alt":{"uretim_atamalari":{"satirlar":[{"id":"atama-mwyr8bm6-ikk3","uretim_id":"pa-paf1","proses":"Dikim","personel_id":"pa-usta","beden_miktarlari":{"40":10},"miktar":10,"verildi_mi":true,"verilme_tarihi":"2026-11-27T09:03:52.782Z","tamamlandi_mi":false,"tamamlanma_tarihi":null,"sonuc":{"saglam":{"40":10},"tamir":[],"hurda":[]},"tam
   ✓ [Ufuk PAF1: yeniden teslim (sağlam 10) → [fark (akış başından), üretim fişleri, atamalar]] [{"mamul":10,"usta":-350},"1 geçerli / 1 iptal",["Dikim:10:pa-usta:teslim"]]
      form: önerilen sağlam 10 · Sağlam 10 · bildirim: ÜRT-261127002 · PAF1 tüm prosesler tamamlandı — mamul stoğa eklendi · yazmalar: ["POST rpc/fis_kes 200","POST gunluk 201","PATCH uretim 200","POST gunluk 201"]
   ✓ [Ufuk PAF1 (TAM teslim + Geri Al + yeniden teslim): akışta reddedilen yazma YOK (19 yazma isteği)] []
@@ -239,13 +239,13 @@ ekran-personel-akis · aday_pa (şablon aday_a4) · b3a_yazma_koru 14 tablo · b
      üretim fişleri: PAU1 1 geçerli / 0 iptal · PAUK 2 geçerli / 0 iptal · PAUT 2 geçerli / 0 iptal · PAUH 2 geçerli / 0 iptal · bütün fişler önce 9 geçerli / 6 iptal sonra 16 geçerli / 6 iptal
   — doğrudan REST denemeleri (jeton ✓ · kök mqdgucoomgqcvhvgixbl.supabase.co/rest/v1/ · başlıklar authorization, content-type, apikey, x-atolye-surum)
   ✓ [Umut: denemeler hesabın KENDİ jetonuyla] "yerel-test:umut@atolye.local"
-  ✓ [Umut YETKİSİZ: urunler satış fiyatı PATCH → ret (4xx + 42501), satır değişmedi] [true,"42501",true]
-     HTTP 403 · 42501 · Bu değişiklik için yetkiniz yok: satış fiyatı (Ekran Bot Ayşe) (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
-  ✓ [Umut YETKİSİZ: urunler alış fiyatı PATCH → ret (4xx + 42501), satır değişmedi] [true,"42501",true]
-     HTTP 403 · 42501 · Bu değişiklik için yetkiniz yok: alış fiyatı / maliyet (Ekran Bot Ayşe) (gereken: muhasebe: düzenleme). Hiçbir şey kaydedilmedi.
-  ✓ [Umut YETKİSİZ: cariler unvan PATCH → ret (4xx + 42501), satır değişmedi] [true,"42501",true]
-     HTTP 403 · 42501 · Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: unvan) (gereken: cari: düzenleme). Hiçbir şey kaydedilmedi.
-     doğrudan toplu iptal gövdesi: Ufuk'un gerçek isteğinden (PAF1 → PAU1; fiş ÜRT-261127001 → ÜRT-261127012) · p anahtarları ["fisler","sebep","alt"] · {"p":{"fisler":["ÜRT-261127012"],"sebep":"Üretim teslimi geri alındı (PAU1 · Dikim)","alt":{"uretim_atamalari":{"satirlar":[{"id":"atama-mwypmkjc-x8d4","uretim_id":"pa-pau1","proses":"Dikim","personel_id":"pa-usta","beden_miktarlari":{"40":10},"miktar":10,"verildi_mi":true,"verilme_tarihi":"2026-11-27T08:17:29.682Z","tamamlandi_mi":false,"tamamlanma_tarihi":null,"sonuc":{"saglam":{"40":10},"tamir":[],"hurda":[]},"tam
+  ✓ [Umut YETKİSİZ: urunler satış fiyatı PATCH → ret (4xx + KR040), satır değişmedi] [true,"KR040",true]
+     HTTP 400 · KR040 · Bu değişiklik için yetkiniz yok: satış fiyatı (Ekran Bot Ayşe) (gereken: sipariş: düzenleme). Hiçbir şey kaydedilmedi.
+  ✓ [Umut YETKİSİZ: urunler alış fiyatı PATCH → ret (4xx + KR040), satır değişmedi] [true,"KR040",true]
+     HTTP 400 · KR040 · Bu değişiklik için yetkiniz yok: alış fiyatı / maliyet (Ekran Bot Ayşe) (gereken: muhasebe: düzenleme). Hiçbir şey kaydedilmedi.
+  ✓ [Umut YETKİSİZ: cariler unvan PATCH → ret (4xx + KR040), satır değişmedi] [true,"KR040",true]
+     HTTP 400 · KR040 · Bu değişiklik için yetkiniz yok: cari kartı (İnceleme Müşteri: unvan) (gereken: cari: düzenleme). Hiçbir şey kaydedilmedi.
+     doğrudan toplu iptal gövdesi: Ufuk'un gerçek isteğinden (PAF1 → PAU1; fiş ÜRT-261127001 → ÜRT-261127012) · p anahtarları ["fisler","sebep","alt"] · {"p":{"fisler":["ÜRT-261127012"],"sebep":"Üretim teslimi geri alındı (PAU1 · Dikim)","alt":{"uretim_atamalari":{"satirlar":[{"id":"atama-mwyra83v-tgz0","uretim_id":"pa-pau1","proses":"Dikim","personel_id":"pa-usta","beden_miktarlari":{"40":10},"miktar":10,"verildi_mi":true,"verilme_tarihi":"2026-11-27T09:03:52.782Z","tamamlandi_mi":false,"tamamlanma_tarihi":null,"sonuc":{"saglam":{"40":10},"tamir":[],"hurda":[]},"tam
   ✓ [Umut: doğrudan toplu iptal gövdesi Umut'un KENDİ geçerli teslim fişini hedefliyor] ["ÜRT-261127012"]
   ✓ [Umut YETKİSİZ İPTAL: POST rpc/fis_iptal_toplu (PAU1: ÜRT-261127012) → [HTTP, kod, iletide "fiş iptali", iletide "silme", iletide "(stok:", hiçbir kayıt değişmedi, geçerli kalan fiş]] [403,"42501",true,true,false,true,1]
      HTTP 403 · 42501 · Bu işlem için yetkiniz yok: fiş iptali (Geri Al) (gereken: stok, fişler, sipariş, üretim, cari, muhasebe modüllerinden birinde silme)
@@ -255,7 +255,7 @@ ekran-personel-akis · aday_pa (şablon aday_a4) · b3a_yazma_koru 14 tablo · b
   ✓ [Umut: sayfa hatası yok] []
      istemcinin isteklerinde x-atolye-surum: 1.744.44
 
-SON DURUM (sunucu): ürün {"ad":"Ekran Bot Ayşe","sf":120,"af":60,"t":"cari-mwypi3g2-dliv","surum":12} · müşteri unvanı "İnceleme Müşteri" · renkler ["Siyah","Vizon Yılan"] · fişler 16 geçerli / 6 iptal
+SON DURUM (sunucu): ürün {"ad":"Ekran Bot Ayşe","sf":120,"af":60,"t":"cari-mwyr5qws-03t6","surum":12} · müşteri unvanı "İnceleme Müşteri" · renkler ["Siyah","Vizon Yılan"] · fişler 16 geçerli / 6 iptal
 ÜRETİM AKIŞLARI (hesap başına):
   Ufuk · PAF1 · TAM teslim + Geri Al + yeniden teslim: TAMAMLANDI
   Ufuk · PAFK · KISMİ teslim (6 + 4) + Geri Al + yeniden teslim: TAMAMLANDI

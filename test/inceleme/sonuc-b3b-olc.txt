@@ -11,10 +11,10 @@ b3b-olc · inc_tam · B4 işlevi 0 · B3a 0 tablo · B3a-2 0 tablo
 
 b3b-olc · aday_m3 · B4 işlevi 2 · B3a 14 tablo · B3a-2 3 tablo
 ■ alt_yaz: sipariş kalemi miktarını 999 yap
-   zeki (listede yok)   RET 42501 Bu işlem için yetkiniz yok (stok: kaydetme)
+   zeki (listede yok)   RET 42501 Bu işlem için yetkiniz yok: bağlı kayıt yazma (sipariş / üretim satırları) (gereken: sipariş, fişler, stok, ca
    ayşe (yalnız stok)   YAZDI · sonra: 999
    ali (Yönetici)       YAZDI · sonra: 999
 ■ car_yaz: müşteriye 1.000 ₺ borç hareketi yaz
-   zeki (listede yok)   RET 42501 Bu işlem için yetkiniz yok (stok: kaydetme)
+   zeki (listede yok)   RET 42501 Bu işlem için yetkiniz yok: cari hareketi yazma (gereken: cari, fişler, muhasebe, sipariş, üretim, stok, tanım
    ayşe (yalnız stok)   YAZDI · sonra: 1000
    ali (Yönetici)       YAZDI · sonra: 1000
