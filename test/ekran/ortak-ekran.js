@@ -17,7 +17,8 @@ async function ekranAc(veritabani, { mudahale = null, kullanici = "Ali" } = {}) 
   process.env.TEST_HTML = path.join(W, "test/test.html");
   const hatalar = [];
   const { tarayici, sayfa } = await O.uygulamaAc({}, { hataYaz: false, stkAyar: ayar, onceRota: async (s) => {
-    await s.addInitScript((e) => { localStorage.setItem("atolye:oturum", JSON.stringify({ erisim: `yerel-test:${e}`, yenileme: `yerel-test:${e}`, sonaErme: Date.now() + 864e5, email: e })); }, eposta);
+    // gerçek API kipinde (KOPRU_SUPABASE) sahte oturum KONMAZ: giriş ekrandan, gerçek Auth hesabıyla yapılır (girisYap)
+    if (!process.env.KOPRU_SUPABASE) await s.addInitScript((e) => { localStorage.setItem("atolye:oturum", JSON.stringify({ erisim: `yerel-test:${e}`, yenileme: `yerel-test:${e}`, sonaErme: Date.now() + 864e5, email: e })); }, eposta);
     await k.bagla(s);
     // senaryonun ağ müdahalesi (yanıt kaybı, istek tekrarı) köprüden SONRA kaydedilir → önce o denenir
     if (mudahale) await mudahale(s, k);
