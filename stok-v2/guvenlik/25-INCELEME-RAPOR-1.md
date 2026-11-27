@@ -443,6 +443,9 @@ paket `4904a7e` değişmedi. Ayrıntı: `33-YEREL-SUPABASE-SONUC.md`; öneri: `3
 - **Yetki paketleri LF / CRLF:** `42-SATIR-SONU-DAYANIKLILIK.md`. B3a ve B3a-2 dosyaları değişmeden iki biçimde de kuruluyor ve geri alınıyor
   (matrisler aynı: 448 / 0 açık — yalnız B3a-2 kapsamı —, 86 / 0 açık; personel akışları 118 / 118). Ret iletisinin asıl dosyaları CRLF ile
   duruyor; dayanıklı sürümleri hazırlandı. Durum sorgusu `41-…` satır sonundan bağımsız. Hiçbiri canlıya uygulanmadı.
+- **Deneme temizliği canlıda doğrulandı (salt okur, `40-…`, kullanıcı çalıştırdı):** 11 satırın 11'i tamam, GENEL "TEMİZ". DENEME ÜRÜN ve
+  DENEME HAMMADDE stoku 0; deneme fişleri 0 geçerli / 2 iptal; geçerli stok / cari hareketi ve bölüm tahakkuku yok. Üç deneme kartı AKTİF;
+  üretim 10001 açık duruyor (aşama Kesim, atama DENEME USTA'da "bekliyor", 2 adet) — pasife alma ve 10001 ayrı ele alınacak.
 - **AÇIK:** B1 / B2, B3b, B6, Y1.
 
 ## 4. Sıradaki adımlar (güncel)
