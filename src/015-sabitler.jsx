@@ -492,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.744.37";
-const SURUM_TARIHI = "2026-11-26";
-const SURUM_NOTU = "Kombinasyonda kullanılan bir rengin adı değişince modelin renkleri artık tek renge çökmüyor";
+const SURUM = "1.744.45";
+const SURUM_TARIHI = "2026-11-27";
+const SURUM_NOTU = "Geri dönüş sürümü: 1.744.37 ile aynı uygulama, yalnız sürüm numarası yükseltildi";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -525,6 +525,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" };   // teklif: v1.723.0, Sipariş'in alt sekmesi
 
 const SURUM_GECMISI = [
+  { surum: "1.744.45", tarih: "27.11.2026", eklenen: [], degisen: ["Geri dönüş sürümü: içerik 1.744.37 ile aynıdır; yalnız sürüm numarası yükseltildi (uygulama düşük numaralı sürüme kendiliğinden dönmediği için)"], duzeltilen: [] },
   { surum: "1.744.37", tarih: "26.11.2026", eklenen: [], degisen: [], duzeltilen: ["Tanımlar › renk adı değiştirme: rengin geçtiği model kombinasyonları (ör. \"1054 - KAHVE SÜET/VİZON YILAN\" ve \"1055 - BEJ SÜET/VİZON YILAN\") ayrı kalıyor, yalnız yazımları değişiyor. Önceden rengin adı değişince (büyük/küçük harf dahil) modelin bütün kombinasyon renkleri rengin düz adına (\"Vizon Yılan\") dönüp tek renk gibi görünüyordu; reçetenin model rengi de aynı şekilde çöküyordu. Önceden çökmüş kayıtları bu sürüm geri getirmez (ayrı onarım)."] },
   { surum: "1.744.36", tarih: "23.11.2026", eklenen: ["Kasa & Banka › hesap › \"Hesaplar arası aktarım\": kasadan bankaya, bankadan kasaya, hesaptan hesaba para aktarımı yeniden arayüzde (cari virmanından ayrı işlem; kur çevirici ve aktarım sebebi aynen)."], degisen: ["Ödeme & Tahsilat'taki virman \"Cari virmanı (cariden cariye)\" adını aldı. Para birimi ilk carinin para birimidir; karşı cari başka para birimindeyse virman yapılmaz (kur dönüşümü yok). Aynı cari ve sıfır / eksi / boş tutar reddedilir."], duzeltilen: [] },
   { surum: "1.744.35", tarih: "23.11.2026", eklenen: ["Ödeme & Tahsilat › ödeme şekli \"Virman (cariden cariye)\": ilk cari ve karşı cari seçilir. Ödemede ilk cariye ödeme, karşı cariden tahsilat; tahsilatta ilk cariden tahsilat, karşı cariye ödeme. İki satır tek fişte (CVR-…), kasa / banka hareketi yok; geri alınca ikisi birden kalkar.", "Ödeme & Tahsilat › Kasa / Banka satırının yanında + düğmesi: yeni kasa ya da banka hesabı oradan açılır ve hemen seçilir."], degisen: ["Kasa & Banka ekranında Virman ve \"Yeni Kasa / Yeni Banka Hesabı\" düğmeleri kalktı (hesap düzenleme, arşivleme ve silme yerinde)."], duzeltilen: [] },
