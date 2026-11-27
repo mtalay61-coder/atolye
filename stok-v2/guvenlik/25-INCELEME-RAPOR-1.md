@@ -427,12 +427,23 @@ paket `4904a7e` değişmedi. Ayrıntı: `33-YEREL-SUPABASE-SONUC.md`; öneri: `3
   yerelde CRLF'li kurulumla birebir üretildi). Aynı gövdelerle B4 sunucu sınaması 40 / 40, yayındaki 1.744.37 ile ekran sınaması 35 / 35.
 - **Geri alma:** `27-b4-geri-al.sql` KULLANILMAMALI (CRLF ile yapıştırılınca kendi doğrulamasında durur). Geçerli dosya
   `27-b4-geri-al-satirsonu.sql` (`4dbe9e7e7b843e6369850f8aa9bdc37198bcc371dcceb60f4b2662f75b7ae69c`); LF ve CRLF ile sınandı. Çalıştırma onayı YOK.
-- **Canlı deneme (kullanıcı; DENEME ÜRÜN / DENEME HAMMADDE / DENEME USTA, üretim 10001, tek cihaz):** iş verme → teslim → Geri Al →
+- **CANLI TEK CİHAZ DOĞRULAMASI (iki cihaz sınamasından AYRI; kullanıcı; DENEME ÜRÜN / DENEME HAMMADDE / DENEME USTA, üretim 10001):** iş verme → teslim → Geri Al →
   yeniden teslim → Geri Al. Her teslimde tek fiş (mamul +2, hammadde −2); her geri almada stok, hammadde ve bölüm tahakkuku başa döndü.
   İki cihaz koruması canlıda DENENMEDİ (yerel sınamalarda doğrulandı).
 - **Açıklığa kavuşan (hata değil):** Kesim işçiliği cariye değil KESİMHANE bölümüne yazıldı — mevcut kural (015 `iscilikBolumu`); kullanıcı
   "doğru, değişiklik gerekmiyor" dedi. Hammaddesiz reçete onaylanmıyor / üretim açılmıyor (mevcut kural).
 - **Sıradaki işlerden önce:** 28 / 29 / 31 dosyaları CRLF yapıştırma koşuluyla sınanmadan sunulmaz. B1 / B2, B3b, B6, Y1 AÇIK.
+
+## 20. Doğrulama türleri ve satır sonu dayanıklılığı (27 Kasım; canlıya yeni yazma YOK)
+- **B4 / B5 için iki ayrı kanıt, birbirinin yerine geçmez:**
+  - *Canlı tek cihaz doğrulaması:* canlıda, kullanıcı tarafından, tek cihazdan; iş verme / teslim / geri alma / yeniden teslim doğru sonuçlandı.
+  - *İki cihaz (eşzamanlılık) sınaması:* yalnız YERELDE (PostgreSQL 16 ve yerel Supabase), canlıdaki gövdelerin birebir kopyasıyla. Canlıda YAPILMADI.
+- Deneme kayıtlarının temizliği için salt okur sorgu: `40-canli-deneme-temiz-salt-okur.sql`. Deneme kartlarının pasife alınması ayrı iş;
+  üretim 10001 değiştirilmedi. Kesim işçiliğinin bölüme / cariye yazılması kuralı bu çalışmada DEĞİŞTİRİLMEDİ.
+- **Yetki paketleri LF / CRLF:** `42-SATIR-SONU-DAYANIKLILIK.md`. B3a ve B3a-2 dosyaları değişmeden iki biçimde de kuruluyor ve geri alınıyor
+  (matrisler aynı: 448 / 0 açık — yalnız B3a-2 kapsamı —, 86 / 0 açık; personel akışları 118 / 118). Ret iletisinin asıl dosyaları CRLF ile
+  duruyor; dayanıklı sürümleri hazırlandı. Durum sorgusu `41-…` satır sonundan bağımsız. Hiçbiri canlıya uygulanmadı.
+- **AÇIK:** B1 / B2, B3b, B6, Y1.
 
 ## 4. Sıradaki adımlar (güncel)
 1. Kullanıcı onayıyla B1 / B2 deneme paketi (§9) — deneme projesinde salt okur adım 0, sonra kurulum ve elle sınamalar.
