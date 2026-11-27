@@ -250,7 +250,9 @@ const degisenSutunlar = (a, b) => Object.keys(b).filter((x) => JSON.stringify(a[
     const kurulum = []; let kurHata = null;
     for (const f of PAKET_SQL) { try { kurulum.push(`${path.basename(f)} → ${paketKur(db, f)}`); } catch (e) { kurHata = `${path.basename(f)}: ${kisa((e.stderr || e.message || "").toString().split("\n").filter((x) => /ERROR|HATA/.test(x)).join(" ") || e.message, 300)}`; break; } }
     yaz(`     kurulum: ${kurulum.join(" ; ")}${kurHata ? ` ; HATA ${kurHata}` : ""}`);
-    k_("G2: üç paket sırayla kuruldu, her biri GENEL|KURULU", [kurulum.length, kurulum.every((x) => /GENEL\|KURULU$/.test(x)), kurHata], [3, true, null]);
+    // başarı sözü betiğin KENDİ son satırı: 27-b4 "99|GENEL|UYGULANMIŞ" yazar (HAZIR = henüz uygulanmamış, FARKLI — DUR = beklenmeyen gövde);
+    // 28-b3a ve 29-b3a2 "GENEL|KURULU" yazar
+    k_("G2: üç paket sırayla kuruldu [27 → GENEL|UYGULANMIŞ, 28 → GENEL|KURULU, 29 → GENEL|KURULU]", [kurulum.map((x) => x.replace(/^.* → (\d+\|)?/, "")), kurHata], [["GENEL|UYGULANMIŞ", "GENEL|KURULU", "GENEL|KURULU"], null]);
     k_("G2: kurulumdan sonra paketler var", (await paketDurum(c.q)).map((x) => x > 0), [true, true, true]);
     // sekme YENİLENMEDEN: ad değiştir, kaydet
     const r = await urunDuzenle(c, { ad: "Ekran Bot G2" });
@@ -311,7 +313,7 @@ const degisenSutunlar = (a, b) => Object.keys(b).filter((x) => JSON.stringify(a[
     const ret = ilk.find((y) => y.durum >= 400);
     const okRet = k_(`${kod}: sunucu reddetti [4xx, kod]`, ret ? [ret.durum >= 400 && ret.durum < 500, ret.kod] : [false, null], [true, "42501"]);
     if (ret) yaz(`     sunucu iletisi: ${kisa(ret.ileti, 400)}`);
-    const okFiyat = k_(`${kod}: sunucuda ${etiket.toLowerCase()} fiyatı DEĞİŞMEDİ`, r.sonra[sutun], r.once[sutun]);
+    const okFiyat = k_(`${kod}: sunucuda ${etiket.toLocaleLowerCase("tr-TR")} fiyatı DEĞİŞMEDİ`, r.sonra[sutun], r.once[sutun]);
     const okAd = k_(`${kod}: aynı kayıttaki ad değişikliği de YAZILMADI (satır tek istek) [ad, sürüm]`, [r.sonra.ad, r.sonra.surum], [r.once.ad, r.once.surum]);
     if (!okRet || !okFiyat) bulgu(`${kod} — ESKİ İSTEMCİ KORUMAYI AŞTI ya da beklenen biçimde reddedilmedi: ${ilk.map(yazmaOzeti).join(" ; ") || "ürün yazması gitmedi"} · sunucu önce ${JSON.stringify(r.once)} · sonra ${JSON.stringify(r.sonra)} · bildirim: ${r.bildirim}`);
     if (!okAd && okFiyat) bulgu(`${kod} — reddedilen kayıtta ad AYRICA yazıldı (kısmi kayıt): önce ${JSON.stringify(r.once)} · sonra ${JSON.stringify(r.sonra)} · yazmalar: ${ilk.map(yazmaOzeti).join(" ; ")}`);
@@ -354,9 +356,12 @@ const degisenSutunlar = (a, b) => Object.keys(b).filter((x) => JSON.stringify(a[
       if (await cip.count()) { const cipYazi = kisa(await cip.first().innerText(), 120); const onceS = await ekranSatirlari(c);
         await cip.first().evaluate((el) => el.click()); await c.sayfa.waitForTimeout(1200);
         const ayrinti = (await ekranSatirlari(c)).filter((x) => !onceS.includes(x));
-        yaz(`     ŞERİT — çip: "${cipYazi}" · tıklanınca açılan ayrıntı (${ayrinti.length} satır): ${kisa(ayrinti.join(" ⏎ "), 900) || "—"}`);
-        if (!k_(`${kod}: şerit ayrıntısında reddin nedeni okunuyor ("yetki" geçiyor)`, /yetki/i.test(ayrinti.join(" ")), true))
-          bulgu(`${kod} — gönderilemeyen kayıt ayrıntısında da reddin nedeni yok: ${kisa(ayrinti.join(" ⏎ "), 300) || "ayrıntı açılmadı"}`);
+        yaz(`     ŞERİT — çip: "${cipYazi}" · tıklanınca açılan ayrıntı (${ayrinti.length} satır): ${kisa(ayrinti.join(" ⏎ "), 1800) || "—"}`);
+        // ayrıntıdaki genel "yazma yetkisi yok — giriş yapılmamış" sözü neden DEĞİL; aranan sunucunun kendi iletisi: hangi alan (… fiyatı), hangi yetki
+        const at = ayrinti.join(" ");
+        if (!k_(`${kod}: şerit ayrıntısında sunucunun iletisi okunuyor [alan adı ("${etiket.toLocaleLowerCase("tr-TR")} fiyatı") geçiyor, "gereken:" geçiyor]`, [new RegExp(`${alan === "satis" ? "satış" : "alış"} fiyatı`, "i").test(at), /gereken:/i.test(at)], [true, true]))
+          bulgu(`${kod} — gönderilemeyen kayıt ayrıntısı reddin gerçek nedenini (hangi alan / hangi yetki) göstermiyor; kullanıcının okuduğu: ${kisa(at, 700) || "ayrıntı açılmadı"}`);
+        if (/rls-kimlik|giriş yapılmamış|izni vermiyor/i.test(at)) bulgu(`${kod} — şerit ayrıntısı YANLIŞ yönlendiriyor: yetki reddi (42501, alan kuralı) "giriş yapılmamış / rls-kimlik.sql yeniden çalıştırılmalı / veritabanı yazma izni vermiyor" diye açıklanıyor`);
         await cip.first().evaluate((el) => el.click()).catch(() => {}); await c.sayfa.waitForTimeout(400);
       } else yaz("     ŞERİT — gönderilemeyen kayıt çipi ([data-bekleyen-cip]) ekranda yok"); }
     // "Yeniden dene" düğmesi (gönderilemeyen kayıt şeridi) varsa: basılınca ne oluyor
@@ -435,10 +440,18 @@ const degisenSutunlar = (a, b) => Object.keys(b).filter((x) => JSON.stringify(a[
       if (!(await kutuYaz(c, "ad", ad))) return { hata: "Ürün Adı kutusu bulunamadı" };
       const kutular = await kutuDurumu(c);
       if (satis != null && !(await kutuYaz(c, "satis", satis))) return { hata: "Satış Fiyatı kutusu bulunamadı", kutular };
+      // Tohumda Tanımlar › Birimler BOŞ: formun birimi kendiliğinden dolmaz ("Önce Tanımlar → Birimler…" uyarısı, yazma gitmez).
+      // Kullanıcı gibi Birim kutusundan açıkça seçilir (çift).
+      const birim = s.locator("label:visible", { hasText: /^Birim/ }).locator("select");
+      if (await birim.count()) { await birim.first().selectOption("çift"); await s.waitForTimeout(300); }
+      // Kaydet, renk × beden matrisi oluşturulana kadar KAPALI: renksiz, tek beden (40) seçilip "Matris Oluştur"a basılır
+      const beden = s.locator("button.mono:visible", { hasText: /^40$/ }); if (await beden.count()) { await beden.first().click(); await s.waitForTimeout(300); }
+      const matris = s.locator("button:visible", { hasText: "Matris Oluştur" }); if (await matris.count()) { await matris.first().click(); await s.waitForTimeout(700); }
+      const kaydet = s.locator("button.btn-save:visible", { hasText: "Kaydet" }).first();
+      if (await kaydet.isDisabled()) return { hata: `formun Kaydet düğmesi kapalı kaldı (beden 40 + "Matris Oluştur" denendi); formda görünen: ${kisa((await ekranSatirlari(c)).filter((x) => /matris|beden|renk/i.test(x)).join(" | "), 240)}`, kutular };
       await bildirim(c);
       const sinir = c.yazmalar.length; const ekranOnce = await ekranSatirlari(c);
-      // formun Kaydet'i: "Yeni Stok Kartı" başlığına en yakın .btn-save
-      await s.locator("button.btn-save:visible", { hasText: "Kaydet" }).first().click();
+      await kaydet.click();
       await bekle(async () => c.yazmalar.slice(sinir).some((y) => /^urunler/.test(y.yol)), 12); await s.waitForTimeout(2500);
       const ekranSonra = await ekranSatirlari(c);
       return { sinir, kutular, bildirim: await bildirim(c), satir: await c.q(`select id, ad, satis_fiyati::float sf, alis_fiyati::float af from public.urunler where ad = $1`, [ad]),
@@ -464,6 +477,8 @@ const degisenSutunlar = (a, b) => Object.keys(b).filter((x) => JSON.stringify(a[
       const ok1 = k_("G6b: satış fiyatlı yeni ürün reddedildi [4xx, kod]", ret ? [ret.durum >= 400 && ret.durum < 500, ret.kod] : [false, null], [true, "42501"]);
       const ok2 = k_("G6b: sunucuda ürün OLUŞMADI (satır sayısı)", b.satir.length, 0);
       if (!ok1 || !ok2) bulgu(`G6b — Ayşe satış fiyatlı yeni ürün ekleyebildi ya da beklenen biçimde reddedilmedi: ${y.map(yazmaOzeti).join(" ; ") || "yazma gitmedi"} · sunucu ${JSON.stringify(b.satir)} · bildirim: ${b.bildirim}`);
+      if (!k_('G6b: reddedilen yeni üründe "başarılı" bildirimi ÇIKMADI ("kaydedildi" yok)', /kaydedildi/i.test(b.bildirim), false))
+        bulgu(`G6b — sunucu yeni ürünü reddettiği hâlde ekranda başarı bildirimi çıktı ve ürün listede görünüyor: "${b.bildirim}" · beliren satırlar: ${kisa(b.yeniSatirlar.join(" ⏎ "), 330)}`);
       await c.sayfa.waitForTimeout(8000);
       const artik = await c.q(`select count(*)::int n from public.stk_varyant v where not exists (select 1 from public.urunler u where u.id = v.urun_id)`);
       yaz(`     G6b sonrası: ürünsüz kalan varyant satırı ${artik[0].n} · 8 sn içinde sonraki yazmalar: ${c.yazmalar.slice(b.sinir + y.length).map(yazmaOzeti).join(" ; ") || "—"}`);
