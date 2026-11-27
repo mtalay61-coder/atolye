@@ -11,20 +11,33 @@
 - G-25 deneme projesinde `fis_kes` / `fis_iptal` G-25 tarafından değiştirilmiş. `27-b4-uygula.sql` oraya kurulmaz: önkoşul "FARKLI — DUR" der, bekçi hiçbir şeyi değiştirmez.
 - B4 canlıdaki gövdelere (1.744.37) yazıldı. Denemenin anlamlı olması için deneme projesindeki üç gövde canlıyla **bayt bayt aynı** olmalı.
 
-## Yapı nereden gelecek — KARAR GEREKİR
+## Yapı dosyası (karar: yerel hizalı kopyadan, yalnız şema — 30 Kasım)
 
-Yeni proje boş açılır; içine canlının yapısı kurulmalı. İki yol var, ikisi de senin onayını ister:
+- **Dosya:** `b4-deneme-yapi.sql` — depoda DEĞİL; doğrudan sana verildi.
+- **SHA-256:** `7510c95a247972e5640370617c20cb5803315306976fda91ac8632a091a88c27` · 4732 satır · ~300 KB.
+- **Üretim:** `pg_dump --schema-only --no-owner -n public` (yerel hizalı kopya) → `27-b4-deneme/yapi-uret.py`.
+- **Biçim:** tek `do $$ … $$` bloğu + bir salt okur sayım sorgusu. Ya bütünüyle kurulur ya hiç.
+  - Dosyada yalnız LF var; canlıdaki CRLF satır sonları kurulumda yeniden üretilir (pano / Editor satır sonlarını değiştirse de gövdeler canlıyla aynı kurulur).
+  - Bekçi: `public` şeması boş değilse çalışmaz; `auth.jwt()` yoksa çalışmaz.
+  - Başta Supabase'in `public` varsayılan yetkileri alınır, sonra kaynaktaki yetkiler verilir.
+- **İçerik denetimi** (yardımcı tarayıcı + elle desen araması; ikisi de "kesin yok" garantisi değildir):
+  - veri satırı: yalnız `stk_ayar` bayrak satırı (hangi v2 parçalarının açık olduğu; tarihleri kurulum anı). Başka INSERT / COPY yok; kalan `insert` / `update` satırlarının hepsi fonksiyon gövdesi (kod);
+  - hesap, e-posta: yok (`@atolye.local` yalnız kullanıcı adından e-posta türeten kuralın metni);
+  - parola: yok (`p_sifre`, `sifre_ozeti` parametre / sütun adları; değer yok);
+  - anahtar / jeton (`sb_secret_`, `sb_publishable_`, JWT, `Bearer`, `apikey`): 0;
+  - adres (`http://`, `https://`), proje kimlikleri, alan adı: 0.
 
-- **Yol A (önerilen) — yerel hizalı kopyadan yapı dökümü.**
-  - Kaynak: senin gönderdiğin canlı dökümlerinden (25 / 25b CSV, 25c ile tamlığı doğrulandı) kurduğum yerel kopya. Yalnız yapı; veri yok.
-  - Yerelde ölçüldü: döküm boş bir veritabanına kurulunca 115 fonksiyon / 117 tetikleyici / 36 politika kaynakla aynı; `27-b4-onkosul` **HAZIR**.
-  - **Gerçek Supabase projesinde DENENMEDİ.** SQL Editor'ün dökümü nasıl böldüğü, satır sonlarını koruyup korumadığı ve ilk açılış için gereken başlangıç satırları (ör. `stk_ayar`) bilinmiyor; birkaç deneme turu gerekebilir.
-  - Dosya depoya KONMAZ (canlı fonksiyon gövdelerinin tamamını içerir). Onay verirsen dosyayı doğrudan sana veririm.
-- **Yol B — `kurulum_betigi()`.**
-  - Canlının kendi kurulum üreticisi; ama canlı yapı dökümüne göre fonksiyon canlıda YOK (25 CSV'de satırı yok).
-  - Kullanmak için önce canlıya `kurulum-betigi.sql` kurulmalı — canlıya yazma; bugünkü talimatına aykırı. Önermiyorum.
-
-Aşağıdaki adımlar Yol A'ya göre yazıldı.
+**Yerelde kurulum sınaması** (Supabase benzeri boş veritabanı: `auth` + `extensions` + Supabase varsayılan yetkileri):
+- Kurulum: 44 tablo · 18 görünüm · 115 fonksiyon · 117 tetikleyici · 36 politika · veri 0. İkinci çalıştırma bekçide durdu.
+- `27-b4-onkosul`: **HAZIR** (üç gövde canlı md5'iyle aynı).
+- **Kaynakla fark** (`yapi-karsilastir.py`, 25 sorgusunun iki çıktısı):
+  - yerel kaynak kopyaya göre: yalnız nesne sahibi (`root` → `postgres`; canlıdaki gibi) ve veriye bağlı satırlar;
+  - canlı 25 dökümüne göre: tablo, sütun, kısıt, indeks, görünüm, fonksiyon (115), dizi, tablo yetkisi **AYNI**. Farklar:
+    - sütun düzeyi REFERENCES yetkisi (51 satır; yalnız canlıda);
+    - `public` varsayılan yetkilerinde `service_role` ve TRUNCATE yok (yalnız sonradan açılacak tabloları etkiler);
+    - ortam: depolama kovaları ve politikaları, `pg_cron` / `pg_net`, zamanlanmış iş, olay tetikleyicileri, roller;
+    - veri: hesaplar, ERP kullanıcıları, giriş ayarı.
+- **Gerçek Supabase projesinde henüz DENENMEDİ.** Editor'ün 300 KB'lık tek ifadeyi kabul edip etmeyeceği bilinmiyor.
 
 ## Yerelde ölçülenler (bu paketin dayanağı)
 
@@ -41,6 +54,8 @@ Sonuçlar `27-b4-PAKET.md` "Sınamalar" bölümünde. Özet:
 | `f49078f2361e8546d59e6a0b9c5d52e0ace6474c47663ef2615478e2b327645d` | `stok-v2/guvenlik/27-b4-uygula.sql` | **YAZAR** — B4 / B5 kurulumu (tek ifade) |
 | `940c40262bf141d35093d999c30195e098ac730d21b2f9483636c0bb8c1036af` | `stok-v2/guvenlik/27-b4-geri-al.sql` | **YAZAR** (ayrı onay) — canlı gövdelere birebir dönüş |
 | `bc6912c22a062d1c7e0b012257839dac3e2b86aab0e9f5eb1b7ab5052fbe458a` | `atolye-erp-v1.744.37.html` | yayındaki istemci |
+| `7510c95a247972e5640370617c20cb5803315306976fda91ac8632a091a88c27` | `b4-deneme-yapi.sql` (depoda değil) | **YAZAR** — yeni boş projeye yapı |
+| `b7d0714e2553075124db352154e697a68a944916ac04b1c3665273f3c1c74354` | `atolye-erp-v1.744.41.html` (dal `claude/geri-al-ileti`) | istemci 1.744.41 (yayınlanmadı) — adım 7b |
 | (commit'te) | `stok-v2/guvenlik/27-b4-deneme/korumali-sunucu.js` | korumalı yerel sunucu — `DENEME_REF` ile; ana projeyi ve G-25 denemesini REDDEDER |
 
 ## Adımlar (sırayla; her adımın çıktısını paylaş — tutmazsa DUR)
@@ -50,15 +65,21 @@ Sonuçlar `27-b4-PAKET.md` "Sınamalar" bölümünde. Özet:
 - Supabase'de yeni, boş bir proje aç (ör. "atolye-b4-deneme"). Kimliğini (20 karakter) ve **publishable** anahtarını not et.
 - Gizli (secret / service_role) anahtar gerekmez, istenmez.
 
-### 1. Yapı dosyası (benden)
+### 1. Dosyayı doğrula
 
-- Onayından sonra yapı dökümünü ve SHA-256'sını veririm. Canlıda hiçbir şey çalıştırılmaz.
+- `b4-deneme-yapi.sql` SHA-256'sı yukarıdakiyle aynı olmalı (`Get-FileHash` / `sha256sum`). Tutmazsa kullanma.
 
 ### 2. Yapıyı yeni projeye kur (YAZAR — yalnız yeni proje)
 
-- Yeni projede SQL Editor → yapı dosyası → Run. Hata çıkarsa iletisini paylaş, devam etme.
-- Ardından `27-b4-onkosul-salt-okur.sql` → beklenen: 1–3 **HAZIR**, 4 `yok`, **99 GENEL: HAZIR**.
-- "FARKLI" çıkarsa DUR: gövdeler canlıyla bayt bayt aynı kurulmamış demektir (ör. Editor satır sonlarını değiştirmiş). B4 bu hâlde kurulmaz; md5'leri paylaş, hizalama adımı hazırlarım.
+- Adres çubuğunda YENİ projenin kimliği olmalı (`mqdg…` ya da `drtm…` DEĞİL).
+- SQL Editor → dosyanın tamamı → Run. Beklenen sonuç tablosu: tablo 44 · görünüm 18 · fonksiyon 115 · tetikleyici 117 · politika 36 · veri satırı 0.
+- Hata çıkarsa hiçbir şey kurulmamıştır; iletisini paylaş, devam etme.
+- `27-b4-onkosul-salt-okur.sql` → 1–3 **HAZIR**, 4 `yok`, **99 GENEL: HAZIR**. "FARKLI" çıkarsa DUR.
+
+### 2b. Kurulan yapının kaynakla farkı (salt okur)
+
+- Yeni projede `25-canli-tam-yapi-salt-okur.sql` (dal `claude/guvenlik-inceleme`; SHA-256 `9d7f8ee1…`) → Export → CSV → bana gönder.
+- CSV'yi canlı 25 dökümüyle `yapi-karsilastir.py` ile karşılaştırıp farkları raporlarım. Beklenen: yukarıdaki "canlı 25 dökümüne göre" listesi; uygulama nesnelerinde (tablo, sütun, kısıt, indeks, görünüm, fonksiyon, tablo yetkisi) fark 0.
 
 ### 3. İstemci — korumalı sunucu, iki pencere = iki cihaz
 
@@ -102,8 +123,16 @@ DENEME_REF=<yeni-proje-kimliği> DENEME_ANAHTAR=sb_publishable_… node korumali
   - Sonra A kalan 4'ü teslim alır → toplam 10 / −350.
 - **U2 (bayat Geri Al):** B sayfayı yeniler, U2 kartını açar. A "Geri Al" yapar ve yeniden teslim alır. B, 8 sn içinde eski teslimi "Geri Al" yapar.
   - Beklenen: stok ve bakiye değişmez; iş "Teslim Alındı" kalır; tek geçerli ÜRT.
-  - Not: 1.744.37 istemcisi B'de yine "geri alındı" yazar; 8 sn içinde ekran düzelir. Bu ileti ayrı istemci düzeltmesidir (dal `claude/geri-al-ileti`, 1.744.41), bu denemenin parçası değil.
+  - Not: 1.744.37 istemcisi B'de yine "geri alındı" yazar; 8 sn içinde ekran düzelir. Düzeltmesi 1.744.41'de — adım 7b.
 - **Olağan akış:** tek cihazdan teslim → Geri Al → yeniden teslim sorunsuz; kısmi teslim ve tamirli teslim sorunsuz.
+
+### 7b. Aynı sınamalar 1.744.41 ile (B4 kurulu)
+
+- Korumalı sunucuları durdur; `atolye-erp-v1.744.41.html` ile yeniden başlat (dal `claude/geri-al-ileti`; SHA-256 belgenin sonunda).
+- Yeni üretimlerle adım 7'nin tamamı: sonuçlar (stok, bakiye, fiş sayısı) 1.744.37 ile AYNI olmalı.
+- Ek olarak iletiler:
+  - **Bayat Geri Al:** B'de "… teslimi zaten geri alınmıştı … ve iş yeniden teslim alınmış — bu işlem yeni bir değişiklik yapmadı"; "geri alındı" DENMEZ; B'nin ekranı işi teslim alınmış gösterir.
+  - **İki cihazdan aynı anda "İşi Ver":** bir cihaz "verildi", öteki "İş VERİLEMEDİ — bu üretim az önce başka bir cihazda değişti"; tek atama.
 
 ### 8. Sonuç
 
@@ -126,7 +155,7 @@ DENEME_REF=<yeni-proje-kimliği> DENEME_ANAHTAR=sb_publishable_… node korumali
 
 ## Onay istenen
 
-1. Yol A ile ilerlemek ve yapı dosyasını (depoya konmadan) sana vermem.
-2. Yeni projeye yazma: yapı kurulumu, deneme verisi, `27-b4-uygula.sql`.
+1. Yeni projeye yazma: yapı kurulumu (`b4-deneme-yapi.sql`), deneme verisi, `27-b4-uygula.sql`.
+2. Yeni projede salt okur yapı dökümü (2b) ve CSV'nin bana gönderilmesi.
 
 Canlıya yazma, `main`, yayın, G-25 kapsam dışı.
