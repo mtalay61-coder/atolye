@@ -251,7 +251,10 @@ const kisa = (s, n = 170) => String(s == null ? "" : s).replace(/\s+/g, " ").sli
   };
   const denemeBasligi = async (c) => { yaz(`  — doğrudan REST denemeleri (jeton ${c.ornek ? "✓" : "?"} · kök ${c.ornek ? c.ornek.kok.replace(/^https?:\/\//, "").slice(0, 60) : "YOK"} · başlıklar ${c.ornek ? Object.keys(c.ornek.basliklar).filter((x) => /apikey|authorization|x-atolye|x-istemci|content-type/.test(x)).join(", ") : "—"})`);
     const j = await c.sayfa.evaluate(() => (JSON.parse(localStorage.getItem("atolye:oturum") || "{}").erisim) || "");
-    k_(`${c.kullanici}: denemeler hesabın KENDİ jetonuyla`, j, `yerel-test:${c.eposta}`); };
+    // gerçek API kipinde (yerel Supabase) jeton GoTrue'nun imzaladığı JWT'dir: içindeki e-posta hesabınki olmalı
+    if (process.env.KOPRU_SUPABASE) { let e = null; try { e = JSON.parse(Buffer.from(String(j).split(".")[1], "base64url").toString("utf8")).email; } catch (x) { /* JWT değil */ }
+      k_(`${c.kullanici}: denemeler hesabın KENDİ gerçek oturum jetonuyla (JWT e-postası)`, e, c.eposta); }
+    else k_(`${c.kullanici}: denemeler hesabın KENDİ jetonuyla`, j, `yerel-test:${c.eposta}`); };
   const kapat = async (c) => {
     // denemeler sırasında köprünün gördüğü ret sayısı (bilgi) + sayfa hatası
     k_(`${c.kullanici}: sayfa hatası yok`, c.hatalar, []);

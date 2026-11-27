@@ -40,11 +40,11 @@ const { Client } = require(process.env.KOPRU_PG || "pg");
 
 const KOKDIZIN = path.join(__dirname, "..", "..");
 const HTML = process.env.YAYIN_HTML || path.join(KOKDIZIN, "atolye-erp-v1.744.37.html");
-const SONUC = path.join(__dirname, "sonuc-ekran-gecis-1744-37.txt");
+const SONUC = path.join(__dirname, process.env.KOPRU_SUPABASE ? "sonuc-sb/ekran-gecis-1744-37.txt" : "sonuc-ekran-gecis-1744-37.txt");
 const KOK = "https://yalitilmis-sinama.invalid/";
 const YASAK = /mqdgucoomgqcvhvgixbl|drtmnovafswzcmpacubl/;
 const PAKETLI = "aday_a", PAKETSIZ = "inc_ekran_taban";
-const PAKET_SQL = ["27-b4-uygula.sql", "28-b3a-uygula.sql", "29-b3a2-uygula.sql"].map((x) => path.join(KOKDIZIN, "stok-v2", "guvenlik", x));
+const PAKET_SQL = ["27-b4-uygula.sql", "28-b3a-uygula.sql", "29-b3a2-uygula.sql", "31-yetki-ileti-uygula.sql"].map((x) => path.join(KOKDIZIN, "stok-v2", "guvenlik", x));
 const URUN = "ekr-bot";
 const SECILI = process.env.GECIS_SENARYO ? process.env.GECIS_SENARYO.split(",") : null;
 const kos = (ad) => !SECILI || SECILI.includes(ad);
@@ -74,11 +74,17 @@ const epostasi = (ad) => String(ad).toLowerCase().replace(/[çğıiöşü]/g, (h
 const pgYonet = async (sql) => { const pg = new Client({ host: process.env.PGHOST || "localhost", database: "postgres", user: process.env.PGUSER || "postgres" });
   await pg.connect(); pg.on("notice", () => {}); try { for (const s of sql) await pg.query(s); } finally { await pg.end(); } };
 const acikKopyalar = [];
-const kopya = async (db, sablon) => { await pgYonet([`drop database if exists ${db}`, `create database ${db} template ${sablon}`]); acikKopyalar.push(db); };
+// GERÇEK API KİPİ (KOPRU_SUPABASE, yerel Supabase): tek veritabanı var — "taze kopya" yerine veri sıfırlanır ve paket durumu ayarlanır
+// (test/sb/sb-sifirla.sh paketli | paketsiz); paketler aynı dosyalarla, postgres rolüyle kurulur; PostgREST şema belleği yenilenir.
+const GERCEK = !!process.env.KOPRU_SUPABASE;
+const SB_PG = "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
+const kopya = async (db, sablon) => {
+  if (GERCEK) { execFileSync("bash", [path.join(__dirname, "../sb/sb-sifirla.sh"), sablon === PAKETLI ? "paketli" : "paketsiz"], { stdio: ["ignore", "pipe", "pipe"] }); return; }
+  await pgYonet([`drop database if exists ${db}`, `create database ${db} template ${sablon}`]); acikKopyalar.push(db); };
 const paketDurum = async (q) => { const r = (await q(`select (select count(*) from pg_trigger where tgname = 'b3a_yazma_koru')::int a,
   (select count(*) from pg_trigger where tgname = 'b3a2_alan_koru')::int b, (select count(*) from pg_proc where proname like 'b4\\_%')::int c`))[0]; return [r.a, r.b, r.c]; };
 // paket kur: psql'in SON stdout satırı (GENEL|KURULU) döner; NOTICE'lar stderr'de kalır ve yazılmaz
-const paketKur = (db, dosya) => { const cikti = execFileSync("psql", ["-X", "-q", "-A", "-t", "-U", "postgres", "-v", "ON_ERROR_STOP=1", "-d", db, "-f", dosya],
+const paketKur = (db, dosya) => { const cikti = execFileSync("psql", GERCEK ? ["-X", "-q", "-A", "-t", SB_PG, "-v", "ON_ERROR_STOP=1", "-f", dosya, "-c", "notify pgrst, 'reload schema'"] : ["-X", "-q", "-A", "-t", "-U", "postgres", "-v", "ON_ERROR_STOP=1", "-d", db, "-f", dosya],
   { stdio: ["ignore", "pipe", "pipe"], env: process.env }).toString().trim().split("\n"); return cikti[cikti.length - 1].trim(); };
 
 // ── UYGULAMA HAZIR: herhangi bir menü öğesi var, "Yükleniyor" yok, giriş ekranı yok — art arda iki bakışta. Giriş ekranı çıkarsa giriş yapılır.
@@ -124,8 +130,8 @@ async function ac(db, kullanici) {
     ? r.fulfill({ status: 200, contentType: "text/html; charset=utf-8", body: govde }) : r.fulfill({ status: 404, body: "" })));
   await sayfa.addInitScript((e) => {
     localStorage.setItem("firma:secim", JSON.stringify({ kod: "yalitilmis", ad: "YALITILMIŞ SINAMA", url: "https://yalitilmissinama00.supabase.co", anahtar: "sb_publishable_yalitilmis_yerel_sinama" }));
-    if (!localStorage.getItem("atolye:oturum")) localStorage.setItem("atolye:oturum", JSON.stringify({ erisim: `yerel-test:${e}`, yenileme: `yerel-test:${e}`, sonaErme: Date.now() + 864e5, email: e }));
-  }, eposta);
+    if (e && !localStorage.getItem("atolye:oturum")) localStorage.setItem("atolye:oturum", JSON.stringify({ erisim: `yerel-test:${e}`, yenileme: `yerel-test:${e}`, sonaErme: Date.now() + 864e5, email: e }));
+  }, GERCEK ? null : eposta);   // gerçek API kipinde sahte oturum konmaz: giriş ekrandan, gerçek Auth hesabıyla
   await k.bagla(sayfa);
   await sayfa.goto(KOK + path.basename(HTML));
   if (!(await hazirBekle(sayfa, kullanici))) throw new Error("yayın paketi açılmadı: " + kisa(await sayfa.evaluate(() => document.body.innerText), 300));
@@ -530,6 +536,6 @@ const degisenSutunlar = (a, b) => Object.keys(b).filter((x) => JSON.stringify(a[
   yaz(`EKRANDAN YAPILAMAYAN (${yapilamayan.length})`); yapilamayan.forEach((b, i) => yaz(`  ${i + 1}. ${b}`)); if (!yapilamayan.length) yaz("  —");
   yaz(`\n── ekran-gecis-1744-37: ${gecen} geçti · ${kalan} kaldı ──`);
   if (!SECILI) fs.writeFileSync(SONUC, satirlar.join("\n") + "\n");
-  if (!process.env.GECIS_TUT) await pgYonet(acikKopyalar.map((d) => `drop database if exists ${d}`)).catch((e) => console.error("kopyalar silinemedi:", e.message));
+  if (!process.env.GECIS_TUT && !GERCEK) await pgYonet(acikKopyalar.map((d) => `drop database if exists ${d}`)).catch((e) => console.error("kopyalar silinemedi:", e.message));
   process.exit(kalan ? 1 : 0);
 })().catch((x) => { console.error("HATA", x); process.exit(2); });
