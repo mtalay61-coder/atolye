@@ -1,0 +1,252 @@
+ekran-deneme-temizlik · 2026-11-27 · yalnız yerel PostgreSQL (localhost) · yayın paketi atolye-erp-v1.744.37.html
+■ KURULUM — canlıdaki durumun yerelde kuruluşu
+  sunucu: inc_ekran_taban kopyası + 27-b4-uygula.sql → 99|GENEL|UYGULANMIŞ
+  paketler: B4 işlevi 2 · yetki paketi tetikleyicisi 0 (0 = YOK) · G-25 nesnesi 0 · sunucuda uretim_sil VAR · stk_ayar.fis_aktif=false
+  fikstür (SQL): KESİMHANE bölümü (Kesim), 1068 - Siyah, DENEME ÜRÜN (+reçete, Kesim 1 ₺), DENEME HAMMADDE, DENEME USTA, üretim 10001 (2 çift, iş verilmemiş)
+  istemci: atolye-erp-v1.744.37.html · sha256 bc6912c22a062d1c7e0b012257839dac3e2b86aab0e9f5eb1b7ab5052fbe458a · kullanıcı Ali (Yönetici)
+  ● ekran: Ürün Stok › DENEME ÜRÜN › Reçete › "Reçeteyi onayla" (etkin) → bildirim: İşçilik gider kartları açılıp proseslere bağlandı (Finans › Gelir / Gider) ‖ Başka cihazdan güncellendi: Stok ‖ DENEME ÜRÜN: reçete onaylandı · sunucuda receteOnay.onaylayan="Ali"
+  ● ekran: üretim 10001 › "İşi Ver" (DENEME USTA) → bildirim: DENEME ÜRÜN: reçete onaylandı ‖ 2 adet (40:2) DENEME USTA'a verildi
+  ● ekran: 1. "Teslim Al" (sağlam 2) → bildirim: ÜRT-261127001 · 10001 tüm prosesler tamamlandı — mamul stoğa eklendi
+      teslim sonrası: stok ÜRÜN=2 HAMMADDE=-2 · dnm-10001 aşama=Tamamlandı stoğaEklendi=true tahakkuk=1 adımlar=Kesim:verildi=true:tamam=true · DENEME USTA geçerli cari hareketi=0 (işçilik bölüm tahakkukunda)
+  ● ekran: 1. teslimi "Geri Al" → bildirim: "Kesim" için 2 adetlik teslim alma işlemi geri alındı — hammadde ve işçilik geri alındı
+  ● ekran: 2. "Teslim Al" (sağlam 2) → bildirim: ÜRT-261127002 · 10001 tüm prosesler tamamlandı — mamul stoğa eklendi
+      teslim sonrası: stok ÜRÜN=2 HAMMADDE=-2 · dnm-10001 aşama=Tamamlandı stoğaEklendi=true tahakkuk=1 adımlar=Kesim:verildi=true:tamam=true · DENEME USTA geçerli cari hareketi=0 (işçilik bölüm tahakkukunda)
+  ● ekran: 2. teslimi "Geri Al" → bildirim: "Kesim" için 2 adetlik teslim alma işlemi geri alındı — hammadde ve işçilik geri alındı
+  ▸ SUNUCU [BAŞLANGIÇ = canlıdaki durum]
+      40-sorgu son satır: 99|GENEL|TEMİZ — geçerli deneme kaydı kalmadı
+      stok: DENEME ÜRÜN=0 · DENEME HAMMADDE=0 | ÜRT fişleri: ÜRT-261127001:İPTAL:2 satır(2 iptal), ÜRT-261127002:İPTAL:2 satır(2 iptal) | DENEME USTA geçerli cari hareketi=0
+      üretim: dnm-10001 aşama=Kesim stoğaEklendi=false tahakkuk=0 adımlar=Kesim:verildi=true:tamam=false | atamalar: Kesim:2:DENEME USTA:bekliyor
+      cop: boş | uretim_silinen izi=0 | stok_rezervasyonlari=0 | kartlar: DENEME HAMMADDE=aktif, DENEME ÜRÜN=aktif, DENEME USTA=aktif
+      tablo satır sayıları: stk_fis=2 stk_hareket=4 car_hareket=0 | defter özeti: car_hareket=0:d41d8cd9 stk_fis=2:66c1950a stk_hareket=4:6aa058c6 stk_stok=8:c2e32af6
+  ✓ [başlangıç: 40-sorgu TEMİZ] "TEMİZ — geçerli deneme kaydı kalmadı"
+  ✓ [başlangıç: stoklar 0, 2 iptal ÜRT fişi, geçerli 0] [0,0,2,0]
+  ✓ [başlangıç: atama Kesim 2 adet DENEME USTA'da bekliyor] "Kesim:2:DENEME USTA:bekliyor"
+  ✓ [başlangıç: üç kart aktif] "DENEME HAMMADDE=aktif, DENEME ÜRÜN=aktif, DENEME USTA=aktif"
+  ▸ EKRAN [BAŞLANGIÇ (sayfa yenilendi)]
+      Üretim › Üretim Takibi: Üretim Takibi Atölye Ekranı Barkod Okut Yeni Üretim Siparişi Tümü Bugün Bu Hafta Bu Ay Tümü (1) Kesim (1) Proses 10001 — DENEME ÜRÜN 1068 - Siyah 2 çift Kesim Bu görünümdeki toplam 2 adet (1 sipariş) Tamamlanan: 0 adet (0 sipariş) Devam Eden: 2 adet (1 sipariş)
+      üretim kartı › "Hammadde İhtiyacı" sekmesi: Kesim 1 malzeme DENEME HAMMADDE Siyah · 40 2 × 1 = 2 çift
+      üretim kartı › "Prosesler" sekmesi: 1. Kesim 2 / 2 adet dağıtıldı 10001 DENEME USTA 2 adet (40:2) Rezerve Geri Al Teslim Al · 2 adet verilmişti BEDEN 40 Σ VERİLEN 2 2 SAĞLAM 2 TAMİR HURDA Artan ve eksik malzeme Artan — işten geriye kalan, stoğa geri döner Ek alınan — malzeme yetmeyince depodan f
+      Üretim Raporu: Üretim Raporu Günlük Haftalık Aylık 27 Kasım 2026 Cuma · 1 iş günü Açık üretim 1 Açık üretimde çift 2 Biten üretim (stoğa giren) 0 Şu an personelde 2
+      Depo › Hammadde Deposu (DENEME satırları; sütunlar STOK AYRILAN SERBEST TALEP İHTİYAÇ): DENEME HAMMADDE 1 renk · 1 ölçü — detay için tıklayın — çift — — — ✓ karşılandı ‖ DENEME ÜRÜN 1 renk · 1 ölçü — detay için tıklayın — çift — — — ✓ karşılandı
+      Planlama › Hammadde İhtiyaç: Bekleyen satış siparişi kalemi yok — hesaplanacak bir hammadde ihtiyacı bulunamadı.
+      Fişler: Fişler Tüm defterler Genel Resmi Tümü (0) Gösterilecek fiş bulunamadı.
+  ✓ [kurulumda sayfa hatası yok] []
+
+■ S1 — SIRA (i): işi vermeyi Geri Al → (iptal yolu varsa iptal, yoksa bırak) → üç kartı Pasife al
+  ▸ SUNUCU [S1 başlangıç]
+      40-sorgu son satır: 99|GENEL|TEMİZ — geçerli deneme kaydı kalmadı
+      stok: DENEME ÜRÜN=0 · DENEME HAMMADDE=0 | ÜRT fişleri: ÜRT-261127001:İPTAL:2 satır(2 iptal), ÜRT-261127002:İPTAL:2 satır(2 iptal) | DENEME USTA geçerli cari hareketi=0
+      üretim: dnm-10001 aşama=Kesim stoğaEklendi=false tahakkuk=0 adımlar=Kesim:verildi=true:tamam=false | atamalar: Kesim:2:DENEME USTA:bekliyor
+      cop: boş | uretim_silinen izi=0 | stok_rezervasyonlari=0 | kartlar: DENEME HAMMADDE=aktif, DENEME ÜRÜN=aktif, DENEME USTA=aktif
+      tablo satır sayıları: stk_fis=2 stk_hareket=4 car_hareket=0 | defter özeti: car_hareket=0:d41d8cd9 stk_fis=2:66c1950a stk_hareket=4:6aa058c6 stk_stok=8:c2e32af6
+  ▸ SORU 1 — ekranda üretimi SİLMEDEN iptal / kapatma / durdurma var mı
+      Üretim Takibi (kart kapalı) görünen düğmeler: Atölye Ekranı | Barkod Okut | Yeni Üretim Siparişi | Tümü | Bugün | Bu Hafta | Bu Ay | Tümü (1) | Kesim (1) | Proses | Tam ekran aç — başka modüle geçerken açık kalır
+      üretim şeridine SAĞ TIK menüsü: ÜRETİM · 10001 · DENEME ÜRÜN Kartı aç Tam ekranda aç Barkod etiketi (6×4) İş emri yazdır (A4) Üretimi sil
+      kart AÇIKKEN eklenen düğmeler (Prosesler sekmesi): Prosesler | Hammadde İhtiyacı | Bu parçanın barkod etiketini bas | Geri Al | Teslim Al
+  ✓ [Soru 1: üretim için İPTAL / askıya al / durdur / sonlandır düğmesi ya da menü öğesi YOK; "Üretimi sil" VAR] [false,true]
+  ● üretim 10001 kartı › Prosesler › atama satırı «10001 DENEME USTA 2 adet (40:2) Rezerve Geri Al Teslim Al · 2 adet verilmişti BEDEN 40 Σ VERİLEN 2 2 SAĞLAM 2 TAMİR HURD» › "Geri Al" (ipucu: "Yanlış personele/miktarla verildiyse — hiçbir stok/cari etkisi olmadan geri alır") → bildirim: "Kesim" için 2 adetlik atama geri alındı
+      yazma istekleri: PATCH uretim → 200 · POST rpc/alt_yaz → 200 · POST gunluk → 201
+  ▸ SUNUCU [S1 · işi vermeyi Geri Al sonrası (YOL A)]
+      40-sorgu son satır: 99|GENEL|TEMİZ — geçerli deneme kaydı kalmadı
+      stok: DENEME ÜRÜN=0 · DENEME HAMMADDE=0 | ÜRT fişleri: ÜRT-261127001:İPTAL:2 satır(2 iptal), ÜRT-261127002:İPTAL:2 satır(2 iptal) | DENEME USTA geçerli cari hareketi=0
+      üretim: dnm-10001 aşama=Kesim stoğaEklendi=false tahakkuk=0 adımlar=Kesim:verildi=false:tamam=false | atamalar: atama yok
+      cop: boş | uretim_silinen izi=0 | stok_rezervasyonlari=0 | kartlar: DENEME HAMMADDE=aktif, DENEME ÜRÜN=aktif, DENEME USTA=aktif
+      tablo satır sayıları: stk_fis=2 stk_hareket=4 car_hareket=0 | defter özeti: car_hareket=0:d41d8cd9 stk_fis=2:66c1950a stk_hareket=4:6aa058c6 stk_stok=8:c2e32af6
+  ✓ [S1/A: defterler (fiş, stok hareketi, cari hareketi, stok) DEĞİŞMEDİ] true
+  ✓ [S1/A: atama satırı silindi, üretim satırı duruyor (Kesim verilmedi)] ["atama yok",true]
+  ▸ EKRAN [S1 · Geri Al sonrası (sayfa yenilendi)]
+      Üretim › Üretim Takibi: Üretim Takibi Atölye Ekranı Barkod Okut Yeni Üretim Siparişi Tümü Bugün Bu Hafta Bu Ay Tümü (1) Kesim (1) Proses 10001 — DENEME ÜRÜN 1068 - Siyah 2 çift Kesim Bu görünümdeki toplam 2 adet (1 sipariş) Tamamlanan: 0 adet (0 sipariş) Devam Eden: 2 adet (1 sipariş)
+      üretim kartı › "Hammadde İhtiyacı" sekmesi: Kesim 1 malzeme DENEME HAMMADDE Siyah · 40 2 × 1 = 2 çift
+      üretim kartı › "Prosesler" sekmesi: 1. Kesim 0 / 2 adet dağıtıldı 40 kalan 2 Kime: ⚠ Personel seçin DENEME USTA Verilen hammadde boş bırakırsanız reçete kadar verilmiş sayılır — artan teslim alırken hesaplanır DENEME HAMMADDE · Siyah · 40 /2 çift İşi Ver
+      Üretim Raporu: Üretim Raporu Günlük Haftalık Aylık 27 Kasım 2026 Cuma · 1 iş günü Açık üretim 1 Açık üretimde çift 2 Biten üretim (stoğa giren) 0 Şu an personelde 0
+      Depo › Hammadde Deposu (DENEME satırları; sütunlar STOK AYRILAN SERBEST TALEP İHTİYAÇ): DENEME HAMMADDE 1 renk · 1 ölçü — detay için tıklayın — çift — — — ✓ karşılandı ‖ DENEME ÜRÜN 1 renk · 1 ölçü — detay için tıklayın — çift — — — ✓ karşılandı
+      Planlama › Hammadde İhtiyaç: Bekleyen satış siparişi kalemi yok — hesaplanacak bir hammadde ihtiyacı bulunamadı.
+      Fişler: Fişler Tüm defterler Genel Resmi Tümü (0) Gösterilecek fiş bulunamadı.
+  ● üretim için ekranda iptal yolu YOK (Soru 1) → üretim 10001 OLDUĞU GİBİ BIRAKILDI (açık, Kesim'de, iş verilmemiş)
+  ● Ürün Stok › "DENEME ÜRÜN" satırına dokun (STOK KARTI açılır; kartta görünen pasif/sil düğmesi: []) › mor şeride sağ tık (menü: ÜRÜN · DENEME ÜRÜN Kartı kapat Düzenle Stok bilgileri Reçete Maliyet Fiyatlandırma Barkodlar Stok hareketleri Web sitesinde göster Çeviriler (sitede EN / RU) Pasife al Ürünü sil) › "Pasife al"
+      → bildirim: "DENEME ÜRÜN" pasife alındı — geçmişi duruyor, yeni işlemlerde seçilemez · yazma istekleri: POST rpc/site_kayit_listesi → 200 ×2 · PATCH urunler → 200 · POST gunluk → 201
+      Ürün Stok listesi şimdi: Ürün Stok Stok değeri: 0,00 ₺ Stok Girişi Ürün Ekle Pasifler (1) Liste Katalog İnceleme Bot 2 renk/beden 0 Ekran Bot 4 renk/beden 0
+  ● Stok › "DENEME HAMMADDE" satırına dokun (STOK KARTI açılır; kartta görünen pasif/sil düğmesi: []) › mor şeride sağ tık (menü: ÜRÜN · DENEME HAMMADDE Kartı kapat Düzenle Stok bilgileri Fiyatlandırma Barkodlar Stok hareketleri Pasife al Ürünü sil) › "Pasife al"
+      → bildirim: "DENEME ÜRÜN" pasife alındı — geçmişi duruyor, yeni işlemlerde seçilemez ‖ "DENEME HAMMADDE" pasife alındı — geçmişi duruyor, yeni işlemlerde seçilemez · yazma istekleri: PATCH urunler → 200 · POST gunluk → 201
+      Stok listesi şimdi: Stok Yönetimi Stok değeri: 0,00 ₺ Stok Girişi Ürün Ekle Pasifler (1) Tümü 0 Hammadde 0 Yarı Mamul 0 Hizmet 0 Liste Katalog Aramanızla eşleşen ürün yok.
+  ● Cari › "DENEME USTA" satırına sağ tık (menü: CARİ · DENEME USTA Kartı aç Tam ekran aç Düzenle Ekstre yazdır (PDF) — Genel Pasife al Cariyi sil) › "Pasife al"
+      → bildirim: "DENEME HAMMADDE" pasife alındı — geçmişi duruyor, yeni işlemlerde seçilemez ‖ "DENEME USTA" pasife alındı — geçmişi duruyor, yeni işlemlerde seçilemez. Pasifler sekmesinden geri alınabilir · yazma istekleri: PATCH cariler → 200 · POST gunluk → 201
+      Cari listesi şimdi: Cari Hesaplar Liste Raporlar Pasifler (1) Tümü (2) Müşteri (2) Tedarikçi (0) Personel (0) Tümü Genel Resmi Alacak: 0 ₺ Borç: 0 ₺ Net: 0 ₺ Cari Ekle 0002 Ekran Müşteri Müşteri USD ALACAK — BORÇ — 0001 İnceleme Müşteri Müşteri ALACAK — BORÇ —
+  ▸ SUNUCU [S1 · üç kart pasif (SON)]
+      40-sorgu son satır: 99|GENEL|TEMİZ — geçerli deneme kaydı kalmadı
+      stok: DENEME ÜRÜN=0 · DENEME HAMMADDE=0 | ÜRT fişleri: ÜRT-261127001:İPTAL:2 satır(2 iptal), ÜRT-261127002:İPTAL:2 satır(2 iptal) | DENEME USTA geçerli cari hareketi=0
+      üretim: dnm-10001 aşama=Kesim stoğaEklendi=false tahakkuk=0 adımlar=Kesim:verildi=false:tamam=false | atamalar: atama yok
+      cop: boş | uretim_silinen izi=0 | stok_rezervasyonlari=0 | kartlar: DENEME HAMMADDE=pasif, DENEME ÜRÜN=pasif, DENEME USTA=pasif
+      tablo satır sayıları: stk_fis=2 stk_hareket=4 car_hareket=0 | defter özeti: car_hareket=0:d41d8cd9 stk_fis=2:66c1950a stk_hareket=4:6aa058c6 stk_stok=8:c2e32af6
+  ✓ [S1: üç kart pasif] "DENEME HAMMADDE=pasif, DENEME ÜRÜN=pasif, DENEME USTA=pasif"
+  ✓ [S1: pasife alma defterlere dokunmadı (2 iptal fiş satırlarıyla duruyor)] [true,true]
+  ✓ [S1: 40-sorgu TEMİZ] "TEMİZ — geçerli deneme kaydı kalmadı"
+  ▸ EKRAN [S1 · SON (sayfa yenilendi)]
+      Üretim › Üretim Takibi: Üretim Takibi Atölye Ekranı Barkod Okut Yeni Üretim Siparişi Tümü Bugün Bu Hafta Bu Ay Tümü (1) Kesim (1) Proses 10001 — DENEME ÜRÜN 1068 - Siyah 2 çift Kesim Bu görünümdeki toplam 2 adet (1 sipariş) Tamamlanan: 0 adet (0 sipariş) Devam Eden: 2 adet (1 sipariş)
+      üretim kartı › "Hammadde İhtiyacı" sekmesi: Kesim 1 malzeme DENEME HAMMADDE Siyah · 40 2 × 1 = 2 çift
+      üretim kartı › "Prosesler" sekmesi: 1. Kesim 0 / 2 adet dağıtıldı 40 kalan 2 Kime: ⚠ Personel seçin DENEME USTA Verilen hammadde boş bırakırsanız reçete kadar verilmiş sayılır — artan teslim alırken hesaplanır DENEME HAMMADDE · Siyah · 40 /2 çift İşi Ver
+      Üretim Raporu: Üretim Raporu Günlük Haftalık Aylık 27 Kasım 2026 Cuma · 1 iş günü Açık üretim 1 Açık üretimde çift 2 Biten üretim (stoğa giren) 0 Şu an personelde 0
+      Depo › Hammadde Deposu (DENEME satırları; sütunlar STOK AYRILAN SERBEST TALEP İHTİYAÇ): DENEME HAMMADDE 1 renk · 1 ölçü — detay için tıklayın — çift — — — ✓ karşılandı ‖ DENEME ÜRÜN 1 renk · 1 ölçü — detay için tıklayın — çift — — — ✓ karşılandı
+      Planlama › Hammadde İhtiyaç: Bekleyen satış siparişi kalemi yok — hesaplanacak bir hammadde ihtiyacı bulunamadı.
+      Fişler: Fişler Tüm defterler Genel Resmi Tümü (0) Gösterilecek fiş bulunamadı.
+  ▸ SEÇİM KUTULARI [S1]
+      Üretim › "Yeni Üretim Siparişi" › Ürün (Mamul) listesi: ["Seçin…","İnceleme Bot","Ekran Bot"]
+  ✓ [S1: pasif DENEME ÜRÜN yeni üretimde SEÇİLEMİYOR] [true,false]
+      üretim 10001 kartı › "Kime" (iş verme) listesi: ["⚠ Personel seçin","DENEME USTA"]
+  ✗ [S1: pasif DENEME USTA iş vermede SEÇİLEMİYOR] true · beklenen false
+     ‼ BULGU: S1: pasife alınan DENEME USTA, üretim kartındaki "Kime" (iş verme) listesinde HÂLÂ ÇIKIYOR — pasif cari iş vermede seçilebiliyor (pasif bildirimi "yeni işlemlerde seçilemez" diyor). Açık üretim kalırsa iş yeniden bu ustaya verilebilir.
+      Ürün Stok › Ekran Bot › Reçete › "Hammadde ara…": kutuya dokununca "DENEME HAMMADDE" yok; "DENEME" yazınca yok · kutunun çevresi: «Hammadde "DENEME" adıyla yeni hammadde ekle "DENEME" ile eşleşen ürün yok»
+  ✓ [S1: pasif DENEME HAMMADDE reçete hammadde aramasında ÇIKMIYOR] [false,false]
+  pencereler: [] · sayfa hataları: []
+     ‼ BULGU: S1 sonunda üretim 10001 AÇIK üretim olarak duruyor (Üretim Takibi'nde listeleniyor, Üretim Raporu'nda "Açık üretim 1", kartında hammadde ihtiyacı yazıyor) — "açık iş ve hammadde ihtiyacı kalksın" isteği bu sırayla KARŞILANMIYOR.
+
+■ S2 — SIRA (ii): işi vermeyi Geri Al → Üretimi sil → üç kartı Pasife al
+  ▸ SUNUCU [S2 başlangıç]
+      40-sorgu son satır: 99|GENEL|TEMİZ — geçerli deneme kaydı kalmadı
+      stok: DENEME ÜRÜN=0 · DENEME HAMMADDE=0 | ÜRT fişleri: ÜRT-261127001:İPTAL:2 satır(2 iptal), ÜRT-261127002:İPTAL:2 satır(2 iptal) | DENEME USTA geçerli cari hareketi=0
+      üretim: dnm-10001 aşama=Kesim stoğaEklendi=false tahakkuk=0 adımlar=Kesim:verildi=true:tamam=false | atamalar: Kesim:2:DENEME USTA:bekliyor
+      cop: boş | uretim_silinen izi=0 | stok_rezervasyonlari=0 | kartlar: DENEME HAMMADDE=aktif, DENEME ÜRÜN=aktif, DENEME USTA=aktif
+      tablo satır sayıları: stk_fis=2 stk_hareket=4 car_hareket=0 | defter özeti: car_hareket=0:d41d8cd9 stk_fis=2:66c1950a stk_hareket=4:6aa058c6 stk_stok=8:c2e32af6
+  ● üretim 10001 kartı › Prosesler › atama satırı «10001 DENEME USTA 2 adet (40:2) Rezerve Geri Al Teslim Al · 2 adet verilmişti BEDEN 40 Σ VERİLEN 2 2 SAĞLAM 2 TAMİR HURD» › "Geri Al" (ipucu: "Yanlış personele/miktarla verildiyse — hiçbir stok/cari etkisi olmadan geri alır") → bildirim: "Kesim" için 2 adetlik atama geri alındı
+      yazma istekleri: PATCH uretim → 200 · POST rpc/alt_yaz → 200 · POST gunluk → 201
+  ▸ SUNUCU [S2 · işi vermeyi Geri Al sonrası]
+      40-sorgu son satır: 99|GENEL|TEMİZ — geçerli deneme kaydı kalmadı
+      stok: DENEME ÜRÜN=0 · DENEME HAMMADDE=0 | ÜRT fişleri: ÜRT-261127001:İPTAL:2 satır(2 iptal), ÜRT-261127002:İPTAL:2 satır(2 iptal) | DENEME USTA geçerli cari hareketi=0
+      üretim: dnm-10001 aşama=Kesim stoğaEklendi=false tahakkuk=0 adımlar=Kesim:verildi=false:tamam=false | atamalar: atama yok
+      cop: boş | uretim_silinen izi=0 | stok_rezervasyonlari=0 | kartlar: DENEME HAMMADDE=aktif, DENEME ÜRÜN=aktif, DENEME USTA=aktif
+      tablo satır sayıları: stk_fis=2 stk_hareket=4 car_hareket=0 | defter özeti: car_hareket=0:d41d8cd9 stk_fis=2:66c1950a stk_hareket=4:6aa058c6 stk_stok=8:c2e32af6
+  ● üretim şeridine sağ tık (menü: ÜRETİM · 10001 · DENEME ÜRÜN Kartı aç Tam ekranda aç Barkod etiketi (6×4) İş emri yazdır (A4) Üretimi sil) → "Üretimi sil" → onay kutusu: «Bu üretim siparişini silmek istediğinize emin misiniz? Evet, Sil Vazgeç»
+      → bildirim: Üretim siparişi silindi
+      yazma istekleri: POST rpc/site_kayit_listesi → 200 ×2 · POST rpc/uretim_sil → 200 · DELETE uretim → 200 · POST gunluk → 201
+  ▸ SUNUCU [S2 · Üretimi sil sonrası (YOL B)]
+      40-sorgu son satır: 99|GENEL|BAK — yukarıdaki satırları incele
+      BAK satırları: 4) deneme üretim kaydı 10001 (1 kayıt; değiştirilmedi) · aşama · stoğa eklendi mi → 0 kayıt
+      stok: DENEME ÜRÜN=0 · DENEME HAMMADDE=0 | ÜRT fişleri: ÜRT-261127001:İPTAL:2 satır(2 iptal), ÜRT-261127002:İPTAL:2 satır(2 iptal) | DENEME USTA geçerli cari hareketi=0
+      üretim: ÜRETİM SATIRI YOK | atamalar: atama yok
+      cop: boş | uretim_silinen izi=1 | stok_rezervasyonlari=0 | kartlar: DENEME HAMMADDE=aktif, DENEME ÜRÜN=aktif, DENEME USTA=aktif
+      tablo satır sayıları: stk_fis=2 stk_hareket=4 car_hareket=0 | defter özeti: car_hareket=0:d41d8cd9 stk_fis=2:66c1950a stk_hareket=4:6aa058c6 stk_stok=8:c2e32af6
+  ✗ [S2/B: üretim satırı sunucudan SİLİNDİ, çöpte (cop) kopyası var] ["ÜRETİM SATIRI YOK",false] · beklenen ["ÜRETİM SATIRI YOK",true]
+     ‼ BULGU: Yol B: geçerli hareketi olmayan ("etkisiz") üretim silinince Çöp Kutusu'na GİTMİYOR — `cop` tablosu boş, Tanımlar › Çöp Kutusu "boş" diyor; üretim ve atama satırı sunucudan kalıcı siliniyor (DELETE uretim). Kopya yalnız sunucu arşivinde (silinen_arsiv: uretim + uretim_atamalari) ve `uretim_silinen` izinde kalıyor. Kaynak: 076-uretim-sil.jsx — `copaAt` yalnız hareketli (cascade) dalda çağrılıyor.
+  ✓ [S2/B: iki iptal ÜRT fişi satırlarıyla DURUYOR; defterler değişmedi (yeni fiş / hareket YOK)] [true,true]
+  ✓ [S2/B: stoklar 0, DENEME USTA geçerli cari hareketi 0] [0,0,0]
+      iptal fişlerin üretim bağı (silmeden sonra): ÜRT-261127001 iptal=true uretim_id=dnm-10001 siparis_no=10001 sebep="Üretim teslimi geri alındı (10001 · Kesim)" ‖ ÜRT-261127002 iptal=true uretim_id=dnm-10001 siparis_no=10001 sebep="Üretim teslimi geri alındı (10001 · Kesim)"
+      sunucu arşivi (silinen_arsiv; sütunlar id,tablo,islem,satir_id,veri,silen,silen_eposta,zaman): 3 satır
+      40-sorgu notu: sorgu deneme fişlerini ÜRETİM SATIRI üzerinden bulur; üretim silinince 4. satır "0 kayıt" (BAK) ve 5. satır "0 / 0" olur — fişler silinmedi, yukarıdaki ÜRT satırı kanıt.
+  ▸ EKRAN [S2 · Sil sonrası (sayfa yenilendi)]
+      Üretim › Üretim Takibi: Üretim Takibi Atölye Ekranı Barkod Okut Yeni Üretim Siparişi Henüz üretim siparişi yok. Yeni sipariş oluşturarak takibe başlayın.
+      üretim kartı: 10001 Üretim Takibi listesinde YOK
+      Üretim Raporu: Üretim Raporu Günlük Haftalık Aylık 27 Kasım 2026 Cuma · 1 iş günü Açık üretim 0 Açık üretimde çift 0 Biten üretim (stoğa giren) 0 Şu an personelde 0
+      Depo › Hammadde Deposu (DENEME satırları; sütunlar STOK AYRILAN SERBEST TALEP İHTİYAÇ): DENEME HAMMADDE 1 renk · 1 ölçü — detay için tıklayın — çift — — — ✓ karşılandı ‖ DENEME ÜRÜN 1 renk · 1 ölçü — detay için tıklayın — çift — — — ✓ karşılandı
+      Planlama › Hammadde İhtiyaç: Bekleyen satış siparişi kalemi yok — hesaplanacak bir hammadde ihtiyacı bulunamadı.
+      Fişler: Fişler Tüm defterler Genel Resmi Tümü (0) Gösterilecek fiş bulunamadı.
+      Tanımlar › Çöp Kutusu: Tümü (0) Çöp kutusu boş — henüz hiçbir kayıt silinmedi.
+  ● Ürün Stok › "DENEME ÜRÜN" satırına dokun (STOK KARTI açılır; kartta görünen pasif/sil düğmesi: []) › mor şeride sağ tık (menü: ÜRÜN · DENEME ÜRÜN Kartı kapat Düzenle Stok bilgileri Reçete Maliyet Fiyatlandırma Barkodlar Stok hareketleri Web sitesinde göster Çeviriler (sitede EN / RU) Pasife al Ürünü sil) › "Pasife al"
+      → bildirim: "DENEME ÜRÜN" pasife alındı — geçmişi duruyor, yeni işlemlerde seçilemez · yazma istekleri: POST rpc/site_kayit_listesi → 200 ×2 · PATCH urunler → 200 · POST gunluk → 201
+      Ürün Stok listesi şimdi: Ürün Stok Stok değeri: 0,00 ₺ Stok Girişi Ürün Ekle Pasifler (1) Liste Katalog İnceleme Bot 2 renk/beden 0 Ekran Bot 4 renk/beden 0
+  ● Stok › "DENEME HAMMADDE" satırına dokun (STOK KARTI açılır; kartta görünen pasif/sil düğmesi: []) › mor şeride sağ tık (menü: ÜRÜN · DENEME HAMMADDE Kartı kapat Düzenle Stok bilgileri Fiyatlandırma Barkodlar Stok hareketleri Pasife al Ürünü sil) › "Pasife al"
+      → bildirim: "DENEME ÜRÜN" pasife alındı — geçmişi duruyor, yeni işlemlerde seçilemez ‖ "DENEME HAMMADDE" pasife alındı — geçmişi duruyor, yeni işlemlerde seçilemez · yazma istekleri: PATCH urunler → 200 · POST gunluk → 201
+      Stok listesi şimdi: Stok Yönetimi Stok değeri: 0,00 ₺ Stok Girişi Ürün Ekle Pasifler (1) Tümü 0 Hammadde 0 Yarı Mamul 0 Hizmet 0 Liste Katalog Aramanızla eşleşen ürün yok.
+  ● Cari › "DENEME USTA" satırına sağ tık (menü: CARİ · DENEME USTA Kartı aç Tam ekran aç Düzenle Ekstre yazdır (PDF) — Genel Pasife al Cariyi sil) › "Pasife al"
+      → bildirim: "DENEME HAMMADDE" pasife alındı — geçmişi duruyor, yeni işlemlerde seçilemez ‖ "DENEME USTA" pasife alındı — geçmişi duruyor, yeni işlemlerde seçilemez. Pasifler sekmesinden geri alınabilir · yazma istekleri: PATCH cariler → 200 · POST gunluk → 201
+      Cari listesi şimdi: Cari Hesaplar Liste Raporlar Pasifler (1) Tümü (2) Müşteri (2) Tedarikçi (0) Personel (0) Tümü Genel Resmi Alacak: 0 ₺ Borç: 0 ₺ Net: 0 ₺ Cari Ekle 0002 Ekran Müşteri Müşteri USD ALACAK — BORÇ — 0001 İnceleme Müşteri Müşteri ALACAK — BORÇ —
+  ▸ SUNUCU [S2 · üç kart pasif (SON)]
+      40-sorgu son satır: 99|GENEL|BAK — yukarıdaki satırları incele
+      BAK satırları: 4) deneme üretim kaydı 10001 (1 kayıt; değiştirilmedi) · aşama · stoğa eklendi mi → 0 kayıt
+      stok: DENEME ÜRÜN=0 · DENEME HAMMADDE=0 | ÜRT fişleri: ÜRT-261127001:İPTAL:2 satır(2 iptal), ÜRT-261127002:İPTAL:2 satır(2 iptal) | DENEME USTA geçerli cari hareketi=0
+      üretim: ÜRETİM SATIRI YOK | atamalar: atama yok
+      cop: boş | uretim_silinen izi=1 | stok_rezervasyonlari=0 | kartlar: DENEME HAMMADDE=pasif, DENEME ÜRÜN=pasif, DENEME USTA=pasif
+      tablo satır sayıları: stk_fis=2 stk_hareket=4 car_hareket=0 | defter özeti: car_hareket=0:d41d8cd9 stk_fis=2:66c1950a stk_hareket=4:6aa058c6 stk_stok=8:c2e32af6
+  ✓ [S2: üç kart pasif] "DENEME HAMMADDE=pasif, DENEME ÜRÜN=pasif, DENEME USTA=pasif"
+  ✓ [S2: pasife alma defterlere dokunmadı] [true,true]
+  ▸ EKRAN [S2 · SON (sayfa yenilendi)]
+      Üretim › Üretim Takibi: Üretim Takibi Atölye Ekranı Barkod Okut Yeni Üretim Siparişi Henüz üretim siparişi yok. Yeni sipariş oluşturarak takibe başlayın.
+      üretim kartı: 10001 Üretim Takibi listesinde YOK
+      Üretim Raporu: Üretim Raporu Günlük Haftalık Aylık 27 Kasım 2026 Cuma · 1 iş günü Açık üretim 0 Açık üretimde çift 0 Biten üretim (stoğa giren) 0 Şu an personelde 0
+      Depo › Hammadde Deposu (DENEME satırları; sütunlar STOK AYRILAN SERBEST TALEP İHTİYAÇ): DENEME HAMMADDE 1 renk · 1 ölçü — detay için tıklayın — çift — — — ✓ karşılandı ‖ DENEME ÜRÜN 1 renk · 1 ölçü — detay için tıklayın — çift — — — ✓ karşılandı
+      Planlama › Hammadde İhtiyaç: Bekleyen satış siparişi kalemi yok — hesaplanacak bir hammadde ihtiyacı bulunamadı.
+      Fişler: Fişler Tüm defterler Genel Resmi Tümü (0) Gösterilecek fiş bulunamadı.
+  ▸ SEÇİM KUTULARI [S2]
+      Üretim › "Yeni Üretim Siparişi" › Ürün (Mamul) listesi: ["Seçin…","İnceleme Bot","Ekran Bot"]
+  ✓ [S2: pasif DENEME ÜRÜN yeni üretimde SEÇİLEMİYOR] [true,false]
+      iş verme listesi: üretim 10001 yok — bakılamadı (başka açık üretim de yok)
+      Ürün Stok › Ekran Bot › Reçete › "Hammadde ara…": kutuya dokununca "DENEME HAMMADDE" yok; "DENEME" yazınca yok · kutunun çevresi: «Hammadde "DENEME" adıyla yeni hammadde ekle "DENEME" ile eşleşen ürün yok»
+  ✓ [S2: pasif DENEME HAMMADDE reçete hammadde aramasında ÇIKMIYOR] [false,false]
+  pencereler: [] · sayfa hataları: []
+
+■ S3 — EK: iş ustadayken üç kartı Pasife al → Geri Al YAPMADAN Üretimi sil → Çöp Kutusu'ndan Geri yükle
+  ▸ SUNUCU [S3 başlangıç]
+      40-sorgu son satır: 99|GENEL|TEMİZ — geçerli deneme kaydı kalmadı
+      stok: DENEME ÜRÜN=0 · DENEME HAMMADDE=0 | ÜRT fişleri: ÜRT-261127001:İPTAL:2 satır(2 iptal), ÜRT-261127002:İPTAL:2 satır(2 iptal) | DENEME USTA geçerli cari hareketi=0
+      üretim: dnm-10001 aşama=Kesim stoğaEklendi=false tahakkuk=0 adımlar=Kesim:verildi=true:tamam=false | atamalar: Kesim:2:DENEME USTA:bekliyor
+      cop: boş | uretim_silinen izi=0 | stok_rezervasyonlari=0 | kartlar: DENEME HAMMADDE=aktif, DENEME ÜRÜN=aktif, DENEME USTA=aktif
+      tablo satır sayıları: stk_fis=2 stk_hareket=4 car_hareket=0 | defter özeti: car_hareket=0:d41d8cd9 stk_fis=2:66c1950a stk_hareket=4:6aa058c6 stk_stok=8:c2e32af6
+  ● Ürün Stok › "DENEME ÜRÜN" satırına dokun (STOK KARTI açılır; kartta görünen pasif/sil düğmesi: []) › mor şeride sağ tık (menü: ÜRÜN · DENEME ÜRÜN Kartı kapat Düzenle Stok bilgileri Reçete Maliyet Fiyatlandırma Barkodlar Stok hareketleri Web sitesinde göster Çeviriler (sitede EN / RU) Pasife al Ürünü sil) › "Pasife al"
+      → bildirim: "DENEME ÜRÜN" pasife alındı — geçmişi duruyor, yeni işlemlerde seçilemez · yazma istekleri: PATCH urunler → 200 · POST gunluk → 201
+      Ürün Stok listesi şimdi: Ürün Stok Stok değeri: 0,00 ₺ Stok Girişi Ürün Ekle Pasifler (1) Liste Katalog İnceleme Bot 2 renk/beden 0 Ekran Bot 4 renk/beden 0
+  ● Stok › "DENEME HAMMADDE" satırına dokun (STOK KARTI açılır; kartta görünen pasif/sil düğmesi: []) › mor şeride sağ tık (menü: ÜRÜN · DENEME HAMMADDE Kartı kapat Düzenle Stok bilgileri Fiyatlandırma Barkodlar Stok hareketleri Pasife al Ürünü sil) › "Pasife al"
+      → bildirim: "DENEME ÜRÜN" pasife alındı — geçmişi duruyor, yeni işlemlerde seçilemez ‖ "DENEME HAMMADDE" pasife alındı — geçmişi duruyor, yeni işlemlerde seçilemez · yazma istekleri: PATCH urunler → 200 · POST gunluk → 201
+      Stok listesi şimdi: Stok Yönetimi Stok değeri: 0,00 ₺ Stok Girişi Ürün Ekle Pasifler (1) Tümü 0 Hammadde 0 Yarı Mamul 0 Hizmet 0 Liste Katalog Aramanızla eşleşen ürün yok.
+  ● Cari › "DENEME USTA" satırına sağ tık (menü: CARİ · DENEME USTA Kartı aç Tam ekran aç Düzenle Ekstre yazdır (PDF) — Genel Pasife al Cariyi sil) › "Pasife al"
+      → bildirim: "DENEME HAMMADDE" pasife alındı — geçmişi duruyor, yeni işlemlerde seçilemez ‖ "DENEME USTA" pasife alındı — geçmişi duruyor, yeni işlemlerde seçilemez. Pasifler sekmesinden geri alınabilir · yazma istekleri: PATCH cariler → 200 · POST gunluk → 201
+      Cari listesi şimdi: Cari Hesaplar Liste Raporlar Pasifler (1) Tümü (2) Müşteri (2) Tedarikçi (0) Personel (0) Tümü Genel Resmi Alacak: 0 ₺ Borç: 0 ₺ Net: 0 ₺ Cari Ekle 0002 Ekran Müşteri Müşteri USD ALACAK — BORÇ — 0001 İnceleme Müşteri Müşteri ALACAK — BORÇ —
+  ▸ SUNUCU [S3 · açık üretim + ustada bekleyen iş VARKEN üç kart pasif]
+      40-sorgu son satır: 99|GENEL|TEMİZ — geçerli deneme kaydı kalmadı
+      stok: DENEME ÜRÜN=0 · DENEME HAMMADDE=0 | ÜRT fişleri: ÜRT-261127001:İPTAL:2 satır(2 iptal), ÜRT-261127002:İPTAL:2 satır(2 iptal) | DENEME USTA geçerli cari hareketi=0
+      üretim: dnm-10001 aşama=Kesim stoğaEklendi=false tahakkuk=0 adımlar=Kesim:verildi=true:tamam=false | atamalar: Kesim:2:DENEME USTA:bekliyor
+      cop: boş | uretim_silinen izi=0 | stok_rezervasyonlari=0 | kartlar: DENEME HAMMADDE=pasif, DENEME ÜRÜN=pasif, DENEME USTA=pasif
+      tablo satır sayıları: stk_fis=2 stk_hareket=4 car_hareket=0 | defter özeti: car_hareket=0:d41d8cd9 stk_fis=2:66c1950a stk_hareket=4:6aa058c6 stk_stok=8:c2e32af6
+  ✓ [S3: açık üretimi / ustada işi varken pasife almaya İZİN VERİYOR (uyarı penceresi yok)] ["DENEME HAMMADDE=pasif, DENEME ÜRÜN=pasif, DENEME USTA=pasif",[]]
+  ✓ [S3: pasife alma üretime, atamaya, defterlere dokunmadı] [true,"Kesim:2:DENEME USTA:bekliyor",true]
+  ▸ EKRAN [S3 · kartlar pasif, iş hâlâ ustada (sayfa yenilendi)]
+      Üretim › Üretim Takibi: Üretim Takibi Atölye Ekranı Barkod Okut Yeni Üretim Siparişi Tümü Bugün Bu Hafta Bu Ay Tümü (1) Kesim (1) Proses 10001 — DENEME ÜRÜN 1068 - Siyah 2 çift Kesim Bu görünümdeki toplam 2 adet (1 sipariş) Tamamlanan: 0 adet (0 sipariş) Devam Eden: 2 adet (1 sipariş)
+      üretim kartı › "Hammadde İhtiyacı" sekmesi: Kesim 1 malzeme DENEME HAMMADDE Siyah · 40 2 × 1 = 2 çift
+      üretim kartı › "Prosesler" sekmesi: 1. Kesim 2 / 2 adet dağıtıldı 10001 DENEME USTA 2 adet (40:2) Rezerve Geri Al Teslim Al · 2 adet verilmişti BEDEN 40 Σ VERİLEN 2 2 SAĞLAM 2 TAMİR HURDA Artan ve eksik malzeme Artan — işten geriye kalan, stoğa geri döner Ek alınan — malzeme yetmeyince depodan f
+      Üretim Raporu: Üretim Raporu Günlük Haftalık Aylık 27 Kasım 2026 Cuma · 1 iş günü Açık üretim 1 Açık üretimde çift 2 Biten üretim (stoğa giren) 0 Şu an personelde 2
+      Depo › Hammadde Deposu (DENEME satırları; sütunlar STOK AYRILAN SERBEST TALEP İHTİYAÇ): DENEME HAMMADDE 1 renk · 1 ölçü — detay için tıklayın — çift — — — ✓ karşılandı ‖ DENEME ÜRÜN 1 renk · 1 ölçü — detay için tıklayın — çift — — — ✓ karşılandı
+      Planlama › Hammadde İhtiyaç: Bekleyen satış siparişi kalemi yok — hesaplanacak bir hammadde ihtiyacı bulunamadı.
+      Fişler: Fişler Tüm defterler Genel Resmi Tümü (0) Gösterilecek fiş bulunamadı.
+      (pasif kartlarla üretim 10001 kartında "Teslim Al" HÂLÂ VAR — pasif usta / pasif ürünle teslim alınabilir görünüyor; DENENMEDİ)
+  ● üretim şeridine sağ tık (menü: ÜRETİM · 10001 · DENEME ÜRÜN Kartı kapat Tam ekranda aç Barkod etiketi (6×4) İş emri yazdır (A4) Üretimi sil) → "Üretimi sil" → onay kutusu: «Bu üretim siparişini silmek istediğinize emin misiniz? Evet, Sil Vazgeç»
+      → bildirim: Üretim siparişi silindi
+      yazma istekleri: POST rpc/site_kayit_listesi → 200 ×2 · POST rpc/uretim_sil → 200 · POST rpc/alt_yaz → 200 · DELETE uretim → 200 · POST gunluk → 201
+  ▸ SUNUCU [S3 · iş ustadayken (Geri Al yapmadan) Üretimi sil sonrası]
+      40-sorgu son satır: 99|GENEL|BAK — yukarıdaki satırları incele
+      BAK satırları: 4) deneme üretim kaydı 10001 (1 kayıt; değiştirilmedi) · aşama · stoğa eklendi mi → 0 kayıt
+      stok: DENEME ÜRÜN=0 · DENEME HAMMADDE=0 | ÜRT fişleri: ÜRT-261127001:İPTAL:2 satır(2 iptal), ÜRT-261127002:İPTAL:2 satır(2 iptal) | DENEME USTA geçerli cari hareketi=0
+      üretim: ÜRETİM SATIRI YOK | atamalar: atama yok
+      cop: boş | uretim_silinen izi=1 | stok_rezervasyonlari=0 | kartlar: DENEME HAMMADDE=pasif, DENEME ÜRÜN=pasif, DENEME USTA=pasif
+      tablo satır sayıları: stk_fis=2 stk_hareket=4 car_hareket=0 | defter özeti: car_hareket=0:d41d8cd9 stk_fis=2:66c1950a stk_hareket=4:6aa058c6 stk_stok=8:c2e32af6
+  ✓ [S3: üretim ve ataması silindi; iptal fişler duruyor; defterler değişmedi] ["ÜRETİM SATIRI YOK","atama yok",true,true]
+  ● Tanımlar › Çöp Kutusu: Tümü (0) Çöp kutusu boş — henüz hiçbir kayıt silinmedi. · "Geri yükle" düğmesi 0 adet
+  ✗ [S3: silinen üretim Çöp Kutusu'nda, "Geri yükle" düğmesi var] false · beklenen true
+     ‼ BULGU: S3: iş ustadayken silinen üretim de Çöp Kutusu'na gitmedi (atama satırıyla birlikte kalıcı silindi). Geri dönüş yalnız Tanımlar › Çöp Kutusu › "Sunucu arşivi" üzerinden: önce "Üretim", sonra "İş ataması" tablosu (aşağıda denendi).
+  ● Tanımlar › Çöp Kutusu › Sunucu arşivi › tablo "Üretim" › "Arşivi getir" → düğme: «Bu 1 satırı geri yükle»
+      → onay penceresi: ["confirm: Üretim: arşivdeki 1 silinmiş satır buluta OLDUĞU GİBİ geri yazılacak. Üst tablo önce yüklenmeli (ürün → hareket/varyant, cari → cari hareketi, sipariş → kalem, üretim → iş ataması). Bitince sayfa yeni"] · yazma istekleri: POST rpc/site_kayit_listesi → 200 ×4 · POST uretim → 201 · POST gunluk → 201
+  ● Tanımlar › Çöp Kutusu › Sunucu arşivi › tablo "İş ataması" › "Arşivi getir" → düğme: «Bu 1 satırı geri yükle»
+      → onay penceresi: ["confirm: İş ataması: arşivdeki 1 silinmiş satır buluta OLDUĞU GİBİ geri yazılacak. Üst tablo önce yüklenmeli (ürün → hareket/varyant, cari → cari hareketi, sipariş → kalem, üretim → iş ataması). Bitince sayfa "] · yazma istekleri: POST rpc/site_kayit_listesi → 200 ×4 · POST rpc/alt_yaz → 200 · POST gunluk → 201
+  ▸ SUNUCU [S3 · geri yükleme (Çöp Kutusu yoksa Sunucu arşivi) sonrası]
+      40-sorgu son satır: 99|GENEL|TEMİZ — geçerli deneme kaydı kalmadı
+      stok: DENEME ÜRÜN=0 · DENEME HAMMADDE=0 | ÜRT fişleri: ÜRT-261127001:İPTAL:2 satır(2 iptal), ÜRT-261127002:İPTAL:2 satır(2 iptal) | DENEME USTA geçerli cari hareketi=0
+      üretim: dnm-10001 aşama=Kesim stoğaEklendi=false tahakkuk=0 adımlar=Kesim:verildi=true:tamam=false | atamalar: Kesim:2:DENEME USTA:bekliyor
+      cop: boş | uretim_silinen izi=0 | stok_rezervasyonlari=0 | kartlar: DENEME HAMMADDE=pasif, DENEME ÜRÜN=pasif, DENEME USTA=pasif
+      tablo satır sayıları: stk_fis=2 stk_hareket=4 car_hareket=0 | defter özeti: car_hareket=0:d41d8cd9 stk_fis=2:66c1950a stk_hareket=4:6aa058c6 stk_stok=8:c2e32af6
+  ✓ [S3: silinen üretim GERİ GELDİ (atamasıyla), defterler değişmedi] [true,"Kesim:2:DENEME USTA:bekliyor",true]
+  ▸ EKRAN [S3 · geri yükleme sonrası (sayfa yenilendi)]
+      Üretim › Üretim Takibi: Üretim Takibi Atölye Ekranı Barkod Okut Yeni Üretim Siparişi Tümü Bugün Bu Hafta Bu Ay Tümü (1) Kesim (1) Proses 10001 — DENEME ÜRÜN 1068 - Siyah 2 çift Kesim Bu görünümdeki toplam 2 adet (1 sipariş) Tamamlanan: 0 adet (0 sipariş) Devam Eden: 2 adet (1 sipariş)
+      üretim kartı › "Hammadde İhtiyacı" sekmesi: Kesim 1 malzeme DENEME HAMMADDE Siyah · 40 2 × 1 = 2 çift
+      üretim kartı › "Prosesler" sekmesi: 1. Kesim 2 / 2 adet dağıtıldı 10001 DENEME USTA 2 adet (40:2) Rezerve Geri Al Teslim Al · 2 adet verilmişti BEDEN 40 Σ VERİLEN 2 2 SAĞLAM 2 TAMİR HURDA Artan ve eksik malzeme Artan — işten geriye kalan, stoğa geri döner Ek alınan — malzeme yetmeyince depodan f
+      Üretim Raporu: Üretim Raporu Günlük Haftalık Aylık 27 Kasım 2026 Cuma · 1 iş günü Açık üretim 1 Açık üretimde çift 2 Biten üretim (stoğa giren) 0 Şu an personelde 2
+      Depo › Hammadde Deposu (DENEME satırları; sütunlar STOK AYRILAN SERBEST TALEP İHTİYAÇ): DENEME HAMMADDE 1 renk · 1 ölçü — detay için tıklayın — çift — — — ✓ karşılandı ‖ DENEME ÜRÜN 1 renk · 1 ölçü — detay için tıklayın — çift — — — ✓ karşılandı
+      Planlama › Hammadde İhtiyaç: Bekleyen satış siparişi kalemi yok — hesaplanacak bir hammadde ihtiyacı bulunamadı.
+      Fişler: Fişler Tüm defterler Genel Resmi Tümü (0) Gösterilecek fiş bulunamadı.
+  pencereler: ["confirm: Üretim: arşivdeki 1 silinmiş satır buluta OLDUĞU GİBİ geri yazılacak. Üst tablo önce yüklenmeli (ürün → hareket/varyant, cari → cari hareketi, sipariş → kalem, üretim → iş ataması). Bitince sayfa yeni","confirm: İş ataması: arşivdeki 1 silinmiş satır buluta OLDUĞU GİBİ geri yazılacak. Üst tablo önce yüklenmeli (ürün → hareket/varyant, cari → cari hareketi, sipariş → kalem, üretim → iş ataması). Bitince sayfa "] · sayfa hataları: []
+
+  ✓ [canlı / G-25 deneme projesine giden istek ya da WebSocket YOK] []
+
+BULGULAR
+  1. S1: pasife alınan DENEME USTA, üretim kartındaki "Kime" (iş verme) listesinde HÂLÂ ÇIKIYOR — pasif cari iş vermede seçilebiliyor (pasif bildirimi "yeni işlemlerde seçilemez" diyor). Açık üretim kalırsa iş yeniden bu ustaya verilebilir.
+  2. S1 sonunda üretim 10001 AÇIK üretim olarak duruyor (Üretim Takibi'nde listeleniyor, Üretim Raporu'nda "Açık üretim 1", kartında hammadde ihtiyacı yazıyor) — "açık iş ve hammadde ihtiyacı kalksın" isteği bu sırayla KARŞILANMIYOR.
+  3. Yol B: geçerli hareketi olmayan ("etkisiz") üretim silinince Çöp Kutusu'na GİTMİYOR — `cop` tablosu boş, Tanımlar › Çöp Kutusu "boş" diyor; üretim ve atama satırı sunucudan kalıcı siliniyor (DELETE uretim). Kopya yalnız sunucu arşivinde (silinen_arsiv: uretim + uretim_atamalari) ve `uretim_silinen` izinde kalıyor. Kaynak: 076-uretim-sil.jsx — `copaAt` yalnız hareketli (cascade) dalda çağrılıyor.
+  4. S3: iş ustadayken silinen üretim de Çöp Kutusu'na gitmedi (atama satırıyla birlikte kalıcı silindi). Geri dönüş yalnız Tanımlar › Çöp Kutusu › "Sunucu arşivi" üzerinden: önce "Üretim", sonra "İş ataması" tablosu (aşağıda denendi).
+
+── ekran-deneme-temizlik: 24 geçti · 3 kaldı · 4 bulgu ──
