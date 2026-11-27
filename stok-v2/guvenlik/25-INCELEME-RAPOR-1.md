@@ -446,6 +446,9 @@ paket `4904a7e` değişmedi. Ayrıntı: `33-YEREL-SUPABASE-SONUC.md`; öneri: `3
 - **Deneme temizliği canlıda doğrulandı (salt okur, `40-…`, kullanıcı çalıştırdı):** 11 satırın 11'i tamam, GENEL "TEMİZ". DENEME ÜRÜN ve
   DENEME HAMMADDE stoku 0; deneme fişleri 0 geçerli / 2 iptal; geçerli stok / cari hareketi ve bölüm tahakkuku yok. Üç deneme kartı AKTİF;
   üretim 10001 açık duruyor (aşama Kesim, atama DENEME USTA'da "bekliyor", 2 adet) — pasife alma ve 10001 ayrı ele alınacak.
+- **Canlı durum (salt okur, `41-…` `f4d003b5…842f8`, kullanıcı çalıştırdı, 27 Kasım):** B4 / B5 "KURULU — kod sınananla aynı" (satır sonundan
+  bağımsız karşılaştırma — B4 kurulumunun canlıdaki kod doğrulaması); B3a, B3a-2, ret iletisi kurulu değil; iç fonksiyonlar kullanıcılara kapalı;
+  G-25 nesnesi 0; kullanıcılar 3 Yönetici · 0 diğer; GENEL "tutarlı". Yetki paketleri için kurulum onayı BEKLENİYOR.
 - **AÇIK:** B1 / B2, B3b, B6, Y1.
 
 ## 4. Sıradaki adımlar (güncel)
