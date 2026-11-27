@@ -374,10 +374,27 @@ Dal `claude/aday-birlesik`; belge `30-BIRLIKTE-KURULUM.md`. B3a-2 paketi sabit (
 - **BULGU P1 (AÇIK, karar bekliyor):** fiş iptali ve üretimde "Geri Al" `silme` yetkisi ister (mevcut kural). Kaydetme yetkili
   muhasebe / üretim personeli kendi kestiği fişi iptal edemiyor; düğme görünüyor, ileti hep "stok: silme". Kalan 5 kontrol bu.
 - **Gerçek Supabase: YAPILMADI.** Bu ortamdan erişim yok; yalıtılmış proje kurulmadı. Araçlar ve adımlar hazır.
-- **AÇIK DURANLAR:** B3b (okuma yetkisi; dört hesap da Stok / Sipariş menülerini görüyor), B6 (ücret verisi), P1, Y1, B3a'nın açıkları
+- **AÇIK DURANLAR:** B3b (**DÜZELTME:** burada yanlışlıkla "okuma yetkisi" yazılmıştı; B3b §8'deki RPC ile YAZMA genişliğidir — bkz. §16), B6 (ücret verisi), P1, Y1, B3a'nın açıkları
   (paketler canlıya kurulana kadar). **Sınanmayan kapsam:** gerçek Supabase; 1.744.43'ün B4'süz sunucuda davranışı; eski istemci
   (1.744.37) ile B3a-2 ekrandan; personelle kısmi teslim / tamir / hammaddeli teslim; salt okur kullanıcının kişisel tercihi;
   beden adı değişikliği, diğer tek satırlık tablolar, eski sekme, site portalı, depolama kovaları.
+
+## 16. Son hâl: 1.744.44 + dört SQL paketi; B3b kapsam düzeltmesi; geçiş sınaması (27 Kasım; canlı / deneme / main / yayın YOK)
+Dal `claude/aday-birlesik` (`4904a7e`); belge `30-BIRLIKTE-KURULUM.md` "2. TUR" (sabit özetler orada), adımlar `32-GERCEK-SUPABASE-ADIMLAR.md`.
+- **B3b KAPSAM DÜZELTMESİ.** §15'te B3b "okuma yetkisi" diye geçti — YANLIŞ. B3b, §8'deki RPC ile yazma genişliğidir. Yeniden ölçüldü
+  (gövdeler canlı dökümle birebir): yalnız stok yetkili hesap dört paket kuruluyken de `alt_yaz` ile sipariş kalemi miktarını (999),
+  `car_yaz` ile 1.000 ₺ cari hareketini yazdı; `fis_kes` ile cari virmanı fişini kesti. **B3b AÇIK; paketler kapatmıyor.**
+- **P1 kararı:** iptal / "Geri Al" silme yetkisi ister, kaydetme genişletilmedi. 1.744.44 düğmeleri yetkisize çizmiyor; sunucu
+  denetimi sürüyor. Ret iletisi paketi (31): "fiş iptali (gereken: … modüllerinden birinde silme)"; her işlemde "stok" demiyor.
+- **Personel akışları (6 hesap, iki tam koşu 118/118):** silme yetkisi olmayan üretim hesabı tam, kısmi (6 + 4), tamir (8 + 2) ve
+  hammaddeli teslimi tamamladı, Geri Al düğmesini görmedi, doğrudan iptal isteği reddedildi. Silme yetkili hesap aynı akışları ve
+  Geri Al → yeniden teslimi tamamladı. Fazla stok / çift işçilik yok.
+- **Geçiş (açık kalmış 1.744.37 sekmesi, paketler kurulu):** meşru kayıtlar reddedilmedi; eski istemci korumayı aşamadı. İlk hâlde
+  yetki reddi "oturum kapandı" diye gösterilip sürekli yeniden gönderiliyordu → B3a-2 ret kodu KR040 (kalıcı ret) yapıldı, yeniden
+  gönderim kesildi. Eski sekmede kalan: kayıt anında başarı bildirimi ve reddedilen değerin o cihazda inceleme şeridiyle durması.
+- **Açık:** B3b, B6, Y1; eski sekmede kalıcı ret gösterimi; B3a açıkları (paketler canlıya kurulana kadar). **Sınanmayan:** gerçek
+  Supabase; 1.744.44 B4'süz sunucuda; `uretim_sil` kuralı; "Çeki sil"; Fişler menüsü / ürün kartı hareketleri / çeklerdeki düğme
+  gizlemesi ekrandan; salt okur kişisel tercih; beden adı, diğer tek satırlık tablolar, site portalı, depolama kovaları.
 
 ## 4. Sıradaki adımlar (güncel)
 1. Kullanıcı onayıyla B1 / B2 deneme paketi (§9) — deneme projesinde salt okur adım 0, sonra kurulum ve elle sınamalar.
