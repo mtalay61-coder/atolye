@@ -10,7 +10,7 @@
 // Bu dosya App'e bağlı değil: `mevcut` verilir, uzlaşmış hâl döner; ekranı App günceller.
 
 // Döner: { tanimlar, ozet } | null (okunamadı). Okuma başarılıysa taban = sunucu hâli, tazelik işareti yenilenir.
-async function tanimlariSunucudanTazele(mevcut) {
+async function tanimlariSunucudanTazele(mevcut, secenek) {
   if (!supabaseAcikMi()) return { tanimlar: mevcut, ozet: null };
   let bulut;
   try {
@@ -34,6 +34,16 @@ async function tanimlariSunucudanTazele(mevcut) {
   if (taban === undefined && bulut) {
     const bekleyenVar = typeof bekleyenYazmalariOku === "function" && !!bekleyenYazmalariOku()["tanimlar:data"];
     taban = bekleyenVar ? tabansizTaban(mevcut, bulut) : mevcut;
+  }
+  // ÇAKIŞMA VARSA UZLAŞTIRMA YOK (v1.744.48 — test/inceleme/ekran-tanim-tazele.js T4). Bekleyen tanım kaydı yeniden gönderilirken
+  // (100, `secenek.cakismaKontrol`) bu cihazın bekleyen değişikliği ile başka cihazın bu arada yaptığı değişiklik AYNI öğedeyse,
+  // aşağıdaki uzlaştırma bu cihazı kazandırıp TABANI sunucu hâline çekiyordu → ardından gelen sürüm koşullu yazma (030) çakışmayı
+  // göremiyor, bu cihaz öbürünü SESSİZCE eziyordu (çakışma şeridi hiç çıkmıyordu). Çakışma varken ekran ve taban OLDUĞU GİBİ bırakılır;
+  // yazma çakışmayı kendi bulur, değişiklik "inceleme"ye düşer, kullanıcıya sorulur ("Benimkini uygula" / "Sunucudakini al").
+  if (secenek && secenek.cakismaKontrol && bulut && taban !== undefined && typeof tanimCakismalari === "function"
+      && tanimCakismalari(mevcut, bulut, taban).length > 0) {
+    tanimlarOkundu();
+    return { tanimlar: mevcut, ozet: null, cakisma: true };
   }
   const u = tanimlarUzlastir(mevcut, bulut, taban, tanimSilinenleriOku());
   if (bulut) tekilTabanAyarla("tanimlar", bulut);

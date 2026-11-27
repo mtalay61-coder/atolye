@@ -984,7 +984,7 @@ function AtolyeUygulamasi() {
     if (d["tanimlar:data"]) {
       isler.push(tanimIsiSirala(async () => {   // bayat-muaf: tanimIsiSirala yalnız ref (tanimIsZinciriRef) kullanır, her çizimde aynı
         if (bulutYazmaEngeli()) return;
-        const taze = await tanimlariSunucudanTazele(tanimRef.current || tanimlar);
+        const taze = await tanimlariSunucudanTazele(tanimRef.current || tanimlar, { cakismaKontrol: true });
         if (!taze) return;
         if (bulutYazmaEngeli()) return;   // okuma sürerken çıkış yapıldı / kilit indi
         if (taze.ozet && taze.ozet.toplam > 0) {

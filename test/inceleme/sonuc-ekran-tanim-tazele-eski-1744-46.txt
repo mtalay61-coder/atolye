@@ -1,0 +1,58 @@
+ekran-tanim-tazele · istemci 1.744.46 (/home/user/atolye-46) · PostgreSQL kipi (şablon b12_crlf: dört paket + B1, CRLF kurulum)
+
+■ T1 aynı cihaz: "Vizon Yılan" → "Vizon Deri", ardından aynı cihazdan renk eklenir, sayfa yenilenir
+  ✓ T1 başlangıç: rozet var, kopuk bağ yok
+     ad değişikliğinden sonra bellek: {"renkler":["Siyah","Vizon Yılan"],"varyantAdlari":["1054 - Siyah/Vizon Deri","Siyah","Taba"]}
+  ✗ KALDI T1 ad değişikliğinden sonra ekrandaki (bellekteki) Tanımlar YENİ adda — görülen ["Siyah","Vizon Yılan"] · beklenen ["Siyah","Vizon Deri"]
+  ✗ KALDI T1 rozet kaybolmadı ("N üründe") — görülen "(rozet yok)" · beklenen "1 üründe"
+  ✗ KALDI T1 aynı cihazın sonraki Tanımlar kaydı eski adı GERİ YAZMADI (sunucu Tanımlar) — görülen ["Mor","Siyah","Vizon Yılan"] · beklenen ["Mor","Siyah","Vizon Deri"]
+  ✗ KALDI T1 varyant etiketleri yeni adda — görülen ["k-1054=1054 - Siyah/Vizon Yılan","r-vizon=Vizon Yılan"] · beklenen ["k-1054=1054 - Siyah/Vizon Deri","r-vizon=Vizon Deri"]
+  ✗ KALDI T1 sipariş kalemleri yeni adda, kopuk bağ yok — görülen [["1054 - Siyah/Vizon Deri"],2] · beklenen [["1054 - Siyah/Vizon Deri"],0]
+  ✓ T1 renk / kombinasyon kimlikleri, varyantlar, kalem ve sipariş bağları AYNI
+  ✗ KALDI T1 yenilemeden sonra ekranda yeni ad ve rozet; bekleyen kayıt / çakışma yok — görülen ["(satır yok)","1 üründe",[],[]] · beklenen ["1 üründe","(satır yok)",[],[]]
+     (ton kodu kutusu yok: Vizon Deri — satır ekranda bu adla değil)
+  ✗ KALDI T1 yenilemeden sonraki kayıt da adı korudu — görülen [["Mor#101","Siyah","Vizon Yılan"],["1054 - Siyah/Vizon Deri"],2] · beklenen [["Mor","Siyah","Vizon Deri#450"],["1054 - Siyah/Vizon Deri"],0]
+  ✓ T1 reddedilen yazma yok, sayfa hatası yok
+
+■ T2 diğer cihaz: A ton kodu verir, renk ekler, bir rengin adını değiştirir — B'nin ekranı AÇIK, yenilenmez
+  ✗ KALDI T2 A'nın değişiklikleri sunucuda — görülen ["Kırmızı#302","Siyah#301","Vizon Deri"] · beklenen ["Kırmızı","Siyah#301","Vizon Deri"]
+     B'nin belleği (yoklamadan sonra): {"renkler":["Siyah","Vizon Yılan"],"varyantAdlari":["1054 - Siyah/Vizon Deri","Siyah","Taba"]} · B bildirimleri: Başka cihazdan güncellendi: Stok, Siparişler
+  ✗ KALDI T2 A'nın değişiklikleri B'nin AÇIK ekranına geldi (ton kodu, yeni renk, yeni ad) — görülen ["Siyah","Vizon Yılan"] · beklenen ["Kırmızı","Siyah#301","Vizon Deri"]
+  ✗ KALDI T2 B'nin ekranında yeni renk ve yeni ad görünüyor — görülen [false,"(satır yok)"] · beklenen [true,"1 üründe"]
+  ✗ KALDI T2 B'nin sonraki kaydı A'nın değişikliklerini GERİ ÇEVİRMEDİ — görülen ["Kırmızı#302","Lacivert#101","Siyah","Vizon Yılan"] · beklenen ["Kırmızı","Lacivert","Siyah#301","Vizon Deri"]
+  ✗ KALDI T2 kalemler yeni adda, kopuk bağ yok; kimlikler ve bağlar AYNI — görülen [["1054 - Siyah/Vizon Deri"],2,true] · beklenen [["1054 - Siyah/Vizon Deri"],0,true]
+  ✓ T2 çakışma şeridi yok, bekleyen yok, ret yok
+  ✓ T2 sayfa hatası yok
+
+■ T3 B'nin Tanımlar yazması gidemiyor (bekleyen); A başka bir öğeyi değiştirir
+  ✓ T3 B'nin değişikliği bekleyen defterde, sunucuya gitmedi
+     B'nin belleği (A yazdıktan ve yoklama süresi geçtikten sonra): ["Siyah","Vizon Yılan#777"]
+  ✓ T3 tazeleme B'nin bekleyen yerel değişikliğini EZMEDİ (ekranda 777 duruyor, defterde duruyor)
+  ✗ KALDI T3 yazma açılınca ikisi de sunucuda: B'nin ton kodu + A'nın rengi (B2 birleştirme) — görülen ["Kırmızı#101","Siyah","Vizon Yılan#777"] · beklenen ["Kırmızı","Siyah","Vizon Yılan#777"]
+  ✓ T3 defter boşaldı, çakışma şeridi yok
+  ✓ T3 sınama engeli dışında ret yok, sayfa hatası yok
+
+■ T4 B'nin bekleyen değişikliği ile A'nın değişikliği AYNI alanda (Siyah › ton kodu)
+  ✓ T4 tazeleme B'nin bekleyen değerini EZMEDİ (ekranda 888)
+  ✗ KALDI T4 B sessizce ezmedi: sunucuda A'nın değeri — görülen ["Siyah#888","Vizon Yılan"] · beklenen ["Siyah#999","Vizon Yılan"]
+  ✗ KALDI T4 B'de çakışma şeridi: hangi öğe; değişiklik defterde bekliyor — görülen [[],false] · beklenen [["renkler › Siyah › kod"],true]
+  ✓ T4 "Benimkini uygula" → sunucuda B'nin değeri; şerit kapandı, defter boş
+  ✓ T4 sayfa hatası yok
+
+SONUÇ: 12 geçti · 15 kaldı
+KALANLAR:
+  - T1 ad değişikliğinden sonra ekrandaki (bellekteki) Tanımlar YENİ adda
+  - T1 rozet kaybolmadı ("N üründe")
+  - T1 aynı cihazın sonraki Tanımlar kaydı eski adı GERİ YAZMADI (sunucu Tanımlar)
+  - T1 varyant etiketleri yeni adda
+  - T1 sipariş kalemleri yeni adda, kopuk bağ yok
+  - T1 yenilemeden sonra ekranda yeni ad ve rozet; bekleyen kayıt / çakışma yok
+  - T1 yenilemeden sonraki kayıt da adı korudu
+  - T2 A'nın değişiklikleri sunucuda
+  - T2 A'nın değişiklikleri B'nin AÇIK ekranına geldi (ton kodu, yeni renk, yeni ad)
+  - T2 B'nin ekranında yeni renk ve yeni ad görünüyor
+  - T2 B'nin sonraki kaydı A'nın değişikliklerini GERİ ÇEVİRMEDİ
+  - T2 kalemler yeni adda, kopuk bağ yok; kimlikler ve bağlar AYNI
+  - T3 yazma açılınca ikisi de sunucuda: B'nin ton kodu + A'nın rengi (B2 birleştirme)
+  - T4 B sessizce ezmedi: sunucuda A'nın değeri
+  - T4 B'de çakışma şeridi: hangi öğe; değişiklik defterde bekliyor
