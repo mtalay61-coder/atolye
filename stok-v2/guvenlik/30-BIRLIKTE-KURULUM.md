@@ -66,8 +66,35 @@ Sonuç dosyaları: `test/inceleme/sonuc-birlesik/`.
 | `ekran-geri-al-ileti.js` (1.744.41 düzeltmeleri) | 20/20 |
 | `ekran-stok.js`, `ekran-kasa.js`, `ekran-cari-virman.js` (Yönetici) | 24/24 · 29/29 · 29/29 |
 | `ekran-b3a2-personel.js` (yalnız stok yetkili hesap + Yönetici) | 10/10 |
-| `ekran-personel-akis.js` (stok, sipariş, muhasebe, üretim hesapları) | @@AKIS@@ |
+| `ekran-personel-akis.js` (stok, sipariş, muhasebe, üretim hesapları) | 51 geçti · **5 kaldı** — beşi de tek nedenden: fiş iptali `silme` yetkisi ister (aşağıda) |
 | `./test/kosu.sh` (1.744.43) | 275/275 AYNI |
+
+### Personel akışları (ekrandan; `test/inceleme/ekran-personel-akis.js`, sonuç `sonuc-ekran-personel-akis.txt`)
+
+Hesaplar: Ayşe = yalnız stok, Selin = yalnız sipariş, Murat = yalnız muhasebe, Umut = yalnız üretim (hepsi görüntüleme + düzenleme +
+kaydetme; **silme yok**). Umut eklendi çünkü iş verme ve teslim Üretim menüsünde; diğer üç hesap o menüyü görmüyor.
+
+| Hesap | Ekrandan tamamlanan | Sunucunun reddettiği yetkisiz deneme (kendi jetonuyla) |
+|---|---|---|
+| Ayşe | stok giriş fişi · ürün adını kaydetme (fiyat kutuları kapalı) · ürün kartından hızlı tedarikçi ekleme (yalnız unvan + tip) | satış fiyatı · cari unvanı · renk silme |
+| Selin | yeni satış siparişi (mevcut müşteri, 1 kalem) · satış kutusu açık, alış kapalı · satış fiyatı yazma geçti | alış fiyatı · cari unvanı · müşterinin fiyat grubu |
+| Murat | tahsilat fişi · alış kutusu açık, satış kapalı · alış fiyatı yazma geçti | satış fiyatı · renk adını değiştirme |
+| Umut | İşi Ver · teslim (mamul +10, usta −350) | satış fiyatı · alış fiyatı · cari unvanı |
+
+Yetkisiz yazmanın geçtiği durum YOK. Ayşe ve Selin'de sunucunun reddettiği beklenmeyen yazma 0.
+
+**Kalan 5 kontrol — BULGU P1 (üç paketten gelmiyor; mevcut kural):** Murat tahsilat fişini iptal edemedi, Umut teslimi "Geri Al"
+yapamadı (dolayısıyla yeniden teslim de yapılamadı). `fis_iptal` ve `fis_iptal_toplu` altı modülden birinde **silme** yetkisi ister;
+bu kural paketsiz, canlıya hizalı tabanda da aynen var. Sunucu doğru reddetti ve hiçbir kayıt değişmedi; ekran "iptal edilemedi /
+geri alınamadı — hiçbir değişiklik yapılmadı" dedi. Silme yetkisi eklenmiş iki ek hesapla (Mert, Ufuk) aynı ekran yolundan iptal,
+Geri Al ve yeniden teslim tamamlandı; bakiyeler başa döndü.
+- Karar gerektirir: "Geri Al / iptal = silme yetkisi" bilinçli tasarım mı, yoksa üretim ve muhasebe personeline iptal verilecek mi.
+- Yan gözlemler: Sil / Geri Al düğmesi silme yetkisi olmayan hesaba da görünüyor; ret iletisi hangi modülde olursa olsun
+  "stok: silme" diyor (`stk_yetki` içindeki sabit metin).
+
+Sınamanın sınırları: son hâl bir kez baştan sona koştu (oynaklık ölçülmedi); yetkisiz denemelerin gövdesi yalnız değişen alan + sürüm;
+köprü gerçek PostgREST değil; üretim fikstürü tek adımlı ve reçetesiz (kısmi teslim, tamir ve hammadde bu sınamada değil, Yönetici ile
+koşan `ekran-uretim-b4.js`'de); dört hesap da Stok / Sipariş menülerini görüyor — okuma yetkisi bu işin kapsamında değil (B3b).
 
 ### Otomatik yazma istisnaları gerçek değişikliği gizleyebiliyor mu — HAYIR (22 olumsuz durum, hepsi beklenen sonucu verdi)
 

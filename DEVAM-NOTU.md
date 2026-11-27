@@ -16276,3 +16276,15 @@ fiyat değişikliğini eski değerle gönderir ve bildirir; fiyat kutuları (160
 **Bilinen sınırlar:** salt okur kullanıcının kişisel raporu / ekran düzeni ayrı tablo ister (`kullanici_tercih`, 2. aşama — yok);
 `bolumler`, `mesaiAyar`, `proses_ucretleri` kuralsız (B6, G-25); gerçek Supabase'de denenmedi; personelin sipariş / üretim / fiş
 akışları ekrandan uçtan uca koşulmadı.
+
+## v1.744.43 — BİRLEŞİK ADAY ve birlikte kurulum doğrulaması (27 Kasım 2026; HAZIRLIK, canlıda YOK)
+
+Dal `claude/aday-birlesik`. Belge: `stok-v2/guvenlik/30-BIRLIKTE-KURULUM.md` (sıra, bağımlılıklar, sonuçlar).
+- **1.744.42, 1.744.41'i İÇERMİYORDU** (iki dal da main'den). 1.744.43 = 41 + 42; yeni davranış yok. Ders: yeni dal açarken bekleyen
+  düzeltme dalının üzerine kur ya da birleştir; sürüm numarası içerik kanıtı değildir (`git merge-base --is-ancestor` ile bak).
+- Üç paket (B4, B3a, B3a-2) birbirinden bağımsız; iki uç sırayla kurulan şema birebir aynı. İstemci B4'ten sonra.
+- Olumsuz istisna testleri (22): boş değer / oluşturma damgası / varsayılan firma bilgisi istisnaları gerçek değişikliği gizlemiyor.
+- **BULGU P1:** fiş iptali ve üretimde "Geri Al" `silme` yetkisi ister (mevcut kural, paketlerden gelmiyor). Görüntüleme + düzenleme +
+  kaydetme yetkili muhasebe / üretim personeli iptal edemez; düğme görünür, sunucu reddeder, ileti hep "stok: silme" der. Kullanıcı kararı bekliyor.
+- Gerçek Supabase'de DENENMEDİ: bu ortamdan erişim yok, yalıtılmış proje kurulmadı.
+- Yeni worktree'de `node_modules` yok → `ln -s /home/user/atolye/node_modules`; arka plan koşusunda `PW_CHROMIUM` verilmezse bütün senaryolar HATALI çıkar.
