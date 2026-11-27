@@ -31,3 +31,13 @@ Geri alma, kurulu olduğu sürede yazılmış kayıtları değiştirmez.
 
 ## Diğer paketler
 28 (B3a), 29 (B3a-2) ve 31 (ret iletisi) dosyaları CRLF yapıştırma koşuluyla SINANMADI. Sınanıp gerekiyorsa dayanıklı hâle getirilmeden sunulmaz.
+
+## Teslim izleme sorgusu
+- `39-canli-teslim-izle-salt-okur.sql` (`789a69b31d5277b8fb83a797fcd74fed8f5ef5f4230930e37c82291cbcc506af`) — GEÇERLİ. Stok: fiş / ürün / renk / beden, MAMUL ve
+  HAMMADDE ayrı. Cari: fiş / cari / yön / açıklama. Atamalar kimlikle, sağlam / tamir / hurda. İşçilik canlı kurala göre (ücretli adet =
+  sağlam + tamir; hurda ödenmez; tamir işinde atamanın tamir ücreti). CRLF yapıştırmayla sınandı: hammaddeli (B4T8), tamirli (B4T7),
+  kısmi (B4T2), iptal + yeniden teslim (B4T6), ara proses (B4V3) gerçek sınama kayıtları; hurda ve çift işçilik YAPAY kayıtla
+  (hurda ödenmişse ve aynı fişe ikinci cari satırı yazılmışsa "FARKLI — incele").
+- Sınırı: proses atölye bölümüne (maaşlı) bağlıysa tutar cariye yazılmaz; sorgu bunu ayırt edemez, not düşer. Atamasız ara proses
+  fişleri B / C / D bölümlerinde görünür, F'de değerlendirilmez.
+- `36-canli-teslim-izle-salt-okur.sql` — KULLANILMAMALI.

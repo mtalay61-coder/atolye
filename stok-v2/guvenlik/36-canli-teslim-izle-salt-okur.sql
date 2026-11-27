@@ -1,3 +1,5 @@
+-- !!! KULLANILMAMALI (27 Kasım): mamul girişiyle hammadde tüketimini topluyor, işçiliği "adet × ücret" varsayıyor.
+-- !!! Yerine: 39-canli-teslim-izle-salt-okur.sql
 -- =====================================================================================================================
 --  36-canli-teslim-izle-salt-okur.sql — YALNIZ OKUR. Hiçbir şeyi değiştirmez.
 --  Kullanıcının ZATEN yapacağı gerçek bir üretim teslimini izlemek için: teslimden ÖNCE ve SONRA çalıştırılır, iki çıktı karşılaştırılır.
