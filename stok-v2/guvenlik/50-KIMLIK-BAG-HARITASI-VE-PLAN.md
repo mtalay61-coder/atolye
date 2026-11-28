@@ -192,6 +192,21 @@ Paket 1 ile K ve F birbirini beklemez; 2, 5 ve 8 Paket 3'ün kimlik sütunların
 tek eşleşme yoksa ya da kimlik–ad çelişiyorsa KR koduyla reddeder (yeni "serbest" kayıt açmaz). Reddedilen bekleyen yazma defterde
 "inceleme gerekiyor" olarak kalır. İnternetsiz kayıt kilitli; birikmiş yazma aynı kuraldan geçer.
 
+## 5b. Canlı envanter sonucu (28 Kasım, `51-canli-bag-envanteri-salt-okur.sql`; kullanıcı çalıştırdı)
+
+| Bölüm | Sonuç | Değerlendirme |
+|---|---|---|
+| A yetim | cari hareketi 25'te **11** · fiş 9'da **3** · stok hareketi: carisi olmayan 20'de **10**, ürünü olmayan 26'da **10** · varyant 951'de **5** · site hesabı 3'te **3** · site talebi 8'de **8** · fiş → sipariş / üretim / kasa hesabı, kasa hareketi → hesap, üretim → rezervasyon siparişi: 0 | Üst kaydı silinmiş kayıtlar VAR. Site tablolarındaki cari kimliği gerçek cari kimliği (kayıt anında denetleniyor); hepsinin yetim olması o carilerin sonradan silindiğini gösterir. Deneme / sınama kayıtlarının temizliğinden kalmış olabilir — hangi üst kayıtlar olduğu `53-canli-yetim-ayrinti-salt-okur.sql` ile görülür. **Onarılmayacak; raporlanır.** |
+| B boşalmış bağ | hepsi 0 (sipariş 3, kalem 150, üretim 1, verilmiş atama 1) | Temiz. SET NULL kuralları fiilen iz bırakmamış. |
+| C yanlış üst kayıt | hepsi 0 | Temiz: hareket, fiş, kalem ve sipariş birbirini tutuyor. |
+| D eski tablolar | `hesaplar`, `hesap_hareketleri`, `cekler`: 0 satır | Canlıda KULLANILMIYOR (uygulama kodu da bu tablolara yazmıyor). Topluca silen kural bugün veri silemez; Paket K yine de yolu kapatır. |
+| E ada bağlı | kalem 150, reçete 221, üretim 1: BİREBİR eşleşmeyen 0 · reçete renk kimliği–ad çelişkisi **6** · cari hareketinde ürün adı eşleşmeyen 20'de **10** · proses adları: eşleşmeyen 0 · tam "Fasoncu" tipli cari **2**, adı "fason" içeren başka tip 0 | Ad bağları bugün tutarlı (hacim küçük). 6 reçete satırında kimlik ile ad çelişiyor: Paket 2'de sessizce seçilmeyecek, raporlanacak. 10 cari hareketinin ürün adı artık hiçbir ürünle eşleşmiyor (silinmiş ürünler — A ile aynı kaynak olabilir). |
+| F belirsizlik | etkin ölçüde aynı ada birden çok kimlik **7** · etkin renkte **1** · adla açılmış "serbest" kayıt: renk 155 satırın bir kısmı, ölçü 26 satırın bir kısmı (sorgu toplamı tablo toplamı; etkin serbest sayısı 0 görünüyor) | Aynı ada iki kimlik: Paket 3'te otomatik eşlemeyi engeller (tür ve ürün kapsamıyla ayrışıyorsa bağlanır, ayrışmıyorsa rapor). |
+
+Sonuçlar: (1) Paket K'nın yabancı anahtarları DOĞRULANMADAN kurulmalı (mevcut yetimler var; reddedilmezler). (2) Eski hesap tabloları boş —
+kapsam dışı bırakılabilirdi; koruma yine de eklendi (maliyeti yok). (3) Paket F için canlıda tek fason tipi var: adı tam "Fasoncu", 2 cari;
+dönüşüm gerekmiyor, eski kural aynen geçerli. (4) Ad bağlarının hacmi küçük ve tutarlı: Paket 2 ve 3'ün veri taşıması düşük riskli.
+
 ## 6. Bilinmeyenler
 - Canlı veride ad bağlarının hacmi ve tutarlılığı (Paket 0).
 - Taramaların ayrıntılı okumadığı yerler: sipariş / koli form satırları (325, 092, 315), teklif → sipariş (326), fiş defteri kalem
