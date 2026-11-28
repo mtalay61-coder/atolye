@@ -1,0 +1,12 @@
+ekran-fason-teslim · istemci 1.744.48 · PostgreSQL kipi (şablon b12_crlf) · Paket F sunucu kuralı KURULU
+     1. teslim (tip adı "Fasoncu"): cari bakiye farkı -350 · bölüm tahakkuku 0 · bildirim: ÜRT-261128001 · FT1 tüm prosesler tamamlandı — mamul stoğa eklendi
+  ✓ 1. teslim: işçilik fason ustanın carisine alacak (−350), bölüm tahakkuku yok
+     ad değişikliği: tipler null · cari {"altTip":"Fasoncu","olusturma":"2026-11-28T08:09:59.248727+00:00"}
+  ✗ KALDI tip adı sunucuda değişti — görülen [] · beklenen ["Fason Atölye"]
+     sürüm kapısı: min_istemci_surum = 1.744.50
+     2. üretim: geçerli fiş 0 · atama bekliyor
+     2. teslim (tip adı "Fason Atölye"): cari bakiye farkı 0 · bölüm tahakkuku 0 · bildirim: Teslim kaydedilemedi — hiçbir değişiklik yapılmadı (AT001: Uygulama eski (1.744.48) — en az 1.744.50 gerekiyor; uygulama
+  ✗ KALDI 2. teslim (ad değiştikten sonra): işçilik YİNE carisine alacak (−350), bölüm tahakkuku yok — görülen [0,0] · beklenen [-350,0]
+  ✓ 1. teslimin cari hareketi olduğu gibi (geçmiş değişmedi)
+  ✗ KALDI reddedilen yazma yok, sayfa hatası yok — görülen [["PATCH cariler 400 AT001","PATCH tanimlar 400 AT001","POST rpc/fis_kes 400 AT001","POST gunluk 400 AT001"],[]] · beklenen [[],[]]
+SONUÇ: 2 geçti · 3 kaldı

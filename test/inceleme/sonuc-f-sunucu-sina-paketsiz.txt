@@ -1,0 +1,51 @@
+f-sunucu-sina · şablon b12_crlf · paket F YOK (bugünkü kurulum) · eski istemci 1.744.48, yeni 1.744.50
+
+■ ESKİ İSTEMCİ (açık kalmış sekme) — Yönetici hesabıyla bile ödeme yönünü değiştirememeli
+  E1 eski istemci tipin adını değiştirir (Tanımlar) → tamam (1)
+  E2 eski istemci carinin tip adını taşır → tamam (1)
+     sonuç: tipler [{"ad":"Fason Atölye","temel":"Personel"},{"ad":"Kargo","temel":"Tedarikçi"}] · fason usta fason mu: false
+  ✗ AÇIK E1–E2 eski istemcinin ad değişikliğinden sonra fason ustanın işçiliği YİNE cariye — görülen false · hedef true
+  E3 yeni istemci alanı yazdıktan sonra eski istemci cari tiplerini kaydeder (alanları bilmez) → tamam (1)
+     sonuç: [{"ad":"Fason Atölye","temel":"Personel"},{"ad":"Kargo","temel":"Tedarikçi"},{"ad":"Nakliye","temel":"Tedarikçi"}]
+  ✗ AÇIK E3 eski istemci fason alanını ve tip kimliğini SİLEMEZ; ödeme yönü değişmez — görülen [null,null,false] · hedef [true,"ctip-1",true]
+  E4 eski istemci Tanımlar'ın BAŞKA bölümünü kaydeder (cari tipleri aynı) → tamam (1)
+  E5 eski istemci carinin ünvanını değiştirir → tamam (1)
+  ✓ E4–E5 eski istemcinin ilgisiz kayıtları ENGELLENMEZ
+
+■ YENİ İSTEMCİ — ad değişir, davranış değişmez; alan düşürülemez
+  Y1 tip adı + kimlik + fason alanı (Tanımlar) → tamam (1) · (cari henüz eski adda: fason true)
+  Y2 cari tip adı + kimliği → tamam (1)
+  ✓ Y1–Y2 yeni istemcinin ad değişikliği geçer; her adımda fason usta fason kalır
+  Y3 fason alanı kayıttan düşürülür (alanı göndermeyen yazma) → tamam (1)
+  ✗ AÇIK Y3 bir kez yazılmış fason alanı düşürülemez; ödeme yönü değişmez — görülen [null,false] · hedef [true,true]
+  ✓ geçmiş cari hareketi olduğu gibi
+
+■ YETKİ — fason durumunu kim değiştirebilir (sunucu kuralı; ekrandaki kutudan bağımsız)
+  Cem (cari: düzenleme + kaydetme; muhasebe YOK):
+   K1 fason işaretini kapatır → tamam (1)
+   K2 fason işaretli YENİ tip açar → tamam (1)
+   K3 fason OLMAYAN yeni tip açar → RET KR040 Bu değişiklik için yetkiniz yok: cariTipleri listesinden öğe silme (1) (gereken: tanımlar: silme). Hiçbir şey kaydedilme
+   K4 fason ustayı fason olmayan tipe alır → tamam (1)
+   K5 fason olmayan cariyi fason tipe alır → tamam (1)
+  ✗ AÇIK K1, K2, K4, K5 muhasebe yetkisi olmayan kullanıcı kimsenin ödeme yönünü değiştiremez — görülen [false,false,false,false,false,false,true] · hedef [true,true,true,true,true,true,false]
+  ✗ AÇIK K3 fason olmayan yeni tip açmak engellenmez (cari yetkisi yeter) — görülen false · hedef true
+  Murat (cari + muhasebe düzenleme): cariyi fason tipe alır → tamam (1)
+  Ali (Yönetici): fason işaretini kapatır → tamam (1)
+  ✓ muhasebe düzenleme yetkisi olan ve Yönetici değiştirebilir
+  jetonsuz bağlantı (SQL Editor) → tamam (1)  (bilgi: öteki korumalardaki gibi kuralın dışında)
+
+■ TESLİM — bayat istemci fason kişinin işçiliğini bölüm tahakkukuna yazamaz
+  T1 fason usta için YENİ bölüm tahakkuku → tamam (1)
+  T2 fason olmayan kişi için bölüm tahakkuku → tamam (1)
+  T3 eski tahakkuku olan üretimde başka alan → tamam (1)
+     üretimdeki tahakkuklar: ["tah-1","tah-2","tah-eski"]
+  ✗ AÇIK T1 fason kişi için yeni bölüm tahakkuku yazılamaz; T2 fason olmayan için yazılır; T3 eski tahakkuk ve ilgisiz alan etkilenmez — görülen [false,true,true,["tah-1","tah-2","tah-eski"]] · hedef [true,true,true,["tah-2","tah-eski"]]
+
+SONUÇ: 4 hedefte · 6 AÇIK
+AÇIK:
+  - E1–E2 eski istemcinin ad değişikliğinden sonra fason ustanın işçiliği YİNE cariye
+  - E3 eski istemci fason alanını ve tip kimliğini SİLEMEZ; ödeme yönü değişmez
+  - Y3 bir kez yazılmış fason alanı düşürülemez; ödeme yönü değişmez
+  - K1, K2, K4, K5 muhasebe yetkisi olmayan kullanıcı kimsenin ödeme yönünü değiştiremez
+  - K3 fason olmayan yeni tip açmak engellenmez (cari yetkisi yeter)
+  - T1 fason kişi için yeni bölüm tahakkuku yazılamaz; T2 fason olmayan için yazılır; T3 eski tahakkuk ve ilgisiz alan etkilenmez

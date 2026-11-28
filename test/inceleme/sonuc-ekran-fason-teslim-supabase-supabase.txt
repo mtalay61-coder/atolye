@@ -1,0 +1,12 @@
+  yerel Supabase: Paket F (sunucu) → 99|GENEL|||KURULU
+ekran-fason-teslim · istemci 1.744.50 · GERÇEK API KİPİ (yerel Supabase; giriş ekrandan) · Paket F sunucu kuralı KURULU
+     1. teslim (tip adı "Fasoncu"): cari bakiye farkı -350 · bölüm tahakkuku 0 · bildirim: ÜRT-261128001 · FT1 tüm prosesler tamamlandı — mamul stoğa eklendi
+  ✓ 1. teslim: işçilik fason ustanın carisine alacak (−350), bölüm tahakkuku yok
+     ad değişikliği: tipler [{"ad":"Fason Atölye","id":"ctip-mx04yvw7-yuen","fason":true,"temel":"Personel"}] · cari {"altTip":"Fason Atölye","altTipId":"ctip-mx04yvw7-yuen","olusturma":"2026-11-28T08:15:53.352499+00:00"}
+  ✓ tip adı sunucuda değişti
+     2. üretim: geçerli fiş 1 · atama teslim alındı
+     2. teslim (tip adı "Fason Atölye"): cari bakiye farkı -350 · bölüm tahakkuku 0 · bildirim: ÜRT-261128002 · FT2 tüm prosesler tamamlandı — mamul stoğa eklendi
+  ✓ 2. teslim (ad değiştikten sonra): işçilik YİNE carisine alacak (−350), bölüm tahakkuku yok
+  ✓ 1. teslimin cari hareketi olduğu gibi (geçmiş değişmedi)
+  ✓ reddedilen yazma yok, sayfa hatası yok
+SONUÇ: 5 geçti · 0 kaldı
