@@ -22,6 +22,9 @@ begin
   -- Kural: bir üründe aynı renk adı + aynı ölçü adı tek varyantta olur. İkincisi açılmaz; işlem bütünüyle reddedilir, hangi kaydın
   -- doğru olduğuna SUNUCU KARAR VERMEZ. Var olan varyantlara ve stoklarına dokunulmaz. Jetonsuz (yönetim) bağlantı serbest.
   if auth.jwt() is null then return new; end if;
+  -- EŞZAMANLILIK: aynı ürüne aynı anda iki varyant açan iki işlem birbirinin henüz işlenmemiş satırını göremez; ürün başına işlem
+  -- kilidiyle sıraya girerler — ikincisi birincinin sonucunu görerek denetlenir (kilit işlem bitince kendiliğinden kalkar).
+  perform pg_advisory_xact_lock(hashtextextended(''v_ikiz_varyant:'' || new.urun_id, 0));
   select public.stk_nrm(coalesce((select r.ad from public.stk_renk r where r.id = new.renk_id), '''')),
          public.stk_nrm(coalesce((select o.ad from public.stk_olcu o where o.id = new.olcu_id), '''')) into ra, oa;
   select v.id, v.renk_id, v.olcu_id, v.aktif,

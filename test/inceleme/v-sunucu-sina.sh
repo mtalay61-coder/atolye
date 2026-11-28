@@ -31,6 +31,21 @@ r=$(ac '{"urunId":"vh-astar","renk":"Kahve","olcu":"41"}'); echo "    V5 aynı r
 k "V5 başka bedende varyant açılır (ad çakışması yok)" "$(say "public.stk_varyant v where v.urun_id = 'vh-astar' and v.olcu_id = 'b-41'")" "1"
 Q -c "insert into public.stk_varyant (id, urun_id, renk_id, olcu_id) values ('vv-yonetim', 'vh-astar', 'vr-etkin', 'b-40')" > /dev/null 2>&1
 k "V6 jetonsuz (yönetim) bağlantı kural dışı: elle düzeltme yolu açık" "$(say "public.stk_varyant where id = 'vv-yonetim'")" "1"
+# EŞZAMANLI İKİ İSTEK: aynı ürüne, AYNI ADLI iki ayrı renk kaydıyla (Yeşil / Yeşil) aynı anda varyant açılır. Birinci işlem 3 sn açık
+# tutulur; ikincisi o sırada gelir. İkiz oluşmamalı: ikincisi birinciyi bekler ve reddedilir.
+Q -c "set session_replication_role = replica; insert into public.stk_renk (id, ad, tur, aktif) values ('vy-1', 'Yeşil', 'renk', true), ('vy-2', 'Yeşil', 'renk', true); insert into public.urunler (id, ad, kategori, olcu_tipi, birim) values ('vh-yaris', 'YARIŞ', 'Hammadde', 'Beden', 'adet'), ('vh-yaris2', 'YARIŞ-2', 'Hammadde', 'Beden', 'adet')" > /dev/null
+JW="select set_config('request.jwt.claims', '{\"role\":\"authenticated\",\"email\":\"ali@atolye.local\"}', true), set_config('request.headers', '{\"x-atolye-surum\":\"1.744.48\"}', true)"
+yaris() { # $1 ürün · $2 birinci istek · $3 ikinci istek
+  ( Q -c "begin" -c "$JW" -c "set local role authenticated" -c "select public.stk_varyant_ac('$2'::jsonb)" -c "reset role" -c "select pg_sleep(3)" -c "commit" > /dev/null 2>&1 ) &
+  sleep 1; local t0=$(date +%s%N); local r; r=$(ali "select public.stk_varyant_ac('$3'::jsonb)"); local ms=$(( ($(date +%s%N) - t0) / 1000000 )); wait
+  echo "    birinci işlem açıkken gelen ikinci istek → ${r:-tamam} · bekleme ${ms} ms · üründe \"Yeşil / 40\" varyantı: $(say "public.stk_varyant where urun_id = '$1'")"; }
+yaris vh-yaris '{"urunId":"vh-yaris","renkId":"vy-1","renk":"Yeşil","olcu":"40"}' '{"urunId":"vh-yaris","renkId":"vy-2","renk":"Yeşil","olcu":"40"}'
+k "V7 eşzamanlı iki istek (aynı ad, iki ayrı renk kaydı) ikiz varyant oluşturamaz" "$(say "public.stk_varyant where urun_id = 'vh-yaris'")" "1"
+yaris vh-yaris2 '{"urunId":"vh-yaris2","renkId":"vy-2","renk":"Yeşil","olcu":"40"}' '{"urunId":"vh-yaris2","renkId":"vy-1","renk":"Yeşil","olcu":"40"}'
+k "V8 aynı yarış ters sırayla: yine tek varyant" "$(say "public.stk_varyant where urun_id = 'vh-yaris2'")" "1"
+Q -c "insert into public.urunler (id, ad, kategori, olcu_tipi, birim) values ('vh-yaris3', 'YARIŞ-3', 'Hammadde', 'Beden', 'adet')" > /dev/null
+yaris vh-yaris3 '{"urunId":"vh-yaris3","renkId":"vy-1","renk":"Yeşil","olcu":"40"}' '{"urunId":"vh-yaris3","renkId":"vy-1","renk":"Yeşil","olcu":"40"}'
+k "V9 eşzamanlı iki istek AYNI renk kaydıyla: tek varyant, ikincisi reddedilmez (aynı varyantı bulur)" "$(say "public.stk_varyant where urun_id = 'vh-yaris3'")" "1"
 if [ "${PAKET_V:-1}" = 1 ]; then
   k "durum sorgusu KURULU, var olan ikizi bilgi olarak sayar" "$(Q -f $G/59-v-durum-salt-okur.sql | tail -2 | cut -d'|' -f4,5 | tr '\n' ' ')" "1 ad · 2 varyant|bilgi |KURULU "
   pg_dump -s $DB | grep -v restrict > $T.a; sed 's/$/\r/' $G/59-v-geri-al.sql > $T; Q -f $T > /dev/null; Q -f $T > /dev/null

@@ -40,5 +40,12 @@ ekran-recete-renk-tuketim · istemci 1.744.48 · GERÇEK API KİPİ (yerel Supab
   ✓ var olan rengin üründe olmayan bedeni (41) için ilk varyant açılır
   ASTAR'da pasif kayıttaki "Kahve" adıyla ikinci varyant isteği → HTTP 400 {"code":"KR060","details":null,"hint":null,"message":"KR060: \"ASTAR\" ürününde \"Kahve — pasif renk kaydı\" / \"40 [Beden]\" adlı varyant zaten var ama başka bir renk ya da ölçü kaydına bağlı — aynı 
   ✓ aynı adla ikinci varyant isteği reddedilir (KR060), varyant sayısı değişmez
+  ekrandan stok girişi: ASTAR · Vizon Yılan · 40 → 25 · bildirim: Başka cihazdan güncellendi: Stok
+  değişen varyantlar: {"Vizon Yılan / 40":25} · yeni fiş 1
+  ✓ ilk stok giriş fişi: 25 yalnız yeni açılan Vizon Yılan / 40 varyantına yazıldı, başka varyant değişmedi, tek fiş kesildi
+  ekrandan stok girişi: ASTAR · Siyah · 40 → 5 · bildirim: Stok girişi kaydedildi — fiş: MNL-261128002
+  değişen varyantlar: {"Siyah / 40":5} · yeni fiş 1
+  ✓ var olan varyanta giriş: 5 yalnız Siyah / 40 varyantına yazıldı
+  ✓ stok girişlerinde reddedilen yazma ve sayfa hatası yok; ASTAR'da varyant sayısı girişlerle değişmedi
 
-SONUÇ: 6 geçti · 0 kaldı
+SONUÇ: 9 geçti · 0 kaldı

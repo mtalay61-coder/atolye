@@ -102,6 +102,29 @@ const tur = async (AD, baslik) => {
     const y3 = await rpc("stk_varyant_ac", { p: { urunId: "h-astar", renk: "Kahve", olcu: "40" } });
     yaz(`  ASTAR'da pasif kayıttaki "Kahve" adıyla ikinci varyant isteği → HTTP ${y3.durum} ${y3.metin}`);
     k_(`aynı adla ikinci varyant isteği ${PAKET_V ? "reddedilir (KR060), varyant sayısı değişmez" : "(paketsiz) ikinci varyantı AÇAR"}`, [/KR060/.test(y3.metin), await say(`r.ad = 'Kahve' and v.olcu_id = 'b-40'`)], PAKET_V ? [true, 1] : [false, 2]);
+    // STOK GİRİŞ FİŞİ — gerçek istemci (giriş ekrandan), gerçek API: yeni açılan varyanta 25, var olan Siyah / 40 varyantına 5.
+    const hrk = async () => Object.fromEntries((await c.query(`select coalesce(r.ad, '-') || ' / ' || coalesce(o.ad, '-') || case when r.aktif then '' else ' (pasif renk kaydı)' end || ' [' || v.id || ']' a,
+       coalesce(sum(h.miktar) filter (where not coalesce(h.iptal, false)), 0)::float m from public.stk_varyant v left join public.stk_renk r on r.id = v.renk_id left join public.stk_olcu o on o.id = v.olcu_id
+       left join public.stk_hareket h on h.varyant_id = v.id where v.urun_id = 'h-astar' group by 1 order by 1`)).rows.map((x) => [x.a, x.m]));
+    const fisSay = async () => Number((await c.query(`select count(*)::int n from public.stk_fis`)).rows[0].n);
+    const a2 = await ekranAc(undefined, {}); const s2 = a2.sayfa; s2.on("dialog", (d) => d.accept().catch(() => {}));
+    const giris = async (renk, miktar) => { await O.modulAc(s2, "Stok"); await s2.waitForTimeout(800);
+      if (!(await s2.locator("[data-stok-giris-seridi]").count())) { await s2.locator('button[title^="Bağımsız stok girişi"]').first().click(); await s2.waitForTimeout(500); }
+      await s2.locator("[data-stok-giris-urun]").first().selectOption("h-astar"); await s2.waitForTimeout(300);
+      await s2.locator("[data-stok-giris-renk]").first().selectOption(renk); await s2.waitForTimeout(300);
+      await s2.locator('[data-stok-giris-miktar="40"]').first().fill(String(miktar));
+      await s2.locator("[data-stok-giris-seridi] .btn-save").first().click(); await s2.waitForTimeout(5000); return kisa(await toastlar(s2), 160); };
+    const h0 = await hrk(), f0 = await fisSay();
+    const b1 = await giris("Vizon Yılan", 25); const h1 = await hrk(), f1 = await fisSay();
+    const fark = (o, n) => Object.fromEntries(Object.keys(n).filter((k) => n[k] !== o[k]).map((k) => [k.replace(/ \[.*$/, ""), n[k] - (o[k] || 0)]));
+    yaz(`  ekrandan stok girişi: ASTAR · Vizon Yılan · 40 → 25 · bildirim: ${b1}`); yaz(`  değişen varyantlar: ${JSON.stringify(fark(h0, h1))} · yeni fiş ${f1 - f0}`);
+    k_("ilk stok giriş fişi: 25 yalnız yeni açılan Vizon Yılan / 40 varyantına yazıldı, başka varyant değişmedi, tek fiş kesildi", [fark(h0, h1), f1 - f0], [{ "Vizon Yılan / 40": 25 }, 1]);
+    const b2 = await giris("Siyah", 5); const h2 = await hrk(), f2 = await fisSay();
+    yaz(`  ekrandan stok girişi: ASTAR · Siyah · 40 → 5 · bildirim: ${b2}`); yaz(`  değişen varyantlar: ${JSON.stringify(fark(h1, h2))} · yeni fiş ${f2 - f1}`);
+    k_("var olan varyanta giriş: 5 yalnız Siyah / 40 varyantına yazıldı", [fark(h1, h2), f2 - f1], [{ "Siyah / 40": 5 }, 1]);
+    const red2 = (a2.k.gunluk || []).filter((x) => !["GET", "HEAD", "OPTIONS"].includes(x.m) && x.durum >= 400).map((x) => `${x.m} ${x.yol.slice(0, 40)} ${x.durum} ${x.kod || ""}`);
+    k_("stok girişlerinde reddedilen yazma ve sayfa hatası yok; ASTAR'da varyant sayısı girişlerle değişmedi", [red2, a2.hatalar, Object.keys(h2).length - Object.keys(h0).length], [[], [], 0]);
+    await a2.tarayici.close(); await a2.k.kapat();
     await c.end();
   }
   yaz(`\nSONUÇ: ${gecen} geçti · ${kalan} kaldı`);
