@@ -214,3 +214,19 @@ dönüşüm gerekmiyor, eski kural aynen geçerli. (4) Ad bağlarının hacmi k�
   onay hedefleri (075), sevk fiş bağı (239), mamul depo (233). Her paket başlarken kendi alanı için tamamlanacak.
 - Eski `cariler.fiyat_grubu` sütununun ad mı kimlik mi taşıdığı.
 - Cari kodu ve personel barkodu için tekillik / düzenleme yolları.
+
+## Durum kaydı — 28 Kasım (Paket K canlıda)
+
+- **Paket K canlıda KURULU** (ana proje; kullanıcı SQL Editor'de çalıştırdı). `52-k-uygula.sql`
+  `244920e26a81a71747495c51c32316370deccca7897f19d9376d3ce86fdf953d`. Önkoşul sorgusu (`52-k-onkosul-salt-okur.sql`) "HAZIR",
+  kurulum sonrası durum sorgusu iki kez "KURULU" (7 fonksiyon · 8 tetikleyici · 6 yabancı anahtar). Geri alma: `52-k-geri-al.sql`
+  (ayrı onay). İstemci değişmedi (1.744.48).
+- Canlıdaki mevcut yetimler olduğu gibi duruyor: cari hareketi 11 · fiş 3 · stok hareketi 10 (cari) + 10 (ürün) · site hesabı 3 ·
+  site talebi 8 · kasa hareketi 1 (hangi cari olduğu incelenmedi). Deneme kalıntılarının tamamı iptal edilmiş.
+- **Bekleyen kararlar (kullanıcı):** 27181 reçetesinde altı satır (ad "KAHVE", kimlik Siyah — ölçüm: tüketim ADA göre; astarda
+  ikinci Kahve varyantı açılıyor, `test/inceleme/ekran-recete-renk-tuketim.js`); kullanılmayan iki Siyah kaydı; astarın pasif
+  Kahve kaydı. Karar gelmeden ad / kimlik değiştirilmez, renk birleştirilmez.
+- **Hazır, uygulanmadı:** portal girişi "cari mevcut ve etkin" (dal `claude/portal-giris-cari`, 58-*); Paket F (dal
+  `claude/paket-f-fason`; yayın için 1.744.50 geri dönüş istemcisi eksik).
+- **Zorunlu kapsam:** ölçü eşlemesinde grup (Beden / Boyut) kimliğin parçasıdır; 36–42 iki grupta ayrı kimliklerle var, ad tek
+  başına eşleşme anahtarı olamaz.
