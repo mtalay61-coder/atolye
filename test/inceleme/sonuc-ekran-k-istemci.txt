@@ -1,0 +1,28 @@
+ekran-k-istemci · PostgreSQL kipi (şablon b12_k_crlf)
+
+■ C1 yeni cari + hemen cari virmanı
+     sunucu: {"cari":1,"hareket":1,"yetim":0} · reddedilen: yok · bildirim: Cari virmanı kaydedildi — CVR-261128001 Geri al
+  ✓ C1 yeni cari ve hemen ardından yazılan hareketi sunucuda; carisiz hareket yok; ret yok
+  ✓ C1 sayfa hatası yok
+
+■ C2 sıra bozulur: carinin yazması yolda tutulur, hareket önce varır
+     30 sn sonra: tutulan cari yazması POST · fiş istekleri: POST rpc/fis_kes 400 23503
+     ret iletisi: insert or update on table "stk_fis" violates foreign key constraint "k_stk_fis_cari_fk"
+     sunucu: {"cari":0,"hareket":0,"yetim":0} · bekleyen defter [] · bildirim: Cari eklendi | Cari virmanı kaydedilemedi — hiçbir değişiklik yapılmadı (Supabase 400: {"code":"23503","message":"insert or update on table \"stk_fis\" violates foreign key constraint \"k_stk_fis_cari_fk\"","details":"Key (cari_id)=() · ekranda: Geciken Müşteri K | Kaydedilince: Geciken Müşteri K: ödeme (borç) · Ekran Satıcı: tahsilat (alacak) — tek fişte, kasa / banka hareketi yok.
+  ✓ C2 cari yokken gelen hareket reddedildi; carisiz hareket OLUŞMADI
+  ✓ C2 istek sonsuz tekrar edilmedi (30 sn'de en çok 3 fiş isteği)
+  ✓ C2 kullanıcıya bildirildi (bildirim ya da ekranda uyarı)
+     cari yazması serbest kaldıktan sonra: {"cari":1,"hareket":0,"yetim":0} · bekleyen []
+  ✓ C2 cari yazması serbest kalınca cari sunucuda (cari kaydı kaybolmadı)
+     kullanıcı yeniden kaydetti → {"cari":1,"hareket":1,"yetim":0}
+  ✓ C2 sonunda hareket TEK kez sunucuda (kayıp yok, çift yok), carisiz hareket yok
+  ✓ C2 sayfa hatası yok
+
+■ C3 hareketi olan cari silinemez · C4 hareketi olan kasa hesabı
+     hareketi olan cariyi doğrudan API ile silme → HTTP 400 · KR050 · KR050: "Ekran Geçmişli" silinemez — bağlı kayıt var: 1 cari hareketi. Geçmiş korunur; cariyi pasife alabilirsiniz.
+  ✓ C3 hareketi olan cari gerçek API üzerinden silinemez (KR050); cari ve hareketi yerinde
+  ✓ C3 hiçbir bağı olmayan cari silinebilir (gereksiz engel yok)
+     kasa hesabı silme (kas_yaz · hesapSil) → HTTP 400 · KR010 · Bakiyesi olan kasa/banka hesabı kapatılamaz (K-ekr) — önce bakiyeyi aktarın · hesap satırı 1, etkin true, geçerli hareket 1
+  ✓ C4 kasa hesabı silinince hesap satırı ve hareketleri DURUYOR (silme = pasife alma; geçmiş kaybolmaz)
+
+SONUÇ: 11 geçti · 0 kaldı
