@@ -431,7 +431,10 @@ begin
     insert into site_giris_kaydi (cari_id, basarili) values (h.cari_id, false);
     return null;
   end if;
-  if exists (select 1 from cariler c where c.id::text = h.cari_id and coalesce(c.pasif, false)) then return null; end if;
+  -- CARİ MEVCUT VE ETKİN OLMALI (28 Kasım): eskiden yalnız "cari pasif mi" diye bakılıyordu; carisi SİLİNMİŞ hesap doğru şifreyle
+  -- oturum anahtarı alabiliyordu (anahtar site_kod_cari kapısından geçmez, ama gereksiz oturum ve giriş kaydı birikir).
+  -- Şifre doğrulandıktan SONRA bakılır ve boş dönülür: dışarıdan "hesap var mı" sınaması için yeni bir ipucu vermez.
+  if not exists (select 1 from cariler c where c.id::text = h.cari_id and not coalesce(c.pasif, false)) then return null; end if;
   anahtar := encode(gen_random_bytes(32), 'hex');
   delete from site_oturumlari where bitis < now();
   insert into site_oturumlari values (anahtar, h.cari_id, now() + interval '30 days');

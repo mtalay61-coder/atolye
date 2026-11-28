@@ -1,0 +1,30 @@
+portal-giris-sina · PostgreSQL (şablon b12_crlf)
+  durum: ESKİ — yalnız pasif cariye bakıyor 
+■ DÜZELTMEDEN ÖNCE (bugünkü gövde)
+    geçerli hesap, doğru şifre → anahtar verildi · portal → Geçerli Müşteri
+  ✓ G1 geçerli hesap girer ve portalı okur
+  ✓ G2 geçerli hesap, yanlış şifre → boş; hatalı deneme sayacı 1
+    CARİSİ OLMAYAN hesap, doğru şifre → anahtar VERİLDİ · portal → GECERSIZ_KOD · oturum 1 → 2 · başarılı giriş kaydı 1 · son giriş 2026-11-28 09:11:13.735423+00
+  ✓ G3 (bugünkü durum) carisi olmayan hesap anahtar ALIYOR ama portal kapısından geçemiyor
+  ✓ G4 carisi olmayan hesabın ESKİ oturumu silinmedi ve portaldan geçmiyor
+  ✓ G5 carisi PASİF hesap doğru şifreyle giremez (oturum açılmaz)
+  ✓ G6 carisi olmayan hesap, yanlış şifre → boş; hatalı deneme sayılır
+  ✓ G7 olmayan kullanıcı → boş
+  ✓ G8 beş hatalı denemeden sonra hesap kilitlenir (carisi olmasa da)
+  ✓ G9 geçerli hesabın önceki oturumu duruyor ve çalışıyor
+  kurulum (CRLF, iki kez) → durum: YENİ — cari mevcut ve etkin olmalı 
+■ DÜZELTMEDEN SONRA
+    geçerli hesap, doğru şifre → anahtar verildi · portal → Geçerli Müşteri
+  ✓ G1 geçerli hesap girer ve portalı okur
+  ✓ G2 geçerli hesap, yanlış şifre → boş; hatalı deneme sayacı 1
+    CARİSİ OLMAYAN hesap, doğru şifre → boş (giriş reddedildi) · oturum 1 → 1 · başarılı giriş kaydı 0 · son giriş yok
+  ✓ G3 carisi olmayan hesap doğru şifreyle GİREMEZ: anahtar yok, yeni oturum yok, başarılı giriş kaydı yok, son giriş değişmez
+  ✓ G4 carisi olmayan hesabın ESKİ oturumu silinmedi ve portaldan geçmiyor
+  ✓ G5 carisi PASİF hesap doğru şifreyle giremez (oturum açılmaz)
+  ✓ G6 carisi olmayan hesap, yanlış şifre → boş; hatalı deneme sayılır
+  ✓ G7 olmayan kullanıcı → boş
+  ✓ G8 beş hatalı denemeden sonra hesap kilitlenir (carisi olmasa da)
+  ✓ G9 geçerli hesabın önceki oturumu duruyor ve çalışıyor
+  geri alma (CRLF) → durum: ESKİ — yalnız pasif cariye bakıyor 
+  ✓ geri almadan sonra gövde eski sürüm
+SONUÇ: 19 geçti · 0 kaldı
