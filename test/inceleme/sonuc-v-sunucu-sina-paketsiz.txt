@@ -1,0 +1,13 @@
+v-sunucu-sina · Paket V YOK (bugünkü davranış)
+    V1 ASTAR'da Kahve PASİF kayıtta; adla ("KAHVE") varyant isteği → tamam
+  ✗ AÇIK V1 pasif renk kaydındaki varyantın adıyla ikinci varyant açılmaz — görülen [2] · hedef [1]
+    V2 BOYLU'da 36 [Boyut] var; adla ("36") istek sunucuda 36 [Beden] kaydına çözülüyor → tamam
+  ✗ AÇIK V2 Beden / Boyut: aynı ölçü adıyla başka gruptan ikinci varyant açılmaz — görülen [2] · hedef [1]
+    V3 var olan varyant KİMLİKLE istenir → tamam
+  ✗ AÇIK V3 kimlikle istenen var olan varyant bulunur, yenisi açılmaz, istek reddedilmez — görülen [2|0] · hedef [1|0]
+    V4 üründe hiç olmayan renk (Mavi) → tamam
+  ✓ V4 gerçekten yeni renk için varyant açılır (koruma meşru yeni varyantı engellemez)
+    V5 aynı renk adı, üründe olmayan beden (41) → tamam
+  ✓ V5 başka bedende varyant açılır (ad çakışması yok)
+  ✗ AÇIK V6 jetonsuz (yönetim) bağlantı kural dışı: elle düzeltme yolu açık — görülen [0] · hedef [1]
+SONUÇ: 2 hedefte · 4 AÇIK

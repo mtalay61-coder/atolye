@@ -1,0 +1,15 @@
+v-sunucu-sina · Paket V KURULU (CRLF, iki kez)
+    V1 ASTAR'da Kahve PASİF kayıtta; adla ("KAHVE") varyant isteği → RET KR060: "ASTAR" ürününde "Kahve — pasif renk kaydı" / "40 [Beden]" adlı varyant zaten var ama başka bir renk ya da ölçü kaydına bağlı — aynı adla ikin
+  ✓ V1 pasif renk kaydındaki varyantın adıyla ikinci varyant açılmaz
+    V2 BOYLU'da 36 [Boyut] var; adla ("36") istek sunucuda 36 [Beden] kaydına çözülüyor → RET KR060: "BOYLU" ürününde "Mavi" / "36 [Boyut]" adlı varyant zaten var ama başka bir renk ya da ölçü kaydına bağlı — aynı adla ikinci varyant açılmadı,
+  ✓ V2 Beden / Boyut: aynı ölçü adıyla başka gruptan ikinci varyant açılmaz
+    V3 var olan varyant KİMLİKLE istenir → tamam
+  ✓ V3 kimlikle istenen var olan varyant bulunur, yenisi açılmaz, istek reddedilmez
+    V4 üründe hiç olmayan renk (Mavi) → tamam
+  ✓ V4 gerçekten yeni renk için varyant açılır (koruma meşru yeni varyantı engellemez)
+    V5 aynı renk adı, üründe olmayan beden (41) → tamam
+  ✓ V5 başka bedende varyant açılır (ad çakışması yok)
+  ✓ V6 jetonsuz (yönetim) bağlantı kural dışı: elle düzeltme yolu açık
+  ✓ durum sorgusu KURULU, var olan ikizi bilgi olarak sayar
+  ✓ geri almadan sonra şema, paketsiz şablonla aynı (fark 0 satır)
+SONUÇ: 8 hedefte · 0 AÇIK

@@ -1,0 +1,29 @@
+ekran-recete-renk-tuketim · istemci 1.744.48 · PostgreSQL kipi (şablon b12_v)
+  kurulum: ASTAR ve TABAN hammaddelerinde birer "Kahve" ve "Siyah" varyantı, her biri 100 stok. ASTAR'ın Kahve'si PASİF ve Tanımlar'da olmayan renk kaydına, TABAN'ınki etkin kayda bağlı (canlıdaki gibi).
+
+■ 1 · reçetede renk adı "KAHVE", kimlik Siyah (canlıdaki altı satırın biçimi) — 10 çift teslim; reçeteye göre tüketim: astar 20, taban 10
+  başlangıç: {"astar-kahve":100,"astar-siyah":100,"taban-kahve":100,"taban-siyah":100}
+  bildirim: Teslim kaydedilemedi — hiçbir değişiklik yapılmadı (KR060: "ASTAR" ürününde "Kahve — pasif renk kaydı" / "40 [Beden]" adlı varyant zaten var ama başka bir renk ya da ölçü kaydına bağlı — aynı adla ikinci varyant )
+  teslimden sonra: {"astar-kahve":100,"astar-siyah":100,"taban-kahve":100,"taban-siyah":100}
+  kesilen fişin çıkış satırları: []
+  DEĞİŞEN: {}
+  yeni açılan varyant: []
+  yeni renk kaydı: [] · reddedilen yazma: ["POST rpc/fis_kes 400 KR060"] · sayfa hatası: []
+
+■ 2 · karşılaştırma: renk adı birebir "Kahve", kimlik yine Siyah — 10 çift teslim; reçeteye göre tüketim: astar 20, taban 10
+  başlangıç: {"astar-kahve":100,"astar-siyah":100,"taban-kahve":100,"taban-siyah":100}
+  bildirim: Teslim kaydedilemedi — hiçbir değişiklik yapılmadı (KR060: "ASTAR" ürününde "Kahve — pasif renk kaydı" / "40 [Beden]" adlı varyant zaten var ama başka bir renk ya da ölçü kaydına bağlı — aynı adla ikinci varyant )
+  teslimden sonra: {"astar-kahve":100,"astar-siyah":100,"taban-kahve":100,"taban-siyah":100}
+  kesilen fişin çıkış satırları: []
+  DEĞİŞEN: {}
+  yeni açılan varyant: []
+  yeni renk kaydı: [] · reddedilen yazma: ["POST rpc/fis_kes 400 KR060"] · sayfa hatası: []
+
+■ 3 · karşılaştırma: renk adı "Siyah", kimlik Siyah (uyumlu satır) — 10 çift teslim; reçeteye göre tüketim: astar 20, taban 10
+  başlangıç: {"astar-kahve":100,"astar-siyah":100,"taban-kahve":100,"taban-siyah":100}
+  bildirim: ÜRT-261128001 · RR1 tüm prosesler tamamlandı — mamul stoğa eklendi
+  teslimden sonra: {"astar-kahve":100,"astar-siyah":80,"taban-kahve":100,"taban-siyah":90}
+  kesilen fişin çıkış satırları: ["v-astar-siyah -20 [varyantın rengi: Siyah]","v-taban-siyah -10 [varyantın rengi: Siyah]"]
+  DEĞİŞEN: {"astar-siyah":-20,"taban-siyah":-10}
+  yeni açılan varyant: []
+  yeni renk kaydı: [] · reddedilen yazma: [] · sayfa hatası: []
