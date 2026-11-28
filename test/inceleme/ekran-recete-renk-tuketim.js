@@ -10,7 +10,7 @@ const { execFileSync } = require("child_process");
 const GERCEK = !!process.env.KOPRU_SUPABASE;   // yerel Supabase: giriş ekrandan, istekler gerçek API'den
 const SB_PG = "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
 if (GERCEK && !process.env.KOPRU_SUPABASE_DB) process.env.KOPRU_SUPABASE_DB = SB_PG;
-const G = path.join(__dirname, "..", "..", "stok-v2", "guvenlik"), PAKET_V = process.env.PAKET_V === "1" || /_v$/.test(process.env.EKRAN_SABLON || "");
+const G = path.join(__dirname, "..", "..", "stok-v2", "guvenlik"), PAKET_V = process.env.PAKET_V === "1" || /_vo?$/.test(process.env.EKRAN_SABLON || "");
 const psqlSon = (args) => { const c = execFileSync("psql", ["-X", "-q", "-A", "-t", "-v", "ON_ERROR_STOP=1", ...args], { stdio: ["ignore", "pipe", "pipe"], env: process.env }).toString().trim().split("\n"); return c[c.length - 1]; };
 const ORTAK = process.env.ORTAK_EKRAN || path.join(__dirname, "../ekran/ortak-ekran.js");
 const { ekranAc, toastlar, O } = require(ORTAK);
@@ -20,7 +20,7 @@ const SABLON = process.env.EKRAN_SABLON || "b12_crlf", DB = "b12_rrenk";
 const satirlar = []; const yaz = (...a) => { const s = a.join(" "); satirlar.push(s); console.log(s); };
 let gecen = 0, kalan = 0;
 const k_ = (ad, g, b) => { const ok = JSON.stringify(g) === JSON.stringify(b); if (ok) gecen += 1; else kalan += 1; yaz(`  ${ok ? "✓" : "✗ KALDI"} ${ad}${ok ? "" : ` — görülen ${JSON.stringify(g)} · beklenen ${JSON.stringify(b)}`}`); };
-const BEKLENEN_RET = process.env.PAKET_V === "1" || /_v$/.test(process.env.EKRAN_SABLON || "") ? ["KAHVE", "Kahve"] : [];
+const BEKLENEN_RET = process.env.PAKET_V === "1" || /_vo?$/.test(process.env.EKRAN_SABLON || "") ? ["KAHVE", "Kahve"] : [];
 const kisa = (s, n = 300) => String(s == null ? "" : s).replace(/\s+/g, " ").trim().slice(0, n);
 const surum = () => (fs.readFileSync(path.join(ISTEMCI, "src/015-sabitler.jsx"), "utf8").match(/const SURUM = "([^"]+)"/) || [])[1];
 const tur = async (AD, baslik) => {
