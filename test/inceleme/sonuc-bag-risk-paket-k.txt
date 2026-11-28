@@ -7,7 +7,7 @@ bag-risk · şablon b12_b1t · PAKET K KURULU · her durum taze kopyada · işle
   ✓ S2 stok hareketi olan sipariş silinemez; kalemleri ve hareketi yerinde
   S3 ataması ve işçilik hareketi olan üretim silme → RET KR010 KR010: Üretimin geçerli stok / cari hareketi var (ur-1) — üretim silinmedi; önce fişleri iptal edilmeli · kalan atama 1 · üretimi kalmayan işçilik hareketi 0 · arşivde atama 0
   ✓ S3 ataması / işçiliği olan üretim silinmez ya da atamaları korunur; işçilik hareketi üretimsiz kalmaz
-  S4 siparişi, üretimi, stok hareketi olan ürün silme → RET KR055 KR055: "İnceleme Bot" silinemez — 1 stok hareketi var. Geçmiş korunur; ürünü pasife alabilirsiniz. · ürünsüz varyant 0 · ürünsüz stok hareketi 0 · ürün bağı boşalan kalem 0 · üretim 0 · kalan rezervasyon 2/2
+  S4 siparişi, üretimi, stok hareketi olan ürün silme → RET KR055 KR055: "İnceleme Bot" silinemez — bağlı kayıt var: 2 stok hareketi, 3 sipariş kalemi, 3 üretim. Geçmiş korunur · ürünsüz varyant 0 · ürünsüz stok hareketi 0 · ürün bağı boşalan kalem 0 · üretim 0 · kalan rezervasyon 2/2
   ✓ S4 kullanılan ürün silinemez (bağlar boşalmaz, rezervasyon silinmez, varyant / hareket ürünsüz kalmaz)
   S5 hareketi, siparişi, fişi olan cari silme → RET KR050 KR050: "İnceleme Müşteri" silinemez — bağlı kayıt var: 1 cari hareketi, 1 fiş, 1 stok hareketi, 2 sipariş. Geç · carisiz cari hareketi 0 · carisiz fiş 0 · cari bağı boşalan sipariş 0
   ✓ S5 hareketi / siparişi / fişi olan cari silinemez (hareket ve fiş carisiz kalmaz, sipariş bağı boşalmaz)
@@ -28,12 +28,12 @@ bag-risk · şablon b12_b1t · PAKET K KURULU · her durum taze kopyada · işle
 ■ B · YANLIŞ ÜST KAYDA BAĞLANMA
   B1 stok hareketi olan kalemi (kl-inc-40) başka siparişe taşıma → RET KR003 Teslim geçmişi olan kalemin ürünü, rengi, bedeni ya da siparişi değiştirilemez (kalem kl-inc-40: 1054 - Siyah/ · kalem şimdi sp-inc-1; hareket h-1 hâlâ siparis_id = sp-inc-1
   ✓ B1 stok hareketi olan kalem başka siparişe taşınamaz (hareketin siparişi ile kalemin siparişi ayrışmaz)
-  B2 ataması ve işçilik hareketi olan üretimin ürününü değiştirme → RET KR052 KR052: üretim URT-ur-1 işlem görmüş (1 cari hareketi) — ürünü değiştirilemez
-  ✓ B2 ataması / işçilik hareketi olan üretimin ürünü değiştirilemez
+  B2 ataması ve işçilik hareketi olan üretimin ürününü değiştirme → RET KR052 KR052: üretim URT-ur-1 başka ürüne çevrilemez — üretimin ürünü değişmez (gerekirse üretim iptal edilip yenisi 
+  ✓ B2 üretimin ürünü değiştirilemez (ataması / işçilik hareketi varken)
   B3 fişi kesilmiş siparişin carisini değiştirme → RET KR051 KR051: sipariş SAT-9001 için kesilmiş fiş / stok hareketi başka caride (2 kayıt) — siparişin carisi değiştiril · fiş f-1 carisi inc-musteri
   ✓ B3 fişi kesilmiş siparişin carisi değiştirilemez (fiş başka caride kalmaz)
 
-■ S8 siparişi olmayan ama stok hareketi olan ürün silme → RET KR055 KR055: "İnceleme Bot 3" silinemez — 1 stok hareketi var. Geçmiş korunur; ürünü pasife alabilirsiniz. · ürünsüz stok hareketi 0 · ürünsüz varyant 0
+■ S8 siparişi olmayan ama stok hareketi olan ürün silme → RET KR055 KR055: "İnceleme Bot 3" silinemez — bağlı kayıt var: 1 stok hareketi. Geçmiş korunur; ürünü pasife alabilirsin · ürünsüz stok hareketi 0 · ürünsüz varyant 0
   ✓ S8 stok hareketi olan ürün silinemez (hareket ve varyant ürünsüz kalmaz)
 
 ■ Y7 kasa hareketi, olmayan cari (kas_yaz) → tamam (1 satır) · yazılan satır 0
@@ -61,4 +61,27 @@ bag-risk · şablon b12_b1t · PAKET K KURULU · her durum taze kopyada · işle
   E5 kasa hareketi (cari JSON içinde) · kayıt önce: kayıt tamam (1 satır) · sonra gelen silme RET KR050 KR050: "İnceleme Temiz" silinemez — bağlı kayıt var: 1 kasa / banka hareketi. Geçmiş korunur; cariyi pasife al → cari duruyor, carisiz kayıt 0
   ✓ E5 kasa hareketi (cari JSON içinde) kayıt yazılırken istenen silme kaydı carisiz bırakmaz
 
-SONUÇ: 23 hedefte · 0 AÇIK
+■ E6 · EŞZAMANLI: siparişin carisi değişirken fiş kesilir / fiş kesilirken siparişin carisi değişir
+  cari değişikliği önce: değişiklik tamam (1 satır) · sonra gelen fiş RET KR056 KR056: siparişin carisi bu arada değişmiş — fiş kesilmedi; ekranı yenileyip tekrar deneyin → çelişen fiş 0
+  ✓ E6 cari değişikliği sürerken kesilen fiş başka caride kalmaz
+  fiş önce: fiş tamam (1 satır) · sonra gelen cari değişikliği RET KR051 KR051: sipariş SAT-9002 için kesilmiş fiş / stok hareketi başka caride (1 kayıt) — siparişin carisi değiştiril → çelişen fiş 0
+  ✓ E6 fiş kesilirken istenen cari değişikliği fişi başka caride bırakmaz
+
+■ E7 · EŞZAMANLI: üretimin ürünü değişirken teslim alınır / teslim alınırken ürün değişir (teslim, sunucudaki gibi üretim satırını kilitler)
+  ürün değişikliği önce: değişiklik RET KR052 KR052: üretim URT-ur-2 başka ürüne çevrilemez — üretimin ürünü değişmez (gerekirse üretim iptal edilip yenisi  · sonra gelen teslim tamam (1 satır) → ürünü üretimle çelişen mamul girişi 0
+  ✓ E7 ürün değişikliği sürerken alınan teslim, üretimin ürünüyle çelişen giriş bırakmaz
+  teslim önce: teslim tamam (1 satır) · sonra gelen ürün değişikliği RET KR052 KR052: üretim URT-ur-2 başka ürüne çevrilemez — üretimin ürünü değişmez (gerekirse üretim iptal edilip yenisi  → çelişen giriş 0
+  ✓ E7 teslim alınırken istenen ürün değişikliği teslimi çelişkili bırakmaz
+
+■ N · MEVCUT YETİM SATIRDA İŞLEM (üst kaydı önceden silinmiş kayıt; doğrulanmamış yabancı anahtar bunları reddetmemeli)
+  N1 yetim cari hareketinde açıklama düzeltme (car_yaz, cari aynı) → tamam (1 satır) · açıklama "açıklama düzeltildi"
+  ✓ N1 yetim cari hareketinin ilgisiz alanı düzeltilebilir
+  N2 carisi silinmiş fişin iptali (fis_iptal) → tamam (1 satır) · iptal: fiş true, stok hareketi true, cari hareketi true
+  ✓ N2 carisi silinmiş fiş iptal edilebilir (fiş + stok hareketi + cari hareketi)
+  N3 yetim cari hareketini VAR OLAN cariye bağlama (car_yaz) → tamam (1 satır) · cari inc-temiz  (bilgi: elle düzeltme yolu; otomatik yapılmaz)
+  N4 silinmiş cariye YENİ hareket (car_yaz) → RET 23503 insert or update on table "car_hareket" violates foreign key constraint "k_car_hareket_cari_fk"
+  ✓ N4 silinmiş cariye yeni cari hareketi yazılamaz
+  N5 carisi silinmiş kasa hareketinde açıklama düzeltme → tamam (1 satır)
+  ✓ N5 carisi silinmiş kasa hareketinin ilgisiz alanı düzeltilebilir
+
+SONUÇ: 31 hedefte · 0 AÇIK

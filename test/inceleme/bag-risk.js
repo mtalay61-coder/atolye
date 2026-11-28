@@ -37,6 +37,11 @@ insert into public.urunler (id, ad, kategori, birim, olcu_tipi, pasif, surum) va
 insert into public.stk_varyant (id, urun_id, renk_id, olcu_id, min_stok, aktif) values ('vry-inc3-40', 'inc-bot-3', 'k-1054', 'b-40', 0, true);
 insert into public.stk_fis (id, tur, tarih) values ('f-2', 'sayim', current_date);
 insert into public.stk_hareket (id, fis_id, varyant_id, urun_id, miktar) values ('h-2', 'f-2', 'vry-inc3-40', 'inc-bot-3', 5);
+insert into public.car_hareket (id, cari_id, tarih, yon, tutar, aciklama) values ('ch-yetim', 'silinmis-cari', current_date, 'Borç', 30, 'yetim hareket');
+insert into public.stk_fis (id, tur, cari_id, tarih, tutar) values ('f-yetim', 'satis', 'silinmis-cari', current_date, 60);
+insert into public.stk_hareket (id, fis_id, varyant_id, urun_id, miktar, cari_id) values ('h-yetim', 'f-yetim', 'vry-inc-41', 'inc-bot', -2, 'silinmis-cari');
+insert into public.car_hareket (id, cari_id, tarih, yon, tutar, aciklama, fis_id) values ('ch-yetim-fis', 'silinmis-cari', current_date, 'Borç', 60, 'yetim fişin hareketi', 'f-yetim');
+insert into public.kas_hareket (id, hesap_id, sira, veri) values ('kh-yetim', 'yok', 1, '{"cariId":"silinmis-cari","tutar":15,"yon":"Giriş","aciklama":"yetim"}');
 insert into public.hesaplar (id, ad, tur) values ('hs-1', 'İnceleme Kasa', 'kasa');
 insert into public.hesap_hareketleri (id, hesap_id, tarih, yon, tutar) values ('hh-1', 'hs-1', current_date, 'Giriş', 50);
 set session_replication_role = origin;`;
@@ -121,7 +126,7 @@ const arsivde = (c, tablo) => c.say(`public.silinen_arsiv where tablo = $1`, [ta
     k_("B1 stok hareketi olan kalem başka siparişe taşınamaz (hareketin siparişi ile kalemin siparişi ayrışmaz)", nerede, "sp-inc-1");
     const b2 = await c.ali(`update public.uretim set urun_id = 'inc-bot-2' where id = 'ur-1'`);
     yaz(`  B2 ataması ve işçilik hareketi olan üretimin ürününü değiştirme → ${b2}`);
-    k_("B2 ataması / işçilik hareketi olan üretimin ürünü değiştirilemez", [/^RET/.test(b2), (await c.query(`select urun_id from public.uretim where id = 'ur-1'`)).rows[0].urun_id], [true, "inc-bot"]);
+    k_("B2 üretimin ürünü değiştirilemez (ataması / işçilik hareketi varken)", [/^RET/.test(b2), (await c.query(`select urun_id from public.uretim where id = 'ur-1'`)).rows[0].urun_id], [true, "inc-bot"]);
     const b3 = await c.ali(`update public.siparisler set cari_id = 'inc-usta' where id = 'sp-inc-1'`);
     const fisCari = (await c.query(`select cari_id from public.stk_fis where id = 'f-1'`)).rows[0].cari_id;
     yaz(`  B3 fişi kesilmiş siparişin carisini değiştirme → ${b3} · fiş f-1 carisi ${fisCari}`);
@@ -168,6 +173,61 @@ const arsivde = (c, tablo) => c.say(`public.silinen_arsiv where tablo = $1`, [ta
     `public.uretim_atamalari a where a.id = 'at-e' and (a.personel_id is null or not exists (select 1 from public.cariler x where x.id = a.personel_id))`);
   await yaris("E5 kasa hareketi (cari JSON içinde)", `insert into public.kas_hareket (id, hesap_id, sira, veri) values ('kh-e', 'yok', 1, '{"cariId":"inc-temiz","tutar":5}')`,
     `public.kas_hareket h where h.id = 'kh-e' and not exists (select 1 from public.cariler x where x.id = h.veri ->> 'cariId')`);
+
+  yaz("\n■ E6 · EŞZAMANLI: siparişin carisi değişirken fiş kesilir / fiş kesilirken siparişin carisi değişir");
+  const celiski6 = `public.stk_fis f join public.siparisler s on s.id = f.siparis_id where f.id = 'f-e6' and not coalesce(f.iptal, false) and s.cari_id is distinct from f.cari_id`;
+  { const c = await taze(); const a = await c.baska(), b = await c.baska();
+    await a.basla(); await a.query("set local role authenticated"); const deg = await a.dene(`update public.siparisler set cari_id = 'inc-temiz' where id = 'sp-2'`);
+    await b.basla(); await b.query("set local lock_timeout = '6s'"); const bek = b.dene(`insert into public.stk_fis (id, tur, cari_id, siparis_id, tarih) values ('f-e6', 'satis', 'inc-musteri', 'sp-2', current_date)`);
+    await new Promise((r) => setTimeout(r, 1200)); await a.query(/^RET/.test(deg) ? "rollback" : "commit"); const fis = await bek; await b.query(/^RET/.test(fis) ? "rollback" : "commit");
+    yaz(`  cari değişikliği önce: değişiklik ${deg} · sonra gelen fiş ${fis} → çelişen fiş ${await c.say(celiski6)}`);
+    k_("E6 cari değişikliği sürerken kesilen fiş başka caride kalmaz", await c.say(celiski6), 0); await a.end(); await b.end(); await c.bitir(); }
+  { const c = await taze(); const a = await c.baska(), b = await c.baska();
+    await b.basla(); const fis = await b.dene(`insert into public.stk_fis (id, tur, cari_id, siparis_id, tarih) values ('f-e6', 'satis', 'inc-musteri', 'sp-2', current_date)`);
+    await a.basla(); await a.query("set local role authenticated"); await a.query("set local lock_timeout = '6s'"); const bek = a.dene(`update public.siparisler set cari_id = 'inc-temiz' where id = 'sp-2'`);
+    await new Promise((r) => setTimeout(r, 1200)); await b.query(/^RET/.test(fis) ? "rollback" : "commit"); const deg = await bek; await a.query(/^RET/.test(deg) ? "rollback" : "commit");
+    yaz(`  fiş önce: fiş ${fis} · sonra gelen cari değişikliği ${deg} → çelişen fiş ${await c.say(celiski6)}`);
+    k_("E6 fiş kesilirken istenen cari değişikliği fişi başka caride bırakmaz", await c.say(celiski6), 0); await a.end(); await b.end(); await c.bitir(); }
+
+  yaz("\n■ E7 · EŞZAMANLI: üretimin ürünü değişirken teslim alınır / teslim alınırken ürün değişir (teslim, sunucudaki gibi üretim satırını kilitler)");
+  // Teslim sunucuda `b4_teslim_denetle` ile üretim satırını FOR UPDATE kilitler, sonra fiş ve stok hareketi yazar — burada aynı sıra elle.
+  const teslim = async (x) => { const k1 = await x.dene(`select 1 from public.uretim where id = 'ur-2' for update`); if (/^RET/.test(k1)) return k1;
+    const k2 = await x.dene(`insert into public.stk_fis (id, tur, uretim_id, tarih) values ('f-e7', 'Üretim', 'ur-2', current_date)`); if (/^RET/.test(k2)) return k2;
+    return x.dene(`insert into public.stk_hareket (id, fis_id, varyant_id, urun_id, miktar, uretim_id, kaynak) values ('h-e7', 'f-e7', 'vry-inc-40', 'inc-bot', 3, 'ur-2', 'Üretim')`); };
+  const celiski7 = `public.stk_hareket h join public.uretim u on u.id = h.uretim_id where h.id = 'h-e7' and not coalesce(h.iptal, false) and h.miktar > 0 and u.urun_id is distinct from h.urun_id`;
+  { const c = await taze(); const a = await c.baska(), b = await c.baska();
+    await a.basla(); await a.query("set local role authenticated"); const deg = await a.dene(`update public.uretim set urun_id = 'inc-bot-2' where id = 'ur-2'`);
+    await b.basla(); await b.query("set local lock_timeout = '6s'"); const bek = teslim(b);
+    await new Promise((r) => setTimeout(r, 1200)); await a.query(/^RET/.test(deg) ? "rollback" : "commit"); const t = await bek; await b.query(/^RET/.test(t) ? "rollback" : "commit");
+    yaz(`  ürün değişikliği önce: değişiklik ${deg} · sonra gelen teslim ${t} → ürünü üretimle çelişen mamul girişi ${await c.say(celiski7)}`);
+    k_("E7 ürün değişikliği sürerken alınan teslim, üretimin ürünüyle çelişen giriş bırakmaz", await c.say(celiski7), 0); await a.end(); await b.end(); await c.bitir(); }
+  { const c = await taze(); const a = await c.baska(), b = await c.baska();
+    await b.basla(); const t = await teslim(b);
+    await a.basla(); await a.query("set local role authenticated"); await a.query("set local lock_timeout = '6s'"); const bek = a.dene(`update public.uretim set urun_id = 'inc-bot-2' where id = 'ur-2'`);
+    await new Promise((r) => setTimeout(r, 1200)); await b.query(/^RET/.test(t) ? "rollback" : "commit"); const deg = await bek; await a.query(/^RET/.test(deg) ? "rollback" : "commit");
+    yaz(`  teslim önce: teslim ${t} · sonra gelen ürün değişikliği ${deg} → çelişen giriş ${await c.say(celiski7)}`);
+    k_("E7 teslim alınırken istenen ürün değişikliği teslimi çelişkili bırakmaz", await c.say(celiski7), 0); await a.end(); await b.end(); await c.bitir(); }
+
+  yaz("\n■ N · MEVCUT YETİM SATIRDA İŞLEM (üst kaydı önceden silinmiş kayıt; doğrulanmamış yabancı anahtar bunları reddetmemeli)");
+  { const c = await taze();
+    const satir = (ek) => JSON.stringify({ satirlar: [{ id: "ch-yetim", cari_id: "silinmis-cari", tarih: new Date().toISOString().slice(0, 10), yon: "Borç", tutar: 30, aciklama: "yetim hareket", ...ek }] });
+    const n1 = await c.ali(`select public.car_yaz($1::jsonb)`, [satir({ aciklama: "açıklama düzeltildi" })]);
+    yaz(`  N1 yetim cari hareketinde açıklama düzeltme (car_yaz, cari aynı) → ${n1} · açıklama "${(await c.query(`select aciklama from public.car_hareket where id = 'ch-yetim'`)).rows[0].aciklama}"`);
+    k_("N1 yetim cari hareketinin ilgisiz alanı düzeltilebilir", (await c.query(`select aciklama from public.car_hareket where id = 'ch-yetim'`)).rows[0].aciklama, "açıklama düzeltildi");
+    const n2 = await c.ali(`select public.fis_iptal($1::jsonb)`, [JSON.stringify({ no: "f-yetim", sebep: "sınama" })]);
+    const ip = (await c.query(`select (select iptal from public.stk_fis where id = 'f-yetim') f, (select iptal from public.stk_hareket where id = 'h-yetim') h, (select iptal from public.car_hareket where id = 'ch-yetim-fis') c`)).rows[0];
+    yaz(`  N2 carisi silinmiş fişin iptali (fis_iptal) → ${n2} · iptal: fiş ${ip.f}, stok hareketi ${ip.h}, cari hareketi ${ip.c}`);
+    k_("N2 carisi silinmiş fiş iptal edilebilir (fiş + stok hareketi + cari hareketi)", [ip.f, ip.h, ip.c], [true, true, true]);
+    const n3 = await c.ali(`select public.car_yaz($1::jsonb)`, [satir({ cari_id: "inc-temiz", aciklama: "var olan cariye bağlandı" })]);
+    yaz(`  N3 yetim cari hareketini VAR OLAN cariye bağlama (car_yaz) → ${n3} · cari ${(await c.query(`select cari_id from public.car_hareket where id = 'ch-yetim'`)).rows[0].cari_id}  (bilgi: elle düzeltme yolu; otomatik yapılmaz)`);
+    const n4 = await c.ali(`select public.car_yaz($1::jsonb)`, [JSON.stringify({ satirlar: [{ id: "ch-yeni-yetim", cari_id: "silinmis-cari", tarih: new Date().toISOString().slice(0, 10), yon: "Borç", tutar: 5 }] })]);
+    yaz(`  N4 silinmiş cariye YENİ hareket (car_yaz) → ${n4}`);
+    k_("N4 silinmiş cariye yeni cari hareketi yazılamaz", await c.say(`public.car_hareket where id = 'ch-yeni-yetim'`), 0);
+    const x = await c.baska(); await x.basla();
+    const n5 = await x.dene(`update public.kas_hareket set veri = veri || '{"aciklama":"düzeltildi"}'::jsonb where id = 'kh-yetim'`); await x.query(/^RET/.test(n5) ? "rollback" : "commit"); await x.end();
+    yaz(`  N5 carisi silinmiş kasa hareketinde açıklama düzeltme → ${n5}`);
+    k_("N5 carisi silinmiş kasa hareketinin ilgisiz alanı düzeltilebilir", /^tamam/.test(n5), true);
+    await c.bitir(); }
 
   yaz(`\nSONUÇ: ${gecen} hedefte · ${kalan} AÇIK${acik.length ? "\nAÇIK RİSKLER:\n  - " + acik.join("\n  - ") : ""}`);
   fs.writeFileSync(path.join(__dirname, PAKET_K ? "sonuc-bag-risk-paket-k.txt" : "sonuc-bag-risk.txt"), satirlar.join("\n") + "\n");

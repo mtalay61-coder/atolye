@@ -29,7 +29,7 @@ bag-risk · şablon b12_b1t · paket K YOK (bugünkü canlı kurulum) · her dur
   B1 stok hareketi olan kalemi (kl-inc-40) başka siparişe taşıma → RET KR003 Teslim geçmişi olan kalemin ürünü, rengi, bedeni ya da siparişi değiştirilemez (kalem kl-inc-40: 1054 - Siyah/ · kalem şimdi sp-inc-1; hareket h-1 hâlâ siparis_id = sp-inc-1
   ✓ B1 stok hareketi olan kalem başka siparişe taşınamaz (hareketin siparişi ile kalemin siparişi ayrışmaz)
   B2 ataması ve işçilik hareketi olan üretimin ürününü değiştirme → tamam (1 satır)
-  ✗ AÇIK B2 ataması / işçilik hareketi olan üretimin ürünü değiştirilemez — görülen [false,"inc-bot-2"] · hedef [true,"inc-bot"]
+  ✗ AÇIK B2 üretimin ürünü değiştirilemez (ataması / işçilik hareketi varken) — görülen [false,"inc-bot-2"] · hedef [true,"inc-bot"]
   B3 fişi kesilmiş siparişin carisini değiştirme → tamam (1 satır) · fiş f-1 carisi inc-musteri
   ✗ AÇIK B3 fişi kesilmiş siparişin carisi değiştirilemez (fiş başka caride kalmaz) — görülen false · hedef true
 
@@ -61,13 +61,36 @@ bag-risk · şablon b12_b1t · paket K YOK (bugünkü canlı kurulum) · her dur
   E5 kasa hareketi (cari JSON içinde) · kayıt önce: kayıt tamam (1 satır) · sonra gelen silme tamam (1 satır) → cari silindi, carisiz kayıt 1
   ✗ AÇIK E5 kasa hareketi (cari JSON içinde) kayıt yazılırken istenen silme kaydı carisiz bırakmaz — görülen 1 · hedef 0
 
-SONUÇ: 8 hedefte · 15 AÇIK
+■ E6 · EŞZAMANLI: siparişin carisi değişirken fiş kesilir / fiş kesilirken siparişin carisi değişir
+  cari değişikliği önce: değişiklik tamam (1 satır) · sonra gelen fiş tamam (1 satır) → çelişen fiş 1
+  ✗ AÇIK E6 cari değişikliği sürerken kesilen fiş başka caride kalmaz — görülen 1 · hedef 0
+  fiş önce: fiş tamam (1 satır) · sonra gelen cari değişikliği tamam (1 satır) → çelişen fiş 1
+  ✗ AÇIK E6 fiş kesilirken istenen cari değişikliği fişi başka caride bırakmaz — görülen 1 · hedef 0
+
+■ E7 · EŞZAMANLI: üretimin ürünü değişirken teslim alınır / teslim alınırken ürün değişir (teslim, sunucudaki gibi üretim satırını kilitler)
+  ürün değişikliği önce: değişiklik tamam (1 satır) · sonra gelen teslim tamam (1 satır) → ürünü üretimle çelişen mamul girişi 1
+  ✗ AÇIK E7 ürün değişikliği sürerken alınan teslim, üretimin ürünüyle çelişen giriş bırakmaz — görülen 1 · hedef 0
+  teslim önce: teslim tamam (1 satır) · sonra gelen ürün değişikliği tamam (1 satır) → çelişen giriş 1
+  ✗ AÇIK E7 teslim alınırken istenen ürün değişikliği teslimi çelişkili bırakmaz — görülen 1 · hedef 0
+
+■ N · MEVCUT YETİM SATIRDA İŞLEM (üst kaydı önceden silinmiş kayıt; doğrulanmamış yabancı anahtar bunları reddetmemeli)
+  N1 yetim cari hareketinde açıklama düzeltme (car_yaz, cari aynı) → tamam (1 satır) · açıklama "açıklama düzeltildi"
+  ✓ N1 yetim cari hareketinin ilgisiz alanı düzeltilebilir
+  N2 carisi silinmiş fişin iptali (fis_iptal) → tamam (1 satır) · iptal: fiş true, stok hareketi true, cari hareketi true
+  ✓ N2 carisi silinmiş fiş iptal edilebilir (fiş + stok hareketi + cari hareketi)
+  N3 yetim cari hareketini VAR OLAN cariye bağlama (car_yaz) → tamam (1 satır) · cari inc-temiz  (bilgi: elle düzeltme yolu; otomatik yapılmaz)
+  N4 silinmiş cariye YENİ hareket (car_yaz) → tamam (1 satır)
+  ✗ AÇIK N4 silinmiş cariye yeni cari hareketi yazılamaz — görülen 1 · hedef 0
+  N5 carisi silinmiş kasa hareketinde açıklama düzeltme → tamam (1 satır)
+  ✓ N5 carisi silinmiş kasa hareketinin ilgisiz alanı düzeltilebilir
+
+SONUÇ: 11 hedefte · 20 AÇIK
 AÇIK RİSKLER:
   - S5 hareketi / siparişi / fişi olan cari silinemez (hareket ve fiş carisiz kalmaz, sipariş bağı boşalmaz)
   - S6 ataması / işçilik hareketi olan kişi silinemez
   - S7 hareketi olan hesap silinemez ya da hareketleri korunur
   - Y var olmayan üst kayda bağlanan yazmaların HEPSİ reddedilir [Y1 üretim→sipariş, Y2 site talebi→cari, Y3, Y4, Y5, Y6]
-  - B2 ataması / işçilik hareketi olan üretimin ürünü değiştirilemez
+  - B2 üretimin ürünü değiştirilemez (ataması / işçilik hareketi varken)
   - B3 fişi kesilmiş siparişin carisi değiştirilemez (fiş başka caride kalmaz)
   - S8 stok hareketi olan ürün silinemez (hareket ve varyant ürünsüz kalmaz)
   - E1 cari hareketi silme sürerken yazılan kayıt carisiz kalmaz
@@ -78,3 +101,8 @@ AÇIK RİSKLER:
   - E4 üretim ataması kayıt yazılırken istenen silme kaydı carisiz bırakmaz
   - E5 kasa hareketi (cari JSON içinde) silme sürerken yazılan kayıt carisiz kalmaz
   - E5 kasa hareketi (cari JSON içinde) kayıt yazılırken istenen silme kaydı carisiz bırakmaz
+  - E6 cari değişikliği sürerken kesilen fiş başka caride kalmaz
+  - E6 fiş kesilirken istenen cari değişikliği fişi başka caride bırakmaz
+  - E7 ürün değişikliği sürerken alınan teslim, üretimin ürünüyle çelişen giriş bırakmaz
+  - E7 teslim alınırken istenen ürün değişikliği teslimi çelişkili bırakmaz
+  - N4 silinmiş cariye yeni cari hareketi yazılamaz

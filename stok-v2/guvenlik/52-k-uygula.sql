@@ -49,19 +49,13 @@ begin
   return new;
 end';
   revoke all on function public.k_siparis_cari_koru() from public, anon, authenticated;
-  create or replace function public.k_uretim_urun_koru() returns trigger language plpgsql security definer set search_path = public as 'declare
-  v text[] := ''{}'';
-  n bigint;
-begin
-  if auth.jwt() is null or new.urun_id is not distinct from old.urun_id then return new; end if;
-  select count(*) into n from public.uretim_atamalari where uretim_id = old.id and coalesce(verildi_mi, false);          if n > 0 then v := v || (n || '' verilmiş iş''); end if;
-  select count(*) into n from public.stk_hareket where uretim_id = old.id and not coalesce(iptal, false);                if n > 0 then v := v || (n || '' stok hareketi''); end if;
-  select count(*) into n from public.car_hareket where uretim_id = old.id and not coalesce(iptal, false);                if n > 0 then v := v || (n || '' cari hareketi''); end if;
-  select count(*) into n from public.stk_fis where uretim_id = old.id and not coalesce(iptal, false);                    if n > 0 then v := v || (n || '' fiş''); end if;
-  if cardinality(v) > 0 then
-    raise exception ''KR052: üretim % işlem görmüş (%) — ürünü değiştirilemez'', old.siparis_no, array_to_string(v, '', '') using errcode = ''KR052'';
-  end if;
-  return new;
+  create or replace function public.k_uretim_urun_koru() returns trigger language plpgsql security definer set search_path = public as 'begin
+  -- ÜRETİMİN ÜRÜNÜ DEĞİŞMEZ. Uygulamada üretimin ürününü değiştiren ekran yok (ürün planlamada bir kez yazılır); değişiklik ancak
+  -- bayat bir kaydın ya da doğrudan API çağrısının işi olabilir. "İşlem görmüşse değiştirilemez" kuralı yarışa açıktı: ürün değişikliği
+  -- işlenmeden hemen önce başlayan teslim eski ürüne giriş yazabiliyordu (bag-risk E7). Bu yüzden kural koşulsuz: dolu ürün değişmez.
+  -- Boş ürünün doldurulması serbest (ürünü silinmiş eski kaydın elle düzeltilmesi).
+  if auth.jwt() is null or old.urun_id is null or new.urun_id is not distinct from old.urun_id then return new; end if;
+  raise exception ''KR052: üretim % başka ürüne çevrilemez — üretimin ürünü değişmez (gerekirse üretim iptal edilip yenisi açılır)'', old.siparis_no using errcode = ''KR052'';
 end';
   revoke all on function public.k_uretim_urun_koru() from public, anon, authenticated;
   create or replace function public.k_kasa_cari_koru() returns trigger language plpgsql security definer set search_path = public as 'declare
@@ -78,16 +72,34 @@ begin
   return new;
 end';
   revoke all on function public.k_kasa_cari_koru() from public, anon, authenticated;
+  create or replace function public.k_fis_siparis_koru() returns trigger language plpgsql security definer set search_path = public as 'declare
+  sc text;
+begin
+  -- FİŞ ↔ SİPARİŞ CARİSİ YARIŞI. `k_siparis_cari_koru` yalnız İŞLENMİŞ fişleri görür; cari değişikliği ile fiş kesme aynı anda olursa
+  -- ikisi de geçip fiş başka caride kalabiliyordu. Burada fiş yazılırken siparişin satırı PAYLAŞIMLI kilitlenir (cari değişikliği bu
+  -- işlem bitene kadar bekler; değişiklik önce başladıysa bu ifade onu bekler) ve kilitten SONRA okunan cariyle karşılaştırılır.
+  -- Uygulama sipariş fişinde cariyi siparişten alır (081); farklıysa istemcinin bildiği sipariş bayattır.
+  if auth.jwt() is null or new.siparis_id is null or new.cari_id is null or coalesce(new.iptal, false) then return new; end if;
+  select s.cari_id into sc from public.siparisler s where s.id = new.siparis_id for share;
+  if found and sc is not null and sc <> new.cari_id then
+    raise exception ''KR056: siparişin carisi bu arada değişmiş — fiş kesilmedi; ekranı yenileyip tekrar deneyin'' using errcode = ''KR056'';
+  end if;
+  return new;
+end';
+  revoke all on function public.k_fis_siparis_koru() from public, anon, authenticated;
   create or replace function public.k_urun_silme_koru() returns trigger language plpgsql security definer set search_path = public as 'declare
+  v text[] := ''{}'';
   n bigint;
 begin
   -- Siparişi olan ürünü mevcut kural (KR003) zaten korur; siparişi olmayıp STOK HAREKETİ olan ürün silinebiliyordu (hareket ürünsüz
   -- kalıyordu). Satır kilidi: yabancı anahtarlı yeni hareket silme bitene kadar bekler.
   if auth.jwt() is null then return old; end if;
   perform 1 from public.urunler where id = old.id for update;
-  select count(*) into n from public.stk_hareket where urun_id = old.id;
-  if n > 0 then
-    raise exception ''KR055: "%" silinemez — % stok hareketi var. Geçmiş korunur; ürünü pasife alabilirsiniz.'', old.ad, n using errcode = ''KR055'';
+  select count(*) into n from public.stk_hareket where urun_id = old.id;        if n > 0 then v := v || (n || '' stok hareketi''); end if;
+  select count(*) into n from public.siparis_kalemleri where urun_id = old.id;  if n > 0 then v := v || (n || '' sipariş kalemi''); end if;
+  select count(*) into n from public.uretim where urun_id = old.id;             if n > 0 then v := v || (n || '' üretim''); end if;
+  if cardinality(v) > 0 then
+    raise exception ''KR055: "%" silinemez — bağlı kayıt var: %. Geçmiş korunur; ürünü pasife alabilirsiniz.'', old.ad, array_to_string(v, '', '') using errcode = ''KR055'';
   end if;
   return old;
 end';
@@ -114,6 +126,8 @@ end';
   create trigger k_kasa_cari_koru before insert or update of veri on public.kas_cek for each row execute function public.k_kasa_cari_koru();
   drop trigger if exists k_urun_silme_koru on public.urunler;
   create trigger k_urun_silme_koru before delete on public.urunler for each row execute function public.k_urun_silme_koru();
+  drop trigger if exists k_fis_siparis_koru on public.stk_fis;
+  create trigger k_fis_siparis_koru before insert on public.stk_fis for each row execute function public.k_fis_siparis_koru();
   drop trigger if exists k_eski_hesap_silme_koru on public.hesaplar;
   create trigger k_eski_hesap_silme_koru before delete on public.hesaplar for each row execute function public.k_eski_hesap_silme_koru();
   if not exists (select 1 from pg_constraint where conname = 'k_car_hareket_cari_fk') then
@@ -136,10 +150,10 @@ end';
   end if;
 end $$;
 with k(no, kontrol, beklenen, bulunan) as (
-  select 1, 'koruma fonksiyonları (k_*)', '6', (select count(*)::text from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public'
-     and p.proname in ('k_cari_silme_koru', 'k_siparis_cari_koru', 'k_uretim_urun_koru', 'k_kasa_cari_koru', 'k_eski_hesap_silme_koru', 'k_urun_silme_koru'))
-  union all select 2, 'etkin tetikleyiciler (cariler, siparisler, uretim, urunler, kas_hareket, kas_cek, hesaplar)', '7',
-     (select count(*)::text from pg_trigger g where not g.tgisinternal and g.tgenabled = 'O' and g.tgname in ('k_cari_silme_koru', 'k_siparis_cari_koru', 'k_uretim_urun_koru', 'k_kasa_cari_koru', 'k_eski_hesap_silme_koru', 'k_urun_silme_koru'))
+  select 1, 'koruma fonksiyonları (k_*)', '7', (select count(*)::text from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public'
+     and p.proname in ('k_cari_silme_koru', 'k_siparis_cari_koru', 'k_uretim_urun_koru', 'k_kasa_cari_koru', 'k_eski_hesap_silme_koru', 'k_urun_silme_koru', 'k_fis_siparis_koru'))
+  union all select 2, 'etkin tetikleyiciler (cariler, siparisler, uretim, urunler, stk_fis, kas_hareket, kas_cek, hesaplar)', '8',
+     (select count(*)::text from pg_trigger g where not g.tgisinternal and g.tgenabled = 'O' and g.tgname in ('k_cari_silme_koru', 'k_siparis_cari_koru', 'k_uretim_urun_koru', 'k_kasa_cari_koru', 'k_eski_hesap_silme_koru', 'k_urun_silme_koru', 'k_fis_siparis_koru'))
   union all select 3, 'yabancı anahtarlar (cari: car_hareket, stk_fis, stk_hareket, site_talepleri, site_hesaplari; ürün: stk_hareket)', '6',
      (select count(*)::text from pg_constraint where contype = 'f' and conname in ('k_car_hareket_cari_fk', 'k_stk_fis_cari_fk', 'k_stk_hareket_cari_fk', 'k_site_talepleri_cari_fk', 'k_site_hesaplari_cari_fk', 'k_stk_hareket_urun_fk'))
   union all select 4, 'koruma fonksiyonları authenticated / anon tarafından doğrudan çağrılamaz', 'evet',
