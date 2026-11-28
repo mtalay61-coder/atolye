@@ -1,0 +1,26 @@
+ekran-taban-astari · PostgreSQL kipi (şablon b12_vo = Paket K + V + Ö) · istemci 1.744.48
+
+■ 0 · ÖNCE: 36 [Beden] net 100 · 37 [Beden] net 0 · 38 [Beden] net 0 · 39 [Beden] net 0 · 40 [Beden] net 0 · 41 [Beden] net 0 · 42 [Beden] net 0 · JUT [Boyut] net 0
+  ✓ önkoşul sorgusu: yedi varyantın yedisi 'hazır'
+
+■ 1 · ONARIMDAN ÖNCE gerçek istemciyle stok girişi: 36 → +12
+  giriş: bildirim "Stok girişi kaydedilemedi — hiçbir değişiklik yapılmadı (KR062: "TABAN ASTARI" ürününün ölçü tipi Boyut ama "36" ölçüsü Beden grubundaki kayda bağlı —" · ret ["400 KR062"]
+    varyantlar: 36 [Beden] net 100 · 37 [Beden] net 0 · 38 [Beden] net 0 · 39 [Beden] net 0 · 40 [Beden] net 0 · 41 [Beden] net 0 · 42 [Beden] net 0 · JUT [Boyut] net 0
+  ✓ Paket Ö kuruluyken onarımdan önce giriş açık hatayla reddedilir (KR062), hiçbir şey yazılmaz
+
+■ 2 · ONARIM (64-taban-astari-uygula.sql, CRLF, iki kez)
+  sonra: 36 [Boyut] net 100 · 37 [Boyut] net 0 · 38 [Boyut] net 0 · 39 [Boyut] net 0 · 40 [Boyut] net 0 · 41 [Boyut] net 0 · 42 [Boyut] net 0 · JUT [Boyut] net 0
+  ✓ yedi varyantın ölçü kaydı aynı adlı Boyut kaydı oldu
+  ✓ yedi varyantta olcu_id DIŞINDAKİ bütün sütunlar, hareket sayısı ve stok aynı; JUT varyantı hiç değişmedi
+  ✓ varyant sayısı aynı (yeni varyant yok); hiçbir ölçü kaydı ve ürün kaydı değişmedi
+  ✓ ikinci çalıştırma hata vermedi
+
+■ 3 · ONARIMDAN SONRA gerçek istemciyle stok girişi: 36 → +12
+  giriş: bildirim "Stok girişi kaydedildi — fiş: MNL-261128001" · ret []
+    varyantlar: 36 [Boyut] net 112 · 37 [Boyut] net 0 · 38 [Boyut] net 0 · 39 [Boyut] net 0 · 40 [Boyut] net 0 · 41 [Boyut] net 0 · 42 [Boyut] net 0 · JUT [Boyut] net 0
+  ✓ giriş MEVCUT 36 varyantına yazıldı (+12), yeni varyant açılmadı, ret yok
+
+■ 4 · GERİ ALMA DOSYASI (CRLF)
+  ✓ geri almadan sonra yedi varyantın ölçü kaydı ilk Beden kayıtları; diğer sütunlar ve stok aynı
+
+SONUÇ: 8 geçti · 0 kaldı

@@ -1,0 +1,27 @@
+ekran-taban-astari · PostgreSQL kipi (şablon b12_k_crlf = Paket K (bugünkü canlı)) · istemci 1.744.48
+
+■ 0 · ÖNCE: 36 [Beden] net 100 · 37 [Beden] net 0 · 38 [Beden] net 0 · 39 [Beden] net 0 · 40 [Beden] net 0 · 41 [Beden] net 0 · 42 [Beden] net 0 · JUT [Boyut] net 0
+  ✓ önkoşul sorgusu: yedi varyantın yedisi 'hazır'
+
+■ 1 · ONARIMDAN ÖNCE gerçek istemciyle stok girişi: 36 → +12
+  giriş: bildirim "Stok girişi kaydedildi — fiş: MNL-261128001" · ret []
+    varyantlar: 36 [Beden] net 112 · 37 [Beden] net 0 · 38 [Beden] net 0 · 39 [Beden] net 0 · 40 [Beden] net 0 · 41 [Beden] net 0 · 42 [Beden] net 0 · JUT [Boyut] net 0
+    (bugünkü canlı kurulum: giriş Beden kaydındaki mevcut varyanta yazılır — ürün ayarıyla çelişen ama çalışan durum)
+
+■ 2 · ONARIM (64-taban-astari-uygula.sql, CRLF, iki kez)
+  sonra: 36 [Boyut] net 112 · 37 [Boyut] net 0 · 38 [Boyut] net 0 · 39 [Boyut] net 0 · 40 [Boyut] net 0 · 41 [Boyut] net 0 · 42 [Boyut] net 0 · JUT [Boyut] net 0
+  ✓ yedi varyantın ölçü kaydı aynı adlı Boyut kaydı oldu
+  ✓ yedi varyantta olcu_id DIŞINDAKİ bütün sütunlar, hareket sayısı ve stok aynı; JUT varyantı hiç değişmedi
+  ✓ varyant sayısı aynı (yeni varyant yok); hiçbir ölçü kaydı ve ürün kaydı değişmedi
+  ✓ ikinci çalıştırma hata vermedi
+
+■ 3 · ONARIMDAN SONRA gerçek istemciyle stok girişi: 36 → +12
+  giriş: bildirim "Stok girişi kaydedildi — fiş: MNL-261128002" · ret []
+    varyantlar: 36 [Beden] net 12 · 36 [Boyut] net 112 · 37 [Boyut] net 0 · 38 [Boyut] net 0 · 39 [Boyut] net 0 · 40 [Boyut] net 0 · 41 [Boyut] net 0 · 42 [Boyut] net 0 · JUT [Boyut] net 0
+    (Paket Ö YOKKEN onarım tek başına yapılırsa: yeni varyant sayısı 1 — sunucu "36"yı yine Beden kaydına çözer)
+
+■ 4 · GERİ ALMA DOSYASI (CRLF)
+  HATA: psql:/tmp/29367-64-taban-astari-geri-al.sql:33: ERROR: Üründe 36 için hedef kayda bağlı varyant zaten var — ikiz olurdu. Hiçbir şey değişmedi. CONTEXT: PL/pgSQL function inline_code_block line 22 at RAISE
+  ✗ KALDI geri almadan sonra yedi varyantın ölçü kaydı ilk Beden kayıtları; diğer sütunlar ve stok aynı — görülen [["olcu-mwngldrp-j8oh","olcu-mwngldrp-wkwq","olcu-mwngldrp-58si","olcu-mwngldrp-gt2k","olcu-mwngldrp-nwtx","olcu-mwngldrp-192w","olcu-mwngldrp-xm78"],[["afff33d7633d2bb799d3256af96ac81b",112],["de0ecfec0aa4d0e3cb69ca520ee6e731",0],["76488a4c8a3689fe73188669e8ca9c2c",0],["0aa55618a931efab087ab41dcc9396cb",0],["b9db0b30d486e3abad22b3c41341bd58",0],["05c6c497f69bcc9415ec7751e9d27d44",0],["6718a6e9820dfebf6cdd8cb935bc87fb",0]]] · beklenen [["olcu-mvwf90xm-f30d","olcu-mvwf90xm-aamo","olcu-mvwf90xm-k59x","olcu-mvwf90xm-hfpg","olcu-mvwf90xm-qpqw","olcu-mvwf90xm-07tn","olcu-mwdd947i-1b8s"],[["afff33d7633d2bb799d3256af96ac81b",112],["de0ecfec0aa4d0e3cb69ca520ee6e731",0],["76488a4c8a3689fe73188669e8ca9c2c",0],["0aa55618a931efab087ab41dcc9396cb",0],["b9db0b30d486e3abad22b3c41341bd58",0],["05c6c497f69bcc9415ec7751e9d27d44",0],["6718a6e9820dfebf6cdd8cb935bc87fb",0]]]
+
+SONUÇ: 5 geçti · 1 kaldı
