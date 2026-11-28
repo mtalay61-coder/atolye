@@ -17,15 +17,16 @@ begin
   -- EŞZAMANLILIK: aynı ürüne aynı anda iki varyant açan iki işlem birbirinin henüz işlenmemiş satırını göremez; ürün başına işlem
   -- kilidiyle sıraya girerler — ikincisi birincinin sonucunu görerek denetlenir (kilit işlem bitince kendiliğinden kalkar).
   perform pg_advisory_xact_lock(hashtextextended('v_ikiz_varyant:' || new.urun_id, 0));
-  select public.stk_nrm(coalesce((select r.ad from public.stk_renk r where r.id = new.renk_id), '')),
-         public.stk_nrm(coalesce((select o.ad from public.stk_olcu o where o.id = new.olcu_id), '')) into ra, oa;
+  -- stk_nrm boş metinde NULL döner: renksiz / ölçüsüz varyant ('' ile) karşılaştırılabilsin diye coalesce DIŞTA.
+  select coalesce(public.stk_nrm((select r.ad from public.stk_renk r where r.id = new.renk_id)), ''),
+         coalesce(public.stk_nrm((select o.ad from public.stk_olcu o where o.id = new.olcu_id)), '') into ra, oa;
   select v.id, v.renk_id, v.olcu_id, v.aktif,
          (select r.ad || case when r.aktif then '' else ' — pasif renk kaydı' end from public.stk_renk r where r.id = v.renk_id) as renk,
          (select o.ad || ' [' || o.tur || ']' from public.stk_olcu o where o.id = v.olcu_id) as olcu into w
     from public.stk_varyant v
    where v.urun_id = new.urun_id
-     and public.stk_nrm(coalesce((select r.ad from public.stk_renk r where r.id = v.renk_id), '')) = ra
-     and public.stk_nrm(coalesce((select o.ad from public.stk_olcu o where o.id = v.olcu_id), '')) = oa
+     and coalesce(public.stk_nrm((select r.ad from public.stk_renk r where r.id = v.renk_id)), '') = ra
+     and coalesce(public.stk_nrm((select o.ad from public.stk_olcu o where o.id = v.olcu_id)), '') = oa
      and (coalesce(v.renk_id, '') <> coalesce(new.renk_id, '') or coalesce(v.olcu_id, '') <> coalesce(new.olcu_id, ''))
    order by v.aktif desc, v.id limit 1;
   if not found then return new; end if;
@@ -41,7 +42,7 @@ BASLIK = """-- =================================================================
 -- =====================================================================================================================
 """
 DURUM = """with ikiz as (
-  select v.urun_id, public.stk_nrm(coalesce(r.ad, '')) as ra, public.stk_nrm(coalesce(o.ad, '')) as oa, count(*) as n
+  select v.urun_id, coalesce(public.stk_nrm(r.ad), '') as ra, coalesce(public.stk_nrm(o.ad), '') as oa, count(*) as n
     from public.stk_varyant v left join public.stk_renk r on r.id = v.renk_id left join public.stk_olcu o on o.id = v.olcu_id
    group by 1, 2, 3 having count(*) > 1),
 k(no, kontrol, beklenen, bulunan) as (
@@ -69,7 +70,7 @@ v as (select sv.id, sv.urun_id, sv.aktif, sv.renk_id, sv.olcu_id, r.ad as renk, 
 risk as (select v.*, (select u.ad from public.urunler u where u.id = v.urun_id) as urun,
            (select count(*) from public.stk_hareket h where h.varyant_id = v.id and not coalesce(h.iptal, false)) as hareket
            from v where (v.renk_id is not null and v.renk_cozum is distinct from v.renk_id) or (v.olcu_id is not null and v.olcu_cozum is distinct from v.olcu_id)),
-ikiz as (select v.urun_id, count(*) as n from v group by v.urun_id, public.stk_nrm(coalesce(v.renk, '')), public.stk_nrm(coalesce(v.olcu, '')) having count(*) > 1),
+ikiz as (select v.urun_id, count(*) as n from v group by v.urun_id, coalesce(public.stk_nrm(v.renk), ''), coalesce(public.stk_nrm(v.olcu), '') having count(*) > 1),
 eksik_tablo as (select coalesce(string_agg(x, ', '), '') as e from unnest(array['stk_varyant', 'stk_renk', 'stk_olcu', 'stk_hareket', 'urunler']) x where to_regclass('public.' || x) is null),
 eksik_islev as (select coalesce(string_agg(x, ', '), '') as e from unnest(array['auth.jwt()', 'public.stk_nrm(text)', 'public.stk_varyant_coz(text,text,text,text,text)', 'public.stk_renk_coz(text,text)', 'public.stk_olcu_coz(text,text)']) x where to_regprocedure(x) is null),
 kur as (select (select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'v_ikiz_varyant_koru')::int as f,

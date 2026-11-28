@@ -10,7 +10,7 @@ v as (select sv.id, sv.urun_id, sv.aktif, sv.renk_id, sv.olcu_id, r.ad as renk, 
 risk as (select v.*, (select u.ad from public.urunler u where u.id = v.urun_id) as urun,
            (select count(*) from public.stk_hareket h where h.varyant_id = v.id and not coalesce(h.iptal, false)) as hareket
            from v where (v.renk_id is not null and v.renk_cozum is distinct from v.renk_id) or (v.olcu_id is not null and v.olcu_cozum is distinct from v.olcu_id)),
-ikiz as (select v.urun_id, count(*) as n from v group by v.urun_id, public.stk_nrm(coalesce(v.renk, '')), public.stk_nrm(coalesce(v.olcu, '')) having count(*) > 1),
+ikiz as (select v.urun_id, count(*) as n from v group by v.urun_id, coalesce(public.stk_nrm(v.renk), ''), coalesce(public.stk_nrm(v.olcu), '') having count(*) > 1),
 eksik_tablo as (select coalesce(string_agg(x, ', '), '') as e from unnest(array['stk_varyant', 'stk_renk', 'stk_olcu', 'stk_hareket', 'urunler']) x where to_regclass('public.' || x) is null),
 eksik_islev as (select coalesce(string_agg(x, ', '), '') as e from unnest(array['auth.jwt()', 'public.stk_nrm(text)', 'public.stk_varyant_coz(text,text,text,text,text)', 'public.stk_renk_coz(text,text)', 'public.stk_olcu_coz(text,text)']) x where to_regprocedure(x) is null),
 kur as (select (select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'v_ikiz_varyant_koru')::int as f,

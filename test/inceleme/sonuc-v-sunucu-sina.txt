@@ -3,6 +3,10 @@ v-sunucu-sina · Paket V KURULU (CRLF, iki kez)
   ✓ V1 pasif renk kaydındaki varyantın adıyla ikinci varyant açılmaz
     V2 BOYLU'da 36 [Boyut] var; adla ("36") istek sunucuda 36 [Beden] kaydına çözülüyor → RET KR060: "BOYLU" ürününde "Mavi" / "36 [Boyut]" adlı varyant zaten var ama başka bir renk ya da ölçü kaydına bağlı — aynı adla ikinci varyant açılmadı,
   ✓ V2 Beden / Boyut: aynı ölçü adıyla başka gruptan ikinci varyant açılmaz
+    V2b RENKSİZ üründe (SÜNGER) 36 [Boyut] var; adla ("36") istek → RET KR060: "SÜNGER" ürününde "-" / "36 [Boyut]" adlı varyant zaten var ama başka bir renk ya da ölçü kaydına bağlı — aynı adla ikinci varyant açılmadı, 
+  ✓ V2b renksiz varyantta da Beden / Boyut ikizi açılmaz (canlıdaki SÜNGER biçimi)
+    V2c ÖLÇÜSÜZ üründe Kahve pasif kayıtta (canlıdaki ASTAR DANA biçimi); adla istek → RET KR060: "ÖLÇÜSÜZ" ürününde "Kahve — pasif renk kaydı" / "-" adlı varyant zaten var ama başka bir renk ya da ölçü kaydına bağlı — aynı adla ikinci 
+  ✓ V2c ölçüsüz varyantta da aynı adla ikinci varyant açılmaz
     V3 var olan varyant KİMLİKLE istenir → tamam
   ✓ V3 kimlikle istenen var olan varyant bulunur, yenisi açılmaz, istek reddedilmez
     V4 üründe hiç olmayan renk (Mavi) → tamam
@@ -10,12 +14,12 @@ v-sunucu-sina · Paket V KURULU (CRLF, iki kez)
     V5 aynı renk adı, üründe olmayan beden (41) → tamam
   ✓ V5 başka bedende varyant açılır (ad çakışması yok)
   ✓ V6 jetonsuz (yönetim) bağlantı kural dışı: elle düzeltme yolu açık
-    birinci işlem açıkken gelen ikinci istek → RET KR060: "YARIŞ" ürününde "Yeşil" / "40 [Beden]" adlı varyant zaten var ama başka bir renk ya da ölçü kaydına bağlı — aynı adla ikinci varyant açılmad · bekleme 2062 ms · üründe "Yeşil / 40" varyantı: 1
+    birinci işlem açıkken gelen ikinci istek → RET KR060: "YARIŞ" ürününde "Yeşil" / "40 [Beden]" adlı varyant zaten var ama başka bir renk ya da ölçü kaydına bağlı — aynı adla ikinci varyant açılmad · bekleme 2063 ms · üründe "Yeşil / 40" varyantı: 1
   ✓ V7 eşzamanlı iki istek (aynı ad, iki ayrı renk kaydı) ikiz varyant oluşturamaz
-    birinci işlem açıkken gelen ikinci istek → RET KR060: "YARIŞ-2" ürününde "Yeşil" / "40 [Beden]" adlı varyant zaten var ama başka bir renk ya da ölçü kaydına bağlı — aynı adla ikinci varyant açılm · bekleme 2062 ms · üründe "Yeşil / 40" varyantı: 1
+    birinci işlem açıkken gelen ikinci istek → RET KR060: "YARIŞ-2" ürününde "Yeşil" / "40 [Beden]" adlı varyant zaten var ama başka bir renk ya da ölçü kaydına bağlı — aynı adla ikinci varyant açılm · bekleme 2056 ms · üründe "Yeşil / 40" varyantı: 1
   ✓ V8 aynı yarış ters sırayla: yine tek varyant
-    birinci işlem açıkken gelen ikinci istek → tamam · bekleme 2054 ms · üründe "Yeşil / 40" varyantı: 1
+    birinci işlem açıkken gelen ikinci istek → tamam · bekleme 2049 ms · üründe "Yeşil / 40" varyantı: 1
   ✓ V9 eşzamanlı iki istek AYNI renk kaydıyla: tek varyant, ikincisi reddedilmez (aynı varyantı bulur)
   ✓ durum sorgusu KURULU, var olan ikizi bilgi olarak sayar
   ✓ geri almadan sonra şema, paketsiz şablonla aynı (fark 0 satır)
-SONUÇ: 11 hedefte · 0 AÇIK
+SONUÇ: 13 hedefte · 0 AÇIK

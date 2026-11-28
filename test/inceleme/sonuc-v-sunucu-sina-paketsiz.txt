@@ -3,6 +3,10 @@ v-sunucu-sina · Paket V YOK (bugünkü davranış)
   ✗ AÇIK V1 pasif renk kaydındaki varyantın adıyla ikinci varyant açılmaz — görülen [2] · hedef [1]
     V2 BOYLU'da 36 [Boyut] var; adla ("36") istek sunucuda 36 [Beden] kaydına çözülüyor → tamam
   ✗ AÇIK V2 Beden / Boyut: aynı ölçü adıyla başka gruptan ikinci varyant açılmaz — görülen [2] · hedef [1]
+    V2b RENKSİZ üründe (SÜNGER) 36 [Boyut] var; adla ("36") istek → tamam
+  ✗ AÇIK V2b renksiz varyantta da Beden / Boyut ikizi açılmaz (canlıdaki SÜNGER biçimi) — görülen [2] · hedef [1]
+    V2c ÖLÇÜSÜZ üründe Kahve pasif kayıtta (canlıdaki ASTAR DANA biçimi); adla istek → tamam
+  ✗ AÇIK V2c ölçüsüz varyantta da aynı adla ikinci varyant açılmaz — görülen [2] · hedef [1]
     V3 var olan varyant KİMLİKLE istenir → tamam
   ✗ AÇIK V3 kimlikle istenen var olan varyant bulunur, yenisi açılmaz, istek reddedilmez — görülen [2|0] · hedef [1|0]
     V4 üründe hiç olmayan renk (Mavi) → tamam
@@ -10,10 +14,10 @@ v-sunucu-sina · Paket V YOK (bugünkü davranış)
     V5 aynı renk adı, üründe olmayan beden (41) → tamam
   ✓ V5 başka bedende varyant açılır (ad çakışması yok)
   ✗ AÇIK V6 jetonsuz (yönetim) bağlantı kural dışı: elle düzeltme yolu açık — görülen [0] · hedef [1]
-    birinci işlem açıkken gelen ikinci istek → tamam · bekleme 1968 ms · üründe "Yeşil / 40" varyantı: 2
+    birinci işlem açıkken gelen ikinci istek → tamam · bekleme 2052 ms · üründe "Yeşil / 40" varyantı: 2
   ✗ AÇIK V7 eşzamanlı iki istek (aynı ad, iki ayrı renk kaydı) ikiz varyant oluşturamaz — görülen [2] · hedef [1]
-    birinci işlem açıkken gelen ikinci istek → tamam · bekleme 2068 ms · üründe "Yeşil / 40" varyantı: 2
+    birinci işlem açıkken gelen ikinci istek → tamam · bekleme 2064 ms · üründe "Yeşil / 40" varyantı: 2
   ✗ AÇIK V8 aynı yarış ters sırayla: yine tek varyant — görülen [2] · hedef [1]
-    birinci işlem açıkken gelen ikinci istek → tamam · bekleme 2067 ms · üründe "Yeşil / 40" varyantı: 1
+    birinci işlem açıkken gelen ikinci istek → tamam · bekleme 2053 ms · üründe "Yeşil / 40" varyantı: 1
   ✓ V9 eşzamanlı iki istek AYNI renk kaydıyla: tek varyant, ikincisi reddedilmez (aynı varyantı bulur)
-SONUÇ: 3 hedefte · 6 AÇIK
+SONUÇ: 3 hedefte · 8 AÇIK

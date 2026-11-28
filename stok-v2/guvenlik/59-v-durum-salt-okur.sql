@@ -1,6 +1,6 @@
 -- PAKET V DURUMU — SALT OKUR. Hiçbir şey yazmaz.
 with ikiz as (
-  select v.urun_id, public.stk_nrm(coalesce(r.ad, '')) as ra, public.stk_nrm(coalesce(o.ad, '')) as oa, count(*) as n
+  select v.urun_id, coalesce(public.stk_nrm(r.ad), '') as ra, coalesce(public.stk_nrm(o.ad), '') as oa, count(*) as n
     from public.stk_varyant v left join public.stk_renk r on r.id = v.renk_id left join public.stk_olcu o on o.id = v.olcu_id
    group by 1, 2, 3 having count(*) > 1),
 k(no, kontrol, beklenen, bulunan) as (
