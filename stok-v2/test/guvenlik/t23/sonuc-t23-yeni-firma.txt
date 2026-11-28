@@ -1,0 +1,24 @@
+== Ana proje: atolye_guvenlik kopyası (v2 dahil) + 23 + platform verisi + ERP carisi · 0a15166 + çalışma ağacı
+  [GEÇTİ] anada 23 önkoşulu → UYGULANMIŞ
+   kurulum dosyası: 5059 satır
+== A) Kurulum dosyası veri taşımaz
+  [GEÇTİ] dosyada 'Gizli Musteri Unvani 7Q' geçmez → 0
+  [GEÇTİ] dosyada 'gizli-firma-7q' geçmez → 0
+  [GEÇTİ] dosyada 'gizliref1234' geçmez → 0
+  [GEÇTİ] dosyada '98765.43' geçmez → 0
+  [GEÇTİ] dosyada '12345.67' geçmez → 0
+  [GEÇTİ] dosyada '00000000-0000-0000-0000-0000000000a1' geçmez → 0
+  [GEÇTİ] dosyada 'AnaFirmaCarisi-9K' geçmez → 0
+  [GEÇTİ] dosyada üst düzey insert / copy ifadesi yok (fonksiyon gövdeleri girintili, sayılmaz) → 0
+  [GEÇTİ] dosya platform_ YAPISINI taşır (5 tablo) → 5
+== B) Supabase SQL Editor uyumu (rehber: SQL Editor › Run)
+  [KALDI] editor-icin.py denetimi → beklenen: uygun · gelen: çift-dolar dışında dolar işareti var (adlı/iç içe tırnak ya da $1)
+== C) İki boş projede çalıştırma (psql, tek işlem — dosya begin / commit taşır)
+  [KALDI] firma a: kurulum dosyası hatasız → beklenen:  · gelen: ERROR:  function public.stk_dizi(jsonb) does not exist
+  [KALDI] firma b: kurulum dosyası hatasız → beklenen:  · gelen: ERROR:  function public.stk_dizi(jsonb) does not exist
+== D) Her firmada platform_ tabloları boş ve kapalı
+  [ATLANDI] firma a/b: 23 önkoşulu — C başarısız (kurulum dosyası boş projede çalışmıyor)
+  [ATLANDI] firma a/b: platform tabloları boş — C başarısız (kurulum dosyası boş projede çalışmıyor)
+  [ATLANDI] firma Yönetici'si platform yöneticisi değil / ekleyemez — C başarısız (kurulum dosyası boş projede çalışmıyor)
+  [ATLANDI] E) veri ayrımı (5 denetim) — C başarısız (kurulum dosyası boş projede çalışmıyor)
+── test23-yeni-firma: 10 geçti, 3 kaldı, 4 atlandı ──

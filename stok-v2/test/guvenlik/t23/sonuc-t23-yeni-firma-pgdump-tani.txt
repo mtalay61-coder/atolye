@@ -1,0 +1,34 @@
+== Ana proje: atolye_guvenlik kopyası (v2 dahil) + 23 + platform verisi + ERP carisi · 0a15166 + çalışma ağacı
+  [GEÇTİ] anada 23 önkoşulu → UYGULANMIŞ
+   TANI KİPİ: kurulum dosyası = pg_dump --schema-only --schema=public --no-owner (kurulum_betigi DEĞİL)
+   kurulum dosyası: 8455 satır
+== A) Kurulum dosyası veri taşımaz
+  [GEÇTİ] dosyada 'Gizli Musteri Unvani 7Q' geçmez → 0
+  [GEÇTİ] dosyada 'gizli-firma-7q' geçmez → 0
+  [GEÇTİ] dosyada 'gizliref1234' geçmez → 0
+  [GEÇTİ] dosyada '98765.43' geçmez → 0
+  [GEÇTİ] dosyada '12345.67' geçmez → 0
+  [GEÇTİ] dosyada '00000000-0000-0000-0000-0000000000a1' geçmez → 0
+  [GEÇTİ] dosyada 'AnaFirmaCarisi-9K' geçmez → 0
+  [GEÇTİ] dosyada üst düzey insert / copy ifadesi yok (fonksiyon gövdeleri girintili, sayılmaz) → 0
+  [KALDI] dosya platform_ YAPISINI taşır (5 tablo) → beklenen: 5 · gelen: 0
+== B) Supabase SQL Editor uyumu (rehber: SQL Editor › Run)
+  [KALDI] editor-icin.py denetimi → beklenen: uygun · gelen: çift-dolar dışında dolar işareti var (adlı/iç içe tırnak ya da $1)
+== C) İki boş projede çalıştırma (psql, tek işlem — dosya begin / commit taşır)
+  [GEÇTİ] firma a: kurulum dosyası hatasız → 
+  [GEÇTİ] firma b: kurulum dosyası hatasız → 
+== D) Her firmada platform_ tabloları boş ve kapalı
+  [KALDI] firma a: 23 önkoşulu (yapı birebir) → beklenen: UYGULANMIŞ · gelen: KARIŞIK
+  [GEÇTİ] firma a: platform tabloları boş (yönetici / firma / sözleşme / ödeme / olay) → 0 0 0 0 0
+  [KALDI] firma b: 23 önkoşulu (yapı birebir) → beklenen: UYGULANMIŞ · gelen: KARIŞIK
+  [GEÇTİ] firma b: platform tabloları boş (yönetici / firma / sözleşme / ödeme / olay) → 0 0 0 0 0
+  [GEÇTİ] firma a Yönetici'si platform yöneticisi değil → ok:f
+  [KALDI] firma a Yönetici'si kendini platform yöneticisi yapamaz → beklenen: ret:izin · gelen: ret:rls
+  [GEÇTİ] firma a Yönetici'si platform firması ekleyemez → ret:rls
+== E) Veri ayrımı
+  [GEÇTİ] A'nın carisi A'da → 1
+  [GEÇTİ] A'nın carisi B'de yok → 0
+  [GEÇTİ] A'nın carisi anada yok → 0
+  [GEÇTİ] ananın carisi A ve B'de yok → 0 0
+  [GEÇTİ] B'nin carisi A'da ve anada yok → 0 0
+── test23-yeni-firma: 20 geçti, 5 kaldı, 0 atlandı ──

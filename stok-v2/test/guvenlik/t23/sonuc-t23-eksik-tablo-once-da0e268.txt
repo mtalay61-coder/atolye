@@ -1,0 +1,19 @@
+# test23.sh (eksik tablo senaryolarıyla) ÖNCEKİ önkoşul / geri alma (da0e268) ile — 17 kırmızı: hata veriyordu
+  [KALDI] yalnız sözleşmeler yok: önkoşul hata vermez → beklenen: 0 · gelen: 1
+  [KALDI] yalnız sözleşmeler yok: GENEL → beklenen: KARIŞIK · gelen: 
+  [KALDI] yalnız sözleşmeler yok: eksik tablo yetki farkında adıyla görünür → beklenen: evet · gelen: hayır
+  [KALDI] yalnız sözleşmeler yok: geri alma tamamlar → beklenen: tamam — platform_ nesnesi kalmadı · gelen: CONTEXT:  PL/pgSQL function inlin
+  [KALDI] yalnız sözleşmeler yok: sonra önkoşul → beklenen: HAZIR · gelen: 
+  [KALDI] yalnız ödemeler yok: önkoşul hata vermez → beklenen: 0 · gelen: 1
+  [KALDI] yalnız ödemeler yok: GENEL → beklenen: KARIŞIK · gelen: 
+  [KALDI] yalnız ödemeler yok: eksik tablo yetki farkında adıyla görünür → beklenen: evet · gelen: hayır
+  [KALDI] yalnız ödemeler yok: geri alma tamamlar → beklenen: tamam — platform_ nesnesi kalmadı · gelen: CONTEXT:  PL/pgSQL function inline_co
+  [KALDI] yalnız ödemeler yok: sonra önkoşul → beklenen: HAZIR · gelen: 
+  [KALDI] sözleşmeler + ödemeler yok: önkoşul hata vermez → beklenen: 0 · gelen: 1
+  [KALDI] sözleşmeler + ödemeler yok: GENEL → beklenen: KARIŞIK · gelen: 
+  [KALDI] sözleşmeler + ödemeler yok: eksik tablo yetki farkında adıyla görünür → beklenen: evet · gelen: hayır
+  [KALDI] sözleşmeler + ödemeler yok: geri alma tamamlar → beklenen: tamam — platform_ nesnesi kalmadı · gelen: CONTEXT:  PL/pgSQL function i
+  [KALDI] sözleşmeler + ödemeler yok: sonra önkoşul → beklenen: HAZIR · gelen: 
+  [KALDI] yarım hâlde kayıt varken geri alma durur → beklenen: DUR: platform tablolarında 1 kayıt var · gelen: 
+  [KALDI] yarım hâlde önkoşul kayıt satırı → beklenen: 10|1 / yok / 0 · gelen: 
+── test23: 146 geçti, 17 kaldı ──

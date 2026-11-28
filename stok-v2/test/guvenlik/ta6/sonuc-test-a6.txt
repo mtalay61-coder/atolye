@@ -1,4 +1,4 @@
-== a6_test: atolye_guvenlik kopyası · 1bbc910 + çalışma ağacı
+== a6_test: atolye_guvenlik kopyası · 4f5e939 + çalışma ağacı
 == 1) Düzeltme öncesi
   [GEÇTİ] önkoşul → HAZIR
   [GEÇTİ] A6 (kimlik değiştirme) — test açığı görüyor → AÇIK
@@ -50,7 +50,7 @@
 == 7) stok-v2/editor/15-duzeltme.sql yeniden çalıştırılırsa
   [GEÇTİ] 15-duzeltme kopyası hatasız → 
   [GEÇTİ] 15-duzeltme (güncel) yeniden çalışınca önkoşul → UYGULANMIŞ
-  [GEÇTİ] ESKİ 15-duzeltme (main) yeniden çalışsaydı koruma eskiye dönerdi → KARIŞIK
+  [GEÇTİ] ESKİ 15-duzeltme (A6 öncesi main, b4594bc) yeniden çalışsaydı koruma eskiye dönerdi → KARIŞIK
   [GEÇTİ] güncel kopya yeniden kurulunca → UYGULANMIŞ
   [GEÇTİ] son sınama özeti → AÇIK: 0 · BAŞARISIZ: 0
 ── test-a6: 46 geçti, 0 kaldı ──
