@@ -55,8 +55,10 @@ const psql = (dosya) => { try { return execFileSync("psql", ["-X", "-q", "-A", "
       (select md5(recete::text) from public.urunler where id = $1) recete_ozet,
       (select jsonb_agg(jsonb_build_array(t.sira, t.r ->> 'renk', t.r ->> 'renkId') order by t.sira) from public.urunler u, jsonb_array_elements(u.recete) with ordinality t(r, sira) where u.id = $1 and t.sira in (7, 84, 85, 86, 87, 88)) alti,
       (select md5(string_agg(t.r::text, '|' order by t.sira)) from public.urunler u, jsonb_array_elements(u.recete) with ordinality t(r, sira) where u.id = $1 and t.sira not in (7, 84, 85, 86, 87, 88)) diger_satirlar,
+      (select md5(string_agg((t.r - 'renkId')::text, '|' order by t.sira)) from public.urunler u, jsonb_array_elements(u.recete) with ordinality t(r, sira) where u.id = $1 and t.sira in (7, 84, 85, 86, 87, 88)) alti_diger_alanlar,
+      (select md5((to_jsonb(v) - 'renk_id')::text) from public.stk_varyant v where v.id = $2) astar_satir_diger, (select md5((to_jsonb(u) - 'recete' - 'guncelleme' - 'surum')::text) from public.urunler u where u.id = $1) urun_diger,
       (select jsonb_agg(jsonb_build_array(id, ad, aktif) order by id) from public.stk_renk) renkler, (select count(*)::int from public.stk_varyant) varyant_sayisi,
-      (select count(*)::int from public.stk_fis where not coalesce(iptal, false)) gecerli_fis, (select tamamlandi_mi from public.uretim_atamalari where id = 'kh-1-a') atama, (select asama from public.uretim where id = 'kh-1') asama`, [URUN])).rows[0]; return r; };
+      (select count(*)::int from public.stk_fis where not coalesce(iptal, false)) gecerli_fis, (select tamamlandi_mi from public.uretim_atamalari where id = 'kh-1-a') atama, (select asama from public.uretim where id = 'kh-1') asama`, [URUN, ASTAR_V])).rows[0]; return r; };
   const net = (f) => Object.fromEntries(Object.entries(f.varyant).map(([id, v]) => [id === ASTAR_V ? "astar-KAHVE(mevcut varyant)" : id.replace("v-", ""), v.net]).sort((x, y) => (x[0] < y[0] ? -1 : 1)));
   yaz(`ekran-kahve-onarim · istemci ${surum()} · PostgreSQL kipi (şablon ${SABLON}${/_v$/.test(SABLON) ? " = Paket K + V" : " = Paket K"})`);
   const f0 = await foto();
@@ -66,7 +68,10 @@ const psql = (dosya) => { try { return execFileSync("psql", ["-X", "-q", "-A", "
   yaz(`\n■ 1 · ONARIM (61-kahve-onarim-uygula.sql, CRLF yapıştırma, iki kez)`);
   const u1 = psql(crlf("61-kahve-onarim-uygula.sql")); const u2 = psql(crlf("61-kahve-onarim-uygula.sql")); yaz(`  ${u1.split("\n").join("\n  ")}`); if (/HATA/.test(u1 + u2)) yaz(`  ikinci: ${u2}`);
   const f1 = await foto();
-  k_("altı satır: ad \"Kahve\", kimlik etkin Kahve", f1.alti, [7, 84, 85, 86, 87, 88].map((i) => [i, "Kahve", ETKIN]));
+  k_("altı satır: renk kimliği etkin Kahve; ad metni (\"KAHVE\") AYNI", f1.alti, [7, 84, 85, 86, 87, 88].map((i) => [i, "KAHVE", ETKIN]));
+  k_("altı satırda renkId DIŞINDAKİ bütün alanlar bayt bayt aynı", f1.alti_diger_alanlar, f0.alti_diger_alanlar);
+  k_("astar varyantı satırında renk_id DIŞINDAKİ bütün sütunlar aynı (kimlik, ürün, ölçü, etkinlik, min stok, oluşturma)", f1.astar_satir_diger, f0.astar_satir_diger);
+  k_("ürün kaydında reçete dışındaki alanlar aynı", f1.urun_diger, f0.urun_diger);
   k_("reçetenin diğer 108 satırı bayt bayt aynı", f1.diger_satirlar, f0.diger_satirlar);
   k_("astar varyantı: KİMLİĞİ, ölçüsü, etkinliği, geçerli + iptal hareket sayısı ve stoku aynı; yalnız renk kaydı bağı değişti",
     [{ ...f1.varyant[ASTAR_V], renk_id: null }, f1.varyant[ASTAR_V].renk_id], [{ ...f0.varyant[ASTAR_V], renk_id: null }, ETKIN]);

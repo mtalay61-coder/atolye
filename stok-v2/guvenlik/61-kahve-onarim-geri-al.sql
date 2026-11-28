@@ -1,12 +1,12 @@
 -- =====================================================================================================================
 --  61-kahve-onarim-geri-al.sql — ÜRETİLDİ (stok-v2/guvenlik/61-kahve-onarim-uret.py; ELLE DÜZENLENMEZ).
---  GERİ ALMA (AYRI ONAYLA): astar varyantı pasif Kahve kaydına, altı satır "KAHVE" / Siyah kimliğine döner.
+--  GERİ ALMA (AYRI ONAYLA): astar varyantı pasif Kahve kaydına, altı satırın renk kimliği Siyah'a döner.
 --  SQL Editor: dosyanın TAMAMINI yapıştırıp bir kez Run. İlk ifade (do bloğu) ya bütünüyle uygulanır ya hiç; ikinci ifade salt okur.
 --  Kayıtlar beklenen durumda değilse HİÇBİR ŞEY değişmez ve sebep yazılır. İkinci kez çalıştırmak zararsızdır.
 -- =====================================================================================================================
 do $$
 declare
-  n int; nv int; ham7 text; av record; yeni_ad text;
+  n int; nv int; ham7 text; av record;
 begin
   if current_user <> 'postgres' and not (select rolsuper from pg_roles where rolname = current_user) then
     raise exception 'Bu dosya postgres rolüyle çalıştırılmalı (şu an: %). Hiçbir şey değişmedi.', current_user;
@@ -31,12 +31,11 @@ begin
   if exists (select 1 from public.stk_varyant x where x.urun_id = av.urun_id and x.renk_id = 'renk-mvwf90xm-d04e' and coalesce(x.olcu_id, '') = coalesce(av.olcu_id, '')) then
     raise exception 'Astarda hedef renk kaydına bağlı aynı ölçüde varyant zaten var — ikiz olurdu. Hiçbir şey değişmedi.';
   end if;
-  yeni_ad := 'KAHVE';
   select count(*) into nv from public.stk_varyant;
   -- 1) astarın Kahve varyantı: yalnız renk kaydı bağı değişir; varyant kimliği, ölçüsü, hareketleri ve stoku aynı kalır
   update public.stk_varyant set renk_id = 'renk-mvwf90xm-d04e' where id = 'vry-414c381d2808416ba7aec74c6d77680a' and renk_id = 'renk-mwnqdfdn-lhy8';
-  -- 2) altı reçete satırı: ad ve kimlik aynı rengi gösterir; satırın başka hiçbir alanı ve başka hiçbir satır değişmez
-  update public.urunler u set recete = (select jsonb_agg(case when t.sira = any (array[7, 84, 85, 86, 87, 88]::bigint[]) then t.r || jsonb_build_object('renk', yeni_ad, 'renkId', 'renk-mw7p1ue2-b6wc') else t.r end order by t.sira)
+  -- 2) altı reçete satırı: YALNIZ renkId alanı değişir; renk adı metni ("KAHVE") dahil satırın başka hiçbir alanı ve başka hiçbir satır değişmez
+  update public.urunler u set recete = (select jsonb_agg(case when t.sira = any (array[7, 84, 85, 86, 87, 88]::bigint[]) then jsonb_set(t.r, '{renkId}', to_jsonb('renk-mw7p1ue2-b6wc'::text)) else t.r end order by t.sira)
                                            from jsonb_array_elements(u.recete) with ordinality t(r, sira)) where u.id = 'stok-mwnj9g21-nyx6';
   if (select count(*) from public.stk_varyant) <> nv then raise exception 'Varyant sayısı değişti — geri alındı.'; end if;
 end $$;

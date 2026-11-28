@@ -1,4 +1,4 @@
-ekran-kahve-onarim · istemci 1.744.48 · PostgreSQL kipi (şablon b12_k_crlf = Paket K)
+ekran-kahve-onarim · istemci 1.744.48 · PostgreSQL kipi (şablon b12_vo = Paket K)
 
 ■ 0 · ÖNCE
   altı satır: [[7,"KAHVE","renk-mw7p1ue2-b6wc"],[84,"KAHVE","renk-mw7p1ue2-b6wc"],[85,"KAHVE","renk-mw7p1ue2-b6wc"],[86,"KAHVE","renk-mw7p1ue2-b6wc"],[87,"KAHVE","renk-mw7p1ue2-b6wc"],[88,"KAHVE","renk-mw7p1ue2-b6wc"]]
@@ -11,13 +11,16 @@ ekran-kahve-onarim · istemci 1.744.48 · PostgreSQL kipi (şablon b12_k_crlf = 
   Kahve renk kayıtları | renk-mvwf90xm-d04e pasif ×0 · renk-mwnqdfdn-lhy8 etkin ×2
   astar varyantı vry-414c381d2808416ba7aec74c6d77680a | renk_id renk-mwnqdfdn-lhy8 · geçerli hareket 1 · net 100
   astar ürünündeki varyant sayısı | 2
-  reçete satırı 7 | renk "Kahve" · renkId renk-mwnqdfdn-lhy8 → "Kahve"
-  reçete satırı 84 | renk "Kahve" · renkId renk-mwnqdfdn-lhy8 → "Kahve"
-  reçete satırı 85 | renk "Kahve" · renkId renk-mwnqdfdn-lhy8 → "Kahve"
-  reçete satırı 86 | renk "Kahve" · renkId renk-mwnqdfdn-lhy8 → "Kahve"
-  reçete satırı 87 | renk "Kahve" · renkId renk-mwnqdfdn-lhy8 → "Kahve"
-  reçete satırı 88 | renk "Kahve" · renkId renk-mwnqdfdn-lhy8 → "Kahve"
-  ✓ altı satır: ad "Kahve", kimlik etkin Kahve
+  reçete satırı 7 | renk "KAHVE" · renkId renk-mwnqdfdn-lhy8 → "Kahve"
+  reçete satırı 84 | renk "KAHVE" · renkId renk-mwnqdfdn-lhy8 → "Kahve"
+  reçete satırı 85 | renk "KAHVE" · renkId renk-mwnqdfdn-lhy8 → "Kahve"
+  reçete satırı 86 | renk "KAHVE" · renkId renk-mwnqdfdn-lhy8 → "Kahve"
+  reçete satırı 87 | renk "KAHVE" · renkId renk-mwnqdfdn-lhy8 → "Kahve"
+  reçete satırı 88 | renk "KAHVE" · renkId renk-mwnqdfdn-lhy8 → "Kahve"
+  ✓ altı satır: renk kimliği etkin Kahve; ad metni ("KAHVE") AYNI
+  ✓ altı satırda renkId DIŞINDAKİ bütün alanlar bayt bayt aynı
+  ✓ astar varyantı satırında renk_id DIŞINDAKİ bütün sütunlar aynı (kimlik, ürün, ölçü, etkinlik, min stok, oluşturma)
+  ✓ ürün kaydında reçete dışındaki alanlar aynı
   ✓ reçetenin diğer 108 satırı bayt bayt aynı
   ✓ astar varyantı: KİMLİĞİ, ölçüsü, etkinliği, geçerli + iptal hareket sayısı ve stoku aynı; yalnız renk kaydı bağı değişti
   ✓ yeni varyant açılmadı, hiçbir renk kaydı silinmedi / değişmedi, diğer varyantlar aynı
@@ -43,4 +46,4 @@ ekran-kahve-onarim · istemci 1.744.48 · PostgreSQL kipi (şablon b12_k_crlf = 
   astar ürünündeki varyant sayısı | 2
   ✓ geri almadan sonra altı satır, reçetenin tamamı ve astar varyantının bağı İLK durumla aynı
 
-SONUÇ: 12 geçti · 0 kaldı
+SONUÇ: 15 geçti · 0 kaldı

@@ -20,7 +20,7 @@ cikti(bolum, sira, kayit, simdi, plan, not_) as (
   union all
   select 'B reçete satırı', h.sira, 'satır ' || h.sira || ' · ' || coalesce(h.ham_ad, '(hammadde yok)') || ' · proses ' || coalesce(h.proses, '-') || ' · beden ' || coalesce(h.beden, '-') || ' · mamul rengi ' || coalesce(h.mamul_renk, '-'),
          'renk "' || coalesce(h.renk, '') || '" · renkId ' || coalesce(h.renk_id, '(yok)') || ' → ' || coalesce((select '"' || r.ad || '"' from public.stk_renk r where r.id = h.renk_id), '(kayıt yok)'),
-         'renk "Kahve" · renkId ' || s.kahve_etkin,
+         'renk "' || coalesce(h.renk, '') || '" (AYNI) · renkId ' || s.kahve_etkin || ' → "Kahve" · satırın diğer alanları AYNI',
          case when h.renk_id is distinct from s.siyah or public.stk_nrm(h.renk) <> 'kahve' then 'BEKLENMEYEN — satır artık planlandığı gibi değil' else 'beklendiği gibi' end
            || ' · hammaddede Kahve varyantı ' || h.kahve_varyant || ' (kimlik: ' || coalesce(h.kahve_kimlikleri, 'yok') || ')'
     from hedef h, sabit s

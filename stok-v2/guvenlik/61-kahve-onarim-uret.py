@@ -21,11 +21,10 @@ union all select 'Kahve renk kayıtları', string_agg(r.id || case when r.aktif 
 order by 1;
 """
 def blok(ileri):
-    # ileri: (ad "kahve", kimlik SIYAH; varyant PASIF) → (ad etkin kaydın adı, kimlik ETKIN; varyant ETKIN).   geri: tersi (ad "KAHVE").
+    # ileri: (kimlik SIYAH; varyant PASIF) → (kimlik ETKIN; varyant ETKIN). Satırdaki ad metnine dokunulmaz.   geri: tersi.
     r_once, r_sonra = (SIYAH, ETKIN) if ileri else (ETKIN, SIYAH)
     v_once, v_sonra = (PASIF, ETKIN) if ileri else (ETKIN, PASIF)
-    yeni_ad = f"(select ad from public.stk_renk where id = '{ETKIN}')" if ileri else "'KAHVE'"
-    s = "do $$\ndeclare\n  n int; nv int; ham7 text; av record; yeni_ad text;\nbegin\n"
+    s = "do $$\ndeclare\n  n int; nv int; ham7 text; av record;\nbegin\n"
     s += "  if current_user <> 'postgres' and not (select rolsuper from pg_roles where rolname = current_user) then\n    raise exception 'Bu dosya postgres rolüyle çalıştırılmalı (şu an: %). Hiçbir şey değişmedi.', current_user;\n  end if;\n"
     s += f"  perform 1 from public.urunler where id = '{URUN}' for update;\n  if not found then raise exception 'Ürün bulunamadı ({URUN}). Hiçbir şey değişmedi.'; end if;\n"
     s += f"  select * into av from public.stk_varyant where id = '{ASTAR_V}' for update;\n  if not found then raise exception 'Astar varyantı bulunamadı. Hiçbir şey değişmedi.'; end if;\n"
@@ -41,14 +40,13 @@ def blok(ileri):
     if ileri:
         s += f"  -- taban: satır 84–88'in hammaddesinde Kahve varyantlarının HEPSİ etkin Kahve kaydında olmalı (reçete oraya bağlanacak)\n  select count(*) filter (where v.renk_id <> '{ETKIN}'), count(*) into n, nv from public.stk_varyant v join public.stk_renk r on r.id = v.renk_id\n   where public.stk_nrm(r.ad) = 'kahve' and v.urun_id in (select t.r ->> 'hammaddeUrunId' from public.urunler u, jsonb_array_elements(u.recete) with ordinality t(r, sira) where u.id = '{URUN}' and t.sira between 84 and 88);\n"
         s += "  if n <> 0 or nv = 0 then raise exception 'Tabanın Kahve varyantları etkin Kahve kaydında değil (başka kayıtta: %, toplam: %). Hiçbir şey değişmedi.', n, nv; end if;\n"
-    s += f"  yeni_ad := {yeni_ad};\n"
     s += f"  select count(*) into nv from public.stk_varyant;\n"
     s += f"  -- 1) astarın Kahve varyantı: yalnız renk kaydı bağı değişir; varyant kimliği, ölçüsü, hareketleri ve stoku aynı kalır\n  update public.stk_varyant set renk_id = '{v_sonra}' where id = '{ASTAR_V}' and renk_id = '{v_once}';\n"
-    s += f"  -- 2) altı reçete satırı: ad ve kimlik aynı rengi gösterir; satırın başka hiçbir alanı ve başka hiçbir satır değişmez\n"
-    s += f"  update public.urunler u set recete = (select jsonb_agg(case when t.sira = any ({SATIR}) then t.r || jsonb_build_object('renk', yeni_ad, 'renkId', '{r_sonra}') else t.r end order by t.sira)\n                                           from jsonb_array_elements(u.recete) with ordinality t(r, sira)) where u.id = '{URUN}';\n"
+    s += f"  -- 2) altı reçete satırı: YALNIZ renkId alanı değişir; renk adı metni (\"KAHVE\") dahil satırın başka hiçbir alanı ve başka hiçbir satır değişmez\n"
+    s += f"  update public.urunler u set recete = (select jsonb_agg(case when t.sira = any ({SATIR}) then jsonb_set(t.r, '{{renkId}}', to_jsonb('{r_sonra}'::text)) else t.r end order by t.sira)\n                                           from jsonb_array_elements(u.recete) with ordinality t(r, sira)) where u.id = '{URUN}';\n"
     s += "  if (select count(*) from public.stk_varyant) <> nv then raise exception 'Varyant sayısı değişti — geri alındı.'; end if;\n"
     return s + "end $$;\n" + SON
-for ad, ic in (("61-kahve-onarim-uygula.sql", BASLIK % ("uygula", "27181 KAHVE ONARIMI: astarın Kahve varyantı etkin Kahve kaydına bağlanır (varyant kimliği, stok, geçmiş aynı); altı reçete satırında\n--  renk adı \"Kahve\", renk kimliği etkin Kahve olur. Yeni varyant açılmaz; renk kaydı silinmez, birleştirilmez.") + blok(True)),
-               ("61-kahve-onarim-geri-al.sql", BASLIK % ("geri-al", "GERİ ALMA (AYRI ONAYLA): astar varyantı pasif Kahve kaydına, altı satır \"KAHVE\" / Siyah kimliğine döner.") + blok(False))):
+for ad, ic in (("61-kahve-onarim-uygula.sql", BASLIK % ("uygula", "27181 KAHVE ONARIMI: astarın Kahve varyantı etkin Kahve kaydına bağlanır (varyant kimliği, stok, geçmiş aynı); altı reçete satırında\n--  YALNIZ renk kimliği (renkId) etkin Kahve olur; satırdaki ad metni ve diğer alanlar aynı kalır. Yeni varyant açılmaz; renk kaydı silinmez, birleştirilmez.") + blok(True)),
+               ("61-kahve-onarim-geri-al.sql", BASLIK % ("geri-al", "GERİ ALMA (AYRI ONAYLA): astar varyantı pasif Kahve kaydına, altı satırın renk kimliği Siyah'a döner.") + blok(False))):
     assert len(re.findall(r"\$", ic)) == 4, (ad, "dolar")
     open(os.path.join(D, ad), "w", encoding="utf8", newline="\n").write(ic); print(ad, len(ic), "bayt")
