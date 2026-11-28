@@ -985,7 +985,7 @@ function CariCard({ onParaFisi, siteYonetici = false, tanimlar, onTanimlarKaydet
           )}
 
           {/* PERSONEL BİLGİLERİ + MESAİ (v1.700, 272): atölye içi personel (Fasoncu değil). */}
-          {cardTab === "bilgiler" && cari.tip === "Personel" && cari.altTip !== "Fasoncu" && tanimlar && onTanimlarKaydet && (
+          {cardTab === "bilgiler" && cari.tip === "Personel" && !cariFasonMu(tanimlar, cari) && tanimlar && onTanimlarKaydet && (
             <PersonelBilgileriPaneli cari={cari} tanimlar={tanimlar} onTanimlarKaydet={onTanimlarKaydet} onAddHareket={onAddHareket} onParaFisi={onParaFisi} showToast={showToast} />
           )}
           {cardTab === "bilgiler" && cari.tip !== "Personel" && (tanimlarFiyatGruplari || []).some((g) => g.tip === (cari.tip === "Tedarikçi" ? "Alış" : "Satış") || cari.tip === "Her İkisi") && (

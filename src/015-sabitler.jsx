@@ -492,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.744.48";
-const SURUM_TARIHI = "2026-11-27";
-const SURUM_NOTU = "Renk adı değiştikten sonra ekrandaki Tanımlar da yeni ada geçiyor (aynı cihazın sonraki kaydı eski adı geri yazabiliyordu)";
+const SURUM = "1.744.50";
+const SURUM_TARIHI = "2026-11-28";
+const SURUM_NOTU = "Fason işçiliğin cariye yazılması artık cari tipinin adına bağlı değil; tip adı değişince ödeme yönü değişmiyor";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -525,6 +525,8 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" };   // teklif: v1.723.0, Sipariş'in alt sekmesi
 
 const SURUM_GECMISI = [
+  { surum: "1.744.50", tarih: "28.11.2026", eklenen: [], degisen: ["Tanımlar › Firma › Cari Tipleri: her tipte \"işçiliği cariye (fason)\" kutusu. Fason çalışanın işçiliğinin kendi carisine mi bölüm tahakkukuna mı yazılacağı artık bu kutuya bağlı, tipin adına değil."], duzeltilen: ["\"Fasoncu\" tipinin adı değiştirilince (ör. \"Fason Atölye\") o tipteki kişilerin işçiliği cariye değil bölüme yazılıyordu. Ad artık yalnız görünen addır; mevcut tiplerin davranışı aynen korunur, geçmiş kayıtlar değişmez."] },
+  { surum: "1.744.49", tarih: "27.11.2026", eklenen: [], degisen: ["Bu numara geri dönüş dosyasına ayrıldı (1.744.44 ile aynı uygulama). Yeni özellik içermez."], duzeltilen: [] },
   { surum: "1.744.48", tarih: "27.11.2026", eklenen: [], degisen: [], duzeltilen: ["Tanımlar › renk adı değiştirme: değişiklikten sonra ekrandaki Tanımlar eski adda kalıyordu (\"N üründe\" rozeti kayboluyordu). Daha önemlisi, aynı cihazdan sayfa yenilenmeden yapılan bir sonraki Tanımlar kaydı eski adı sunucuya geri yazabiliyor, sipariş kalemleri yeni adda kaldığı için bağ kopabiliyordu. Buluttan gelen Tanımlar artık ekrana işleniyor; başka cihazın Tanımlar değişikliği de açık ekrana yansıyor.", "Gönderilmeyi bekleyen bir Tanımlar değişikliği yeniden gönderilirken, başka cihaz bu arada AYNI öğeyi değiştirdiyse artık sessizce ezilmiyor: çakışma şeridi çıkıyor ve hangisinin geçerli olacağı soruluyor."] },
   { surum: "1.744.47", tarih: "27.11.2026", eklenen: [], degisen: ["Bu numara geri dönüş dosyasına ayrıldı (1.744.44 ile aynı uygulama). Yeni özellik içermez."], duzeltilen: [] },
   { surum: "1.744.46", tarih: "27.11.2026", eklenen: [], degisen: [], duzeltilen: ["Tanımlar › renk adı değiştirme artık sunucuda TEK işlem (stok-v2/guvenlik/26-b1-renk-ad-degistir.sql kurulu ise): Tanımlar, sipariş kalemleri, üretim, rezervasyon, koliler, reçete, renk resimleri ve harici barkodlar aynı anda güncellenir; değişiklik sırasında bu kayıtlara başka yazma araya giremez. Eskiden bu cihazın henüz görmediği, başka cihazdan az önce girilmiş sipariş kalemi eski adda kalıyor ve varyant bağı kopuyordu. Değişiklikten sonra eski bir sekmenin eski adla gönderdiği kayıt da sunucuda yeni ada çevrilir. Buluta gönderilmeyi bekleyen kayıt varken ad değiştirilmez. Sunucu kurulumu yoksa ad değiştirilmez ve bunu açıkça söyler (eski, hatalı yönteme dönülmez). Bir rengin eski adı başka bir renge verilemez (Yönetici serbest bırakmadıkça); eski adı belirsiz ya da rengi silinmiş kayıt sessizce bağlanmaz, açık uyarıyla reddedilir.", "Tanımlar iki cihazdan aynı anda kaydedilince birinin eklediği (ör. yeni renk) artık kaybolmuyor: kayıt sunucudaki sürümle koşullu yazılıyor, arada başka cihaz yazdıysa güncel hâl yeniden okunup birleştiriliyor. İki cihaz AYNI öğeyi farklı değiştirdiyse hiçbiri sessizce seçilmiyor: bu cihazın değişikliği bekletiliyor, üstteki \"İnceleme gerekiyor\" şeridinde hangi öğede ne çakıştığı yazıyor; \"Benimkini uygula\" ya da \"Sunucudakini al\" seçilir. (1.744.38 numarası renk adı düzeltmesinin ayrı dalında.)"] },
@@ -2141,7 +2143,7 @@ function mesaiHesapla(maas, aylikSaat, saatler, ayar) {
 //   • ikisi de değilse eski kural: prosesin bölümü (Tanımlar'daki bağ).
 function iscilikBolumu(tanimlar, cariler, prosesAdi, personelId) {
   const c = personelId ? (cariler || []).find((x) => x.id === personelId) : null;
-  if (c && c.altTip === "Fasoncu") return null;
+  if (c && cariFasonMu(tanimlar, c)) return null;   // v1.744.50: tipin ADINA değil açık `fason` alanına bakılır (200 `cariFasonMu`)
   if (c) {
     const b = ((tanimlar && tanimlar.bolumler) || []).find((x) => (x.personel || []).some((p) => p.cariId === c.id));
     if (b) return b;

@@ -1210,11 +1210,31 @@ const CARI_TIPLERI_VARSAYILAN = [{ ad: "Fasoncu", temel: "Personel" }];
 function tanimliCariTipleri(tanimlar) {
   return Array.isArray(tanimlar && tanimlar.cariTipleri) ? tanimlar.cariTipleri : CARI_TIPLERI_VARSAYILAN;
 }
+// FASON DAVRANIŞI ADA BAĞLI DEĞİL (v1.744.50, Paket F — kanıt test/inceleme/bag-risk-fasoncu.js). İşçiliğin cariye mi bölüme mi
+// yazılacağı eskiden `cari.altTip === "Fasoncu"` ile, yani tipin GÖRÜNEN ADIYLA belirleniyordu; ad bu ekrandan değiştirilebildiği için
+// "Fasoncu" → "Fason Atölye" yapıldığında aynı kişinin işçiliği cariye değil bölüm tahakkukuna yazılıyordu. Şimdi davranış tipin
+// AÇIK alanında (`fason`) durur, tip değişmez kimlik (`id`) taşır ve cari tipine kimlikle (`altTipId`) bağlanır; ad yalnız gösterimdir.
+// MEVCUT VERİ DÖNÜŞTÜRÜLMEZ, TAHMİN YAPILMAZ: `fason` alanı hiç yazılmamış tipte ESKİ KURAL aynen geçerlidir (adı tam "Fasoncu" olan
+// tip fason sayılır, ötekiler sayılmaz) — bugünkü davranış birebir korunur. Alan, tip bu ekranda düzenlendiğinde (ad / davranış
+// değişikliği) o anki geçerli değeriyle AÇIKÇA yazılır; böylece ad değişse de ödeme yönü değişmez. Geçmiş tahakkuklara dokunulmaz.
+function cariTipiBul(tanimlar, cari) {
+  if (!cari || !cari.altTip && !cari.altTipId) return null;
+  const liste = tanimliCariTipleri(tanimlar);
+  return (cari.altTipId && liste.find((t) => t && t.id === cari.altTipId)) || liste.find((t) => t && t.ad === cari.altTip) || null;
+}
+// Tip kaydının geçerli fason değeri: açık alan varsa o; yoksa eski kural (adı tam "Fasoncu").
+function cariTipiFasonMu(tip) { return !!tip && (typeof tip.fason === "boolean" ? tip.fason : tip.ad === "Fasoncu"); }
+function cariFasonMu(tanimlar, cari) {
+  if (!cari) return false;
+  const tip = cariTipiBul(tanimlar, cari);
+  // Tip kaydı bulunamadıysa (tanımı silinmiş / henüz yazılmamış özel tip) eski kural: carinin kendi tip adı.
+  return tip ? cariTipiFasonMu(tip) : cari.altTip === "Fasoncu";
+}
 function ozelCariTipleri(cariler, tanimlar) {
   const m = new Map();
-  tanimliCariTipleri(tanimlar).forEach((t) => { if (t && t.ad) m.set(t.ad, t.temel || "Müşteri"); });
-  (cariler || []).forEach((c) => { if (c && c.altTip && !m.has(c.altTip)) m.set(c.altTip, c.tip || "Müşteri"); });
-  return [...m.entries()].map(([ad, temel]) => ({ ad, temel })).sort((a, b) => a.ad.localeCompare(b.ad, "tr"));
+  tanimliCariTipleri(tanimlar).forEach((t) => { if (t && t.ad) m.set(t.ad, { ad: t.ad, temel: t.temel || "Müşteri", ...(t.id ? { id: t.id } : {}), ...(typeof t.fason === "boolean" ? { fason: t.fason } : {}) }); });
+  (cariler || []).forEach((c) => { if (c && c.altTip && !m.has(c.altTip)) m.set(c.altTip, { ad: c.altTip, temel: c.tip || "Müşteri" }); });
+  return [...m.values()].sort((a, b) => a.ad.localeCompare(b.ad, "tr"));
 }
 // Tip seçici: standart tipler + özel tipler + "Yeni tip…" (ad + nasıl davranacağı).
 function CariTipSecici({ tip, altTip, cariler, tanimlar, onDegis, style }) {
@@ -1229,8 +1249,8 @@ function CariTipSecici({ tip, altTip, cariler, tanimlar, onDegis, style }) {
           const v = e.target.value;
           if (v === "__yeni") { setYeni({ ad: "", temel: tip || "Müşteri" }); return; }
           setYeni(null);
-          if (v.startsWith("ozel:")) { const o = ozeller.find((x) => x.ad === v.slice(5)); onDegis({ tip: o ? o.temel : tip, altTip: v.slice(5) }); }
-          else onDegis({ tip: v, altTip: null });
+          if (v.startsWith("ozel:")) { const o = ozeller.find((x) => x.ad === v.slice(5)); onDegis({ tip: o ? o.temel : tip, altTip: v.slice(5), altTipId: (o && o.id) || null }); }
+          else onDegis({ tip: v, altTip: null, altTipId: null });
         }}>
         {CARI_TIPLERI.map((t) => <option key={t} value={t}>{t}</option>)}
         {ozeller.map((o) => <option key={o.ad} value={"ozel:" + o.ad}>{o.ad} ({o.temel} gibi)</option>)}
@@ -1250,7 +1270,7 @@ function CariTipSecici({ tip, altTip, cariler, tanimlar, onDegis, style }) {
               const ad = yeni.ad.trim();
               // Standart tip adı yazıldıysa özel tip açılmaz, doğrudan o seçilir.
               const std = CARI_TIPLERI.find((t) => t.toLocaleLowerCase("tr") === ad.toLocaleLowerCase("tr"));
-              onDegis(std ? { tip: std, altTip: null } : { tip: yeni.temel, altTip: ad });
+              onDegis(std ? { tip: std, altTip: null, altTipId: null } : { tip: yeni.temel, altTip: ad, altTipId: null });
               setYeni(null);
             }}>Tamam</button>
         </div>
@@ -1265,13 +1285,14 @@ function CariTipleriTanimi({ tanimlar, onSave, cariler, onCarilerKaydet, showToa
   const [yeni, setYeni] = useState({ ad: "", temel: "Müşteri" });
   const liste = ozelCariTipleri(cariler, tanimlar);
   const kullanan = (ad) => (cariler || []).filter((c) => c.altTip === ad).length;
-  const listeYaz = (l) => onSave({ ...tanimlar, cariTipleri: l.map((t) => ({ ad: t.ad, temel: t.temel })) });
+  // Kimlik ve fason alanı KORUNUR (eskiden yalnız ad + temel yazılıyordu, öteki alanlar her kayıtta düşerdi).
+  const listeYaz = (l) => onSave({ ...tanimlar, cariTipleri: l.map((t) => ({ ad: t.ad, temel: t.temel, ...(t.id ? { id: t.id } : {}), ...(typeof t.fason === "boolean" ? { fason: t.fason } : {}) })) });
   const standartMi = (ad) => CARI_TIPLERI.some((t) => t.toLocaleLowerCase("tr") === String(ad).trim().toLocaleLowerCase("tr"));
   const ekle = () => {
     const ad = yeni.ad.trim();
     if (!ad) return;
     if (standartMi(ad) || liste.some((t) => t.ad.toLocaleLowerCase("tr") === ad.toLocaleLowerCase("tr"))) { if (showToast) showToast(`"${ad}" zaten var`); return; }
-    listeYaz([...liste, { ad, temel: yeni.temel }]);
+    listeYaz([...liste, { ad, temel: yeni.temel, id: uid("ctip"), fason: false }]);   // yeni tip: davranış açıkça yazılır (ada bakılmaz)
     setYeni({ ad: "", temel: yeni.temel });
   };
   const degistir = (eski, alanlar) => {
@@ -1279,9 +1300,14 @@ function CariTipleriTanimi({ tanimlar, onSave, cariler, onCarilerKaydet, showToa
     if (!ad) return;
     if (ad !== eski.ad && (standartMi(ad) || liste.some((t) => t.ad === ad))) { if (showToast) showToast(`"${ad}" zaten var`); return; }
     const temel = alanlar.temel || eski.temel;
-    listeYaz(liste.map((t) => (t.ad === eski.ad ? { ad, temel } : t)));
-    if (kullanan(eski.ad) > 0 && onCarilerKaydet && (ad !== eski.ad || temel !== eski.temel)) {
-      onCarilerKaydet((cariler || []).map((c) => (c.altTip === eski.ad ? { ...c, altTip: ad, tip: temel } : c)));
+    // DAVRANIŞ ADLA BİRLİKTE DEĞİŞMEZ: tip düzenlenirken fason değeri o anki GEÇERLİ hâliyle açıkça yazılır (eski kayıtta alan yoksa
+    // eski kuraldan okunur: adı tam "Fasoncu"); kullanıcı kutuyu değiştirdiyse onun seçimi. Tip kimliği yoksa burada verilir.
+    const fason = typeof alanlar.fason === "boolean" ? alanlar.fason : cariTipiFasonMu(eski);
+    const id = eski.id || uid("ctip");
+    listeYaz(liste.map((t) => (t.ad === eski.ad ? { ad, temel, id, fason } : t)));
+    if (kullanan(eski.ad) > 0 && onCarilerKaydet && (ad !== eski.ad || temel !== eski.temel || !eski.id)) {
+      // Cariler tipe KİMLİKLE de bağlanır: bu yazma yarım kalsa bile (tanım yeni adda, cari eski adda) cari tipini kimlikten bulur.
+      onCarilerKaydet((cariler || []).map((c) => (c.altTip === eski.ad ? { ...c, altTip: ad, altTipId: id, tip: temel } : c)));
     }
   };
   return (
@@ -1309,6 +1335,11 @@ function CariTipleriTanimi({ tanimlar, onSave, cariler, onCarilerKaydet, showToa
               <select value={t.temel} data-cari-tipi-temel={t.ad} onChange={(e) => degistir(t, { temel: e.target.value })} style={{ ...inputStyle, width: 170 }}>
                 {CARI_TIPLERI.map((x) => <option key={x} value={x}>{x} gibi</option>)}
               </select>
+              <label data-cari-tipi-fason={t.ad} title="İşaretliyse bu tipteki kişinin üretim işçiliği kendi carisine alacak yazılır (bölüm tahakkukuna değil). Tipin adından bağımsızdır."
+                style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--erp-text-2)" }}>
+                <input type="checkbox" checked={cariTipiFasonMu(t)} onChange={(e) => degistir(t, { fason: e.target.checked })} />
+                işçiliği cariye (fason)
+              </label>
               <span style={{ fontSize: 12, color: "var(--erp-text-2)" }}>{n} cari</span>
               <span style={{ marginLeft: "auto" }}>
                 {n > 0

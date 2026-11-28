@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.744.46</title>
+<title>Atölye ERP 1.744.50</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2319,9 +2319,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.744.46";
-const SURUM_TARIHI = "2026-11-27";
-const SURUM_NOTU = "Renk adı değişikliği sunucuda tek işlem; Tanımlar iki cihazdan aynı anda kaydedilince birinin eklediği artık kaybolmuyor";
+const SURUM = "1.744.50";
+const SURUM_TARIHI = "2026-11-28";
+const SURUM_NOTU = "Fason işçiliğin cariye yazılması artık cari tipinin adına bağlı değil; tip adı değişince ödeme yönü değişmiyor";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2351,6 +2351,10 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 }
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" }; // teklif: v1.723.0, Sipariş'in alt sekmesi
 const SURUM_GECMISI = [
+    { surum: "1.744.50", tarih: "28.11.2026", eklenen: [], degisen: ["Tanımlar › Firma › Cari Tipleri: her tipte \"işçiliği cariye (fason)\" kutusu. Fason çalışanın işçiliğinin kendi carisine mi bölüm tahakkukuna mı yazılacağı artık bu kutuya bağlı, tipin adına değil."], duzeltilen: ["\"Fasoncu\" tipinin adı değiştirilince (ör. \"Fason Atölye\") o tipteki kişilerin işçiliği cariye değil bölüme yazılıyordu. Ad artık yalnız görünen addır; mevcut tiplerin davranışı aynen korunur, geçmiş kayıtlar değişmez."] },
+    { surum: "1.744.49", tarih: "27.11.2026", eklenen: [], degisen: ["Bu numara geri dönüş dosyasına ayrıldı (1.744.44 ile aynı uygulama). Yeni özellik içermez."], duzeltilen: [] },
+    { surum: "1.744.48", tarih: "27.11.2026", eklenen: [], degisen: [], duzeltilen: ["Tanımlar › renk adı değiştirme: değişiklikten sonra ekrandaki Tanımlar eski adda kalıyordu (\"N üründe\" rozeti kayboluyordu). Daha önemlisi, aynı cihazdan sayfa yenilenmeden yapılan bir sonraki Tanımlar kaydı eski adı sunucuya geri yazabiliyor, sipariş kalemleri yeni adda kaldığı için bağ kopabiliyordu. Buluttan gelen Tanımlar artık ekrana işleniyor; başka cihazın Tanımlar değişikliği de açık ekrana yansıyor.", "Gönderilmeyi bekleyen bir Tanımlar değişikliği yeniden gönderilirken, başka cihaz bu arada AYNI öğeyi değiştirdiyse artık sessizce ezilmiyor: çakışma şeridi çıkıyor ve hangisinin geçerli olacağı soruluyor."] },
+    { surum: "1.744.47", tarih: "27.11.2026", eklenen: [], degisen: ["Bu numara geri dönüş dosyasına ayrıldı (1.744.44 ile aynı uygulama). Yeni özellik içermez."], duzeltilen: [] },
     { surum: "1.744.46", tarih: "27.11.2026", eklenen: [], degisen: [], duzeltilen: ["Tanımlar › renk adı değiştirme artık sunucuda TEK işlem (stok-v2/guvenlik/26-b1-renk-ad-degistir.sql kurulu ise): Tanımlar, sipariş kalemleri, üretim, rezervasyon, koliler, reçete, renk resimleri ve harici barkodlar aynı anda güncellenir; değişiklik sırasında bu kayıtlara başka yazma araya giremez. Eskiden bu cihazın henüz görmediği, başka cihazdan az önce girilmiş sipariş kalemi eski adda kalıyor ve varyant bağı kopuyordu. Değişiklikten sonra eski bir sekmenin eski adla gönderdiği kayıt da sunucuda yeni ada çevrilir. Buluta gönderilmeyi bekleyen kayıt varken ad değiştirilmez. Sunucu kurulumu yoksa ad değiştirilmez ve bunu açıkça söyler (eski, hatalı yönteme dönülmez). Bir rengin eski adı başka bir renge verilemez (Yönetici serbest bırakmadıkça); eski adı belirsiz ya da rengi silinmiş kayıt sessizce bağlanmaz, açık uyarıyla reddedilir.", "Tanımlar iki cihazdan aynı anda kaydedilince birinin eklediği (ör. yeni renk) artık kaybolmuyor: kayıt sunucudaki sürümle koşullu yazılıyor, arada başka cihaz yazdıysa güncel hâl yeniden okunup birleştiriliyor. İki cihaz AYNI öğeyi farklı değiştirdiyse hiçbiri sessizce seçilmiyor: bu cihazın değişikliği bekletiliyor, üstteki \"İnceleme gerekiyor\" şeridinde hangi öğede ne çakıştığı yazıyor; \"Benimkini uygula\" ya da \"Sunucudakini al\" seçilir. (1.744.38 numarası renk adı düzeltmesinin ayrı dalında.)"] },
     { surum: "1.744.45", tarih: "27.11.2026", eklenen: [], degisen: ["Bu numara geri dönüş dosyasına ayrıldı (1.744.37 ile aynı uygulama; yalnız gerektiğinde yayına alınır). Yeni özellik içermez."], duzeltilen: [] },
     { surum: "1.744.44", tarih: "27.11.2026", eklenen: [], degisen: [], duzeltilen: ["Silme yetkisi olmayan kullanıcıda fiş iptali ve Geri Al düğmeleri artık görünmüyor (sunucu zaten reddediyordu)"] },
@@ -3965,8 +3969,8 @@ function mesaiHesapla(maas, aylikSaat, saatler, ayar) {
 //   • ikisi de değilse eski kural: prosesin bölümü (Tanımlar'daki bağ).
 function iscilikBolumu(tanimlar, cariler, prosesAdi, personelId) {
     const c = personelId ? (cariler || []).find((x) => x.id === personelId) : null;
-    if (c && c.altTip === "Fasoncu")
-        return null;
+    if (c && cariFasonMu(tanimlar, c))
+        return null; // v1.744.50: tipin ADINA değil açık `fason` alanına bakılır (200 `cariFasonMu`)
     if (c) {
         const b = ((tanimlar && tanimlar.bolumler) || []).find((x) => (x.personel || []).some((p) => p.cariId === c.id));
         if (b)
@@ -22478,7 +22482,7 @@ function useFisDefteriYazma(d) {
 //     değişikliği kaybolmaz, başka cihazın eklediği / değiştirdiği / sildiği öğe korunur — eski kopya bütünüyle gönderilmez.
 // Bu dosya App'e bağlı değil: `mevcut` verilir, uzlaşmış hâl döner; ekranı App günceller.
 // Döner: { tanimlar, ozet } | null (okunamadı). Okuma başarılıysa taban = sunucu hâli, tazelik işareti yenilenir.
-async function tanimlariSunucudanTazele(mevcut) {
+async function tanimlariSunucudanTazele(mevcut, secenek) {
     if (!supabaseAcikMi())
         return { tanimlar: mevcut, ozet: null };
     let bulut;
@@ -22505,6 +22509,16 @@ async function tanimlariSunucudanTazele(mevcut) {
     if (taban === undefined && bulut) {
         const bekleyenVar = typeof bekleyenYazmalariOku === "function" && !!bekleyenYazmalariOku()["tanimlar:data"];
         taban = bekleyenVar ? tabansizTaban(mevcut, bulut) : mevcut;
+    }
+    // ÇAKIŞMA VARSA UZLAŞTIRMA YOK (v1.744.48 — test/inceleme/ekran-tanim-tazele.js T4). Bekleyen tanım kaydı yeniden gönderilirken
+    // (100, `secenek.cakismaKontrol`) bu cihazın bekleyen değişikliği ile başka cihazın bu arada yaptığı değişiklik AYNI öğedeyse,
+    // aşağıdaki uzlaştırma bu cihazı kazandırıp TABANI sunucu hâline çekiyordu → ardından gelen sürüm koşullu yazma (030) çakışmayı
+    // göremiyor, bu cihaz öbürünü SESSİZCE eziyordu (çakışma şeridi hiç çıkmıyordu). Çakışma varken ekran ve taban OLDUĞU GİBİ bırakılır;
+    // yazma çakışmayı kendi bulur, değişiklik "inceleme"ye düşer, kullanıcıya sorulur ("Benimkini uygula" / "Sunucudakini al").
+    if (secenek && secenek.cakismaKontrol && bulut && taban !== undefined && typeof tanimCakismalari === "function"
+        && tanimCakismalari(mevcut, bulut, taban).length > 0) {
+        tanimlarOkundu();
+        return { tanimlar: mevcut, ozet: null, cakisma: true };
     }
     const u = tanimlarUzlastir(mevcut, bulut, taban, tanimSilinenleriOku());
     if (bulut)
@@ -24415,7 +24429,7 @@ function AtolyeUygulamasi() {
             isler.push(tanimIsiSirala(async () => {
                 if (bulutYazmaEngeli())
                     return;
-                const taze = await tanimlariSunucudanTazele(tanimRef.current || tanimlar);
+                const taze = await tanimlariSunucudanTazele(tanimRef.current || tanimlar, { cakismaKontrol: true });
                 if (!taze)
                     return;
                 if (bulutYazmaEngeli())
@@ -24511,6 +24525,8 @@ function AtolyeUygulamasi() {
     // Ekrandaki son hâl (v1.645.7): tazelemede buluttan gelenle karşılaştırmak için — aynıysa "başka cihaz" değil (047
     // `degisiklikIcerikAyni`). Her çizimde güncellenir; geri çağırma bayat kapanış yerine bunu okur.
     const guncelDurumRef = useRef({});
+    if (typeof window !== "undefined" && window.__TANI_AC)
+        window.__TANI = guncelDurumRef; // sınama gözlemi (yalnız okuma)
     guncelDurumRef.current = { stok, cariler, siparisler, uretim, stokRezervasyonlari, onaylar, cop, tanimlar, muhasebe, koliler, gorevler, faturalar, teklifler, fisDefteri, modeller };
     // FİYAT KUTULARI (v1.744.42, 094 `fiyatAlanYetkileri`): ekranlar kutuyu kapatmak için buradan okur (prop zinciri kurmadan).
     if (typeof window !== "undefined")
@@ -24591,8 +24607,17 @@ function AtolyeUygulamasi() {
                 // Tanımlar bulut hâli ekrandakine EKLENİR: yalnız buluttan gelen anahtarlar karşılaştırılır.
                 if (bulut.tanimlar) {
                     const mevcut = Object.fromEntries(Object.keys(bulut.tanimlar).map((k) => [k, (g.tanimlar || {})[k]]));
-                    if (!ayni(alan, mevcut))
+                    // KARŞILAŞTIRMA BULUTLA (v1.744.48): burada `ayni(alan, mevcut)` çağrılıyordu — o yardımcı ekrandaki Tanımlar'ı (g.tanimlar)
+                    // verilen değerle karşılaştırır, `mevcut` ise ekrandaki hâlin KENDİ alt kümesi: anahtar kümeleri aynıyken hep "aynı" çıkıyor,
+                    // buluttan gelen Tanımlar ekrana HİÇ işlenmiyordu; taban ise (aşağıda) bulut hâline geçiyordu. Sonuç (canlıda 27 Kasım, renk
+                    // adı sunucuda değiştikten sonra "N üründe" rozeti kayboldu): ekranda eski ad kalıyor, aynı cihazın SONRAKİ Tanımlar kaydı
+                    // eski adı "yerel değişiklik" sanıp sunucuya geri yazıyor, kalemler yeni adda kaldığı için bağ kopuyordu. Doğrusu: ekrandaki
+                    // değerler (bulutun getirdiği anahtarlar için) BULUT hâliyle karşılaştırılır.
+                    if (!degisiklikIcerikAyni(mevcut, bulut.tanimlar)) {
+                        degisen.push(alan);
+                        farklar[alan] = "içerik";
                         setTanimlar((t) => ({ ...t, ...bulut.tanimlar }));
+                    }
                     // TABAN + TAZELİK (v1.744.16): ekran sunucu hâline geçti — sonraki tanım yazması bununla üç yönlü uzlaşır.
                     tekilTabanAyarla("tanimlar", bulut.tanimlar);
                     tanimlarOkundu();
@@ -44194,13 +44219,35 @@ const CARI_TIPLERI_VARSAYILAN = [{ ad: "Fasoncu", temel: "Personel" }];
 function tanimliCariTipleri(tanimlar) {
     return Array.isArray(tanimlar && tanimlar.cariTipleri) ? tanimlar.cariTipleri : CARI_TIPLERI_VARSAYILAN;
 }
+// FASON DAVRANIŞI ADA BAĞLI DEĞİL (v1.744.50, Paket F — kanıt test/inceleme/bag-risk-fasoncu.js). İşçiliğin cariye mi bölüme mi
+// yazılacağı eskiden `cari.altTip === "Fasoncu"` ile, yani tipin GÖRÜNEN ADIYLA belirleniyordu; ad bu ekrandan değiştirilebildiği için
+// "Fasoncu" → "Fason Atölye" yapıldığında aynı kişinin işçiliği cariye değil bölüm tahakkukuna yazılıyordu. Şimdi davranış tipin
+// AÇIK alanında (`fason`) durur, tip değişmez kimlik (`id`) taşır ve cari tipine kimlikle (`altTipId`) bağlanır; ad yalnız gösterimdir.
+// MEVCUT VERİ DÖNÜŞTÜRÜLMEZ, TAHMİN YAPILMAZ: `fason` alanı hiç yazılmamış tipte ESKİ KURAL aynen geçerlidir (adı tam "Fasoncu" olan
+// tip fason sayılır, ötekiler sayılmaz) — bugünkü davranış birebir korunur. Alan, tip bu ekranda düzenlendiğinde (ad / davranış
+// değişikliği) o anki geçerli değeriyle AÇIKÇA yazılır; böylece ad değişse de ödeme yönü değişmez. Geçmiş tahakkuklara dokunulmaz.
+function cariTipiBul(tanimlar, cari) {
+    if (!cari || !cari.altTip && !cari.altTipId)
+        return null;
+    const liste = tanimliCariTipleri(tanimlar);
+    return (cari.altTipId && liste.find((t) => t && t.id === cari.altTipId)) || liste.find((t) => t && t.ad === cari.altTip) || null;
+}
+// Tip kaydının geçerli fason değeri: açık alan varsa o; yoksa eski kural (adı tam "Fasoncu").
+function cariTipiFasonMu(tip) { return !!tip && (typeof tip.fason === "boolean" ? tip.fason : tip.ad === "Fasoncu"); }
+function cariFasonMu(tanimlar, cari) {
+    if (!cari)
+        return false;
+    const tip = cariTipiBul(tanimlar, cari);
+    // Tip kaydı bulunamadıysa (tanımı silinmiş / henüz yazılmamış özel tip) eski kural: carinin kendi tip adı.
+    return tip ? cariTipiFasonMu(tip) : cari.altTip === "Fasoncu";
+}
 function ozelCariTipleri(cariler, tanimlar) {
     const m = new Map();
     tanimliCariTipleri(tanimlar).forEach((t) => { if (t && t.ad)
-        m.set(t.ad, t.temel || "Müşteri"); });
+        m.set(t.ad, { ad: t.ad, temel: t.temel || "Müşteri", ...(t.id ? { id: t.id } : {}), ...(typeof t.fason === "boolean" ? { fason: t.fason } : {}) }); });
     (cariler || []).forEach((c) => { if (c && c.altTip && !m.has(c.altTip))
-        m.set(c.altTip, c.tip || "Müşteri"); });
-    return [...m.entries()].map(([ad, temel]) => ({ ad, temel })).sort((a, b) => a.ad.localeCompare(b.ad, "tr"));
+        m.set(c.altTip, { ad: c.altTip, temel: c.tip || "Müşteri" }); });
+    return [...m.values()].sort((a, b) => a.ad.localeCompare(b.ad, "tr"));
 }
 // Tip seçici: standart tipler + özel tipler + "Yeni tip…" (ad + nasıl davranacağı).
 function CariTipSecici({ tip, altTip, cariler, tanimlar, onDegis, style }) {
@@ -44219,10 +44266,10 @@ function CariTipSecici({ tip, altTip, cariler, tanimlar, onDegis, style }) {
                 setYeni(null);
                 if (v.startsWith("ozel:")) {
                     const o = ozeller.find((x) => x.ad === v.slice(5));
-                    onDegis({ tip: o ? o.temel : tip, altTip: v.slice(5) });
+                    onDegis({ tip: o ? o.temel : tip, altTip: v.slice(5), altTipId: (o && o.id) || null });
                 }
                 else
-                    onDegis({ tip: v, altTip: null });
+                    onDegis({ tip: v, altTip: null, altTipId: null });
             } },
             CARI_TIPLERI.map((t) => React.createElement("option", { key: t, value: t }, t)),
             ozeller.map((o) => React.createElement("option", { key: o.ad, value: "ozel:" + o.ad },
@@ -44240,7 +44287,7 @@ function CariTipSecici({ tip, altTip, cariler, tanimlar, onDegis, style }) {
                     const ad = yeni.ad.trim();
                     // Standart tip adı yazıldıysa özel tip açılmaz, doğrudan o seçilir.
                     const std = CARI_TIPLERI.find((t) => t.toLocaleLowerCase("tr") === ad.toLocaleLowerCase("tr"));
-                    onDegis(std ? { tip: std, altTip: null } : { tip: yeni.temel, altTip: ad });
+                    onDegis(std ? { tip: std, altTip: null, altTipId: null } : { tip: yeni.temel, altTip: ad, altTipId: null });
                     setYeni(null);
                 } }, "Tamam")))));
 }
@@ -44250,7 +44297,8 @@ function CariTipleriTanimi({ tanimlar, onSave, cariler, onCarilerKaydet, showToa
     const [yeni, setYeni] = useState({ ad: "", temel: "Müşteri" });
     const liste = ozelCariTipleri(cariler, tanimlar);
     const kullanan = (ad) => (cariler || []).filter((c) => c.altTip === ad).length;
-    const listeYaz = (l) => onSave({ ...tanimlar, cariTipleri: l.map((t) => ({ ad: t.ad, temel: t.temel })) });
+    // Kimlik ve fason alanı KORUNUR (eskiden yalnız ad + temel yazılıyordu, öteki alanlar her kayıtta düşerdi).
+    const listeYaz = (l) => onSave({ ...tanimlar, cariTipleri: l.map((t) => ({ ad: t.ad, temel: t.temel, ...(t.id ? { id: t.id } : {}), ...(typeof t.fason === "boolean" ? { fason: t.fason } : {}) })) });
     const standartMi = (ad) => CARI_TIPLERI.some((t) => t.toLocaleLowerCase("tr") === String(ad).trim().toLocaleLowerCase("tr"));
     const ekle = () => {
         const ad = yeni.ad.trim();
@@ -44261,7 +44309,7 @@ function CariTipleriTanimi({ tanimlar, onSave, cariler, onCarilerKaydet, showToa
                 showToast(`"${ad}" zaten var`);
             return;
         }
-        listeYaz([...liste, { ad, temel: yeni.temel }]);
+        listeYaz([...liste, { ad, temel: yeni.temel, id: uid("ctip"), fason: false }]); // yeni tip: davranış açıkça yazılır (ada bakılmaz)
         setYeni({ ad: "", temel: yeni.temel });
     };
     const degistir = (eski, alanlar) => {
@@ -44274,9 +44322,14 @@ function CariTipleriTanimi({ tanimlar, onSave, cariler, onCarilerKaydet, showToa
             return;
         }
         const temel = alanlar.temel || eski.temel;
-        listeYaz(liste.map((t) => (t.ad === eski.ad ? { ad, temel } : t)));
-        if (kullanan(eski.ad) > 0 && onCarilerKaydet && (ad !== eski.ad || temel !== eski.temel)) {
-            onCarilerKaydet((cariler || []).map((c) => (c.altTip === eski.ad ? { ...c, altTip: ad, tip: temel } : c)));
+        // DAVRANIŞ ADLA BİRLİKTE DEĞİŞMEZ: tip düzenlenirken fason değeri o anki GEÇERLİ hâliyle açıkça yazılır (eski kayıtta alan yoksa
+        // eski kuraldan okunur: adı tam "Fasoncu"); kullanıcı kutuyu değiştirdiyse onun seçimi. Tip kimliği yoksa burada verilir.
+        const fason = typeof alanlar.fason === "boolean" ? alanlar.fason : cariTipiFasonMu(eski);
+        const id = eski.id || uid("ctip");
+        listeYaz(liste.map((t) => (t.ad === eski.ad ? { ad, temel, id, fason } : t)));
+        if (kullanan(eski.ad) > 0 && onCarilerKaydet && (ad !== eski.ad || temel !== eski.temel || !eski.id)) {
+            // Cariler tipe KİMLİKLE de bağlanır: bu yazma yarım kalsa bile (tanım yeni adda, cari eski adda) cari tipini kimlikten bulur.
+            onCarilerKaydet((cariler || []).map((c) => (c.altTip === eski.ad ? { ...c, altTip: ad, altTipId: id, tip: temel } : c)));
         }
     };
     return (React.createElement("div", { "data-cari-tipleri": true, style: { marginTop: 28 } },
@@ -44296,6 +44349,9 @@ function CariTipleriTanimi({ tanimlar, onSave, cariler, onCarilerKaydet, showToa
                 React.createElement("select", { value: t.temel, "data-cari-tipi-temel": t.ad, onChange: (e) => degistir(t, { temel: e.target.value }), style: { ...inputStyle, width: 170 } }, CARI_TIPLERI.map((x) => React.createElement("option", { key: x, value: x },
                     x,
                     " gibi"))),
+                React.createElement("label", { "data-cari-tipi-fason": t.ad, title: "\u0130\u015Faretliyse bu tipteki ki\u015Finin \u00FCretim i\u015F\u00E7ili\u011Fi kendi carisine alacak yaz\u0131l\u0131r (b\u00F6l\u00FCm tahakkukuna de\u011Fil). Tipin ad\u0131ndan ba\u011F\u0131ms\u0131zd\u0131r.", style: { display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--erp-text-2)" } },
+                    React.createElement("input", { type: "checkbox", checked: cariTipiFasonMu(t), onChange: (e) => degistir(t, { fason: e.target.checked }) }),
+                    "i\u015F\u00E7ili\u011Fi cariye (fason)"),
                 React.createElement("span", { style: { fontSize: 12, color: "var(--erp-text-2)" } },
                     n,
                     " cari"),
@@ -57421,7 +57477,7 @@ function CariCard({ onParaFisi, siteYonetici = false, tanimlar, onTanimlarKaydet
                         "Renk",
                         React.createElement("input", { type: "color", "data-cari-renk-sec": "1", value: /^#[0-9a-f]{6}$/i.test(cari.renk || "") ? cari.renk : cariRengi(cari), onChange: (e) => onFieldChange(cari.id, "renk", e.target.value), style: { width: 34, height: 26, padding: 0, border: "1px solid var(--erp-border)", borderRadius: 4, cursor: "pointer" } }),
                         cari.renk ? (React.createElement("button", { type: "button", className: "btn-ghost", "data-cari-renk-otomatik": "1", style: { padding: "2px 8px", fontSize: 11 }, onClick: () => onFieldChange(cari.id, "renk", ""), title: "Kendi se\u00E7ti\u011Finiz rengi kald\u0131r, otomatik renge d\u00F6n" }, "Otomatik")) : React.createElement("span", { style: { fontSize: 10, color: "var(--erp-text-3)", fontWeight: 400 } }, "otomatik")))),
-                cardTab === "bilgiler" && cari.tip === "Personel" && cari.altTip !== "Fasoncu" && tanimlar && onTanimlarKaydet && (React.createElement(PersonelBilgileriPaneli, { cari: cari, tanimlar: tanimlar, onTanimlarKaydet: onTanimlarKaydet, onAddHareket: onAddHareket, onParaFisi: onParaFisi, showToast: showToast })),
+                cardTab === "bilgiler" && cari.tip === "Personel" && !cariFasonMu(tanimlar, cari) && tanimlar && onTanimlarKaydet && (React.createElement(PersonelBilgileriPaneli, { cari: cari, tanimlar: tanimlar, onTanimlarKaydet: onTanimlarKaydet, onAddHareket: onAddHareket, onParaFisi: onParaFisi, showToast: showToast })),
                 cardTab === "bilgiler" && cari.tip !== "Personel" && (tanimlarFiyatGruplari || []).some((g) => g.tip === (cari.tip === "Tedarikçi" ? "Alış" : "Satış") || cari.tip === "Her İkisi") && (React.createElement("div", { style: { marginBottom: 14, padding: "8px 10px", background: "#EAF0F4", borderRadius: "var(--erp-r-md)" } },
                     React.createElement("label", { style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" } },
                         React.createElement("span", { style: { fontSize: 12, color: "var(--erp-info)", fontWeight: 600 } }, "Fiyat Grubu:"),
@@ -74619,7 +74675,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.744.46)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.744.50)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

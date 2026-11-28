@@ -20,6 +20,7 @@ const DISA_AKTAR = [
   "renkAdVaryantReceteUygula",
   "fiyatAlanYetkileri", "fiyatDegisiklikleriniSuz", "cariFiyatGrubuSuz",
   "fisIptalYetkisi", "fisIptalDugmesiGizli",   // fiş iptali / Geri Al düğmeleri (v1.744.44)
+  "cariFasonMu", "cariTipiFasonMu", "cariTipiBul",   // fason davranışı ada bağlı değil (v1.744.50, Paket F)
   "tanimCakismalari", "tanimOtomatikBirlestir", "tanimCakismaMetni", "tanimYeniKodlariAyir",   // Tanımlar sürüm koşullu yazma (B2)
   "fisKesStokSatiri", "fisKesCariSatiri", "fisKesKasaHareketi", "fisKesGonder", "fisIptalGonder", "fisKesTabaniKur", "fisKesKasaTabaniKur", "fisYerTutucuDoldur",
   "FIS_YER", "ANA_FIS_YER", "fisDefteriKuruluAyarla", "fisKesYolu", "defterSunucuFisleriyleBirlestir", "stokFisiSunucuYuku", "stokFisiSunucuSonucu",

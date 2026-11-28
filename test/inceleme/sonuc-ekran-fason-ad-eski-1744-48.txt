@@ -1,0 +1,12 @@
+ekran-fason-ad · istemci 1.744.48 (/home/user/atolye-46) · b12_fason (şablon b12_crlf)
+  ✓ başlangıç: fason ustanın işçiliği cariye
+  ✓ Cari Tipleri'nde "Fasoncu" satırı var
+     ad değişikliğinden sonra bellek: tipler [{"ad":"Fason Atölye","temel":"Personel"}] · fason usta {"id":"fs-1","tip":"Personel","altTip":"Fason Atölye"}
+  ✗ KALDI ekranda (bellekte): tip adı değişti, fason ustanın işçiliği YİNE cariye — görülen [["Fason Atölye"],"bölüm tahakkuku (Kesimhane)"] · beklenen [["Fason Atölye"],"cariye alacak"]
+  ✗ KALDI sunucudaki veriyle: işçilik YİNE cariye — görülen "bölüm tahakkuku (Kesimhane)" · beklenen "cariye alacak"
+  ✗ KALDI sunucuda tip kaydı açık davranış alanı ve kimlik taşıyor; cari tipe kimlikle bağlı — görülen [[["Fason Atölye",null,false]],false] · beklenen [[["Fason Atölye",true,true]],true]
+  ✗ KALDI sayfa yenilendikten sonra: işçilik YİNE cariye — görülen "bölüm tahakkuku (Kesimhane)" · beklenen "cariye alacak"
+  ✓ bölüm personeli (İç Usta) bölüme — değişmedi
+  ✓ geçmiş cari hareketi olduğu gibi (tahakkuklar değiştirilmedi)
+  ✓ reddedilen yazma yok, sayfa hatası yok
+SONUÇ: 5 geçti · 4 kaldı
