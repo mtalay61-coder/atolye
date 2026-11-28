@@ -1,0 +1,64 @@
+bag-risk · şablon b12_b1t · PAKET K KURULU · her durum taze kopyada · işlemler Yönetici (Ali) hesabıyla, istemcinin yolundan
+
+■ S · ÜST KAYIT SİLİNİNCE GEÇMİŞ
+  S1 hareketsiz sipariş silme → tamam (1 satır) · kalan kalem 0 · kalan rezervasyon 0 · arşivde: sipariş 1, kalem 1, rezervasyon 1
+  ✓ S1 sipariş silinince kalemleri ve rezervasyonu ya kalır ya da arşive alınır (iz bırakmadan silinmez)
+  S2 stok hareketi olan sipariş silme → RET KR002 Teslim geçmişi olan sipariş silinemez (sipariş sp-inc-1 SAT-9001) — iptal edilmiş olarak kalır
+  ✓ S2 stok hareketi olan sipariş silinemez; kalemleri ve hareketi yerinde
+  S3 ataması ve işçilik hareketi olan üretim silme → RET KR010 KR010: Üretimin geçerli stok / cari hareketi var (ur-1) — üretim silinmedi; önce fişleri iptal edilmeli · kalan atama 1 · üretimi kalmayan işçilik hareketi 0 · arşivde atama 0
+  ✓ S3 ataması / işçiliği olan üretim silinmez ya da atamaları korunur; işçilik hareketi üretimsiz kalmaz
+  S4 siparişi, üretimi, stok hareketi olan ürün silme → RET KR055 KR055: "İnceleme Bot" silinemez — 1 stok hareketi var. Geçmiş korunur; ürünü pasife alabilirsiniz. · ürünsüz varyant 0 · ürünsüz stok hareketi 0 · ürün bağı boşalan kalem 0 · üretim 0 · kalan rezervasyon 2/2
+  ✓ S4 kullanılan ürün silinemez (bağlar boşalmaz, rezervasyon silinmez, varyant / hareket ürünsüz kalmaz)
+  S5 hareketi, siparişi, fişi olan cari silme → RET KR050 KR050: "İnceleme Müşteri" silinemez — bağlı kayıt var: 1 cari hareketi, 1 fiş, 1 stok hareketi, 2 sipariş. Geç · carisiz cari hareketi 0 · carisiz fiş 0 · cari bağı boşalan sipariş 0
+  ✓ S5 hareketi / siparişi / fişi olan cari silinemez (hareket ve fiş carisiz kalmaz, sipariş bağı boşalmaz)
+  S6 ataması ve işçilik hareketi olan usta carisi silme → RET KR050 KR050: "İnceleme Usta" silinemez — bağlı kayıt var: 1 cari hareketi, 1 üretim ataması. Geçmiş korunur; cariyi  · kişisi boşalan atama 0 · carisiz işçilik hareketi 0
+  ✓ S6 ataması / işçilik hareketi olan kişi silinemez
+  S7 hareketi olan hesap (eski hesaplar tablosu) silme → RET KR053 KR053: hesabın 1 hareketi var — silinemez · kalan hesap hareketi 1 · arşivde 0
+  ✓ S7 hareketi olan hesap silinemez ya da hareketleri korunur
+
+■ Y · VAR OLMAYAN ÜST KAYDA BAĞLANAN KAYIT (yetim)
+  Y1 üretim.rezervasyon_siparis_id = olmayan sipariş → RET KR006 İptal edilmiş veya silinmiş siparişe operasyon bağı kurulamaz (sipariş yok-siparis)
+  Y2 site talebi, olmayan cari → RET 23503 insert or update on table "site_talepleri" violates foreign key constraint "k_site_talepleri_cari_fk"
+  Y3 rezervasyon, olmayan sipariş → RET KR006 İptal edilmiş veya silinmiş siparişe operasyon bağı kurulamaz (sipariş yok-siparis)
+  Y4 ürün.tedarikci_id = olmayan cari → RET 23503 insert or update on table "urunler" violates foreign key constraint "urunler_tedarikci_id_fkey"
+  Y5 sipariş kalemi, olmayan sipariş → RET 23503 insert or update on table "siparis_kalemleri" violates foreign key constraint "siparis_kalemleri_siparis_id_fk
+  Y6 sipariş kalemi, olmayan ürün → RET 23503 insert or update on table "siparis_kalemleri" violates foreign key constraint "siparis_kalemleri_urun_id_fkey"
+  ✓ Y var olmayan üst kayda bağlanan yazmaların HEPSİ reddedilir [Y1 üretim→sipariş, Y2 site talebi→cari, Y3, Y4, Y5, Y6]
+
+■ B · YANLIŞ ÜST KAYDA BAĞLANMA
+  B1 stok hareketi olan kalemi (kl-inc-40) başka siparişe taşıma → RET KR003 Teslim geçmişi olan kalemin ürünü, rengi, bedeni ya da siparişi değiştirilemez (kalem kl-inc-40: 1054 - Siyah/ · kalem şimdi sp-inc-1; hareket h-1 hâlâ siparis_id = sp-inc-1
+  ✓ B1 stok hareketi olan kalem başka siparişe taşınamaz (hareketin siparişi ile kalemin siparişi ayrışmaz)
+  B2 ataması ve işçilik hareketi olan üretimin ürününü değiştirme → RET KR052 KR052: üretim URT-ur-1 işlem görmüş (1 cari hareketi) — ürünü değiştirilemez
+  ✓ B2 ataması / işçilik hareketi olan üretimin ürünü değiştirilemez
+  B3 fişi kesilmiş siparişin carisini değiştirme → RET KR051 KR051: sipariş SAT-9001 için kesilmiş fiş / stok hareketi başka caride (2 kayıt) — siparişin carisi değiştiril · fiş f-1 carisi inc-musteri
+  ✓ B3 fişi kesilmiş siparişin carisi değiştirilemez (fiş başka caride kalmaz)
+
+■ S8 siparişi olmayan ama stok hareketi olan ürün silme → RET KR055 KR055: "İnceleme Bot 3" silinemez — 1 stok hareketi var. Geçmiş korunur; ürünü pasife alabilirsiniz. · ürünsüz stok hareketi 0 · ürünsüz varyant 0
+  ✓ S8 stok hareketi olan ürün silinemez (hareket ve varyant ürünsüz kalmaz)
+
+■ Y7 kasa hareketi, olmayan cari (kas_yaz) → tamam (1 satır) · yazılan satır 0
+  ✓ Y7 olmayan cariye kasa hareketi yazılmaz
+
+■ E · EŞZAMANLI: silme sürerken yeni kayıt / yeni kayıt yazılırken silme (iki ayrı bağlantı)
+  E1 cari hareketi · silme önce: silme tamam (1 satır) · sonra gelen kayıt RET 23503 insert or update on table "car_hareket" violates foreign key constraint "k_car_hareket_cari_fk" → cari silindi, carisiz kayıt 0
+  ✓ E1 cari hareketi silme sürerken yazılan kayıt carisiz kalmaz
+  E1 cari hareketi · kayıt önce: kayıt tamam (1 satır) · sonra gelen silme RET KR050 KR050: "İnceleme Temiz" silinemez — bağlı kayıt var: 1 cari hareketi. Geçmiş korunur; cariyi pasife alabilirsi → cari duruyor, carisiz kayıt 0
+  ✓ E1 cari hareketi kayıt yazılırken istenen silme kaydı carisiz bırakmaz
+  E2 fiş · silme önce: silme tamam (1 satır) · sonra gelen kayıt RET 23503 insert or update on table "stk_fis" violates foreign key constraint "k_stk_fis_cari_fk" → cari silindi, carisiz kayıt 0
+  ✓ E2 fiş silme sürerken yazılan kayıt carisiz kalmaz
+  E2 fiş · kayıt önce: kayıt tamam (1 satır) · sonra gelen silme RET KR050 KR050: "İnceleme Temiz" silinemez — bağlı kayıt var: 1 fiş. Geçmiş korunur; cariyi pasife alabilirsiniz. → cari duruyor, carisiz kayıt 0
+  ✓ E2 fiş kayıt yazılırken istenen silme kaydı carisiz bırakmaz
+  E3 sipariş · silme önce: silme tamam (1 satır) · sonra gelen kayıt RET 23503 insert or update on table "siparisler" violates foreign key constraint "siparisler_cari_id_fkey" → cari silindi, carisiz kayıt 0
+  ✓ E3 sipariş silme sürerken yazılan kayıt carisiz kalmaz
+  E3 sipariş · kayıt önce: kayıt tamam (1 satır) · sonra gelen silme RET KR050 KR050: "İnceleme Temiz" silinemez — bağlı kayıt var: 1 sipariş. Geçmiş korunur; cariyi pasife alabilirsiniz. → cari duruyor, carisiz kayıt 0
+  ✓ E3 sipariş kayıt yazılırken istenen silme kaydı carisiz bırakmaz
+  E4 üretim ataması · silme önce: silme tamam (1 satır) · sonra gelen kayıt RET 23503 insert or update on table "uretim_atamalari" violates foreign key constraint "uretim_atamalari_personel_id_fke → cari silindi, carisiz kayıt 0
+  ✓ E4 üretim ataması silme sürerken yazılan kayıt carisiz kalmaz
+  E4 üretim ataması · kayıt önce: kayıt tamam (1 satır) · sonra gelen silme RET KR050 KR050: "İnceleme Temiz" silinemez — bağlı kayıt var: 1 üretim ataması. Geçmiş korunur; cariyi pasife alabilirs → cari duruyor, carisiz kayıt 0
+  ✓ E4 üretim ataması kayıt yazılırken istenen silme kaydı carisiz bırakmaz
+  E5 kasa hareketi (cari JSON içinde) · silme önce: silme tamam (1 satır) · sonra gelen kayıt RET KR054 KR054: kayıttaki cari bulunamadı (inc-temiz) — silinmiş olabilir; kayıt yazılmadı → cari silindi, carisiz kayıt 0
+  ✓ E5 kasa hareketi (cari JSON içinde) silme sürerken yazılan kayıt carisiz kalmaz
+  E5 kasa hareketi (cari JSON içinde) · kayıt önce: kayıt tamam (1 satır) · sonra gelen silme RET KR050 KR050: "İnceleme Temiz" silinemez — bağlı kayıt var: 1 kasa / banka hareketi. Geçmiş korunur; cariyi pasife al → cari duruyor, carisiz kayıt 0
+  ✓ E5 kasa hareketi (cari JSON içinde) kayıt yazılırken istenen silme kaydı carisiz bırakmaz
+
+SONUÇ: 23 hedefte · 0 AÇIK
