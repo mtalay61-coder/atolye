@@ -3,6 +3,7 @@
 // kimliklerle; reçete 114 satır, çelişen satırlar 7 ve 84–88) onarım dosyası çalıştırılır, sonra GERÇEK istemciyle teslim alınır ve
 // Geri Al ile iptal edilir. Ölçülen: astarın varyant kimliği / stok / hareket geçmişi korunuyor mu, yeni varyant açılıyor mu, tüketim
 // doğru Kahve varyantlarından düşüyor mu, iptal başlangıca döndürüyor mu, geri alma dosyası ilk duruma döndürüyor mu.
+// Astar canlıdaki gibi ÖLÇÜSÜZ (varyantın ölçüsü yok, reçetede beden "Standart"); taban bedenli.
 // Yalnız yerel PostgreSQL (EKRAN_SABLON: b12_k_crlf = Paket K; b12_v = Paket K + V). ISTEMCI_DIZIN = yayındaki istemcinin ağacı.
 const fs = require("fs"), path = require("path"), os = require("os");
 const { execFileSync } = require("child_process");
@@ -30,16 +31,16 @@ const psql = (dosya) => { try { return execFileSync("psql", ["-X", "-q", "-A", "
   // Tanımlar'daki eski "Siyah" (r-siyah) bu kopyada adıyla çakışmasın: canlıda tek etkin kullanılan Siyah b6wc
   await c.query(`update public.stk_renk set ad = 'Siyah Eski', aktif = false where id = 'r-siyah'`);
   await c.query(`update public.tanimlar set veri = jsonb_set(veri, '{renkler}', (select jsonb_agg(x) from jsonb_array_elements(veri -> 'renkler') x where x ->> 'id' <> 'r-siyah')) where id = 'tekil'`);
-  await c.query(`insert into public.urunler (id, ad, kategori, malzeme_tipi, olcu_tipi, birim, stok_no) values ('h-astar', 'ASTAR DANA', 'Hammadde', 'Deri', 'Beden', 'desi', 10), ('h-taban', 'LADY BOSS LIGHT TERMO TABAN', 'Hammadde', 'Taban', 'Beden', 'çift', 5)`);
-  await c.query(`insert into public.stk_varyant (id, urun_id, renk_id, olcu_id) values ($1, 'h-astar', $2, 'b-40'), ('v-astar-siyah', 'h-astar', $3, 'b-40'), ('v-taban-kahve', 'h-taban', $4, 'b-40'), ('v-taban-siyah', 'h-taban', $3, 'b-40')`, [ASTAR_V, PASIF, SIYAH, ETKIN]);
+  await c.query(`insert into public.urunler (id, ad, kategori, malzeme_tipi, olcu_tipi, birim, stok_no) values ('h-astar', 'ASTAR DANA', 'Hammadde', 'Deri', null, 'desi', 10), ('h-taban', 'LADY BOSS LIGHT TERMO TABAN', 'Hammadde', 'Taban', 'Beden', 'çift', 5)`);
+  await c.query(`insert into public.stk_varyant (id, urun_id, renk_id, olcu_id) values ($1, 'h-astar', $2, null), ('v-astar-siyah', 'h-astar', $3, null), ('v-taban-kahve', 'h-taban', $4, 'b-40'), ('v-taban-siyah', 'h-taban', $3, 'b-40')`, [ASTAR_V, PASIF, SIYAH, ETKIN]);
   await c.query(`insert into public.stk_fis (id, tur, tarih) values ('f-acilis', 'Sayım', now()), ('f-eski-iptal', 'Sayım', now())`);
   for (const [v, u] of [[ASTAR_V, "h-astar"], ["v-astar-siyah", "h-astar"], ["v-taban-kahve", "h-taban"], ["v-taban-siyah", "h-taban"]])
     await c.query(`insert into public.stk_hareket (id, fis_id, varyant_id, urun_id, miktar, kaynak, tarih) values ($1, 'f-acilis', $2, $3, 100, 'Sayım', now())`, [`h-ac-${v}`, v, u]);
   await c.query(`insert into public.stk_hareket (id, fis_id, varyant_id, urun_id, miktar, kaynak, tarih, iptal) values ('h-eski-iptal', 'f-eski-iptal', $1, 'h-astar', 7, 'Sayım', now(), true)`, [ASTAR_V]);   // geçmişte iptal edilmiş hareket de korunmalı
   const recete = []; for (let i = 1; i <= 114; i += 1) {
-    if (i === 7) recete.push({ id: `rc-${i}`, hammaddeUrunId: "h-astar", hammaddeAd: "ASTAR DANA", renk: "KAHVE", renkId: SIYAH, beden: "40", mamulRenk: "Siyah", mamulBeden: "40", proses: "Dikim", miktar: 2, birim: "desi" });
+    if (i === 7) recete.push({ id: `rc-${i}`, hammaddeUrunId: "h-astar", hammaddeAd: "ASTAR DANA", renk: "KAHVE", renkId: SIYAH, beden: "Standart", mamulRenk: "Siyah", mamulBeden: "40", proses: "Dikim", miktar: 2, birim: "desi" });
     else if (i >= 84 && i <= 88) { const b = String(36 + (i - 84)); recete.push({ id: `rc-${i}`, hammaddeUrunId: "h-taban", hammaddeAd: "LADY BOSS LIGHT TERMO TABAN", renk: "KAHVE", renkId: SIYAH, beden: b, mamulRenk: "Siyah", mamulBeden: b, proses: "Dikim", miktar: 1, birim: "çift" }); }
-    else recete.push({ id: `rc-${i}`, hammaddeUrunId: "h-astar", hammaddeAd: "ASTAR DANA", renk: "Siyah", renkId: SIYAH, beden: "40", mamulRenk: "Başka Renk", mamulBeden: "40", proses: "Kesim", miktar: 1, birim: "desi", sira: i }); }
+    else recete.push({ id: `rc-${i}`, hammaddeUrunId: "h-astar", hammaddeAd: "ASTAR DANA", renk: "Siyah", renkId: SIYAH, beden: "Standart", mamulRenk: "Başka Renk", mamulBeden: "40", proses: "Kesim", miktar: 1, birim: "desi", sira: i }); }
   await c.query(`insert into public.urunler (id, ad, kategori, mamul_tipi, olcu_tipi, birim, stok_no, recete) values ($1, '27181', 'Mamul', 'Ayakkabı', 'Beden', 'çift', 55, $2::jsonb)`, [URUN, JSON.stringify(recete)]);
   await c.query(`insert into public.stk_varyant (id, urun_id, renk_id, olcu_id) values ('v-mamul-40', $1, $2, 'b-40')`, [URUN, SIYAH]);
   await c.query(`insert into public.uretim (id, siparis_no, takip_kodu, urun_id, asama, ek, renk, adet, model, beden_miktarlari, proses_ilerleme, olusturuldu)

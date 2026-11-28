@@ -2,7 +2,7 @@ ekran-kahve-onarim · istemci 1.744.48 · PostgreSQL kipi (şablon b12_v = Paket
 
 ■ 0 · ÖNCE
   altı satır: [[7,"KAHVE","renk-mw7p1ue2-b6wc"],[84,"KAHVE","renk-mw7p1ue2-b6wc"],[85,"KAHVE","renk-mw7p1ue2-b6wc"],[86,"KAHVE","renk-mw7p1ue2-b6wc"],[87,"KAHVE","renk-mw7p1ue2-b6wc"],[88,"KAHVE","renk-mw7p1ue2-b6wc"]]
-  astar varyantı vry-414c381d2808416ba7aec74c6d77680a: {"net":100,"olcu":"b-40","aktif":true,"iptal":1,"gecerli":1,"renk_id":"renk-mvwf90xm-d04e"}
+  astar varyantı vry-414c381d2808416ba7aec74c6d77680a: {"net":100,"olcu":null,"aktif":true,"iptal":1,"gecerli":1,"renk_id":"renk-mvwf90xm-d04e"}
   stok: {"astar-KAHVE(mevcut varyant)":100,"astar-siyah":100,"taban-kahve":100,"taban-siyah":100}
   önkoşul sorgusu (D): ["altı satır planlandığı gibi (ad Kahve, kimlik Siyah) → 6 → 6","astar varyantı pasif Kahve kaydında → 1 → 1","astarda etkin Kahve'ye bağlı varyant (ikiz olurdu) → 0 → 0","tabanın Kahve varyantlarının bağlı olduğu renk kaydı → renk-mwnqdfdn-lhy8 → renk-mwnqdfdn-lhy8","satır 7'nin hammaddesi astar varyantının ürünü → true → true","ürünün reçete satırı sayısı (bilgi) → 114 → 114 |"]
   ✓ önkoşul sorgusu: altı satır 6, astar varyantı pasif kayıtta 1, ikiz 0
