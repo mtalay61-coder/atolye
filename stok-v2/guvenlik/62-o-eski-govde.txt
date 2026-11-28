@@ -1,0 +1,22 @@
+
+declare
+  rid text := public.stk_renk_coz(p_renk_id, p_renk);
+  oid_ text := public.stk_olcu_coz(p_olcu_id, p_olcu);
+  v text;
+begin
+  if not exists (select 1 from public.urunler where id = p_urun_id) then
+    raise exception 'Ürün bulunamadı: %', p_urun_id using errcode = 'P0002';
+  end if;
+  select id into v from public.stk_varyant
+   where urun_id = p_urun_id and coalesce(renk_id, '') = coalesce(rid, '') and coalesce(olcu_id, '') = coalesce(oid_, '');
+  if v is null then
+    insert into public.stk_varyant (urun_id, renk_id, olcu_id) values (p_urun_id, rid, oid_)
+    on conflict do nothing
+    returning id into v;
+    if v is null then   -- aynı anda başka işlem açtı
+      select id into v from public.stk_varyant
+       where urun_id = p_urun_id and coalesce(renk_id, '') = coalesce(rid, '') and coalesce(olcu_id, '') = coalesce(oid_, '');
+    end if;
+  end if;
+  return v;
+end 

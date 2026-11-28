@@ -1,0 +1,26 @@
+o-sunucu-sina · şablon b12_v · Paket Ö KURULU (CRLF, iki kez)
+    Ö1 Boyut ürününde mevcut 36 [Boyut] varyantı, adla istek → tamam
+  ✓ Ö1 Boyut ürününde adla gelen istek MEVCUT Boyut varyantını bulur; yeni varyant açılmaz, ret yok
+    Ö2 Boyut ürününde henüz olmayan 37 (ad iki grupta da tanımlı) → tamam
+  ✓ Ö2 ilk varyant ürünün grubundaki (Boyut) ölçü kaydıyla açılır
+    Ö3 Beden ürününde 36 → tamam
+  ✓ Ö3 Beden ürününde aynı ad Beden kaydına çözülür
+    Ö4 ürün ölçü tipi Beden, varyantı Boyut kaydında; adla istek → KR062: "ÇELİŞKİLİ" ürününün ölçü tipi Beden ama "36" ölçüsü Boyut grubundaki kayda bağlı — ikisinden biri sessizce seçilmedi, hi�
+  ✓ Ö4 ürün ayarı ile varyant grubu çelişince AÇIK HATA (KR062); hiçbiri seçilmez, varyant sayısı değişmez
+    Ö5 aynı çelişki, istek KİMLİKLE gelir → KR062: "ÇELİŞKİLİ" ürününün ölçü tipi Beden ama "36" ölçüsü Boyut grubundaki kayda bağlı — ikisinden biri sessizce seçilmedi, hi�
+  ✓ Ö5 kimlikle gelen istekte de çelişki açık hata
+    Ö6 Beden ürününde yalnız Boyut grubunda tanımlı ölçü (90) → KR062: "BOT" ürünü Beden grubunda; "90" ölçüsü yalnız başka grupta tanımlı — başka grubun kaydı kullanılmadı, hiçbir şey kaydedilme
+  ✓ Ö6 ad yalnız başka grupta tanımlıysa o kayıt kullanılmaz: açık hata (KR062), varyant açılmaz
+    Ö7 grupta aynı adla iki etkin ölçü kaydı (50) → KR061: "50" ölçüsü Boyut grubunda birden çok kayıtla tanımlı — hangisinin kullanılacağı belirsiz; hiçbir şey kaydedilmedi.
+  ✓ Ö7 grup içinde ad belirsizse açık hata (KR061), varyant açılmaz
+    Ö8 hiçbir grupta tanımlı olmayan ölçü (47) → tamam
+  ✓ Ö8 tanımsız ölçüde eski davranış sürer (serbest ölçü kaydı ve varyant açılır)
+    Ö9 ölçü tipi Serbest üründe 36 → tamam
+  ✓ Ö9 grubu olmayan (Serbest) üründe eski kural sürer, ret yok
+    Ö10 ölçüsüz + renksiz üründe mevcut varyant → tamam
+  ✓ Ö10 ölçüsüz / renksiz üründe mevcut varyant bulunur, yenisi açılmaz
+    Ö11 eşzamanlı iki ilk istek (aynı ürün, aynı ad) → ikinci: tamam
+  ✓ Ö11 eşzamanlı iki ilk istek tek varyant açar; o da ürünün grubunda (Boyut)
+  ✓ durum sorgusu: YENİ gövde; çelişen ürün bilgi olarak listelenir
+  ✓ geri almadan sonra şema ve fonksiyon gövdeleri paketsiz şablonla aynı (satır sonu / boşluk dışında fark 0 satır)
+SONUÇ: 13 hedefte · 0 AÇIK

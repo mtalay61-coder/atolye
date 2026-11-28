@@ -1,0 +1,24 @@
+o-sunucu-sina · şablon b12_v · Paket Ö YOK
+    Ö1 Boyut ürününde mevcut 36 [Boyut] varyantı, adla istek → KR060: "SÜNGER" ürününde "-" / "36 [Boyut]" adlı varyant zaten var ama başka bir renk ya da ölçü kaydına bağlı — aynı adla ikinci varya
+  ✗ AÇIK Ö1 Boyut ürününde adla gelen istek MEVCUT Boyut varyantını bulur; yeni varyant açılmaz, ret yok — görülen [1|ret] · hedef [1|]
+    Ö2 Boyut ürününde henüz olmayan 37 (ad iki grupta da tanımlı) → tamam
+  ✗ AÇIK Ö2 ilk varyant ürünün grubundaki (Boyut) ölçü kaydıyla açılır — görülen [0|1] · hedef [1|0]
+    Ö3 Beden ürününde 36 → tamam
+  ✓ Ö3 Beden ürününde aynı ad Beden kaydına çözülür
+    Ö4 ürün ölçü tipi Beden, varyantı Boyut kaydında; adla istek → KR060: "ÇELİŞKİLİ" ürününde "-" / "36 [Boyut]" adlı varyant zaten var ama başka bir renk ya da ölçü kaydına bağlı — aynı adla ikinc
+  ✗ AÇIK Ö4 ürün ayarı ile varyant grubu çelişince AÇIK HATA (KR062); hiçbiri seçilmez, varyant sayısı değişmez — görülen [|1] · hedef [KR062|1]
+    Ö5 aynı çelişki, istek KİMLİKLE gelir → tamam
+  ✗ AÇIK Ö5 kimlikle gelen istekte de çelişki açık hata — görülen [|1] · hedef [KR062|1]
+    Ö6 Beden ürününde yalnız Boyut grubunda tanımlı ölçü (90) → tamam
+  ✗ AÇIK Ö6 ad yalnız başka grupta tanımlıysa o kayıt kullanılmaz: açık hata (KR062), varyant açılmaz — görülen [|1] · hedef [KR062|0]
+    Ö7 grupta aynı adla iki etkin ölçü kaydı (50) → tamam
+  ✗ AÇIK Ö7 grup içinde ad belirsizse açık hata (KR061), varyant açılmaz — görülen [|1] · hedef [KR061|0]
+    Ö8 hiçbir grupta tanımlı olmayan ölçü (47) → tamam
+  ✓ Ö8 tanımsız ölçüde eski davranış sürer (serbest ölçü kaydı ve varyant açılır)
+    Ö9 ölçü tipi Serbest üründe 36 → tamam
+  ✓ Ö9 grubu olmayan (Serbest) üründe eski kural sürer, ret yok
+    Ö10 ölçüsüz + renksiz üründe mevcut varyant → tamam
+  ✓ Ö10 ölçüsüz / renksiz üründe mevcut varyant bulunur, yenisi açılmaz
+    Ö11 eşzamanlı iki ilk istek (aynı ürün, aynı ad) → ikinci: tamam
+  ✗ AÇIK Ö11 eşzamanlı iki ilk istek tek varyant açar; o da ürünün grubunda (Boyut) — görülen [1|0|] · hedef [1|1|]
+SONUÇ: 4 hedefte · 7 AÇIK
