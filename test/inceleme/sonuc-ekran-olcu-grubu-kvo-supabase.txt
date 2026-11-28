@@ -1,0 +1,36 @@
+ekran-olcu-grubu · istemci 1.744.48 · GERÇEK API KİPİ (yerel Supabase; giriş ekrandan) · paketler: K + V + Ö
+  başlangıç: {"ASTAR · ölçüsüz":100,"ÇELİŞKİLİ · 40 [Boyut]":100,"SÜNGER · 40 [Boyut]":100}
+
+■ 1 · STOK GİRİŞİ (ekrandan): SÜNGER · 40 → +12   ("40" hem Beden hem Boyut grubunda tanımlı; ürün Boyut, renksiz)
+  bildirim: Başka cihazdan güncellendi: Stok
+  değişen: {"SÜNGER · 40 [Boyut]":12} · yeni varyant: []
+  ✓ giriş MEVCUT Boyut varyantına yazıldı (+12), yeni varyant açılmadı
+
+■ 2 · TÜKETİM (gerçek teslim, 10 çift): SÜNGER 40 ×1, ölçüsüz + renksiz ASTAR ×2
+  bildirim: ÜRT-261128001 · OG1 tüm prosesler tamamlandı — mamul stoğa eklendi
+  değişen: {"ASTAR · ölçüsüz":-20,"SÜNGER · 40 [Boyut]":-10} · yeni varyant: []
+  ✓ tüketim mevcut varyantlardan düştü: SÜNGER 40 [Boyut] −10, ölçüsüz ASTAR −20; yeni varyant yok
+
+■ 3 · İPTAL (ekrandan Geri Al)
+  Geri Al düğmesi: bulundu · bildirim: "Dikim" için 10 adetlik teslim alma işlemi geri alındı — hammadde ve işçilik geri alındı
+  teslim öncesine göre fark: {}
+  ✓ iptal teslim öncesine döndürdü: hiçbir varyantta fark yok, atama bekliyor, geçerli fiş sayısı aynı
+
+■ 4 · EŞZAMANLI İKİ İLK GİRİŞ: YARIŞ SÜNGER (Boyut, hiç varyantı yok)
+  gerçek API'den aynı anda iki ilk varyant isteği (adla, "40") → 200 · 200
+  YARIŞ SÜNGER varyantları: ["YARIŞ SÜNGER · 40 [Boyut]"]
+  ✓ iki eşzamanlı ilk istek TEK varyant açtı, o da ürünün grubunda (40 [Boyut])
+  iki cihazdan aynı anda ilk stok girişi (3 ve 4) → değişen: {"YARIŞ SÜNGER · 40 [Boyut]":7} · yeni varyant: [] · bildirimler: Başka cihazdan güncellendi: Stok | Stok girişi kaydedildi — fiş: MNL-261128003
+  ✓ iki cihazın eşzamanlı ilk girişi aynı tek varyanta yazıldı (toplam 7), ikiz açılmadı
+
+■ 5 · ÇELİŞKİ: ÇELİŞKİLİ ürünün ölçü tipi Beden, varyantı 40 [Boyut] kaydında — ekrandan stok girişi +5
+  bildirim: Stok girişi kaydedilemedi — hiçbir değişiklik yapılmadı (KR062: "ÇELİŞKİLİ" ürününün ölçü tipi Beden ama "40" ölçüsü Boyut grubundaki kayda bağlı — ikisinden biri sessizce seçilmedi, hiçbir şey kaydedilmedi. Ürünün öl)
+  değişen: {} · yeni varyant: []
+  ✓ çelişkide açık hata (KR062); hiçbir varyant değişmedi, yeni varyant ve fiş yok
+
+  reddedilen yazmalar: ["POST rpc/fis_kes 400 KR062"] · sayfa hataları: []
+  ✓ beklenen tek ret çelişki adımındaki KR062; sayfa hatası yok
+  sınama sonunda aynı üründe aynı adla birden çok varyant: 0
+  ✓ sınama sonunda veritabanında ikiz varyant yok
+
+SONUÇ: 8 geçti · 0 kaldı
