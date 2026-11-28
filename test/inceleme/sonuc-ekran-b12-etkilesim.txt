@@ -53,7 +53,7 @@ ekran-b12-etkilesim · PostgreSQL kipi (şablon b12_crlf: dört paket + B1, CRLF
   ✓ E4 kimlikler ve bağlar AYNI; ret yok
 
 ■ E5 Tuna "Vizon Yılan" → "Vizon Rugan"; ardından (ekranı bayat) Ali aynı rengi "Vizon Deri" yapmak ister
-     Ali'nin ekranı bayattı (eski ad görünüyordu) · Ali'nin isteği: 400:KR021 · bildirim: Renk adı değiştirilemedi — hiçbir kayıt değişmedi. KR021: renk adı bu arada değişmiş (şimdi "Vizon Rugan", istekte "Vizon Yılan") — ekranı yenileyip tekrar deneyin [KR021] | Başka cihazdan güncellendi: Stok, Siparişler
+     Ali'nin ekranı bayattı (eski ad görünüyordu) · Ali'nin isteği: 400:KR021 · bildirim: Renk adı değiştirilemedi — hiçbir kayıt değişmedi. KR021: renk adı bu arada değişmiş (şimdi "Vizon Rugan", istekte "Vizon Yılan") — ekranı yenileyip tekrar deneyin [KR021] | Başka cihazdan güncellendi: Stok, Tanımlar, Siparişler
   ✓ E5 ikinci istek KR021 ile reddedildi, açık ileti
   ✓ E5 ilk gelen uygulandı, ikinci EZMEDİ
      eski adla kalem yazması → HTTP 200
