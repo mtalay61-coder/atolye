@@ -42,6 +42,12 @@ insert into public.stk_fis (id, tur, cari_id, tarih, tutar) values ('f-yetim', '
 insert into public.stk_hareket (id, fis_id, varyant_id, urun_id, miktar, cari_id) values ('h-yetim', 'f-yetim', 'vry-inc-41', 'inc-bot', -2, 'silinmis-cari');
 insert into public.car_hareket (id, cari_id, tarih, yon, tutar, aciklama, fis_id) values ('ch-yetim-fis', 'silinmis-cari', current_date, 'Borç', 60, 'yetim fişin hareketi', 'f-yetim');
 insert into public.kas_hareket (id, hesap_id, sira, veri) values ('kh-yetim', 'yok', 1, '{"cariId":"silinmis-cari","tutar":15,"yon":"Giriş","aciklama":"yetim"}');
+insert into public.site_hesaplari (cari_id, kullanici, sifre_ozeti) values ('silinmis-cari', 'yetim.hesap', extensions.crypt('yerel-sinama', extensions.gen_salt('bf', 4)));
+insert into public.site_oturumlari values ('yetim-eski-oturum', 'silinmis-cari', now() + interval '10 days');
+insert into public.site_talepleri (id, cari_id, cari_unvan, durum, not_metni) values ('st-yetim-yeni', 'silinmis-cari', 'Silinmiş', 'yeni', 'ilk not'), ('st-yetim-red', 'silinmis-cari', 'Silinmiş', 'reddedildi', 'eski');
+insert into public.stk_fis (id, tur, cari_id, tarih, tutar, iptal, iptal_zamani, iptal_sebebi) values ('f-yetim-iptal', 'satis', 'silinmis-cari', current_date, 40, true, now(), 'deneme');
+insert into public.stk_hareket (id, fis_id, varyant_id, urun_id, miktar, cari_id, iptal) values ('h-yetim-iptal', 'f-yetim-iptal', 'vry-inc-41', 'inc-bot', -1, 'silinmis-cari', true);
+insert into public.car_hareket (id, cari_id, tarih, yon, tutar, aciklama, fis_id, iptal) values ('ch-yetim-iptal', 'silinmis-cari', current_date, 'Borç', 40, 'iptal edilmiş', 'f-yetim-iptal', true);
 insert into public.hesaplar (id, ad, tur) values ('hs-1', 'İnceleme Kasa', 'kasa');
 insert into public.hesap_hareketleri (id, hesap_id, tarih, yon, tutar) values ('hh-1', 'hs-1', current_date, 'Giriş', 50);
 set session_replication_role = origin;`;
@@ -227,6 +233,35 @@ const arsivde = (c, tablo) => c.say(`public.silinen_arsiv where tablo = $1`, [ta
     const n5 = await x.dene(`update public.kas_hareket set veri = veri || '{"aciklama":"düzeltildi"}'::jsonb where id = 'kh-yetim'`); await x.query(/^RET/.test(n5) ? "rollback" : "commit"); await x.end();
     yaz(`  N5 carisi silinmiş kasa hareketinde açıklama düzeltme → ${n5}`);
     k_("N5 carisi silinmiş kasa hareketinin ilgisiz alanı düzeltilebilir", /^tamam/.test(n5), true);
+    // ── YETİM SİTE HESABI / TALEBİ ve İPTAL EDİLMİŞ YETİM KAYITLAR (canlıda 3 hesap · 8 talep · iptal edilmiş deneme fişleri var) ──
+    const anon = async (sql, deg) => { await c.query("begin"); try { await c.query("set local role anon"); const r = await c.query(sql, deg); await c.query("commit"); return { d: r.rows[0] ? Object.values(r.rows[0])[0] : null }; }
+      catch (e) { await c.query("rollback"); return { ret: `RET ${e.code} ${String(e.message).replace(/\s+/g, " ").slice(0, 80)}` }; } };
+    const n6 = await c.ali(`update public.site_talepleri set not_metni = 'not düzeltildi' where id = 'st-yetim-red'`);
+    yaz(`  N6 yetim site talebinde ilgisiz alan (not) güncelleme → ${n6}`);
+    k_("N6 yetim site talebinin ilgisiz alanı güncellenebilir", (await c.query(`select not_metni from public.site_talepleri where id = 'st-yetim-red'`)).rows[0].not_metni, "not düzeltildi");
+    const n7 = await c.ali(`select public.site_talep_reddet('st-yetim-yeni', 'cari silinmiş')`);
+    const t7 = (await c.query(`select durum, red_sebebi from public.site_talepleri where id = 'st-yetim-yeni'`)).rows[0];
+    yaz(`  N7 yetim "yeni" talebi reddetme (site_talep_reddet) → ${n7} · durum ${t7.durum} · sebep "${t7.red_sebebi}"`);
+    k_("N7 carisi silinmiş talep reddedilebilir", [t7.durum, t7.red_sebebi], ["reddedildi", "cari silinmiş"]);
+    const g1 = await anon(`select public.portal_giris('yetim.hesap', 'yerel-sinama')`);
+    const anahtar = g1.d || "";
+    const p1 = anahtar ? await anon(`select public.portal($1)`, [anahtar]) : { ret: "anahtar yok" };
+    const p2 = anahtar ? await anon(`select public.portal_hesap($1, null, null)`, [anahtar]) : { ret: "anahtar yok" };
+    const p3 = anahtar ? await anon(`select public.portal_siparis($1, '[{"urunId":"inc-bot","renk":"Siyah","beden":"40","miktar":1}]'::jsonb, null, null)`, [anahtar]) : { ret: "anahtar yok" };
+    const p4 = await anon(`select public.portal('yetim-eski-oturum')`);
+    yaz(`  N8 carisi olmayan hesapla giriş (YEREL sahte hesap) → ${g1.ret || (anahtar ? "oturum anahtarı VERİLDİ" : "boş (giriş reddedildi)")} · portal → ${p1.ret || "VERİ DÖNDÜ"} · portal_hesap → ${p2.ret || "VERİ DÖNDÜ"} · portal_siparis → ${p3.ret || "TALEP YAZILDI"} · eski oturumla portal → ${p4.ret || "VERİ DÖNDÜ"}`);
+    k_("N8 carisi olmayan hesap portalda veri okuyamaz, sipariş veremez (giriş anahtarı alsa da; eski oturumu da geçmez)", [!!p1.ret, !!p2.ret, !!p3.ret, !!p4.ret, await c.say(`public.site_talepleri where cari_id = 'silinmis-cari' and olusturma > now() - interval '1 minute' and id not like 'st-yetim%'`)], [true, true, true, true, 0]);
+    const n9 = await c.ali(`select public.site_hesap_kaydet('silinmis-cari', 'yetim.hesap', 'yeni-sifre-1')`);
+    yaz(`  N9 yetim hesabın şifresini değiştirme (site_hesap_kaydet) → ${n9}  (bilgi: carisi olmayan hesap yeniden etkinleştirilemez)`);
+    const n10 = await c.ali(`select count(*) from public.stk_fis f join public.stk_hareket h on h.fis_id = f.id join public.car_hareket k on k.fis_id = f.id where f.id = 'f-yetim-iptal' and f.iptal and h.iptal and k.iptal`);
+    const o10 = Number((await c.query(`select count(*)::int n from public.stk_fis f join public.stk_hareket h on h.fis_id = f.id join public.car_hareket k on k.fis_id = f.id where f.id = 'f-yetim-iptal'`)).rows[0].n);
+    const n10b = await c.ali(`select public.fis_iptal($1::jsonb)`, [JSON.stringify({ no: "f-yetim-iptal", sebep: "ikinci kez" })]);
+    const d10 = (await c.query(`select iptal, iptal_sebebi from public.stk_fis where id = 'f-yetim-iptal'`)).rows[0];
+    yaz(`  N10 iptal edilmiş yetim fişi okuma (fiş + stok + cari hareketi) → ${n10} · görünen ${o10} · yeniden iptal isteği → ${n10b} · fiş hâlâ iptal ${d10.iptal}, sebep "${d10.iptal_sebebi}"`);
+    k_("N10 iptal edilmiş yetim kayıtlar okunabilir ve iptal durumu bozulmaz", [/^tamam/.test(n10), o10, d10.iptal, d10.iptal_sebebi], [true, 1, true, "deneme"]);
+    const n11 = await c.ali(`select public.site_hesap_sil('silinmis-cari')`);
+    yaz(`  N11 yetim site hesabını kapatma (site_hesap_sil) → ${n11} · kalan hesap ${await c.say(`public.site_hesaplari where cari_id = 'silinmis-cari'`)} · kalan oturum ${await c.say(`public.site_oturumlari where cari_id = 'silinmis-cari'`)} · talepler ${await c.say(`public.site_talepleri where cari_id = 'silinmis-cari'`)}`);
+    k_("N11 carisi olmayan site hesabı kapatılabilir (hesap + oturumlar silinir, talepler kalır)", [await c.say(`public.site_hesaplari where cari_id = 'silinmis-cari'`), await c.say(`public.site_oturumlari where cari_id = 'silinmis-cari'`), await c.say(`public.site_talepleri where cari_id = 'silinmis-cari'`)], [0, 0, 2]);
     await c.bitir(); }
 
   yaz(`\nSONUÇ: ${gecen} hedefte · ${kalan} AÇIK${acik.length ? "\nAÇIK RİSKLER:\n  - " + acik.join("\n  - ") : ""}`);

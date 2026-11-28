@@ -7,7 +7,7 @@ bag-risk · şablon b12_b1t · PAKET K KURULU · her durum taze kopyada · işle
   ✓ S2 stok hareketi olan sipariş silinemez; kalemleri ve hareketi yerinde
   S3 ataması ve işçilik hareketi olan üretim silme → RET KR010 KR010: Üretimin geçerli stok / cari hareketi var (ur-1) — üretim silinmedi; önce fişleri iptal edilmeli · kalan atama 1 · üretimi kalmayan işçilik hareketi 0 · arşivde atama 0
   ✓ S3 ataması / işçiliği olan üretim silinmez ya da atamaları korunur; işçilik hareketi üretimsiz kalmaz
-  S4 siparişi, üretimi, stok hareketi olan ürün silme → RET KR055 KR055: "İnceleme Bot" silinemez — bağlı kayıt var: 2 stok hareketi, 3 sipariş kalemi, 3 üretim. Geçmiş korunur · ürünsüz varyant 0 · ürünsüz stok hareketi 0 · ürün bağı boşalan kalem 0 · üretim 0 · kalan rezervasyon 2/2
+  S4 siparişi, üretimi, stok hareketi olan ürün silme → RET KR055 KR055: "İnceleme Bot" silinemez — bağlı kayıt var: 3 stok hareketi, 3 sipariş kalemi, 3 üretim. Geçmiş korunur · ürünsüz varyant 0 · ürünsüz stok hareketi 0 · ürün bağı boşalan kalem 0 · üretim 0 · kalan rezervasyon 2/2
   ✓ S4 kullanılan ürün silinemez (bağlar boşalmaz, rezervasyon silinmez, varyant / hareket ürünsüz kalmaz)
   S5 hareketi, siparişi, fişi olan cari silme → RET KR050 KR050: "İnceleme Müşteri" silinemez — bağlı kayıt var: 1 cari hareketi, 1 fiş, 1 stok hareketi, 2 sipariş. Geç · carisiz cari hareketi 0 · carisiz fiş 0 · cari bağı boşalan sipariş 0
   ✓ S5 hareketi / siparişi / fişi olan cari silinemez (hareket ve fiş carisiz kalmaz, sipariş bağı boşalmaz)
@@ -83,5 +83,16 @@ bag-risk · şablon b12_b1t · PAKET K KURULU · her durum taze kopyada · işle
   ✓ N4 silinmiş cariye yeni cari hareketi yazılamaz
   N5 carisi silinmiş kasa hareketinde açıklama düzeltme → tamam (1 satır)
   ✓ N5 carisi silinmiş kasa hareketinin ilgisiz alanı düzeltilebilir
+  N6 yetim site talebinde ilgisiz alan (not) güncelleme → tamam (1 satır)
+  ✓ N6 yetim site talebinin ilgisiz alanı güncellenebilir
+  N7 yetim "yeni" talebi reddetme (site_talep_reddet) → tamam (1 satır) · durum reddedildi · sebep "cari silinmiş"
+  ✓ N7 carisi silinmiş talep reddedilebilir
+  N8 carisi olmayan hesapla giriş (YEREL sahte hesap) → oturum anahtarı VERİLDİ · portal → RET P0001 GECERSIZ_KOD · portal_hesap → RET P0001 GECERSIZ_KOD · portal_siparis → RET P0001 GECERSIZ_KOD · eski oturumla portal → RET P0001 GECERSIZ_KOD
+  ✓ N8 carisi olmayan hesap portalda veri okuyamaz, sipariş veremez (giriş anahtarı alsa da; eski oturumu da geçmez)
+  N9 yetim hesabın şifresini değiştirme (site_hesap_kaydet) → RET P0001 Cari bulunamadı  (bilgi: carisi olmayan hesap yeniden etkinleştirilemez)
+  N10 iptal edilmiş yetim fişi okuma (fiş + stok + cari hareketi) → tamam (1 satır) · görünen 1 · yeniden iptal isteği → tamam (1 satır) · fiş hâlâ iptal true, sebep "deneme"
+  ✓ N10 iptal edilmiş yetim kayıtlar okunabilir ve iptal durumu bozulmaz
+  N11 yetim site hesabını kapatma (site_hesap_sil) → tamam (1 satır) · kalan hesap 0 · kalan oturum 0 · talepler 2
+  ✓ N11 carisi olmayan site hesabı kapatılabilir (hesap + oturumlar silinir, talepler kalır)
 
-SONUÇ: 31 hedefte · 0 AÇIK
+SONUÇ: 36 hedefte · 0 AÇIK
