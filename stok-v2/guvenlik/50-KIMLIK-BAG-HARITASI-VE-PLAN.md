@@ -101,60 +101,96 @@ Proses adını değiştiren işlev bulunamadı; tutarlılık bugün "ad değişm
 - Site kaydı → cari eşleme önerisi unvan / vergi no ile; bağ kullanıcı onayıyla ID üzerinden kuruluyor (sağlam).
 - `site_talepleri.cari_unvan` gösterim kopyası; bağ `cari_id`.
 
-## 3. Öncelik (ad / kod değişikliği, silme, birleştirme, eşzamanlı kayıt)
+## 3. Kimlikle kurulu bağların denetimi (cari, fiş, stok, kasa)
 
-| # | Risk | Neden önce |
-|---|---|---|
-| 1 | **Beden adı değişikliği atomik değil** | canlıda yaşanan renk hatasının aynı sınıfı; her kayıt beden adıyla bağlı; şema değişmeden kapatılabilir |
-| 2 | **Reçete eşleşmesi birebir ad** | sessiz sonuç: hammadde düşmez, maliyet / ihtiyaç boş; kimlik damgası zaten var, okunmuyor |
-| 3 | **Sipariş kalemi / üretim / rezervasyon renk-beden metni** | bütün satış-üretim zinciri; eşzamanlı kayıtta bayat ad |
-| 4 | **Proses adı ve "Fasoncu" sabiti** | para: ücret, tahakkuk, işçilik fişi |
-| 5 | **Cariye özel fiyat kuralı, renk resmi, harici barkod, koli kalemi** | ad taşıması eksik / kırılgan |
-| 6 | **Sipariş ↔ üretim numara bağı, rezervasyon `uretim_no`** | iptalde numara değişiyor |
-| 7 | **CASCADE silmeler ve eksik yabancı anahtarlar** | geçmişin topluca silinmesi, yetim kayıt |
-| 8 | **Cari hareketinde ürün kimliği yok** | maliyet geçmişi ürün adına bağlı |
-| 9 | Kimliksiz Tanımlar listeleri, kullanıcı damgası, portal kalemleri | görece düşük hacim / etki |
+"Kimlik var" tek başına sağlam demek değildir. Her bağ dört açıdan denetlendi: yabancı anahtar · var olmayan üst kayda bağlanma (yetim) ·
+yanlış üst kayda bağlanma · üst kayıt silinince ne olduğu. Ölçüm: `test/inceleme/bag-risk.js` (yerel, beş paket kurulu; Yönetici
+hesabıyla, istemcinin yolundan). Canlıdaki mevcut yetim / tutarsız kayıt sayısı Paket 0 sorgusuyla ölçülecek.
 
-## 4. Aşamalı uygulama planı
+| Bağ | Yabancı anahtar | Yetim yazma | Yanlış üst kayıt | Üst kayıt silinince | Karar |
+|---|---|---|---|---|---|
+| sipariş kalemi → sipariş | var (CASCADE) | reddedilir ✔ (Y5) | hareketi olan kalem taşınamaz ✔ (B1, KR003) | hareketsiz sipariş: kalemler silinir AMA arşive alınır ✔ (S1); hareketli: silinemez ✔ (S2, KR002) | **kapsam dışı** — CASCADE burada korumalı çalışıyor; değiştirilmeyecek |
+| sipariş kalemi → ürün | var (SET NULL) | reddedilir ✔ (Y6) | — | kullanılan ürün silinemez ✔ (S4, KR003) | kapsam dışı; SET NULL fiilen devreye girmiyor (Paket 0 "ürünü boş kalem" sayısı doğrular) |
+| rezervasyon → sipariş / ürün | var (CASCADE) | reddedilir ✔ (Y3, KR006) | — | sipariş silinince arşive alınıp silinir ✔ (S1) | kapsam dışı (rezervasyon geçici kayıt; arşivleniyor) |
+| üretim ataması → üretim | var (CASCADE) | — | — | hareketi olan üretim silinemez ✔ (S3, KR010) | kapsam dışı; hareketsiz üretimde atama silinmesi Paket K'da arşiv kontrolüyle doğrulanacak |
+| üretim → ürün | var (SET NULL) | — | **ürün değiştirilebiliyor ✗ (B2)** — ataması ve işçilik hareketi varken | kullanılan ürün silinemez ✔ | **Paket K** |
+| üretim → rezervasyon siparişi | YOK | reddedilir ✔ (Y1, KR006) | — | — | kapsam dışı (tetikleyici koruyor); Paket 0 mevcut yetimi ölçer |
+| stok hareketi → fiş / varyant / kalem | var (engel) | doğrudan yazılamaz (yalnız sunucu işlemi) | — | engel ✔ | **kapsam dışı — sağlam** |
+| stok hareketi → ürün / sipariş / cari / üretim | YOK | doğrudan yazılamaz | Paket 0 C bölümü ölçer | **cari silinebiliyor ✗ (S5)** | **Paket K** (yabancı anahtar + cari silme) |
+| cari hareketi → cari | **YOK** | doğrudan yazılamaz (`car_yaz`) | Paket 0 C | **hareketi olan cari silinebiliyor; hareket carisiz kalıyor ✗ (S5, S6)** | **Paket K — öncelikli** |
+| fiş → cari / sipariş / üretim / kasa hesabı | **YOK** | doğrudan yazılamaz (`fis_kes`) | **fişi kesilmiş siparişin carisi değiştirilebiliyor ✗ (B3)** | cari silinince fiş carisiz ✗ (S5) | **Paket K** |
+| sipariş → cari | var (SET NULL) | — | ✗ (B3) | **cari silinince sipariş carisiz kalıyor ✗ (S5)** | **Paket K** |
+| üretim ataması → kişi | var (SET NULL) | — | — | **ataması ve işçilik hareketi olan kişi silinebiliyor ✗ (S6)** | **Paket K** |
+| kasa hareketi → kasa hesabı | **YOK** | doğrudan yazılamaz (`kas_yaz`) | Paket 0 C | hesap silme `kas_yaz` içinde (ayrıca sınanacak) | Paket K (yabancı anahtar) |
+| eski `hesaplar` → `hesap_hareketleri` | var (**CASCADE**) | — | — | **hesap silinince hareketler iz bırakmadan siliniyor ✗ (S7)** | uygulama bu tabloları kullanmıyor görünüyor; Paket 0 satır sayısına göre: boşsa kapsam dışı, doluysa Paket K |
+| site talebi / site hesabı → cari | **YOK** | **olmayan cariye talep yazılabiliyor ✗ (Y2)** | — | cari silinince yetim | Paket K |
+| ürün → tedarikçi | var (SET NULL) | reddedilir ✔ (Y4) | — | tedarikçi silinince boşalır | Paket K (cari silme kuralıyla birlikte) |
 
-**Ortak kurallar (her paket)**
-- Var olan kimlikler korunur; yeni kimlik yalnız kimliği hiç olmayan varlığa (cari tipi) verilir. Sipariş numarası, barkod kodu, fiş
-  numarası insan için kalır; teknik bağ kimlikle kurulur.
-- Şema değişiklikleri EKLEMELİDİR (yeni boş sütun / JSON alanı). Ad sütunları kalır: "işlem anındaki ad" olarak ve eski istemci için.
-- Geçiş üç adımdır: (a) sunucu kimliği ad yanında KABUL eder ve doldurur, (b) istemci kimliği yazar ve kimlikten okur, (c) sunucu
-  kimliği ZORUNLU kılar (eksik / geçersiz kimlik KR koduyla reddedilir). (c) adımı ancak bütün cihazlar yeni sürümdeyken ve
-  `stk_ayar.min_istemci_surum` kapısıyla birlikte açılır.
-- Veri taşıma: yalnız TEK ve KESİN eşleşme otomatik bağlanır. Eşleşmeyen ve birden çok eşleşen kayıtlar tahmin edilmez; salt okur
-  raporla listelenir, karar kullanıcıda.
-- Her paket: kurulum SQL'i (tek blok, LF / CRLF sınanmış) + geri alma SQL'i + salt okur önkoşul / doğrulama sorgusu + kalıcı ekran
-  sınaması (önce eski kodda kalır, sonra geçer) + yerel Supabase'de: ad / kod değişikliği, iki cihaz, bağlantı kesilmesi, tekrar gönderme,
-  iptal, geri alma; miktar, bakiye, stok, geçmiş hareket ve barkod karşılaştırması.
-- Geri dönüş: sunucu paketi geri alınır (eklenen sütunlar kalır, okunmaz); istemci için her yayında "önceki sağlam kod, daha yüksek
-  numara" dosyası hazır olur.
+İstemci hareketi / siparişi olan cariyi silmeyi engelliyor (`src/260:187`, `087:23`), ama bu yalnız o cihazın belleğindeki veriye bakıyor;
+sunucuda engel yok. Başka cihazın az önce yazdığı hareket, eski istemci ya da doğrudan API çağrısı bu denetimi aşar.
 
-| Paket | Kapsam | Veri dönüşümü | Geri dönüş |
+**Silme kuralları için ilke:** CASCADE topluca değiştirilmeyecek. Yukarıda ✔ olan üç CASCADE (kalem, rezervasyon, atama) bugün üst kayıt
+silme korumasıyla birlikte çalışıyor ve silinen satırlar arşive alınıyor; dokunulmayacak. Değişecek olanlar yalnız ölçümle AÇIK çıkanlar:
+cari silme (S5, S6), eski hesap tablosu (S7, kullanılıyorsa), üretimin ürünü (B2), fişi olan siparişin carisi (B3), site talebi (Y2).
+
+## 4. Öncelik
+
+| # | Risk | Kanıt | Paket |
 |---|---|---|---|
-| **0 · Envanter (salt okur)** | Canlıda her ad bağının ölçümü: kaç kayıt, kaçı tek eşleşiyor, kaçı eşleşmiyor / çoklu. Paketlerin kapsamını ve sırasını kesinleştirir. | yok | yok (yalnız okur) |
-| **1 · Beden adı sunucuda tek işlem** | `tanim_olcu_ad_degistir` (B1'in bedene karşılığı): Tanımlar + kalem, üretim (`beden_miktarlari`, atama sonuçları), rezervasyon, koli, reçete, barkod, asorti aynı işlemde; eski ad defteri; bayat yazma çevirisi. İstemci 082 sunucuyu çağırır. | yok (yeni tablo / fonksiyon) | SQL geri alma + istemci geri dönüş |
-| **2 · Reçete kimlikle okunur** | Okuyucular `mamulRenkId` / `renkId` (ve yeni `mamulOlcuId`, `olcuId`) ile eşler; ad yalnız kimliksiz satırda yedek. Sunucu reçete yazmasında kimliği doğrular. | var olan damgalar; eksikler tek eşleşmede doldurulur, kalanı rapor | istemci geri dönüş; eklenen alanlar zararsız |
-| **3 · Kalem / üretim / rezervasyon satırlarında kimlik** | `siparis_kalemleri`, `uretim`, `stok_rezervasyonlari`'na `renk_id`, `olcu_id` (ve uygun yerde `varyant_id`) sütunları + yabancı anahtar. Sunucu yazmada doldurur / doğrular; "serbest renk aç" yolu bu tablolarda kapanır. İstemci kimlikle eşler, güncel adı kimlikten gösterir. | tek eşleşen otomatik; diğerleri rapor | sütunlar kalır; tetikleyiciler kalkar |
-| **4 · Proses kimliği ve fasoncu** | Ücret, bölüm üyeliği, usta yetkisi, kapasite, atama, gider kartı bağı proses `id` ile; işçilik fişinde proses kimliği `ek`'te; cari tipine kimlik ve "fasoncu" için ada bağlı olmayan işaret. | proses adı → kimlik tek eşleşme; çoklu / eksik rapor | eski ad anahtarları yanında tutulur |
-| **5 · Ürün JSON bağları** | Fiyat kuralı, renk resmi, harici barkod, koli kalemi (`kalemId`) kimlikli. | tek eşleşme; kalan rapor | eklenen alanlar zararsız |
-| **6 · Sipariş ↔ üretim bağı** | `planlama` bağında `uretimId` / `siparisId`; rezervasyonda `uretim_id`; numara gösterim olarak kalır. | numara → kimlik tek eşleşme | eski numara alanları kalır |
-| **7 · Silme korumaları ve yabancı anahtarlar** | CASCADE yerine engel / pasife alma (kalem, rezervasyon, atama, hesap hareketi); eksik yabancı anahtarlar önce doğrulanmadan (NOT VALID), yetim raporu temizse doğrulanarak; bölüm / renk / proses silmede sunucu kullanım denetimi. | yok; yetim kayıt raporu | kısıtlar kaldırılır |
-| **8 · Cari hareketinde ürün kimliği** | `car_hareket`'e `urun_id` (+ varyant); maliyet / son alış kimlikle. | ad → kimlik tek eşleşme | sütun kalır |
-| **9 · Kalanlar** | Kimliksiz Tanımlar listeleri, kullanıcı damgasında `kullaniciId`, portal kalemlerinde renk / ölçü kimliği. | tek eşleşme | zararsız |
+| 1 | **Hareketi / fişi / siparişi olan cari sunucuda silinebiliyor; hareket ve fiş carisiz kalıyor, sipariş ve atama bağı boşalıyor** | bag-risk S5, S6 | K |
+| 2 | **Fişi kesilmiş siparişin carisi, hareketi olan üretimin ürünü değiştirilebiliyor** | bag-risk B3, B2 | K |
+| 3 | **"Fasoncu" adı ödeme yönünü belirliyor** (ad değişince işçilik cariye değil bölüme yazılır) | bag-risk-fasoncu: 3 açık | F |
+| 4 | Eksik yabancı anahtarlar (cari hareketi, fiş, stok hareketi, kasa hareketi, site talebi) | şema dökümü; Y2 | K |
+| 5 | Beden adı değişikliği atomik değil | kod; renk için canlıda yaşandı | 1 (geçici koruma) |
+| 6 | Reçete eşleşmesi birebir ad | kod | 2 |
+| 7 | Kalem / üretim / rezervasyon satırlarında renk–beden metni | kod | 3 |
+| 8 | Proses adı (ücret, tahakkuk, işçilik fişi) | kod | 4 |
+| 9 | Fiyat kuralı, renk resmi, harici barkod, koli kalemi | kod | 5 |
+| 10 | Sipariş ↔ üretim numara bağı | kod | 6 |
+| 11 | Cari hareketinde ürün kimliği yok | kod | 8 |
+| 12 | Kimliksiz Tanımlar listeleri, kullanıcı damgası, portal kalemleri | kod | 9 |
 
-**Eski istemci, çevrimdışı kayıt, bekleyen yazma**
-- (a) adımında sunucu eski istemcinin adla gelen yazmasını kabul eder ve kimliği kendisi doldurur; çoklu / eksik eşleşmede o tablo için
-  KR koduyla reddeder (yeni "serbest" kayıt açmaz). Bekleyen yazma reddedilirse defterde "inceleme gerekiyor" olarak kalır, veri kaybolmaz.
-- İnternetsiz kayıt zaten kilitli; çevrimdışı birikmiş yazma yalnız "gönderilemeyen bekleyen kayıt"tır ve aynı kuraldan geçer.
-- (c) adımından önce bütün cihazların sürümü doğrulanır; kapı `min_istemci_surum` ile sunucuda da uygulanır.
+## 5. Paketler
 
-## 5. Bugün zaten sağlam olanlar (dokunulmayacak)
-Cari ↔ hareket / sipariş / çek / kasa (`cari_id`); stok hareketi ↔ fiş / varyant / kalem (yabancı anahtarlı); üretim ataması ↔ kişi
-(`personel_id`); fiş ↔ hareketler (`fis_id`, istek kimliğiyle tekrar koruması); gider kartı, fiyat grubu, bölüm üyeliği (`cariId`);
-görev / mesaj (`kullaniciId`); site kaydı ↔ cari.
+**Ortak kurallar**
+- Var olan kimlikler korunur; yeni kimlik yalnız kimliği hiç olmayan varlığa verilir. Sipariş numarası, barkod kodu, fiş numarası
+  insan için kalır.
+- Şema değişiklikleri EKLEMELİDİR; ad sütunları "işlem anındaki ad" olarak ve eski istemci için kalır.
+- **Eşleme kuralı:** ad tek başına anahtar değildir. Eşleme, gereken kapsamla yapılır: ürün (varyant, reçete, kalem), tür (renk /
+  model rengi / serbest; beden / boyut), etkin–pasif durumu, firma (her firma ayrı veritabanı; çapraz eşleme yapılmaz). Aynı kapsamda
+  birden çok aday varsa ya da hiç yoksa otomatik bağlanmaz, raporlanır. **Kayıtta kimlik dolu ve ad onunla çelişiyorsa hiçbiri
+  sessizce seçilmez: yazma KR koduyla reddedilir, mevcut veri raporlanır.**
+- Geçiş adımları: (a) sunucu kimliği ad yanında kabul eder, doldurur, çelişkiyi reddeder → (b) istemci kimlikle yazar ve okur →
+  (c) sunucu kimliği zorunlu kılar (`stk_ayar.min_istemci_surum` kapısıyla; bütün cihazlar doğrulandıktan sonra).
+- **Geri dönüş kuralı:** geri dönüş, geçişten SONRA oluşan kayıtların kimlik bağlarını kaybettirmez. Bunun için: eklenen sütunlar /
+  alanlar geri almada silinmez; (a) adımındaki "sunucu doldurur" tetikleyicileri istemci geri dönse de KALIR (eski kodun adla yazdığı
+  kayıt yine kimliklenir); geri dönüş istemcisi kimlik alanlarını bilmese bile onları silmeyen yazma yolu kullanır (satırın tamamını
+  yazan yollarda sunucu, gelmeyen kimlik alanını mevcut değerle korur — her paketin sınamasında "geri dönüş istemcisiyle kayıt
+  düzenle → kimlik yerinde" kontrolü olur). (c) adımı geri alınabilir tek satır ayardır.
+- Her paket: kurulum + geri alma SQL'i (LF / CRLF sınanmış), salt okur önkoşul / doğrulama, önce eski kodda kalan kalıcı sınama,
+  yerel Supabase'de ad / kod değişikliği, iki cihaz, bağlantı kesilmesi, tekrar gönderme, iptal, geri alma; miktar, bakiye, stok,
+  geçmiş hareket ve barkod karşılaştırması.
+
+| Paket | Kapsam | Veri dönüşümü | Bağımlı olduğu |
+|---|---|---|---|
+| **0 · Envanter** (salt okur) | `51-canli-bag-envanteri-salt-okur.sql`: yetim, boşalmış bağ, yanlış üst kayıt, eski tablolar, ad bağlarının hacmi, belirsizlik | yok | — |
+| **K · Silme ve üst kayıt korumaları** | Cari silme: hareketi / fişi / siparişi / ataması olan cari silinemez (pasife alınır). Fişi olan siparişin carisi, hareketi olan üretimin ürünü değiştirilemez. Eksik yabancı anahtarlar: önce doğrulanmadan eklenir (yeni yazmayı korur), Paket 0 yetim raporu temizse doğrulanır. Site talebinde cari denetimi. Eski hesap tablosu Paket 0 sonucuna göre. | yok (mevcut yetimler raporlanır, onarılmaz) | 0 (yetim sayısı kısıtların nasıl kurulacağını belirler) |
+| **F · Fasoncu işareti** | Cari tipine ada bağlı olmayan iş kuralı alanı (`fason: true`) ve tipe kimlik; `iscilikBolumu` ve personel paneli bu alana bakar; ad serbestçe değişir. İstemci + Tanımlar verisi; işçilik sunucuda hesaplanmıyorsa SQL gerekmez. | mevcut "Fasoncu" tipi işaretlenir (tek kayıt); adında "fason" geçen başka tipler RAPORLANIR, otomatik işaretlenmez | 0 (tiplerin dökümü) |
+| **1 · Beden adı — GEÇİCİ KORUMA** | Beden adı değişikliği sunucuda tek işlem + eski ad defteri + bayat yazma çevirisi. Hedef değil: asıl hedef Paket 3'te beden bağlarının kimliğe geçmesi. O zamana kadar ad değişikliğinin yarım kalmasını önler; Paket 3'ten sonra gösterim adını değiştiren basit işleme iner. | yok | — |
+| **2 · Reçete kimlikle** | Okuyucular `mamulRenkId` / `renkId` (+ ölçü kimlikleri) ile eşler; sunucu reçete yazmasında kimlik–ad çelişkisini reddeder. | var olan damgalar; eksikler ürün kapsamında tek eşleşmede | 0; ölçü kimliği için 3'ün sütun tasarımı |
+| **3 · Kalem / üretim / rezervasyon satırlarında kimlik** | `renk_id`, `olcu_id` (uygun yerde `varyant_id`) + yabancı anahtar; bu tablolarda "serbest renk / ölçü aç" yolu kapanır. | ürün + tür + etkinlik kapsamında tek eşleşme | 0, K (yabancı anahtar düzeni), 1 (geçiş süresince ad tutarlılığı) |
+| **4 · Proses kimliği** | Ücret, bölüm üyeliği, usta yetkisi, kapasite, atama, gider kartı bağı proses kimliğiyle; işçilik fişinde proses kimliği. | ad → kimlik tek eşleşme | 0, F (aynı işçilik kuralına dokunur; önce F) |
+| **5 · Ürün JSON bağları** | Fiyat kuralı, renk resmi, harici barkod, koli kalemi (`kalemId`). | tek eşleşme | 3 (kalem ve renk / ölçü kimlikleri) |
+| **6 · Sipariş ↔ üretim bağı** | Planlama bağında ve rezervasyonda kimlik; numara gösterim. | numara → kimlik tek eşleşme | K |
+| **8 · Cari hareketinde ürün kimliği** | `car_hareket.urun_id` (+ varyant); maliyet / son alış kimlikle. | ürün adı tek eşleşme | 3 |
+| **9 · Kalanlar** | Kimliksiz Tanımlar listeleri, kullanıcı damgası, portal kalemleri. | tek eşleşme | 3 (portal), F (cari tipi kimliği) |
+
+Bağımlılık sırası: **0 → K ve F (birbirinden bağımsız) → 1 → 3 → (2, 5, 8) ; 4 F'den sonra ; 6 K'dan sonra ; 9 en son.**
+Paket 1 ile K ve F birbirini beklemez; 2, 5 ve 8 Paket 3'ün kimlik sütunlarına dayanır.
+
+**Eski istemci, çevrimdışı kayıt, bekleyen yazma:** (a) adımında sunucu adla gelen yazmayı kabul eder ve kimliği doldurur; kapsamda
+tek eşleşme yoksa ya da kimlik–ad çelişiyorsa KR koduyla reddeder (yeni "serbest" kayıt açmaz). Reddedilen bekleyen yazma defterde
+"inceleme gerekiyor" olarak kalır. İnternetsiz kayıt kilitli; birikmiş yazma aynı kuraldan geçer.
 
 ## 6. Bilinmeyenler
 - Canlı veride ad bağlarının hacmi ve tutarlılığı (Paket 0).

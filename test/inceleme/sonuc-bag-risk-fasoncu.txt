@@ -1,0 +1,6 @@
+bag-risk-fasoncu · iscilikBolumu(tanimlar, cariler, proses, kişi)
+  ✓ başlangıç: fasoncunun bölüme bağlı prosesteki işçiliği cariye
+  ✗ AÇIK tipin adı "Fason Atölye" olunca aynı kişinin işçiliği yine cariye (ödeme yönü değişmez) — görülen "bölüm tahakkuku (Kesimhane)" · hedef "cariye alacak"
+  ✗ AÇIK tipin adı "FASONCU" yazılınca işçilik yine cariye — görülen "bölüm tahakkuku (Kesimhane)" · hedef "cariye alacak"
+  ✗ AÇIK fason işareti taşıyan başka adlı tip ("Dış Usta") cariye yazılır — görülen "bölüm tahakkuku (Kesimhane)" · hedef "cariye alacak"
+SONUÇ: 1 hedefte · 3 AÇIK

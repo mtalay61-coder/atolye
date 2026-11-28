@@ -1,0 +1,43 @@
+bag-risk · şablon b12_b1t · her durum taze kopyada · işlemler Yönetici (Ali) hesabıyla, istemcinin yolundan
+
+■ S · ÜST KAYIT SİLİNİNCE GEÇMİŞ
+  S1 hareketsiz sipariş silme → tamam (1 satır) · kalan kalem 0 · kalan rezervasyon 0 · arşivde: sipariş 1, kalem 1, rezervasyon 1
+  ✓ S1 sipariş silinince kalemleri ve rezervasyonu ya kalır ya da arşive alınır (iz bırakmadan silinmez)
+  S2 stok hareketi olan sipariş silme → RET KR002 Teslim geçmişi olan sipariş silinemez (sipariş sp-inc-1 SAT-9001) — iptal edilmiş olarak kalır
+  ✓ S2 stok hareketi olan sipariş silinemez; kalemleri ve hareketi yerinde
+  S3 ataması ve işçilik hareketi olan üretim silme → RET KR010 KR010: Üretimin geçerli stok / cari hareketi var (ur-1) — üretim silinmedi; önce fişleri iptal edilmeli · kalan atama 1 · üretimi kalmayan işçilik hareketi 0 · arşivde atama 0
+  ✓ S3 ataması / işçiliği olan üretim silinmez ya da atamaları korunur; işçilik hareketi üretimsiz kalmaz
+  S4 siparişi, üretimi, stok hareketi olan ürün silme → RET KR003 Teslim geçmişi olan kalemin ürünü, rengi, bedeni ya da siparişi değiştirilemez (kalem kl-inc-40: 1054 - Siyah/ · ürünsüz varyant 0 · ürünsüz stok hareketi 0 · ürün bağı boşalan kalem 0 · üretim 0 · kalan rezervasyon 2/2
+  ✓ S4 kullanılan ürün silinemez (bağlar boşalmaz, rezervasyon silinmez, varyant / hareket ürünsüz kalmaz)
+  S5 hareketi, siparişi, fişi olan cari silme → tamam (1 satır) · carisiz cari hareketi 1 · carisiz fiş 1 · cari bağı boşalan sipariş 2
+  ✗ AÇIK S5 hareketi / siparişi / fişi olan cari silinemez (hareket ve fiş carisiz kalmaz, sipariş bağı boşalmaz) — görülen [false,1,1,2] · hedef [true,0,0,0]
+  S6 ataması ve işçilik hareketi olan usta carisi silme → tamam (1 satır) · kişisi boşalan atama 1 · carisiz işçilik hareketi 1
+  ✗ AÇIK S6 ataması / işçilik hareketi olan kişi silinemez — görülen [false,1,1] · hedef [true,0,0]
+  S7 hareketi olan hesap (eski hesaplar tablosu) silme → tamam (1 satır) · kalan hesap hareketi 0 · arşivde 0
+  ✗ AÇIK S7 hareketi olan hesap silinemez ya da hareketleri korunur — görülen [false] · hedef [true]
+
+■ Y · VAR OLMAYAN ÜST KAYDA BAĞLANAN KAYIT (yetim)
+  Y1 üretim.rezervasyon_siparis_id = olmayan sipariş → RET KR006 İptal edilmiş veya silinmiş siparişe operasyon bağı kurulamaz (sipariş yok-siparis)
+  Y2 site talebi, olmayan cari → tamam (1 satır)
+  Y3 rezervasyon, olmayan sipariş → RET KR006 İptal edilmiş veya silinmiş siparişe operasyon bağı kurulamaz (sipariş yok-siparis)
+  Y4 ürün.tedarikci_id = olmayan cari → RET 23503 insert or update on table "urunler" violates foreign key constraint "urunler_tedarikci_id_fkey"
+  Y5 sipariş kalemi, olmayan sipariş → RET 23503 insert or update on table "siparis_kalemleri" violates foreign key constraint "siparis_kalemleri_siparis_id_fk
+  Y6 sipariş kalemi, olmayan ürün → RET 23503 insert or update on table "siparis_kalemleri" violates foreign key constraint "siparis_kalemleri_urun_id_fkey"
+  ✗ AÇIK Y var olmayan üst kayda bağlanan yazmaların HEPSİ reddedilir [Y1 üretim→sipariş, Y2 site talebi→cari, Y3, Y4, Y5, Y6] — görülen [true,false,true,true,true,true] · hedef [true,true,true,true,true,true]
+
+■ B · YANLIŞ ÜST KAYDA BAĞLANMA
+  B1 stok hareketi olan kalemi (kl-inc-40) başka siparişe taşıma → RET KR003 Teslim geçmişi olan kalemin ürünü, rengi, bedeni ya da siparişi değiştirilemez (kalem kl-inc-40: 1054 - Siyah/ · kalem şimdi sp-inc-1; hareket h-1 hâlâ siparis_id = sp-inc-1
+  ✓ B1 stok hareketi olan kalem başka siparişe taşınamaz (hareketin siparişi ile kalemin siparişi ayrışmaz)
+  B2 ataması ve işçilik hareketi olan üretimin ürününü değiştirme → tamam (1 satır)
+  ✗ AÇIK B2 ataması / işçilik hareketi olan üretimin ürünü değiştirilemez — görülen [false,"inc-bot-2"] · hedef [true,"inc-bot"]
+  B3 fişi kesilmiş siparişin carisini değiştirme → tamam (1 satır) · fiş f-1 carisi inc-musteri
+  ✗ AÇIK B3 fişi kesilmiş siparişin carisi değiştirilemez (fiş başka caride kalmaz) — görülen false · hedef true
+
+SONUÇ: 5 hedefte · 6 AÇIK
+AÇIK RİSKLER:
+  - S5 hareketi / siparişi / fişi olan cari silinemez (hareket ve fiş carisiz kalmaz, sipariş bağı boşalmaz)
+  - S6 ataması / işçilik hareketi olan kişi silinemez
+  - S7 hareketi olan hesap silinemez ya da hareketleri korunur
+  - Y var olmayan üst kayda bağlanan yazmaların HEPSİ reddedilir [Y1 üretim→sipariş, Y2 site talebi→cari, Y3, Y4, Y5, Y6]
+  - B2 ataması / işçilik hareketi olan üretimin ürünü değiştirilemez
+  - B3 fişi kesilmiş siparişin carisi değiştirilemez (fiş başka caride kalmaz)
